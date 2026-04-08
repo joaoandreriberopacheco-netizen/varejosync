@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
-import { addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { addDays, eachDayOfInterval, format, isSameDay, subDays } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function TimelinePeriodPicker({ range, onChange }) {
+  const scrollRef = useRef(null);
+  const centerRef = useRef(null);
+
   const label = useMemo(() => {
     if (!range?.from && !range?.to) return 'Selecionar período';
     if (range?.from && range?.to) return `${format(range.from, 'dd/MM/yyyy')} → ${format(range.to, 'dd/MM/yyyy')}`;
@@ -13,12 +13,22 @@ export default function TimelinePeriodPicker({ range, onChange }) {
     return 'Selecionar período';
   }, [range]);
 
+  const centerDate = useMemo(() => range?.from || new Date(), [range]);
+
   const days = useMemo(() => {
-    const today = new Date();
-    const from = startOfMonth(subMonths(today, 1));
-    const to = endOfMonth(addMonths(today, 1));
+    const from = subDays(centerDate, 30);
+    const to = addDays(centerDate, 30);
     return eachDayOfInterval({ from, to });
-  }, []);
+  }, [centerDate]);
+
+  useEffect(() => {
+    if (centerRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const item = centerRef.current;
+      const left = item.offsetLeft - (container.clientWidth / 2) + (item.clientWidth / 2);
+      container.scrollTo({ left, behavior: 'smooth' });
+    }
+  }, [centerDate]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 md:p-5 shadow-sm space-y-3">
@@ -32,40 +42,24 @@ export default function TimelinePeriodPicker({ range, onChange }) {
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-1">
         {days.map((day) => {
-          const active = range?.from && format(range.from, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
-          const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+          const active = range?.from && isSameDay(range.from, day);
+          const isCenter = isSameDay(centerDate, day);
           return (
             <button
               key={format(day, 'yyyy-MM-dd')}
+              ref={isCenter ? centerRef : null}
               type="button"
-              onClick={() => onChange({ from: day, to: addMonths(day, 0) })}
-              className={`flex-shrink-0 rounded-2xl px-3 py-3 shadow-sm min-w-[72px] ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-200'}`}
+              onClick={() => onChange({ from: day, to: addDays(day, 30) })}
+              className={`flex-shrink-0 rounded-2xl shadow-sm min-w-[70px] min-h-[70px] ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-200'}`}
             >
               <div className="text-[10px] uppercase tracking-wide opacity-70">{format(day, 'MMM')}</div>
               <div className="text-base font-semibold leading-none mt-1">{format(day, 'dd')}</div>
-              <div className="text-[10px] mt-1 opacity-70">{isToday ? 'Hoje' : format(day, 'EEE')}</div>
+              <div className="text-[10px] mt-1 opacity-70">{isCenter ? 'Hoje' : format(day, 'EEE')}</div>
             </button>
           );
         })}
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="flex-shrink-0 justify-center rounded-2xl border-0 shadow-sm bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 h-[72px] w-[56px] px-0">
-              <CalendarDays className="w-4 h-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-0 rounded-3xl border-0 shadow-xl bg-white dark:bg-gray-800">
-            <Calendar
-              mode="range"
-              numberOfMonths={typeof window !== 'undefined' && window.innerWidth >= 1024 ? 2 : 1}
-              selected={range}
-              onSelect={onChange}
-              className="rounded-3xl"
-            />
-          </PopoverContent>
-        </Popover>
       </div>
 
       <div className="text-sm text-gray-900 dark:text-gray-100">{label}</div>

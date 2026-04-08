@@ -1,10 +1,9 @@
 import React from 'react';
-import { ChevronUp, ListFilter, ShipWheel, Link2 } from 'lucide-react';
+import { ChevronUp, ListFilter, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import TimelineViewControls from '@/components/logistica-sandbox/TimelineViewControls';
 import TimelinePeriodPicker from '@/components/logistica-sandbox/TimelinePeriodPicker';
-import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 
 export default function FluvialExpandableFilters({
   open,
@@ -13,11 +12,6 @@ export default function FluvialExpandableFilters({
   onViewModeChange,
   periodRange,
   onPeriodRangeChange,
-  simulationDate,
-  onSimulationDateChange,
-  boatOptions = [],
-  selectedBoat = 'all',
-  onBoatChange,
   onlyLinked = false,
   onOnlyLinkedChange,
 }) {
@@ -50,32 +44,10 @@ export default function FluvialExpandableFilters({
             <CollapsibleContent className="px-3 pb-3 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
               <div className="space-y-3 max-h-[62vh] overflow-y-auto pr-1">
                 <div className="rounded-3xl bg-white/5 p-3 shadow-sm">
-                  <div className="flex items-center gap-2 text-xs text-white/65 mb-3"><ShipWheel className="w-4 h-4" /> Barco</div>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    <button
-                      type="button"
-                      onClick={() => onBoatChange?.('all')}
-                      className={`px-3 py-2 rounded-2xl text-sm whitespace-nowrap shadow-sm ${selectedBoat === 'all' ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
-                    >
-                      Todos
-                    </button>
-                    {boatOptions.map((boat) => (
-                      <button
-                        key={boat}
-                        type="button"
-                        onClick={() => onBoatChange?.(boat)}
-                        className={`px-3 py-2 rounded-2xl text-sm whitespace-nowrap shadow-sm ${selectedBoat === boat ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
-                      >
-                        {boat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-3xl bg-white/5 p-3 shadow-sm">
                   <button
                     type="button"
                     onClick={() => onOnlyLinkedChange?.(!onlyLinked)}
-                    className={`w-full flex items-center justify-between gap-3 px-3 py-3 rounded-2xl text-sm shadow-sm ${onlyLinked ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
+                    className={`w-full flex items-center justify-between gap-3 rounded-2xl text-sm shadow-sm ${onlyLinked ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
                   >
                     <span className="flex items-center gap-2"><Link2 className="w-4 h-4" /> Apenas com embarques vinculados</span>
                     <span>{onlyLinked ? 'Ligado' : 'Todos'}</span>
@@ -86,7 +58,6 @@ export default function FluvialExpandableFilters({
                   onViewModeChange={onViewModeChange}
                 />
                 <TimelinePeriodPicker range={periodRange} onChange={onPeriodRangeChange} />
-                <TimelineDatePicker value={simulationDate} onChange={onSimulationDateChange} />
               </div>
             </CollapsibleContent>
           </div>

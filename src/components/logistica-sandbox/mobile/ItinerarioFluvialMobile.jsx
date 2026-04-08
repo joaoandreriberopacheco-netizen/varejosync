@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, isSameDay } from 'date-fns';
+import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
 import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
@@ -24,11 +24,12 @@ export default function ItinerarioFluvialMobile() {
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [periodRange, setPeriodRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) });
+  const [periodRange, setPeriodRange] = useState(() => {
+    const today = new Date();
+    return { from: subDays(today, 30), to: addDays(today, 30) };
+  });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
-  const [boatSearch, setBoatSearch] = useState('');
-  const [selectedBoat, setSelectedBoat] = useState('all');
   const [onlyLinked, setOnlyLinked] = useState(false);
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -87,15 +88,12 @@ export default function ItinerarioFluvialMobile() {
 
   useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate, freteMonth, periodRange, selectedBoat, onlyLinked]);
+  }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked]);
 
-  const boatOptions = useMemo(() => Array.from(new Set(eventos.map((evento) => evento.embarcacao_nome).filter(Boolean))).sort(), [eventos]);
-
-  const filteredBoatOptions = useMemo(() => {
-    const termo = boatSearch.trim().toLowerCase();
-    if (!termo) return boatOptions;
-    return boatOptions.filter((boat) => boat.toLowerCase().includes(termo));
-  }, [boatOptions, boatSearch]);
+  useEffect(() => {
+    const baseDate = new Date(`${simulationDate}T12:00:00`);
+    setPeriodRange({ from: subDays(baseDate, 30), to: addDays(baseDate, 30) });
+  }, [simulationDate]);
 
   const groupedEventos = useMemo(() => {
     const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
@@ -118,6 +116,7 @@ export default function ItinerarioFluvialMobile() {
         if (selectedBoat !== 'all' && evento.embarcacao_nome !== selectedBoat) return false;
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
+        if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         if (marco < targetDate) return false;
         if (endDate && marco > endDate) return false;
         return true;
@@ -128,7 +127,7 @@ export default function ItinerarioFluvialMobile() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode, selectedBoat, onlyLinked]);
+  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -174,8 +173,8 @@ export default function ItinerarioFluvialMobile() {
         {routeType === 'Fluvial' && !selectedEvento ? (
           <>
             <FluvialSearchBar
-              value={boatSearch}
-              onChange={setBoatSearch}
+              value=""
+              onChange={() => {}}
               onToggleFilters={() => setShowFilters((prev) => !prev)}
               filtersOpen={showFilters}
             />
@@ -186,11 +185,6 @@ export default function ItinerarioFluvialMobile() {
               onViewModeChange={setViewMode}
               periodRange={periodRange}
               onPeriodRangeChange={setPeriodRange}
-              simulationDate={simulationDate}
-              onSimulationDateChange={setSimulationDate}
-              boatOptions={filteredBoatOptions}
-              selectedBoat={selectedBoat}
-              onBoatChange={setSelectedBoat}
               onlyLinked={onlyLinked}
               onOnlyLinkedChange={setOnlyLinked}
             />

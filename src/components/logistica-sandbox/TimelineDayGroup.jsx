@@ -21,7 +21,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
             <button
               key={evento.id}
               onClick={() => onSelect(evento)}
-              className={`w-full text-left rounded-2xl bg-white dark:bg-gray-800 px-4 py-3 shadow-sm transition-all ${isSelected ? 'ring-2 ring-gray-300 dark:ring-gray-500 shadow-md' : 'ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700'}`}
+              className={`w-full text-left rounded-2xl bg-white dark:bg-gray-800 py-3 shadow-sm transition-all ${isSelected ? 'ring-2 ring-gray-300 dark:ring-gray-500 shadow-md' : 'ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700'}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
