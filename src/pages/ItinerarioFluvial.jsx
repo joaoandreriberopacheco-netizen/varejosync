@@ -17,9 +17,9 @@ import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNaviga
 import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
-import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
+import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -174,6 +174,10 @@ export default function ItinerarioFluvial() {
     : viewMode === 'chegada_tabatinga'
       ? 'Chegada Tabatinga'
       : 'Saída Manaus';
+
+  if (isMobile) {
+    return <ItinerarioFluvialMobile />;
+  }
 
   const freteEventos = useMemo(() => {
     const start = new Date(freteMonth.getFullYear(), freteMonth.getMonth(), 1);
