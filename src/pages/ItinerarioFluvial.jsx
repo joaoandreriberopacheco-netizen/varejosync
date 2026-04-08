@@ -24,6 +24,7 @@ import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/Itine
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRef } from 'react';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -41,6 +42,7 @@ export default function ItinerarioFluvial() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedBoat, setSelectedBoat] = useState('all');
   const [onlyLinked, setOnlyLinked] = useState(false);
+  const timelineScrollRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -213,6 +215,15 @@ export default function ItinerarioFluvial() {
 
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || freteEventos[0] || null;
 
+  useEffect(() => {
+    if (!isMobile && routeType === 'Fluvial' && timelineScrollRef.current) {
+      const todayMarker = timelineScrollRef.current.querySelector('[data-is-today="true"]');
+      if (todayMarker) {
+        todayMarker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [isMobile, routeType]);
+
   if (isMobile) {
     return <ItinerarioFluvialMobile />;
   }
@@ -286,18 +297,20 @@ export default function ItinerarioFluvial() {
               )
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
-                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
+                <div ref={timelineScrollRef} className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
                   {timelineItems.map((item) => (
-                    <TimelineDayGroup
-                      key={item.key}
-                      label={item.label}
-                      dayNumber={item.dayNumber}
-                      eventos={item.eventos}
-                      isToday={item.isToday}
-                      onSelect={setSelectedEvento}
-                      viewModeLabel={viewModeLabel}
-                      selectedEventoId={currentEvento?.id}
-                    />
+                    <div data-is-today={item.isToday}>
+                      <TimelineDayGroup
+                        key={item.key}
+                        label={item.label}
+                        dayNumber={item.dayNumber}
+                        eventos={item.eventos}
+                        isToday={item.isToday}
+                        onSelect={setSelectedEvento}
+                        viewModeLabel={viewModeLabel}
+                        selectedEventoId={currentEvento?.id}
+                      />
+                    </div>
                   ))}
                 </div>
                 <TimelineSidebarCard evento={currentEvento} />
@@ -346,7 +359,7 @@ export default function ItinerarioFluvial() {
                   )}
                 </div>
                 <FreteTotalValue eventos={freteEventos} />
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 pb-2">
                   {freteEventos.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
                   ))}
