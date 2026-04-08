@@ -16,6 +16,8 @@ import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
 import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
+import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
+import FluvialSimulationFab from '@/components/logistica-sandbox/mobile/FluvialSimulationFab';
 
 export default function ItinerarioFluvialMobile() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -24,7 +26,8 @@ export default function ItinerarioFluvialMobile() {
   const [viewMode, setViewMode] = useState('saida_manaus');
   const [periodRange, setPeriodRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) });
   const [freteMonth, setFreteMonth] = useState(new Date());
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [boatSearch, setBoatSearch] = useState('');
   const [selectedBoat, setSelectedBoat] = useState('all');
   const [onlyLinked, setOnlyLinked] = useState(false);
 
@@ -87,6 +90,12 @@ export default function ItinerarioFluvialMobile() {
   }, [routeType, viewMode, simulationDate, freteMonth, periodRange, selectedBoat, onlyLinked]);
 
   const boatOptions = useMemo(() => Array.from(new Set(eventos.map((evento) => evento.embarcacao_nome).filter(Boolean))).sort(), [eventos]);
+
+  const filteredBoatOptions = useMemo(() => {
+    const termo = boatSearch.trim().toLowerCase();
+    if (!termo) return boatOptions;
+    return boatOptions.filter((boat) => boat.toLowerCase().includes(termo));
+  }, [boatOptions, boatSearch]);
 
   const groupedEventos = useMemo(() => {
     const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
@@ -163,21 +172,29 @@ export default function ItinerarioFluvialMobile() {
         <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />
 
         {routeType === 'Fluvial' && !selectedEvento ? (
-          <FluvialExpandableFilters
-            open={showFilters}
-            onOpenChange={setShowFilters}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            periodRange={periodRange}
-            onPeriodRangeChange={setPeriodRange}
-            simulationDate={simulationDate}
-            onSimulationDateChange={setSimulationDate}
-            boatOptions={boatOptions}
-            selectedBoat={selectedBoat}
-            onBoatChange={setSelectedBoat}
-            onlyLinked={onlyLinked}
-            onOnlyLinkedChange={setOnlyLinked}
-          />
+          <>
+            <FluvialSearchBar
+              value={boatSearch}
+              onChange={setBoatSearch}
+              onToggleFilters={() => setShowFilters((prev) => !prev)}
+              filtersOpen={showFilters}
+            />
+            <FluvialExpandableFilters
+              open={showFilters}
+              onOpenChange={setShowFilters}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              periodRange={periodRange}
+              onPeriodRangeChange={setPeriodRange}
+              simulationDate={simulationDate}
+              onSimulationDateChange={setSimulationDate}
+              boatOptions={filteredBoatOptions}
+              selectedBoat={selectedBoat}
+              onBoatChange={setSelectedBoat}
+              onlyLinked={onlyLinked}
+              onOnlyLinkedChange={setOnlyLinked}
+            />
+          </>
         ) : null}
 
         {routeType === 'Fluvial' ? (
@@ -248,6 +265,10 @@ export default function ItinerarioFluvialMobile() {
             <BoatsTab />
           </div>
         )}
+
+        {routeType === 'Fluvial' && !selectedEvento ? (
+          <FluvialSimulationFab value={simulationDate} onChange={setSimulationDate} />
+        ) : null}
       </div>
     </div>
   );

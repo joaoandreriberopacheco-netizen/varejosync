@@ -24,7 +24,7 @@ export default function TimelineViewControls({ viewMode, onViewModeChange }) {
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <CalendarDays className="w-4 h-4" /> Marco principal
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {viewOptions.map((option) => {
             const active = option.value === viewMode;
             return (
@@ -32,9 +32,9 @@ export default function TimelineViewControls({ viewMode, onViewModeChange }) {
                 key={option.value}
                 type="button"
                 onClick={() => onViewModeChange(option.value)}
-                className={`snap-start px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all min-w-fit ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
+                className={`px-3 py-3 rounded-2xl shadow-sm text-sm transition-all min-h-[72px] flex items-center justify-center text-center leading-tight ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
               >
-                {option.label}
+                <span className="break-words">{option.label}</span>
               </button>
             );
           })}

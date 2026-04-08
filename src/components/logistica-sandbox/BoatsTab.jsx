@@ -3,19 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Anchor, ChevronDown, Plus, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { buildBoatViewModels, buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BoatDetailsDialog from '@/components/logistica-sandbox/BoatDetailsDialog';
 import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransportadoraDialog';
-
-function StatusBadge({ status }) {
-  const classes = status === 'ativa'
-    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
-
-  return <Badge className={`border-0 shadow-none ${classes}`}>{status === 'ativa' ? 'Ativa' : 'Inativa'}</Badge>;
-}
 
 function BoatListCard({ transportadora, onClick }) {
   return (
@@ -26,16 +17,15 @@ function BoatListCard({ transportadora, onClick }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm flex-shrink-0">
-            <Anchor className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          <div className={`w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm flex-shrink-0 ring-2 ${transportadora.status === 'ativa' ? 'ring-emerald-500/70' : 'ring-gray-400/40 dark:ring-gray-500/50'}`}>
+            <Anchor className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 font-glacial truncate">{transportadora.nome}</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 font-glacial truncate">{transportadora.nome}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 truncate">Próximo ETA: {transportadora.proximo_eta}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <StatusBadge status={transportadora.status} />
           <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
             <ChevronDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
           </div>

@@ -1,10 +1,10 @@
 import React from 'react';
 import { CalendarDays } from 'lucide-react';
 
-export default function TimelineDatePicker({ value, onChange }) {
+export default function TimelineDatePicker({ value, onChange, compact = false }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm">
-      <div className="flex items-center gap-3 mb-3">
+    <div className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm ${compact ? 'p-4' : 'p-5'}`}>
+      <div className={`flex items-center gap-3 ${compact ? 'mb-2' : 'mb-3'}`}>
         <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
           <CalendarDays className="w-5 h-5 text-gray-700 dark:text-gray-200" />
         </div>
