@@ -4,10 +4,20 @@ import { base44 } from '@/api/base44Client';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
+import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
+import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
+import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
+import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
+import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
+import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
+import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
+import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
+import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
+import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialSimulationFab from '@/components/logistica-sandbox/mobile/FluvialSimulationFab';
 import FluvialBottomFilterSheet from '@/components/logistica-sandbox/mobile/FluvialBottomFilterSheet';
-import { cn } from '@/lib/utils';
 
 export default function ItinerarioFluvialMobile() {
   const [routeType, setRouteType] = useState('Fluvial');
