@@ -68,9 +68,11 @@ Deno.serve(async (req) => {
       const etaTabatinga = addDays(saidaManaus, 7);
       const proximaChegadaManaus = addDays(saidaManaus, 21);
 
+      const codigo = buildCodigo(sequencia);
+
       return {
-        nome: `${transportadora.nome} · Viagem ${sequencia}`,
-        codigo: buildCodigo(sequencia),
+        nome: `${transportadora.nome} · ${codigo}`,
+        codigo,
         embarcacao_template_id: transportadoraId,
         embarcacao_nome: transportadora.nome,
         rota_nome: 'Manaus → Tabatinga',
