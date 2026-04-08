@@ -3,8 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Boxes, Plus, Check, X, Search, Anchor } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Boxes, Plus, Check, X, Search, Anchor } from 'lucide-react';
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
@@ -198,7 +199,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   const [volumes, setVolumes] = useState([]);
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showItens, setShowItens] = useState(true);
+  const [activeTab, setActiveTab] = useState('transporte');
   const [showVolumesDialog, setShowVolumesDialog] = useState(false);
   const [showTripSelector, setShowTripSelector] = useState(false);
   const [qtdEmbarque, setQtdEmbarque] = useState({});
@@ -218,6 +219,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     if (!isOpen || !pedido) return;
     loadTransportadoras();
     loadEventosLogisticos();
+    setActiveTab('transporte');
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? new Date(embarqueExistente.data_embarque).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
       setTransportadoraId(embarqueExistente.transportadora_id || '');
@@ -405,119 +407,133 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
             </h2>
           </div>
 
-          <div className="px-6 py-5 space-y-5 overflow-y-auto">
+          <div className="px-6 py-5 overflow-y-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 w-full">
+                <TabsTrigger value="transporte" className="rounded-2xl py-2.5 text-sm">Transporte</TabsTrigger>
+                <TabsTrigger value="itens" className="rounded-2xl py-2.5 text-sm">Itens relacionados</TabsTrigger>
+              </TabsList>
 
-            {/* Data Despacho + ETA lado a lado */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Data Despacho
-                </label>
-                <Input
-                  type="date"
-                  value={dataDespacho}
-                  onChange={e => setDataDespacho(e.target.value)}
-                  disabled={!!eventoLogisticoId}
-                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  ETA — Chegada <span className="text-red-400">*</span>
-                </label>
-                <Input
-                  type="date"
-                  value={eta}
-                  onChange={e => setEta(e.target.value)}
-                  disabled={!!eventoLogisticoId}
-                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
-                />
-              </div>
-            </div>
+              <TabsContent value="transporte" className="space-y-5 mt-0">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Data Despacho
+                    </label>
+                    <Input
+                      type="date"
+                      value={dataDespacho}
+                      onChange={e => setDataDespacho(e.target.value)}
+                      disabled={!!eventoLogisticoId}
+                      className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      ETA — Chegada <span className="text-red-400">*</span>
+                    </label>
+                    <Input
+                      type="date"
+                      value={eta}
+                      onChange={e => setEta(e.target.value)}
+                      disabled={!!eventoLogisticoId}
+                      className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                    />
+                  </div>
+                </div>
 
-            {/* Transportadora */}
-            <div className="space-y-1.5">
-              <label className="text-sm text-gray-500 dark:text-gray-400">
-                Transportadora <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-              </label>
-              <div className={eventoLogisticoId ? 'pointer-events-none opacity-70' : ''}>
-                <TransportadoraSearch
-                  transportadoras={transportadoras}
-                  value={transportadoraId}
-                  onChange={setTransportadoraId}
-                  onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
-                />
-              </div>
-            </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm text-gray-500 dark:text-gray-400">
+                    Transportadora <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <div className={eventoLogisticoId ? 'pointer-events-none opacity-70' : ''}>
+                    <TransportadoraSearch
+                      transportadoras={transportadoras}
+                      value={transportadoraId}
+                      onChange={setTransportadoraId}
+                      onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm text-gray-500 dark:text-gray-400">
-                Viagem vinculada <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowTripSelector(true)}
-                className="w-full h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 px-4 flex items-center gap-3 text-left"
-              >
-                <Anchor className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className={`flex-1 truncate ${eventoSelecionado ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Selecionar viagem no itinerário'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-              {eventoSelecionado ? (
-                <div className="flex items-center justify-between gap-3 px-1">
-                  <p className="text-xs text-gray-400">
-                    Transportadora e datas serão sobrescritas automaticamente pela viagem.
-                  </p>
-                  <button type="button" onClick={() => setEventoLogisticoId('')} className="text-xs text-gray-500 dark:text-gray-400">
-                    Limpar
+                <div className="space-y-1.5">
+                  <label className="text-sm text-gray-500 dark:text-gray-400">
+                    Viagem vinculada <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowTripSelector(true)}
+                    className="w-full h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 px-4 flex items-center gap-3 text-left"
+                  >
+                    <Anchor className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Selecionar viagem no itinerário'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  </button>
+                  {eventoSelecionado ? (
+                    <div className="flex items-center justify-between gap-3 px-1">
+                      <p className="text-xs text-gray-400">
+                        Transportadora e datas serão sobrescritas automaticamente pela viagem.
+                      </p>
+                      <button type="button" onClick={() => setEventoLogisticoId('')} className="text-xs text-gray-500 dark:text-gray-400">
+                        Limpar
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm text-gray-500 dark:text-gray-400">
+                    Volumes <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowVolumesDialog(true)}
+                    className="w-full h-12 rounded-xl bg-gray-50 dark:bg-gray-800 shadow-sm px-4 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Boxes className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    {volumes.length > 0 ? (
+                      <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 text-left">
+                        {totalVolumesQtd.toLocaleString('pt-BR')} vol · {totalPesoKg > 0 ? `${totalPesoKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg` : '—'}
+                        <span className="text-xs text-gray-400 ml-2">({volumes.length} tipo{volumes.length > 1 ? 's' : ''})</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400 flex-1 text-left">Clicar para gerenciar volumes...</span>
+                    )}
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
-              ) : null}
-            </div>
 
-            {/* Volumes */}
-            <div className="space-y-1.5">
-              <label className="text-sm text-gray-500 dark:text-gray-400">
-                Volumes <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowVolumesDialog(true)}
-                className="w-full h-12 rounded-xl bg-gray-50 dark:bg-gray-800 shadow-sm px-4 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Boxes className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                {volumes.length > 0 ? (
-                   <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 text-left">
-                     {totalVolumesQtd.toLocaleString('pt-BR')} vol · {totalPesoKg > 0 ? `${totalPesoKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg` : '—'}
-                     <span className="text-xs text-gray-400 ml-2">({volumes.length} tipo{volumes.length > 1 ? 's' : ''})</span>
-                   </span>
-                 ) : (
-                  <span className="text-sm text-gray-400 flex-1 text-left">Clicar para gerenciar volumes...</span>
-                )}
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-            </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm text-gray-500 dark:text-gray-400">Observações</label>
+                  <Input
+                    placeholder="Observações sobre este embarque..."
+                    value={observacoes}
+                    onChange={e => setObservacoes(e.target.value)}
+                    className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm"
+                  />
+                </div>
+              </TabsContent>
 
-            {/* Itens */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setShowItens(o => !o)}
-                className="flex items-center justify-between w-full py-0.5"
-              >
-                <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                  <Package className="w-3.5 h-3.5" />
-                  Itens deste embarque
-                  <span className="text-xs text-gray-400 font-normal">(desmarque para tornar órfão)</span>
-                </span>
-                {showItens ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-              </button>
+              <TabsContent value="itens" className="space-y-4 mt-0">
+                <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
+                  statusPreview === 'Total' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300' :
+                  statusPreview === 'Parcial' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300' :
+                  'bg-gray-100 dark:bg-gray-800 text-gray-400'
+                }`}>
+                  {statusPreview === 'Total' && <CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                  {statusPreview === 'Parcial' && <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />}
+                  {statusPreview === 'Nenhum' && <Package className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                  <span>
+                    {statusPreview === 'Total' && 'Embarque total — todos os itens cobertos'}
+                    {statusPreview === 'Parcial' && 'Embarque parcial — haverá itens órfãos aguardando despacho'}
+                    {statusPreview === 'Nenhum' && 'Selecione e informe as quantidades a embarcar'}
+                  </span>
+                </div>
 
-              {showItens && (
                 <div className="space-y-2">
                   {(pedido.itens || []).map(item => {
                     const pedida = item.quantidade || 0;
@@ -532,7 +548,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                         key={item.produto_id}
                         className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors ${selecionado ? 'bg-gray-50 dark:bg-gray-800' : 'bg-gray-50/40 dark:bg-gray-900/40 opacity-60'}`}
                       >
-                        {/* Linha superior: Checkbox + Produto */}
                         <div className="flex items-start gap-3">
                           <button
                             type="button"
@@ -546,7 +561,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                           </div>
                         </div>
 
-                        {/* Linha inferior: Infos + Input */}
                         <div className="flex items-center justify-between gap-3 pl-8">
                           <p className="text-xs text-gray-400 dark:text-gray-500 flex-1">
                             Ped: <span className="font-medium">{pedida}</span> {item.unidade_medida}
@@ -570,35 +584,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                     );
                   })}
                 </div>
-              )}
-            </div>
-
-            {/* Status preview */}
-            <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
-              statusPreview === 'Total' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300' :
-              statusPreview === 'Parcial' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300' :
-              'bg-gray-100 dark:bg-gray-800 text-gray-400'
-            }`}>
-              {statusPreview === 'Total' && <CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />}
-              {statusPreview === 'Parcial' && <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />}
-              {statusPreview === 'Nenhum' && <Package className="w-4 h-4 text-gray-300 flex-shrink-0" />}
-              <span>
-                {statusPreview === 'Total' && 'Embarque total — todos os itens cobertos'}
-                {statusPreview === 'Parcial' && 'Embarque parcial — haverá itens órfãos aguardando despacho'}
-                {statusPreview === 'Nenhum' && 'Selecione e informe as quantidades a embarcar'}
-              </span>
-            </div>
-
-            {/* Observações */}
-            <div className="space-y-1.5">
-              <label className="text-sm text-gray-500 dark:text-gray-400">Observações</label>
-              <Input
-                placeholder="Observações sobre este embarque..."
-                value={observacoes}
-                onChange={e => setObservacoes(e.target.value)}
-                className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm"
-              />
-            </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Footer */}
