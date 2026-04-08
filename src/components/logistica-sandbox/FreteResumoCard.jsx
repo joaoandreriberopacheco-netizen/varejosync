@@ -27,8 +27,8 @@ export default function FreteResumoCard({ eventos = [] }) {
   const { label, color, bgClass } = getStatusAggregado(eventos);
   
   return (
-    <div className="rounded-3xl bg-white dark:bg-gray-800 p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
+    <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm">
+      <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${bgClass}`}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -38,14 +38,16 @@ export default function FreteResumoCard({ eventos = [] }) {
             </svg>
           </div>
           <div>
-            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide block">Total de fretes</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Total de fretes</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                {(totalFretes || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
+            </div>
             <span className="text-xs text-gray-500 dark:text-gray-500">{label}</span>
           </div>
         </div>
       </div>
-      <p className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-        {(totalFretes || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-      </p>
     </div>
   );
 }
