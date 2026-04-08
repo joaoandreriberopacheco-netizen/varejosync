@@ -27,8 +27,8 @@ export default function ItinerarioFluvialMobile() {
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
   const [periodRange, setPeriodRange] = useState(() => {
-    const baseDate = new Date();
-    return { from: subDays(baseDate, 30), to: addDays(baseDate, 30) };
+    const today = new Date();
+    return { from: subDays(today, 30), to: addDays(today, 30) };
   });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
