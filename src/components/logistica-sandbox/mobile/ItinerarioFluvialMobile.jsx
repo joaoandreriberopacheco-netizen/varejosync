@@ -108,7 +108,7 @@ export default function ItinerarioFluvialMobile() {
 
   useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked]);
+  }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked, linkedStatus]);
 
   useEffect(() => {
     const baseDate = new Date(`${simulationDate}T12:00:00`);

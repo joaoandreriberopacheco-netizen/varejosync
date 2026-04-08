@@ -5,7 +5,11 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
   return (
     <div className="relative pl-12">
       <div className="absolute left-[18px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
-      <div className="absolute left-0 top-1 flex h-9 w-9 items-center justify-center rounded-2xl bg-white dark:bg-gray-800 shadow-sm text-gray-700 dark:text-gray-200 text-sm font-semibold">
+      <div className={`absolute left-0 top-1 flex h-9 w-9 items-center justify-center rounded-2xl shadow-sm text-sm font-semibold ${
+        isToday
+          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-400 dark:ring-emerald-500'
+          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+      }`}>
         {dayNumber}
       </div>
       <div className="pb-6">
