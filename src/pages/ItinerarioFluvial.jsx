@@ -310,13 +310,27 @@ export default function ItinerarioFluvial() {
               </div>
             ) : (
               <>
-                <FreteMonthNavigator
-                  currentMonth={freteMonth}
-                  onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                  onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-                />
+                <div className="flex items-center justify-between gap-3">
+                  <FreteMonthNavigator
+                    currentMonth={freteMonth}
+                    onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
+                    onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
+                  />
+                  {!isMobile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowFilters(true)}
+                      className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
+                    >
+                      <ListFilter className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
                 <FreteResumoCard
                   totalFretes={freteResumo.totalFretes}
+                  totalValor={freteEventos.reduce((sum, e) => sum + (e.valor_total_carga || 0), 0)}
                   totalComConta={freteResumo.totalComConta}
                   totalSemConta={freteResumo.totalSemConta}
                 />
