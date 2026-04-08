@@ -30,7 +30,12 @@ export default function ItinerarioFluvial() {
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [periodRange, setPeriodRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) });
+  const [periodRange, setPeriodRange] = useState(() => {
+    const hoje = new Date();
+    const from = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 30);
+    const to = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 30);
+    return { from, to };
+  });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -341,14 +346,12 @@ export default function ItinerarioFluvial() {
                   )}
                 </div>
                 <FreteTotalValue eventos={freteEventos} />
-                <div className="space-y-3 overflow-x-auto flex flex-wrap gap-3 pb-2">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
                   {freteEventos.map((evento) => (
-                    <div key={evento.id} className="flex-shrink-0 w-full md:w-auto">
-                      <FreteListCard evento={evento} onSelect={setSelectedEvento} />
-                    </div>
+                    <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
                   ))}
                   {freteEventos.length === 0 && (
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400 w-full">
+                    <div className="col-span-full bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
                       Nenhum frete com carga encontrado neste período.
                     </div>
                   )}
@@ -361,7 +364,20 @@ export default function ItinerarioFluvial() {
             <BoatsTab />
           </div>
         )}
-        {routeType === 'Fluvial' && !isMobile && showFilters ? (
+        {routeType !== 'Fluvial' && !isMobile && showFilters ? (
+          <div className="w-full">
+            <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
+              <div className="space-y-4">
+                <TimelineViewControls
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
+                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+              </div>
+            </div>
+          </div>
+        ) : routeType === 'Fluvial' && !isMobile && showFilters ? (
           <div className="w-full">
             <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
               <div className="space-y-4">
