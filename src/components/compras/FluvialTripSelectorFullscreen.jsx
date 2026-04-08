@@ -104,9 +104,6 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
         if (!evento.visualizacao_data) return false;
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         if (searchQuery && !evento.embarcacao_nome?.toLowerCase().includes(searchQuery.toLowerCase()) && !evento.codigo?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-        const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
-        if (marco < targetDate) return false;
-        if (endDate && marco > endDate) return false;
         return true;
       })
       .reduce((acc, evento) => {
