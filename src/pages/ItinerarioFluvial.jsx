@@ -29,7 +29,14 @@ export default function ItinerarioFluvial() {
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [periodRange, setPeriodRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) });
+  const [periodRange, setPeriodRange] = useState(() => {
+    const today = new Date();
+    const thirtyDaysBefore = new Date(today);
+    thirtyDaysBefore.setDate(today.getDate() - 30);
+    const thirtyDaysAfter = new Date(today);
+    thirtyDaysAfter.setDate(today.getDate() + 30);
+    return { from: thirtyDaysBefore, to: thirtyDaysAfter };
+  });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
