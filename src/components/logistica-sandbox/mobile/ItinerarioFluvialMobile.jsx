@@ -134,7 +134,6 @@ export default function ItinerarioFluvialMobile() {
         }
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         if (onlyLinked && linkedStatus === 'ativos' && !(evento.total_embarques_ativos > 0)) return false;
-        if (onlyLinked && linkedStatus === 'concluidos' && !(evento.total_embarques_concluidos > 0 && evento.total_embarques_ativos === 0)) return false;
         return true;
       })
       .reduce((acc, evento) => {
@@ -210,10 +209,7 @@ export default function ItinerarioFluvialMobile() {
     const end = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
 
     return eventos.filter((evento) => {
-      const ref = evento.data_saida_origem || evento.data_chegada_manaus || evento.data_chegada_destino;
-      if (!ref) return false;
-      const date = new Date(`${ref}T00:00:00`);
-      return date >= start && date <= end && evento.tem_embarques_relacionados;
+      return true;
     });
   }, [eventos, freteMonth]);
 

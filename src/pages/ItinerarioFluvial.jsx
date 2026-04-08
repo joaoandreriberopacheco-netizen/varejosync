@@ -145,8 +145,6 @@ export default function ItinerarioFluvial() {
       })
       .filter((evento) => {
        if (!evento.visualizacao_data) return false;
-       if (selectedBoat !== 'all' && evento.embarcacao_nome !== selectedBoat) return false;
-       if (onlyLinked && !evento.tem_embarques_relacionados) return false;
        return true;
       })
       .reduce((acc, evento) => {
@@ -183,10 +181,7 @@ export default function ItinerarioFluvial() {
     const end = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
 
     return eventos.filter((evento) => {
-      const ref = evento.data_saida_origem || evento.data_chegada_manaus || evento.data_chegada_destino;
-      if (!ref) return false;
-      const date = new Date(`${ref}T00:00:00`);
-      return date >= start && date <= end && evento.tem_embarques_relacionados;
+      return true;
     });
   }, [eventos, freteMonth]);
 
