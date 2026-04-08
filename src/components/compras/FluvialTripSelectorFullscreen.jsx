@@ -85,8 +85,8 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
   }, [simulationDate]);
 
   const groupedEventos = useMemo(() => {
-    const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
-    const endDate = periodRange?.to || null;
+    const targetDate = new Date(1980, 0, 1);
+    const endDate = new Date(2099, 11, 31);
 
     const getViewDate = (evento) => {
       if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
@@ -144,7 +144,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
   return (
     <div className="fixed inset-0 z-[120] bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      <div className="flex h-full flex-col max-w-md mx-auto">
+      <div className="flex h-full flex-col w-full md:max-w-2xl md:mx-auto">
         <div className="sticky top-0 z-30 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-3 pt-3 pb-2 space-y-3">
           <div className="flex items-center gap-3">
             <Button type="button" size="icon" variant="ghost" onClick={onClose} className="h-10 w-10 rounded-2xl bg-white dark:bg-gray-800 shadow-sm">
