@@ -1,5 +1,6 @@
 import React from 'react';
 import { CalendarClock, ShipWheel } from 'lucide-react';
+import { getLinkedIndicatorStyle } from '@/components/logistica-sandbox/fluvialDataUtils';
 
 export default function TimelineDayGroup({ label, dayNumber, eventos = [], isToday = false, onSelect, viewModeLabel, selectedEventoId = null }) {
   return (
@@ -37,8 +38,8 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
             >
               {(comprasAtivas > 0 || comprasConcluidas > 0) ? (
                 <div className="absolute -right-1 -top-1 flex items-center gap-1">
-                  {comprasConcluidas > 0 ? <div className="min-w-[22px] h-[22px] px-1 rounded-full bg-gray-300 text-gray-900 text-[11px] font-bold flex items-center justify-center shadow-sm">{comprasConcluidas}</div> : null}
-                  {comprasAtivas > 0 ? <div className="min-w-[22px] h-[22px] px-1 rounded-full bg-lime-300 text-gray-900 text-[11px] font-bold flex items-center justify-center shadow-sm">{comprasAtivas}</div> : null}
+                  {comprasConcluidas > 0 ? <div className={`min-w-[22px] h-[22px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center shadow-sm ${getLinkedIndicatorStyle('finalizado').badge}`}>{comprasConcluidas}</div> : null}
+                  {comprasAtivas > 0 ? <div className={`min-w-[22px] h-[22px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center shadow-sm ${getLinkedIndicatorStyle('ativo').badge}`}>{comprasAtivas}</div> : null}
                 </div>
               ) : null}
               <div className="space-y-2 pr-4">

@@ -18,6 +18,29 @@ export function formatDate(value) {
   return parsed ? format(parsed, 'dd/MM/yyyy', { locale: ptBR }) : value;
 }
 
+export function getEmbarqueLifecycleStatus(embarque = {}) {
+  const statusOperacional = String(embarque.status || '').toLowerCase();
+  const statusRecebimento = String(embarque.status_recebimento || '').toLowerCase();
+  const isFinalizado = statusOperacional === 'concluído' || statusOperacional === 'concluido';
+  const isRecebido = statusRecebimento === 'recebido ok' || statusRecebimento === 'recebido parcial' || statusRecebimento === 'com divergência' || statusRecebimento === 'com divergencia';
+
+  return isFinalizado || isRecebido ? 'finalizado' : 'ativo';
+}
+
+export function getLinkedIndicatorStyle(status = 'ativo') {
+  if (status === 'finalizado') {
+    return {
+      badge: 'bg-gray-300/90 text-gray-800 dark:bg-gray-500/70 dark:text-gray-100',
+      dot: 'bg-gray-300 dark:bg-gray-500'
+    };
+  }
+
+  return {
+    badge: 'bg-lime-300 text-gray-900 dark:bg-lime-300 dark:text-gray-900',
+    dot: 'bg-lime-300 dark:bg-lime-300'
+  };
+}
+
 export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lancamentosFinanceiros = [] }) {
   // Mapa de lancamentos financeiros por referencia_id (evento logistico)
   const mapaLancamentosFrete = {};
@@ -73,8 +96,8 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
           return sum + (quantidade * custo);
         }, 0);
       }, 0);
-      const totalEmbarquesAtivos = embarquesRelacionados.filter((emb) => emb.status !== 'Concluído').length;
-      const totalEmbarquesConcluidos = embarquesRelacionados.filter((emb) => emb.status === 'Concluído').length;
+      const totalEmbarquesAtivos = embarquesRelacionados.filter((emb) => getEmbarqueLifecycleStatus(emb) === 'ativo').length;
+      const totalEmbarquesConcluidos = embarquesRelacionados.filter((emb) => getEmbarqueLifecycleStatus(emb) === 'finalizado').length;
 
       const lancamento = mapaLancamentosFrete[item.id] || null;
 
@@ -90,6 +113,7 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
         proxima_chegada_manaus_formatada: formatDate(proximaChegadaManaus),
         data_retorno_origem_formatada: formatDate(proximaChegadaManaus),
         embarques_relacionados: embarquesRelacionados,
+        embarques_status_resumo: embarquesRelacionados.map((emb) => getEmbarqueLifecycleStatus(emb)),
         tem_embarques_relacionados: embarquesRelacionados.length > 0,
         total_embarques_relacionados: embarquesRelacionados.length,
         total_fornecedores_relacionados: resumoFornecedores.length,

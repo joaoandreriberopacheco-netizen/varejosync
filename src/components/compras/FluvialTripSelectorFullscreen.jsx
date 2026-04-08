@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Anchor, Check, Sliders } from 'lucide-react';
-import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, getLinkedIndicatorStyle } from '@/components/logistica-sandbox/fluvialDataUtils';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
