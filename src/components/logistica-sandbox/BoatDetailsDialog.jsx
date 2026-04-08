@@ -128,7 +128,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
   const timelineItems = draft.timeline || [];
   const itinerarioItems = draft.itinerario_real || [];
   const eventoItems = draft.eventos || [];
-  const hasRecords = eventoItems.length > 0;
+  const hasRecords = (draft.timeline || []).length > 0;
 
   const handleSave = async () => {
     setShowProgress(true);
@@ -262,11 +262,18 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                 </TabsContent>
 
                 <TabsContent value="historico" className="mt-0">
-                  <div className="space-y-3">
-                    {eventoItems.map((evento) => (
-                      <HistoricoCard key={evento.id} evento={evento} onOpen={setSelectedEvento} />
-                    ))}
-                  </div>
+                  {eventoItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {eventoItems.map((evento) => (
+                        <HistoricoCard key={evento.id} evento={evento} onOpen={setSelectedEvento} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-6 shadow-sm text-center">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Nenhuma viagem com carga vinculada</p>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">O histórico mostra apenas viagens que realmente trouxeram embarques.</p>
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>

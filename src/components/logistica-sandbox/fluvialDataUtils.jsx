@@ -97,20 +97,22 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
       status: item.ativo === false ? 'inativa' : 'ativa',
       proximo_eta: proximoEvento?.data_chegada_destino ? format(parseStableDate(proximoEvento.data_chegada_destino), 'dd/MM/yyyy', { locale: ptBR }) : '-',
       recorrencia: item.saida_referencia || '-',
-      eventos: eventosRelacionados.map((evento) => ({
-        id: evento.id,
-        titulo: evento.nome || `${item.nome} · ${evento.codigo}`,
-        codigo: evento.codigo || '-',
-        data: formatDate(evento.data_saida_origem),
-        cargas: evento.total_embarques_relacionados || 0,
-        freteValor: evento.tem_conta_frete
-          ? (evento.conta_frete_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-          : 'Frete pendente',
-        financeiroStatus: evento.conta_frete_status === 'Pago' ? 'pago' : evento.tem_conta_frete ? 'vinculado' : 'sem_conta',
-        pagamentoLabel: evento.tem_conta_frete ? (evento.conta_frete_status || 'Conta vinculada') : 'Sem conta',
-        embarques: evento.embarques_relacionados || [],
-        anexos: [],
-      })),
+      eventos: eventosRelacionados
+        .filter((evento) => (evento.total_embarques_relacionados || 0) > 0)
+        .map((evento) => ({
+          id: evento.id,
+          titulo: evento.nome || `${item.nome} · ${evento.codigo}`,
+          codigo: evento.codigo || '-',
+          data: formatDate(evento.data_saida_origem),
+          cargas: evento.total_embarques_relacionados || 0,
+          freteValor: evento.tem_conta_frete
+            ? (evento.conta_frete_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+            : 'Frete pendente',
+          financeiroStatus: evento.conta_frete_status === 'Pago' ? 'pago' : evento.tem_conta_frete ? 'vinculado' : 'sem_conta',
+          pagamentoLabel: evento.tem_conta_frete ? (evento.conta_frete_status || 'Conta vinculada') : 'Sem conta',
+          embarques: evento.embarques_relacionados || [],
+          anexos: [],
+        })),
       timeline: eventosRelacionados.flatMap((evento) => ([
         {
           label: 'Chegada em Manaus',
