@@ -173,13 +173,11 @@ export default function ItinerarioFluvial() {
 
 
   const freteEventos = useMemo(() => {
-    // Filtrar: não pagos (em aberto, vencido) com conta vinculada
     return eventos.filter((evento) => {
-      if (!evento.lancamento_financeiro_id) return false;
-      const status = evento.lancamento_financeiro_status;
-      return status === 'Em Aberto' || status === 'Vencido';
+      const embarquesRelacionados = embarques.filter((emb) => emb.evento_logistico_id === evento.id);
+      return embarquesRelacionados.length > 0;
     });
-  }, [eventos]);
+  }, [eventos, embarques]);
 
   const freteEventosFiltrados = useMemo(() => {
     if (!freteSearchQuery.trim()) return freteEventos;
@@ -257,7 +255,7 @@ export default function ItinerarioFluvial() {
                   ))}
                   {freteEventosFiltrados.length === 0 && (
                     <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
-                      {freteSearchQuery ? 'Nenhuma embarcação encontrada.' : 'Nenhum frete em aberto.'}
+                      {freteSearchQuery ? 'Nenhuma viagem encontrada.' : 'Nenhuma viagem com embarques vinculados.'}
                     </div>
                   )}
                 </div>

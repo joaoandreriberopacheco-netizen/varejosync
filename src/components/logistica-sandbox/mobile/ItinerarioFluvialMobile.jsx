@@ -1,13 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { addDays, format, isSameDay, subDays } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
-import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
 import FreteFAB from '@/components/logistica-sandbox/mobile/FreteFAB';
 import FreteTotalValue from '@/components/logistica-sandbox/FreteTotalValue';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
@@ -25,7 +24,6 @@ export default function ItinerarioFluvialMobile() {
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [freteMonth, setFreteMonth] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
   const [scrolledToToday, setScrolledToToday] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,7 +98,7 @@ export default function ItinerarioFluvialMobile() {
 
   useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate, freteMonth]);
+  }, [routeType, viewMode, simulationDate]);
 
   const groupedEventos = useMemo(() => {
     const getViewDate = (evento) => {
@@ -188,22 +186,15 @@ export default function ItinerarioFluvialMobile() {
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
 
   const freteEventos = useMemo(() => {
-    return eventos.filter((evento) => evento.tem_conta_frete === true);
-  }, [eventos]);
+    return eventos.filter((evento) => {
+      const embarquesRelacionados = embarques.filter((emb) => emb.evento_logistico_id === evento.id);
+      return embarquesRelacionados.length > 0;
+    });
+  }, [eventos, embarques]);
 
   const freteEventosFiltrados = useMemo(() => {
     let filtered = freteEventos;
-    
-    // Filtrar por mês
-    const freteMonthStart = new Date(freteMonth.getFullYear(), freteMonth.getMonth(), 1);
-    const freteMonthEnd = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
-    
-    filtered = filtered.filter((evento) => {
-      const eventDate = evento.data_saida_origem ? new Date(`${evento.data_saida_origem}T00:00:00`) : null;
-      return eventDate && eventDate >= freteMonthStart && eventDate <= freteMonthEnd;
-    });
-    
-    // Aplicar filtro selecionado
+
     if (freteFilter !== 'todos') {
       filtered = filtered.filter((evento) => {
         if (freteFilter === 'pago') return evento.lancamento_financeiro_status === 'Pago';
@@ -212,9 +203,9 @@ export default function ItinerarioFluvialMobile() {
         return true;
       });
     }
-    
+
     return filtered;
-  }, [freteEventos, freteMonth, freteFilter]);
+  }, [freteEventos, freteFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 overflow-x-hidden">
@@ -279,19 +270,14 @@ export default function ItinerarioFluvialMobile() {
           ) : (
             <div className="space-y-4 pb-4">
               <div>
-                <FreteMonthNavigator
-                  currentMonth={freteMonth}
-                  onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                  onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-                />
                 <FreteTotalValue eventos={freteEventosFiltrados} />
               </div>
               {freteEventosFiltrados.length > 0 ? freteEventosFiltrados.map((evento) => (
                 <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
               )) : (
                 <ItinerarioMobileEmptyState
-                  title="Nenhum frete com carga"
-                  description="Não encontramos fretes com embarques."
+                  title="Nenhuma viagem com embarques"
+                  description="Não encontramos viagens vinculadas a embarques."
                 />
               )}
               <FreteFAB
