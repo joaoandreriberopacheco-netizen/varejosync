@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Anchor, Check } from 'lucide-react';
+import { ArrowLeft, Anchor, Check, Sliders } from 'lucide-react';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
@@ -20,6 +20,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
     const today = new Date();
     return { from: subDays(today, 30), to: addDays(today, 30) };
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [onlyLinked, setOnlyLinked] = useState(false);
   const todayRef = useRef(null);
@@ -102,6 +103,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
+        if (searchQuery && !evento.embarcacao_nome?.toLowerCase().includes(searchQuery.toLowerCase()) && !evento.codigo?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
         if (marco < targetDate) return false;
         if (endDate && marco > endDate) return false;
@@ -113,7 +115,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked]);
+  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, searchQuery]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -158,17 +160,37 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
           {routeType === 'Fluvial' && (
             <>
-              <FluvialSearchBar value="" onChange={() => {}} onToggleFilters={() => setShowFilters((prev) => !prev)} filtersOpen={showFilters} />
-              <FluvialExpandableFilters
-                open={showFilters}
-                onOpenChange={setShowFilters}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                periodRange={periodRange}
-                onPeriodRangeChange={setPeriodRange}
-                onlyLinked={onlyLinked}
-                onOnlyLinkedChange={setOnlyLinked}
-              />
+              <FluvialSearchBar value={searchQuery} onChange={setSearchQuery} onToggleFilters={() => setShowFilters((prev) => !prev)} filtersOpen={showFilters} />
+              {showFilters && (
+                <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-3 space-y-3 border border-gray-200 dark:border-gray-700">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2 uppercase tracking-wide">
+                      Visualização
+                    </label>
+                    <select
+                      value={viewMode}
+                      onChange={(e) => setViewMode(e.target.value)}
+                      className="w-full text-xs px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-0 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                    >
+                      <option value="saida_manaus">Saída Manaus</option>
+                      <option value="chegada_manaus">Chegada Manaus</option>
+                      <option value="chegada_tabatinga">Chegada Tabatinga</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="onlyLinked"
+                      checked={onlyLinked}
+                      onChange={(e) => setOnlyLinked(e.target.checked)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                    <label htmlFor="onlyLinked" className="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
+                      Apenas com embarques
+                    </label>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
