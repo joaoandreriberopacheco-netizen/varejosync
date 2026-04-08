@@ -15,19 +15,24 @@ export default function ProdutosAccessGuard({ children }) {
           return;
         }
         
-        // Admin sempre tem acesso, sem verificações de perfil
+        // Admin BASE44 (não perfil customizado) sempre tem acesso
         if (user.role === 'admin') {
           setAcessoPermitido(true);
           return;
         }
 
-        // Para não-admins, verificar perfil de acesso
+        // Para usuários regulares, verificar perfil de acesso customizado
         if (user?.perfil_acesso_id) {
           const perfis = await base44.entities.PerfilDeAcesso.list();
           const perfil = perfis.find(p => p.id === user.perfil_acesso_id);
-          setAcessoPermitido(perfil?.permissoes?.estoque?.acesso === true);
+          // Verificar se tem permissão específica em estoque ou acesso geral
+          const temAcesso = perfil?.permissoes?.estoque?.acesso === true || 
+                           perfil?.permissoes?.produtos?.acesso === true ||
+                           perfil?.acesso_geral === true;
+          setAcessoPermitido(temAcesso);
         } else {
-          setAcessoPermitido(true); // sem perfil vinculado = acesso livre
+          // Sem perfil vinculado = acesso padrão (permitir)
+          setAcessoPermitido(true);
         }
       } catch (error) {
         console.error("Erro ao validar acesso a Produtos:", error);
