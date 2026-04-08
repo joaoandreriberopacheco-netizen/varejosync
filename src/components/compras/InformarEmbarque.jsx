@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Boxes, Plus, Check, X, Search, Anchor } from 'lucide-react';
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
+import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -199,6 +200,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   const [loading, setLoading] = useState(false);
   const [showItens, setShowItens] = useState(true);
   const [showVolumesDialog, setShowVolumesDialog] = useState(false);
+  const [showTripSelector, setShowTripSelector] = useState(false);
   const [qtdEmbarque, setQtdEmbarque] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
 
@@ -291,6 +293,16 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       setEta(String(dataEta).slice(0, 10));
     }
   }, [eventoSelecionado]);
+
+  const handleSelectTrip = (evento) => {
+    setEventoLogisticoId(evento?.id || '');
+    setTransportadoraId(evento?.transportadora_id || '');
+    const dataSaida = evento?.data_saida_origem || evento?.data_referencia;
+    const dataEta = evento?.previsao_chegada || evento?.data_chegada_destino;
+    if (dataSaida) setDataDespacho(String(dataSaida).slice(0, 10));
+    if (dataEta) setEta(String(dataEta).slice(0, 10));
+    setShowTripSelector(false);
+  };
 
   const toggleItem = (produtoId) => {
     setSelectedItems(prev => ({ ...prev, [produtoId]: !prev[produtoId] }));
@@ -444,27 +456,27 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
               <label className="text-sm text-gray-500 dark:text-gray-400">
                 Viagem vinculada <span className="text-xs text-gray-400 font-normal">(opcional)</span>
               </label>
-              <Select value={eventoLogisticoId || '__none__'} onValueChange={(value) => setEventoLogisticoId(value === '__none__' ? '' : value)}>
-                <SelectTrigger className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 pl-11">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <Anchor className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <SelectValue placeholder="Selecionar depois" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-2xl">
-                  <SelectItem value="__none__">Selecionar depois</SelectItem>
-                  {eventosLogisticos.map((evento) => (
-                    <SelectItem key={evento.id} value={evento.id}>
-                      {(evento.codigo || 'Sem código')} · {(evento.nome || evento.embarcacao_nome || 'Viagem')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {eventoSelecionado && (
-                <p className="text-xs text-gray-400 px-1">
-                  Transportadora e datas serão puxadas automaticamente da viagem.
-                </p>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowTripSelector(true)}
+                className="w-full h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 px-4 flex items-center gap-3 text-left"
+              >
+                <Anchor className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className={`flex-1 truncate ${eventoSelecionado ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Selecionar viagem no itinerário'}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </button>
+              {eventoSelecionado ? (
+                <div className="flex items-center justify-between gap-3 px-1">
+                  <p className="text-xs text-gray-400">
+                    Transportadora e datas serão sobrescritas automaticamente pela viagem.
+                  </p>
+                  <button type="button" onClick={() => setEventoLogisticoId('')} className="text-xs text-gray-500 dark:text-gray-400">
+                    Limpar
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             {/* Volumes */}
@@ -610,6 +622,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         onClose={() => setShowVolumesDialog(false)}
         volumes={volumes}
         onChange={setVolumes}
+      />
+
+      <FluvialTripSelectorFullscreen
+        open={showTripSelector}
+        onClose={() => setShowTripSelector(false)}
+        onSelect={handleSelectTrip}
       />
     </>
   );

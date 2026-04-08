@@ -1,26 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ArrowLeft, Anchor, Check } from 'lucide-react';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
+import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
-import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
-import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
-import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
-import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
-import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
-import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
-import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
-import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
-import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
-import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
-import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
-import FluvialSimulationFab from '@/components/logistica-sandbox/mobile/FluvialSimulationFab';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
-export default function ItinerarioFluvialMobile() {
+export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect }) {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -29,25 +20,24 @@ export default function ItinerarioFluvialMobile() {
     const today = new Date();
     return { from: subDays(today, 30), to: addDays(today, 30) };
   });
-  const [freteMonth, setFreteMonth] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
   const [onlyLinked, setOnlyLinked] = useState(false);
   const todayRef = useRef(null);
 
   const { data: eventosLogisticos = [] } = useQuery({
-    queryKey: ['evento-logistico'],
+    queryKey: ['evento-logistico-selector'],
     queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 50),
     initialData: []
   });
 
   const { data: embarques = [] } = useQuery({
-    queryKey: ['embarques-logistica'],
+    queryKey: ['embarques-logistica-selector'],
     queryFn: () => base44.entities.Embarque.list('-created_date', 500),
     initialData: []
   });
 
   const { data: contasPrevistas = [] } = useQuery({
-    queryKey: ['contas-previstas-frete'],
+    queryKey: ['contas-previstas-frete-selector'],
     queryFn: () => base44.entities.ContaPrevista.list('-data_vencimento', 500),
     initialData: []
   });
@@ -87,10 +77,6 @@ export default function ItinerarioFluvialMobile() {
       return { ...item, ocupacao_percentual_dinamica: ocupacaoPercentualDinamica };
     });
   }, [eventosBase, simulationDate]);
-
-  useEffect(() => {
-    setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked]);
 
   useEffect(() => {
     const baseDate = new Date(`${simulationDate}T12:00:00`);
@@ -145,72 +131,87 @@ export default function ItinerarioFluvialMobile() {
   }, [groupedEventos, simulationDate]);
 
   useEffect(() => {
-    if (todayRef.current) {
+    if (open && todayRef.current) {
       todayRef.current.scrollIntoView({ block: 'center' });
     }
-  }, [timelineItems]);
+  }, [open, timelineItems]);
+
+  if (!open) return null;
 
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
 
-  const freteEventos = useMemo(() => {
-    const start = new Date(freteMonth.getFullYear(), freteMonth.getMonth(), 1);
-    const end = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
-
-    return eventos.filter((evento) => {
-      const ref = evento.data_saida_origem || evento.data_chegada_manaus || evento.data_chegada_destino;
-      if (!ref) return false;
-      const date = new Date(`${ref}T00:00:00`);
-      return date >= start && date <= end && evento.tem_embarques_relacionados;
-    });
-  }, [eventos, freteMonth]);
-
-  const freteResumo = useMemo(() => ({
-    totalFretes: freteEventos.length,
-    totalComConta: freteEventos.filter((evento) => evento.tem_conta_frete).length,
-    totalSemConta: freteEventos.filter((evento) => !evento.tem_conta_frete).length,
-  }), [freteEventos]);
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 overflow-x-hidden">
-      <div className="max-w-md mx-auto px-3 space-y-4 overflow-x-hidden">
-        <ItinerarioMobileHeader />
-        <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />
+    <div className="fixed inset-0 z-[120] bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="flex h-full flex-col max-w-md mx-auto">
+        <div className="sticky top-0 z-30 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-3 pt-3 pb-2 space-y-3">
+          <div className="flex items-center gap-3">
+            <Button type="button" size="icon" variant="ghost" onClick={onClose} className="h-10 w-10 rounded-2xl bg-white dark:bg-gray-800 shadow-sm">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Selecionar viagem</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 font-glacial truncate">Itinerário Fluvial</p>
+            </div>
+          </div>
 
-        {routeType === 'Fluvial' && !selectedEvento ? (
-          <>
-            <FluvialSearchBar
-              value=""
-              onChange={() => {}}
-              onToggleFilters={() => setShowFilters((prev) => !prev)}
-              filtersOpen={showFilters}
-            />
-            <FluvialExpandableFilters
-              open={showFilters}
-              onOpenChange={setShowFilters}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              periodRange={periodRange}
-              onPeriodRangeChange={setPeriodRange}
-              onlyLinked={onlyLinked}
-              onOnlyLinkedChange={setOnlyLinked}
-            />
-          </>
-        ) : null}
+          <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />
 
-        {routeType === 'Fluvial' ? (
-          selectedEvento ? (
-            <div className="space-y-4 pb-4">
-              <MobileDetailHeader
-                title={selectedEvento.embarcacao_nome}
-                subtitle={selectedEvento.codigo || 'Detalhes do evento'}
-                onBack={() => setSelectedEvento(null)}
+          {routeType === 'Fluvial' && (
+            <>
+              <FluvialSearchBar value="" onChange={() => {}} onToggleFilters={() => setShowFilters((prev) => !prev)} filtersOpen={showFilters} />
+              <FluvialExpandableFilters
+                open={showFilters}
+                onOpenChange={setShowFilters}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                periodRange={periodRange}
+                onPeriodRangeChange={setPeriodRange}
+                onlyLinked={onlyLinked}
+                onOnlyLinkedChange={setOnlyLinked}
               />
-              <TimelineSidebarCard evento={selectedEvento} />
+            </>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-3 pb-6">
+          {routeType !== 'Fluvial' ? (
+            <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-5 text-sm text-gray-500 dark:text-gray-400">Use a aba Fluvial para selecionar uma viagem.</div>
+          ) : selectedEvento ? (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <Anchor className="w-5 h-5 text-gray-600 dark:text-gray-200" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{selectedEvento.embarcacao_nome}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{selectedEvento.codigo || 'Viagem logística'}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div>Transportadora: {selectedEvento.transportadora_nome || '—'}</div>
+                  <div>Saída: {selectedEvento.data_saida_origem || '—'}</div>
+                  <div>ETA: {selectedEvento.previsao_chegada || selectedEvento.data_chegada_destino || '—'}</div>
+                </div>
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" onClick={() => setSelectedEvento(null)} className="flex-1 h-11 rounded-2xl border-0 bg-gray-100 dark:bg-gray-700 shadow-sm">
+                    Voltar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => onSelect?.(selectedEvento)}
+                    className="flex-1 h-11 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-sm"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Usar viagem
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : timelineItems.length > 0 ? (
-            <div className="space-y-4 pb-4 overflow-x-hidden">
+            <div className="space-y-4 pt-2 overflow-x-hidden">
               {timelineItems.map((item) => (
-                <div key={item.key} ref={item.isToday ? todayRef : null} className="relative">
+                <div key={item.key} ref={item.isToday ? todayRef : null} className={item.isToday ? 'relative' : ''}>
                   {item.isToday ? <div className="absolute left-[2px] top-[4px] h-10 w-10 rounded-2xl ring-4 ring-lime-300/80 pointer-events-none" /> : null}
                   <TimelineDayGroup
                     label={item.label}
@@ -225,52 +226,9 @@ export default function ItinerarioFluvialMobile() {
               ))}
             </div>
           ) : (
-            <ItinerarioMobileEmptyState
-              title="Nenhum evento encontrado"
-              description="Ajuste os filtros para visualizar viagens neste período."
-            />
-          )
-        ) : routeType === 'Fretes' ? (
-          selectedEvento ? (
-            <div className="space-y-4 pb-4">
-              <MobileDetailHeader
-                title={selectedEvento.embarcacao_nome}
-                subtitle={selectedEvento.codigo || 'Resumo da carga'}
-                onBack={() => setSelectedEvento(null)}
-              />
-              <EventoCargaReportCard evento={selectedEvento} />
-            </div>
-          ) : (
-            <div className="space-y-4 pb-4">
-              <FreteMonthNavigator
-                currentMonth={freteMonth}
-                onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-              />
-              <FreteResumoCard
-                totalFretes={freteResumo.totalFretes}
-                totalComConta={freteResumo.totalComConta}
-                totalSemConta={freteResumo.totalSemConta}
-              />
-              {freteEventos.length > 0 ? freteEventos.map((evento) => (
-                <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
-              )) : (
-                <ItinerarioMobileEmptyState
-                  title="Nenhum frete com carga"
-                  description="Não encontramos fretes com embarques no mês selecionado."
-                />
-              )}
-            </div>
-          )
-        ) : (
-          <div className="pb-4">
-            <BoatsTab />
-          </div>
-        )}
-
-        {routeType === 'Fluvial' && !selectedEvento ? (
-          <FluvialSimulationFab value={simulationDate} onChange={setSimulationDate} />
-        ) : null}
+            <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-5 text-sm text-gray-500 dark:text-gray-400 mt-2">Nenhuma viagem encontrada neste período.</div>
+          )}
+        </div>
       </div>
     </div>
   );

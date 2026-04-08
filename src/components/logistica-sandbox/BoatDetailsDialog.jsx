@@ -250,15 +250,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Controle de itinerário</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ajuste visual de eventos atuais, futuros e passados.</p>
-                    </div>
-                    {itinerarioItems.map((item) => (
-                      <ItinerarioEditorCard key={item.id} item={item} />
-                    ))}
-                  </div>
+
                 </TabsContent>
 
                 <TabsContent value="historico" className="mt-0 min-w-0">
