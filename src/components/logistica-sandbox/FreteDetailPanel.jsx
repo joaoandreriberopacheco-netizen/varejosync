@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { DollarSign, X } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
-import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 function getContaStatusStyle(temConta, status, estaAtrasada) {
   if (!temConta) return { bgClass: 'bg-gray-50 dark:bg-gray-800', strokeColor: '#d1d5db', label: 'Sem vinculação' };
@@ -12,6 +15,12 @@ function getContaStatusStyle(temConta, status, estaAtrasada) {
 
 export default function FreteDetailPanel({ evento, embarques, onBack }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    descricao: `Frete - ${evento.embarcacao_nome}`,
+    valor: evento.valor_total_frete || 0,
+    data_vencimento: new Date().toISOString().split('T')[0]
+  });
 
   const calcularValorTotalEmbarques = () => {
     if (!embarques || embarques.length === 0) return 0;
@@ -21,6 +30,33 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
       }, 0);
       return total + valorEmbarque;
     }, 0);
+  };
+
+  const handleSubmitForm = async () => {
+    try {
+      setFormLoading(true);
+      await base44.entities.LancamentoFinanceiro.create({
+        tipo: 'Despesa',
+        descricao: formData.descricao,
+        valor: formData.valor,
+        data_vencimento: formData.data_vencimento,
+        status: 'Em Aberto',
+        tags: ['frete'],
+        is_custo_mercadoria: true
+      });
+      toast.success('Conta a pagar criada com sucesso');
+      setShowCreateForm(false);
+      setFormData({
+        descricao: `Frete - ${evento.embarcacao_nome}`,
+        valor: evento.valor_total_frete || 0,
+        data_vencimento: new Date().toISOString().split('T')[0]
+      });
+    } catch (error) {
+      toast.error('Erro ao criar conta a pagar');
+      console.error(error);
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const temConta = evento?.tem_conta_frete;
@@ -78,27 +114,58 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
           )}
         </div>
       ) : showCreateForm ? (
-        <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4">
+        <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-3">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Criar Conta a Pagar</p>
             <button
               onClick={() => setShowCreateForm(false)}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              disabled={formLoading}
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-          <NovoLancamentoDialog
-            isOpen={showCreateForm}
-            onClose={() => setShowCreateForm(false)}
-            defaultLancamento={{
-              tipo: 'Despesa',
-              descricao: `Frete - ${evento.embarcacao_nome}`,
-              valor: evento.valor_total_frete || calcularValorTotalEmbarques() || 0,
-              tags: ['frete'],
-              is_custo_mercadoria: true
-            }}
-          />
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Descrição</label>
+              <Input
+                value={formData.descricao}
+                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                placeholder="Descrição"
+                className="h-9 text-sm"
+                disabled={formLoading}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Valor (R$)</label>
+              <Input
+                type="number"
+                value={formData.valor}
+                onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) || 0 })}
+                placeholder="0,00"
+                step="0.01"
+                className="h-9 text-sm"
+                disabled={formLoading}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Data Vencimento</label>
+              <Input
+                type="date"
+                value={formData.data_vencimento}
+                onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
+                className="h-9 text-sm"
+                disabled={formLoading}
+              />
+            </div>
+            <Button
+              onClick={handleSubmitForm}
+              disabled={formLoading || !formData.valor}
+              className="w-full h-9 text-sm"
+            >
+              {formLoading ? 'Criando...' : 'Criar Conta'}
+            </Button>
+          </div>
         </div>
       ) : (
         <button
