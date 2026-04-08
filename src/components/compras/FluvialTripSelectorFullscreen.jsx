@@ -18,7 +18,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
   const [viewMode, setViewMode] = useState('saida_manaus');
   const [periodRange, setPeriodRange] = useState(() => {
     const today = new Date();
-    return { from: subDays(today, 30), to: addDays(today, 30) };
+    return { from: subDays(today, 180), to: addDays(today, 180) };
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -81,7 +81,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
   useEffect(() => {
     const baseDate = new Date(`${simulationDate}T12:00:00`);
-    setPeriodRange({ from: subDays(baseDate, 30), to: addDays(baseDate, 30) });
+    setPeriodRange({ from: subDays(baseDate, 180), to: addDays(baseDate, 180) });
   }, [simulationDate]);
 
   const groupedEventos = useMemo(() => {
