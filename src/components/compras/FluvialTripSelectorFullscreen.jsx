@@ -79,10 +79,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
     });
   }, [eventosBase, simulationDate]);
 
-  useEffect(() => {
-    const baseDate = new Date(`${simulationDate}T12:00:00`);
-    setPeriodRange({ from: subDays(baseDate, 180), to: addDays(baseDate, 180) });
-  }, [simulationDate]);
+
 
   const groupedEventos = useMemo(() => {
     const targetDate = new Date(1980, 0, 1);
