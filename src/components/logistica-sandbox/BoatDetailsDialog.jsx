@@ -125,7 +125,10 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
 
   if (!transportadora || !draft) return null;
 
-  const hasRecords = (transportadora.eventos || []).length > 0;
+  const timelineItems = draft.timeline || [];
+  const itinerarioItems = draft.itinerario_real || [];
+  const eventoItems = draft.eventos || [];
+  const hasRecords = eventoItems.length > 0;
 
   const handleSave = async () => {
     setShowProgress(true);
@@ -200,7 +203,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
 
                 <TabsContent value="timeline" className="mt-0">
                   <div className="space-y-1 pr-1">
-                    {draft.timeline.map((item) => (
+                    {timelineItems.map((item) => (
                       <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
                     ))}
                   </div>
@@ -252,7 +255,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Controle de itinerário</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ajuste visual de eventos atuais, futuros e passados.</p>
                     </div>
-                    {draft.itinerario_real.map((item) => (
+                    {itinerarioItems.map((item) => (
                       <ItinerarioEditorCard key={item.id} item={item} />
                     ))}
                   </div>
@@ -260,7 +263,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
 
                 <TabsContent value="historico" className="mt-0">
                   <div className="space-y-3">
-                    {draft.eventos.map((evento) => (
+                    {eventoItems.map((evento) => (
                       <HistoricoCard key={evento.id} evento={evento} onOpen={setSelectedEvento} />
                     ))}
                   </div>
