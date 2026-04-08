@@ -20,6 +20,7 @@ import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaRep
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
+import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -288,14 +289,24 @@ export default function ItinerarioFluvial() {
           </>
         ) : routeType === 'Fretes' ? (
           <div className="space-y-5">
-            {isMobile && selectedEvento ? (
+            {selectedEvento ? (
               <div className="space-y-4">
-                <MobileDetailHeader
-                  title={selectedEvento.embarcacao_nome}
-                  subtitle={selectedEvento.codigo || 'Resumo da carga'}
-                  onBack={() => setSelectedEvento(null)}
-                />
-                <EventoCargaReportCard evento={selectedEvento} />
+                {isMobile && (
+                  <MobileDetailHeader
+                    title={selectedEvento.embarcacao_nome}
+                    subtitle={selectedEvento.codigo || 'Resumo da carga'}
+                    onBack={() => setSelectedEvento(null)}
+                  />
+                )}
+                {!isMobile && (
+                  <button
+                    onClick={() => setSelectedEvento(null)}
+                    className="text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-gray-700 dark:hover:text-gray-300"
+                  >
+                    ← Voltar
+                  </button>
+                )}
+                <FreteDetailPanel evento={selectedEvento} embarques={embarques.filter(e => e.evento_logistico_id === selectedEvento.id)} onBack={() => setSelectedEvento(null)} />
               </div>
             ) : (
               <>
@@ -309,18 +320,15 @@ export default function ItinerarioFluvial() {
                   totalComConta={freteResumo.totalComConta}
                   totalSemConta={freteResumo.totalSemConta}
                 />
-                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
-                  <div className="space-y-3">
-                    {freteEventos.map((evento) => (
-                      <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
-                    ))}
-                    {freteEventos.length === 0 && (
-                      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
-                        Nenhum frete com carga encontrado neste período.
-                      </div>
-                    )}
-                  </div>
-                  {!isMobile && <EventoCargaReportCard evento={currentEvento} />}
+                <div className="space-y-3">
+                  {freteEventos.map((evento) => (
+                    <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
+                  ))}
+                  {freteEventos.length === 0 && (
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
+                      Nenhum frete com carga encontrado neste período.
+                    </div>
+                  )}
                 </div>
               </>
             )}
