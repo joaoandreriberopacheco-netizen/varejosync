@@ -58,14 +58,9 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
   }, [evento.id]);
 
   const handleCreateContaFrete = () => {
-    // Construir descrição no mesmo padrão do mobile
     const eta = evento.data_previsao_chegada ? ` ETA ${new Date(evento.data_previsao_chegada).toLocaleDateString('pt-BR')}` : '';
     const descricao = `Frete - ${evento.embarcacao_nome} ${evento.codigo}${eta}`;
-    
-    // Usar valor_total_carga como base (calculado corretamente nos eventos)
     const valor = evento.valor_total_carga || 0;
-    
-    // Encoding seguro dos parâmetros
     const params = new URLSearchParams({
       tipo: 'Despesa',
       descricao: descricao,
@@ -73,8 +68,16 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
       referencia_id: evento.id,
       referencia_tipo: 'EventosLogisticos'
     });
-    
     window.location.href = `/FluxoCaixa?${params.toString()}`;
+  };
+
+  const handleCancelarConta = async () => {
+    if (!contaAtualizada?.id) return;
+    try {
+      await base44.entities.LancamentoFinanceiro.update(contaAtualizada.id, { status: 'Cancelado' });
+    } catch (error) {
+      console.error('Erro ao cancelar conta:', error);
+    }
   };
 
   const statusConta = contaAtualizada?.status;
@@ -129,6 +132,12 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
               </span>
             </div>
           )}
+          <button
+            onClick={handleCancelarConta}
+            className="w-full mt-3 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors text-center py-2"
+          >
+            Cancelar Conta
+          </button>
         </div>
       ) : (
         <button
