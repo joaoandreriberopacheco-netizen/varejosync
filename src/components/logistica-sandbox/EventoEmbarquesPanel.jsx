@@ -9,10 +9,18 @@ function criarMapaCustosPedido(embarques = []) {
   const mapa = {};
 
   embarques.forEach((embarque) => {
-    const itensPedido = embarque?._pedido_compra_itens || [];
+    const itensPedido = embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
     itensPedido.forEach((item) => {
       if (!item?.produto_id || mapa[item.produto_id] != null) return;
-      mapa[item.produto_id] = Number(item.custo_unitario ?? item.total / (item.quantidade || 1) ?? 0) || 0;
+      const quantidadeBase = Number(item.quantidade_base ?? item.quantidade ?? 1) || 1;
+      const custoUnitario = Number(
+        item.custo_unitario ??
+        item.custo_unitario_momento ??
+        item.valor_unitario ??
+        item.total_unitario ??
+        ((Number(item.total) || 0) / quantidadeBase)
+      ) || 0;
+      mapa[item.produto_id] = custoUnitario;
     });
   });
 
@@ -65,8 +73,8 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
       </button>
 
       {open && (
-        <div className="mx-2 mb-2 rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
-          <div className="grid grid-cols-[52px_minmax(0,1fr)_80px] gap-2 px-2 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
+        <div className="mb-2 rounded-2xl bg-[#253042] px-1.5 py-2 shadow-inner">
+          <div className="grid grid-cols-[44px_minmax(0,1fr)_72px] gap-1.5 px-1.5 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
             <span>Qtd</span>
             <span className="text-center">Descrição</span>
             <span className="text-right">Vlr Tot</span>
@@ -77,7 +85,7 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
               const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? 0;
               const total = item.total ?? item.valor_total ?? (quantidade * custo);
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[52px_minmax(0,1fr)_80px] gap-2 px-2 py-2 text-[10px] text-white">
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[44px_minmax(0,1fr)_72px] gap-1.5 px-1.5 py-2 text-[10px] text-white">
                   <span className="text-[10px] text-white">{quantidade}</span>
                   <div className="min-w-0 text-center">
                     <p className="text-[10px] leading-tight break-words font-normal text-white">{item.produto_nome || 'Item sem descrição'}</p>
