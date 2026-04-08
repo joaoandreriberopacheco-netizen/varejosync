@@ -15,9 +15,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'transportadoraId é obrigatório' }, { status: 400 });
     }
 
+    const saidaReferenciaNormalizada = saidaReferencia ? new Date(`${saidaReferencia}T12:00:00`).toISOString().slice(0, 10) : null;
+
     await base44.asServiceRole.entities.Transportadora.update(transportadoraId, {
       nome,
-      saida_referencia: saidaReferencia,
+      saida_referencia: saidaReferenciaNormalizada,
       contato,
       telefone,
       email,

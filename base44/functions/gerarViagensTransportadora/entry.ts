@@ -16,9 +16,16 @@ function addDays(dateString, days, hour = 12) {
 }
 
 function buildCodigo(sequence) {
-  const grupo = String(Math.floor((sequence - 1) / 999) + 1).padStart(3, '0');
-  const item = String(((sequence - 1) % 999) + 1).padStart(3, '0');
-  return `${grupo}-${item}`;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let seed = sequence;
+  let output = '';
+
+  for (let index = 0; index < 6; index += 1) {
+    output = chars[seed % chars.length] + output;
+    seed = Math.floor(seed / chars.length);
+  }
+
+  return `${output.slice(0, 3)}-${output.slice(3)}`;
 }
 
 function isSameOrBefore(dateA, dateB) {

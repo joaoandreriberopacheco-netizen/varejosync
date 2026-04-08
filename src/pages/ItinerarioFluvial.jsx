@@ -60,9 +60,9 @@ export default function ItinerarioFluvial() {
   }), [eventosLogisticos, embarques, contasPrevistas]);
 
   const eventos = useMemo(() => {
-    const simulationBaseDate = new Date(`${simulationDate}T00:00:00`);
+    const simulationBaseDate = new Date(`${simulationDate}T12:00:00`);
     const hojeReal = new Date();
-    const hojeRealBase = new Date(`${format(hojeReal, 'yyyy-MM-dd')}T00:00:00`);
+    const hojeRealBase = new Date(`${format(hojeReal, 'yyyy-MM-dd')}T12:00:00`);
 
     return eventosBase.map((item) => {
       const saidaManaus = item.data_saida_origem;
@@ -157,7 +157,7 @@ export default function ItinerarioFluvial() {
     return Object.entries(groupedEventos)
       .sort(([a], [b]) => new Date(a) - new Date(b))
       .map(([dateKey, items]) => {
-        const date = new Date(`${dateKey}T00:00:00`);
+        const date = new Date(`${dateKey}T12:00:00`);
         return {
           key: dateKey,
           label: format(date, 'EEEE, d MMM'),
@@ -245,7 +245,7 @@ export default function ItinerarioFluvial() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="bg-transparent space-y-1">
+                  <div className="bg-transparent space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
                     {timelineItems.map((item) => (
                       <TimelineDayGroup
                         key={item.key}
@@ -255,6 +255,7 @@ export default function ItinerarioFluvial() {
                         isToday={item.isToday}
                         onSelect={setSelectedEvento}
                         viewModeLabel={viewModeLabel}
+                        selectedEventoId={selectedEvento?.id}
                       />
                     ))}
                   </div>
@@ -262,7 +263,7 @@ export default function ItinerarioFluvial() {
               )
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
-                <div className="bg-transparent space-y-1">
+                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto pr-2">
                   {timelineItems.map((item) => (
                     <TimelineDayGroup
                       key={item.key}
@@ -272,6 +273,7 @@ export default function ItinerarioFluvial() {
                       isToday={item.isToday}
                       onSelect={setSelectedEvento}
                       viewModeLabel={viewModeLabel}
+                      selectedEventoId={currentEvento?.id}
                     />
                   ))}
                 </div>

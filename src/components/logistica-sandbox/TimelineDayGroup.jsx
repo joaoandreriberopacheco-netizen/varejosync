@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarClock, ShipWheel } from 'lucide-react';
 
-export default function TimelineDayGroup({ label, dayNumber, eventos = [], isToday = false, onSelect, viewModeLabel }) {
+export default function TimelineDayGroup({ label, dayNumber, eventos = [], isToday = false, onSelect, viewModeLabel, selectedEventoId = null }) {
   return (
     <div className="relative pl-12">
       <div className="absolute left-[18px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
@@ -14,11 +14,14 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
           {isToday && <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">Hoje</span>}
         </div>
         <div className="space-y-2">
-          {eventos.map((evento) => (
+          {eventos.map((evento) => {
+            const isSelected = selectedEventoId === evento.id;
+
+            return (
             <button
               key={evento.id}
               onClick={() => onSelect(evento)}
-              className="w-full text-left rounded-2xl bg-white dark:bg-gray-800 px-4 py-3 shadow-sm"
+              className={`w-full text-left rounded-2xl bg-white dark:bg-gray-800 px-4 py-3 shadow-sm transition-all ${isSelected ? 'ring-2 ring-gray-300 dark:ring-gray-500 shadow-md' : 'ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700'}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -40,7 +43,8 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
                 </div>
               </div>
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
