@@ -25,7 +25,14 @@ export default function ProdutosAccessGuard({ children }) {
         if (user?.perfil_acesso_id) {
           const perfis = await base44.entities.PerfilDeAcesso.list();
           const perfil = perfis.find(p => p.id === user.perfil_acesso_id);
-          // Verificar se tem permissão específica em estoque ou acesso geral
+          
+          // Perfil "Administrador" customizado tem acesso total
+          if (perfil?.nome?.toLowerCase().includes('administrador')) {
+            setAcessoPermitido(true);
+            return;
+          }
+          
+          // Verificar permissões específicas
           const temAcesso = perfil?.permissoes?.estoque?.acesso === true || 
                            perfil?.permissoes?.produtos?.acesso === true ||
                            perfil?.acesso_geral === true;
