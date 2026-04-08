@@ -26,11 +26,11 @@ const FREQS_MAP = {
   'Anual': (d, i) => addYears(d, i),
 };
 
-export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial }) {
+export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial, descricaoInicial, valorInicial, referenciaId, referenciaTipo }) {
   const [tipo, setTipo] = useState(tipoInicial || 'Despesa');
   const [contas, setContas] = useState([]);
-  const [valorCents, setValorCents] = useState('0');
-  const [descricao, setDescricao] = useState('');
+  const [valorCents, setValorCents] = useState(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
+  const [descricao, setDescricao] = useState(descricaoInicial || '');
   const [data, setData] = useState(dataHoje());
   const [categoria, setCategoria] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
@@ -58,8 +58,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       base44.entities.ContasFinanceiras.filter({ ativo: true }).then(setContas);
       base44.entities.PedidoCompra.list('-created_date', 50).then(setPedidosCompra);
       setTipo(tipoInicial || 'Despesa');
-      setValorCents('0');
-      setDescricao('');
+      setValorCents(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
+      setDescricao(descricaoInicial || '');
       setData(dataHoje());
       setCategoria('');
       setCategoriaId('');
@@ -79,7 +79,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setConfirmDialogMode('processing');
       setShowConfirmDialog(false);
     }
-  }, [open, tipoInicial, contaDefaultId]);
+  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial]);
 
   if (!open) return null;
 
@@ -180,7 +180,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         status, status_conciliacao: isPago ? 'Pendente' : 'N/A',
         categoria, categoria_id: categoriaId, tags,
         conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
-        referencia_tipo: 'Manual',
+        referencia_tipo: referenciaTipo || 'Manual',
+        referencia_id: referenciaId || '',
         is_custo_mercadoria: isCustoMercadoria,
         pedido_compra_vinculado_id: pedidoCompra?.id,
         pedido_compra_vinculado_numero: pedidoCompra?.numero,

@@ -86,6 +86,32 @@ export default function ExecucaoOrcamentaria() {
   const [abaContas, setAbaContas] = useState('contas');
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [showNovoFluxo, setShowNovoFluxo] = useState(false);
+  const [urlDescricao, setUrlDescricao] = useState('');
+  const [urlValor, setUrlValor] = useState('');
+  const [urlReferenciaId, setUrlReferenciaId] = useState('');
+  const [urlReferenciaTipo, setUrlReferenciaTipo] = useState('');
+
+  useEffect(() => {
+    // Ler params de URL e abrir dialog se fornecidos
+    const params = new URLSearchParams(window.location.search);
+    const desc = params.get('descricao');
+    const valor = params.get('valor');
+    const refId = params.get('referencia_id');
+    const refTipo = params.get('referencia_tipo');
+    const tipo = params.get('tipo');
+    
+    if (desc) {
+      setUrlDescricao(desc);
+      setShowNovoFluxo(true);
+    }
+    if (valor) setUrlValor(valor);
+    if (refId) setUrlReferenciaId(refId);
+    if (refTipo) setUrlReferenciaTipo(refTipo);
+    if (tipo) setNovoTipo(tipo);
+    
+    // Limpar URL
+    window.history.replaceState({}, '', window.location.pathname);
+  }, []);
 
   useEffect(() => { load(); }, []);
 
@@ -420,7 +446,16 @@ export default function ExecucaoOrcamentaria() {
 
           {/* Dialogs */}
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
-          <NovoLancamentoDialog open={showNovoFluxo} tipoInicial={novoTipo} onClose={() => { setShowNovoFluxo(false); setFabOpen(false); }} onSaved={load} />
+          <NovoLancamentoDialog 
+            open={showNovoFluxo} 
+            tipoInicial={novoTipo} 
+            descricaoInicial={urlDescricao}
+            valorInicial={urlValor}
+            referenciaId={urlReferenciaId}
+            referenciaTipo={urlReferenciaTipo}
+            onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }} 
+            onSaved={load} 
+          />
           <FluxoCaixaPrintDialog
             open={showPrintDialog}
             onOpenChange={setShowPrintDialog}
