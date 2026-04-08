@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import TimelineViewControls from '@/components/logistica-sandbox/TimelineViewControls';
 import TimelinePeriodPicker from '@/components/logistica-sandbox/TimelinePeriodPicker';
 
-export default function FluvialExpandableFilters({
+export default function FluvialExpandableFilters_UNUSED({
   open,
   onOpenChange,
   viewMode,

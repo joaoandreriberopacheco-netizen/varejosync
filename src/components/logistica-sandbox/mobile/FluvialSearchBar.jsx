@@ -1,7 +1,7 @@
 import React from 'react';
-import { ListFilter, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
-export default function FluvialSearchBar({ value, onChange, onToggleFilters, filtersOpen }) {
+export default function FluvialSearchBar({ value, onChange }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 rounded-3xl bg-white dark:bg-gray-800 shadow-sm px-3 py-2.5 flex items-center gap-2.5 min-w-0">
@@ -9,7 +9,7 @@ export default function FluvialSearchBar({ value, onChange, onToggleFilters, fil
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Buscar barco"
+          placeholder="Buscar embarcação"
           className="w-full bg-transparent border-0 outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
         />
         {value ? (
@@ -18,13 +18,6 @@ export default function FluvialSearchBar({ value, onChange, onToggleFilters, fil
           </button>
         ) : null}
       </div>
-      <button
-        type="button"
-        onClick={onToggleFilters}
-        className={`w-11 h-11 rounded-2xl shadow-sm flex items-center justify-center flex-shrink-0 ${filtersOpen ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-white text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}
-      >
-        <ListFilter className="w-4 h-4" />
-      </button>
     </div>
   );
 }

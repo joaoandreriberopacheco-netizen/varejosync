@@ -4,20 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
-import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
-import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
-import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
-import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
-import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
-import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
-import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
-import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
-import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
-import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
-import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
-import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialSimulationFab from '@/components/logistica-sandbox/mobile/FluvialSimulationFab';
+import FluvialBottomFilterSheet from '@/components/logistica-sandbox/mobile/FluvialBottomFilterSheet';
 import { cn } from '@/lib/utils';
 
 export default function ItinerarioFluvialMobile() {
@@ -33,6 +22,7 @@ export default function ItinerarioFluvialMobile() {
   const [showFilters, setShowFilters] = useState(false);
   const [onlyLinked, setOnlyLinked] = useState(false);
   const [linkedStatus, setLinkedStatus] = useState('todos');
+  const [searchTerm, setSearchTerm] = useState('');
   const todayRef = useRef(null);
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -116,6 +106,12 @@ export default function ItinerarioFluvialMobile() {
       }))
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
+        if (searchTerm) {
+          const termo = searchTerm.toLowerCase();
+          const matchNome = String(evento.embarcacao_nome || '').toLowerCase().includes(termo);
+          const matchCodigo = String(evento.codigo || '').toLowerCase().includes(termo);
+          if (!matchNome && !matchCodigo) return false;
+        }
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         if (onlyLinked && linkedStatus === 'ativos' && !(evento.total_embarques_ativos > 0)) return false;
         if (onlyLinked && linkedStatus === 'concluidos' && !(evento.total_embarques_concluidos > 0 && evento.total_embarques_ativos === 0)) return false;
@@ -130,7 +126,7 @@ export default function ItinerarioFluvialMobile() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, linkedStatus]);
+  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, linkedStatus, searchTerm]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -182,12 +178,20 @@ export default function ItinerarioFluvialMobile() {
         {routeType === 'Fluvial' && !selectedEvento ? (
           <>
             <FluvialSearchBar
-              value=""
-              onChange={() => {}}
-              onToggleFilters={() => setShowFilters((prev) => !prev)}
-              filtersOpen={showFilters}
+              value={searchTerm}
+              onChange={setSearchTerm}
             />
-            <FluvialExpandableFilters
+            <div className="fixed bottom-24 right-4 z-40">
+              <button
+                type="button"
+                onClick={() => setShowFilters(true)}
+                className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg dark:bg-gray-100 dark:text-slate-900"
+              >
+                <span className="sr-only">Abrir filtros</span>
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
+              </button>
+            </div>
+            <FluvialBottomFilterSheet
               open={showFilters}
               onOpenChange={setShowFilters}
               viewMode={viewMode}
