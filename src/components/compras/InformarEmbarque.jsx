@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Boxes, Plus, Check, X, Search, Anchor } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Boxes, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel } from 'lucide-react';
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
@@ -396,23 +396,24 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl">
+        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl bg-[#111827] border-0 text-white">
 
-          {/* Header */}
-          <div className="flex items-center gap-2 px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-            <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 font-quicksand flex-1">
-              {isEdicao ? 'Editar Despacho' : 'Informar Despacho'}
-              <span className="text-gray-400 font-normal"> — {pedido.numero}</span>
-            </h2>
+        <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-white/5">
+          <div className="w-10 h-10 rounded-3xl bg-[#1f2937] flex items-center justify-center shadow-sm">
+            <Truck className="w-4 h-4 text-slate-200 flex-shrink-0" />
           </div>
+          <h2 className="text-base font-semibold text-white font-quicksand flex-1">
+            {isEdicao ? 'Editar Despacho' : 'Informar Despacho'}
+            <span className="text-slate-400 font-normal"> — {pedido.numero}</span>
+          </h2>
+        </div>
 
-          <div className="px-6 py-5 overflow-y-auto">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 w-full">
-                <TabsTrigger value="transporte" className="rounded-2xl py-2.5 text-sm">Transporte</TabsTrigger>
-                <TabsTrigger value="itens" className="rounded-2xl py-2.5 text-sm">Itens relacionados</TabsTrigger>
-              </TabsList>
+        <div className="px-6 py-5 overflow-y-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-[#1f2937] p-1 w-full">
+              <TabsTrigger value="transporte" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><Route className="w-4 h-4" />Transporte</TabsTrigger>
+              <TabsTrigger value="itens" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4" />Itens relacionados</TabsTrigger>
+            </TabsList>
 
               <TabsContent value="transporte" className="space-y-5 mt-0">
                 <div className="grid grid-cols-2 gap-3">
@@ -426,7 +427,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                       value={dataDespacho}
                       onChange={e => setDataDespacho(e.target.value)}
                       disabled={!!eventoLogisticoId}
-                      className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white disabled:opacity-70"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -439,7 +440,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                       value={eta}
                       onChange={e => setEta(e.target.value)}
                       disabled={!!eventoLogisticoId}
-                      className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white disabled:opacity-70"
                     />
                   </div>
                 </div>
@@ -465,9 +466,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   <button
                     type="button"
                     onClick={() => setShowTripSelector(true)}
-                    className="w-full h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 px-4 flex items-center gap-3 text-left"
+                    className="w-full h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white px-4 flex items-center gap-3 text-left"
                   >
-                    <Anchor className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ShipWheel className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     <span className={`flex-1 truncate ${eventoSelecionado ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                       {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Selecionar viagem no itinerário'}
                     </span>
@@ -492,7 +493,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   <button
                     type="button"
                     onClick={() => setShowVolumesDialog(true)}
-                    className="w-full h-12 rounded-xl bg-gray-50 dark:bg-gray-800 shadow-sm px-4 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full h-12 rounded-xl bg-[#1f2937] shadow-sm px-4 flex items-center gap-3 hover:bg-[#253042] transition-colors"
                   >
                     <Boxes className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     {volumes.length > 0 ? (
@@ -513,7 +514,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                     placeholder="Observações sobre este embarque..."
                     value={observacoes}
                     onChange={e => setObservacoes(e.target.value)}
-                    className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm"
+                    className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white placeholder:text-slate-400"
                   />
                 </div>
               </TabsContent>
