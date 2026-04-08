@@ -116,7 +116,7 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
 
 function resumoEmbarque(embarque, itensPedidoMap = {}) {
   const itens = enriquecerItensEmbarque(embarque, itensPedidoMap);
-  const totalCompra = itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0) || Number(embarque.valor_total_embarcado) || 0;
+  const totalCompra = Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
 
   return {
     totalCompra,

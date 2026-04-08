@@ -21,7 +21,7 @@ import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeade
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
-import { ListFilter, Settings } from 'lucide-react';
+import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ItinerarioFluvial() {
@@ -310,27 +310,16 @@ export default function ItinerarioFluvial() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between gap-3">
-                  <FreteMonthNavigator
-                    currentMonth={freteMonth}
-                    onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                    onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-                  />
-                  {!isMobile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowFilters(true)}
-                      className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-3xl px-4 py-2 shadow-sm text-xs text-gray-500 dark:text-gray-400">
-                  Total filtrado: <span className="font-semibold text-gray-900 dark:text-white">{freteEventos.length} frete{freteEventos.length !== 1 ? 's' : ''}</span>
-                </div>
+                <FreteMonthNavigator
+                  currentMonth={freteMonth}
+                  onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
+                  onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
+                />
+                <FreteResumoCard
+                  totalFretes={freteResumo.totalFretes}
+                  totalComConta={freteResumo.totalComConta}
+                  totalSemConta={freteResumo.totalSemConta}
+                />
                 <div className="space-y-3">
                   {freteEventos.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
