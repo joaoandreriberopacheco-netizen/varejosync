@@ -24,22 +24,38 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
     }, 0);
   };
 
+  // Fetch conta vinculada ao evento
   useEffect(() => {
-    if (!contaAtualizada?.id) return;
+    const fetchContaVinculada = async () => {
+      const contas = await base44.entities.LancamentoFinanceiro.filter({
+        referencia_id: evento.id,
+        referencia_tipo: 'EventosLogisticos'
+      });
+      if (contas.length > 0) {
+        setContaAtualizada(contas[0]);
+        setTemConta(true);
+      }
+    };
+    fetchContaVinculada();
+  }, [evento.id]);
 
+  // Subscribe para mudanças em tempo real
+  useEffect(() => {
     const unsubscribe = base44.entities.LancamentoFinanceiro.subscribe((event) => {
-      if (event.id === contaAtualizada.id) {
+      // Se é create/update de uma conta vinculada ao evento
+      if (event.data?.referencia_id === evento.id && event.data?.referencia_tipo === 'EventosLogisticos') {
         if (event.type === 'delete' || event.data?.status === 'Cancelado') {
           setContaAtualizada(null);
           setTemConta(false);
-        } else if (event.type === 'update') {
+        } else if (event.type === 'create' || event.type === 'update') {
           setContaAtualizada(event.data);
+          setTemConta(true);
         }
       }
     });
 
     return unsubscribe;
-  }, [contaAtualizada?.id]);
+  }, [evento.id]);
 
   const handleCreateContaFrete = () => {
     // Construir descrição no mesmo padrão do mobile
