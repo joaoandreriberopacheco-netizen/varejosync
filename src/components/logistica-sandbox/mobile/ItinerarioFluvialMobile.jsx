@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
@@ -18,22 +18,15 @@ import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/Itine
 import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
 import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
-import FluvialSimulationFab from '@/components/logistica-sandbox/mobile/FluvialSimulationFab';
-import FluvialBottomFilterSheet from '@/components/logistica-sandbox/mobile/FluvialBottomFilterSheet';
 
 export default function ItinerarioFluvialMobile() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [periodRange, setPeriodRange] = useState(() => {
-    const today = new Date();
-    return { from: subDays(today, 30), to: addDays(today, 30) };
-  });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
-  const [onlyLinked, setOnlyLinked] = useState(false);
-  const [linkedStatus, setLinkedStatus] = useState('todos');
+  const [scrolledToToday, setScrolledToToday] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [freteFilter, setFreteFilter] = useState('todos');
   const todayRef = useRef(null);
@@ -48,14 +41,12 @@ export default function ItinerarioFluvialMobile() {
     queryKey: ['embarques-logistica'],
     queryFn: async () => {
       const embarquesData = await base44.entities.Embarque.list('-created_date', 500);
-      // Carregar todos os PedidosCompra e criar mapa
       const pedidosData = await base44.entities.PedidoCompra.list('', 500);
       const mapaReferenciaoPedidos = {};
       pedidosData.forEach(pedido => {
         mapaReferenciaoPedidos[pedido.id] = pedido;
       });
       
-      // Enriquecer embarques com relação _pedido_compra
       return embarquesData.map(embarque => ({
         ...embarque,
         _pedido_compra: mapaReferenciaoPedidos[embarque.pedido_compra_id] || null
@@ -108,10 +99,9 @@ export default function ItinerarioFluvialMobile() {
 
   useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked]);
+  }, [routeType, viewMode, simulationDate, freteMonth]);
 
   const groupedEventos = useMemo(() => {
-
     const getViewDate = (evento) => {
       if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
       if (viewMode === 'saida_manaus') return evento.data_saida_origem;
@@ -132,8 +122,6 @@ export default function ItinerarioFluvialMobile() {
           const matchCodigo = String(evento.codigo || '').toLowerCase().includes(termo);
           if (!matchNome && !matchCodigo) return false;
         }
-        if (onlyLinked && !evento.tem_embarques_relacionados) return false;
-        if (onlyLinked && linkedStatus === 'ativos' && !(evento.total_embarques_ativos > 0)) return false;
         return true;
       })
       .reduce((acc, evento) => {
@@ -142,7 +130,7 @@ export default function ItinerarioFluvialMobile() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, linkedStatus, searchTerm]);
+  }, [eventos, viewMode, searchTerm]);
 
   const timelineItems = useMemo(() => {
     const sortedItems = Object.entries(groupedEventos)
@@ -185,44 +173,26 @@ export default function ItinerarioFluvialMobile() {
   }, [groupedEventos, simulationDate]);
 
   useEffect(() => {
-    const refElement = todayRef.current;
-    if (!refElement) return;
-
-    const container = refElement.closest('.js-fluvial-timeline-scroll');
-    if (!container) {
-      refElement.scrollIntoView({ block: 'center' });
-      return;
+    if (!scrolledToToday && timelineItems.length > 0) {
+      const todayItem = timelineItems.find(item => item.isToday);
+      if (todayItem && todayRef.current) {
+        setTimeout(() => {
+          todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setScrolledToToday(true);
+        }, 100);
+      }
     }
-
-    const containerRect = container.getBoundingClientRect();
-    const elementRect = refElement.getBoundingClientRect();
-    const currentScroll = container.scrollTop;
-    const targetScroll = currentScroll + (elementRect.top - containerRect.top) - (container.clientHeight / 2) + (elementRect.height / 2);
-
-    container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
-  }, [timelineItems]);
+  }, [timelineItems, scrolledToToday]);
 
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
 
   const freteEventos = useMemo(() => {
-    const start = new Date(freteMonth.getFullYear(), freteMonth.getMonth(), 1);
-    const end = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
-
-    return eventos.filter((evento) => {
-      return true;
-    });
-  }, [eventos, freteMonth]);
+    return eventos;
+  }, [eventos]);
 
   const freteEventosFiltrados = useMemo(() => {
-    switch (freteFilter) {
-      case 'comConta':
-        return freteEventos.filter(e => e.tem_conta_frete);
-      case 'semConta':
-        return freteEventos.filter(e => !e.tem_conta_frete);
-      default:
-        return freteEventos;
-    }
-  }, [freteEventos, freteFilter]);
+    return freteEventos;
+  }, [freteEventos]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 overflow-x-hidden">
@@ -235,30 +205,6 @@ export default function ItinerarioFluvialMobile() {
             <FluvialSearchBar
               value={searchTerm}
               onChange={setSearchTerm}
-            />
-            <div className="fixed bottom-24 right-4 z-40">
-              <button
-                type="button"
-                onClick={() => setShowFilters(true)}
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg dark:bg-gray-100 dark:text-slate-900"
-              >
-                <span className="sr-only">Abrir filtros</span>
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
-              </button>
-            </div>
-            <FluvialBottomFilterSheet
-              open={showFilters}
-              onOpenChange={setShowFilters}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              periodRange={periodRange}
-              onPeriodRangeChange={setPeriodRange}
-              simulationDate={simulationDate}
-              onSimulationDateChange={setSimulationDate}
-              onlyLinked={onlyLinked}
-              linkedStatus={linkedStatus}
-              onLinkedStatusChange={setLinkedStatus}
-              onOnlyLinkedChange={setOnlyLinked}
             />
           </>
         ) : null}
@@ -276,8 +222,7 @@ export default function ItinerarioFluvialMobile() {
           ) : timelineItems.length > 0 ? (
             <div className="js-fluvial-timeline-scroll max-h-[calc(100vh-14rem)] space-y-4 overflow-y-auto pb-4 pr-1 overflow-x-hidden">
               {timelineItems.map((item) => (
-                <div key={item.key} ref={item.isToday ? todayRef : null} className="relative">
-                  {item.isToday ? <div className="absolute left-[2px] top-[4px] h-10 w-10 rounded-2xl ring-4 ring-lime-300/80 pointer-events-none" /> : null}
+                <div key={item.key} ref={item.isToday ? todayRef : null}>
                   <TimelineDayGroup
                     label={item.label}
                     dayNumber={item.dayNumber}
@@ -293,7 +238,7 @@ export default function ItinerarioFluvialMobile() {
           ) : (
             <ItinerarioMobileEmptyState
               title="Nenhum evento encontrado"
-              description="Ajuste os filtros para visualizar viagens neste período."
+              description="Verifique os filtros e tente novamente."
             />
           )
         ) : routeType === 'Fretes' ? (
@@ -318,7 +263,7 @@ export default function ItinerarioFluvialMobile() {
               )) : (
                 <ItinerarioMobileEmptyState
                   title="Nenhum frete com carga"
-                  description="Não encontramos fretes com embarques no mês selecionado."
+                  description="Não encontramos fretes com embarques."
                 />
               )}
               <FreteFAB
@@ -332,10 +277,6 @@ export default function ItinerarioFluvialMobile() {
             <BoatsTab />
           </div>
         )}
-
-        {false ? (
-          <FluvialSimulationFab value={simulationDate} onChange={setSimulationDate} />
-        ) : null}
       </div>
     </div>
   );
