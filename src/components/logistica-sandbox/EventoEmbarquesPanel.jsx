@@ -116,25 +116,25 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       </button>
 
       {open && (
-        <div className="mx-[-10px] mb-2 rounded-2xl bg-[#253042] px-0 py-2 shadow-inner">
-          <div className="grid grid-cols-[40px_minmax(0,1fr)_64px] items-center gap-1 px-2 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
+        <div className="mx-[-14px] mb-2 rounded-2xl bg-[#253042] px-1 py-2 shadow-inner sm:mx-[-18px] sm:px-2">
+          <div className="grid grid-cols-[42px_minmax(0,1fr)_72px] items-center gap-2 px-1 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300 sm:grid-cols-[48px_minmax(0,1fr)_84px]">
             <span>Qtd</span>
-            <div className="grid grid-cols-[minmax(0,1fr)_70px] items-center gap-2">
-              <span className="text-center">Descrição</span>
+            <div className="grid grid-cols-[minmax(0,1fr)_76px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_88px]">
+              <span className="text-left">Descrição</span>
               <span className="text-right">V. Unt</span>
             </div>
             <span className="text-right">Vlr Tot</span>
           </div>
           <div className="space-y-1">
             {itensOrdenados.map((item, index) => {
-              const quantidade = item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0;
-              const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? custosPedido[normalizarTexto(item.produto_nome)] ?? 0;
-              const total = item.total ?? item.valor_total ?? (quantidade * custo);
+              const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
+              const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
+              const total = Number(item.total ?? item.valor_total ?? (quantidade * custo)) || 0;
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[40px_minmax(0,1fr)_64px] items-start gap-1 px-2 py-2 text-[10px] text-white">
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[42px_minmax(0,1fr)_72px] items-start gap-2 px-1 py-2 text-[10px] text-white sm:grid-cols-[48px_minmax(0,1fr)_84px]">
                   <span className="pt-0.5 text-[10px] text-white">{quantidade}</span>
-                  <div className="grid grid-cols-[minmax(0,1fr)_70px] items-start gap-2 min-w-0">
-                    <p className="text-[10px] leading-tight break-words font-normal text-white text-center">{item.produto_nome || 'Item sem descrição'}</p>
+                  <div className="grid grid-cols-[minmax(0,1fr)_76px] items-start gap-3 min-w-0 sm:grid-cols-[minmax(0,1fr)_88px]">
+                    <p className="text-[10px] leading-tight break-words font-normal text-white text-left">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[10px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>
                   <span className="pt-0.5 text-[10px] text-right font-normal whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
