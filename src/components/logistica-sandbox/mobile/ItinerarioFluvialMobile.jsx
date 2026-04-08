@@ -190,25 +190,38 @@ export default function ItinerarioFluvialMobile() {
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
 
   const freteEventos = useMemo(() => {
-    return eventos.filter((evento) => {
-      const embarquesRelacionados = embarques.filter((emb) => emb.evento_logistico_id === evento.id);
-      return embarquesRelacionados.length > 0;
-    });
-  }, [eventos, embarques]);
+    return eventos.filter((evento) => (evento.embarques_relacionados || []).length > 0);
+  }, [eventos]);
 
   const freteEventosFiltrados = useMemo(() => {
-    let filtered = freteEventos;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
 
-    if (freteFilter !== 'todos') {
-      filtered = filtered.filter((evento) => {
-        if (freteFilter === 'pago') return evento.lancamento_financeiro_status === 'Pago';
-        if (freteFilter === 'aberto') return evento.lancamento_financeiro_status === 'Em Aberto';
-        if (freteFilter === 'vencido') return evento.lancamento_financeiro_status === 'Vencido';
-        return true;
-      });
-    }
+    return freteEventos.filter((evento) => {
+      const vencimento = evento.lancamento_financeiro_data_vencimento
+        ? new Date(`${evento.lancamento_financeiro_data_vencimento}T12:00:00`)
+        : null;
 
-    return filtered;
+      if (vencimento) {
+        vencimento.setHours(0, 0, 0, 0);
+      }
+
+      const diferencaDias = vencimento
+        ? Math.round((vencimento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+
+      if (freteFilter === 'todos') return true;
+      if (freteFilter === 'com_conta') return !!evento.lancamento_financeiro_id;
+      if (freteFilter === 'sem_conta') return !evento.lancamento_financeiro_id;
+      if (freteFilter === 'pago') return evento.lancamento_financeiro_status === 'Pago';
+      if (freteFilter === 'em_aberto') return evento.lancamento_financeiro_status === 'Em Aberto';
+      if (freteFilter === 'vencido') return evento.lancamento_financeiro_status === 'Vencido';
+      if (freteFilter === 'vence_hoje') return diferencaDias === 0;
+      if (freteFilter === 'vence_7_dias') return diferencaDias !== null && diferencaDias >= 0 && diferencaDias <= 7;
+      if (freteFilter === 'atrasado') return diferencaDias !== null && diferencaDias < 0;
+
+      return true;
+    });
   }, [freteEventos, freteFilter]);
 
   return (

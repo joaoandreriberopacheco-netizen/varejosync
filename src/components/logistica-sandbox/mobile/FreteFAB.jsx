@@ -19,9 +19,9 @@ export default function FreteFAB({
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
+        <SheetContent side="bottom" className="rounded-t-3xl border-0 bg-white dark:bg-gray-900">
           <SheetHeader>
-            <SheetTitle className="text-sm font-semibold">Filtrar Fretes</SheetTitle>
+            <SheetTitle className="text-sm font-semibold text-gray-900 dark:text-white">Filtrar Fretes</SheetTitle>
           </SheetHeader>
           <div className="pt-4">
             <FreteFilterTabs 
