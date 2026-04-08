@@ -43,7 +43,27 @@ export default function ItinerarioFluvialMobile() {
 
   const { data: embarques = [] } = useQuery({
     queryKey: ['embarques-logistica'],
-    queryFn: () => base44.entities.Embarque.list('-created_date', 500),
+    queryFn: async () => {
+      const embarquesData = await base44.entities.Embarque.list('-created_date', 500);
+      // Carregar os PedidosCompra relacionados
+      const pedidoIds = [...new Set(embarquesData.map(e => e.pedido_compra_id).filter(Boolean))];
+      if (pedidoIds.length === 0) return embarquesData;
+      
+      const pedidos = await Promise.all(
+        pedidoIds.map(id => base44.entities.PedidoCompra.filter({ id }))
+      ).then(results => results.flat());
+      
+      const mapaReferenciaoPedidos = {};
+      pedidos.forEach(pedido => {
+        mapaReferenciaoPedidos[pedido.id] = pedido;
+      });
+      
+      // Enriquecer embarques com relação _pedido_compra
+      return embarquesData.map(embarque => ({
+        ...embarque,
+        _pedido_compra: mapaReferenciaoPedidos[embarque.pedido_compra_id] || null
+      }));
+    },
     initialData: []
   });
 

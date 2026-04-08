@@ -43,8 +43,15 @@ function criarMapaItensPedido(embarques = [], pedidosCompra = []) {
   const mapa = {};
 
   embarques.forEach((embarque) => {
-    const itensPedido = embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
-    itensPedido.forEach((item) => registrarItemNoMapa(mapa, item));
+    // Priorizar itens da relação _pedido_compra
+    const pedido = embarque?._pedido_compra;
+    if (pedido?.itens) {
+      pedido.itens.forEach((item) => registrarItemNoMapa(mapa, item));
+    } else {
+      // Fallback para legado
+      const itensPedido = embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
+      itensPedido.forEach((item) => registrarItemNoMapa(mapa, item));
+    }
   });
 
   pedidosCompra.forEach((pedido) => {

@@ -24,6 +24,22 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], con
     return descricao.includes('frete') || descricao.includes('cmv');
   });
 
+  // Criar mapa de itens dos pedidos de compra para enriquecer os embarques
+  const mapaPedidosItens = {};
+  embarques.forEach((embarque) => {
+    const pedido = embarque?._pedido_compra;
+    if (pedido?.id && pedido?.itens) {
+      if (!mapaPedidosItens[pedido.id]) {
+        mapaPedidosItens[pedido.id] = {};
+      }
+      pedido.itens.forEach((item) => {
+        if (item?.produto_id) {
+          mapaPedidosItens[pedido.id][item.produto_id] = item;
+        }
+      });
+    }
+  });
+
   return (eventosLogisticos || [])
     .map((item) => {
       const saidaManaus = item.data_saida_origem || item.data_referencia;
@@ -46,9 +62,11 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], con
 
       const resumoFornecedores = Array.from(fornecedoresMap.values());
       const valorTotalCarga = embarquesRelacionados.reduce((total, embarque) => {
+        const pedidoItens = mapaPedidosItens[embarque.pedido_compra_id] || {};
         return total + (embarque.itens || []).reduce((sum, itemEmbarque) => {
           const quantidade = itemEmbarque.quantidade_embarcada ?? itemEmbarque.quantidade_pedida ?? itemEmbarque.quantidade ?? 0;
-          const custo = itemEmbarque.custo_unitario ?? itemEmbarque.custo_unitario_momento ?? itemEmbarque.valor_unitario ?? 0;
+          const itemPedido = pedidoItens[itemEmbarque.produto_id] || {};
+          const custo = Number(itemEmbarque.custo_unitario ?? itemPedido.custo_unitario ?? 0) || 0;
           return sum + (quantidade * custo);
         }, 0);
       }, 0);
