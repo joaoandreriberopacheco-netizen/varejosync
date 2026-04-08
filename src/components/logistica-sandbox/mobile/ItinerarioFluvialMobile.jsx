@@ -18,6 +18,7 @@ import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/Itine
 import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
 import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
+import FluvialFAB from '@/components/logistica-sandbox/mobile/FluvialFAB';
 
 export default function ItinerarioFluvialMobile() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -191,8 +192,29 @@ export default function ItinerarioFluvialMobile() {
   }, [eventos]);
 
   const freteEventosFiltrados = useMemo(() => {
-    return freteEventos;
-  }, [freteEventos]);
+    let filtered = freteEventos;
+    
+    // Filtrar por mês
+    const freteMonthStart = new Date(freteMonth.getFullYear(), freteMonth.getMonth(), 1);
+    const freteMonthEnd = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
+    
+    filtered = filtered.filter((evento) => {
+      const eventDate = evento.data_saida_origem ? new Date(`${evento.data_saida_origem}T00:00:00`) : null;
+      return eventDate && eventDate >= freteMonthStart && eventDate <= freteMonthEnd;
+    });
+    
+    // Aplicar filtro selecionado
+    if (freteFilter !== 'todos') {
+      filtered = filtered.filter((evento) => {
+        if (freteFilter === 'pago') return evento.lancamento_financeiro_status === 'Pago';
+        if (freteFilter === 'aberto') return evento.lancamento_financeiro_status === 'Em Aberto';
+        if (freteFilter === 'vencido') return evento.lancamento_financeiro_status === 'Vencido';
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [freteEventos, freteMonth, freteFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 overflow-x-hidden">
@@ -201,12 +223,10 @@ export default function ItinerarioFluvialMobile() {
         <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />
 
         {routeType === 'Fluvial' && !selectedEvento ? (
-          <>
-            <FluvialSearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-            />
-          </>
+          <FluvialSearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
         ) : null}
 
         {routeType === 'Fluvial' ? (
@@ -220,7 +240,8 @@ export default function ItinerarioFluvialMobile() {
               <TimelineSidebarCard evento={selectedEvento} />
             </div>
           ) : timelineItems.length > 0 ? (
-            <div className="js-fluvial-timeline-scroll max-h-[calc(100vh-14rem)] space-y-4 overflow-y-auto pb-4 pr-1 overflow-x-hidden">
+            <>
+              <div className="js-fluvial-timeline-scroll max-h-[calc(100vh-14rem)] space-y-4 overflow-y-auto pb-4 pr-1 overflow-x-hidden">
               {timelineItems.map((item) => (
                 <div key={item.key} ref={item.isToday ? todayRef : null}>
                   <TimelineDayGroup
@@ -234,7 +255,14 @@ export default function ItinerarioFluvialMobile() {
                   />
                 </div>
               ))}
-            </div>
+              </div>
+              <FluvialFAB
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                simulationDate={simulationDate}
+                onSimulationDateChange={setSimulationDate}
+              />
+            </>
           ) : (
             <ItinerarioMobileEmptyState
               title="Nenhum evento encontrado"
