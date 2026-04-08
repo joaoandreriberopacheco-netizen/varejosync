@@ -175,10 +175,6 @@ export default function ItinerarioFluvial() {
       ? 'Chegada Tabatinga'
       : 'Saída Manaus';
 
-  if (isMobile) {
-    return <ItinerarioFluvialMobile />;
-  }
-
   const freteEventos = useMemo(() => {
     const start = new Date(freteMonth.getFullYear(), freteMonth.getMonth(), 1);
     const end = new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 0);
@@ -198,6 +194,10 @@ export default function ItinerarioFluvial() {
   }), [freteEventos]);
 
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || freteEventos[0] || null;
+
+  if (isMobile) {
+    return <ItinerarioFluvialMobile />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6 overflow-x-hidden">
