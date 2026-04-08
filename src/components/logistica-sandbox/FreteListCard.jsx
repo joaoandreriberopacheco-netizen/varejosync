@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ShipWheel } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 function getButtonBorderColor(temConta, status, estaAtrazo) {
   // Sem conta vinculada - cinza claro
@@ -22,6 +24,12 @@ function getButtonBorderColor(temConta, status, estaAtrazo) {
 }
 
 export default function FreteListCard({ evento, onSelect }) {
+  const { data: embarques = [] } = useQuery({
+    queryKey: ['embarques-evento', evento.id],
+    queryFn: () => base44.entities.Embarque.filter({ evento_logistico_id: evento.id }),
+    initialData: []
+  });
+
   const temContaFrete = !!evento.lancamento_financeiro_id;
   const statusConta = evento.lancamento_financeiro_status;
   const estaAtrasada = temContaFrete && 
@@ -31,6 +39,21 @@ export default function FreteListCard({ evento, onSelect }) {
   
   const borderColor = getButtonBorderColor(temContaFrete, statusConta, estaAtrasada);
   const valorFrete = evento.lancamento_financeiro_valor || 0;
+  
+  // Calcula total de carga real dos embarques
+  const totalCargaReal = useMemo(() => {
+    return embarques.reduce((sum, emb) => {
+      return sum + ((emb.itens || []).reduce((itemSum, item) => {
+        return itemSum + ((item.quantidade_embarcada || 0) * (item.custo_unitario_momento || 0));
+      }, 0));
+    }, 0);
+  }, [embarques]);
+  
+  // Conta fornecedores únicos
+  const fornecedoresUnicos = useMemo(() => {
+    const set = new Set(embarques.map(e => e.fornecedor_id).filter(Boolean));
+    return set.size;
+  }, [embarques]);
 
   return (
     <button onClick={() => onSelect(evento)} className="w-full text-left bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm active:scale-[0.99] transition-transform">
@@ -43,11 +66,11 @@ export default function FreteListCard({ evento, onSelect }) {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{evento.codigo || 'Sem código'}</p>
           <div className="space-y-1 mt-2 text-[11px] text-gray-500 dark:text-gray-400">
             <div className="flex justify-between gap-4">
-              <span>{evento.total_embarques_relacionados || 0} embarques</span>
-              <span>{(evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+              <span>{embarques.length} embarques</span>
+              <span>{totalCargaReal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
             </div>
             <div className="flex justify-between gap-4">
-              <span>{evento.total_fornecedores_relacionados || 0} fornecedores</span>
+              <span>{fornecedoresUnicos} fornecedores</span>
             </div>
           </div>
         </div>
