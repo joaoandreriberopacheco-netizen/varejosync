@@ -5,11 +5,25 @@ function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
 }
 
-function resumoEmbarque(embarque) {
+function criarMapaCustosPedido(embarques = []) {
+  const mapa = {};
+
+  embarques.forEach((embarque) => {
+    const itensPedido = embarque?._pedido_compra_itens || [];
+    itensPedido.forEach((item) => {
+      if (!item?.produto_id || mapa[item.produto_id] != null) return;
+      mapa[item.produto_id] = Number(item.custo_unitario ?? item.total / (item.quantidade || 1) ?? 0) || 0;
+    });
+  });
+
+  return mapa;
+}
+
+function resumoEmbarque(embarque, custosPedido = {}) {
   const itens = embarque.itens_embarcados || embarque.itens || [];
   const totalCompra = Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => {
     const quantidade = item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0;
-    const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0;
+    const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? 0;
     const totalItem = item.total ?? item.valor_total ?? (quantidade * custo);
     return sum + totalItem;
   }, 0);
@@ -21,10 +35,10 @@ function resumoEmbarque(embarque) {
   };
 }
 
-function EmbarqueCard({ embarque, defaultOpen = false }) {
+function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
   const [open, setOpen] = useState(defaultOpen);
   const itensOrdenados = useMemo(() => ordenarItens(embarque.itens_embarcados || embarque.itens), [embarque.itens_embarcados, embarque.itens]);
-  const resumo = useMemo(() => resumoEmbarque(embarque), [embarque]);
+  const resumo = useMemo(() => resumoEmbarque(embarque, custosPedido), [embarque, custosPedido]);
 
   return (
     <div className="rounded-2xl bg-[#334155]/82 dark:bg-[#334155]/82 shadow-sm overflow-hidden">
@@ -60,7 +74,7 @@ function EmbarqueCard({ embarque, defaultOpen = false }) {
           <div className="space-y-1">
             {itensOrdenados.map((item, index) => {
               const quantidade = item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0;
-              const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0;
+              const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? 0;
               const total = item.total ?? item.valor_total ?? (quantidade * custo);
               return (
                 <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[52px_minmax(0,1fr)_80px] gap-2 px-2 py-2 text-[10px] text-white">
@@ -81,14 +95,15 @@ function EmbarqueCard({ embarque, defaultOpen = false }) {
 }
 
 export default function EventoEmbarquesPanel({ embarques = [] }) {
+  const custosPedido = useMemo(() => criarMapaCustosPedido(embarques), [embarques]);
   const resumoGeral = useMemo(() => {
     return embarques.reduce((acc, embarque) => {
-      const resumo = resumoEmbarque(embarque);
+      const resumo = resumoEmbarque(embarque, custosPedido);
       acc.total += resumo.totalCompra;
       acc.quantidade += 1;
       return acc;
     }, { total: 0, quantidade: 0 });
-  }, [embarques]);
+  }, [embarques, custosPedido]);
 
   if (!embarques.length) {
     return (
@@ -117,7 +132,7 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
       </div>
       <div className="space-y-2">
         {embarques.map((embarque, index) => (
-          <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} />
+          <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} custosPedido={custosPedido} />
         ))}
       </div>
     </div>
