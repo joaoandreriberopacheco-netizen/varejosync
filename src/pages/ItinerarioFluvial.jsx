@@ -167,16 +167,9 @@ export default function ItinerarioFluvial() {
     return eventos.filter((evento) => evento.tem_conta_frete === true);
   }, [eventos]);
 
-  const freteResumo = useMemo(() => {
-    const totalValor = freteEventos.reduce((sum, evento) => {
-      const valor = evento.lancamento_financeiro_valor || 0;
-      return sum + valor;
-    }, 0);
-    return {
-      totalFretes: freteEventos.length,
-      totalValor: totalValor,
-    };
-  }, [freteEventos]);
+  const freteResumo = useMemo(() => ({
+    totalFretes: freteEventos.length,
+  }), [freteEventos]);
 
 
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || freteEventos[0] || null;
@@ -237,7 +230,7 @@ export default function ItinerarioFluvial() {
                     onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
                   />
                 </div>
-                <FreteResumoCard eventos={freteEventos} totalValor={freteResumo.totalValor} />
+                <FreteResumoCard eventos={freteEventos} />
                 <div className="space-y-3">
                   {freteEventos.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
