@@ -320,8 +320,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
   const handleSalvar = async () => {
     if (!eta) return toast.error('Informe a data de chegada prevista (ETA)');
-    const algumSelecionado = Object.values(selectedItems).some(v => v);
-    if (!algumSelecionado) return toast.error('Selecione ao menos um item para embarcar');
 
     setLoading(true);
     try {
@@ -338,8 +336,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
           unidade_medida: item.unidade_medida
         }))
         .filter(i => i.quantidade_embarcada > 0);
+      const itensJaLancados = (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []).filter(
+        (item) => (Number(item?.quantidade_embarcada) || 0) > 0
+      );
+      const podeSalvarSoTransporte = isEdicao && itensEmbarcados.length === 0 && itensJaLancados.length > 0;
 
-      if (itensEmbarcados.length === 0) return toast.error('Informe quantidades maiores que zero');
+      if (!podeSalvarSoTransporte && itensEmbarcados.length === 0) {
+        return toast.error('Informe quantidades maiores que zero');
+      }
 
       // Volumes: texto descritivo resumido para campo legado
       // Volumes: salvar no campo volumes_detalhados (estruturado) + volumes (legado texto)
@@ -358,8 +362,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         volumes_detalhados: volumesDetalhados,
         peso_kg: totalPesoKg,
         observacoes,
-        itens: itensEmbarcados,
-        itens_embarcados: itensEmbarcados,
+        itens: podeSalvarSoTransporte ? (embarqueExistente?.itens || embarqueExistente?.itens_embarcados || []) : itensEmbarcados,
+        itens_embarcados: podeSalvarSoTransporte ? (embarqueExistente?.itens_embarcados || embarqueExistente?.itens || []) : itensEmbarcados,
         status: 'Pendente'
       };
 
