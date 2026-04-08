@@ -328,12 +328,7 @@ export default function ItinerarioFluvial() {
                     </Button>
                   )}
                 </div>
-                <FreteResumoCard
-                  totalFretes={freteResumo.totalFretes}
-                  totalValor={freteEventos.reduce((sum, e) => sum + (e.valor_total_carga || 0), 0)}
-                  totalComConta={freteResumo.totalComConta}
-                  totalSemConta={freteResumo.totalSemConta}
-                />
+                <FreteResumoCard eventos={freteEventos} />
                 <div className="space-y-3">
                   {freteEventos.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />

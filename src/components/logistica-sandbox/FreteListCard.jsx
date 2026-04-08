@@ -22,15 +22,15 @@ function getButtonBorderColor(temConta, status, estaAtrazo) {
 }
 
 export default function FreteListCard({ evento, onSelect }) {
-  const temContaFrete = evento.tem_conta_frete;
-  const statusConta = evento.conta_frete_status;
+  const temContaFrete = !!evento.lancamento_financeiro_id;
+  const statusConta = evento.lancamento_financeiro_status;
   const estaAtrasada = temContaFrete && 
     statusConta !== 'Pago' && 
-    evento.conta_frete?.data_vencimento && 
-    new Date(evento.conta_frete.data_vencimento) < new Date();
+    evento.lancamento_financeiro_data_vencimento && 
+    new Date(evento.lancamento_financeiro_data_vencimento) < new Date();
   
   const borderColor = getButtonBorderColor(temContaFrete, statusConta, estaAtrasada);
-  const valorFrete = evento.conta_frete?.valor || 0;
+  const valorFrete = evento.lancamento_financeiro_valor || 0;
 
   return (
     <button onClick={() => onSelect(evento)} className="w-full text-left bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm active:scale-[0.99] transition-transform">
