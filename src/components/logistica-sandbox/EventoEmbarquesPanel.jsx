@@ -9,12 +9,14 @@ function normalizarTexto(valor) {
   return String(valor || '').trim().toLowerCase();
 }
 
-function criarMapaCustosPedido(embarques = []) {
+function criarMapaItensPedido(embarques = []) {
   const mapa = {};
 
   embarques.forEach((embarque) => {
     const itensPedido = embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
     itensPedido.forEach((item) => {
+      const chaveId = item?.produto_id;
+      const chaveNome = normalizarTexto(item?.produto_nome);
       const quantidadeBase = Number(item.quantidade_base ?? item.quantidade ?? 1) || 1;
       const custoUnitario = Number(
         item.custo_unitario ??
@@ -24,13 +26,21 @@ function criarMapaCustosPedido(embarques = []) {
         ((Number(item.total) || 0) / quantidadeBase)
       ) || 0;
 
-      if (item?.produto_id && mapa[item.produto_id] == null) {
-        mapa[item.produto_id] = custoUnitario;
+      const registro = {
+        produto_id: item?.produto_id || '',
+        produto_nome: item?.produto_nome || '',
+        quantidade_pedida: Number(item.quantidade ?? item.quantidade_base ?? 0) || 0,
+        unidade_medida: item?.unidade_medida || 'UN',
+        custo_unitario: custoUnitario,
+        total: Number(item.total ?? ((Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario)) || 0,
+      };
+
+      if (chaveId && mapa[chaveId] == null) {
+        mapa[chaveId] = registro;
       }
 
-      const nomeNormalizado = normalizarTexto(item.produto_nome);
-      if (nomeNormalizado && mapa[nomeNormalizado] == null) {
-        mapa[nomeNormalizado] = custoUnitario;
+      if (chaveNome && mapa[chaveNome] == null) {
+        mapa[chaveNome] = registro;
       }
     });
   });
@@ -38,26 +48,48 @@ function criarMapaCustosPedido(embarques = []) {
   return mapa;
 }
 
-function resumoEmbarque(embarque, custosPedido = {}) {
+function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
   const itens = embarque.itens_embarcados || embarque.itens || [];
-  const totalCompra = Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => {
-    const quantidade = item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0;
-    const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? custosPedido[normalizarTexto(item.produto_nome)] ?? 0;
-    const totalItem = item.total ?? item.valor_total ?? (quantidade * custo);
-    return sum + totalItem;
-  }, 0);
+  return itens.map((item) => {
+    const itemPedido = itensPedidoMap[item.produto_id] || itensPedidoMap[normalizarTexto(item.produto_nome)] || {};
+    const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
+    const custo = Number(
+      item.custo_unitario ??
+      item.custo_unitario_momento ??
+      item.valor_unitario ??
+      item.total_unitario ??
+      itemPedido.custo_unitario
+    ) || 0;
+    const total = Number(item.total ?? item.valor_total ?? (quantidade * custo)) || 0;
+
+    return {
+      ...item,
+      produto_nome: item.produto_nome || itemPedido.produto_nome || 'Item sem descrição',
+      unidade_medida: item.unidade_medida || itemPedido.unidade_medida || 'UN',
+      quantidade_pedida: Number(item.quantidade_pedida ?? itemPedido.quantidade_pedida ?? quantidade) || 0,
+      quantidade_embarcada: quantidade,
+      custo_unitario: custo,
+      total,
+    };
+  });
+}
+
+function resumoEmbarque(embarque, itensPedidoMap = {}) {
+  const itens = enriquecerItensEmbarque(embarque, itensPedidoMap);
+  const totalCompra = Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
 
   return {
     totalCompra,
     quantidadeItens: itens.length,
-    quantidadeSomada: itens.reduce((sum, item) => sum + (item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0), 0),
+    quantidadeSomada: itens.reduce((sum, item) => sum + (Number(item.quantidade_embarcada) || 0), 0),
+    itens,
   };
 }
 
-function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
+function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
   const [open, setOpen] = useState(defaultOpen);
-  const itensOrdenados = useMemo(() => ordenarItens(embarque.itens_embarcados || embarque.itens), [embarque.itens_embarcados, embarque.itens]);
-  const resumo = useMemo(() => resumoEmbarque(embarque, custosPedido), [embarque, custosPedido]);
+  const resumo = useMemo(() => resumoEmbarque(embarque, itensPedidoMap), [embarque, itensPedidoMap]);
+  const itensOrdenados = useMemo(() => ordenarItens(resumo.itens), [resumo.itens]);
 
   return (
     <div className="rounded-2xl bg-[#334155]/82 dark:bg-[#334155]/82 shadow-sm overflow-hidden">
@@ -117,15 +149,15 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
 }
 
 export default function EventoEmbarquesPanel({ embarques = [] }) {
-  const custosPedido = useMemo(() => criarMapaCustosPedido(embarques), [embarques]);
+  const itensPedidoMap = useMemo(() => criarMapaItensPedido(embarques), [embarques]);
   const resumoGeral = useMemo(() => {
     return embarques.reduce((acc, embarque) => {
-      const resumo = resumoEmbarque(embarque, custosPedido);
+      const resumo = resumoEmbarque(embarque, itensPedidoMap);
       acc.total += resumo.totalCompra;
       acc.quantidade += 1;
       return acc;
     }, { total: 0, quantidade: 0 });
-  }, [embarques, custosPedido]);
+  }, [embarques, itensPedidoMap]);
 
   if (!embarques.length) {
     return (
@@ -154,7 +186,7 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
       </div>
       <div className="space-y-2">
         {embarques.map((embarque, index) => (
-          <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} custosPedido={custosPedido} />
+          <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} itensPedidoMap={itensPedidoMap} />
         ))}
       </div>
     </div>
