@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, isSameDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
@@ -62,7 +63,7 @@ export default function ItinerarioFluvial() {
   const eventos = useMemo(() => {
     const simulationBaseDate = new Date(`${simulationDate}T12:00:00`);
     const hojeReal = new Date();
-    const hojeRealBase = new Date(`${format(hojeReal, 'yyyy-MM-dd')}T12:00:00`);
+    const hojeRealBase = new Date(hojeReal.getFullYear(), hojeReal.getMonth(), hojeReal.getDate(), 12, 0, 0, 0);
 
     return eventosBase.map((item) => {
       const saidaManaus = item.data_saida_origem;
@@ -160,7 +161,7 @@ export default function ItinerarioFluvial() {
         const date = new Date(`${dateKey}T12:00:00`);
         return {
           key: dateKey,
-          label: format(date, 'EEEE, d MMM'),
+          label: format(date, "EEEE, d 'de' MMM", { locale: ptBR }),
           dayNumber: format(date, 'd'),
           isToday: isSameDay(date, new Date(`${simulationDate}T00:00:00`)),
           eventos: items

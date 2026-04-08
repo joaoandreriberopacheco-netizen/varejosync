@@ -1,9 +1,21 @@
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+function parseStableDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
 export function formatDate(value) {
   if (!value) return '-';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : format(parsed, 'dd/MM/yyyy');
+  const parsed = parseStableDate(value);
+  return parsed ? format(parsed, 'dd/MM/yyyy', { locale: ptBR }) : value;
 }
 
 export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], contasPrevistas = [] }) {
@@ -77,13 +89,13 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
 
     const proximoEvento = eventosRelacionados.find((evento) => {
       if (!evento.data_chegada_destino) return false;
-      return new Date(`${evento.data_chegada_destino}T00:00:00`) >= new Date();
+      return parseStableDate(evento.data_chegada_destino) >= new Date();
     }) || eventosRelacionados[0];
 
     return {
       ...item,
       status: item.ativo === false ? 'inativa' : 'ativa',
-      proximo_eta: proximoEvento?.data_chegada_destino ? format(new Date(`${proximoEvento.data_chegada_destino}T00:00:00`), 'dd/MM/yyyy') : '-',
+      proximo_eta: proximoEvento?.data_chegada_destino ? format(parseStableDate(proximoEvento.data_chegada_destino), 'dd/MM/yyyy', { locale: ptBR }) : '-',
       recorrencia: item.saida_referencia || '-',
       eventos: eventosRelacionados.map((evento) => ({
         id: evento.id,
@@ -104,7 +116,7 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
           label: 'Chegada em Manaus',
           data: formatDate(evento.data_chegada_manaus),
           status: evento.data_chegada_manaus ? 'Planejado' : 'Sem data',
-          dayLabel: evento.data_chegada_manaus ? format(new Date(`${evento.data_chegada_manaus}T00:00:00`), 'dd') : '--',
+          dayLabel: evento.data_chegada_manaus ? format(parseStableDate(evento.data_chegada_manaus), 'dd', { locale: ptBR }) : '--',
           hasLinked: Boolean(evento.total_embarques_relacionados),
           linkedCount: evento.total_embarques_relacionados || 0,
         },
@@ -112,7 +124,7 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
           label: 'Saída de Manaus',
           data: formatDate(evento.data_saida_origem),
           status: evento.data_saida_origem ? 'Planejado' : 'Sem data',
-          dayLabel: evento.data_saida_origem ? format(new Date(`${evento.data_saida_origem}T00:00:00`), 'dd') : '--',
+          dayLabel: evento.data_saida_origem ? format(parseStableDate(evento.data_saida_origem), 'dd', { locale: ptBR }) : '--',
           hasLinked: Boolean(evento.total_embarques_relacionados),
           linkedCount: evento.total_embarques_relacionados || 0,
         },
@@ -120,7 +132,7 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
           label: 'ETA Tabatinga',
           data: formatDate(evento.data_chegada_destino),
           status: evento.data_chegada_destino ? 'Planejado' : 'Sem data',
-          dayLabel: evento.data_chegada_destino ? format(new Date(`${evento.data_chegada_destino}T00:00:00`), 'dd') : '--',
+          dayLabel: evento.data_chegada_destino ? format(parseStableDate(evento.data_chegada_destino), 'dd', { locale: ptBR }) : '--',
           hasLinked: Boolean(evento.total_embarques_relacionados),
           linkedCount: evento.total_embarques_relacionados || 0,
         }
