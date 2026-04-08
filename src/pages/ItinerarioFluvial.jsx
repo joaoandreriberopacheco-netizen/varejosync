@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, isSameDay } from 'date-fns';
@@ -164,16 +164,13 @@ export default function ItinerarioFluvial() {
       : 'Saída Manaus';
 
   const freteEventos = useMemo(() => {
-    return eventos.filter((evento) => {
-      return true;
-    });
+    return eventos.filter((evento) => evento.tem_conta_frete === true);
   }, [eventos]);
 
   const freteResumo = useMemo(() => ({
     totalFretes: freteEventos.length,
-    totalComConta: freteEventos.filter((evento) => evento.tem_conta_frete).length,
-    totalSemConta: freteEventos.filter((evento) => !evento.tem_conta_frete).length,
   }), [freteEventos]);
+
 
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || freteEventos[0] || null;
 

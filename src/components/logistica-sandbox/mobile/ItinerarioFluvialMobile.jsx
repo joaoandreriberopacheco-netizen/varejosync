@@ -187,7 +187,7 @@ export default function ItinerarioFluvialMobile() {
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
 
   const freteEventos = useMemo(() => {
-    return eventos;
+    return eventos.filter((evento) => evento.tem_conta_frete === true);
   }, [eventos]);
 
   const freteEventosFiltrados = useMemo(() => {
