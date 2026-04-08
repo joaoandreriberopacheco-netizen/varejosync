@@ -64,13 +64,13 @@ export default function ItinerarioFluvialMobile() {
     initialData: []
   });
 
-  const { data: contasPrevistas = [] } = useQuery({
-    queryKey: ['contas-previstas-frete'],
-    queryFn: () => base44.entities.ContaPrevista.list('-data_vencimento', 500),
+  const { data: lancamentosFinanceiros = [] } = useQuery({
+    queryKey: ['lancamentos-financeiros-fretes'],
+    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ referencia_tipo: 'EventosLogisticos' }, '-created_date', 500),
     initialData: []
   });
 
-  const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, contasPrevistas }), [eventosLogisticos, embarques, contasPrevistas]);
+  const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, lancamentosFinanceiros }), [eventosLogisticos, embarques, lancamentosFinanceiros]);
 
   const eventos = useMemo(() => {
     const simulationBaseDate = new Date(`${simulationDate}T12:00:00`);
