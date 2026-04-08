@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Calendar, Sliders } from 'lucide-react';
+import { Calendar, Sliders, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -9,7 +9,9 @@ export default function FluvialFAB({
   viewMode,
   onViewModeChange,
   simulationDate,
-  onSimulationDateChange
+  onSimulationDateChange,
+  embarqueLinkFilter = 'todos',
+  onEmbarqueLinkFilterChange
 }) {
   const [open, setOpen] = useState(false);
 
@@ -74,6 +76,28 @@ export default function FluvialFAB({
                 }}
                 className="text-xs bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
               />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2 uppercase tracking-wide flex items-center gap-2">
+                <Link2 className="w-3.5 h-3.5" />
+                Vínculo de Embarque
+              </label>
+              <div className="space-y-1.5">
+                {[{ id: 'todos', label: 'Todas' }, { id: 'com_vinculo', label: 'Com vínculo' }, { id: 'sem_vinculo', label: 'Sem vínculo' }].map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => onEmbarqueLinkFilterChange?.(mode.id)}
+                    className={`w-full text-left px-3 py-2.5 rounded text-xs font-medium transition-colors ${
+                      embarqueLinkFilter === mode.id
+                        ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Quick Actions */}

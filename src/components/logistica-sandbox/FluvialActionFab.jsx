@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Sliders, Calendar } from 'lucide-react';
+import { Sliders, Calendar, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function FluvialActionFab({ 
   onScrollToToday,
-  onOpenFilters
+  onOpenFilters,
+  embarqueLinkFilter = 'todos',
+  onEmbarqueLinkFilterChange
 }) {
   const [open, setOpen] = useState(false);
 
@@ -37,6 +39,28 @@ export default function FluvialActionFab({
               <Calendar className="w-5 h-5" />
               <span>Ir para Hoje</span>
             </Button>
+            <div className="rounded-2xl bg-muted/50 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Link2 className="w-3.5 h-3.5" />
+                Vínculo de embarque
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[{ id: 'todos', label: 'Todas' }, { id: 'com_vinculo', label: 'Com vínculo' }, { id: 'sem_vinculo', label: 'Sem vínculo' }].map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => onEmbarqueLinkFilterChange?.(mode.id)}
+                    className={`rounded-2xl px-2 py-2 text-[11px] font-medium transition-colors ${
+                      embarqueLinkFilter === mode.id
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'bg-transparent text-muted-foreground'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Button
               onClick={() => {
                 onOpenFilters();

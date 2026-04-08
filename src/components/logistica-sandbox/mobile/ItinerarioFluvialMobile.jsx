@@ -28,6 +28,7 @@ export default function ItinerarioFluvialMobile() {
   const [scrolledToToday, setScrolledToToday] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [freteFilter, setFreteFilter] = useState('todos');
+  const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
   const todayRef = useRef(null);
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -115,6 +116,9 @@ export default function ItinerarioFluvialMobile() {
       }))
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
+        const temVinculoEmbarque = embarques.some((emb) => emb.evento_logistico_id === evento.id);
+        if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
+        if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
         if (searchTerm) {
           const termo = searchTerm.toLowerCase();
           const matchNome = String(evento.embarcacao_nome || '').toLowerCase().includes(termo);
@@ -129,7 +133,7 @@ export default function ItinerarioFluvialMobile() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, viewMode, searchTerm]);
+  }, [eventos, viewMode, searchTerm, embarques, embarqueLinkFilter]);
 
   const timelineItems = useMemo(() => {
     const sortedItems = Object.entries(groupedEventos)
@@ -252,6 +256,8 @@ export default function ItinerarioFluvialMobile() {
                 onViewModeChange={setViewMode}
                 simulationDate={simulationDate}
                 onSimulationDateChange={setSimulationDate}
+                embarqueLinkFilter={embarqueLinkFilter}
+                onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
               />
             </>
           ) : (

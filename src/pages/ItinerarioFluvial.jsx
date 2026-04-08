@@ -26,6 +26,7 @@ export default function ItinerarioFluvial() {
   const [isMobile, setIsMobile] = useState(false);
   const [freteSearchQuery, setFreteSearchQuery] = useState('');
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
@@ -125,6 +126,9 @@ export default function ItinerarioFluvial() {
       })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
+        const temVinculoEmbarque = embarques.some((emb) => emb.evento_logistico_id === evento.id);
+        if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
+        if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
         return true;
       })
       .reduce((acc, evento) => {
@@ -133,7 +137,7 @@ export default function ItinerarioFluvial() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, viewMode]);
+  }, [eventos, viewMode, embarques, embarqueLinkFilter]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -231,6 +235,8 @@ export default function ItinerarioFluvial() {
              <FluvialActionFab 
                onScrollToToday={handleScrollToToday}
                onOpenFilters={() => setShowFilterPanel(true)}
+               embarqueLinkFilter={embarqueLinkFilter}
+               onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
              />
            </>
         ) : routeType === 'Fretes' ? (
