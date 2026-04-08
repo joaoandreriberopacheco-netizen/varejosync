@@ -15,12 +15,13 @@ export default function ProdutosAccessGuard({ children }) {
           return;
         }
         
-        // Admin sempre tem acesso
+        // Admin sempre tem acesso, sem verificações de perfil
         if (user.role === 'admin') {
           setAcessoPermitido(true);
           return;
         }
 
+        // Para não-admins, verificar perfil de acesso
         if (user?.perfil_acesso_id) {
           const perfis = await base44.entities.PerfilDeAcesso.list();
           const perfil = perfis.find(p => p.id === user.perfil_acesso_id);
