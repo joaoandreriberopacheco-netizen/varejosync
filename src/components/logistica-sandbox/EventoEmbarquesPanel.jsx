@@ -5,6 +5,10 @@ function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
 }
 
+function normalizarTexto(valor) {
+  return String(valor || '').trim().toLowerCase();
+}
+
 function criarMapaCustosPedido(embarques = []) {
   const mapa = {};
 
@@ -21,6 +25,10 @@ function criarMapaCustosPedido(embarques = []) {
         ((Number(item.total) || 0) / quantidadeBase)
       ) || 0;
       mapa[item.produto_id] = custoUnitario;
+      const nomeNormalizado = normalizarTexto(item.produto_nome);
+      if (nomeNormalizado && mapa[nomeNormalizado] == null) {
+        mapa[nomeNormalizado] = custoUnitario;
+      }
     });
   });
 
@@ -31,7 +39,7 @@ function resumoEmbarque(embarque, custosPedido = {}) {
   const itens = embarque.itens_embarcados || embarque.itens || [];
   const totalCompra = Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => {
     const quantidade = item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0;
-    const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? 0;
+    const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? custosPedido[normalizarTexto(item.produto_nome)] ?? 0;
     const totalItem = item.total ?? item.valor_total ?? (quantidade * custo);
     return sum + totalItem;
   }, 0);
@@ -73,8 +81,8 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
       </button>
 
       {open && (
-        <div className="mb-2 rounded-2xl bg-[#253042] px-1.5 py-2 shadow-inner">
-          <div className="grid grid-cols-[44px_minmax(0,1fr)_72px] gap-1.5 px-1.5 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
+        <div className="mx-[-1px] mb-2 rounded-2xl bg-[#253042] px-0 py-2 shadow-inner">
+          <div className="grid grid-cols-[42px_minmax(0,1fr)_70px] gap-1 px-0 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
             <span>Qtd</span>
             <span className="text-center">Descrição</span>
             <span className="text-right">Vlr Tot</span>
@@ -82,10 +90,10 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
           <div className="space-y-1">
             {itensOrdenados.map((item, index) => {
               const quantidade = item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0;
-              const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? 0;
+              const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? custosPedido[normalizarTexto(item.produto_nome)] ?? 0;
               const total = item.total ?? item.valor_total ?? (quantidade * custo);
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[44px_minmax(0,1fr)_72px] gap-1.5 px-1.5 py-2 text-[10px] text-white">
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[42px_minmax(0,1fr)_70px] gap-1 px-0 py-2 text-[10px] text-white">
                   <span className="text-[10px] text-white">{quantidade}</span>
                   <div className="min-w-0 text-center">
                     <p className="text-[10px] leading-tight break-words font-normal text-white">{item.produto_nome || 'Item sem descrição'}</p>
