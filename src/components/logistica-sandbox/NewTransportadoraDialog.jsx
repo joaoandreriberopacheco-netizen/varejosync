@@ -36,6 +36,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
       description: 'As viagens foram recalculadas automaticamente a partir da saída de referência.',
     });
     onCreated?.({ ...novaTransportadora, saida_referencia: saidaReferencia });
+    await base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 1);
     onOpenChange(false);
   };
 
