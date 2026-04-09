@@ -39,15 +39,15 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
               <button
                 type="button"
                 onClick={() => onUpdateItem(item.produto_id, { quantidade: Math.max(1, Number(item.quantidade || 1) - 1) })}
-                className="w-10 h-10 flex items-center justify-center text-gray-500"
+                className="w-12 h-14 md:w-10 md:h-10 flex items-center justify-center text-gray-500"
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="w-10 text-center text-sm font-semibold text-gray-900 dark:text-white">{item.quantidade}</span>
+              <span className="w-12 md:w-10 text-center text-base md:text-sm font-semibold text-gray-900 dark:text-white">{item.quantidade}</span>
               <button
                 type="button"
                 onClick={() => onUpdateItem(item.produto_id, { quantidade: Number(item.quantidade || 1) + 1 })}
-                className="w-10 h-10 flex items-center justify-center text-gray-500"
+                className="w-12 h-14 md:w-10 md:h-10 flex items-center justify-center text-gray-500"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -62,7 +62,8 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
                   min={item.preco_minimo}
                   value={item.preco_unitario}
                   onChange={(e) => onUpdateItem(item.produto_id, { preco_unitario: e.target.value })}
-                  className="h-10 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-sm"
+                  inputMode="decimal"
+                  className="h-14 md:h-10 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-base md:text-sm"
                 />
               </div>
               <div>

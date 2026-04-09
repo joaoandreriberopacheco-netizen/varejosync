@@ -63,7 +63,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
         <QuickBudgetProductSearch
           query={query}
           onQueryChange={setQuery}
@@ -102,7 +102,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[88vh] rounded-t-[28px] border-0 bg-transparent p-0 overflow-hidden">
+        <DrawerContent className="h-[88vh] max-h-[88vh] rounded-t-[28px] border-0 bg-transparent p-0 overflow-hidden">
           {content}
         </DrawerContent>
       </Drawer>

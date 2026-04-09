@@ -5,8 +5,9 @@ import { formatCurrency, matchesProduct } from './quickBudgetUtils';
 
 export default function QuickBudgetProductSearch({ query, onQueryChange, produtos, onAddProduct }) {
   const resultados = useMemo(() => {
-    if (!query?.trim()) return produtos.slice(0, 8);
-    return produtos.filter((produto) => matchesProduct(produto, query)).slice(0, 8);
+    const ordenados = [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+    if (!query?.trim()) return ordenados.slice(0, 8);
+    return ordenados.filter((produto) => matchesProduct(produto, query)).slice(0, 8);
   }, [produtos, query]);
 
   return (
@@ -17,7 +18,8 @@ export default function QuickBudgetProductSearch({ query, onQueryChange, produto
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Buscar produto, código ou marca"
-          className="h-12 pl-11 pr-4 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-sm"
+          inputMode="search"
+          className="h-14 md:h-12 pl-11 pr-4 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-base md:text-sm"
         />
       </div>
 
