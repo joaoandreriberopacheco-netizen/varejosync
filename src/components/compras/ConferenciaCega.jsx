@@ -295,6 +295,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
             referencia_numero: pedido.numero
           });
         }
+        await base44.functions.invoke('recalcularEstoqueProduto', { produtoId: item.produto_id });
       }
 
       // Atualizar status do pedido

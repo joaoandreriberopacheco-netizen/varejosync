@@ -222,6 +222,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             referencia_id: pedido.id,
             referencia_numero: pedido.numero
           });
+          await base44.functions.invoke('recalcularEstoqueProduto', { produtoId });
         }
       }
 
