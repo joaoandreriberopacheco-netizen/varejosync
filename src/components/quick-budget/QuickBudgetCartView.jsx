@@ -1,15 +1,11 @@
 import React from 'react';
-import { Eye, MessageCircle, ShoppingCart } from 'lucide-react';
+import { Check, MessageCircle, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from './quickBudgetUtils';
 
-export default function QuickBudgetCartView({ items, summary }) {
+export default function QuickBudgetCartView({ items, summary, onClose }) {
   if (items.length === 0) {
-    return (
-      <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm px-4 py-10 text-center text-sm text-gray-400">
-        O carrinho vai aparecer aqui depois dos itens salvos.
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -40,8 +36,12 @@ export default function QuickBudgetCartView({ items, summary }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-12 rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-none text-gray-700 dark:text-gray-200">
-          <Eye className="w-4 h-4 mr-2" /> Ver carrinho
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className="h-12 rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-none text-gray-700 dark:text-gray-200"
+        >
+          <Check className="w-4 h-4 mr-2" /> Concluir
         </Button>
         <Button className="h-12 rounded-2xl bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 shadow-none">
           <MessageCircle className="w-4 h-4 mr-2" /> Compartilhar
@@ -50,7 +50,7 @@ export default function QuickBudgetCartView({ items, summary }) {
 
       <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
         <ShoppingCart className="w-4 h-4" />
-        Depois de salvar um item, o foco volta para a busca do próximo produto.
+        Adicionou ao carrinho e a busca volta pronta para o próximo produto.
       </div>
     </div>
   );

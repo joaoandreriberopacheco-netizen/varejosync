@@ -6,9 +6,11 @@ import { formatCurrency, matchesProduct } from './quickBudgetUtils';
 export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, onAddProduct, onSubmitFirstResult }) {
   const resultados = useMemo(() => {
     const ordenados = [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
-    if (!query?.trim()) return ordenados.slice(0, 8);
+    if (!query?.trim()) return [];
     return ordenados.filter((produto) => matchesProduct(produto, query)).slice(0, 8);
   }, [produtos, query]);
+
+  const shouldShowResults = query?.trim().length > 0;
 
   return (
     <div className="space-y-3">
@@ -30,39 +32,41 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
         />
       </div>
 
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-        {resultados.map((produto) => (
-          <button
-            key={produto.id}
-            type="button"
-            onClick={() => onAddProduct(produto)}
-            className="w-full rounded-2xl bg-white dark:bg-gray-900 shadow-sm px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                <Plus className="w-4 h-4 text-gray-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white break-words">{produto.nome}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <span>Estoque: {Number(produto.estoque_atual || 0)}</span>
-                  {produto.codigo_interno && <span>#{produto.codigo_interno}</span>}
+      {shouldShowResults && (
+        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+          {resultados.map((produto) => (
+            <button
+              key={produto.id}
+              type="button"
+              onClick={() => onAddProduct(produto)}
+              className="w-full rounded-2xl bg-white dark:bg-gray-900 shadow-sm px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white break-words">{produto.nome}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>Estoque: {Number(produto.estoque_atual || 0)}</span>
+                    {produto.codigo_interno && <span>#{produto.codigo_interno}</span>}
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(produto.preco_venda_padrao)}</p>
+                  <p className="text-xs text-gray-400">mín. {formatCurrency(produto.preco_custo_calculado)}</p>
                 </div>
               </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(produto.preco_venda_padrao)}</p>
-                <p className="text-xs text-gray-400">mín. {formatCurrency(produto.preco_custo_calculado)}</p>
-              </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
 
-        {resultados.length === 0 && (
-          <div className="rounded-2xl bg-white dark:bg-gray-900 shadow-sm px-4 py-6 text-center text-sm text-gray-400">
-            Nenhum produto encontrado
-          </div>
-        )}
-      </div>
+          {resultados.length === 0 && (
+            <div className="rounded-2xl bg-white dark:bg-gray-900 shadow-sm px-4 py-6 text-center text-sm text-gray-400">
+              Nenhum produto encontrado
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -119,30 +119,28 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
           onSubmitFirstResult={handleSelectProduct}
         />
 
-        <QuickBudgetFlowItemEditor
-          selectedProduct={selectedProduct}
-          stage={flowStage}
-          quantity={quantityDraft}
-          price={priceDraft}
-          onQuantityChange={setQuantityDraft}
-          onPriceChange={setPriceDraft}
-          onNext={handleNextStep}
-          onSave={handleSaveItem}
-          quantityInputRef={quantityInputRef}
-          priceInputRef={priceInputRef}
-        />
+        {selectedProduct && (
+          <QuickBudgetFlowItemEditor
+            selectedProduct={selectedProduct}
+            stage={flowStage}
+            quantity={quantityDraft}
+            price={priceDraft}
+            onQuantityChange={setQuantityDraft}
+            onPriceChange={setPriceDraft}
+            onNext={handleNextStep}
+            onSave={handleSaveItem}
+            quantityInputRef={quantityInputRef}
+            priceInputRef={priceInputRef}
+          />
+        )}
 
         <QuickBudgetCartView
           items={items}
           summary={summary}
+          onClose={() => onOpenChange(false)}
         />
       </div>
 
-      <div className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Fluxo: produto → quantidade → próximo → preço livre → salvar carrinho.
-        </p>
-      </div>
     </div>
   );
 
