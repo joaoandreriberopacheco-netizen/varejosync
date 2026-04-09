@@ -40,7 +40,6 @@ import ConsumoInterno from '@/pages/ConsumoInterno';
 import AuditoriaPins from '@/pages/AuditoriaPins';
 import AgefinConsulta from '@/pages/AgefinConsulta';
 import ItinerarioFluvial from '@/pages/ItinerarioFluvial.jsx';
-import QuickBudgetShare from '@/pages/QuickBudgetShare.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -202,7 +201,6 @@ const AuthenticatedApp = () => {
       <Route path="/AuditoriaPins" element={<LayoutWrapper currentPageName="AuditoriaPins"><AuditoriaPins /></LayoutWrapper>} />
       <Route path="/AgefinConsulta" element={<LayoutWrapper currentPageName="AgefinConsulta"><AgefinConsulta /></LayoutWrapper>} />
       <Route path="/ItinerarioFluvial" element={<LayoutWrapper currentPageName="ItinerarioFluvial"><ItinerarioFluvial /></LayoutWrapper>} />
-      <Route path="/quick-budget-share" element={<QuickBudgetShare />} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>
