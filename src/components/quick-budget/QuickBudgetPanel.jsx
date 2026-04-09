@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { X } from 'lucide-react';
-import shareQuickBudgetPdf from '@/functions/shareQuickBudgetPdf';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
@@ -99,7 +98,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     if (items.length === 0 || isSharing) return;
 
     setIsSharing(true);
-    const response = await shareQuickBudgetPdf({ items, summary });
+    const response = await base44.functions.invoke('shareQuickBudgetPdf', { items, summary });
     const blob = new Blob([response.data], { type: 'application/pdf' });
     const file = new File([blob], 'orcamento-mobile.pdf', { type: 'application/pdf' });
 
