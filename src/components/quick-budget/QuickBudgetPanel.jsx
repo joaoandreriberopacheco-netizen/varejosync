@@ -38,7 +38,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   useEffect(() => {
     if (!open) {
-      resetFlow();
+      resetPanel();
       return;
     }
     setTimeout(() => searchInputRef.current?.focus(), 50);
@@ -58,9 +58,13 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     setQuantityDraft('1');
     setPriceDraft('0');
     setQuery('');
+    setTimeout(() => searchInputRef.current?.focus(), 50);
+  };
+
+  const resetPanel = () => {
+    resetFlow();
     setItems([]);
     setIsSharing(false);
-    setTimeout(() => searchInputRef.current?.focus(), 50);
   };
 
   const handleSaveItem = () => {
@@ -136,7 +140,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         <button
           type="button"
           onClick={() => {
-            resetFlow();
+            resetPanel();
             onOpenChange(false);
           }}
           className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500"
@@ -174,7 +178,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
           items={items}
           summary={summary}
           onClose={() => {
-            resetFlow();
+            resetPanel();
             onOpenChange(false);
           }}
           onShare={handleShare}
