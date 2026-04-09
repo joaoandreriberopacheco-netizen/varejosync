@@ -46,6 +46,7 @@ import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
+import QuickBudgetLauncher from '@/components/quick-budget/QuickBudgetLauncher';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -382,6 +383,7 @@ export default function Layout({ children, currentPageName }) {
             onExternalClose={() => setShowMobileUserMenu(false)}
           />
         )}
+        {!isFullscreen && <QuickBudgetLauncher />}
       </div>
       <Toaster />
       {showPinSetup && (
