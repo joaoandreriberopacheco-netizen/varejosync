@@ -79,8 +79,8 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
     }
     if (stage.key === 'Aprovado' && isCompleted) {
       return isActive
-        ? 'bg-emerald-600 text-white ring-2 ring-offset-1 ring-emerald-400'
-        : 'bg-emerald-600 text-white';
+        ? 'bg-lime-500 text-white ring-2 ring-offset-1 ring-lime-300'
+        : 'bg-lime-500 text-white';
     }
     if (stage.key === 'Concluído' && isCompleted) {
       return isActive
@@ -99,7 +99,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
   const getLineClass = (idx) => {
     if (idx < currentIndex) {
       // Linha até "Aprovado" fica verde
-      if (idx >= 1 && currentIndex >= 2) return 'bg-emerald-500';
+      if (idx >= 1 && currentIndex >= 2) return 'bg-lime-500';
       return 'bg-gray-700 dark:bg-gray-300';
     }
     return 'bg-gray-100 dark:bg-gray-800';

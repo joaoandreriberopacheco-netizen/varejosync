@@ -25,7 +25,7 @@ const STATUS_CONFIG = {
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
-  'Aprovado': { dot: 'bg-emerald-400 dark:bg-emerald-400', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
+  'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Cancelado': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
@@ -187,6 +187,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${
                 isPisca ? 'animate-blink-led' :
                 isVerde ? 'bg-emerald-500 dark:bg-emerald-400' :
+                displayStatus === 'Aprovado' ? 'bg-lime-400 dark:bg-lime-400' :
                 isCyan ? 'bg-cyan-400 dark:bg-cyan-400' :
                 isVermelho ? 'bg-red-500 dark:bg-red-500' :
                 isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
