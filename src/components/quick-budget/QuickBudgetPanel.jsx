@@ -6,7 +6,6 @@ import { X } from 'lucide-react';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
-import { buildQuickBudgetShareHtml } from './quickBudgetSharePage';
 import { buildQuickBudgetItem, getBudgetSummary, getFullPrice, recalculateItem } from './quickBudgetUtils';
 
 export default function QuickBudgetPanel({ open, onOpenChange }) {
@@ -104,13 +103,26 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     if (items.length === 0 || isSharing) return;
 
     setIsSharing(true);
-    const html = buildQuickBudgetShareHtml({ items, summary });
-    const shareWindow = window.open('', '_blank');
-    if (shareWindow) {
-      shareWindow.document.open();
-      shareWindow.document.write(html);
-      shareWindow.document.close();
-    }
+    const shareToken = `qb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await base44.entities.QuickBudgetShare.create({
+      share_token: shareToken,
+      title: 'Orçamento rápido',
+      items: items.map((item) => ({
+        produto_nome: item.produto_nome,
+        quantidade: Number(item.quantidade || 0),
+        preco_unitario: Number(item.preco_unitario || 0),
+        total: Number(item.total || 0),
+      })),
+      summary: {
+        subtotal: Number(summary.subtotal || 0),
+        desconto: Number(summary.desconto || 0),
+        total: Number(summary.total || 0),
+        quantidadeItens: Number(summary.quantidadeItens || 0),
+      },
+    });
+
+    const shareUrl = `${window.location.origin}/quick-budget-share?token=${shareToken}`;
+    window.open(shareUrl, '_blank');
     setIsSharing(false);
   };
 
