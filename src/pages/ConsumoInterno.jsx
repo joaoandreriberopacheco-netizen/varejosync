@@ -105,6 +105,7 @@ export default function ConsumoInternoPage() {
   const addItem = (novoItem) => {
     if (!novoItem?.produto_id) return;
     setFormData((prev) => ({ ...prev, itens: [...prev.itens, novoItem] }));
+    setShowProdutoSelector(false);
   };
 
   const uploadAttachment = async (file, tipoDocumento, referenciaId, referenciaNumero) => {
@@ -270,7 +271,7 @@ export default function ConsumoInternoPage() {
           </DialogContent>
         </Dialog>
         <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
-        <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={(item) => { addItem(item); setShowProdutoSelector(false); }} />
+        <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={addItem} />
       </>
     );
   }

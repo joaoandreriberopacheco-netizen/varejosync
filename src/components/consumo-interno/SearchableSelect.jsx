@@ -66,14 +66,8 @@ export default function SearchableSelect({
   return (
     <div ref={containerRef} className="relative flex-1 min-w-0 w-full">
       {/* Trigger */}
-      <div
-        onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) inputRef.current?.focus();
-        }}
-        className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-gray-900 cursor-pointer overflow-hidden"
-      >
-        <Search className="h-4 w-4 text-gray-400" />
+      <div className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-gray-900 overflow-hidden">
+        <Search className="h-4 w-4 shrink-0 text-gray-400" />
         <input
           ref={inputRef}
           type="text"
@@ -81,15 +75,17 @@ export default function SearchableSelect({
           value={isOpen ? search : ''}
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setIsOpen(true)}
-          className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none dark:text-white dark:placeholder-gray-400"
+          onClick={() => setIsOpen(true)}
+          className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none dark:text-white dark:placeholder-gray-400"
         />
         {selectedLabel && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleClear();
             }}
-            className="flex h-6 w-6 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-800"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-800"
           >
             <X className="h-4 w-4 text-gray-500" />
           </button>

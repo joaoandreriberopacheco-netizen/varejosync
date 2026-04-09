@@ -256,7 +256,10 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
   if (step === 1) return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-5">
-        <button type="button" onClick={onOpenSelector} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+        <button type="button" onClick={() => {
+          console.log('consumo:abrir-seletor-item');
+          onOpenSelector();
+        }} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
           <Search className="h-5 w-5" /> Buscar e adicionar item
         </button>
         <div className="space-y-3">
