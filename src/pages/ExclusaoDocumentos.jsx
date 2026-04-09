@@ -12,6 +12,7 @@ const TIPOS = [
   { value: 'PedidoCompra', label: 'Pedido de Compra', icon: Package, cor: 'blue' },
   { value: 'LancamentoFinanceiro', label: 'Lançamento Financeiro', icon: DollarSign, cor: 'purple' },
   { value: 'MovimentacaoEstoque', label: 'Movimentação de Estoque', icon: FileText, cor: 'amber' },
+  { value: 'Embarque', label: 'Recebimento de Embarque', icon: Package, cor: 'blue' },
   { value: 'AgendaLogistica', label: 'Agenda de Entrega', icon: Calendar, cor: 'red' },
 ];
 
@@ -41,6 +42,17 @@ async function buscarFilhos(tipo, doc) {
     ]);
     lancamentos.forEach(l => filhos.push({ tipo: 'LancamentoFinanceiro', label: `Lançamento: ${l.descricao}`, id: l.id }));
     movEst.forEach(m => filhos.push({ tipo: 'MovimentacaoEstoque', label: `Mov. Estoque: ${m.produto_nome}`, id: m.id }));
+  }
+
+  if (tipo === 'Embarque') {
+    const movEst = await base44.entities.MovimentacaoEstoque.filter({
+      referencia_tipo: 'PedidoCompra',
+      referencia_id: doc.pedido_compra_id,
+    });
+    const produtoIds = new Set((doc.itens || doc.itens_embarcados || []).map((item) => item.produto_id));
+    movEst
+      .filter((m) => produtoIds.has(m.produto_id) && m.tipo === 'Entrada' && m.motivo === 'Compra')
+      .forEach((m) => filhos.push({ tipo: 'MovimentacaoEstoque', label: `Mov. Estoque: ${m.produto_nome}`, id: m.id }));
   }
 
   return filhos;
@@ -83,6 +95,7 @@ export default function ExclusaoDocumentosPage() {
     else if (tipoSelecionado === 'PedidoCompra') docs = await base44.entities.PedidoCompra.list();
     else if (tipoSelecionado === 'LancamentoFinanceiro') docs = await base44.entities.LancamentoFinanceiro.list();
     else if (tipoSelecionado === 'MovimentacaoEstoque') docs = await base44.entities.MovimentacaoEstoque.list();
+    else if (tipoSelecionado === 'Embarque') docs = await base44.entities.Embarque.list();
     else if (tipoSelecionado === 'AgendaLogistica') docs = await base44.entities.AgendaLogistica.list();
 
     const encontrado = docs.find(d =>
@@ -123,7 +136,7 @@ export default function ExclusaoDocumentosPage() {
 
   const getDocLabel = (doc) => {
     if (!doc) return '';
-    return doc.numero || doc.descricao?.slice(0, 40) || doc.produto_nome || doc.pedido_numero || doc.id?.slice(0, 8);
+    return doc.codigo_exibicao || doc.numero || doc.descricao?.slice(0, 40) || doc.produto_nome || doc.pedido_numero || doc.id?.slice(0, 8);
   };
 
   return (

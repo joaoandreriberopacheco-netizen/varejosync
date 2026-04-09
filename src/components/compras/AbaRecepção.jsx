@@ -40,7 +40,7 @@ export default function AbaRecepção({ pedido }) {
         referencia_tipo: 'PedidoCompra',
         referencia_id: pedido.id
       }, '-created_date', 100);
-      setMovimentos(movs || []);
+      setMovimentos((movs || []).filter((mov) => mov.tipo === 'Entrada' && mov.motivo === 'Compra'));
     } catch (error) {
       console.error('Erro ao carregar movimentos:', error);
     } finally {
@@ -167,18 +167,27 @@ export default function AbaRecepção({ pedido }) {
                 </span>
 
                 {/* Movimentos de Estoque vinculados */}
-                {movimentos.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
-                      <Warehouse className="w-3 h-3" /> Movimento de Estoque
-                    </p>
-                    {movimentos.map(mov => (
-                      <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">{mov.quantidade}</span> un. -  {mov.produto_nome}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {(() => {
+                  const movimentosDoEmbarque = movimentos.filter((mov) => {
+                    const itemDoEmbarque = itensEmbarque.find((item) => item.produto_id === mov.produto_id || item.produto_id_recebido_diferente === mov.produto_id);
+                    return !!itemDoEmbarque;
+                  });
+
+                  if (!movimentosDoEmbarque.length) return null;
+
+                  return (
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
+                        <Warehouse className="w-3 h-3" /> Movimento de Estoque
+                      </p>
+                      {movimentosDoEmbarque.map(mov => (
+                        <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">{mov.quantidade}</span> un. - {mov.produto_nome}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
                 </div>
 
                 {/* Ação - Play Icon */}
