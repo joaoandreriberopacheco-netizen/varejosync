@@ -308,7 +308,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-transparent p-0 overflow-hidden z-[120]">
+        <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-transparent p-0 overflow-hidden z-[260]">
           {content}
         </DrawerContent>
       </Drawer>
@@ -317,7 +317,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 border-0 rounded-none overflow-hidden shadow-2xl bg-transparent z-[120]">
+      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 border-0 rounded-none overflow-hidden shadow-2xl bg-transparent z-[260]">
         <DialogHeader className="hidden" />
         {content}
       </DialogContent>

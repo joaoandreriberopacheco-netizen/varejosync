@@ -57,7 +57,7 @@ export default function QuickBudgetLauncher() {
     <>
       {isMobile && (
         <div
-          className="fixed left-0 bottom-28 z-40"
+          className="fixed left-0 bottom-28 z-[250]"
           style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`, transition: dragging ? 'none' : 'transform 180ms ease-out' }}
         >
           <button
