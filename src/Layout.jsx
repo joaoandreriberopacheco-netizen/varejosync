@@ -383,8 +383,8 @@ export default function Layout({ children, currentPageName }) {
             onExternalClose={() => setShowMobileUserMenu(false)}
           />
         )}
-        {!isFullscreen && <QuickBudgetLauncher />}
       </div>
+      <QuickBudgetLauncher />
       <Toaster />
       {showPinSetup && (
         <PinSetupDialog
