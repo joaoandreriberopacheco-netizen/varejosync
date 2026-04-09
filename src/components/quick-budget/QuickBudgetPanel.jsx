@@ -125,8 +125,9 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
       },
     });
 
-    const shareUrl = `${window.location.origin}/quick-budget-share?token=${shareToken}`;
-    window.open(shareUrl, '_blank');
+    const shareUrl = new URL('/quick-budget-share', window.location.href);
+    shareUrl.searchParams.set('token', shareToken);
+    window.open(shareUrl.toString(), '_blank');
     setIsSharing(false);
   };
 

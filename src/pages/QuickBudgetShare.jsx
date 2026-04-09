@@ -29,6 +29,10 @@ export default function QuickBudgetShare() {
     return <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center text-sm text-gray-500">Carregando orçamento...</div>;
   }
 
+  if (!token) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center text-sm text-gray-500">Link do orçamento inválido.</div>;
+  }
+
   if (!data) {
     return <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center text-sm text-gray-500">Orçamento não encontrado.</div>;
   }
