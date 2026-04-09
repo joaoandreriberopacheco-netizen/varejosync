@@ -203,32 +203,36 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </Field>
         <Field label="Destinação">
           <div className="flex items-stretch gap-2 min-w-0">
-            <SearchableSelect
-              items={destinacoes || []}
-              value={formData.destinacao}
-              onChange={(v) => setFormData((p) => ({ ...p, destinacao: v }))}
-              placeholder="Buscar destino"
-              onAddNew={(name) => setNovoCadastro({ tipo: 'destinacao', valor: name })}
-              displayField="nome"
-              idField="id"
-            />
-            <button type="button" onClick={() => setNovoCadastro({ tipo: 'destinacao', valor: '' })} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
+            <div className="min-w-0 flex-1">
+              <SearchableSelect
+                items={destinacoes || []}
+                value={formData.destinacao}
+                onChange={(v) => setFormData((p) => ({ ...p, destinacao: v }))}
+                placeholder="Buscar destino"
+                onAddNew={(name) => setNovoCadastro({ tipo: 'destinacao', valor: name })}
+                displayField="nome"
+                idField="id"
+              />
+            </div>
+            <button type="button" onClick={() => setNovoCadastro({ tipo: 'destinacao', valor: '' })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
               <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
         </Field>
         <Field label="Interveniente / quem recebeu">
           <div className="flex items-stretch gap-2 min-w-0">
-            <SearchableSelect
-              items={responsaveis || []}
-              value={formData.responsavel_recebimento}
-              onChange={(v) => setFormData((p) => ({ ...p, responsavel_recebimento: v }))}
-              placeholder="Buscar interveniente"
-              onAddNew={(name) => setNovoCadastro({ tipo: 'responsavel', valor: name })}
-              displayField="nome"
-              idField="id"
-            />
-            <button type="button" onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
+            <div className="min-w-0 flex-1">
+              <SearchableSelect
+                items={responsaveis || []}
+                value={formData.responsavel_recebimento}
+                onChange={(v) => setFormData((p) => ({ ...p, responsavel_recebimento: v }))}
+                placeholder="Buscar interveniente"
+                onAddNew={(name) => setNovoCadastro({ tipo: 'responsavel', valor: name })}
+                displayField="nome"
+                idField="id"
+              />
+            </div>
+            <button type="button" onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
               <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
