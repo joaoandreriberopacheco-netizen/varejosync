@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
+import { buildQuickBudgetShareHtml } from './quickBudgetSharePage';
 import { buildQuickBudgetItem, getBudgetSummary, getFullPrice, recalculateItem } from './quickBudgetUtils';
 
 export default function QuickBudgetPanel({ open, onOpenChange }) {
@@ -37,7 +38,10 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   const summary = useMemo(() => getBudgetSummary(items), [items]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      resetFlow();
+      return;
+    }
     setTimeout(() => searchInputRef.current?.focus(), 50);
   }, [open]);
 
@@ -55,6 +59,8 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     setQuantityDraft('1');
     setPriceDraft('0');
     setQuery('');
+    setItems([]);
+    setIsSharing(false);
     setTimeout(() => searchInputRef.current?.focus(), 50);
   };
 
@@ -98,23 +104,13 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     if (items.length === 0 || isSharing) return;
 
     setIsSharing(true);
-    const response = await base44.functions.invoke('shareQuickBudgetPdf', { items, summary });
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    const file = new File([blob], 'orcamento-mobile.pdf', { type: 'application/pdf' });
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        title: 'Orçamento rápido',
-        text: 'Segue o orçamento em PDF.',
-        files: [file],
-      });
-      setIsSharing(false);
-      return;
+    const html = buildQuickBudgetShareHtml({ items, summary });
+    const shareWindow = window.open('', '_blank');
+    if (shareWindow) {
+      shareWindow.document.open();
+      shareWindow.document.write(html);
+      shareWindow.document.close();
     }
-
-    const fileUrl = URL.createObjectURL(blob);
-    window.open(`https://wa.me/?text=${encodeURIComponent('Segue o orçamento em PDF: ' + fileUrl)}`, '_blank');
-    setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
     setIsSharing(false);
   };
 
@@ -127,7 +123,10 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         </div>
         <button
           type="button"
-          onClick={() => onOpenChange(false)}
+          onClick={() => {
+            resetFlow();
+            onOpenChange(false);
+          }}
           className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500"
         >
           <X className="w-4 h-4" />
@@ -162,7 +161,10 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         <QuickBudgetCartView
           items={items}
           summary={summary}
-          onClose={() => onOpenChange(false)}
+          onClose={() => {
+            resetFlow();
+            onOpenChange(false);
+          }}
           onShare={handleShare}
           isSharing={isSharing}
         />
