@@ -17,41 +17,12 @@ function resolveMinPrice(product) {
   return product?.preco_custo_calculado || 0;
 }
 
-function ProductRow({ product, tableFactor, onAdd }) {
-  const fullPrice = resolvePrice(product, tableFactor);
-  const minPrice = resolveMinPrice(product);
-
-  return (
-    <button
-      onClick={() => onAdd(product)}
-      className="w-full rounded-2xl bg-white/90 dark:bg-[#23212a] px-4 py-3 text-left shadow-sm transition hover:bg-gray-50 dark:hover:bg-gray-800"
-    >
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
-          <Package className="h-4 w-4 text-gray-400" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{product.nome}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <span>Estoque {fmtNumber(product.estoque_atual)}</span>
-            {product.codigo_interno && <span>#{product.codigo_interno}</span>}
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-semibold text-gray-900 dark:text-gray-100">{fmtCurrency(fullPrice)}</span>
-            <span className="text-gray-400 line-through">{fmtCurrency(minPrice)}</span>
-          </div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function QuoteRow({ item, onQtyChange, onDiscountChange, onRemove }) {
+function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove }) {
   const subtotal = item.price * item.quantity;
   const total = Math.max(subtotal - item.discount, 0);
 
   return (
-    <div className="rounded-2xl bg-white/90 dark:bg-[#23212a] p-4 shadow-sm">
+    <div className="rounded-2xl bg-white/95 dark:bg-[#233044] p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
@@ -66,11 +37,11 @@ function QuoteRow({ item, onQtyChange, onDiscountChange, onRemove }) {
         </button>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/80 p-2.5">
-          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Quantidade</div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-gray-50 dark:bg-[#2b3446] p-2.5">
+          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-300">Quantidade</div>
           <div className="flex items-center gap-2">
-            <button onClick={() => onQtyChange(item.id, item.quantity - 1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-gray-900 text-gray-500 shadow-sm">
+            <button onClick={() => onQtyChange(item.id, item.quantity - 1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-[#1f2737] text-gray-600 dark:text-gray-200 shadow-sm">
               <Minus className="h-4 w-4" />
             </button>
             <Input
@@ -79,16 +50,32 @@ function QuoteRow({ item, onQtyChange, onDiscountChange, onRemove }) {
               value={item.quantity}
               min="1"
               onChange={(e) => onQtyChange(item.id, e.target.value)}
-              className="h-9 border-0 bg-transparent px-0 text-center text-sm font-semibold shadow-none focus-visible:ring-0"
+              className="h-9 border-0 bg-transparent px-0 text-center text-sm font-semibold text-gray-900 shadow-none focus-visible:ring-0 dark:text-white"
             />
-            <button onClick={() => onQtyChange(item.id, item.quantity + 1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-gray-900 text-gray-500 shadow-sm">
+            <button onClick={() => onQtyChange(item.id, item.quantity + 1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-[#1f2737] text-gray-600 dark:text-gray-200 shadow-sm">
               <Plus className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/80 p-2.5">
-          <div className="mb-2 flex items-center gap-1 text-[11px] uppercase tracking-wide text-gray-400">
+        <div className="rounded-2xl bg-gray-50 dark:bg-[#2b3446] p-2.5">
+          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-300">Preço unit.</div>
+          <div className="relative">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={item.minPrice}
+              value={item.price}
+              onChange={(e) => onPriceChange(item.id, e.target.value)}
+              className="h-9 border-0 bg-white dark:bg-[#1f2737] pr-10 text-right text-sm font-semibold text-gray-900 shadow-sm focus-visible:ring-0 dark:text-white"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-300">R$</span>
+          </div>
+          {item.freePrice && <div className="mt-1 text-[10px] text-amber-600 dark:text-amber-300">Preço livre</div>}
+        </div>
+
+        <div className="rounded-2xl bg-gray-50 dark:bg-[#2b3446] p-2.5">
+          <div className="mb-2 flex items-center gap-1 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-300">
             <Percent className="h-3 w-3" /> Desconto
           </div>
           <div className="relative">
@@ -98,9 +85,9 @@ function QuoteRow({ item, onQtyChange, onDiscountChange, onRemove }) {
               min="0"
               value={item.discount}
               onChange={(e) => onDiscountChange(item.id, e.target.value)}
-              className="h-9 border-0 bg-white dark:bg-gray-900 pr-10 text-right text-sm font-semibold shadow-sm focus-visible:ring-0"
+              className="h-9 border-0 bg-white dark:bg-[#1f2737] pr-10 text-right text-sm font-semibold text-gray-900 shadow-sm focus-visible:ring-0 dark:text-white"
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">R$</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-300">R$</span>
           </div>
         </div>
       </div>
@@ -119,6 +106,9 @@ function BudgetContent({ onClose, isMobile }) {
   const [search, setSearch] = useState('');
   const [items, setItems] = useState([]);
   const [customerName, setCustomerName] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedQuantity, setSelectedQuantity] = useState('1');
+  const [selectedPrice, setSelectedPrice] = useState('0');
 
   useEffect(() => {
     const load = async () => {
@@ -138,32 +128,50 @@ function BudgetContent({ onClose, isMobile }) {
 
   const filteredProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return products.slice(0, 25);
+    if (!term) return [];
     return products.filter((product) =>
       product.nome?.toLowerCase().includes(term) ||
       product.codigo_interno?.toLowerCase().includes(term) ||
       product.codigo_barras?.toLowerCase().includes(term)
-    ).slice(0, 25);
+    ).slice(0, 8);
   }, [products, search]);
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setSelectedProduct(null);
+      return;
+    }
+    const first = filteredProducts[0];
+    if (!first) return;
+    setSelectedProduct(first);
+    setSelectedQuantity('1');
+    setSelectedPrice(String(resolvePrice(first, priceTable?.fator_ajuste || 1)));
+  }, [search, filteredProducts, priceTable]);
 
   const quoteTotal = useMemo(() => items.reduce((sum, item) => sum + Math.max((item.price * item.quantity) - item.discount, 0), 0), [items]);
 
-  const handleAdd = (product) => {
-    const existing = items.find((item) => item.id === product.id);
+  const handleAdd = () => {
+    if (!selectedProduct) return;
+    const quantity = Math.max(Number(selectedQuantity) || 1, 1);
+    const price = Math.max(Number(selectedPrice) || 0, selectedProduct.preco_livre ? 0 : resolveMinPrice(selectedProduct));
+    const existing = items.find((item) => item.id === selectedProduct.id);
     if (existing) {
-      setItems((current) => current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-      return;
+      setItems((current) => current.map((item) => item.id === selectedProduct.id ? { ...item, quantity: item.quantity + quantity, price } : item));
+    } else {
+      setItems((current) => [...current, {
+        id: selectedProduct.id,
+        name: selectedProduct.nome,
+        stock: selectedProduct.estoque_atual || 0,
+        quantity,
+        price,
+        minPrice: resolveMinPrice(selectedProduct),
+        discount: 0,
+        freePrice: !!selectedProduct.preco_livre,
+      }]);
     }
-
-    setItems((current) => [...current, {
-      id: product.id,
-      name: product.nome,
-      stock: product.estoque_atual || 0,
-      quantity: 1,
-      price: resolvePrice(product, priceTable?.fator_ajuste || 1),
-      minPrice: resolveMinPrice(product),
-      discount: 0,
-    }]);
+    setSearch('');
+    setSelectedProduct(null);
+    setSelectedQuantity('1');
   };
 
   const handleQtyChange = (id, value) => {
@@ -174,6 +182,11 @@ function BudgetContent({ onClose, isMobile }) {
   const handleDiscountChange = (id, value) => {
     const discount = Math.max(Number(value) || 0, 0);
     setItems((current) => current.map((item) => item.id === id ? { ...item, discount } : item));
+  };
+
+  const handlePriceChange = (id, value) => {
+    const price = Math.max(Number(value) || 0, 0);
+    setItems((current) => current.map((item) => item.id === id ? { ...item, price } : item));
   };
 
   const handleRemove = (id) => setItems((current) => current.filter((item) => item.id !== id));
@@ -250,33 +263,80 @@ function BudgetContent({ onClose, isMobile }) {
 
       <div className="grid flex-1 gap-4 overflow-hidden px-4 pb-4 md:grid-cols-[1.05fr_0.95fr]">
         <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
-          <div className="rounded-3xl bg-white/90 p-3 shadow-sm dark:bg-[#23212a]">
+          <div className="rounded-3xl bg-white/95 p-3 shadow-sm dark:bg-[#233044]">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-300" />
               <Input
                 autoFocus={!isMobile}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar nome, código ou barras"
-                className="h-11 rounded-2xl border-0 bg-gray-50 pl-10 shadow-none focus-visible:ring-0 dark:bg-gray-800"
+                className="h-11 rounded-2xl border-0 bg-gray-50 pl-10 text-gray-900 shadow-none focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white dark:placeholder:text-gray-300"
               />
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-            {filteredProducts.map((product) => (
-              <ProductRow key={product.id} product={product} tableFactor={priceTable?.fator_ajuste || 1} onAdd={handleAdd} />
-            ))}
-            {filteredProducts.length === 0 && (
-              <div className="rounded-3xl bg-white/90 px-4 py-10 text-center text-sm text-gray-400 shadow-sm dark:bg-[#23212a]">
-                Nenhum produto encontrado.
+          <div className="rounded-3xl bg-white/95 p-4 shadow-sm dark:bg-[#233044]">
+            {selectedProduct ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-[#1f2737]">
+                    <Package className="h-4 w-4 text-gray-400 dark:text-gray-200" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{selectedProduct.nome}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-300">
+                      <span>Estoque {fmtNumber(selectedProduct.estoque_atual)}</span>
+                      {selectedProduct.codigo_interno && <span>#{selectedProduct.codigo_interno}</span>}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                      <span className="font-semibold text-gray-900 dark:text-white">{fmtCurrency(resolvePrice(selectedProduct, priceTable?.fator_ajuste || 1))}</span>
+                      <span className="text-gray-400 dark:text-gray-300 line-through">{fmtCurrency(resolveMinPrice(selectedProduct))}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-gray-50 p-3 dark:bg-[#2b3446]">
+                    <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-300">Quantidade</div>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={selectedQuantity}
+                      min="1"
+                      onChange={(e) => setSelectedQuantity(e.target.value)}
+                      className="h-10 rounded-2xl border-0 bg-white text-center text-sm font-semibold text-gray-900 shadow-sm focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white"
+                    />
+                  </div>
+                  <div className="rounded-2xl bg-gray-50 p-3 dark:bg-[#2b3446]">
+                    <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-300">Preço unit.</div>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={selectedPrice}
+                      min={selectedProduct.preco_livre ? 0 : resolveMinPrice(selectedProduct)}
+                      onChange={(e) => setSelectedPrice(e.target.value)}
+                      className="h-10 rounded-2xl border-0 bg-white text-right text-sm font-semibold text-gray-900 shadow-sm focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white"
+                    />
+                    {selectedProduct.preco_livre && <div className="mt-1 text-[10px] text-amber-600 dark:text-amber-300">Preço livre habilitado</div>}
+                  </div>
+                </div>
+
+                <Button onClick={handleAdd} className="h-11 rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+                  Adicionar ao orçamento
+                </Button>
+              </div>
+            ) : (
+              <div className="py-10 text-center text-sm text-gray-500 dark:text-gray-300">
+                Digite para encontrar um item e preencher quantidade e preço sem sair da tela.
               </div>
             )}
           </div>
+
         </div>
 
         <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
-          <div className="rounded-3xl bg-white/90 p-4 shadow-sm dark:bg-[#23212a]">
+          <div className="rounded-3xl bg-white/95 p-4 shadow-sm dark:bg-[#233044]">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
               <div>
                 <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-gray-400">Cliente</div>
@@ -284,7 +344,7 @@ function BudgetContent({ onClose, isMobile }) {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Nome para compartilhar"
-                  className="h-11 rounded-2xl border-0 bg-gray-50 shadow-none focus-visible:ring-0 dark:bg-gray-800"
+                  className="h-11 rounded-2xl border-0 bg-gray-50 text-gray-900 shadow-none focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white dark:placeholder:text-gray-300"
                 />
               </div>
               <Button onClick={handleGeneratePdf} disabled={items.length === 0} className="h-11 rounded-2xl bg-gray-900 px-4 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
@@ -293,7 +353,7 @@ function BudgetContent({ onClose, isMobile }) {
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white/90 p-4 shadow-sm dark:bg-[#23212a]">
+          <div className="rounded-3xl bg-white/95 p-4 shadow-sm dark:bg-[#233044]">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Total geral</div>
@@ -305,7 +365,7 @@ function BudgetContent({ onClose, isMobile }) {
 
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             {items.length === 0 ? (
-              <div className="rounded-3xl bg-white/90 px-4 py-10 text-center text-sm text-gray-400 shadow-sm dark:bg-[#23212a]">
+              <div className="rounded-3xl bg-white/95 px-4 py-10 text-center text-sm text-gray-500 shadow-sm dark:bg-[#233044] dark:text-gray-300">
                 Monte um orçamento sem sair da tela atual.
               </div>
             ) : items.map((item) => (
@@ -314,6 +374,7 @@ function BudgetContent({ onClose, isMobile }) {
                 item={item}
                 onQtyChange={handleQtyChange}
                 onDiscountChange={handleDiscountChange}
+                onPriceChange={handlePriceChange}
                 onRemove={handleRemove}
               />
             ))}
@@ -328,7 +389,7 @@ export default function QuickBudgetSheet({ open, onOpenChange, isMobile }) {
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-[92vw] max-w-none border-0 bg-gray-50 p-0 dark:bg-[#182132] sm:max-w-none">
+        <SheetContent side="left" className="w-[92vw] max-w-none border-0 bg-gray-50 p-0 dark:bg-[#1b2433] sm:max-w-none">
           <BudgetContent onClose={() => onOpenChange(false)} isMobile />
         </SheetContent>
       </Sheet>
@@ -337,7 +398,7 @@ export default function QuickBudgetSheet({ open, onOpenChange, isMobile }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl border-0 bg-gray-50 p-0 shadow-2xl dark:bg-[#182132]">
+      <DialogContent className="max-w-6xl border-0 bg-gray-50 p-0 shadow-2xl dark:bg-[#1b2433]">
         <BudgetContent onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
