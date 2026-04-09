@@ -1,9 +1,9 @@
 import React from 'react';
-import { Check, MessageCircle, ShoppingCart } from 'lucide-react';
+import { Check, Loader2, MessageCircle, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from './quickBudgetUtils';
 
-export default function QuickBudgetCartView({ items, summary, onClose }) {
+export default function QuickBudgetCartView({ items, summary, onClose, onShare, isSharing }) {
   if (items.length === 0) {
     return null;
   }
@@ -43,8 +43,8 @@ export default function QuickBudgetCartView({ items, summary, onClose }) {
         >
           <Check className="w-4 h-4 mr-2" /> Concluir
         </Button>
-        <Button className="h-12 rounded-2xl bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 shadow-none">
-          <MessageCircle className="w-4 h-4 mr-2" /> Compartilhar
+        <Button onClick={onShare} disabled={isSharing} className="h-12 rounded-2xl bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 shadow-none">
+          {isSharing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />} Compartilhar
         </Button>
       </div>
 

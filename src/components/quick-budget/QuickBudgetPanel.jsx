@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { X } from 'lucide-react';
+import { shareQuickBudgetPdf } from '@/functions/shareQuickBudgetPdf';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
@@ -17,6 +18,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   const [flowStage, setFlowStage] = useState('quantity');
   const [quantityDraft, setQuantityDraft] = useState('1');
   const [priceDraft, setPriceDraft] = useState('0');
+  const [isSharing, setIsSharing] = useState(false);
   const searchInputRef = useRef(null);
   const quantityInputRef = useRef(null);
   const priceInputRef = useRef(null);
@@ -93,6 +95,30 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     handleSaveItem();
   };
 
+  const handleShare = async () => {
+    if (items.length === 0 || isSharing) return;
+
+    setIsSharing(true);
+    const response = await shareQuickBudgetPdf({ items, summary });
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const file = new File([blob], 'orcamento-mobile.pdf', { type: 'application/pdf' });
+
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        title: 'Orçamento rápido',
+        text: 'Segue o orçamento em PDF.',
+        files: [file],
+      });
+      setIsSharing(false);
+      return;
+    }
+
+    const fileUrl = URL.createObjectURL(blob);
+    window.open(`https://wa.me/?text=${encodeURIComponent('Segue o orçamento em PDF: ' + fileUrl)}`, '_blank');
+    setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
+    setIsSharing(false);
+  };
+
   const content = (
     <div className="flex flex-col h-full min-h-0 bg-gray-50 dark:bg-gray-950">
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
@@ -138,6 +164,8 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
           items={items}
           summary={summary}
           onClose={() => onOpenChange(false)}
+          onShare={handleShare}
+          isSharing={isSharing}
         />
       </div>
 

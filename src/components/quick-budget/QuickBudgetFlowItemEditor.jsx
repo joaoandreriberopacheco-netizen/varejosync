@@ -16,6 +16,19 @@ export default function QuickBudgetFlowItemEditor({
   quantityInputRef,
   priceInputRef,
 }) {
+  const handleQuantityKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onNext();
+    }
+  };
+
+  const handlePriceKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSave();
+    }
+  };
   if (!selectedProduct) {
     return (
       <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm px-4 py-10 text-center text-sm text-gray-400">
@@ -55,6 +68,8 @@ export default function QuickBudgetFlowItemEditor({
             min="1"
             value={quantity}
             onChange={(e) => onQuantityChange(e.target.value)}
+            onKeyDown={handleQuantityKeyDown}
+            enterKeyHint="next"
             className="h-14 border-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm text-lg text-center font-semibold"
           />
         </div>
@@ -70,6 +85,8 @@ export default function QuickBudgetFlowItemEditor({
               step="0.01"
               value={price}
               onChange={(e) => onPriceChange(e.target.value)}
+              onKeyDown={handlePriceKeyDown}
+              enterKeyHint="go"
               className="h-14 border-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm text-lg text-center font-semibold"
             />
           </div>
