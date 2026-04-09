@@ -33,7 +33,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
       </div>
 
       {shouldShowResults && (
-        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[min(40vh,20rem)] overflow-y-auto pr-1 pb-1">
           {resultados.map((produto) => (
             <button
               key={produto.id}

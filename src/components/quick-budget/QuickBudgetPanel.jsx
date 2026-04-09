@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { X } from 'lucide-react';
+import { Check, Loader2, MessageCircle, Search, ShoppingCart, X } from 'lucide-react';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
@@ -18,6 +18,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   const [quantityDraft, setQuantityDraft] = useState('1');
   const [priceDraft, setPriceDraft] = useState('0');
   const [isSharing, setIsSharing] = useState(false);
+  const [showCartMobile, setShowCartMobile] = useState(false);
   const searchInputRef = useRef(null);
   const quantityInputRef = useRef(null);
   const priceInputRef = useRef(null);
@@ -65,6 +66,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     resetFlow();
     setItems([]);
     setIsSharing(false);
+    setShowCartMobile(false);
   };
 
   const handleSaveItem = () => {
@@ -182,7 +184,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   };
 
   const content = (
-    <div className="flex flex-col h-full min-h-0 bg-gray-50 dark:bg-gray-950">
+    <div className="relative flex flex-col h-full min-h-0 bg-gray-50 dark:bg-gray-950">
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div>
           <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">Orçamento rápido</DialogTitle>
@@ -200,7 +202,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 pb-28 md:pb-4">
         <QuickBudgetProductSearch
           inputRef={searchInputRef}
           query={query}
@@ -210,7 +212,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
           onSubmitFirstResult={handleSelectProduct}
         />
 
-        {selectedProduct && (
+        {selectedProduct ? (
           <QuickBudgetFlowItemEditor
             selectedProduct={selectedProduct}
             stage={flowStage}
@@ -223,27 +225,90 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
             quantityInputRef={quantityInputRef}
             priceInputRef={priceInputRef}
           />
+        ) : (
+          <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm px-4 py-4 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <Search className="w-4 h-4" />
+            Os itens ficam guardados no carrinho para você continuar buscando sem fechar o teclado.
+          </div>
         )}
-
-        <QuickBudgetCartView
-          items={items}
-          summary={summary}
-          onClose={() => {
-            resetPanel();
-            onOpenChange(false);
-          }}
-          onShare={handleShare}
-          isSharing={isSharing}
-        />
       </div>
 
+      {isMobile && items.length > 0 && (
+        <div className="absolute inset-0 z-20 bg-gray-50 dark:bg-gray-950 flex flex-col" style={{ display: showCartMobile ? 'flex' : 'none' }}>
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <button type="button" onClick={() => setShowCartMobile(false)} className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white font-glacial">Carrinho</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">{summary.quantidadeItens} un · {items.length} itens</p>
+            </div>
+            <div className="w-9" />
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 pb-28">
+            <QuickBudgetCartView
+              items={items}
+              summary={summary}
+              onClose={() => {
+                resetPanel();
+                onOpenChange(false);
+              }}
+              onShare={handleShare}
+              isSharing={isSharing}
+              compact
+            />
+          </div>
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <div className="border-t border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight font-glacial">{summary.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+            </div>
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setShowCartMobile(true)}
+                aria-label="Abrir carrinho"
+                className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <span className="absolute -top-0.5 -right-0.5 bg-slate-700 text-slate-100 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
+                  {items.length}
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                resetPanel();
+                onOpenChange(false);
+              }}
+              className="h-10 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl font-medium flex items-center justify-center gap-2 text-sm"
+            >
+              <Check className="w-4 h-4" /> Concluir
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              className="h-10 px-4 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+            >
+              {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />} Compartilhar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[88vh] max-h-[88vh] rounded-t-[28px] border-0 bg-transparent p-0 overflow-hidden">
+        <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-transparent p-0 overflow-hidden z-[120]">
           {content}
         </DrawerContent>
       </Drawer>
@@ -252,7 +317,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[82vh] p-0 border-0 rounded-[32px] overflow-hidden shadow-2xl bg-transparent">
+      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 border-0 rounded-none overflow-hidden shadow-2xl bg-transparent z-[120]">
         <DialogHeader className="hidden" />
         {content}
       </DialogContent>
