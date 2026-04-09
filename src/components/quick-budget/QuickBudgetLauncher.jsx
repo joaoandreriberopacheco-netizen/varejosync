@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronUp, Search } from 'lucide-react';
 import QuickBudgetPanel from './QuickBudgetPanel';
 
 export default function QuickBudgetLauncher() {
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [dragX, setDragX] = useState(0);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  const startXRef = useRef(null);
+  const startPointRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -29,24 +29,25 @@ export default function QuickBudgetLauncher() {
   }, []);
 
   const resetDrag = () => {
-    setDragX(0);
+    setDragOffset({ x: 0, y: 0 });
     setDragging(false);
-    startXRef.current = null;
+    startPointRef.current = null;
   };
 
   const handlePointerDown = (event) => {
-    startXRef.current = event.clientX;
+    startPointRef.current = { x: event.clientX, y: event.clientY };
     setDragging(true);
   };
 
   const handlePointerMove = (event) => {
-    if (startXRef.current === null) return;
-    const delta = Math.max(0, Math.min(event.clientX - startXRef.current, 56));
-    setDragX(delta);
+    if (!startPointRef.current) return;
+    const deltaX = Math.max(0, Math.min(event.clientX - startPointRef.current.x, 56));
+    const deltaY = Math.min(0, Math.max(event.clientY - startPointRef.current.y, -56));
+    setDragOffset({ x: deltaX, y: deltaY });
   };
 
   const handlePointerUp = () => {
-    if (dragX >= 28) {
+    if (dragOffset.x >= 20 && dragOffset.y <= -20) {
       setOpen(true);
     }
     resetDrag();
@@ -57,7 +58,7 @@ export default function QuickBudgetLauncher() {
       {isMobile && (
         <div
           className="fixed left-0 bottom-28 z-40"
-          style={{ transform: `translateX(${dragX}px)`, transition: dragging ? 'none' : 'transform 180ms ease-out' }}
+          style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`, transition: dragging ? 'none' : 'transform 180ms ease-out' }}
         >
           <button
             type="button"
@@ -69,7 +70,7 @@ export default function QuickBudgetLauncher() {
             aria-label="Arraste para abrir orçamento rápido"
           >
             <Search className="w-4 h-4" />
-            <ChevronRight className="w-3 h-3 opacity-70" />
+            <ChevronUp className="w-3 h-3 opacity-70" />
           </button>
         </div>
       )}

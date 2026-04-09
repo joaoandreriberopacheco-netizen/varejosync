@@ -3,7 +3,7 @@ import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, matchesProduct } from './quickBudgetUtils';
 
-export default function QuickBudgetProductSearch({ query, onQueryChange, produtos, onAddProduct }) {
+export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, onAddProduct, onSubmitFirstResult }) {
   const resultados = useMemo(() => {
     const ordenados = [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
     if (!query?.trim()) return ordenados.slice(0, 8);
@@ -15,8 +15,15 @@ export default function QuickBudgetProductSearch({ query, onQueryChange, produto
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
+          ref={inputRef}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && resultados[0]) {
+              e.preventDefault();
+              onSubmitFirstResult?.(resultados[0]);
+            }
+          }}
           placeholder="Buscar produto, código ou marca"
           inputMode="search"
           className="h-14 md:h-12 pl-11 pr-4 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-base md:text-sm"
