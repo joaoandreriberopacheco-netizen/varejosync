@@ -18,7 +18,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const produtos = await base44.asServiceRole.entities.Produto.list();
+    const { skip = 0, limit = 25 } = await req.json();
+    const produtos = await base44.asServiceRole.entities.Produto.list('', limit, skip);
 
     let atualizados = 0;
     const divergencias = [];
@@ -47,9 +48,13 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      total_produtos: produtos.length,
+      skip,
+      limit,
+      processados: produtos.length,
       atualizados,
       divergencias,
+      proximo_skip: skip + produtos.length,
+      terminou: produtos.length < limit,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
