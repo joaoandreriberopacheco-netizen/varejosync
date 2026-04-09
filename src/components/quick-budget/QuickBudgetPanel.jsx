@@ -79,12 +79,16 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
       </div>
 
       <div className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Resumo</p>
             <p className="text-sm text-gray-700 dark:text-gray-300">{summary.quantidadeItens} un · {items.length} itens</p>
+            {summary.desconto > 0 && <p className="text-xs text-red-500 dark:text-red-400 mt-1">Desconto: {formatCurrency(summary.desconto)}</p>}
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{formatCurrency(summary.total)}</p>
+          <div className="text-right">
+            {summary.desconto > 0 && <p className="text-xs text-gray-400 line-through">{formatCurrency(summary.subtotal)}</p>}
+            <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{formatCurrency(summary.total)}</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

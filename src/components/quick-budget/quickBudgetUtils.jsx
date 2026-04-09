@@ -36,19 +36,25 @@ export function buildQuickBudgetItem(produto) {
     preco_cheio: precoCheio,
     preco_minimo: precoMinimo,
     preco_unitario: precoCheio,
+    preco_livre: !!produto.preco_livre,
+    desconto: 0,
     quantidade,
     total: precoCheio * quantidade,
   };
 }
 
 export function recalculateItem(item) {
-  const quantidade = Number(item.quantidade || 0);
-  const preco = Number(item.preco_unitario || 0);
+  const quantidade = Math.max(Number(item.quantidade || 0), 1);
+  const desconto = Math.max(Number(item.desconto || 0), 0);
+  const precoBase = Number(item.preco_unitario || 0);
+  const preco = item.preco_livre ? precoBase : Math.max(precoBase, Number(item.preco_minimo || 0));
+  const subtotal = quantidade * preco;
   return {
     ...item,
     quantidade,
+    desconto,
     preco_unitario: preco,
-    total: quantidade * preco,
+    total: Math.max(subtotal - desconto, 0),
   };
 }
 
@@ -60,10 +66,12 @@ export function matchesProduct(produto, query) {
 }
 
 export function getBudgetSummary(items) {
-  const subtotal = items.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const subtotal = items.reduce((sum, item) => sum + ((Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0)), 0);
+  const desconto = items.reduce((sum, item) => sum + (Number(item.desconto) || 0), 0);
   return {
     subtotal,
-    total: subtotal,
+    desconto,
+    total: Math.max(subtotal - desconto, 0),
     quantidadeItens: items.reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0),
   };
 }

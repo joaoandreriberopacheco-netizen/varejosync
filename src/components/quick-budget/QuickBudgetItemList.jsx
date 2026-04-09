@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Minus, Percent, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from './quickBudgetUtils';
 
@@ -22,7 +22,8 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                 <span>Estoque: {item.estoque_atual}</span>
                 <span>Cheio: {formatCurrency(item.preco_cheio)}</span>
-                <span className="line-through opacity-70">Min: {formatCurrency(item.preco_minimo)}</span>
+                {!item.preco_livre && <span className="line-through opacity-70">Min: {formatCurrency(item.preco_minimo)}</span>}
+                {item.preco_livre && <span className="text-emerald-600 dark:text-emerald-400">Preço livre</span>}
               </div>
             </div>
             <button
@@ -53,13 +54,13 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <p className="text-[11px] text-gray-400 mb-1">Preço unitário</p>
                 <Input
                   type="number"
                   step="0.01"
-                  min={item.preco_minimo}
+                  min={item.preco_livre ? 0 : item.preco_minimo}
                   value={item.preco_unitario}
                   onChange={(e) => onUpdateItem(item.produto_id, { preco_unitario: e.target.value })}
                   inputMode="decimal"
@@ -67,8 +68,20 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
                 />
               </div>
               <div>
+                <p className="text-[11px] text-gray-400 mb-1 flex items-center gap-1"><Percent className="w-3 h-3" /> Desconto</p>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={item.desconto || 0}
+                  onChange={(e) => onUpdateItem(item.produto_id, { desconto: e.target.value })}
+                  inputMode="decimal"
+                  className="h-14 md:h-10 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-base md:text-sm"
+                />
+              </div>
+              <div>
                 <p className="text-[11px] text-gray-400 mb-1">Total</p>
-                <div className="h-10 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm px-3 flex items-center justify-end text-sm font-semibold text-gray-900 dark:text-white">
+                <div className="h-14 md:h-10 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm px-3 flex items-center justify-end text-sm font-semibold text-gray-900 dark:text-white">
                   {formatCurrency(item.total)}
                 </div>
               </div>
