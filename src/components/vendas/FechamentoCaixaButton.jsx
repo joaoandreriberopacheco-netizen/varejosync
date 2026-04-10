@@ -113,7 +113,7 @@ export default function FechamentoCaixaButton({
       </SafeActionButton>
 
       <AlertDialog open={showConfirmacao} onOpenChange={setShowConfirmacao}>
-        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-white p-5 shadow-2xl sm:left-[50%] sm:top-[50%] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:p-6 dark:bg-gray-900">
+        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-white p-5 shadow-2xl sm:w-full sm:max-w-lg sm:p-6 dark:bg-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar fechamento do caixa?</AlertDialogTitle>
             <AlertDialogDescription>
