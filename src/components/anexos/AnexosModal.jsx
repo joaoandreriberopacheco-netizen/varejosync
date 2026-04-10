@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer } from 'lucide-react';
-import ExportAnexosPdfWorker from '@/components/anexos/exportAnexosPdf.worker.js?worker';
+import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
 import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
 
 const TIPOS_DOCUMENTO = ['Comprovante', 'Boleto', 'Nota Fiscal', 'Contrato', 'Orçamento', 'Outro'];
@@ -75,42 +75,13 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   const [tiposCustomizados, setTiposCustomizados] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
   const inputRef = useRef();
-  const workerRef = useRef(null);
 
-  useEffect(() => {
-    workerRef.current = new ExportAnexosPdfWorker();
-
-    return () => {
-      workerRef.current?.terminate();
-      workerRef.current = null;
-    };
-  }, []);
-
-  const handleExportPdf = () => {
-    if (!workerRef.current || exportingPdf || anexos.length === 0) return;
+  const handleExportPdf = async () => {
+    if (exportingPdf || anexos.length === 0) return;
 
     setExportingPdf(true);
-
-    workerRef.current.onmessage = (event) => {
-      const { type, blob, message } = event.data || {};
-
-      if (type === 'EXPORT_SUCCESS') {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'anexos.pdf';
-        link.click();
-        URL.revokeObjectURL(url);
-      }
-
-      if (type === 'EXPORT_ERROR') {
-        console.error(message || 'Falha ao exportar PDF');
-      }
-
-      setExportingPdf(false);
-    };
-
-    workerRef.current.postMessage({ type: 'EXPORT_ANEXOS_PDF', anexos });
+    await exportAnexosToPdf(anexos);
+    setExportingPdf(false);
   };
 
   const tiposDisponiveis = useMemo(() => {
