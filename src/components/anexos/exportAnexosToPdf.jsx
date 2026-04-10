@@ -14,7 +14,13 @@ async function renderPdfPagesToImages(fileUrl) {
   const pdfjsLib = await import('https://esm.sh/pdfjs-dist@4.4.168/build/pdf.min.mjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
 
-  const pdf = await pdfjsLib.getDocument(fileUrl).promise;
+  const response = await fetch(fileUrl);
+  if (!response.ok) {
+    throw new Error('Falha ao baixar o PDF');
+  }
+
+  const bytes = await response.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
   const pages = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -43,7 +49,7 @@ function addImagePage(doc, imageSource, mimeType = 'image/jpeg', title = 'Anexo'
   doc.setFontSize(11);
   doc.text(title, margin, 12);
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
       const maxWidth = pageWidth - margin * 2;
@@ -56,8 +62,16 @@ function addImagePage(doc, imageSource, mimeType = 'image/jpeg', title = 'Anexo'
       doc.addImage(imageSource, getExtensionFromMime(mimeType), x, y, width, height);
       resolve();
     };
+    img.onerror = () => reject(new Error('Falha ao carregar imagem do anexo'));
     img.src = imageSource;
   });
+}
+
+function addTextFallbackPage(doc, title, message) {
+  doc.setFontSize(11);
+  doc.text(title || 'Anexo', 14, 14);
+  doc.setFontSize(10);
+  doc.text(message, 14, 28, { maxWidth: 180 });
 }
 
 export default async function exportAnexosToPdf(anexos = []) {
@@ -71,18 +85,24 @@ export default async function exportAnexosToPdf(anexos = []) {
     const isPdf = anexo.mime_type?.includes('pdf');
     if (!isImage && !isPdf) continue;
 
-    if (isImage) {
-      if (hasPage) doc.addPage();
-      hasPage = true;
-      await addImagePage(doc, anexo.url_drive, anexo.mime_type, anexo.nome_arquivo || 'Imagem');
-      continue;
-    }
+    try {
+      if (isImage) {
+        if (hasPage) doc.addPage();
+        hasPage = true;
+        await addImagePage(doc, anexo.url_drive, anexo.mime_type, anexo.nome_arquivo || 'Imagem');
+        continue;
+      }
 
-    const pages = await renderPdfPagesToImages(anexo.url_drive);
-    for (let index = 0; index < pages.length; index += 1) {
+      const pages = await renderPdfPagesToImages(anexo.url_drive);
+      for (let index = 0; index < pages.length; index += 1) {
+        if (hasPage) doc.addPage();
+        hasPage = true;
+        await addImagePage(doc, pages[index], 'image/jpeg', `${anexo.nome_arquivo || 'PDF'} · pág. ${index + 1}`);
+      }
+    } catch {
       if (hasPage) doc.addPage();
       hasPage = true;
-      await addImagePage(doc, pages[index], 'image/jpeg', `${anexo.nome_arquivo || 'PDF'} · pág. ${index + 1}`);
+      addTextFallbackPage(doc, anexo.nome_arquivo || 'Anexo', 'Não foi possível renderizar este arquivo dentro do PDF final. Abra o anexo original para visualizar o conteúdo completo.');
     }
   }
 
