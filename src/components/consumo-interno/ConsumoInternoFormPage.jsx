@@ -136,8 +136,8 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
           </Button>
           <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Paperclip className="h-4 w-4" />
-            {attachedCount > 0 ? `${attachedCount} arquivo(s)` : 'Adicionar anexos'}
-            <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={onFileChange} />
+            {attachedCount > 0 ? `${attachedCount} foto(s)/arquivo(s)` : 'Adicionar foto ou anexo'}
+            <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" capture="environment" className="hidden" onChange={onFileChange} />
           </label>
         </div>
         <div className="mt-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900">
@@ -283,8 +283,8 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </button>
         <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
           <Paperclip className="h-5 w-5" />
-          {attachedCount > 0 ? `${attachedCount} arquivo(s) selecionado(s)` : 'Adicionar anexos'}
-          <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={onFileChange} />
+          {attachedCount > 0 ? `${attachedCount} foto(s)/arquivo(s)` : 'Adicionar foto ou anexo'}
+          <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" capture="environment" className="hidden" onChange={onFileChange} />
         </label>
         <div className="rounded-2xl bg-gray-50 p-5 dark:bg-gray-800">
           <div className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400">

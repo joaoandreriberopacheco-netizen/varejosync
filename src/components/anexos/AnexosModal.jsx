@@ -52,6 +52,9 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
           <ExternalLink className="w-3.5 h-3.5 flex-none text-gray-500 dark:text-gray-400" />
         </a>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatSize(anexo.tamanho_bytes)}</p>
+        {anexo.descricao && (
+          <p className="mt-1 line-clamp-2 text-[11px] text-gray-400 dark:text-gray-500">{anexo.descricao}</p>
+        )}
       </div>
       {!readOnly && (
         <button

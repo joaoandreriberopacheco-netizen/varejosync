@@ -12,6 +12,8 @@ import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdu
 import ConsumoInternoFormPage from '@/components/consumo-interno/ConsumoInternoFormPage';
 import ComprovanteConsumoInterno from '@/components/consumo-interno/ComprovanteConsumoInterno';
 import ConsumoInternoPainelInicial from '@/components/consumo-interno/ConsumoInternoPainelInicial';
+import { buildAnexoMovimentoTag } from '@/components/anexos/buildAnexoMovimentoTag';
+import { renderTaggedImage } from '@/components/anexos/renderTaggedImage';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -109,12 +111,23 @@ export default function ConsumoInternoPage() {
     toast.success('Item adicionado');
   };
 
-  const uploadAttachment = async (file, tipoDocumento, referenciaId, referenciaNumero) => {
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+  const uploadAttachment = async (file, tipoDocumento, referenciaId, referenciaNumero, metadata = {}) => {
+    const tag = buildAnexoMovimentoTag({
+      referenciaNumero,
+      interveniente: metadata.interveniente,
+      destinacao: metadata.destinacao,
+      observacoes: metadata.observacoes,
+      usuarioNome: metadata.usuarioNome,
+      createdAt: metadata.createdAt,
+    });
+
+    const arquivoFinal = file.type?.startsWith('image/') ? await renderTaggedImage(file, tag.linhas) : file;
+    const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivoFinal });
+
     await base44.entities.AnexoDocumento.create({
       referencia_tipo: 'Outro', referencia_id: referenciaId, referencia_numero: referenciaNumero,
-      tipo_documento: tipoDocumento, nome_arquivo: file.name, url_drive: file_url,
-      mime_type: file.type, tamanho_bytes: file.size, origem: 'upload_manual', descricao: 'Consumo interno',
+      tipo_documento: tipoDocumento, nome_arquivo: arquivoFinal.name, url_drive: file_url,
+      mime_type: arquivoFinal.type, tamanho_bytes: arquivoFinal.size, origem: 'upload_manual', descricao: tag.texto,
     });
   };
 
@@ -153,7 +166,13 @@ export default function ConsumoInternoPage() {
   const handleAnexoFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length || !consumoAnexoAlvo) return;
-    await Promise.all(files.map(file => uploadAttachment(file, 'Comprovante', consumoAnexoAlvo.id, consumoAnexoAlvo.numero)));
+    await Promise.all(files.map(file => uploadAttachment(file, 'Comprovante', consumoAnexoAlvo.id, consumoAnexoAlvo.numero, {
+      interveniente: consumoAnexoAlvo.responsavel_recebimento,
+      destinacao: consumoAnexoAlvo.destinacao,
+      observacoes: consumoAnexoAlvo.observacoes,
+      usuarioNome: consumoAnexoAlvo.usuario_solicitante_nome,
+      createdAt: consumoAnexoAlvo.created_date,
+    })));
     toast.success(`${files.length} arquivo(s) anexado(s)`);
     e.target.value = '';
     setConsumoAnexoAlvo(null);
@@ -225,7 +244,13 @@ export default function ConsumoInternoPage() {
 
       const fileInput = document.getElementById('consumo-anexo-input');
       const files = Array.from(fileInput?.files || []);
-      await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero)));
+      await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero, {
+        interveniente: formData.responsavel_recebimento,
+        destinacao: formData.destinacao,
+        observacoes: formData.observacoes,
+        usuarioNome: currentUser?.full_name || currentUser?.email,
+        createdAt: new Date().toISOString(),
+      })));
       if (formData.assinatura_recolhedor_url) {
         await base44.entities.AnexoDocumento.create({
           referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
