@@ -233,26 +233,28 @@ Deno.serve(async (req) => {
       const valorVenda = Number(produto?.preco_venda_padrao) || 0;
       const detalheFinanceiro = `C. aum.: ${fmtCur(custoAumentado)}  |  Acess.: ${fmtCur(custoAcessorios)}  |  Venda: ${fmtCur(valorVenda)}`;
       const detalheLines = doc.splitTextToSize(safe(detalheFinanceiro), 126);
-      const rowHeight = Math.max(18, 12 + (nomeLines.length * 4.2) + (detalheLines.length * 3.4));
+      const nomeLineHeight = 5.3;
+      const detalheLineHeight = 4.2;
+      const rowHeight = Math.max(22, 14 + (nomeLines.length * nomeLineHeight) + (detalheLines.length * detalheLineHeight));
       ensurePage(rowHeight + 3);
 
       doc.setFillColor(250, 250, 250);
       doc.roundedRect(page.marginX, y, usableWidth, rowHeight, 4, 4, 'F');
 
-      setText(9, 'bold', [17, 24, 39]);
+      setText(10.5, 'bold', [17, 24, 39]);
       nomeLines.forEach((line, index) => {
-        drawText(line, tableColumns.produto + 3, y + 5 + (index * 4.2));
+        drawText(line, tableColumns.produto + 3, y + 6 + (index * nomeLineHeight));
       });
-      setText(7, 'normal', [107, 114, 128]);
+      setText(8.4, 'normal', [107, 114, 128]);
       detalheLines.forEach((line, index) => {
-        drawText(line, tableColumns.produto + 3, y + 8 + (nomeLines.length * 4.2) + (index * 3.4));
+        drawText(line, tableColumns.produto + 3, y + 10 + (nomeLines.length * nomeLineHeight) + (index * detalheLineHeight));
       });
-      drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.2);
+      drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.8);
 
-      setText(9, 'bold', [17, 24, 39]);
-      drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6);
-      drawText(fmtCur(item.custo_unitario || 0), tableColumns.unit, y + 6);
-      drawText(fmtCur(item.total || 0), tableColumns.total - 3, y + 6, { align: 'right' });
+      setText(10, 'bold', [17, 24, 39]);
+      drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6.8);
+      drawText(fmtCur(item.custo_unitario || 0), tableColumns.unit, y + 6.8);
+      drawText(fmtCur(item.total || 0), tableColumns.total - 3, y + 6.8, { align: 'right' });
       y += rowHeight + 3;
     });
 
