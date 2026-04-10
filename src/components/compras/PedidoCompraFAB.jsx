@@ -127,53 +127,47 @@ export default function PedidoCompraFAB({
     },
   ].filter(Boolean);
 
-  // Distribui em arco acima-esquerda do FAB (90° a 180°)
-  // Para N ações, distribui igualmente no arco
-  const n = actions.length;
-  const arcStart = 90;   // começa em cima
-  const arcEnd = 195;    // termina à esquerda
-  const step = n > 1 ? (arcEnd - arcStart) / (n - 1) : 0;
 
   return (
     <>
-      {/* Backdrop */}
-      {isExpanded && (
-        <div
-          className="fixed inset-0 z-[60] backdrop-blur-[2px] bg-black/20 pointer-events-auto"
-          onClick={() => setIsExpanded(false)}
-        />
-      )}
-
-      {/* FAB container */}
-      <div className="fixed bottom-[max(6rem,env(safe-area-inset-bottom)+5.5rem)] md:bottom-6 right-4 md:right-6 z-[80] flex flex-col-reverse items-end gap-2 pointer-events-none">
-        {/* FAB principal */}
-        <button
-          onClick={() => setIsExpanded(prev => !prev)}
-          className={`relative z-[81] pointer-events-auto w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-            isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
-          } text-white`}
-          title="Ações do pedido"
-        >
-          {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
-        </button>
-
-        {/* Botões filhos — lista vertical */}
-        {isExpanded && actions.map((action, idx) => (
+      <div className="fixed inset-0 z-[80] pointer-events-none">
+        {isExpanded && (
           <button
-            key={idx}
-            onClick={action.onClick}
-            disabled={action.disabled}
-            title={action.label}
-            className={`relative z-[81] pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
-            style={{
-              animation: `fadeSlideUp 0.18s ease both`,
-              animationDelay: `${idx * 30}ms`,
-            }}
+            type="button"
+            aria-label="Fechar ações"
+            onClick={() => setIsExpanded(false)}
+            className="absolute inset-0 bg-black/20 backdrop-blur-[2px] pointer-events-auto"
+          />
+        )}
+
+        <div className="absolute bottom-[max(6rem,env(safe-area-inset-bottom)+5.5rem)] md:bottom-6 right-4 md:right-6 flex flex-col-reverse items-end gap-2 pointer-events-none">
+          <button
+            onClick={() => setIsExpanded(prev => !prev)}
+            className={`pointer-events-auto w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+              isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
+            } text-white`}
+            title="Ações do pedido"
           >
-            {action.icon}
-            {action.label}
+            {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
           </button>
-        ))}
+
+          {isExpanded && actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={action.onClick}
+              disabled={action.disabled}
+              title={action.label}
+              className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
+              style={{
+                animation: `fadeSlideUp 0.18s ease both`,
+                animationDelay: `${idx * 30}ms`,
+              }}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <style>{`
