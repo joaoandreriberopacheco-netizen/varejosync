@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import SafeActionButton from '@/components/ui/safe-action-button';
 import { Printer, X, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClose, onContinuar }) {
+export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClose, onContinuar, isContinuing = false }) {
   const jaImprimiu = useRef(false);
 
   useEffect(() => {
@@ -157,12 +158,14 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
           >
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
-          <Button
+          <SafeActionButton
             onClick={onContinuar}
+            isLoading={isContinuing}
+            loadingText="Finalizando..."
             className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800"
           >
             Continuar
-          </Button>
+          </SafeActionButton>
         </div>
       </DialogContent>
     </Dialog>

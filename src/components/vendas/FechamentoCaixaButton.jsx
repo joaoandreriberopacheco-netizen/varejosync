@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Lock } from 'lucide-react';
+import SafeActionButton from '@/components/ui/safe-action-button';
 import { useToast } from '@/components/ui/use-toast';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
 import { createPageUrl } from '@/utils';
@@ -20,8 +21,12 @@ export default function FechamentoCaixaButton({
   const { toast } = useToast();
   const [showRelatorio, setShowRelatorio] = useState(false);
   const [turnoFechado, setTurnoFechado] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
 
   const handleFechar = async () => {
+    if (isClosing) return;
+    setIsClosing(true);
     const dinheiroConferido =
       parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
     const totalConferido =
@@ -75,10 +80,14 @@ export default function FechamentoCaixaButton({
       setShowRelatorio(true);
     } catch (error) {
       toast({ title: 'Erro ao fechar caixa', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsClosing(false);
     }
   };
 
-  const handleContinuar = () => {
+  const handleContinuar = async () => {
+    if (isContinuing) return;
+    setIsContinuing(true);
     setShowRelatorio(false);
     toast({
       title: '✓ Caixa fechado!',
@@ -92,13 +101,15 @@ export default function FechamentoCaixaButton({
 
   return (
     <>
-      <button
+      <SafeActionButton
         onClick={handleFechar}
+        isLoading={isClosing}
+        loadingText="Fechando..."
         className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
         style={{ minHeight: '48px' }}
       >
         <Lock className="w-4 h-4" /> Fechar Caixa
-      </button>
+      </SafeActionButton>
 
       <RelatorioFechamentoCaixa
         turno={turnoFechado}
@@ -106,6 +117,7 @@ export default function FechamentoCaixaButton({
         open={showRelatorio}
         onClose={() => setShowRelatorio(false)}
         onContinuar={handleContinuar}
+        isContinuing={isContinuing}
       />
     </>
   );
