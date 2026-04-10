@@ -54,7 +54,11 @@ Deno.serve(async (req) => {
           periodo_referencia: new Date(dataRef.getFullYear(), dataRef.getMonth(), 1)
             .toISOString()
             .split('T')[0],
-          status: 'Pendente'
+          status: 'Pendente',
+          tem_anexo: false,
+          tem_boleto: false,
+          tem_comprovante: false,
+          status_visual: 'pendente'
         });
 
         geradas++;

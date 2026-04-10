@@ -10,7 +10,7 @@ export default function AgefinDetalhes({ conta, onBack, onUpdate }) {
   const handleMarkAsPaid = async () => {
     setLoading(true);
     try {
-      await base44.entities.ContaPrevista.update(conta.id, { status: 'Pago' });
+      await base44.entities.ContaPrevista.update(conta.id, { status: 'Pago', status_visual: 'pago' });
       onUpdate?.();
       onBack();
     } catch (err) {

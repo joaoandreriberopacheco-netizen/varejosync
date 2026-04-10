@@ -79,9 +79,14 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1">
                   <Calendar className="w-3.5 h-3.5" /> {formatDate(conta.data_vencimento)}
                 </span>
-                {conta.boleto_url && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1">
+                {conta.tem_boleto && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-lime-50 dark:bg-lime-500/10 px-2.5 py-1 text-lime-700 dark:text-lime-300">
                     <Receipt className="w-3.5 h-3.5" /> Boleto anexado
+                  </span>
+                )}
+                {conta.tem_comprovante && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Comprovante anexado
                   </span>
                 )}
               </div>

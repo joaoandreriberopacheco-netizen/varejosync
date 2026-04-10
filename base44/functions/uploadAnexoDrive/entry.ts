@@ -108,6 +108,23 @@ Deno.serve(async (req) => {
       tipo_documento,
     });
 
+    if (referencia_tipo === 'ContaPrevista') {
+      const conta = await base44.asServiceRole.entities.ContaPrevista.get(referencia_id);
+      const hoje = new Date().toISOString().slice(0, 10);
+      const vencida = conta?.data_vencimento && conta.data_vencimento < hoje && conta.status !== 'Pago';
+      const isBoleto = tipo_documento === 'Boleto';
+      const isComprovante = tipo_documento === 'Comprovante';
+
+      await base44.asServiceRole.entities.ContaPrevista.update(referencia_id, {
+        tem_anexo: true,
+        tem_boleto: isBoleto ? true : !!conta?.tem_boleto,
+        tem_comprovante: isComprovante ? true : !!conta?.tem_comprovante,
+        boleto_url: isBoleto ? (uploadData.webViewLink || `https://drive.google.com/file/d/${uploadData.id}/view`) : (conta?.boleto_url || ''),
+        status: conta?.status === 'Pago' ? 'Pago' : isBoleto ? 'Boleto Anexado' : (conta?.status || 'Pendente'),
+        status_visual: conta?.status === 'Pago' ? 'pago' : isBoleto ? (vencida ? 'vencido' : 'boleto_anexado') : (vencida ? 'vencido' : (conta?.status_visual || 'pendente')),
+      });
+    }
+
     return Response.json({ success: true, anexo });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

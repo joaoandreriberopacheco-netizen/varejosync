@@ -92,20 +92,23 @@ export default function AgefinLista({ contas, onRefresh }) {
 }
 
 function ContaCard({ conta, onClick }) {
-  const isOverdue = new Date(conta.data_vencimento) < new Date() && conta.status !== 'Pago';
+  const isPaid = conta.status === 'Pago' || conta.status_visual === 'pago';
+  const isOverdue = new Date(conta.data_vencimento) < new Date() && !isPaid;
+  const hasBoleto = !!conta.tem_boleto;
   const daysUntil = Math.ceil((new Date(conta.data_vencimento) - new Date()) / (1000 * 60 * 60 * 24));
 
   const statusColors = {
-    'Pendente': 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400',
-    'Boleto Anexado': 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400',
-    'Pago': 'bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400',
-    'Cancelado': 'bg-gray-100 dark:bg-gray-800 border-l-4 border-gray-400',
+    pendente: 'bg-gray-50 dark:bg-gray-900/40 border-l-4 border-gray-300',
+    boleto_anexado: 'bg-lime-50 dark:bg-lime-900/10 border-l-4 border-lime-400',
+    vencido: 'bg-pink-50 dark:bg-pink-900/10 border-l-4 border-pink-400',
+    pago: 'bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500',
+    Cancelado: 'bg-gray-100 dark:bg-gray-800 border-l-4 border-gray-400',
   };
 
   return (
     <button
       onClick={onClick}
-      className={`w-full p-4 rounded-2xl shadow-sm transition-all hover:shadow-md active:scale-98 ${statusColors[conta.status] || 'bg-white dark:bg-gray-900'}`}
+      className={`w-full p-4 rounded-2xl shadow-sm transition-all hover:shadow-md active:scale-98 ${statusColors[conta.status_visual] || statusColors[conta.status] || 'bg-white dark:bg-gray-900'}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 text-left">
@@ -113,8 +116,8 @@ function ContaCard({ conta, onClick }) {
             <h3 className="font-semibold text-gray-900 dark:text-white truncate">
               {conta.descricao}
             </h3>
-            {isOverdue && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-            {conta.boleto_url && <Paperclip className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+            {isPaid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : isOverdue ? <AlertCircle className="w-4 h-4 text-pink-500 flex-shrink-0" /> : hasBoleto ? <DollarSign className="w-4 h-4 text-lime-500 flex-shrink-0" /> : <DollarSign className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+            {conta.tem_anexo && <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />}
             {conta.valor_desatualizado && <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />}
           </div>
 

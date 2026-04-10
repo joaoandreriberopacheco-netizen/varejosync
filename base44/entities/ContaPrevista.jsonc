@@ -66,6 +66,32 @@
       "default": false,
       "description": "Indica se o valor est\u00e1 desatualizado"
     },
+    "tem_anexo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se a conta j\u00e1 possui algum anexo vinculado"
+    },
+    "tem_boleto": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se j\u00e1 existe boleto anexado para esta conta"
+    },
+    "tem_comprovante": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se j\u00e1 existe comprovante anexado para esta conta"
+    },
+    "status_visual": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "boleto_anexado",
+        "vencido",
+        "pago"
+      ],
+      "default": "pendente",
+      "description": "Estado visual consolidado do card no atualizador e na consulta"
+    },
     "status": {
       "type": "string",
       "enum": [

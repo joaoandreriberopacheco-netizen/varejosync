@@ -65,8 +65,16 @@ function KpiCard({ label, value, tone = 'default' }) {
 
 function ContaCard({ conta, onOpen }) {
   const todayKey = new Date().toISOString().slice(0, 10);
-  const isPaid = conta.status === 'Pago';
+  const isPaid = conta.status === 'Pago' || conta.status_visual === 'pago';
   const isOverdue = !isPaid && conta.data_vencimento < todayKey;
+  const hasBoleto = !!conta.tem_boleto;
+  const iconClass = isPaid
+    ? 'w-4 h-4 text-emerald-600 shrink-0'
+    : isOverdue
+      ? 'w-4 h-4 text-pink-500 shrink-0'
+      : hasBoleto
+        ? 'w-4 h-4 text-lime-500 shrink-0'
+        : 'w-4 h-4 text-gray-400 shrink-0';
 
   return (
     <button
@@ -77,17 +85,25 @@ function ContaCard({ conta, onOpen }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-2">
-              {isPaid ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : isOverdue ? <CircleAlert className="w-4 h-4 text-red-500 shrink-0" /> : <Clock3 className="w-4 h-4 text-gray-400 shrink-0" />}
+              {isPaid ? <CheckCircle2 className={iconClass} /> : isOverdue ? <CircleAlert className={iconClass} /> : <Wallet className={iconClass} />}
               <p className="text-[15px] font-semibold text-gray-900 dark:text-white line-clamp-2">{conta.descricao}</p>
-              {conta.boleto_url && <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />}
+              {conta.tem_anexo && <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />}
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria_nome || 'Sem categoria'}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 shadow-sm">
                 <Calendar className="w-3.5 h-3.5" /> {new Date(`${conta.data_vencimento}T12:00:00`).toLocaleDateString('pt-BR')}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 shadow-sm">
-                {conta.status || 'Pendente'}
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 shadow-sm ${
+                isPaid
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  : isOverdue
+                    ? 'bg-pink-50 dark:bg-pink-500/10 text-pink-700 dark:text-pink-300'
+                    : hasBoleto
+                      ? 'bg-lime-50 dark:bg-lime-500/10 text-lime-700 dark:text-lime-300'
+                      : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-300'
+              }`}>
+                {isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Atualizado' : 'Pendente'}
               </span>
             </div>
           </div>
