@@ -1,16 +1,25 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Calendar, UserRound, MapPin } from 'lucide-react';
+import { Calendar, UserRound, MapPin, X } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 export default function ConsumoResumoDialog({ open, onOpenChange, consumo }) {
   if (!consumo) return null;
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
-        <div className="space-y-5 p-5 md:p-6">
+    <div className="fixed inset-0 z-[205] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+      <button type="button" aria-label="Fechar resumo" className="absolute inset-0" onClick={() => onOpenChange(false)} />
+      <div className="relative z-10 flex h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-gray-900 md:h-auto md:max-h-[88vh] md:rounded-[32px]">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 md:p-6">
           <div>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">{consumo.numero || 'Consumo Interno'}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Rastreabilidade completa do consumo registrado.</p>
@@ -41,8 +50,8 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo }) {
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
 

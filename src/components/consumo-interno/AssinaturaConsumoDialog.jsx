@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PenLine, RotateCcw, Check } from 'lucide-react';
+import { RotateCcw, Check, X } from 'lucide-react';
 
 export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm }) {
   const canvasRef = useRef(null);
@@ -73,10 +72,20 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
     setNome('');
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
-        <div className="space-y-4 p-4 md:p-5">
+    <div className="fixed inset-0 z-[210] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+      <button type="button" aria-label="Fechar assinatura" className="absolute inset-0" onClick={() => onOpenChange(false)} />
+      <div className="relative z-10 flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-gray-900 md:h-auto md:max-h-[90vh] md:rounded-[32px]">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-5">
           <div>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">Assinatura do recolhedor</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Assine na tela para anexar a minuta.</p>
@@ -114,7 +123,7 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
