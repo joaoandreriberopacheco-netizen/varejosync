@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, UserRound, MapPin, X, Tags, Paperclip, ExternalLink, Image as ImageIcon, PenSquare } from 'lucide-react';
+import { Calendar, UserRound, MapPin, X, Tags, Paperclip, ExternalLink, Image as ImageIcon, PenSquare, Link as LinkIcon, Building2 } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -27,8 +27,9 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexo
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Info icon={MapPin} label="Destinação" value={consumo.destinacao} />
+            <Info icon={Building2} label="Interveniente" value={consumo.interveniente_nome || consumo.interveniente || '—'} />
             <Info icon={UserRound} label="Recebeu" value={consumo.responsavel_recebimento} />
-            <Info icon={UserRound} label="Registrado por" value={consumo.usuario_solicitante_nome} />
+            <Info icon={UserRound} label="Registrado por" value={consumo.usuario_solicitante_nome || consumo.created_by} />
             <Info icon={Calendar} label="Confirmado em" value={consumo.data_confirmacao ? new Date(consumo.data_confirmacao).toLocaleString('pt-BR') : '—'} />
             <Info icon={Tags} label="Tags" value={consumo.tags?.length ? consumo.tags.join(', ') : '—'} />
           </div>
@@ -81,6 +82,10 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexo
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{isAssinatura ? 'Assinatura' : anexo.nome_arquivo || 'Anexo'}</p>
                         <p className="truncate text-xs text-gray-500 dark:text-gray-400">{anexo.descricao || anexo.tipo_documento || 'Arquivo salvo'}</p>
+                        <p className="mt-1 inline-flex max-w-full items-center gap-1 truncate text-[11px] text-gray-400 dark:text-gray-500">
+                          <LinkIcon className="h-3 w-3 flex-shrink-0" />
+                          {anexo.url_drive || 'Link indisponível'}
+                        </p>
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
