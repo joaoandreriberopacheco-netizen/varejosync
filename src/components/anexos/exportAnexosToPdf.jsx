@@ -10,9 +10,54 @@ function loadImage(url) {
   });
 }
 
+async function renderPdfPagesToImages(fileUrl) {
+  const pdfjsLib = await import('https://esm.sh/pdfjs-dist@4.4.168/build/pdf.min.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+
+  const pdf = await pdfjsLib.getDocument(fileUrl).promise;
+  const pages = [];
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 1.6 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: context, viewport }).promise;
+    pages.push(canvas.toDataURL('image/jpeg', 0.92));
+  }
+
+  return pages;
+}
+
 function getExtensionFromMime(mimeType = '') {
   if (mimeType.includes('png')) return 'PNG';
   return 'JPEG';
+}
+
+function addImagePage(doc, imageSource, mimeType = 'image/jpeg', title = 'Anexo') {
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const margin = 12;
+  doc.setFontSize(11);
+  doc.text(title, margin, 12);
+
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - 24;
+      const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+      const width = img.width * ratio;
+      const height = img.height * ratio;
+      const x = (pageWidth - width) / 2;
+      const y = 18 + (maxHeight - height) / 2;
+      doc.addImage(imageSource, getExtensionFromMime(mimeType), x, y, width, height);
+      resolve();
+    };
+    img.src = imageSource;
+  });
 }
 
 export default async function exportAnexosToPdf(anexos = []) {
@@ -24,35 +69,20 @@ export default async function exportAnexosToPdf(anexos = []) {
 
     const isImage = anexo.mime_type?.startsWith('image/');
     const isPdf = anexo.mime_type?.includes('pdf');
-
     if (!isImage && !isPdf) continue;
 
-    if (hasPage) doc.addPage();
-    hasPage = true;
-
-    doc.setFontSize(12);
-    doc.text(anexo.nome_arquivo || 'Anexo', 14, 14);
-
     if (isImage) {
-      const image = await loadImage(anexo.url_drive);
-      const pageWidth = 210;
-      const pageHeight = 297;
-      const margin = 14;
-      const maxWidth = pageWidth - margin * 2;
-      const maxHeight = pageHeight - 30 - margin;
-      const ratio = Math.min(maxWidth / image.width, maxHeight / image.height);
-      const width = image.width * ratio;
-      const height = image.height * ratio;
-      const x = (pageWidth - width) / 2;
-      const y = 24 + (maxHeight - height) / 2;
+      if (hasPage) doc.addPage();
+      hasPage = true;
+      await addImagePage(doc, anexo.url_drive, anexo.mime_type, anexo.nome_arquivo || 'Imagem');
+      continue;
+    }
 
-      doc.addImage(image, getExtensionFromMime(anexo.mime_type), x, y, width, height);
-    } else {
-      doc.setFontSize(11);
-      doc.text('Arquivo PDF anexado', 14, 32);
-      doc.setFontSize(10);
-      doc.text('Abra o arquivo original para visualizar o conteúdo completo.', 14, 40);
-      doc.text(anexo.url_drive, 14, 52, { maxWidth: 180 });
+    const pages = await renderPdfPagesToImages(anexo.url_drive);
+    for (let index = 0; index < pages.length; index += 1) {
+      if (hasPage) doc.addPage();
+      hasPage = true;
+      await addImagePage(doc, pages[index], 'image/jpeg', `${anexo.nome_arquivo || 'PDF'} · pág. ${index + 1}`);
     }
   }
 

@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer } from 'lucide-react';
 import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
+import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
 
 const TIPOS_DOCUMENTO = ['Comprovante', 'Boleto', 'Nota Fiscal', 'Contrato', 'Orçamento', 'Outro'];
 const ORDER = ['Nota Fiscal', 'Boleto', 'Comprovante', 'Contrato', 'Orçamento', 'Outro'];
@@ -39,8 +40,8 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-4">
-      <ThumbnailIcon anexo={anexo} large />
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3">
+      <ThumbnailIcon anexo={anexo} />
       <div className="flex-1 min-w-0">
         <a
           href={anexo.url_drive}
@@ -71,18 +72,31 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
 
 export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero, readOnly = false }) {
   const [tipoSelecionado, setTipoSelecionado] = useState('Comprovante');
+  const [tiposCustomizados, setTiposCustomizados] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
   const inputRef = useRef();
 
-  const grupos = ORDER.reduce((acc, tipo) => {
-    const itens = anexos.filter(a => (a.tipo_documento || 'Comprovante') === tipo);
-    if (itens.length > 0) acc.push({ tipo, itens });
-    return acc;
-  }, []);
+  const tiposDisponiveis = useMemo(() => {
+    const tiposDosAnexos = anexos.map((a) => a.tipo_documento).filter(Boolean);
+    return Array.from(new Set([...TIPOS_DOCUMENTO, ...tiposCustomizados, ...tiposDosAnexos]));
+  }, [anexos, tiposCustomizados]);
 
-  const handleFileChange = (e) => {
+  const grupos = useMemo(() => {
+    const ordemFinal = [...ORDER, ...tiposDisponiveis.filter((tipo) => !ORDER.includes(tipo))];
+    return ordemFinal.reduce((acc, tipo) => {
+      const itens = anexos.filter(a => (a.tipo_documento || 'Comprovante') === tipo);
+      if (itens.length > 0) acc.push({ tipo, itens });
+      return acc;
+    }, []);
+  }, [anexos, tiposDisponiveis]);
+
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) onUpload(file, tipoSelecionado, e);
+    if (!file) return;
+    const tipoUsado = await onUpload(file, tipoSelecionado, e);
+    if (tipoUsado && !TIPOS_DOCUMENTO.includes(tipoUsado)) {
+      setTiposCustomizados((prev) => prev.includes(tipoUsado) ? prev : [...prev, tipoUsado]);
+    }
   };
 
   if (!isOpen) return null;
@@ -119,24 +133,18 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
 
       {!readOnly && (
         <>
-          {/* Tipo Selector */}
           <div className="px-5 pb-3">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-2">Tipo do documento</p>
-            <div className="grid grid-cols-3 gap-2">
-              {TIPOS_DOCUMENTO.map(tipo => (
-                <button
-                  key={tipo}
-                  onClick={() => setTipoSelecionado(tipo)}
-                  className={`py-4 px-2 rounded-2xl text-sm font-medium transition-all ${
-                    tipoSelecionado === tipo
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  {tipo}
-                </button>
-              ))}
-            </div>
+            <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Tipo do documento</p>
+            <TipoDocumentoSearch
+              tipos={tiposDisponiveis}
+              value={tipoSelecionado}
+              onChange={(tipo, isNew = false) => {
+                setTipoSelecionado(tipo);
+                if (isNew) {
+                  setTiposCustomizados((prev) => prev.includes(tipo) ? prev : [...prev, tipo]);
+                }
+              }}
+            />
           </div>
 
           {/* Upload button */}
@@ -144,7 +152,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
             <button
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              className="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors border border-dashed border-gray-300 dark:border-gray-700"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-200 py-4 text-gray-600 transition-colors dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
             >
               {uploading
                 ? <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm font-medium">Enviando...</span></>

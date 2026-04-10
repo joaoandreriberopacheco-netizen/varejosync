@@ -43,6 +43,7 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
     await carregar();
     setUploading(false);
     if (e) e.target.value = '';
+    return tipoSelecionado;
   };
 
   const handleDelete = async (anexo) => {
