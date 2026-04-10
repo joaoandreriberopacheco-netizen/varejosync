@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket, RefreshCw } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
+import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -14,6 +15,7 @@ export default function CaixasAtivosPage() {
   const [consumosHoje, setConsumosHoje] = useState([]);
   const [destinacoesExpandidas, setDestinacoesExpandidas] = useState({});
   const [showSenhasPage, setShowSenhasPage] = useState(false);
+  const [consumoSelecionado, setConsumoSelecionado] = useState(null);
 
   useEffect(() => {
     loadTurnos();
@@ -128,6 +130,37 @@ export default function CaixasAtivosPage() {
   }, [consumosHoje]);
 
   const totalConsumoHoje = useMemo(() => consumosHoje.reduce((s, c) => s + (c.valor_total || 0), 0), [consumosHoje]);
+
+  const anexosPorConsumoId = useMemo(() => {
+    const mapa = {};
+    consumosHoje.forEach((consumo) => {
+      const anexos = [];
+      if (consumo.assinatura_recolhedor_url) {
+        anexos.push({
+          id: `${consumo.id}-assinatura`,
+          nome_arquivo: 'Assinatura',
+          descricao: consumo.assinatura_recolhedor_nome || 'Assinatura do recolhedor',
+          tipo_documento: 'Assinatura',
+          url_drive: consumo.assinatura_recolhedor_url,
+        });
+      }
+      if (Array.isArray(consumo.anexos)) {
+        consumo.anexos.forEach((anexo, index) => {
+          if (anexo?.url_drive) {
+            anexos.push({
+              id: anexo.id || `${consumo.id}-anexo-${index}`,
+              nome_arquivo: anexo.nome_arquivo,
+              descricao: anexo.descricao,
+              tipo_documento: anexo.tipo_documento,
+              url_drive: anexo.url_drive,
+            });
+          }
+        });
+      }
+      mapa[consumo.id] = anexos;
+    });
+    return mapa;
+  }, [consumosHoje]);
 
   const toggleDestinacao = (dest) => setDestinacoesExpandidas(prev => ({ ...prev, [dest]: !prev[dest] }));
 
@@ -311,14 +344,13 @@ export default function CaixasAtivosPage() {
                 <div className="space-y-2">
                   {consumosPorDestinacao.map(([dest, data]) => {
                     const expanded = destinacoesExpandidas[dest];
+                    const registrosDestino = consumosHoje.filter(c => (c.destinacao || 'Sem destinação') === dest);
                     const itensAgrupados = {};
-                    consumosHoje
-                      .filter(c => (c.destinacao || 'Sem destinação') === dest)
-                      .forEach(c => (c.itens || []).forEach(it => {
-                        if (!itensAgrupados[it.produto_nome]) itensAgrupados[it.produto_nome] = { qtd: 0, subtotal: 0, unidade: it.unidade_medida || '' };
-                        itensAgrupados[it.produto_nome].qtd += it.quantidade || 0;
-                        itensAgrupados[it.produto_nome].subtotal += it.subtotal || 0;
-                      }));
+                    registrosDestino.forEach(c => (c.itens || []).forEach(it => {
+                      if (!itensAgrupados[it.produto_nome]) itensAgrupados[it.produto_nome] = { qtd: 0, subtotal: 0, unidade: it.unidade_medida || '' };
+                      itensAgrupados[it.produto_nome].qtd += it.quantidade || 0;
+                      itensAgrupados[it.produto_nome].subtotal += it.subtotal || 0;
+                    }));
                     return (
                       <div key={dest} className="rounded-xl bg-gray-50 dark:bg-gray-900 overflow-hidden">
                         <div className="flex items-center justify-between px-4 py-3">
@@ -334,7 +366,7 @@ export default function CaixasAtivosPage() {
                           </div>
                         </div>
                         {expanded && (
-                          <div className="px-4 pb-3 space-y-1 border-t border-gray-100 dark:border-gray-800 pt-2">
+                          <div className="space-y-3 border-t border-gray-100 px-4 pb-3 pt-2 dark:border-gray-800">
                             {Object.entries(itensAgrupados).map(([nome, v]) => (
                               <div key={nome} className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                                 <span>{nome}</span>
@@ -344,6 +376,27 @@ export default function CaixasAtivosPage() {
                                 </span>
                               </div>
                             ))}
+                            <div className="space-y-2 pt-2">
+                              {registrosDestino.map((consumo) => (
+                                <div key={consumo.id} className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm dark:bg-gray-800/70">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{consumo.numero || 'Consumo interno'}</p>
+                                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">{consumo.usuario_solicitante_nome || consumo.created_by || '—'} · {consumo.interveniente_nome || consumo.interveniente || 'Sem interveniente'}</p>
+                                  </div>
+                                  <div className="ml-3 flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(consumo.valor_total)}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConsumoSelecionado(consumo)}
+                                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500 shadow-sm hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                      aria-label="Ver detalhes do consumo"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -416,6 +469,13 @@ export default function CaixasAtivosPage() {
             </div>
           </div>
         )}
+
+        <ConsumoDetalheDialog
+          open={!!consumoSelecionado}
+          onOpenChange={(open) => !open && setConsumoSelecionado(null)}
+          consumo={consumoSelecionado}
+          anexos={consumoSelecionado ? (anexosPorConsumoId[consumoSelecionado.id] || []) : []}
+        />
 
         {rascunhoSelecionado && (
           <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
