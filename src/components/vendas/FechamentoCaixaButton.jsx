@@ -4,11 +4,9 @@ import { Lock } from 'lucide-react';
 import SafeActionButton from '@/components/ui/safe-action-button';
 import { useToast } from '@/components/ui/use-toast';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
-import { createPageUrl } from '@/utils';
 
 /**
- * Botão de fechar caixa inline — sem dialog redundante.
- * Executa o fechamento diretamente e redireciona ao seletor.
+ * Botão de fechamento de caixa com proteção contra clique duplo.
  */
 export default function FechamentoCaixaButton({
   caixaData,
@@ -88,15 +86,16 @@ export default function FechamentoCaixaButton({
   const handleContinuar = async () => {
     if (isContinuing) return;
     setIsContinuing(true);
-    setShowRelatorio(false);
     toast({
       title: '✓ Caixa fechado!',
-      description: 'Turno encerrado.',
+      description: 'Turno encerrado com sucesso.',
       className: 'bg-emerald-100 text-emerald-800',
     });
+    setShowRelatorio(false);
+    onFechado?.();
     setTimeout(() => {
-      window.location.href = createPageUrl('PDV') + '?mode=caixa';
-    }, 500);
+      setIsContinuing(false);
+    }, 300);
   };
 
   return (
