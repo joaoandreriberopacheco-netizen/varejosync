@@ -159,12 +159,12 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
           <label onClick={(e) => e.stopPropagation()} className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Camera className="h-4 w-4" />
             {photoCount > 0 ? `${photoCount} foto(s)` : 'Câmera'}
-            <input id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
+            <input key={`camera-${attachmentInputKey}`} id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
           </label>
           <label onClick={(e) => e.stopPropagation()} className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Paperclip className="h-4 w-4" />
             {attachedCount > 0 ? `${attachedCount} anexo(s)` : 'Anexo'}
-            <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
+            <input key={`attachment-${attachmentInputKey}`} id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
           </label>
         </div>
         <div className="mt-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900">
@@ -312,12 +312,12 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <label onClick={(e) => e.stopPropagation()} className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
             <Camera className="h-5 w-5" />
             {photoCount > 0 ? `${photoCount} foto(s)` : 'Câmera'}
-            <input id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
+            <input key={`camera-mobile-${attachmentInputKey}`} id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
           </label>
           <label onClick={(e) => e.stopPropagation()} className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
             <Paperclip className="h-5 w-5" />
             {attachedCount > 0 ? `${attachedCount} anexo(s)` : 'Anexo'}
-            <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
+            <input key={`attachment-mobile-${attachmentInputKey}`} id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
           </label>
         </div>
         <div className="rounded-2xl bg-gray-50 p-5 dark:bg-gray-800">
@@ -364,6 +364,7 @@ export default function ConsumoInternoFormPage({
 }) {
   const [attachedCount, setAttachedCount] = useState(0);
   const [photoCount, setPhotoCount] = useState(0);
+  const attachmentInputKey = `${attachedCount}-${photoCount}`;
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
   const observationsRef = useRef(null);
