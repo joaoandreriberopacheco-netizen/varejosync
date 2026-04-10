@@ -26,6 +26,7 @@ import SaldoValeDialog from './caixa/SaldoValeDialog';
 import ProcessarVendasView from './caixa/ProcessarVendasView';
 import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog.jsx';
 import PromissoriaDialog from './caixa/PromissoriaDialog';
+import FechamentoCaixaButton from '@/components/vendas/FechamentoCaixaButton';
 import {
   Receipt,
   DollarSign,
@@ -364,9 +365,9 @@ export default function PDVCaixa() {
 
       // F5: reservado para refresh nativo do browser (sem atribuição)
 
-      if (e.key === 'F6' && view === 'dashboard') {// Updated telaAtual to view
+      if (e.key === 'F6' && view === 'dashboard') {
         e.preventDefault();
-        handleFecharCaixa();
+        document.getElementById('secao-fechamento-caixa')?.scrollIntoView({ behavior: 'smooth' });
         return;
       }
 
@@ -1441,12 +1442,12 @@ export default function PDVCaixa() {
 
                    {/* Fechamento inline no balanço */}
                    {!modoVisualizacao && (() => {
-                      const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                      const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                      // Vale é não-monetário, então não entra na comparação do fechamento
-                      const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-                      const diferenca = totalConferido - esperado;
-                      const temDiferenca = Math.abs(diferenca) > 0.01;
+                     const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                     const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                     // Vale é não-monetário, então não entra na comparação do fechamento
+                     const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
+                     const diferenca = totalConferido - esperado;
+                     const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
                         const pw = window.open('', '_blank', 'width=800,height=900');
                         if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
@@ -1545,13 +1546,18 @@ export default function PDVCaixa() {
                            <button onClick={imprimirRelatorio} className="flex-1 h-12 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }} disabled={fechandoCaixa}>
                              <Printer className="w-4 h-4" /> Imprimir
                            </button>
-                           <button onClick={handleFecharCaixa} disabled={!temDiferenca === false || fechandoCaixa} className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed" style={{ minHeight: '48px' }}>
-                             {fechandoCaixa ? (
-                               <><RefreshCw className="w-4 h-4 animate-spin mr-2" /> Fechando...</>
-                             ) : (
-                               <><Lock className="w-4 h-4" /> Fechar Caixa</>
-                             )}
-                           </button>
+                           <FechamentoCaixaButton
+                             caixaData={{ ...caixaData, saldoAtual: dinheiroConferido }}
+                             recebimentosDinheiro={recebimentosDinheiro}
+                             turnoAtivo={turnoAtivo}
+                             currentUser={currentUser}
+                             contaCaixaPDV={contaCaixaPDV}
+                             onFechado={() => {
+                               setFechandoCaixa(false);
+                               loadData();
+                               setView('dashboard');
+                             }}
+                           />
                          </div>
                        </div>
                      );
