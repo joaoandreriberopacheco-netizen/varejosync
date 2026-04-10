@@ -12,6 +12,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
   const [quantidade, setQuantidade] = useState('1');
   const searchRef = useRef(null);
   const quantidadeRef = useRef(null);
+  const lastTapRef = useRef(0);
 
   const produtosFiltrados = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -44,6 +45,8 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
   }, [open, produtoSelecionado]);
 
   const handleClose = (value) => {
+    const now = Date.now();
+    if (!value && now - lastTapRef.current < 250) return;
     if (!value) resetState();
     onOpenChange(value);
   };
@@ -82,7 +85,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                   ref={searchRef}
                   autoFocus
                   type="text"
-                  inputMode="text"
+                  inputMode="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => {
@@ -91,7 +94,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                       handleSelect(produtosFiltrados[0]);
                     }
                   }}
-                  placeholder="Buscar produto..."
+                  placeholder="Digite para buscar produto"
                   className="h-12 rounded-2xl border-0 bg-gray-100 pl-10 shadow-sm dark:bg-gray-800"
                 />
               </div>
@@ -101,6 +104,8 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                 {produtosFiltrados.map((produto) => (
                   <button
                     key={produto.id}
+                    type="button"
+                    onMouseDown={() => { lastTapRef.current = Date.now(); }}
                     onClick={() => handleSelect(produto)}
                     className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-4 text-left shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
