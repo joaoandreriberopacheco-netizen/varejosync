@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
 import ConsumoFormShell from './ConsumoFormShell';
+import ConsumoItensDisplay from './ConsumoItensDisplay';
 
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -41,25 +42,6 @@ function Field({ label, children }) {
 }
 
 // ── Item card ──────────────────────────────────────────────────────────────
-function ItemCard({ item, onRemove }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 py-3 shadow-sm dark:bg-gray-800">
-      <div className="min-w-0">
-        <p className="truncate text-base font-semibold text-gray-900 dark:text-white">{item.produto_nome}</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {item.quantidade} {item.unidade_medida} · custo calc. {fmt(item.custo_unitario)}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="text-base font-bold text-gray-800 dark:text-gray-200">{fmt(item.subtotal)}</span>
-        <button type="button" onClick={onRemove} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:bg-gray-700 dark:text-gray-500">
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
 function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, onFileChange }) {
   return (
@@ -128,22 +110,20 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
       </div>
 
       {/* Section: Itens */}
-      <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-gray-800">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-xl font-bold text-gray-900 dark:text-white">Itens</p>
-          <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">{fmt(totalAtual)}</span>
-        </div>
-        <Button type="button" onClick={onOpenSelector} variant="outline" className="mb-4 h-12 w-full justify-start rounded-2xl border-0 bg-gray-100 text-sm text-gray-700 shadow-sm hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-200">
-          <Search className="mr-2 h-4 w-4" /> Adicionar item
-        </Button>
-        <div className="space-y-2">
-          {formData.itens.map((item, i) => (
-            <ItemCard key={i} item={item} onRemove={() => setFormData((p) => ({ ...p, itens: p.itens.filter((_, j) => j !== i) }))} />
-          ))}
-          {!formData.itens.length && (
-            <p className="py-6 text-center text-sm text-gray-400 dark:text-gray-600">Nenhum item adicionado</p>
-          )}
-        </div>
+      <div className="relative">
+        <ConsumoItensDisplay
+          items={formData.itens}
+          total={totalAtual}
+          onRemove={(index) => setFormData((p) => ({ ...p, itens: p.itens.filter((_, j) => j !== index) }))}
+        />
+        <button
+          type="button"
+          onClick={onOpenSelector}
+          className="absolute bottom-5 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-white text-gray-900 shadow-xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900"
+          aria-label="Adicionar item"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Section: Minuta */}
@@ -257,21 +237,21 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
   if (step === 1) return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-5">
-        <button type="button" onClick={() => {
-          console.log('consumo:abrir-seletor-item');
-          onOpenSelector();
-        }} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
-          <Search className="h-5 w-5" /> Buscar e adicionar item
-        </button>
-        <div className="space-y-3">
-          {formData.itens.map((item, i) => (
-            <ItemCard key={i} item={item} onRemove={() => setFormData((p) => ({ ...p, itens: p.itens.filter((_, j) => j !== i) }))} />
-          ))}
-          {!formData.itens.length && (
-            <div className="rounded-2xl bg-gray-50 py-10 text-center text-sm text-gray-400 dark:bg-gray-800 dark:text-gray-600">
-              Nenhum item adicionado
-            </div>
-          )}
+        <div className="relative">
+          <ConsumoItensDisplay
+            items={formData.itens}
+            total={totalAtual}
+            compact
+            onRemove={(index) => setFormData((p) => ({ ...p, itens: p.itens.filter((_, j) => j !== index) }))}
+          />
+          <button
+            type="button"
+            onClick={onOpenSelector}
+            className="absolute bottom-5 right-5 flex h-16 w-16 items-center justify-center rounded-full bg-white text-gray-900 shadow-xl transition-transform active:scale-95 dark:bg-white dark:text-gray-900"
+            aria-label="Adicionar item"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
         </div>
       </div>
       <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
