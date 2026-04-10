@@ -142,12 +142,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
             <TipoDocumentoSearch
               tipos={tiposDisponiveis}
               value={tipoSelecionado}
-              onChange={(tipo, isNew = false) => {
-                setTipoSelecionado(tipo);
-                if (isNew) {
-                  setTiposCustomizados((prev) => prev.includes(tipo) ? prev : [...prev, tipo]);
-                }
-              }}
+              onChange={setTipoSelecionado}
             />
           </div>
 
