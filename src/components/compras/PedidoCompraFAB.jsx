@@ -139,17 +139,17 @@ export default function PedidoCompraFAB({
       {/* Backdrop */}
       {isExpanded && (
         <div
-          className="fixed inset-0 z-40 backdrop-blur-[2px] bg-black/20"
+          className="fixed inset-0 z-[60] backdrop-blur-[2px] bg-black/20"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
       {/* FAB container */}
-      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col-reverse items-end gap-2 max-h-[70vh] overflow-y-auto">
+      <div className="fixed bottom-[max(6rem,env(safe-area-inset-bottom)+5.5rem)] md:bottom-6 right-4 md:right-6 z-[70] flex flex-col-reverse items-end gap-2 pointer-events-none">
         {/* FAB principal */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}
-          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+          className={`pointer-events-auto w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
             isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
           } text-white`}
           title="Ações do pedido"
@@ -164,7 +164,7 @@ export default function PedidoCompraFAB({
             onClick={action.onClick}
             disabled={action.disabled}
             title={action.label}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
+            className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
             style={{
               animation: `fadeSlideUp 0.18s ease both`,
               animationDelay: `${idx * 30}ms`,
