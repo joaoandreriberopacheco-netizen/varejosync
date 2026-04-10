@@ -64,7 +64,7 @@ function SpeechButton({ isListening, onToggle }) {
 
 // ── Item card ──────────────────────────────────────────────────────────────
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
-function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting, observationsRef }) {
+function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting, observationsRef, attachmentInputKey }) {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 pb-10">
       {/* Section: Dados */}
@@ -193,7 +193,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
 }
 
 // ── MOBILE: PDV-style step flow ────────────────────────────────────────────
-function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting, observationsRef }) {
+function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting, observationsRef, attachmentInputKey }) {
 
   // Step 0: Dados básicos
   if (step === 0) return (
@@ -464,6 +464,7 @@ export default function ConsumoInternoFormPage({
             onToggleVoice={handleToggleVoice}
             isSubmitting={isSubmitting}
             observationsRef={observationsRef}
+            attachmentInputKey={attachmentInputKey}
           />
         </div>
       )}
@@ -492,6 +493,7 @@ export default function ConsumoInternoFormPage({
             onToggleVoice={handleToggleVoice}
             isSubmitting={isSubmitting}
             observationsRef={observationsRef}
+            attachmentInputKey={attachmentInputKey}
           />
         </div>
       )}
