@@ -36,18 +36,24 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/25 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center">
-            <div className="fixed inset-0" onClick={() => setOpen(false)}></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm dark:bg-black/40">
+            <button
+                type="button"
+                aria-label="Fechar modal"
+                className="absolute inset-0 z-0 cursor-default"
+                onClick={() => setOpen(false)}
+            />
             <div
                 ref={ref}
                 className={cn(
-                    "z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg bg-white dark:bg-gray-900",
+                    "relative z-10 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg bg-white dark:bg-gray-900",
                     className
                 )}
                 {...props}
             >
                 {children}
                 <button
+                    type="button"
                     className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
                     onClick={() => setOpen(false)}
                 >
