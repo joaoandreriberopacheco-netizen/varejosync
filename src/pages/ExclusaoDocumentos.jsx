@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Search, Trash2, AlertTriangle, CheckCircle2, ChevronRight, FileText, ShoppingCart, DollarSign, Package, Calendar } from 'lucide-react';
+import { Search, Trash2, AlertTriangle, CheckCircle2, ChevronRight, FileText, ShoppingCart, DollarSign, Package, Calendar, Plus, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 
 const TIPOS = [
@@ -12,6 +12,9 @@ const TIPOS = [
   { value: 'PedidoCompra', label: 'Pedido de Compra', icon: Package, cor: 'blue' },
   { value: 'LancamentoFinanceiro', label: 'Lançamento Financeiro', icon: DollarSign, cor: 'purple' },
   { value: 'MovimentacaoEstoque', label: 'Movimentação de Estoque', icon: FileText, cor: 'amber' },
+  { value: 'MovimentosCaixaReforco', label: 'Reforço de Caixa', icon: Plus, cor: 'emerald' },
+  { value: 'MovimentosCaixaRecolhimento', label: 'Recolhimento de Caixa', icon: Minus, cor: 'blue' },
+  { value: 'DespesaTurno', label: 'Despesa do Turno', icon: DollarSign, cor: 'red' },
   { value: 'Embarque', label: 'Recebimento de Embarque', icon: Package, cor: 'blue' },
   { value: 'AgendaLogistica', label: 'Agenda de Entrega', icon: Calendar, cor: 'red' },
 ];
@@ -59,11 +62,20 @@ async function buscarFilhos(tipo, doc) {
 }
 
 async function excluirTudo(tipo, doc, filhos) {
-  // Excluir filhos primeiro
   for (const filho of filhos) {
     await base44.entities[filho.tipo].delete(filho.id);
   }
-  // Excluir o documento principal
+
+  if (tipo === 'MovimentosCaixaReforco' || tipo === 'MovimentosCaixaRecolhimento') {
+    await base44.entities.MovimentosCaixa.delete(doc.id);
+    return;
+  }
+
+  if (tipo === 'DespesaTurno') {
+    await base44.entities.LancamentoFinanceiro.delete(doc.id);
+    return;
+  }
+
   await base44.entities[tipo].delete(doc.id);
 }
 
@@ -95,11 +107,14 @@ export default function ExclusaoDocumentosPage() {
     else if (tipoSelecionado === 'PedidoCompra') docs = await base44.entities.PedidoCompra.list();
     else if (tipoSelecionado === 'LancamentoFinanceiro') docs = await base44.entities.LancamentoFinanceiro.list();
     else if (tipoSelecionado === 'MovimentacaoEstoque') docs = await base44.entities.MovimentacaoEstoque.list();
+    else if (tipoSelecionado === 'MovimentosCaixaReforco') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Reforço');
+    else if (tipoSelecionado === 'MovimentosCaixaRecolhimento') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Sangria' || d.tipo === 'Recolhimento de Caixa');
+    else if (tipoSelecionado === 'DespesaTurno') docs = (await base44.entities.LancamentoFinanceiro.list()).filter(d => d.tipo === 'Despesa' && d.turno_caixa_id);
     else if (tipoSelecionado === 'Embarque') docs = await base44.entities.Embarque.list();
     else if (tipoSelecionado === 'AgendaLogistica') docs = await base44.entities.AgendaLogistica.list();
 
     const encontrado = docs.find(d =>
-      (d.numero || d.descricao || d.produto_nome || d.pedido_numero || '')
+      (d.numero || d.descricao || d.produto_nome || d.pedido_numero || d.observacao || '')
         .toUpperCase().includes(t) ||
       d.id === t
     );
@@ -136,7 +151,7 @@ export default function ExclusaoDocumentosPage() {
 
   const getDocLabel = (doc) => {
     if (!doc) return '';
-    return doc.codigo_exibicao || doc.numero || doc.descricao?.slice(0, 40) || doc.produto_nome || doc.pedido_numero || doc.id?.slice(0, 8);
+    return doc.codigo_exibicao || doc.numero || doc.descricao?.slice(0, 40) || doc.observacao?.slice(0, 40) || doc.produto_nome || doc.pedido_numero || doc.id?.slice(0, 8);
   };
 
   return (
@@ -204,7 +219,9 @@ export default function ExclusaoDocumentosPage() {
                 {documento.fornecedor_nome && <div className="text-sm text-gray-500 dark:text-gray-400">{documento.fornecedor_nome}</div>}
                 {documento.valor_total != null && <div className="text-sm text-gray-700 dark:text-gray-300">{formatValor(documento.valor_total)}</div>}
                 {documento.valor != null && <div className="text-sm text-gray-700 dark:text-gray-300">{formatValor(documento.valor)}</div>}
+                {documento.observacao && <div className="text-sm text-gray-500 dark:text-gray-400">{documento.observacao}</div>}
                 {documento.status && <div className="text-xs text-gray-400 dark:text-gray-500">{documento.status}</div>}
+                {documento.status_registro && <div className="text-xs text-gray-400 dark:text-gray-500">{documento.status_registro}</div>}
                 {documento.created_date && <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(documento.created_date), 'dd/MM/yyyy HH:mm')}</div>}
               </div>
             </div>
