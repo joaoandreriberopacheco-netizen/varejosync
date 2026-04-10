@@ -112,11 +112,59 @@ export default function PDVAuditoria() {
 
   const finalizar = async () => {
     setFinalizando(true);
-    await base44.entities.ConferenciaEstoque.update(conferencia_id, {
-      status: "Concluída",
-      data_fim: new Date().toISOString(),
-      itens_conferidos: itens,
-    });
+
+    const produtosIds = [...new Set(itens.map(item => item.produto_id).filter(Boolean))];
+    const produtosConferidos = await Promise.all(
+      produtosIds.map((produtoId) => base44.entities.Produto.filter({ id: produtoId }))
+    );
+
+    const mapaProdutos = produtosConferidos.reduce((acc, resultado) => {
+      const produto = resultado?.[0];
+      if (produto?.id) acc[produto.id] = produto;
+      return acc;
+    }, {});
+
+    const totaisConferidos = itens.reduce((acc, item) => {
+      if (!item.produto_id) return acc;
+      acc[item.produto_id] = (acc[item.produto_id] || 0) + (Number(item.quantidade_contada) || 0);
+      return acc;
+    }, {});
+
+    const movimentacoes = Object.entries(totaisConferidos)
+      .map(([produtoId, quantidadeContada]) => {
+        const produto = mapaProdutos[produtoId];
+        if (!produto) return null;
+
+        const estoqueAtual = Number(produto.estoque_atual) || 0;
+        const diferenca = quantidadeContada - estoqueAtual;
+        if (diferenca === 0) return null;
+
+        return {
+          produto_id: produto.id,
+          produto_nome: produto.nome || produto.campo_hierarquico_1 || "Produto",
+          tipo: diferenca > 0 ? "Entrada" : "Saída",
+          motivo: "Ajuste de Inventário",
+          quantidade: Math.abs(diferenca),
+          custo_unitario: Number(produto.preco_custo_calculado) || Number(produto.valor_compra) || 0,
+          referencia_tipo: "ConferenciaEstoque",
+          referencia_id: conferencia_id,
+          referencia_numero: conferencia?.nome_conferencia || conferencia_id,
+          observacoes: `Ajuste automático gerado pela conferência ${conferencia?.nome_conferencia || conferencia_id}`,
+          usuario_responsavel: conferencia?.responsavel_nome || conferencia?.responsavel_id || "Sistema"
+        };
+      })
+      .filter(Boolean);
+
+    await Promise.all([
+      base44.entities.ConferenciaEstoque.update(conferencia_id, {
+        status: "Concluída",
+        data_fim: new Date().toISOString(),
+        itens_conferidos: itens,
+        ajuste_aplicado: true,
+      }),
+      ...movimentacoes.map((movimentacao) => base44.entities.MovimentacaoEstoque.create(movimentacao))
+    ]);
+
     setFinalizando(false);
     navigate(createPageUrl("AuditoriaEstoque"));
   };
