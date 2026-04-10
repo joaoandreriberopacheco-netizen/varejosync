@@ -47,6 +47,7 @@ export default function ConsumoInternoPage() {
   const [editandoConsumo, setEditandoConsumo] = useState(null);
   const anexoInputRef = useRef(null);
   const [consumoAnexoAlvo, setConsumoAnexoAlvo] = useState(null);
+  const [anexosResumo, setAnexosResumo] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => { loadData(); }, []);
@@ -150,6 +151,16 @@ export default function ConsumoInternoPage() {
     }
     setNovoCadastro({ tipo: '', valor: '' });
     loadData();
+  };
+
+  const carregarAnexosConsumo = async (consumo) => {
+    if (!consumo?.id) {
+      setAnexosResumo([]);
+      return;
+    }
+
+    const anexos = await base44.entities.AnexoDocumento.filter({ referencia_id: consumo.id });
+    setAnexosResumo(anexos);
   };
 
   const handleDelete = async (consumo) => {
@@ -331,7 +342,11 @@ export default function ConsumoInternoPage() {
         setSearch={setSearch}
         consumosAgrupadosPorDia={consumosAgrupadosPorDia}
         onRefresh={loadData}
-        onView={(item) => { setConsumoSelecionado(item); setShowResumo(true); }}
+        onView={async (item) => {
+          setConsumoSelecionado(item);
+          setShowResumo(true);
+          await carregarAnexosConsumo(item);
+        }}
         onEdit={handleEditar}
         onAttach={handleAnexarDocumento}
         onDelete={handleDelete}
@@ -344,7 +359,7 @@ export default function ConsumoInternoPage() {
       />
 
       <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />
-      <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} />
+      <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} anexos={anexosResumo} />
       <ComprovanteConsumoInterno open={showComprovante} onClose={() => setShowComprovante(false)} consumo={consumoSelecionado} />
     </>
   );

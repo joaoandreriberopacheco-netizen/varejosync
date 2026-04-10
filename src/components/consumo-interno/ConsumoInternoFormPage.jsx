@@ -123,6 +123,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         </div>
         <Field label="Observações" actions={<SpeechButton isListening={isListening} onToggle={onToggleVoice} />}>
           <Textarea
+            ref={textareaRef}
             className="mt-3 min-h-[80px] rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900"
             value={formData.observacoes}
             onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))}
@@ -248,7 +249,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <Input className="h-14 rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" placeholder="obra, manutenção..." onChange={(e) => setFormData((p) => ({ ...p, tags: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }))} />
         </Field>
         <Field label="Observações (opcional)" actions={<SpeechButton isListening={isListening} onToggle={onToggleVoice} />}>
-          <Textarea className="rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" value={formData.observacoes} onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))} />
+          <Textarea ref={textareaRef} className="rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" value={formData.observacoes} onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))} />
         </Field>
       </div>
       <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
@@ -365,6 +366,7 @@ export default function ConsumoInternoFormPage({
   const [photoCount, setPhotoCount] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -382,7 +384,7 @@ export default function ConsumoInternoFormPage({
     setPhotoCount(e.target.files?.length || 0);
   };
 
-  const handleToggleVoice = () => {
+  const handleToggleVoice = async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       return;
@@ -394,23 +396,40 @@ export default function ConsumoInternoFormPage({
       return;
     }
 
+    if (navigator.mediaDevices?.getUserMedia) {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+
+    textareaRef.current?.focus?.();
+
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
     recognition.interimResults = true;
-    recognition.continuous = false;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = '';
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
     recognition.onerror = () => setIsListening(false);
     recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0]?.transcript || '')
-        .join(' ')
-        .trim();
+      let partialTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const texto = event.results[i][0]?.transcript || '';
+        if (event.results[i].isFinal) {
+          finalTranscript = `${finalTranscript} ${texto}`.trim();
+        } else {
+          partialTranscript = `${partialTranscript} ${texto}`.trim();
+        }
+      }
+
+      const textoCompleto = `${finalTranscript} ${partialTranscript}`.trim();
 
       setFormData((prev) => ({
         ...prev,
-        observacoes: transcript ? [prev.observacoes, transcript].filter(Boolean).join(prev.observacoes ? ' ' : '') : prev.observacoes,
+        observacoes: textoCompleto || prev.observacoes,
       }));
     };
 

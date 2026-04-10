@@ -1,9 +1,9 @@
 import React from 'react';
-import { Calendar, UserRound, MapPin, X, Tags } from 'lucide-react';
+import { Calendar, UserRound, MapPin, X, Tags, Paperclip, ExternalLink, Image as ImageIcon, PenSquare } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-export default function ConsumoResumoDialog({ open, onOpenChange, consumo }) {
+export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexos = [] }) {
   if (!consumo) return null;
 
   if (!open) return null;
@@ -48,6 +48,45 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo }) {
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(item.subtotal)}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] bg-gray-50 p-4 shadow-sm dark:bg-gray-800">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white"><Paperclip className="h-4 w-4" />Anexos</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{anexos.length}</p>
+            </div>
+            <div className="space-y-2">
+              {anexos.length === 0 && (
+                <div className="rounded-2xl bg-white px-3 py-3 text-sm text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-400">
+                  Nenhum anexo salvo.
+                </div>
+              )}
+              {anexos.map((anexo) => {
+                const isAssinatura = anexo.tipo_documento === 'Contrato' || /assinatura/i.test(anexo.nome_arquivo || '') || /assinatura/i.test(anexo.descricao || '');
+                const isImagem = anexo.mime_type?.startsWith('image/');
+                const Icone = isAssinatura ? PenSquare : isImagem ? ImageIcon : Paperclip;
+                return (
+                  <a
+                    key={anexo.id}
+                    href={anexo.url_drive}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-950"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                        <Icone className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{isAssinatura ? 'Assinatura' : anexo.nome_arquivo || 'Anexo'}</p>
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">{anexo.descricao || anexo.tipo_documento || 'Arquivo salvo'}</p>
+                      </div>
+                    </div>
+                    <ExternalLink className="h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>

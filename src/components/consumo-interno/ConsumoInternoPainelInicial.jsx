@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus, Tags } from 'lucide-react';
+import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus, Tags, ImageIcon } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -98,6 +98,7 @@ export default function ConsumoInternoPainelInicial({
                           <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
                           <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
                           <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
+                          {!!item.assinatura_recolhedor_url && <span className="inline-flex items-center gap-1"><Paperclip className="h-3.5 w-3.5" />assinatura</span>}
                           {!!item.tags?.length && <span className="inline-flex items-center gap-1"><Tags className="h-3.5 w-3.5" />{item.tags.join(', ')}</span>}
                         </div>
                       </div>
@@ -121,6 +122,9 @@ export default function ConsumoInternoPainelInicial({
                           <DropdownMenuContent align="end" className="w-44 dark:border-gray-700 dark:bg-gray-800">
                             <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
                               <Pencil className="h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onView(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
+                              <ImageIcon className="h-4 w-4" /> Ver anexos
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
                               <Paperclip className="h-4 w-4" /> Anexar doc / foto
