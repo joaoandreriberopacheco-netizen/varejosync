@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Lock } from 'lucide-react';
 import SafeActionButton from '@/components/ui/safe-action-button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
 
@@ -21,6 +22,7 @@ export default function FechamentoCaixaButton({
   const [turnoFechado, setTurnoFechado] = useState(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
+  const [showConfirmacao, setShowConfirmacao] = useState(false);
 
   const handleFechar = async () => {
     if (isClosing) return;
@@ -101,7 +103,7 @@ export default function FechamentoCaixaButton({
   return (
     <>
       <SafeActionButton
-        onClick={handleFechar}
+        onClick={() => setShowConfirmacao(true)}
         isLoading={isClosing}
         loadingText="Fechando..."
         className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
@@ -109,6 +111,21 @@ export default function FechamentoCaixaButton({
       >
         <Lock className="w-4 h-4" /> Fechar Caixa
       </SafeActionButton>
+
+      <AlertDialog open={showConfirmacao} onOpenChange={setShowConfirmacao}>
+        <AlertDialogContent className="rounded-[28px] border-0 bg-white shadow-2xl dark:bg-gray-900">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar fechamento do caixa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esse botão é sensível. O caixa só será fechado depois desta confirmação de segurança.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-2xl border-0">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">Fechar agora</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <RelatorioFechamentoCaixa
         turno={turnoFechado}

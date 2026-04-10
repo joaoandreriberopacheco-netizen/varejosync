@@ -214,6 +214,44 @@ export default function ConsumoInternoPage() {
     setShowAnexosDialog(true);
   };
 
+  const processarAnexosEmSegundoPlano = async ({ consumoId, numero, assinaturaUrl, assinaturaNome, responsavel, destinacao, observacoes }) => {
+    const fileInput = document.getElementById('consumo-anexo-input');
+    const cameraInput = document.getElementById('consumo-camera-input');
+    const anexos = Array.from(fileInput?.files || []);
+    const fotos = Array.from(cameraInput?.files || []);
+
+    if (!anexos.length && !fotos.length && !assinaturaUrl) return;
+
+    Promise.all([
+      ...anexos.map((file) => uploadAttachment(file, 'Comprovante', consumoId, numero, {
+        interveniente: responsavel,
+        destinacao,
+        observacoes,
+        usuarioNome: currentUser?.full_name || currentUser?.email,
+        createdAt: new Date().toISOString(),
+      })),
+      ...fotos.map((file) => uploadAttachment(file, 'Outro', consumoId, numero, {
+        interveniente: responsavel,
+        destinacao,
+        observacoes,
+        usuarioNome: currentUser?.full_name || currentUser?.email,
+        createdAt: new Date().toISOString(),
+      })),
+      ...(assinaturaUrl ? [base44.entities.AnexoDocumento.create({
+        referencia_tipo: 'Outro', referencia_id: consumoId, referencia_numero: numero,
+        tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
+        url_drive: assinaturaUrl, mime_type: 'image/png',
+        origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${assinaturaNome}`,
+      })] : []),
+    ]).then(() => {
+      if (fileInput) fileInput.value = '';
+      if (cameraInput) cameraInput.value = '';
+      toast.success('Anexos enviados em segundo plano');
+    }).catch(() => {
+      toast.error('O consumo foi salvo, mas alguns anexos não terminaram de subir');
+    });
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
@@ -264,36 +302,15 @@ export default function ConsumoInternoPage() {
           }
         }));
 
-        const fileInput = document.getElementById('consumo-anexo-input');
-        const cameraInput = document.getElementById('consumo-camera-input');
-        const anexos = Array.from(fileInput?.files || []);
-        const fotos = Array.from(cameraInput?.files || []);
-        await Promise.all([
-          ...anexos.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero, {
-            interveniente: formData.responsavel_recebimento,
-            destinacao: formData.destinacao,
-            observacoes: formData.observacoes,
-            usuarioNome: currentUser?.full_name || currentUser?.email,
-            createdAt: new Date().toISOString(),
-          })),
-          ...fotos.map((file) => uploadAttachment(file, 'Outro', created.id, numero, {
-            interveniente: formData.responsavel_recebimento,
-            destinacao: formData.destinacao,
-            observacoes: formData.observacoes,
-            usuarioNome: currentUser?.full_name || currentUser?.email,
-            createdAt: new Date().toISOString(),
-          }))
-        ]);
-        if (formData.assinatura_recolhedor_url) {
-          await base44.entities.AnexoDocumento.create({
-            referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
-            tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
-            url_drive: formData.assinatura_recolhedor_url, mime_type: 'image/png',
-            origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
-          });
-        }
-        if (fileInput) fileInput.value = '';
-        if (cameraInput) cameraInput.value = '';
+        processarAnexosEmSegundoPlano({
+          consumoId: created.id,
+          numero,
+          assinaturaUrl: formData.assinatura_recolhedor_url,
+          assinaturaNome: formData.assinatura_recolhedor_nome,
+          responsavel: formData.responsavel_recebimento,
+          destinacao: formData.destinacao,
+          observacoes: formData.observacoes,
+        });
         toast.success('Consumo interno registrado');
         setShowComprovante(true);
       }

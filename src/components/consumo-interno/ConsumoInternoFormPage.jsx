@@ -64,7 +64,7 @@ function SpeechButton({ isListening, onToggle }) {
 
 // ── Item card ──────────────────────────────────────────────────────────────
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
-function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting }) {
+function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting, observationsRef }) {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 pb-10">
       {/* Section: Dados */}
@@ -123,7 +123,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         </div>
         <Field label="Observações" actions={<SpeechButton isListening={isListening} onToggle={onToggleVoice} />}>
           <Textarea
-            ref={textareaRef}
+            ref={observationsRef}
             className="mt-3 min-h-[80px] rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900"
             value={formData.observacoes}
             onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))}
@@ -193,7 +193,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
 }
 
 // ── MOBILE: PDV-style step flow ────────────────────────────────────────────
-function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting }) {
+function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting, observationsRef }) {
 
   // Step 0: Dados básicos
   if (step === 0) return (
@@ -249,7 +249,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <Input className="h-14 rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" placeholder="obra, manutenção..." onChange={(e) => setFormData((p) => ({ ...p, tags: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }))} />
         </Field>
         <Field label="Observações (opcional)" actions={<SpeechButton isListening={isListening} onToggle={onToggleVoice} />}>
-          <Textarea ref={textareaRef} className="rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" value={formData.observacoes} onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))} />
+          <Textarea ref={observationsRef} className="rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" value={formData.observacoes} onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))} />
         </Field>
       </div>
       <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
@@ -366,6 +366,7 @@ export default function ConsumoInternoFormPage({
   const [photoCount, setPhotoCount] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
+  const observationsRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -398,6 +399,8 @@ export default function ConsumoInternoFormPage({
     if (navigator.mediaDevices?.getUserMedia) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
     }
+
+    observationsRef.current?.focus?.();
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
@@ -459,6 +462,7 @@ export default function ConsumoInternoFormPage({
             isListening={isListening}
             onToggleVoice={handleToggleVoice}
             isSubmitting={isSubmitting}
+            observationsRef={observationsRef}
           />
         </div>
       )}
@@ -486,6 +490,7 @@ export default function ConsumoInternoFormPage({
             isListening={isListening}
             onToggleVoice={handleToggleVoice}
             isSubmitting={isSubmitting}
+            observationsRef={observationsRef}
           />
         </div>
       )}
