@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { subDays, startOfDay, endOfDay, startOfMonth, isWithinInterval } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, startOfMonth, isWithinInterval } from 'date-fns';
 import AssinaturaConsumoDialog from '@/components/consumo-interno/AssinaturaConsumoDialog';
 import ConsumoResumoDialog from '@/components/consumo-interno/ConsumoResumoDialog';
 import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdutoSelectorPDV';
