@@ -110,9 +110,9 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div className="fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-4 gap-3">
+      <div className="flex items-center justify-between px-5 pt-6 pb-4 gap-3 shrink-0">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">Anexos</h2>
           {referenciaNomero && <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">{referenciaNomero}</p>}
@@ -137,7 +137,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
 
       {!readOnly && (
         <>
-          <div className="px-5 pb-3">
+          <div className="px-5 pb-3 shrink-0">
             <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Tipo do documento</p>
             <TipoDocumentoSearch
               tipos={tiposDisponiveis}
@@ -147,7 +147,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
           </div>
 
           {/* Upload button */}
-          <div className="px-5 pb-4">
+          <div className="px-5 pb-4 shrink-0">
             <button
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
