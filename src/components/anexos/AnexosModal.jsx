@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer } from 'lucide-react';
-import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
+import ExportAnexosPdfWorker from '@/components/anexos/exportAnexosPdf.worker.js?worker';
 import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
 
 const TIPOS_DOCUMENTO = ['Comprovante', 'Boleto', 'Nota Fiscal', 'Contrato', 'Orçamento', 'Outro'];
@@ -75,6 +75,43 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   const [tiposCustomizados, setTiposCustomizados] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
   const inputRef = useRef();
+  const workerRef = useRef(null);
+
+  useEffect(() => {
+    workerRef.current = new ExportAnexosPdfWorker();
+
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  const handleExportPdf = () => {
+    if (!workerRef.current || exportingPdf || anexos.length === 0) return;
+
+    setExportingPdf(true);
+
+    workerRef.current.onmessage = (event) => {
+      const { type, blob, message } = event.data || {};
+
+      if (type === 'EXPORT_SUCCESS') {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'anexos.pdf';
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      if (type === 'EXPORT_ERROR') {
+        console.error(message || 'Falha ao exportar PDF');
+      }
+
+      setExportingPdf(false);
+    };
+
+    workerRef.current.postMessage({ type: 'EXPORT_ANEXOS_PDF', anexos });
+  };
 
   const tiposDisponiveis = useMemo(() => {
     const tiposDosAnexos = anexos.map((a) => a.tipo_documento).filter(Boolean);
@@ -111,11 +148,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={async () => {
-              setExportingPdf(true);
-              await exportAnexosToPdf(anexos);
-              setExportingPdf(false);
-            }}
+            onClick={handleExportPdf}
             disabled={exportingPdf || anexos.length === 0}
             className="h-9 px-3 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors"
           >
