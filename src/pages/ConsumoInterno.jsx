@@ -12,6 +12,7 @@ import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdu
 import ConsumoInternoFormPage from '@/components/consumo-interno/ConsumoInternoFormPage';
 import ComprovanteConsumoInterno from '@/components/consumo-interno/ComprovanteConsumoInterno';
 import ConsumoInternoPainelInicial from '@/components/consumo-interno/ConsumoInternoPainelInicial';
+import ConsumoAnexosDialog from '@/components/consumo-interno/ConsumoAnexosDialog';
 import { buildAnexoMovimentoTag } from '@/components/anexos/buildAnexoMovimentoTag';
 import { renderTaggedImage } from '@/components/anexos/renderTaggedImage';
 
@@ -47,6 +48,7 @@ export default function ConsumoInternoPage() {
   const [editandoConsumo, setEditandoConsumo] = useState(null);
   const anexoInputRef = useRef(null);
   const [consumoAnexoAlvo, setConsumoAnexoAlvo] = useState(null);
+  const [showAnexosDialog, setShowAnexosDialog] = useState(false);
   const [anexosResumo, setAnexosResumo] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -205,6 +207,13 @@ export default function ConsumoInternoPage() {
     setShowForm(true);
   };
 
+  const handleVerAnexos = async (consumo) => {
+    const anexos = await base44.entities.AnexoDocumento.filter({ referencia_id: consumo.id });
+    setConsumoSelecionado(consumo);
+    setAnexosResumo(anexos || []);
+    setShowAnexosDialog(true);
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
@@ -347,6 +356,7 @@ export default function ConsumoInternoPage() {
           setShowResumo(true);
           await carregarAnexosConsumo(item);
         }}
+        onViewAttachments={handleVerAnexos}
         onEdit={handleEditar}
         onAttach={handleAnexarDocumento}
         onDelete={handleDelete}
@@ -360,6 +370,7 @@ export default function ConsumoInternoPage() {
 
       <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} anexos={anexosResumo} />
+      <ConsumoAnexosDialog open={showAnexosDialog} onOpenChange={setShowAnexosDialog} anexos={anexosResumo} consumoNumero={consumoSelecionado?.numero} />
       <ComprovanteConsumoInterno open={showComprovante} onClose={() => setShowComprovante(false)} consumo={consumoSelecionado} />
     </>
   );

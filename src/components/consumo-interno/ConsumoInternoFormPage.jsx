@@ -366,7 +366,6 @@ export default function ConsumoInternoFormPage({
   const [photoCount, setPhotoCount] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
-  const textareaRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -399,8 +398,6 @@ export default function ConsumoInternoFormPage({
     if (navigator.mediaDevices?.getUserMedia) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
     }
-
-    textareaRef.current?.focus?.();
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';

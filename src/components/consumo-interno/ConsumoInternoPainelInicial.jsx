@@ -19,6 +19,7 @@ export default function ConsumoInternoPainelInicial({
   consumosAgrupadosPorDia,
   onRefresh,
   onView,
+  onViewAttachments,
   onEdit,
   onAttach,
   onDelete,
@@ -123,7 +124,7 @@ export default function ConsumoInternoPainelInicial({
                             <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
                               <Pencil className="h-4 w-4" /> Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onView(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
+                            <DropdownMenuItem onClick={() => onViewAttachments(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
                               <ImageIcon className="h-4 w-4" /> Ver anexos
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
