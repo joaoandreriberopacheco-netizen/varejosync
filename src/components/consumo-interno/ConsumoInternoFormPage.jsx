@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ArrowLeft, Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check
+  Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check
 } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
+import ConsumoFormShell from './ConsumoFormShell';
 
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -346,92 +347,57 @@ export default function ConsumoInternoFormPage({
   onOpenAssinatura,
   onSubmit,
 }) {
-  const [mobileStep, setMobileStep] = useState(0);
   const [attachedCount, setAttachedCount] = useState(0);
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
-
-  const stepLabels = ['Destino', 'Itens', 'Minuta'];
-
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleFileChange = (e) => {
     setAttachedCount(e.target.files?.length || 0);
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50 dark:bg-gray-900">
-      <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-        <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-          <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-        </button>
-        <div className="flex-1">
-          <p className="text-base font-bold text-gray-900 dark:text-white">Novo consumo interno</p>
-          {!isDesktop && (
-            <div className="flex items-center gap-2">
-              <StepDots step={mobileStep} />
-              <span className="text-xs text-gray-400">{stepLabels[mobileStep]}</span>
-            </div>
-          )}
+    <ConsumoFormShell
+      onBack={onBack}
+      desktop={(
+        <div className="h-full overflow-y-auto p-6">
+          <DesktopForm
+            formData={formData}
+            setFormData={setFormData}
+            turnos={turnos}
+            destinacoes={destinacoes}
+            responsaveis={responsaveis}
+            setNovoCadastro={setNovoCadastro}
+            totalAtual={totalAtual}
+            onOpenSelector={onOpenSelector}
+            currentUser={currentUser}
+            onOpenAssinatura={onOpenAssinatura}
+            onSubmit={onSubmit}
+            onBack={onBack}
+            attachedCount={attachedCount}
+            onFileChange={handleFileChange}
+          />
         </div>
-        {isDesktop && (
-          <div className="flex items-center gap-1">
-            {stepLabels.map((label, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <span className="text-xs font-semibold text-gray-400 dark:text-gray-600">{label}</span>
-                {i < stepLabels.length - 1 && <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-700" />}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-hidden">
-        {isDesktop ? (
-          <div className="h-full overflow-y-auto p-6">
-            <DesktopForm
-              formData={formData}
-              setFormData={setFormData}
-              turnos={turnos}
-              destinacoes={destinacoes}
-              responsaveis={responsaveis}
-              setNovoCadastro={setNovoCadastro}
-              totalAtual={totalAtual}
-              onOpenSelector={onOpenSelector}
-              currentUser={currentUser}
-              onOpenAssinatura={onOpenAssinatura}
-              onSubmit={onSubmit}
-              onBack={onBack}
-              attachedCount={attachedCount}
-              onFileChange={handleFileChange}
-            />
-          </div>
-        ) : (
-          <div className="flex h-full flex-col overflow-hidden">
-            <MobileForm
-              step={mobileStep}
-              setStep={setMobileStep}
-              formData={formData}
-              setFormData={setFormData}
-              turnos={turnos}
-              destinacoes={destinacoes}
-              responsaveis={responsaveis}
-              setNovoCadastro={setNovoCadastro}
-              totalAtual={totalAtual}
-              onOpenSelector={onOpenSelector}
-              currentUser={currentUser}
-              onOpenAssinatura={onOpenAssinatura}
-              onSubmit={onSubmit}
-              onBack={onBack}
-              attachedCount={attachedCount}
-              onFileChange={handleFileChange}
-            />
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+      mobile={({ mobileStep, setMobileStep }) => (
+        <div className="flex h-full flex-col overflow-hidden">
+          <MobileForm
+            step={mobileStep}
+            setStep={setMobileStep}
+            formData={formData}
+            setFormData={setFormData}
+            turnos={turnos}
+            destinacoes={destinacoes}
+            responsaveis={responsaveis}
+            setNovoCadastro={setNovoCadastro}
+            totalAtual={totalAtual}
+            onOpenSelector={onOpenSelector}
+            currentUser={currentUser}
+            onOpenAssinatura={onOpenAssinatura}
+            onSubmit={onSubmit}
+            onBack={onBack}
+            attachedCount={attachedCount}
+            onFileChange={handleFileChange}
+          />
+        </div>
+      )}
+    />
   );
 }
