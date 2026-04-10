@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, Package, ChevronLeft } from 'lucide-react';
+import { Search, Plus, Minus, Package, ChevronLeft, X } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -72,11 +71,26 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
     onOpenChange(false);
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl rounded-[28px] border-0 bg-white p-0 shadow-2xl pointer-events-auto [&_*]:pointer-events-auto dark:bg-gray-900">
+    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
+      <button
+        type="button"
+        aria-label="Fechar seletor"
+        className="absolute inset-0"
+        onClick={() => handleClose(false)}
+      />
+      <div className="relative z-10 flex h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-gray-900 md:h-auto md:max-h-[88vh] md:rounded-[32px]">
+        <button
+          type="button"
+          onClick={() => handleClose(false)}
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
         {!produtoSelecionado ? (
-          <div className="flex max-h-[80vh] flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <div className="border-b border-gray-100 p-4 dark:border-gray-800">
               <p className="text-lg font-semibold text-gray-900 dark:text-white">Escolher material</p>
               <div className="relative mt-3">
@@ -99,7 +113,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                 />
               </div>
             </div>
-            <div className="overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
               <div className="space-y-2">
                 {produtosFiltrados.map((produto) => (
                   <button
@@ -122,7 +136,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
             </div>
           </div>
         ) : (
-          <div className="flex max-h-[80vh] flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <div className="border-b border-gray-100 p-4 dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <button onClick={() => setProdutoSelecionado(null)} className="rounded-2xl p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -179,7 +193,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
