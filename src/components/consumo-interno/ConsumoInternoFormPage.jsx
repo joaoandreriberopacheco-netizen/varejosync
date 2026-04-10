@@ -377,12 +377,16 @@ export default function ConsumoInternoFormPage({
 
   const handleAttachmentChange = (e) => {
     e.stopPropagation();
-    setAttachedCount(e.target.files?.length || 0);
+    const files = Array.from(e.target.files || []);
+    setAttachedCount(files.length);
+    setFormData((prev) => ({ ...prev, anexos_temporarios: files }));
   };
 
   const handleCameraChange = (e) => {
     e.stopPropagation();
-    setPhotoCount(e.target.files?.length || 0);
+    const files = Array.from(e.target.files || []);
+    setPhotoCount(files.length);
+    setFormData((prev) => ({ ...prev, fotos_temporarias: files }));
   };
 
   const handleToggleVoice = async () => {

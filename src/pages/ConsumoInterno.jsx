@@ -43,6 +43,8 @@ export default function ConsumoInternoPage() {
     itens: [],
     assinatura_recolhedor_url: '',
     assinatura_recolhedor_nome: '',
+    anexos_temporarios: [],
+    fotos_temporarias: [],
   });
   const [novoCadastro, setNovoCadastro] = useState({ tipo: '', valor: '' });
   const [editandoConsumo, setEditandoConsumo] = useState(null);
@@ -203,6 +205,8 @@ export default function ConsumoInternoPage() {
       itens: consumo.itens || [],
       assinatura_recolhedor_url: consumo.assinatura_recolhedor_url || '',
       assinatura_recolhedor_nome: consumo.assinatura_recolhedor_nome || '',
+      anexos_temporarios: [],
+      fotos_temporarias: [],
     });
     setShowForm(true);
   };
@@ -214,12 +218,7 @@ export default function ConsumoInternoPage() {
     setShowAnexosDialog(true);
   };
 
-  const processarAnexosEmSegundoPlano = async ({ consumoId, numero, assinaturaUrl, assinaturaNome, responsavel, destinacao, observacoes }) => {
-    const fileInput = document.getElementById('consumo-anexo-input');
-    const cameraInput = document.getElementById('consumo-camera-input');
-    const anexos = Array.from(fileInput?.files || []);
-    const fotos = Array.from(cameraInput?.files || []);
-
+  const processarAnexosEmSegundoPlano = async ({ consumoId, numero, assinaturaUrl, assinaturaNome, responsavel, destinacao, observacoes, anexos = [], fotos = [] }) => {
     if (!anexos.length && !fotos.length && !assinaturaUrl) return;
 
     Promise.all([
@@ -244,8 +243,6 @@ export default function ConsumoInternoPage() {
         origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${assinaturaNome}`,
       })] : []),
     ]).then(() => {
-      if (fileInput) fileInput.value = '';
-      if (cameraInput) cameraInput.value = '';
       toast.success('Anexos enviados em segundo plano');
     }).catch(() => {
       toast.error('O consumo foi salvo, mas alguns anexos não terminaram de subir');
@@ -310,6 +307,8 @@ export default function ConsumoInternoPage() {
           responsavel: formData.responsavel_recebimento,
           destinacao: formData.destinacao,
           observacoes: formData.observacoes,
+          anexos: formData.anexos_temporarios || [],
+          fotos: formData.fotos_temporarias || [],
         });
         toast.success('Consumo interno registrado');
         setShowComprovante(true);
@@ -318,7 +317,7 @@ export default function ConsumoInternoPage() {
       setConsumos((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
       setEditandoConsumo(null);
       setShowForm(false);
-      setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' });
+      setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '', anexos_temporarios: [], fotos_temporarias: [] });
       await loadData();
     } finally {
       setIsSubmitting(false);
