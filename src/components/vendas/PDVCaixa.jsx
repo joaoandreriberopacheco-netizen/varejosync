@@ -1047,11 +1047,13 @@ export default function PDVCaixa() {
   }, [caixaData]);
 
   const handleFecharCaixa = async () => {
+    if (fechandoCaixa) return;
+
     const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
     const totalConferido = dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
     const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
     const diferenca = totalConferido - esperado;
-    
+
     if (Math.abs(diferenca) > 0.01) {
       toast({
         title: "Valores não conferem",
@@ -1060,10 +1062,20 @@ export default function PDVCaixa() {
       });
       return;
     }
-    
+
+    setShowFechamentoDialog(true);
+  };
+
+  const handleConfirmarFechamentoCaixa = async () => {
+    if (fechandoCaixa) return;
+
+    const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+    const totalConferido = dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+    const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
+    const diferenca = totalConferido - esperado;
+
     setFechandoCaixa(true);
     try {
-      // Atualizar turno com todos os dados consolidados
       await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
         status: 'Fechado',
         data_fechamento: new Date().toISOString(),
@@ -1086,7 +1098,6 @@ export default function PDVCaixa() {
         despesas_ids: (caixaData.despesasLista || []).map(d => d.id)
       });
 
-      // Registrar o recolhimento no fechamento sem manipular saldo_atual da conta
       const todasContas = await base44.entities.ContasFinanceiras.list();
       const caixaGeral = todasContas.find((c) => c.is_caixa_geral === true);
       if (caixaGeral && dinheiroContado > 0) {
@@ -1102,15 +1113,8 @@ export default function PDVCaixa() {
         });
       }
 
-      toast({
-        title: "✓ Caixa fechado com sucesso!",
-        className: "bg-emerald-100 text-emerald-800",
-        duration: 2000
-      });
-
-      setTimeout(() => {
-        navigate(createPageUrl('Dashboard'));
-      }, 1500);
+      setShowFechamentoDialog(false);
+      setShowFechamentoSucessoDialog(true);
     } catch (error) {
       toast({
         title: "Erro ao fechar caixa",
@@ -1120,6 +1124,21 @@ export default function PDVCaixa() {
     } finally {
       setFechandoCaixa(false);
     }
+  };
+
+  const handleConcluirFechamentoSucesso = () => {
+    setShowFechamentoSucessoDialog(false);
+    setShowSeletorCaixa(true);
+    setCaixaSelecionado(null);
+    setTurnoAtivo(null);
+    setContaCaixaPDV(null);
+    setModoVisualizacao(false);
+    setView('dashboard');
+    toast({
+      title: "✓ Caixa fechado com sucesso!",
+      className: "bg-emerald-100 text-emerald-800",
+      duration: 2000
+    });
   };
 
   const formatValor = (valor) => {
