@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import SafeActionButton from '@/components/ui/safe-action-button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -63,7 +64,7 @@ function SpeechButton({ isListening, onToggle }) {
 
 // ── Item card ──────────────────────────────────────────────────────────────
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
-function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice }) {
+function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting }) {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 pb-10">
       {/* Section: Dados */}
@@ -182,16 +183,16 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         <Button type="button" variant="outline" onClick={onBack} className="h-14 flex-1 rounded-2xl border-0 bg-white text-base shadow-sm dark:bg-gray-800">
           Cancelar
         </Button>
-        <Button type="button" onClick={onSubmit} className="h-14 flex-[2] rounded-2xl bg-gray-900 text-base text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+        <SafeActionButton type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Processando..." className="h-14 flex-[2] rounded-2xl bg-gray-900 text-base text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900">
           Concluir
-        </Button>
+        </SafeActionButton>
       </div>
     </div>
   );
 }
 
 // ── MOBILE: PDV-style step flow ────────────────────────────────────────────
-function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice }) {
+function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice, isSubmitting }) {
 
   // Step 0: Dados básicos
   if (step === 0) return (
@@ -336,9 +337,9 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <button type="button" onClick={() => setStep(1)} className="flex h-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
             Voltar
           </button>
-          <button type="button" onClick={onSubmit} className="flex h-16 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
+          <SafeActionButton type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Processando..." className="flex h-16 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
             Concluir
-          </button>
+          </SafeActionButton>
         </div>
       </div>
     </div>
@@ -358,6 +359,7 @@ export default function ConsumoInternoFormPage({
   currentUser,
   onOpenAssinatura,
   onSubmit,
+  isSubmitting = false,
 }) {
   const [attachedCount, setAttachedCount] = useState(0);
   const [photoCount, setPhotoCount] = useState(0);
@@ -440,6 +442,7 @@ export default function ConsumoInternoFormPage({
             onCameraChange={handleCameraChange}
             isListening={isListening}
             onToggleVoice={handleToggleVoice}
+            isSubmitting={isSubmitting}
           />
         </div>
       )}
@@ -466,6 +469,7 @@ export default function ConsumoInternoFormPage({
             onCameraChange={handleCameraChange}
             isListening={isListening}
             onToggleVoice={handleToggleVoice}
+            isSubmitting={isSubmitting}
           />
         </div>
       )}

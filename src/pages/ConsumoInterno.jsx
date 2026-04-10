@@ -47,6 +47,7 @@ export default function ConsumoInternoPage() {
   const [editandoConsumo, setEditandoConsumo] = useState(null);
   const anexoInputRef = useRef(null);
   const [consumoAnexoAlvo, setConsumoAnexoAlvo] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -194,92 +195,96 @@ export default function ConsumoInternoPage() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
       toast.error('Preencha destinação, responsável e itens');
       return;
     }
-    const turno = turnos.find((item) => item.id === formData.turno_caixa_id);
-    const payload = {
-      ...formData,
-      status: 'Confirmado',
-      turno_caixa_numero: turno?.numero || '',
-      usuario_solicitante_id: currentUser?.id,
-      usuario_solicitante_nome: currentUser?.full_name || currentUser?.email,
-      quantidade_total_itens: formData.itens.reduce((sum, item) => sum + (item.quantidade || 0), 0),
-      valor_total: totalAtual,
-      data_confirmacao: new Date().toISOString(),
-    };
-    let created;
-    if (editandoConsumo) {
-      created = await base44.entities.ConsumoInterno.update(editandoConsumo.id, payload);
-      toast.success('Consumo atualizado');
-    } else {
-      const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
-      const numero = response?.data?.numero || `CI-${Date.now()}`;
-      created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
 
-      // ── Baixar estoque de cada item ───────────────────────────────────────
-      await Promise.all(formData.itens.map(async (item) => {
-        // 1. Registrar movimentação de saída
-        await base44.entities.MovimentacaoEstoque.create({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          tipo: 'Saída',
-          motivo: 'Consumo Interno',
-          quantidade: item.quantidade,
-          custo_unitario: item.custo_unitario,
-          referencia_tipo: 'ConsumoInterno',
-          referencia_id: created.id,
-          referencia_numero: numero,
-          observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
-          usuario_responsavel: currentUser?.full_name || currentUser?.email,
-        });
-        // 2. Atualizar estoque_atual do produto
-        const produtoAtual = produtos.find((p) => p.id === item.produto_id);
-        if (produtoAtual) {
-          const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
-          await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
+    setIsSubmitting(true);
+    try {
+      const turno = turnos.find((item) => item.id === formData.turno_caixa_id);
+      const payload = {
+        ...formData,
+        status: 'Confirmado',
+        turno_caixa_numero: turno?.numero || '',
+        usuario_solicitante_id: currentUser?.id,
+        usuario_solicitante_nome: currentUser?.full_name || currentUser?.email,
+        quantidade_total_itens: formData.itens.reduce((sum, item) => sum + (item.quantidade || 0), 0),
+        valor_total: totalAtual,
+        data_confirmacao: new Date().toISOString(),
+      };
+      let created;
+      if (editandoConsumo) {
+        created = await base44.entities.ConsumoInterno.update(editandoConsumo.id, payload);
+        toast.success('Consumo atualizado');
+      } else {
+        const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
+        const numero = response?.data?.numero || `CI-${Date.now()}`;
+        created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
+
+        await Promise.all(formData.itens.map(async (item) => {
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            tipo: 'Saída',
+            motivo: 'Consumo Interno',
+            quantidade: item.quantidade,
+            custo_unitario: item.custo_unitario,
+            referencia_tipo: 'ConsumoInterno',
+            referencia_id: created.id,
+            referencia_numero: numero,
+            observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
+            usuario_responsavel: currentUser?.full_name || currentUser?.email,
+          });
+          const produtoAtual = produtos.find((p) => p.id === item.produto_id);
+          if (produtoAtual) {
+            const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
+            await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
+          }
+        }));
+
+        const fileInput = document.getElementById('consumo-anexo-input');
+        const cameraInput = document.getElementById('consumo-camera-input');
+        const anexos = Array.from(fileInput?.files || []);
+        const fotos = Array.from(cameraInput?.files || []);
+        await Promise.all([
+          ...anexos.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero, {
+            interveniente: formData.responsavel_recebimento,
+            destinacao: formData.destinacao,
+            observacoes: formData.observacoes,
+            usuarioNome: currentUser?.full_name || currentUser?.email,
+            createdAt: new Date().toISOString(),
+          })),
+          ...fotos.map((file) => uploadAttachment(file, 'Outro', created.id, numero, {
+            interveniente: formData.responsavel_recebimento,
+            destinacao: formData.destinacao,
+            observacoes: formData.observacoes,
+            usuarioNome: currentUser?.full_name || currentUser?.email,
+            createdAt: new Date().toISOString(),
+          }))
+        ]);
+        if (formData.assinatura_recolhedor_url) {
+          await base44.entities.AnexoDocumento.create({
+            referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
+            tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
+            url_drive: formData.assinatura_recolhedor_url, mime_type: 'image/png',
+            origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
+          });
         }
-      }));
-
-      const fileInput = document.getElementById('consumo-anexo-input');
-      const cameraInput = document.getElementById('consumo-camera-input');
-      const anexos = Array.from(fileInput?.files || []);
-      const fotos = Array.from(cameraInput?.files || []);
-      await Promise.all([
-        ...anexos.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero, {
-          interveniente: formData.responsavel_recebimento,
-          destinacao: formData.destinacao,
-          observacoes: formData.observacoes,
-          usuarioNome: currentUser?.full_name || currentUser?.email,
-          createdAt: new Date().toISOString(),
-        })),
-        ...fotos.map((file) => uploadAttachment(file, 'Outro', created.id, numero, {
-          interveniente: formData.responsavel_recebimento,
-          destinacao: formData.destinacao,
-          observacoes: formData.observacoes,
-          usuarioNome: currentUser?.full_name || currentUser?.email,
-          createdAt: new Date().toISOString(),
-        }))
-      ]);
-      if (formData.assinatura_recolhedor_url) {
-        await base44.entities.AnexoDocumento.create({
-          referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
-          tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
-          url_drive: formData.assinatura_recolhedor_url, mime_type: 'image/png',
-          origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
-        });
+        if (fileInput) fileInput.value = '';
+        if (cameraInput) cameraInput.value = '';
+        toast.success('Consumo interno registrado');
+        setShowComprovante(true);
       }
-      if (fileInput) fileInput.value = '';
-      if (cameraInput) cameraInput.value = '';
-      toast.success('Consumo interno registrado');
-      setShowComprovante(true);
+      setConsumoSelecionado(created);
+      setEditandoConsumo(null);
+      setShowForm(false);
+      setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' });
+      loadData();
+    } finally {
+      setIsSubmitting(false);
     }
-    setConsumoSelecionado(created);
-    setEditandoConsumo(null);
-    setShowForm(false);
-    setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' });
-    loadData();
   };
 
   if (showForm) {
@@ -298,6 +303,7 @@ export default function ConsumoInternoPage() {
           currentUser={currentUser}
           onOpenAssinatura={() => setShowAssinatura(true)}
           onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
         />
         <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
           <DialogContent className="max-w-sm rounded-[28px] border-0 bg-white p-5 shadow-2xl dark:bg-gray-900">
