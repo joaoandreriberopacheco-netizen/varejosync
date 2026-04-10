@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ export default function ConsumoInternoPage() {
   const [showProdutoSelector, setShowProdutoSelector] = useState(false);
   const [showComprovante, setShowComprovante] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   const [consumoSelecionado, setConsumoSelecionado] = useState(null);
   const [formData, setFormData] = useState({
     turno_caixa_id: '',
@@ -380,14 +382,37 @@ export default function ConsumoInternoPage() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowForm(true)}
-        className="fixed bottom-28 right-4 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900 md:bottom-10 md:right-6"
-        aria-label="Novo consumo interno"
-      >
-        <Plus className="h-6 w-6" />
-      </button>
+      <div className="fixed bottom-28 right-4 z-40 flex flex-col items-end gap-3 md:bottom-10 md:right-6">
+        {showFabMenu && (
+          <div className="flex flex-col gap-2 rounded-[28px] bg-white p-2 shadow-2xl dark:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => {
+                setShowFabMenu(false);
+                setShowForm(true);
+              }}
+              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              Novo formulário
+            </button>
+            <Link
+              to="/AnexoCompartilhado"
+              onClick={() => setShowFabMenu(false)}
+              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              Página antiga
+            </Link>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowFabMenu((prev) => !prev)}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900"
+          aria-label="Novo consumo interno"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+      </div>
 
       {/* Input oculto para anexos diretos da lista */}
       <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />
