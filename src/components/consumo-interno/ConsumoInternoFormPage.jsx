@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -348,8 +348,15 @@ export default function ConsumoInternoFormPage({
 }) {
   const [mobileStep, setMobileStep] = useState(0);
   const [attachedCount, setAttachedCount] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
 
   const stepLabels = ['Destino', 'Itens', 'Minuta'];
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleFileChange = (e) => {
     setAttachedCount(e.target.files?.length || 0);
@@ -357,71 +364,73 @@ export default function ConsumoInternoFormPage({
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-        <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+        <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
           <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
         </button>
         <div className="flex-1">
           <p className="text-base font-bold text-gray-900 dark:text-white">Novo consumo interno</p>
-          {/* Mobile step indicator */}
-          <div className="flex items-center gap-2 md:hidden">
-            <StepDots step={mobileStep} />
-            <span className="text-xs text-gray-400">{stepLabels[mobileStep]}</span>
-          </div>
-        </div>
-        {/* Desktop: show all step labels */}
-        <div className="hidden items-center gap-1 md:flex">
-          {stepLabels.map((label, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <span className={`text-xs font-semibold ${i === mobileStep ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>{label}</span>
-              {i < stepLabels.length - 1 && <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-700" />}
+          {!isDesktop && (
+            <div className="flex items-center gap-2">
+              <StepDots step={mobileStep} />
+              <span className="text-xs text-gray-400">{stepLabels[mobileStep]}</span>
             </div>
-          ))}
+          )}
         </div>
+        {isDesktop && (
+          <div className="flex items-center gap-1">
+            {stepLabels.map((label, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <span className="text-xs font-semibold text-gray-400 dark:text-gray-600">{label}</span>
+                {i < stepLabels.length - 1 && <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-700" />}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Body */}
-      {/* Desktop: vertical scroll */}
-      <div aria-hidden="true" className="hidden pointer-events-none flex-1 overflow-y-auto p-6 md:pointer-events-auto md:block">
-        <DesktopForm
-          formData={formData}
-          setFormData={setFormData}
-          turnos={turnos}
-          destinacoes={destinacoes}
-          responsaveis={responsaveis}
-          setNovoCadastro={setNovoCadastro}
-          totalAtual={totalAtual}
-          onOpenSelector={onOpenSelector}
-          currentUser={currentUser}
-          onOpenAssinatura={onOpenAssinatura}
-          onSubmit={onSubmit}
-          onBack={onBack}
-          attachedCount={attachedCount}
-          onFileChange={handleFileChange}
-        />
-      </div>
-
-      {/* Mobile: step-based full height */}
-      <div aria-hidden="false" className="flex flex-1 flex-col overflow-hidden md:hidden">
-        <MobileForm
-          step={mobileStep}
-          setStep={setMobileStep}
-          formData={formData}
-          setFormData={setFormData}
-          turnos={turnos}
-          destinacoes={destinacoes}
-          responsaveis={responsaveis}
-          setNovoCadastro={setNovoCadastro}
-          totalAtual={totalAtual}
-          onOpenSelector={onOpenSelector}
-          currentUser={currentUser}
-          onOpenAssinatura={onOpenAssinatura}
-          onSubmit={onSubmit}
-          onBack={onBack}
-          attachedCount={attachedCount}
-          onFileChange={handleFileChange}
-        />
+      <div className="flex-1 overflow-hidden">
+        {isDesktop ? (
+          <div className="h-full overflow-y-auto p-6">
+            <DesktopForm
+              formData={formData}
+              setFormData={setFormData}
+              turnos={turnos}
+              destinacoes={destinacoes}
+              responsaveis={responsaveis}
+              setNovoCadastro={setNovoCadastro}
+              totalAtual={totalAtual}
+              onOpenSelector={onOpenSelector}
+              currentUser={currentUser}
+              onOpenAssinatura={onOpenAssinatura}
+              onSubmit={onSubmit}
+              onBack={onBack}
+              attachedCount={attachedCount}
+              onFileChange={handleFileChange}
+            />
+          </div>
+        ) : (
+          <div className="flex h-full flex-col overflow-hidden">
+            <MobileForm
+              step={mobileStep}
+              setStep={setMobileStep}
+              formData={formData}
+              setFormData={setFormData}
+              turnos={turnos}
+              destinacoes={destinacoes}
+              responsaveis={responsaveis}
+              setNovoCadastro={setNovoCadastro}
+              totalAtual={totalAtual}
+              onOpenSelector={onOpenSelector}
+              currentUser={currentUser}
+              onOpenAssinatura={onOpenAssinatura}
+              onSubmit={onSubmit}
+              onBack={onBack}
+              attachedCount={attachedCount}
+              onFileChange={handleFileChange}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
