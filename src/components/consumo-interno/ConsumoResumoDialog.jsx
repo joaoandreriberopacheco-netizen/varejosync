@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, UserRound, MapPin, X } from 'lucide-react';
+import { Calendar, UserRound, MapPin, X, Tags } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -30,6 +30,7 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo }) {
             <Info icon={UserRound} label="Recebeu" value={consumo.responsavel_recebimento} />
             <Info icon={UserRound} label="Registrado por" value={consumo.usuario_solicitante_nome} />
             <Info icon={Calendar} label="Confirmado em" value={consumo.data_confirmacao ? new Date(consumo.data_confirmacao).toLocaleString('pt-BR') : '—'} />
+            <Info icon={Tags} label="Tags" value={consumo.tags?.length ? consumo.tags.join(', ') : '—'} />
           </div>
 
           <div className="rounded-[24px] bg-gray-50 p-4 shadow-sm dark:bg-gray-800">

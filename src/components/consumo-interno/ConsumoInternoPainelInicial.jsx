@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus } from 'lucide-react';
+import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus, Tags } from 'lucide-react';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -98,6 +98,7 @@ export default function ConsumoInternoPainelInicial({
                           <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
                           <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
                           <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
+                          {!!item.tags?.length && <span className="inline-flex items-center gap-1"><Tags className="h-3.5 w-3.5" />{item.tags.join(', ')}</span>}
                         </div>
                       </div>
 

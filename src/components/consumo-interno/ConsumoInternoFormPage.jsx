@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check
+  Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check, Camera
 } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
 import ConsumoFormShell from './ConsumoFormShell';
@@ -43,7 +43,7 @@ function Field({ label, children }) {
 
 // ── Item card ──────────────────────────────────────────────────────────────
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
-function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, onFileChange }) {
+function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange }) {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 pb-10">
       {/* Section: Dados */}
@@ -129,15 +129,20 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
       {/* Section: Minuta */}
       <div className="rounded-3xl bg-white p-6 shadow-sm dark:bg-gray-800">
         <p className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Minuta</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Button type="button" variant="outline" onClick={onOpenAssinatura} className="h-14 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900">
             <Signature className="mr-2 h-4 w-4" />
             {formData.assinatura_recolhedor_nome ? `✓ ${formData.assinatura_recolhedor_nome}` : 'Coletar assinatura'}
           </Button>
           <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
+            <Camera className="h-4 w-4" />
+            {photoCount > 0 ? `${photoCount} foto(s)` : 'Câmera'}
+            <input id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
+          </label>
+          <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Paperclip className="h-4 w-4" />
-            {attachedCount > 0 ? `${attachedCount} foto(s)/arquivo(s)` : 'Adicionar foto ou anexo'}
-            <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" capture="environment" className="hidden" onChange={onFileChange} />
+            {attachedCount > 0 ? `${attachedCount} anexo(s)` : 'Anexo'}
+            <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
           </label>
         </div>
         <div className="mt-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900">
@@ -166,7 +171,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
 }
 
 // ── MOBILE: PDV-style step flow ────────────────────────────────────────────
-function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, onFileChange }) {
+function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange }) {
 
   // Step 0: Dados básicos
   if (step === 0) return (
@@ -281,11 +286,18 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> {formData.assinatura_recolhedor_nome}</span>
           ) : 'Coletar assinatura'}
         </button>
-        <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
-          <Paperclip className="h-5 w-5" />
-          {attachedCount > 0 ? `${attachedCount} foto(s)/arquivo(s)` : 'Adicionar foto ou anexo'}
-          <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" capture="environment" className="hidden" onChange={onFileChange} />
-        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+            <Camera className="h-5 w-5" />
+            {photoCount > 0 ? `${photoCount} foto(s)` : 'Câmera'}
+            <input id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
+          </label>
+          <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+            <Paperclip className="h-5 w-5" />
+            {attachedCount > 0 ? `${attachedCount} anexo(s)` : 'Anexo'}
+            <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
+          </label>
+        </div>
         <div className="rounded-2xl bg-gray-50 p-5 dark:bg-gray-800">
           <div className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400">
             <Clock3 className="h-3.5 w-3.5" /> Resumo
@@ -328,9 +340,14 @@ export default function ConsumoInternoFormPage({
   onSubmit,
 }) {
   const [attachedCount, setAttachedCount] = useState(0);
+  const [photoCount, setPhotoCount] = useState(0);
 
-  const handleFileChange = (e) => {
+  const handleAttachmentChange = (e) => {
     setAttachedCount(e.target.files?.length || 0);
+  };
+
+  const handleCameraChange = (e) => {
+    setPhotoCount(e.target.files?.length || 0);
   };
 
   return (
@@ -352,7 +369,9 @@ export default function ConsumoInternoFormPage({
             onSubmit={onSubmit}
             onBack={onBack}
             attachedCount={attachedCount}
-            onFileChange={handleFileChange}
+            photoCount={photoCount}
+            onAttachmentChange={handleAttachmentChange}
+            onCameraChange={handleCameraChange}
           />
         </div>
       )}
@@ -374,7 +393,9 @@ export default function ConsumoInternoFormPage({
             onSubmit={onSubmit}
             onBack={onBack}
             attachedCount={attachedCount}
-            onFileChange={handleFileChange}
+            photoCount={photoCount}
+            onAttachmentChange={handleAttachmentChange}
+            onCameraChange={handleCameraChange}
           />
         </div>
       )}

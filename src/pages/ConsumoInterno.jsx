@@ -243,14 +243,25 @@ export default function ConsumoInternoPage() {
       }));
 
       const fileInput = document.getElementById('consumo-anexo-input');
-      const files = Array.from(fileInput?.files || []);
-      await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero, {
-        interveniente: formData.responsavel_recebimento,
-        destinacao: formData.destinacao,
-        observacoes: formData.observacoes,
-        usuarioNome: currentUser?.full_name || currentUser?.email,
-        createdAt: new Date().toISOString(),
-      })));
+      const cameraInput = document.getElementById('consumo-camera-input');
+      const anexos = Array.from(fileInput?.files || []);
+      const fotos = Array.from(cameraInput?.files || []);
+      await Promise.all([
+        ...anexos.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero, {
+          interveniente: formData.responsavel_recebimento,
+          destinacao: formData.destinacao,
+          observacoes: formData.observacoes,
+          usuarioNome: currentUser?.full_name || currentUser?.email,
+          createdAt: new Date().toISOString(),
+        })),
+        ...fotos.map((file) => uploadAttachment(file, 'Outro', created.id, numero, {
+          interveniente: formData.responsavel_recebimento,
+          destinacao: formData.destinacao,
+          observacoes: formData.observacoes,
+          usuarioNome: currentUser?.full_name || currentUser?.email,
+          createdAt: new Date().toISOString(),
+        }))
+      ]);
       if (formData.assinatura_recolhedor_url) {
         await base44.entities.AnexoDocumento.create({
           referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
@@ -260,6 +271,7 @@ export default function ConsumoInternoPage() {
         });
       }
       if (fileInput) fileInput.value = '';
+      if (cameraInput) cameraInput.value = '';
       toast.success('Consumo interno registrado');
       setShowComprovante(true);
     }
