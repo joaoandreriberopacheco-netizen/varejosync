@@ -383,7 +383,7 @@ export default function ConsumoInternoPage() {
       <button
         type="button"
         onClick={() => setShowForm(true)}
-        className="fixed bottom-24 right-4 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900 md:bottom-6 md:right-6"
+        className="fixed bottom-28 right-4 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900 md:bottom-10 md:right-6"
         aria-label="Novo consumo interno"
       >
         <Plus className="h-6 w-6" />

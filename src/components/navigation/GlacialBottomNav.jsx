@@ -79,8 +79,10 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
             return (
               <button
                 key={item.id}
+                type="button"
+                onMouseDown={(e) => handleClick(e, item)}
                 onClick={(e) => handleClick(e, item)}
-                className="flex-1 relative"
+                className="flex-1 relative touch-manipulation"
               >
                 {content}
               </button>
