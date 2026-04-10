@@ -39,8 +39,11 @@ export default function SearchableSelect({
   };
 
   const handleAddNew = () => {
-    if (search.trim()) {
-      onAddNew(search);
+    const nextValue = search.trim();
+    if (nextValue) {
+      onAddNew(nextValue);
+      setSelectedLabel(nextValue);
+      onChange(nextValue);
       setSearch('');
       setIsOpen(false);
     }
@@ -81,6 +84,7 @@ export default function SearchableSelect({
         {selectedLabel && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
               e.stopPropagation();
               handleClear();
@@ -110,6 +114,7 @@ export default function SearchableSelect({
               {search && (
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={handleAddNew}
                   className="w-full flex items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-t border-gray-100 dark:border-gray-700"
                 >

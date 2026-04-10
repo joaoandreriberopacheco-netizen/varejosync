@@ -106,6 +106,7 @@ export default function ConsumoInternoPage() {
     if (!novoItem?.produto_id) return;
     setFormData((prev) => ({ ...prev, itens: [...prev.itens, novoItem] }));
     setShowProdutoSelector(false);
+    toast.success('Item adicionado');
   };
 
   const uploadAttachment = async (file, tipoDocumento, referenciaId, referenciaNumero) => {
