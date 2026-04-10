@@ -383,7 +383,7 @@ export default function ConsumoInternoFormPage({
 
       {/* Body */}
       {/* Desktop: vertical scroll */}
-      <div className="hidden flex-1 overflow-y-auto p-6 md:block">
+      <div aria-hidden="true" className="hidden pointer-events-none flex-1 overflow-y-auto p-6 md:pointer-events-auto md:block">
         <DesktopForm
           formData={formData}
           setFormData={setFormData}
@@ -403,7 +403,7 @@ export default function ConsumoInternoFormPage({
       </div>
 
       {/* Mobile: step-based full height */}
-      <div className="flex flex-1 flex-col overflow-hidden md:hidden">
+      <div aria-hidden="false" className="flex flex-1 flex-col overflow-hidden md:hidden">
         <MobileForm
           step={mobileStep}
           setStep={setMobileStep}
