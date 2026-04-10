@@ -315,10 +315,11 @@ export default function ConsumoInternoPage() {
         setShowComprovante(true);
       }
       setConsumoSelecionado(created);
+      setConsumos((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
       setEditandoConsumo(null);
       setShowForm(false);
       setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' });
-      loadData();
+      await loadData();
     } finally {
       setIsSubmitting(false);
     }
