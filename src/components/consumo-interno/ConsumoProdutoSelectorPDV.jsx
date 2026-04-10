@@ -74,7 +74,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl rounded-[28px] border-0 bg-white p-0 shadow-2xl pointer-events-auto dark:bg-gray-900">
+      <DialogContent className="max-w-3xl rounded-[28px] border-0 bg-white p-0 shadow-2xl pointer-events-auto [&_*]:pointer-events-auto dark:bg-gray-900">
         {!produtoSelecionado ? (
           <div className="flex max-h-[80vh] flex-col">
             <div className="border-b border-gray-100 p-4 dark:border-gray-800">
@@ -95,7 +95,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                     }
                   }}
                   placeholder="Digite para buscar produto"
-                  className="h-12 rounded-2xl border-0 bg-gray-100 pl-10 shadow-sm dark:bg-gray-800"
+                  className="h-12 touch-manipulation rounded-2xl border-0 bg-gray-100 pl-10 shadow-sm dark:bg-gray-800"
                 />
               </div>
             </div>
@@ -105,9 +105,9 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                   <button
                     key={produto.id}
                     type="button"
-                    onMouseDown={() => { lastTapRef.current = Date.now(); }}
+                    onPointerDown={() => { lastTapRef.current = Date.now(); }}
                     onClick={() => handleSelect(produto)}
-                    className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-4 text-left shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    className="flex w-full touch-manipulation items-center justify-between rounded-[24px] bg-gray-50 px-4 py-4 text-left shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{produto.nome}</p>
