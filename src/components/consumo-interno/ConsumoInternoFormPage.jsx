@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check, Camera
+  Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check, Camera, Mic, MicOff
 } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
 import ConsumoFormShell from './ConsumoFormShell';
@@ -30,20 +30,40 @@ function StepDots({ step, total = 3 }) {
 }
 
 // ── Field wrapper ──────────────────────────────────────────────────────────
-function Field({ label, children }) {
+function Field({ label, children, actions }) {
   return (
     <div className="space-y-2">
-      <Label className="block text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-        {label}
-      </Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="block text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          {label}
+        </Label>
+        {actions}
+      </div>
       {children}
     </div>
   );
 }
 
+function SpeechButton({ isListening, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition-colors ${
+        isListening
+          ? 'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-300'
+          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300'
+      }`}
+      aria-label={isListening ? 'Parar gravação' : 'Falar observações'}
+    >
+      {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+    </button>
+  );
+}
+
 // ── Item card ──────────────────────────────────────────────────────────────
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
-function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange }) {
+function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice }) {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 pb-10">
       {/* Section: Dados */}
@@ -100,7 +120,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             </div>
           </Field>
         </div>
-        <Field label="Observações">
+        <Field label="Observações" actions={<SpeechButton isListening={isListening} onToggle={onToggleVoice} />}>
           <Textarea
             className="mt-3 min-h-[80px] rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900"
             value={formData.observacoes}
@@ -134,12 +154,12 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             <Signature className="mr-2 h-4 w-4" />
             {formData.assinatura_recolhedor_nome ? `✓ ${formData.assinatura_recolhedor_nome}` : 'Coletar assinatura'}
           </Button>
-          <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
+          <label onClick={(e) => e.stopPropagation()} className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Camera className="h-4 w-4" />
             {photoCount > 0 ? `${photoCount} foto(s)` : 'Câmera'}
             <input id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
           </label>
-          <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
+          <label onClick={(e) => e.stopPropagation()} className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Paperclip className="h-4 w-4" />
             {attachedCount > 0 ? `${attachedCount} anexo(s)` : 'Anexo'}
             <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
@@ -171,7 +191,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
 }
 
 // ── MOBILE: PDV-style step flow ────────────────────────────────────────────
-function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange }) {
+function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, photoCount, onAttachmentChange, onCameraChange, isListening, onToggleVoice }) {
 
   // Step 0: Dados básicos
   if (step === 0) return (
@@ -226,7 +246,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         <Field label="Tags (opcional)">
           <Input className="h-14 rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" placeholder="obra, manutenção..." onChange={(e) => setFormData((p) => ({ ...p, tags: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }))} />
         </Field>
-        <Field label="Observações (opcional)">
+        <Field label="Observações (opcional)" actions={<SpeechButton isListening={isListening} onToggle={onToggleVoice} />}>
           <Textarea className="rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" value={formData.observacoes} onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))} />
         </Field>
       </div>
@@ -287,12 +307,12 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           ) : 'Coletar assinatura'}
         </button>
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+          <label onClick={(e) => e.stopPropagation()} className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
             <Camera className="h-5 w-5" />
             {photoCount > 0 ? `${photoCount} foto(s)` : 'Câmera'}
             <input id="consumo-camera-input" type="file" multiple accept="image/*" capture="environment" className="hidden" onChange={onCameraChange} />
           </label>
-          <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+          <label onClick={(e) => e.stopPropagation()} className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
             <Paperclip className="h-5 w-5" />
             {attachedCount > 0 ? `${attachedCount} anexo(s)` : 'Anexo'}
             <input id="consumo-anexo-input" type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onAttachmentChange} />
@@ -341,13 +361,59 @@ export default function ConsumoInternoFormPage({
 }) {
   const [attachedCount, setAttachedCount] = useState(0);
   const [photoCount, setPhotoCount] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop?.();
+    };
+  }, []);
 
   const handleAttachmentChange = (e) => {
+    e.stopPropagation();
     setAttachedCount(e.target.files?.length || 0);
   };
 
   const handleCameraChange = (e) => {
+    e.stopPropagation();
     setPhotoCount(e.target.files?.length || 0);
+  };
+
+  const handleToggleVoice = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop?.();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript || '')
+        .join(' ')
+        .trim();
+
+      setFormData((prev) => ({
+        ...prev,
+        observacoes: transcript ? [prev.observacoes, transcript].filter(Boolean).join(prev.observacoes ? ' ' : '') : prev.observacoes,
+      }));
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   return (
@@ -372,6 +438,8 @@ export default function ConsumoInternoFormPage({
             photoCount={photoCount}
             onAttachmentChange={handleAttachmentChange}
             onCameraChange={handleCameraChange}
+            isListening={isListening}
+            onToggleVoice={handleToggleVoice}
           />
         </div>
       )}
@@ -396,6 +464,8 @@ export default function ConsumoInternoFormPage({
             photoCount={photoCount}
             onAttachmentChange={handleAttachmentChange}
             onCameraChange={handleCameraChange}
+            isListening={isListening}
+            onToggleVoice={handleToggleVoice}
           />
         </div>
       )}
