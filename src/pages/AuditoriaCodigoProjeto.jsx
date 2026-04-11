@@ -1,252 +1,233 @@
 import { useState } from 'react';
-import { AlertTriangle, Trash2, Archive, CheckCircle2, ChevronDown, ChevronRight, Info, Code2, Database, FileCode, Layers } from 'lucide-react';
 
-const AUDIT_DATA = {
-  funcoesMigracao: {
-    label: 'Funções de Migração One-Time',
-    icon: Code2,
-    color: 'text-red-500',
-    bg: 'bg-red-50 dark:bg-red-900/10',
-    border: 'border-l-red-400',
-    risco: 'ALTO — Scripts já executados. Sem utilidade, ocupam bundle e confundem o contexto.',
-    items: [
-      { nome: 'migrarTagContaPagar', motivo: 'Migração de tag já concluída. Substituída por corrigirTagContaPagar.' },
-      { nome: 'corrigirTagContaPagar', motivo: 'Correção pontual já executada com sucesso (29 registros).' },
-      { nome: 'migrarMovimentosParaLancamentos', motivo: 'Migração de entidade legada já concluída.' },
-      { nome: 'migrarCustosParaProduto', motivo: 'Campo de custo já movido. Migração concluída.' },
-      { nome: 'migrarDadosLegadosEmbarqueRecebimento', motivo: 'Dados legados de embarque já migrados.' },
-      { nome: 'migrarEmbarquesOriginais', motivo: 'Estrutura de embarques refatorada. Script obsoleto.' },
-      { nome: 'migrarLancamentosVendas', motivo: 'Lançamentos de venda agora gerados automaticamente no fluxo.' },
-      { nome: 'migrarNumerosPedidosCompra', motivo: 'Numeração PC já padronizada.' },
-      { nome: 'migrarPedidoCompraParaEmbarque', motivo: 'Modelo de embarque separado já vigente.' },
-      { nome: 'migrarStatusPedidos', motivo: 'Enum de status migrado. Dados atualizados.' },
-      { nome: 'popularSnapshotRetroativo', motivo: 'Snapshot histórico de estoque já populado.' },
-      { nome: 'corrigirDatasMarcoLancamentos', motivo: 'Correção pontual de datas já aplicada.' },
-      { nome: 'renumerarPedidosVendaDuplicados', motivo: 'Duplicação de numeração resolvida. Sem reincidência.' },
-      { nome: 'recalcularTodosEstoques', motivo: 'Recálculo de massa executado. Automação incremental já ativa.' },
-      { nome: 'recalcularSupermanifestos', motivo: 'Totais já corretos. Script foi corretivo.' },
-      { nome: 'recalcularConclusaoPedidoCompra', motivo: 'Substituído por reprocessarConclusaoPedidosCompra.' },
-      { nome: 'reprocessarConclusaoPedidosCompra', motivo: 'Correção one-time de status de conclusão.' },
-      { nome: 'regularizarSaldosCaixaRetroativo', motivo: 'Saldos retroativos corrigidos. Fluxo atual não gera mais inconsistência.' },
-      { nome: 'deduplicarColaboradores', motivo: 'Deduplicação já aplicada. Entidade Colaborador sem novos duplicados.' },
-      { nome: 'deduplicarUsuarios', motivo: 'Deduplicação já aplicada no início do projeto.' },
-      { nome: 'repararLancamentosCartao', motivo: 'Lançamentos de cartão já normalizados pelo fluxo atual do PDV.' },
-      { nome: 'repararLancamentoPedidosAprovados', motivo: 'Consistência de aprovação financeira já garantida no fluxo.' },
+const FASES = [
+  {
+    id: 'funcoes_migracao',
+    fase: 'Fase 1',
+    titulo: 'Funções de Migração',
+    descricao: 'Scripts one-time já executados. Candidatos certos à exclusão.',
+    itens: [
+      'functions/migrarTagContaPagar',
+      'functions/corrigirTagContaPagar',
+      'functions/migrarMovimentosParaLancamentos',
+      'functions/migrarCustosParaProduto',
+      'functions/migrarDadosLegadosEmbarqueRecebimento',
+      'functions/migrarEmbarquesOriginais',
+      'functions/migrarLancamentosVendas',
+      'functions/migrarNumerosPedidosCompra',
+      'functions/migrarPedidoCompraParaEmbarque',
+      'functions/migrarStatusPedidos',
+      'functions/popularSnapshotRetroativo',
+      'functions/corrigirDatasMarcoLancamentos',
+      'functions/renumerarPedidosVendaDuplicados',
+      'functions/recalcularTodosEstoques',
+      'functions/recalcularSupermanifestos',
+      'functions/recalcularConclusaoPedidoCompra',
+      'functions/reprocessarConclusaoPedidosCompra',
+      'functions/regularizarSaldosCaixaRetroativo',
+      'functions/deduplicarColaboradores',
+      'functions/deduplicarUsuarios',
+      'functions/repararLancamentosCartao',
+      'functions/repararLancamentoPedidosAprovados',
     ],
   },
-  paginasDuplicadas: {
-    label: 'Páginas Duplicadas / Superadas',
-    icon: Layers,
-    color: 'text-amber-500',
-    bg: 'bg-amber-50 dark:bg-amber-900/10',
-    border: 'border-l-amber-400',
-    risco: 'MÉDIO — Versões antigas mantidas ao lado das novas, gerando confusão de rota e menu.',
-    items: [
-      { nome: 'AuditoriaEstoque (V1)', motivo: 'AuditoriaEstoqueV2 já em produção. V1 nunca mais recebeu updates.' },
-      { nome: 'Financeiro', motivo: 'Substituída por FinanceiroModulo. Antiga tela integrada de finanças.' },
-      { nome: 'FluxoCaixa', motivo: 'Componente ExecucaoOrcamentaria dentro de FinanceiroModulo/Agefin já cobre isso.' },
-      { nome: 'FinanceiroAprovacoes', motivo: 'Fluxo de aprovação financeira já integrado em AprovacoesFinanceiras (rota explícita).' },
-      { nome: 'Compras', motivo: 'Substituída por PedidosCompra + PedidoCompraDetalhe com mais features.' },
-      { nome: 'ControleCaixasAtivos', motivo: 'CaixasAtivos (rota explícita) é a versão atual. ControleCaixasAtivos é legado.' },
-      { nome: 'HubLogistico', motivo: 'Funcionalidades absorvidas por ItinerarioFluvial, GestaoManifestosPage e GestaoSupermanifestosPage.' },
-      { nome: 'Operacoes', motivo: 'Nome genérico sem função clara. Verificar se ainda tem uso real no menu.' },
-      { nome: 'EdicaoMassivaCustos', motivo: 'Substituída por EditarProdutosEmMassa, que é mais completa.' },
-      { nome: 'InterfaceSeparador', motivo: 'Fluxo de separação integrado a OrdemSeparacao e PDV. Página isolada não é mais acessada.' },
-      { nome: 'MapaFuncionalidades', motivo: 'Página de diagnóstico/desenvolvimento. Não deve estar acessível em produção.' },
-      { nome: 'ExclusaoDocumentos', motivo: 'Funcionalidade de exclusão integrada às próprias telas. Página standalone obsoleta.' },
-      { nome: 'PainelGerente', motivo: 'Dashboard já cobre visão gerencial. Verificar se PainelGerente ainda tem diferenciação real.' },
-      { nome: 'DashboardCaixa', motivo: 'Visão de caixa já integrada em PDVCaixa e VisualizadorCaixa.' },
+  {
+    id: 'paginas_duplicadas',
+    fase: 'Fase 2',
+    titulo: 'Páginas Duplicadas / Superadas',
+    descricao: 'Versões antigas ou funcionalidades absorvidas por outras páginas.',
+    itens: [
+      'pages/AuditoriaEstoque (V1 — substituída por AuditoriaEstoqueV2)',
+      'pages/Financeiro (substituída por FinanceiroModulo)',
+      'pages/FluxoCaixa (absorvida por FinanceiroModulo/Agefin)',
+      'pages/FinanceiroAprovacoes (integrada em AprovacoesFinanceiras)',
+      'pages/Compras (substituída por PedidosCompra + PedidoCompraDetalhe)',
+      'pages/ControleCaixasAtivos (substituída por CaixasAtivos)',
+      'pages/HubLogistico (absorvida por ItinerarioFluvial + GestaoManifestosPage)',
+      'pages/Operacoes (nome genérico — verificar uso real)',
+      'pages/EdicaoMassivaCustos (substituída por EditarProdutosEmMassa)',
+      'pages/InterfaceSeparador (separação integrada ao PDV)',
+      'pages/MapaFuncionalidades (página de desenvolvimento — não produção)',
+      'pages/ExclusaoDocumentos (exclusão integrada nas próprias telas)',
+      'pages/PainelGerente (visão coberta pelo Dashboard)',
+      'pages/DashboardCaixa (coberta por PDVCaixa + VisualizadorCaixa)',
     ],
   },
-  entidadesLegadas: {
-    label: 'Entidades / Schemas Obsoletos',
-    icon: Database,
-    color: 'text-purple-500',
-    bg: 'bg-purple-50 dark:bg-purple-900/10',
-    border: 'border-l-purple-400',
-    risco: 'MÉDIO-ALTO — Schemas sem uso geram confusão sobre modelo de dados e podem causar migrações desnecessárias.',
-    items: [
-      { nome: 'EventoLogisticoSandbox', motivo: '"Sandbox" no nome indica entidade de teste. Substituída por EventosLogisticos.' },
-      { nome: 'ContaPrevista', motivo: 'Contas previstas agora são LancamentoFinanceiro com tags. Entidade redundante.' },
-      { nome: 'StatusPedidoCompra', motivo: 'Status embutido como enum em PedidoCompra. Entidade separada não é mais usada.' },
-      { nome: 'StatusAprovacaoFinanceira', motivo: 'Aprovação financeira controlada por campo em PedidoCompra. Entidade isolada é legado.' },
-      { nome: 'TransicaoPedidoCompra', motivo: 'Histórico de transição embutido no campo historico de PedidoCompra.' },
-      { nome: 'ConfiguracoesRelatorios', motivo: 'Configurações de relatório nunca foram salvas via esta entidade no fluxo atual.' },
-      { nome: 'EventoEditorLayout', motivo: 'Editor de layout refatorado (EditorLayoutsTres). Entidade de eventos do editor antigo.' },
-      { nome: 'PadraoLayout', motivo: 'Sistema de layout agora usa LayoutTemplate e ComprovanteTemplate unificados.' },
-      { nome: 'AvisosAuto', motivo: 'Módulo de auto-atendimento com status incerto. Verificar uso real.' },
-      { nome: 'ConfigAutoAtendimento', motivo: 'Idem AvisosAuto — verificar se AutoAtendimento ainda é uma feature ativa.' },
-      { nome: 'LoteEstoque', motivo: 'Controle de lote implementado dentro de MovimentacaoEstoque. Entidade separada vazia.' },
-      { nome: 'ImportacaoLog', motivo: 'Logs de importação não são mais consultados. Dados históricos sem uso operacional.' },
+  {
+    id: 'entidades_legadas',
+    fase: 'Fase 3',
+    titulo: 'Entidades / Schemas Legados',
+    descricao: 'Schemas sem uso ativo. Verificar se há registros antes de deletar.',
+    itens: [
+      'entities/EventoLogisticoSandbox (entidade de teste — substituída por EventosLogisticos)',
+      'entities/ContaPrevista (substituída por LancamentoFinanceiro + tags)',
+      'entities/StatusPedidoCompra (enum embutido em PedidoCompra)',
+      'entities/StatusAprovacaoFinanceira (campo em PedidoCompra)',
+      'entities/TransicaoPedidoCompra (histórico em campo historico de PedidoCompra)',
+      'entities/ConfiguracoesRelatorios (nunca gravada no fluxo atual)',
+      'entities/EventoEditorLayout (editor antigo — substituído por EditorLayoutsTres)',
+      'entities/PadraoLayout (substituído por LayoutTemplate + ComprovanteTemplate)',
+      'entities/AvisosAuto (módulo auto-atendimento — verificar uso real)',
+      'entities/ConfigAutoAtendimento (idem AvisosAuto)',
+      'entities/LoteEstoque (controle de lote em MovimentacaoEstoque)',
+      'entities/ImportacaoLog (logs históricos sem uso operacional)',
     ],
   },
-  funcoesRedundantes: {
-    label: 'Funções com Sobreposição Lógica',
-    icon: FileCode,
-    color: 'text-blue-500',
-    bg: 'bg-blue-50 dark:bg-blue-900/10',
-    border: 'border-l-blue-400',
-    risco: 'BAIXO-MÉDIO — Funções que fazem coisas similares, gerando dúvida sobre qual usar.',
-    items: [
-      { nome: 'sincronizarContaPrevia vs gerarContasPrevistasRecorrentes', motivo: 'Duas funções cuidando de contas futuras. Unificar em uma.' },
-      { nome: 'sincronizarEstoquePorMovimentacao vs recalcularEstoqueProduto', motivo: 'Uma incremental, outra total. Documentar diferença ou unificar.' },
-      { nome: 'atualizarStatusLancamentos vs sincronizarStatusFinanceiro', motivo: 'Ambas atualizam status financeiro. Verificar se não há duplicação de automações.' },
-      { nome: 'gerarViagensTransportadora vs atualizarViagensTransportadoras vs sincronizarViagensTransportadora', motivo: '3 funções para viagens de transportadora. Consolidar em uma com parâmetros.' },
-      { nome: 'gerarRelatorioConferencia vs gerarRelatorioConsolidadoCompra vs gerarRelatorioPedido vs gerarRelatorioPedidosCompra', motivo: 'Relatórios de compra fragmentados em 4 funções. Candidatos a um pipeline unificado.' },
+  {
+    id: 'sobreposicoes',
+    fase: 'Fase 4',
+    titulo: 'Sobreposições Lógicas',
+    descricao: 'Funções que fazem coisas similares. Consolidar em uma só.',
+    itens: [
+      'sincronizarContaPrevia ↔ gerarContasPrevistasRecorrentes (contas futuras duplicadas)',
+      'sincronizarEstoquePorMovimentacao ↔ recalcularEstoqueProduto (incremental vs total)',
+      'atualizarStatusLancamentos ↔ sincronizarStatusFinanceiro (status financeiro duplicado)',
+      'gerarViagensTransportadora ↔ atualizarViagensTransportadoras ↔ sincronizarViagensTransportadora (3 funções para viagens)',
+      'gerarRelatorioConferencia ↔ gerarRelatorioConsolidadoCompra ↔ gerarRelatorioPedido ↔ gerarRelatorioPedidosCompra (relatórios de compra fragmentados)',
     ],
   },
+];
+
+const STATUS = {
+  pendente: { label: '—', style: 'text-gray-400' },
+  excluir: { label: '✕ Excluir', style: 'text-red-600 font-semibold' },
+  manter: { label: '✓ Manter', style: 'text-green-700 font-semibold' },
+  revisar: { label: '? Revisar', style: 'text-amber-600 font-semibold' },
 };
-
-const BADGE = {
-  ALTO: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  MÉDIO: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  'MÉDIO-ALTO': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  'BAIXO-MÉDIO': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-};
-
-function RiscoLabel({ texto }) {
-  const nivel = texto.split(' —')[0];
-  return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${BADGE[nivel] || 'bg-gray-100 text-gray-600'}`}>
-      {nivel}
-    </span>
-  );
-}
-
-function AuditSection({ secao }) {
-  const [open, setOpen] = useState(true);
-  const [expandedItems, setExpandedItems] = useState({});
-  const Icon = secao.icon;
-
-  const toggleItem = (nome) => setExpandedItems(prev => ({ ...prev, [nome]: !prev[nome] }));
-
-  return (
-    <div className="bg-white dark:bg-gray-800/50 rounded-2xl shadow-sm overflow-hidden">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between p-4 md:p-5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl ${secao.bg} flex items-center justify-center`}>
-            <Icon className={`w-5 h-5 ${secao.color}`} />
-          </div>
-          <div className="text-left">
-            <div className="font-semibold text-gray-800 dark:text-gray-100 text-sm md:text-base">
-              {secao.label}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              {secao.items.length} item{secao.items.length !== 1 ? 's' : ''} identificado{secao.items.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <RiscoLabel texto={secao.risco} />
-          {open ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
-        </div>
-      </button>
-
-      {open && (
-        <div className="border-t border-gray-100 dark:border-gray-700/50">
-          <div className={`mx-4 md:mx-5 my-3 p-3 rounded-xl ${secao.bg} flex items-start gap-2`}>
-            <Info className={`w-4 h-4 mt-0.5 shrink-0 ${secao.color}`} />
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-              {secao.risco.split(' — ')[1]}
-            </p>
-          </div>
-
-          <div className="px-4 md:px-5 pb-4 space-y-1.5">
-            {secao.items.map((item) => (
-              <div
-                key={item.nome}
-                className={`rounded-xl border-l-4 ${secao.border} bg-gray-50 dark:bg-gray-700/30 overflow-hidden`}
-              >
-                <button
-                  onClick={() => toggleItem(item.nome)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <code className="text-xs md:text-sm font-mono text-gray-700 dark:text-gray-200">
-                    {item.nome}
-                  </code>
-                  {expandedItems[item.nome]
-                    ? <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    : <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
-                </button>
-                {expandedItems[item.nome] && (
-                  <div className="px-4 pb-3">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-600 pt-2 mt-1">
-                      {item.motivo}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function AuditoriaCodigoProjeto() {
-  const totalItens = Object.values(AUDIT_DATA).reduce((acc, s) => acc + s.items.length, 0);
+  const [decisoes, setDecisoes] = useState({});
+  const [notas, setNotas] = useState({});
+  const [editandoNota, setEditandoNota] = useState(null);
+
+  const setDecisao = (id, status) => {
+    setDecisoes(prev => ({ ...prev, [id]: prev[id] === status ? 'pendente' : status }));
+  };
+
+  const totalPorStatus = (s) => Object.values(decisoes).filter(v => v === s).length;
+  const totalItens = FASES.reduce((a, f) => a + f.itens.length, 0);
+  const totalDecididos = Object.values(decisoes).filter(v => v && v !== 'pendente').length;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-6 font-mono text-sm text-gray-800 dark:text-gray-100">
+
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800/50 rounded-2xl shadow-sm p-5 md:p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-6 h-6 text-amber-500" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-              Auditoria de Código Morto
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Análise estática do projeto — identificação de scripts de migração, páginas superadas, entidades obsoletas e sobreposições lógicas.
-            </p>
-          </div>
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+        <h1 className="text-xl font-bold tracking-tight">Auditoria de Código — Checklist</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+          Marque cada item como <span className="text-red-600">Excluir</span>, <span className="text-green-700">Manter</span> ou <span className="text-amber-600">Revisar</span>.
+        </p>
+        <div className="flex gap-4 mt-3 text-xs text-gray-500">
+          <span>{totalDecididos}/{totalItens} decididos</span>
+          <span className="text-red-600">{totalPorStatus('excluir')} excluir</span>
+          <span className="text-green-700">{totalPorStatus('manter')} manter</span>
+          <span className="text-amber-600">{totalPorStatus('revisar')} revisar</span>
         </div>
+      </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-          {[
-            { label: 'Funções mortas', value: AUDIT_DATA.funcoesMigracao.items.length, color: 'text-red-600 dark:text-red-400', icon: Trash2 },
-            { label: 'Páginas obsoletas', value: AUDIT_DATA.paginasDuplicadas.items.length, color: 'text-amber-600 dark:text-amber-400', icon: Layers },
-            { label: 'Entidades legadas', value: AUDIT_DATA.entidadesLegadas.items.length, color: 'text-purple-600 dark:text-purple-400', icon: Database },
-            { label: 'Sobreposições', value: AUDIT_DATA.funcoesRedundantes.items.length, color: 'text-blue-600 dark:text-blue-400', icon: Archive },
-          ].map(({ label, value, color, icon: Icon }) => (
-            <div key={label} className="bg-gray-50 dark:bg-gray-700/40 rounded-xl p-3 text-center">
-              <div className={`text-2xl font-bold ${color}`}>{value}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
+      {/* Fases */}
+      {FASES.map((fase) => {
+        const decididos = fase.itens.filter(item => decisoes[item] && decisoes[item] !== 'pendente').length;
+        return (
+          <div key={fase.id} className="mb-8">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{fase.fase}</span>
+              <h2 className="font-bold text-base">{fase.titulo}</h2>
+              <span className="text-xs text-gray-400 ml-auto">{decididos}/{fase.itens.length}</span>
             </div>
-          ))}
-        </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{fase.descricao}</p>
+
+            <div className="space-y-1">
+              {fase.itens.map((item) => {
+                const status = decisoes[item] || 'pendente';
+                const nota = notas[item] || '';
+                return (
+                  <div
+                    key={item}
+                    className={`rounded-lg px-3 py-2 transition-colors ${
+                      status === 'excluir' ? 'bg-red-50 dark:bg-red-900/10' :
+                      status === 'manter' ? 'bg-green-50 dark:bg-green-900/10' :
+                      status === 'revisar' ? 'bg-amber-50 dark:bg-amber-900/10' :
+                      'bg-gray-50 dark:bg-gray-800/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Nome */}
+                      <span className={`flex-1 text-xs leading-relaxed break-all ${
+                        status === 'excluir' ? 'line-through text-gray-400' : ''
+                      }`}>
+                        {item}
+                      </span>
+
+                      {/* Botões de decisão */}
+                      <div className="flex gap-1 shrink-0">
+                        {['excluir', 'manter', 'revisar'].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setDecisao(item, s)}
+                            className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                              status === s
+                                ? s === 'excluir' ? 'bg-red-600 text-white border-red-600'
+                                  : s === 'manter' ? 'bg-green-700 text-white border-green-700'
+                                  : 'bg-amber-500 text-white border-amber-500'
+                                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
+                            }`}
+                          >
+                            {s === 'excluir' ? '✕' : s === 'manter' ? '✓' : '?'}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setEditandoNota(editandoNota === item ? null : item)}
+                          className="text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-400 hover:border-gray-400"
+                        >
+                          ✎
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Nota inline */}
+                    {editandoNota === item && (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={nota}
+                        onChange={e => setNotas(prev => ({ ...prev, [item]: e.target.value }))}
+                        onBlur={() => setEditandoNota(null)}
+                        placeholder="Observação..."
+                        className="mt-1.5 w-full text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 outline-none focus:border-gray-400"
+                      />
+                    )}
+                    {nota && editandoNota !== item && (
+                      <p className="mt-1 text-xs text-gray-400 italic">↳ {nota}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Resumo exportável */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+        <p className="text-xs text-gray-400 mb-2 font-bold uppercase tracking-widest">Resumo das decisões</p>
+        {Object.entries(decisoes).filter(([, v]) => v && v !== 'pendente').length === 0 ? (
+          <p className="text-xs text-gray-400">Nenhuma decisão tomada ainda.</p>
+        ) : (
+          <div className="space-y-0.5">
+            {Object.entries(decisoes)
+              .filter(([, v]) => v && v !== 'pendente')
+              .sort(([, a], [, b]) => a.localeCompare(b))
+              .map(([item, status]) => (
+                <div key={item} className="flex gap-2 text-xs">
+                  <span className={`w-14 shrink-0 ${STATUS[status]?.style}`}>{STATUS[status]?.label}</span>
+                  <span className="text-gray-600 dark:text-gray-300 break-all">{item}</span>
+                  {notas[item] && <span className="text-gray-400 italic">— {notas[item]}</span>}
+                </div>
+              ))}
+          </div>
+        )}
       </div>
-
-      {/* Recomendação de Ação */}
-      <div className="bg-green-50 dark:bg-green-900/10 rounded-2xl p-4 flex items-start gap-3 border border-green-100 dark:border-green-800/30">
-        <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-green-800 dark:text-green-300">Plano de ação sugerido</p>
-          <p className="text-xs text-green-700 dark:text-green-400 mt-1 leading-relaxed">
-            <strong>Fase 1 (imediato):</strong> deletar as {AUDIT_DATA.funcoesMigracao.items.length} funções de migração — são código morto certo. <br />
-            <strong>Fase 2:</strong> confirmar e arquivar as {AUDIT_DATA.paginasDuplicadas.items.length} páginas duplicadas, removendo-as do menu e das rotas. <br />
-            <strong>Fase 3:</strong> auditar dados das {AUDIT_DATA.entidadesLegadas.items.length} entidades suspeitas antes de deletá-las (verificar se têm registros ativos). <br />
-            <strong>Fase 4:</strong> consolidar as sobreposições lógicas em funções únicas bem documentadas.
-          </p>
-        </div>
-      </div>
-
-      {/* Seções */}
-      {Object.values(AUDIT_DATA).map((secao) => (
-        <AuditSection key={secao.label} secao={secao} />
-      ))}
-
-      <p className="text-center text-xs text-gray-400 dark:text-gray-500 pb-4">
-        Análise baseada na inspeção estrutural do código-fonte — gerada em {new Date().toLocaleDateString('pt-BR')}.
-        Confirme com o time antes de deletar.
-      </p>
     </div>
   );
 }
