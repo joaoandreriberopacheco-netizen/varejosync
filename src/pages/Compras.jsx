@@ -15,9 +15,6 @@ import PedidoCompraForm from '../components/compras/PedidoCompraForm';
 import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
-import DetalhesSupermanifesto from '../components/compras/DetalhesSupermanifesto';
-import GestaoManifestos from '../components/compras/GestaoManifestos';
-import GestaoSupermanifestos from '../components/compras/GestaoSupermanifestos';
 import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
 import PainelConferencias from '../components/compras/PainelConferencias';
 
@@ -44,7 +41,6 @@ const PedidosCompraTab = () => {
   const [dataFim, setDataFim] = useState('');
   const [showImportador, setShowImportador] = useState(false);
   const [statusPedidoCompra, setStatusPedidoCompra] = useState([]);
-  const [statusAprovacaoFinanceira, setStatusAprovacaoFinanceira] = useState([]);
 
   useEffect(() => {
     loadPedidos();
@@ -53,12 +49,8 @@ const PedidosCompraTab = () => {
 
   const loadStatus = async () => {
     try {
-      const [statusPC, statusAF] = await Promise.all([
-        base44.entities.StatusPedidoCompra.list('ordem'),
-        base44.entities.StatusAprovacaoFinanceira.list('ordem')
-      ]);
+      const statusPC = await base44.entities.StatusPedidoCompra.list('ordem');
       setStatusPedidoCompra(statusPC);
-      setStatusAprovacaoFinanceira(statusAF);
     } catch (error) {
       console.error("Erro ao carregar status:", error);
     }
@@ -69,10 +61,7 @@ const PedidosCompraTab = () => {
     return status?.nome || codigo;
   };
 
-  const getStatusFinanceiroNome = (codigo) => {
-    const status = statusAprovacaoFinanceira.find(s => s.codigo === codigo);
-    return status?.nome || codigo;
-  };
+
 
   const loadPedidos = async () => {
     try {
@@ -449,11 +438,9 @@ export default function ComprasPage() {
 }
 
 function HubLogisticoCompleto() {
-  const [activeSubTab, setActiveSubTab] = useState('manifestos');
+  const [activeSubTab, setActiveSubTab] = useState('conferencia');
 
   const subTabs = [
-    { value: 'manifestos', label: 'Manifestos', icon: Truck },
-    { value: 'supermanifestos', label: 'Supermanifestos', icon: PackageIcon },
     { value: 'conferencia', label: 'Conferência', icon: QrCode },
   ];
 
@@ -472,8 +459,6 @@ function HubLogisticoCompleto() {
         ))}
       </GlacialTabsList>
 
-      {activeSubTab === 'manifestos' && <GestaoManifestos />}
-      {activeSubTab === 'supermanifestos' && <GestaoSupermanifestos />}
       {activeSubTab === 'conferencia' && <ConferenciaSubTab />}
     </div>
   );

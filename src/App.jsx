@@ -25,8 +25,6 @@ import PedidosCompra from '@/pages/PedidosCompra';
 import AprovacoesFinanceiras from '@/pages/AprovacoesFinanceiras';
 import TemplatesCompra from '@/pages/TemplatesCompra';
 import PedidoCompraDetalhe from '@/pages/PedidoCompraDetalhe';
-import GestaoManifestosPage from '@/pages/GestaoManifestosPage';
-import GestaoSupermanifestosPage from '@/pages/GestaoSupermanifestosPage';
 import ConferenciaEntrada from '@/pages/ConferenciaEntrada';
 import TabelaPrecosConsulta from '@/pages/TabelaPrecosConsulta';
 import ImportacaoProdutos from '@/pages/ImportacaoProdutos';
@@ -158,16 +156,7 @@ const AuthenticatedApp = () => {
           <PedidoCompraDetalhe />
         </LayoutWrapper>
       } />
-      <Route path="/GestaoManifestosPage" element={
-        <LayoutWrapper currentPageName="GestaoManifestosPage">
-          <GestaoManifestosPage />
-        </LayoutWrapper>
-      } />
-      <Route path="/GestaoSupermanifestosPage" element={
-        <LayoutWrapper currentPageName="GestaoSupermanifestosPage">
-          <GestaoSupermanifestosPage />
-        </LayoutWrapper>
-      } />
+
       <Route path="/ConferenciaEntrada" element={
         <LayoutWrapper currentPageName="ConferenciaEntrada">
           <ConferenciaEntrada />
