@@ -11,16 +11,8 @@ Deno.serve(async (req) => {
 
     const lancamentos = await base44.asServiceRole.entities.LancamentoFinanceiro.list('-data_vencimento', 2000);
     const candidatos = (lancamentos || []).filter((item) => {
-      if (!item || item.tipo !== 'Despesa') return false;
-      const tags = Array.isArray(item.tags) ? item.tags : [];
-      const jaMarcado = tags.includes('conta_pagar');
-      if (jaMarcado) return false;
-
-      const referenciaCompra = item.referencia_tipo === 'PedidoCompra';
-      const recorrente = item.is_recorrente || Boolean(item.frequencia_recorrencia) || Boolean(item.grupo_lancamento_id);
-      const aberto = item.status === 'Em Aberto' || item.status === 'Vencido' || item.status === 'Pago';
-
-      return referenciaCompra || recorrente || aberto;
+      if (!item || item.status === 'Cancelado' || item.tipo === 'Transferência') return false;
+      return item.status !== 'Pago';
     });
 
     let atualizados = 0;
