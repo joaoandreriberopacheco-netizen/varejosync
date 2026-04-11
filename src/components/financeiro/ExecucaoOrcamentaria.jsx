@@ -141,7 +141,10 @@ export default function ExecucaoOrcamentaria() {
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado' && !statusSel.includes('Cancelado')) return false;
-    const dataAncora = l.data_pagamento || l.data_vencimento;
+    const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
+    const lancamentoRealizado = l.status === 'Pago' || !!l.data_pagamento;
+    if (!lancamentoRealizado && !cartaoCreditoPendente) return false;
+    const dataAncora = cartaoCreditoPendente ? l.data_liquidacao_prevista || l.data_vencimento : l.data_pagamento || l.data_vencimento;
     const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
@@ -207,8 +210,9 @@ export default function ExecucaoOrcamentaria() {
       }
       const totais = { r: 0, d: 0 };
       items.forEach(l => {
+        const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
         const isPago = l.status === 'Pago' || !!l.data_pagamento;
-        if (l.tipo === 'Receita' && isPago) totais.r += l.valor || 0;
+        if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) totais.r += l.valor || 0;
         if (l.tipo === 'Despesa' && isPago) totais.d += l.valor || 0;
       });
       return { k, label, items, totais: { r: roundToTwoDecimals(totais.r), d: roundToTwoDecimals(totais.d) } };

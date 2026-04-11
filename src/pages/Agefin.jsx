@@ -22,8 +22,8 @@ export default function Agefin() {
   const loadContas = async () => {
     try {
       setLoading(true);
-      const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 100);
-      setContas((data || []).filter((item) => item && item.tipo === 'Despesa' && Array.isArray(item.tags) && item.tags.includes('conta_pagar')));
+      const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 1000);
+      setContas((data || []).filter((item) => item && Array.isArray(item.tags) && item.tags.includes('conta_pagar')));
       setDataLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar contas:', error);

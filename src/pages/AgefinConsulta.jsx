@@ -151,7 +151,7 @@ export default function AgefinConsulta() {
     const loadData = async () => {
       setLoading(true);
       const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 1000);
-      setContas((data || []).filter((item) => item && item.tipo === 'Despesa' && Array.isArray(item.tags) && item.tags.includes('conta_pagar')));
+      setContas((data || []).filter((item) => item && Array.isArray(item.tags) && item.tags.includes('conta_pagar')));
       setLoading(false);
     };
     loadData();
@@ -161,7 +161,7 @@ export default function AgefinConsulta() {
     const { start, end } = monthBounds(currentMonth);
     return contas
       .filter((conta) => {
-        if (!conta?.data_vencimento || conta.tipo !== 'Despesa') return false;
+        if (!conta?.data_vencimento) return false;
         const vencimento = `${conta.data_vencimento}`.slice(0, 10);
         return vencimento >= start && vencimento <= end;
       })

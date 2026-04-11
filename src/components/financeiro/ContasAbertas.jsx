@@ -241,8 +241,7 @@ export default function ContasAbertas() {
     lancs.filter(l => {
       if (l.status === 'Cancelado' || l.tipo === 'Transferência') return false;
       const ehContaPagar = Array.isArray(l.tags) && l.tags.includes('conta_pagar');
-      const naoPago = l.status !== 'Pago';
-      if (!ehContaPagar && !naoPago) return false;
+      if (!ehContaPagar) return false;
       if (!mostrarPagas && l.status === 'Pago') return false;
       return true;
     }),

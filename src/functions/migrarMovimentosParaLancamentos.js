@@ -10,15 +10,12 @@ Deno.serve(async (req) => {
     }
 
     const lancamentos = await base44.asServiceRole.entities.LancamentoFinanceiro.list('-data_vencimento', 2000);
-    const candidatos = (lancamentos || []).filter((item) => {
-      if (!item || item.status === 'Cancelado' || item.tipo === 'Transferência') return false;
-      const statusAberto = item.status !== 'Pago';
-      return statusAberto;
-    });
-
     let atualizados = 0;
 
-    for (const item of candidatos) {
+    for (const item of lancamentos || []) {
+      if (!item || item.status === 'Cancelado' || item.tipo === 'Transferência') continue;
+      if (item.status === 'Pago') continue;
+
       const tagsAtuais = Array.isArray(item.tags) ? item.tags : [];
       const novasTags = Array.from(new Set([
         ...tagsAtuais,
@@ -30,7 +27,7 @@ Deno.serve(async (req) => {
       atualizados += 1;
     }
 
-    return Response.json({ success: true, atualizados, total_analisados: lancamentos?.length || 0 });
+    return Response.json({ success: true, atualizados });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
