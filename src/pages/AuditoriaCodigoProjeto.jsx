@@ -96,12 +96,20 @@ const STATUS = {
 };
 
 export default function AuditoriaCodigoProjeto() {
-  const [decisoes, setDecisoes] = useState({});
-  const [notas, setNotas] = useState({});
+  const [decisoes, setDecisoes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('auditoria_decisoes') || '{}'); } catch { return {}; }
+  });
+  const [notas, setNotas] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('auditoria_notas') || '{}'); } catch { return {}; }
+  });
   const [editandoNota, setEditandoNota] = useState(null);
 
   const setDecisao = (id, status) => {
-    setDecisoes(prev => ({ ...prev, [id]: prev[id] === status ? 'pendente' : status }));
+    setDecisoes(prev => {
+      const next = { ...prev, [id]: prev[id] === status ? 'pendente' : status };
+      localStorage.setItem('auditoria_decisoes', JSON.stringify(next));
+      return next;
+    });
   };
 
   const totalPorStatus = (s) => Object.values(decisoes).filter(v => v === s).length;
@@ -191,7 +199,11 @@ export default function AuditoriaCodigoProjeto() {
                         autoFocus
                         type="text"
                         value={nota}
-                        onChange={e => setNotas(prev => ({ ...prev, [item]: e.target.value }))}
+                        onChange={e => {
+                          const next = { ...notas, [item]: e.target.value };
+                          setNotas(next);
+                          localStorage.setItem('auditoria_notas', JSON.stringify(next));
+                        }}
                         onBlur={() => setEditandoNota(null)}
                         placeholder="Observação..."
                         className="mt-1.5 w-full text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 outline-none focus:border-gray-400"
