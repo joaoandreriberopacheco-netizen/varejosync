@@ -26,7 +26,7 @@ const FREQS_MAP = {
   'Anual': (d, i) => addYears(d, i),
 };
 
-export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial, descricaoInicial, valorInicial, referenciaId, referenciaTipo }) {
+export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial, descricaoInicial, valorInicial, referenciaId, referenciaTipo, origemContaPagar }) {
   const [tipo, setTipo] = useState(tipoInicial || 'Despesa');
   const [contas, setContas] = useState([]);
   const [valorCents, setValorCents] = useState(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
@@ -66,7 +66,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setContaId(contaDefaultId || '');
       setContaDestinoId('');
       setStatus('Em Aberto');
-      setTags([]);
+      setTags(origemContaPagar ? ['conta_pagar'] : []);
       setIsRecorrente(false);
       setFrequencia('');
       setParcelas(2);

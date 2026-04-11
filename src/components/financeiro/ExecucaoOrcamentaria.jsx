@@ -371,7 +371,7 @@ export default function ExecucaoOrcamentaria() {
           )}
         </div>
 
-        <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => { setShowNovo(false); setFabOpen(false); }} onSaved={load} />
+        <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => { setShowNovo(false); setFabOpen(false); }} onSaved={load} />
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
           <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
