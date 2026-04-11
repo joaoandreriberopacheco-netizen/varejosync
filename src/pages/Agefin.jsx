@@ -23,7 +23,7 @@ export default function Agefin() {
     try {
       setLoading(true);
       const data = await base44.entities.ContaPrevista.list('-data_vencimento', 100);
-      setContas(data || []);
+      setContas((data || []).filter((item) => item && item.tipo !== 'Receita'));
       setDataLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar contas:', error);

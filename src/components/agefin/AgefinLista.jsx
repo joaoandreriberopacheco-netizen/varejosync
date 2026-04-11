@@ -9,7 +9,8 @@ export default function AgefinLista({ contas, onRefresh }) {
   const [filterStatus, setFilterStatus] = useState('Pendente');
 
   const sorted = useMemo(() => {
-    let filtered = filterStatus ? contas.filter(c => c.status === filterStatus) : contas;
+    const contasPagar = (contas || []).filter((c) => c && c.tipo !== 'Receita');
+    let filtered = filterStatus ? contasPagar.filter(c => c.status === filterStatus) : contasPagar;
 
     return filtered.sort((a, b) => {
       if (sortBy === 'vencimento') {
