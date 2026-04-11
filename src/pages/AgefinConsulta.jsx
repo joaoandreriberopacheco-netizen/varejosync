@@ -123,6 +123,9 @@ export default function AgefinConsulta() {
   const [loading, setLoading] = useState(true);
   const [selectedConta, setSelectedConta] = useState(null);
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [atualizacaoFilter, setAtualizacaoFilter] = useState('todos');
+  const [recorrenciaFilter, setRecorrenciaFilter] = useState('todos');
+  const [cmvFilter, setCmvFilter] = useState('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -150,17 +153,36 @@ export default function AgefinConsulta() {
       const isPaid = conta.status === 'Pago';
       const isOpen = !isPaid && conta.status !== 'Cancelado';
       const isOverdue = isOpen && conta.data_vencimento < todayKey;
+      const isAtualizado = !!conta.tem_boleto || conta.status === 'Boleto Anexado' || conta.status_visual === 'boleto_anexado';
+      const isRecorrente = conta.natureza === 'Recorrente';
+      const isCmv = !!conta.is_custo_mercadoria || !!conta.categoria_nome?.toLowerCase().includes('cmv');
+
       const matchesStatus =
         statusFilter === 'todos' ||
         (statusFilter === 'pagos' && isPaid) ||
-        (statusFilter === 'nao_pagos' && !isPaid) ||
         (statusFilter === 'abertos' && isOpen) ||
         (statusFilter === 'vencidos' && isOverdue);
+
+      const matchesAtualizacao =
+        atualizacaoFilter === 'todos' ||
+        (atualizacaoFilter === 'atualizado' && isAtualizado) ||
+        (atualizacaoFilter === 'automatico' && !isAtualizado);
+
+      const matchesRecorrencia =
+        recorrenciaFilter === 'todos' ||
+        (recorrenciaFilter === 'recorrente' && isRecorrente) ||
+        (recorrenciaFilter === 'nao_recorrente' && !isRecorrente);
+
+      const matchesCmv =
+        cmvFilter === 'todos' ||
+        (cmvFilter === 'cmv' && isCmv) ||
+        (cmvFilter === 'normal' && !isCmv);
+
       const matchesFrom = !dateFrom || conta.data_vencimento >= dateFrom;
       const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
-      return matchesStatus && matchesFrom && matchesTo;
+      return matchesStatus && matchesAtualizacao && matchesRecorrencia && matchesCmv && matchesFrom && matchesTo;
     });
-  }, [monthData, statusFilter, dateFrom, dateTo]);
+  }, [monthData, statusFilter, atualizacaoFilter, recorrenciaFilter, cmvFilter, dateFrom, dateTo]);
 
   const kpis = useMemo(() => {
     const paid = filteredData.filter((c) => c.status === 'Pago');
@@ -212,26 +234,58 @@ export default function AgefinConsulta() {
                     <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">Escolha o status e o intervalo de datas.</DrawerDescription>
                   </DrawerHeader>
                   <div className="space-y-4 px-0">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="ghost" onClick={() => setStatusFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('pagos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'pagos' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Pagos</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('nao_pagos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'nao_pagos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Não pagos</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('abertos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'abertos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Em aberto</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('vencidos')} className={`col-span-2 justify-start rounded-2xl px-4 h-12 ${statusFilter === 'vencidos' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Vencidos</Button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Data inicial</p>
-                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Pagamento</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="ghost" onClick={() => setStatusFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
+                          <Button variant="ghost" onClick={() => setStatusFilter('pagos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'pagos' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Pagos</Button>
+                          <Button variant="ghost" onClick={() => setStatusFilter('abertos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'abertos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Em aberto</Button>
+                          <Button variant="ghost" onClick={() => setStatusFilter('vencidos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'vencidos' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Vencidos</Button>
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Data final</p>
-                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
+
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Origem</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="ghost" onClick={() => setAtualizacaoFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${atualizacaoFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
+                          <Button variant="ghost" onClick={() => setAtualizacaoFilter('atualizado')} className={`justify-start rounded-2xl px-4 h-12 ${atualizacaoFilter === 'atualizado' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Atualizado</Button>
+                          <Button variant="ghost" onClick={() => setAtualizacaoFilter('automatico')} className={`col-span-2 justify-start rounded-2xl px-4 h-12 ${atualizacaoFilter === 'automatico' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Automático</Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Natureza</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="ghost" onClick={() => setRecorrenciaFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${recorrenciaFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
+                          <Button variant="ghost" onClick={() => setRecorrenciaFilter('recorrente')} className={`justify-start rounded-2xl px-4 h-12 ${recorrenciaFilter === 'recorrente' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Recorrente</Button>
+                          <Button variant="ghost" onClick={() => setRecorrenciaFilter('nao_recorrente')} className={`col-span-2 justify-start rounded-2xl px-4 h-12 ${recorrenciaFilter === 'nao_recorrente' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Não recorrente</Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Classificação</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button variant="ghost" onClick={() => setCmvFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${cmvFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
+                          <Button variant="ghost" onClick={() => setCmvFilter('cmv')} className={`justify-start rounded-2xl px-4 h-12 ${cmvFilter === 'cmv' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>CMV</Button>
+                          <Button variant="ghost" onClick={() => setCmvFilter('normal')} className={`justify-start rounded-2xl px-4 h-12 ${cmvFilter === 'normal' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Normal</Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Data inicial</p>
+                          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Data final</p>
+                          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
+                        </div>
                       </div>
                     </div>
                   </div>
                   <DrawerFooter className="px-0 pb-0 pt-5">
-                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
+                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setAtualizacaoFilter('todos'); setRecorrenciaFilter('todos'); setCmvFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
