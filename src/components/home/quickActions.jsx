@@ -82,20 +82,7 @@ export const ALL_QUICK_ACTIONS = [
     page: 'TabelaPrecosConsulta',
     permissaoCheck: (p) => p?.estoque?.tabela_precos || p?.estoque?.visualizar_produtos,
   },
-  {
-    id: 'manifestos',
-    icon: FileText,
-    label: 'Manifestos',
-    page: 'GestaoManifestosPage',
-    permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.manifestos || p?.estoque?.logistica,
-  },
-  {
-    id: 'supermanifestos',
-    icon: ClipboardList,
-    label: 'Supermanifestos',
-    page: 'GestaoSupermanifestosPage',
-    permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.supermanifestos || p?.estoque?.logistica,
-  },
+
   {
     id: 'conferencia',
     icon: QrCode,
@@ -145,13 +132,7 @@ export const ALL_QUICK_ACTIONS = [
     page: 'ConsumoInterno',
     permissaoCheck: (p) => p?.homepage?.acoes_rapidas || p?.estoque?.visualizar_produtos || p?.financeiro?.caixas_ativos,
   },
-  {
-    id: 'pdv_supermercado',
-    icon: Scan,
-    label: 'PDV Mercado',
-    page: 'PDVSupermercado',
-    permissaoCheck: (p) => p?.pdv?.acesso_supermercado,
-  },
+
   {
     id: 'autoatendimento',
     icon: Tablet,
@@ -168,4 +149,4 @@ export const ALL_QUICK_ACTIONS = [
   },
 ];
 
-export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'tabelaprecos', 'terceiros', 'financeiro', 'caixas_ativos', 'agefin_consulta'];
+export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'estoque', 'compras', 'financeiro', 'caixas_ativos', 'agefin_consulta'];
