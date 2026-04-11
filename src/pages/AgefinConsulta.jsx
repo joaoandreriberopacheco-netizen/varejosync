@@ -150,7 +150,7 @@ export default function AgefinConsulta() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const data = await base44.entities.ContaPrevista.list('-data_vencimento');
+      const data = await base44.entities.ContaPrevista.list('-data_vencimento', 1000);
       setContas((data || []).filter((item) => item && item.tipo !== 'Receita'));
       setLoading(false);
     };
@@ -160,8 +160,12 @@ export default function AgefinConsulta() {
   const monthData = useMemo(() => {
     const { start, end } = monthBounds(currentMonth);
     return contas
-      .filter((conta) => conta.data_vencimento >= start && conta.data_vencimento <= end && conta.tipo !== 'Receita')
-      .sort((a, b) => new Date(a.data_vencimento) - new Date(b.data_vencimento));
+      .filter((conta) => {
+        if (!conta?.data_vencimento || conta.tipo === 'Receita') return false;
+        const vencimento = `${conta.data_vencimento}`.slice(0, 10);
+        return vencimento >= start && vencimento <= end;
+      })
+      .sort((a, b) => new Date(`${a.data_vencimento}T12:00:00`) - new Date(`${b.data_vencimento}T12:00:00`));
   }, [contas, currentMonth]);
 
   const filteredData = useMemo(() => {

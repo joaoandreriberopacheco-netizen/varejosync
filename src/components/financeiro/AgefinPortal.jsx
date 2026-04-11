@@ -25,8 +25,8 @@ export default function AgefinPortal() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const contasData = await base44.entities.ContaPrevista.filter({}, '-data_vencimento', 200);
-      setContas(contasData || []);
+      const contasData = await base44.entities.ContaPrevista.list('-data_vencimento', 1000);
+      setContas((contasData || []).filter((item) => item && item.tipo !== 'Receita'));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -41,8 +41,7 @@ export default function AgefinPortal() {
     const contasNoPeriodo = contas.filter((c) => {
       if (!c?.data_vencimento) return false;
       const d = new Date(`${c.data_vencimento}T12:00:00`);
-      const isContaPagar = c.tipo !== 'Receita';
-      return d >= inicio && d <= fim && isContaPagar && c.status !== 'Pago' && c.status !== 'Cancelado';
+      return d >= inicio && d <= fim && c.status !== 'Pago' && c.status !== 'Cancelado';
     });
 
     const hoje = new Date();
