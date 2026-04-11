@@ -132,7 +132,7 @@ export default function AgefinConsulta() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const data = await base44.entities.ContaPrevista.list('-data_vencimento', 500);
+      const data = await base44.entities.ContaPrevista.list('-data_vencimento');
       setContas((data || []).filter((item) => item && item.natureza));
       setLoading(false);
     };
