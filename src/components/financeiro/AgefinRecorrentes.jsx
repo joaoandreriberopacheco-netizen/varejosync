@@ -95,7 +95,7 @@ export default function AgefinRecorrentes() {
     try {
       const contasData = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 500);
 
-      const lancamentosRecorrentes = (contasData || []).filter((item) => item.tipo === 'Despesa' && item.is_recorrente && item.grupo_lancamento_id);
+      const lancamentosRecorrentes = (contasData || []).filter((item) => item.tipo === 'Despesa' && item.is_recorrente && item.grupo_lancamento_id && Array.isArray(item.tags) && item.tags.includes('conta_pagar') && item.tags.includes('recorrente'));
       const grupos = Array.from(new Map(lancamentosRecorrentes.map((item) => [item.grupo_lancamento_id, {
         id: item.grupo_lancamento_id,
         grupo_lancamento_id: item.grupo_lancamento_id,

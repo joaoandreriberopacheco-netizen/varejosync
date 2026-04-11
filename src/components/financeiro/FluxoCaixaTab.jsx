@@ -200,6 +200,7 @@ export default function FluxoCaixaTab() {
 
   const filtrados = useMemo(() => lancamentos.filter(l => {
     if (l.status === 'Cancelado') return false;
+    if (l.status !== 'Pago') return false;
     const dataRef = l.data_pagamento ? new Date(l.data_pagamento) : l.data_vencimento ? new Date(l.data_vencimento) : null;
     if (dateStart && dateEnd && dataRef && !isWithinInterval(dataRef, { start: dateStart, end: dateEnd })) return false;
     if (contasSel.length > 0 && !contasSel.includes(l.conta_financeira_id)) return false;

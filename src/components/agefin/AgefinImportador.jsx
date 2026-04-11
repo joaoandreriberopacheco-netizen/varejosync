@@ -228,9 +228,15 @@ Campos a interpretar do documento:
           referencia_tipo: 'Manual',
           referencia_id: contaCriada.id,
           observacoes: extractedData.observacoes || '',
+          tags: [
+            'conta_pagar',
+            ...(payload.natureza === 'Recorrente' ? ['recorrente'] : []),
+            ...(payload.natureza === 'Parcelado' ? ['parcelado'] : []),
+          ],
           is_recorrente: payload.natureza === 'Recorrente' || payload.natureza === 'Parcelado',
           frequencia_recorrencia: payload.natureza === 'Recorrente' ? selectedRecorrencia : payload.natureza === 'Parcelado' ? 'Parcelado' : undefined,
           parcela_atual: payload.parcela_numero || undefined,
+          grupo_lancamento_id: recorrenteFinal?.id || undefined,
         };
 
         lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);

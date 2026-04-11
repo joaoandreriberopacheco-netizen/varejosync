@@ -151,7 +151,7 @@ export default function AgefinConsulta() {
     const loadData = async () => {
       setLoading(true);
       const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 1000);
-      setContas((data || []).filter((item) => item && item.tipo === 'Despesa'));
+      setContas((data || []).filter((item) => item && item.tipo === 'Despesa' && Array.isArray(item.tags) && item.tags.includes('conta_pagar')));
       setLoading(false);
     };
     loadData();

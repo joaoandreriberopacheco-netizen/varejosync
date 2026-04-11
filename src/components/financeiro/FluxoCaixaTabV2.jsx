@@ -410,6 +410,7 @@ export default function FluxoCaixaTabV2() {
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado') return false;
+    if (l.status !== 'Pago' && !l.data_pagamento) return false;
 
     const conciliavelAutomatico =
       l.status_conciliacao === 'Pendente' ||
