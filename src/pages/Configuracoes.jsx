@@ -18,6 +18,7 @@ import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '@/components/config/RecomecarDoZero';
+import { useNavigate } from 'react-router-dom';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
 
@@ -173,6 +174,23 @@ export default function ConfiguracoesPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Excluir Documentos</p>
                     <p className="text-xs text-gray-400">Remoção permanente de registros</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
+            {/* Auditoria de Código */}
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Manutenção</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Link
+                  to="/AuditoriaCodigoProjeto"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-900/60 shadow-sm hover:shadow transition-shadow"
+                >
+                  <BarChart3 className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Auditoria de Código</p>
+                    <p className="text-xs text-gray-400">Checklist de código morto e detritos</p>
                   </div>
                 </Link>
               </div>
