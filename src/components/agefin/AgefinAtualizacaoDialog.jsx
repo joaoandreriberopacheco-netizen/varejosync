@@ -3,15 +3,17 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function AgefinAtualizacaoDialog({ open, recorrencia, onClose, onConfirm }) {
+export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia, onClose, onConfirm, onRefresh }) {
+  // suporta tanto a prop antiga (recorrencia) quanto a nova (lancamento)
+  const item = lancamento || recorrencia;
   const [periodos, setPeriodos] = useState(1);
   const [updateMode, setUpdateMode] = useState('periodo'); // 'periodo' ou 'multiplos'
 
   const handleIncrement = () => setPeriodos(p => Math.min(p + 1, 12));
   const handleDecrement = () => setPeriodos(p => Math.max(p - 1, 1));
 
-  const totalValue = recorrencia.valor_previsto * periodos;
-  const freqLabel = recorrencia.frequencia.toLowerCase();
+  const totalValue = (item.valor || item.valor_previsto || 0) * periodos;
+  const freqLabel = (item.frequencia_recorrencia || item.frequencia || 'período').toLowerCase();
   const periodoLabel = periodos === 1 ? `1 ${freqLabel}` : `${periodos} ${freqLabel}s`;
 
   return (
@@ -24,7 +26,7 @@ export default function AgefinAtualizacaoDialog({ open, recorrencia, onClose, on
               Gerar Contas a Pagar
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {recorrencia.nome_despesa}
+              {item.descricao || item.nome_despesa}
             </p>
           </div>
 
@@ -124,7 +126,7 @@ export default function AgefinAtualizacaoDialog({ open, recorrencia, onClose, on
               Cancelar
             </Button>
             <Button
-              onClick={() => onConfirm(recorrencia, periodos)}
+              onClick={() => { if (onConfirm) onConfirm(item, periodos); else onRefresh?.(); }}
               className="flex-1 rounded-2xl h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base"
             >
               Gerar {periodos} Conta{periodos > 1 ? 's' : ''}
