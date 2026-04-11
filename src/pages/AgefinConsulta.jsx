@@ -150,22 +150,12 @@ export default function AgefinConsulta() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const { start, end } = monthBounds(currentMonth);
-      const data = await base44.entities.LancamentoFinanceiro.filter(
-        { tipo: 'Despesa' },
-        '-data_vencimento',
-        500
-      );
-      setContas((data || []).filter((item) =>
-        item &&
-        Array.isArray(item.tags) &&
-        item.tags.includes('conta_pagar') &&
-        item.status !== 'Cancelado'
-      ));
+      const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 1000);
+      setContas((data || []).filter((item) => item && Array.isArray(item.tags) && item.tags.includes('conta_pagar')));
       setLoading(false);
     };
     loadData();
-  }, [currentMonth]);
+  }, []);
 
   const monthData = useMemo(() => {
     const { start, end } = monthBounds(currentMonth);
