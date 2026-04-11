@@ -22,8 +22,8 @@ export default function Agefin() {
   const loadContas = async () => {
     try {
       setLoading(true);
-      const data = await base44.entities.ContaPrevista.list('-data_vencimento', 100);
-      setContas((data || []).filter((item) => item && item.tipo !== 'Receita'));
+      const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 100);
+      setContas((data || []).filter((item) => item && item.tipo === 'Despesa'));
       setDataLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar contas:', error);
@@ -104,12 +104,12 @@ export default function Agefin() {
     const proxSete = new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const total = contas.length;
-    const pendentes = contas.filter(c => c.status === 'Pendente').length;
-    const comBoleto = contas.filter(c => c.boleto_url).length;
-    const vencidas = contas.filter(c => new Date(c.data_vencimento) < hoje && c.status !== 'Pago').length;
+    const pendentes = contas.filter(c => c.status === 'Em Aberto').length;
+    const comBoleto = contas.filter(c => c.forma_pagamento_tipo === 'Boleto' || c.forma_pagamento === 'Boleto').length;
+    const vencidas = contas.filter(c => (c.status === 'Vencido') || (new Date(c.data_vencimento) < hoje && c.status !== 'Pago' && c.status !== 'Cancelado')).length;
     const proximosSete = contas.filter(c => {
       const d = new Date(c.data_vencimento);
-      return d >= hoje && d <= proxSete && c.status !== 'Pago';
+      return d >= hoje && d <= proxSete && c.status !== 'Pago' && c.status !== 'Cancelado';
     }).length;
     const valorTotal = contas.reduce((sum, c) => sum + (c.valor || 0), 0);
     
@@ -127,7 +127,7 @@ export default function Agefin() {
                 Agefin
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Gestão de contas a pagar
+                Gestão unificada de lançamentos financeiros
               </p>
             </div>
             <Button

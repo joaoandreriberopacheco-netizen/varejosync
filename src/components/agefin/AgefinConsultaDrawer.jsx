@@ -17,7 +17,7 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
 
   const isPaid = conta.status === 'Pago';
   const todayKey = new Date().toISOString().slice(0, 10);
-  const isOverdue = !isPaid && conta.data_vencimento && conta.data_vencimento < todayKey;
+  const isOverdue = conta.status === 'Vencido' || (!isPaid && conta.data_vencimento && conta.data_vencimento < todayKey);
 
   return (
     <Drawer open={open} onOpenChange={onClose}>
@@ -65,11 +65,11 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                 <p className="text-xs text-gray-400 dark:text-gray-500">Categoria</p>
-                <p className="mt-1 font-medium text-gray-900 dark:text-white">{conta.categoria_nome || '—'}</p>
+                <p className="mt-1 font-medium text-gray-900 dark:text-white">{conta.categoria || '—'}</p>
               </div>
               <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                <p className="text-xs text-gray-400 dark:text-gray-500">Natureza</p>
-                <p className="mt-1 font-medium text-gray-900 dark:text-white">{conta.natureza || '—'}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Recorrência</p>
+                <p className="mt-1 font-medium text-gray-900 dark:text-white">{conta.is_recorrente ? (conta.frequencia_recorrencia || 'Recorrente') : 'Avulso'}</p>
               </div>
             </div>
 
@@ -79,14 +79,14 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1">
                   <Calendar className="w-3.5 h-3.5" /> {formatDate(conta.data_vencimento)}
                 </span>
-                {conta.tem_boleto && (
+                {(conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto') && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-lime-50 dark:bg-lime-500/10 px-2.5 py-1 text-lime-700 dark:text-lime-300">
-                    <Receipt className="w-3.5 h-3.5" /> Boleto anexado
+                    <Receipt className="w-3.5 h-3.5" /> Boleto
                   </span>
                 )}
-                {conta.tem_comprovante && (
+                {conta.data_pagamento && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Comprovante anexado
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Pagamento registrado
                   </span>
                 )}
               </div>
@@ -105,7 +105,7 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
               <AnexosPanel
                 inline
                 referenciaId={conta.id}
-                referenciaTipo="ContaPrevista"
+                referenciaTipo="LancamentoFinanceiro"
                 referenciaNomero={conta.referencia_numero || conta.descricao}
                 readOnly
               />

@@ -15,13 +15,13 @@ function getMonthKey(date) {
 function getContaDoMes(contas, recorrente, monthKey) {
   return contas.find((conta) => {
     if (!conta.data_vencimento || conta.data_vencimento.slice(0, 7) !== monthKey) return false;
-    return conta.conta_recorrente_id === recorrente.id;
+    return conta.grupo_lancamento_id === recorrente.grupo_lancamento_id;
   });
 }
 
 
 function AgefinCard({ recorrente, contaMes, onOpen }) {
-  const hasBoleto = Boolean(contaMes?.boleto_url);
+  const hasBoleto = Boolean(contaMes?.forma_pagamento_tipo === 'Boleto' || contaMes?.forma_pagamento === 'Boleto');
   const isPaid = contaMes?.status === 'Pago';
   const todayKey = new Date().toISOString().slice(0, 10);
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
@@ -93,17 +93,21 @@ export default function AgefinRecorrentes() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [recorrentesData, contasData] = await Promise.all([
-        base44.entities.ContaRecorrente.filter({ ativa: true }, 'nome_despesa', 100),
-        base44.entities.ContaPrevista.list('-data_vencimento', 300),
-      ]);
+      const contasData = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 500);
 
-      const recorrentesAtivas = recorrentesData || [];
-      const recorrenteIds = new Set(recorrentesAtivas.map((item) => item.id));
-      const contasVinculadas = (contasData || []).filter((item) => item.conta_recorrente_id && recorrenteIds.has(item.conta_recorrente_id));
+      const lancamentosRecorrentes = (contasData || []).filter((item) => item.tipo === 'Despesa' && item.is_recorrente && item.grupo_lancamento_id);
+      const grupos = Array.from(new Map(lancamentosRecorrentes.map((item) => [item.grupo_lancamento_id, {
+        id: item.grupo_lancamento_id,
+        grupo_lancamento_id: item.grupo_lancamento_id,
+        nome_despesa: item.descricao,
+        terceiro_nome: item.terceiro_nome,
+        valor_previsto: item.valor,
+        frequencia: item.frequencia_recorrencia,
+        dia_vencimento: Number((item.data_vencimento || '').slice(8, 10)) || 1,
+      }])).values());
 
-      setRecorrentes(recorrentesAtivas);
-      setContas(contasVinculadas);
+      setRecorrentes(grupos);
+      setContas(lancamentosRecorrentes);
     } finally {
       setLoading(false);
     }
@@ -118,7 +122,7 @@ export default function AgefinRecorrentes() {
         return {
           recorrente,
           contaMes,
-          hasBoleto: Boolean(contaMes?.boleto_url),
+          hasBoleto: Boolean(contaMes?.forma_pagamento_tipo === 'Boleto' || contaMes?.forma_pagamento === 'Boleto'),
         };
       })
       .filter((item) => item.contaMes && item.recorrente);

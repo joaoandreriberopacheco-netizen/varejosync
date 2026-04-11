@@ -86,9 +86,9 @@ function FilterChip({ active, onClick, children, tone = 'default' }) {
 
 function ContaCard({ conta, onOpen }) {
   const todayKey = new Date().toISOString().slice(0, 10);
-  const isPaid = conta.status === 'Pago' || conta.status_visual === 'pago';
-  const isOverdue = !isPaid && conta.data_vencimento < todayKey;
-  const hasBoleto = !!conta.tem_boleto;
+  const isPaid = conta.status === 'Pago';
+  const isOverdue = conta.status === 'Vencido' || (!isPaid && conta.data_vencimento < todayKey);
+  const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
   const iconClass = isPaid
     ? 'w-4 h-4 text-emerald-600 shrink-0'
     : isOverdue
@@ -108,9 +108,9 @@ function ContaCard({ conta, onOpen }) {
             <div className="flex items-center gap-2 mb-2">
               {isPaid ? <CheckCircle2 className={iconClass} /> : isOverdue ? <CircleAlert className={iconClass} /> : <Wallet className={iconClass} />}
               <p className="text-[15px] font-semibold text-gray-900 dark:text-white line-clamp-2">{conta.descricao}</p>
-              {conta.tem_anexo && <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />}
+              <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria_nome || 'Sem categoria'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 shadow-sm">
                 <Calendar className="w-3.5 h-3.5" /> {new Date(`${conta.data_vencimento}T12:00:00`).toLocaleDateString('pt-BR')}
@@ -150,8 +150,8 @@ export default function AgefinConsulta() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const data = await base44.entities.ContaPrevista.list('-data_vencimento', 1000);
-      setContas((data || []).filter((item) => item && item.tipo !== 'Receita'));
+      const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 1000);
+      setContas((data || []).filter((item) => item && item.tipo === 'Despesa'));
       setLoading(false);
     };
     loadData();
@@ -161,7 +161,7 @@ export default function AgefinConsulta() {
     const { start, end } = monthBounds(currentMonth);
     return contas
       .filter((conta) => {
-        if (!conta?.data_vencimento || conta.tipo === 'Receita') return false;
+        if (!conta?.data_vencimento || conta.tipo !== 'Despesa') return false;
         const vencimento = `${conta.data_vencimento}`.slice(0, 10);
         return vencimento >= start && vencimento <= end;
       })
@@ -171,10 +171,10 @@ export default function AgefinConsulta() {
   const filteredData = useMemo(() => {
     const todayKey = new Date().toISOString().slice(0, 10);
     return monthData.filter((conta) => {
-      const isPaid = conta.status === 'Pago' || conta.status_visual === 'pago';
+      const isPaid = conta.status === 'Pago';
       const isCancelled = conta.status === 'Cancelado';
       const isOpen = !isPaid && !isCancelled;
-      const isOverdue = isOpen && conta.data_vencimento < todayKey;
+      const isOverdue = (conta.status === 'Vencido') || (isOpen && conta.data_vencimento < todayKey);
       const matchesStatus =
         statusFilter === 'todos' ||
         (statusFilter === 'pagos' && isPaid) ||
@@ -190,7 +190,7 @@ export default function AgefinConsulta() {
   const kpis = useMemo(() => {
     const paid = filteredData.filter((c) => c.status === 'Pago');
     const unpaid = filteredData.filter((c) => c.status !== 'Pago' && c.status !== 'Cancelado');
-    const overdue = unpaid.filter((c) => c.data_vencimento < new Date().toISOString().slice(0, 10));
+    const overdue = unpaid.filter((c) => c.status === 'Vencido' || c.data_vencimento < new Date().toISOString().slice(0, 10));
     return {
       totalValue: filteredData.reduce((sum, c) => sum + (c.valor || 0), 0),
       paidValue: paid.reduce((sum, c) => sum + (c.valor || 0), 0),
