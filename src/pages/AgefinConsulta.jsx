@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Clock3, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,27 @@ function KpiCard({ label, value, tone = 'default' }) {
       </div>
       <p className="mt-1 text-sm md:text-base font-semibold font-glacial truncate">{value}</p>
     </div>
+  );
+}
+
+function FilterChip({ active, onClick, children, tone = 'default' }) {
+  const activeStyles = {
+    default: 'bg-gray-900 text-white dark:bg-white dark:text-gray-900',
+    success: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
+    danger: 'bg-red-600 text-white dark:bg-red-500 dark:text-white',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`h-9 px-3 rounded-2xl text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
+        active
+          ? activeStyles[tone]
+          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -146,8 +167,9 @@ export default function AgefinConsulta() {
   const filteredData = useMemo(() => {
     const todayKey = new Date().toISOString().slice(0, 10);
     return monthData.filter((conta) => {
-      const isPaid = conta.status === 'Pago';
-      const isOpen = !isPaid && conta.status !== 'Cancelado';
+      const isPaid = conta.status === 'Pago' || conta.status_visual === 'pago';
+      const isCancelled = conta.status === 'Cancelado';
+      const isOpen = !isPaid && !isCancelled;
       const isOverdue = isOpen && conta.data_vencimento < todayKey;
       const matchesStatus =
         statusFilter === 'todos' ||
@@ -214,11 +236,11 @@ export default function AgefinConsulta() {
                     <div className="space-y-4">
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Pagamento</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="ghost" onClick={() => setStatusFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
-                          <Button variant="ghost" onClick={() => setStatusFilter('pagos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'pagos' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Pagos</Button>
-                          <Button variant="ghost" onClick={() => setStatusFilter('abertos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'abertos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Em aberto</Button>
-                          <Button variant="ghost" onClick={() => setStatusFilter('vencidos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'vencidos' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Vencidos</Button>
+                        <div className="flex flex-wrap gap-2">
+                          <FilterChip active={statusFilter === 'todos'} onClick={() => setStatusFilter('todos')}>Todos</FilterChip>
+                          <FilterChip active={statusFilter === 'pagos'} onClick={() => setStatusFilter('pagos')} tone="success">Pagos</FilterChip>
+                          <FilterChip active={statusFilter === 'abertos'} onClick={() => setStatusFilter('abertos')}>Em aberto</FilterChip>
+                          <FilterChip active={statusFilter === 'vencidos'} onClick={() => setStatusFilter('vencidos')} tone="danger">Vencidos</FilterChip>
                         </div>
                       </div>
 
@@ -258,6 +280,36 @@ export default function AgefinConsulta() {
             <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-10 w-10 p-0">
               <ChevronRight className="w-5 h-5" />
             </Button>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <FilterChip active={statusFilter === 'todos'} onClick={() => setStatusFilter('todos')}>Todos</FilterChip>
+              <FilterChip active={statusFilter === 'pagos'} onClick={() => setStatusFilter('pagos')} tone="success">Pagos</FilterChip>
+              <FilterChip active={statusFilter === 'abertos'} onClick={() => setStatusFilter('abertos')}>Em aberto</FilterChip>
+              <FilterChip active={statusFilter === 'vencidos'} onClick={() => setStatusFilter('vencidos')} tone="danger">Vencidos</FilterChip>
+            </div>
+
+            {(dateFrom || dateTo) && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {dateFrom && (
+                  <div className="inline-flex items-center gap-2 h-8 px-3 rounded-2xl bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 text-xs shadow-sm">
+                    Início {new Date(`${dateFrom}T12:00:00`).toLocaleDateString('pt-BR')}
+                  </div>
+                )}
+                {dateTo && (
+                  <div className="inline-flex items-center gap-2 h-8 px-3 rounded-2xl bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 text-xs shadow-sm">
+                    Fim {new Date(`${dateTo}T12:00:00`).toLocaleDateString('pt-BR')}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setDateFrom(''); setDateTo(''); }}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-2xl bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 shadow-sm"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
