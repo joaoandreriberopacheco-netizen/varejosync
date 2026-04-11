@@ -155,7 +155,7 @@ export default function AgefinConsulta() {
       const isOverdue = isOpen && conta.data_vencimento < todayKey;
       const isAtualizado = !!conta.tem_boleto || conta.status === 'Boleto Anexado' || conta.status_visual === 'boleto_anexado';
       const isRecorrente = conta.natureza === 'Recorrente';
-      const isCmv = !!conta.is_custo_mercadoria || !!conta.categoria_nome?.toLowerCase().includes('cmv');
+      const isCmv = conta.is_custo_mercadoria === true;
 
       const matchesStatus =
         statusFilter === 'todos' ||
