@@ -123,8 +123,6 @@ export default function AgefinConsulta() {
   const [loading, setLoading] = useState(true);
   const [selectedConta, setSelectedConta] = useState(null);
   const [statusFilter, setStatusFilter] = useState('todos');
-  const [atualizacaoFilter, setAtualizacaoFilter] = useState('todos');
-  const [recorrenciaFilter, setRecorrenciaFilter] = useState('todos');
   const [cmvFilter, setCmvFilter] = useState('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -133,7 +131,7 @@ export default function AgefinConsulta() {
     const loadData = async () => {
       setLoading(true);
       const data = await base44.entities.ContaPrevista.list('-data_vencimento');
-      setContas((data || []).filter((item) => item && item.natureza));
+      setContas((data || []).filter((item) => item));
       setLoading(false);
     };
     loadData();
@@ -153,8 +151,6 @@ export default function AgefinConsulta() {
       const isPaid = conta.status === 'Pago';
       const isOpen = !isPaid && conta.status !== 'Cancelado';
       const isOverdue = isOpen && conta.data_vencimento < todayKey;
-      const isAtualizado = !!conta.tem_boleto || conta.status === 'Boleto Anexado' || conta.status_visual === 'boleto_anexado';
-      const isRecorrente = conta.natureza === 'Recorrente';
       const isCmv = conta.is_custo_mercadoria === true;
 
       const matchesStatus =
@@ -163,16 +159,6 @@ export default function AgefinConsulta() {
         (statusFilter === 'abertos' && isOpen) ||
         (statusFilter === 'vencidos' && isOverdue);
 
-      const matchesAtualizacao =
-        atualizacaoFilter === 'todos' ||
-        (atualizacaoFilter === 'atualizado' && isAtualizado) ||
-        (atualizacaoFilter === 'automatico' && !isAtualizado);
-
-      const matchesRecorrencia =
-        recorrenciaFilter === 'todos' ||
-        (recorrenciaFilter === 'recorrente' && isRecorrente) ||
-        (recorrenciaFilter === 'nao_recorrente' && !isRecorrente);
-
       const matchesCmv =
         cmvFilter === 'todos' ||
         (cmvFilter === 'cmv' && isCmv) ||
@@ -180,9 +166,9 @@ export default function AgefinConsulta() {
 
       const matchesFrom = !dateFrom || conta.data_vencimento >= dateFrom;
       const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
-      return matchesStatus && matchesAtualizacao && matchesRecorrencia && matchesCmv && matchesFrom && matchesTo;
+      return matchesStatus && matchesCmv && matchesFrom && matchesTo;
     });
-  }, [monthData, statusFilter, atualizacaoFilter, recorrenciaFilter, cmvFilter, dateFrom, dateTo]);
+  }, [monthData, statusFilter, cmvFilter, dateFrom, dateTo]);
 
   const kpis = useMemo(() => {
     const paid = filteredData.filter((c) => c.status === 'Pago');
@@ -231,7 +217,7 @@ export default function AgefinConsulta() {
                 <DrawerContent className="border-0 rounded-t-[32px] bg-white dark:bg-gray-900 px-4 pb-6">
                   <DrawerHeader className="px-0 text-left">
                     <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtrar contas</DrawerTitle>
-                    <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">Escolha o status e o intervalo de datas.</DrawerDescription>
+                    <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">Filtre por status, classificação e período.</DrawerDescription>
                   </DrawerHeader>
                   <div className="space-y-4 px-0">
                     <div className="space-y-4">
@@ -245,23 +231,6 @@ export default function AgefinConsulta() {
                         </div>
                       </div>
 
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Origem</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="ghost" onClick={() => setAtualizacaoFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${atualizacaoFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
-                          <Button variant="ghost" onClick={() => setAtualizacaoFilter('atualizado')} className={`justify-start rounded-2xl px-4 h-12 ${atualizacaoFilter === 'atualizado' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Atualizado</Button>
-                          <Button variant="ghost" onClick={() => setAtualizacaoFilter('automatico')} className={`col-span-2 justify-start rounded-2xl px-4 h-12 ${atualizacaoFilter === 'automatico' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Automático</Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Natureza</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="ghost" onClick={() => setRecorrenciaFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${recorrenciaFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
-                          <Button variant="ghost" onClick={() => setRecorrenciaFilter('recorrente')} className={`justify-start rounded-2xl px-4 h-12 ${recorrenciaFilter === 'recorrente' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Recorrente</Button>
-                          <Button variant="ghost" onClick={() => setRecorrenciaFilter('nao_recorrente')} className={`col-span-2 justify-start rounded-2xl px-4 h-12 ${recorrenciaFilter === 'nao_recorrente' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Não recorrente</Button>
-                        </div>
-                      </div>
 
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Classificação</p>
@@ -285,7 +254,7 @@ export default function AgefinConsulta() {
                     </div>
                   </div>
                   <DrawerFooter className="px-0 pb-0 pt-5">
-                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setAtualizacaoFilter('todos'); setRecorrenciaFilter('todos'); setCmvFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
+                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setCmvFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
