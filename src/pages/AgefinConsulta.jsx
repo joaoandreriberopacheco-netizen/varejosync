@@ -123,7 +123,6 @@ export default function AgefinConsulta() {
   const [loading, setLoading] = useState(true);
   const [selectedConta, setSelectedConta] = useState(null);
   const [statusFilter, setStatusFilter] = useState('todos');
-  const [cmvFilter, setCmvFilter] = useState('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -141,7 +140,6 @@ export default function AgefinConsulta() {
     const { start, end } = monthBounds(currentMonth);
     return contas
       .filter((conta) => conta.data_vencimento >= start && conta.data_vencimento <= end)
-      .filter((conta) => conta.categoria_nome !== 'Receitas' && conta.tipo !== 'Receita')
       .sort((a, b) => new Date(a.data_vencimento) - new Date(b.data_vencimento));
   }, [contas, currentMonth]);
 
@@ -151,24 +149,17 @@ export default function AgefinConsulta() {
       const isPaid = conta.status === 'Pago';
       const isOpen = !isPaid && conta.status !== 'Cancelado';
       const isOverdue = isOpen && conta.data_vencimento < todayKey;
-      const isCmv = conta.is_custo_mercadoria === true;
-
       const matchesStatus =
         statusFilter === 'todos' ||
         (statusFilter === 'pagos' && isPaid) ||
         (statusFilter === 'abertos' && isOpen) ||
         (statusFilter === 'vencidos' && isOverdue);
 
-      const matchesCmv =
-        cmvFilter === 'todos' ||
-        (cmvFilter === 'cmv' && isCmv) ||
-        (cmvFilter === 'normal' && !isCmv);
-
       const matchesFrom = !dateFrom || conta.data_vencimento >= dateFrom;
       const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
-      return matchesStatus && matchesCmv && matchesFrom && matchesTo;
+      return matchesStatus && matchesFrom && matchesTo;
     });
-  }, [monthData, statusFilter, cmvFilter, dateFrom, dateTo]);
+  }, [monthData, statusFilter, dateFrom, dateTo]);
 
   const kpis = useMemo(() => {
     const paid = filteredData.filter((c) => c.status === 'Pago');
@@ -217,7 +208,7 @@ export default function AgefinConsulta() {
                 <DrawerContent className="border-0 rounded-t-[32px] bg-white dark:bg-gray-900 px-4 pb-6">
                   <DrawerHeader className="px-0 text-left">
                     <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtrar contas</DrawerTitle>
-                    <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">Filtre por status, classificação e período.</DrawerDescription>
+                    <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">Filtre por status e período.</DrawerDescription>
                   </DrawerHeader>
                   <div className="space-y-4 px-0">
                     <div className="space-y-4">
@@ -232,14 +223,6 @@ export default function AgefinConsulta() {
                       </div>
 
 
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Classificação</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <Button variant="ghost" onClick={() => setCmvFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${cmvFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
-                          <Button variant="ghost" onClick={() => setCmvFilter('cmv')} className={`justify-start rounded-2xl px-4 h-12 ${cmvFilter === 'cmv' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>CMV</Button>
-                          <Button variant="ghost" onClick={() => setCmvFilter('normal')} className={`justify-start rounded-2xl px-4 h-12 ${cmvFilter === 'normal' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Normal</Button>
-                        </div>
-                      </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
@@ -254,7 +237,7 @@ export default function AgefinConsulta() {
                     </div>
                   </div>
                   <DrawerFooter className="px-0 pb-0 pt-5">
-                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setCmvFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
+                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
