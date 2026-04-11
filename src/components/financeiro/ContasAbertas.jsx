@@ -240,8 +240,10 @@ export default function ContasAbertas() {
   const emAberto = useMemo(() =>
     lancs.filter(l => {
       if (l.status === 'Cancelado' || l.tipo === 'Transferência') return false;
+      // Mostra se tem tag conta_pagar OU se é despesa Em Aberto/Vencido sem tag alguma (registros legados)
+      const temTag = Array.isArray(l.tags) && l.tags.length > 0;
       const ehContaPagar = Array.isArray(l.tags) && l.tags.includes('conta_pagar');
-      if (!ehContaPagar) return false;
+      if (temTag && !ehContaPagar) return false;
       if (!mostrarPagas && l.status === 'Pago') return false;
       return true;
     }),
@@ -592,7 +594,7 @@ export default function ContasAbertas() {
       </div>
 
       {/* Dialogs */}
-      <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
+      <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => setShowNovo(false)} onSaved={load} />
       {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
       <PagamentoLoteDialog
         open={showPagamentoLote}
