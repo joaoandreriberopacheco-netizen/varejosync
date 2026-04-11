@@ -7,25 +7,31 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Busca todas as despesas (limite 200) e filtra sem a tag
-  const todos = await base44.asServiceRole.entities.LancamentoFinanceiro.filter(
+  // Busca todas as despesas que não estejam canceladas
+  const despesas = await base44.asServiceRole.entities.LancamentoFinanceiro.filter(
     { tipo: 'Despesa' },
     '-created_date',
-    200
+    500
   );
 
-  const alvos = todos.filter(l =>
+  const alvos = despesas.filter(l =>
     l.status !== 'Cancelado' &&
     !(Array.isArray(l.tags) && l.tags.includes('conta_pagar'))
   );
 
-  // Atualiza em paralelo
-  await Promise.all(alvos.map(l => {
+  let atualizados = 0;
+  for (const l of alvos) {
     const tagsAtuais = Array.isArray(l.tags) ? l.tags : [];
-    return base44.asServiceRole.entities.LancamentoFinanceiro.update(l.id, {
+    await base44.asServiceRole.entities.LancamentoFinanceiro.update(l.id, {
       tags: [...tagsAtuais, 'conta_pagar'],
     });
-  }));
+    atualizados++;
+  }
 
-  return Response.json({ ok: true, total_encontrados: alvos.length, atualizados: alvos.length });
+  return Response.json({
+    ok: true,
+    total_despesas: despesas.length,
+    ja_tinham_tag: despesas.length - alvos.length,
+    atualizados,
+  });
 });
