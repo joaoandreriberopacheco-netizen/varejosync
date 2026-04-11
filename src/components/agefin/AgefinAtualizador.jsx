@@ -25,16 +25,20 @@ export default function AgefinAtualizador({ onRefresh }) {
   const loadLancamentos = async () => {
     try {
       setLoading(true);
-      // Busca lançamentos com tag conta_pagar e que sejam recorrentes
-      const data = await base44.entities.LancamentoFinanceiro.filter(
-        { is_recorrente: true },
-        '-data_vencimento',
-        200
-      );
-      // Filtra pelo lado do cliente para garantir a tag
-      const filtrados = (data || []).filter(l =>
+      // Busca ampla — filtra cliente-side para garantir cobertura
+      // (alguns registros podem ter frequencia_recorrencia sem is_recorrente=true)
+      const [comFlag, semFlag] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.filter({ is_recorrente: true }, '-data_vencimento', 300),
+        base44.entities.LancamentoFinanceiro.list('-data_vencimento', 300),
+      ]);
+      const todos = [...(comFlag || []), ...(semFlag || [])];
+      // Deduplica por id
+      const vistos = new Set();
+      const unicos = todos.filter(l => { if (vistos.has(l.id)) return false; vistos.add(l.id); return true; });
+      const filtrados = unicos.filter(l =>
+        l.frequencia_recorrencia &&
         Array.isArray(l.tags) && l.tags.includes('conta_pagar') &&
-        l.frequencia_recorrencia
+        l.status !== 'Cancelado'
       );
       setLancamentos(filtrados);
     } catch (error) {
@@ -64,7 +68,7 @@ export default function AgefinAtualizador({ onRefresh }) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-        {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} recorrente{lancamentos.length !== 1 ? 's' : ''} com tag <span className="font-semibold">conta_pagar</span>
+        {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} recorrente{lancamentos.length !== 1 ? 's' : ''} encontrado{lancamentos.length !== 1 ? 's' : ''}
       </p>
 
       {lancamentos.map((l) => (
