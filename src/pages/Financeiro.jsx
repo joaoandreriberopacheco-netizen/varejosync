@@ -19,7 +19,7 @@ export default function FinanceiroPage() {
         <p className="text-sm md:text-base text-gray-600 dark:text-muted-foreground mb-6">Controle suas contas, fluxo de caixa e conciliações bancárias.</p>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-4 w-full rounded-full bg-gray-100 dark:bg-gray-800 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 rounded-full bg-gray-100 dark:bg-gray-800 p-1 h-auto gap-0.5">
             <TabsTrigger value="caixa" className="rounded-full text-xs md:text-sm">Fluxo de Caixa</TabsTrigger>
             <TabsTrigger value="contas" className="rounded-full text-xs md:text-sm">Contas a Pagar</TabsTrigger>
             <TabsTrigger value="agefin" className="rounded-full text-xs md:text-sm">AGEFIN</TabsTrigger>

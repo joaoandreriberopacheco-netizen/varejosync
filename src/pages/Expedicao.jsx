@@ -101,7 +101,7 @@ export default function ExpedicaoPage() {
               Pedidos Prontos para Expedição
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -385,7 +385,7 @@ export default function SugestaoCompra() {
           <p className="text-gray-500">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
       ) : (
-        <div className="hidden md:block rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+        <div className="hidden md:block rounded-xl min-w-0 overflow-x-auto bg-white dark:bg-gray-800 shadow-sm">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr className="border-b border-gray-100 dark:border-gray-700">

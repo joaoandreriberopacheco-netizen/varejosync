@@ -51,18 +51,18 @@ export default function VeiculosPage() {
   return (
     <div className="p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 min-w-0">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold text-gray-800">Frota de Veículos</h1>
             <p className="text-gray-600">Gerencie os veículos utilizados para entrega e transporte.</p>
           </div>
-          <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700">
+          <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 shrink-0 w-full sm:w-auto">
             <PlusCircle className="h-4 w-4" /> Novo Veículo
           </Button>
         </div>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -450,7 +450,7 @@ export default function EdicaoMassivaCustos() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-hidden border rounded-lg">
+            <div className="min-w-0 overflow-x-auto border rounded-lg">
               <Table>
                 <TableHeader className="bg-gray-50">
                   <TableRow>

@@ -84,17 +84,17 @@ const PedidosTab = () => {
 
   return (
     <Card className="border-0 shadow-none">
-      <CardHeader className="flex flex-row items-center justify-between px-0 pt-0 pb-4">
-        <div className="relative w-72">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-0 pt-0 pb-4">
+        <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input placeholder="Buscar por Nº ou cliente..." className="pl-9 bg-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
-        <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm">
+        <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto shrink-0">
           <PlusCircle className="h-4 w-4" /> Novo Pedido/Orçamento
         </Button>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="border rounded-lg overflow-hidden bg-white">
+        <div className="border rounded-lg bg-white min-w-0 overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50">
               <TableRow>
@@ -170,11 +170,12 @@ const PedidosTab = () => {
                 </div>
               </div>
 
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 min-w-0">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4" />
                   Itens do Pedido
                 </h3>
+                <div className="overflow-x-auto -mx-1 px-1">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -195,6 +196,7 @@ const PedidosTab = () => {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </div>
 
               <div className="border-t pt-4 space-y-2">

@@ -94,7 +94,7 @@ export default function LogsAutenticacaoPage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-4 gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
         <div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Operações</div>
           <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{filteredLogs.length}</div>
@@ -191,7 +191,7 @@ export default function LogsAutenticacaoPage() {
       </div>
 
       {/* Tabela de Logs */}
-      <div className="border-0 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+      <div className="border-0 shadow-sm rounded-xl bg-white dark:bg-gray-800 min-w-0 overflow-hidden">
         {isLoading ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <Clock className="w-12 h-12 mx-auto mb-3 animate-spin" />
@@ -206,6 +206,7 @@ export default function LogsAutenticacaoPage() {
             </p>
           </div>
         ) : (
+          <div className="w-full min-w-0 overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
               <TableRow className="border-0">
@@ -247,6 +248,7 @@ export default function LogsAutenticacaoPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
 

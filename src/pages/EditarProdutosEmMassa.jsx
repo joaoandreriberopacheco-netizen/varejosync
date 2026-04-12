@@ -147,7 +147,7 @@ export default function EditarProdutosEmMassa() {
       </div>
 
       <Tabs defaultValue="produtos" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg gap-1">
           <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
             Detalhes do Produto
           </TabsTrigger>

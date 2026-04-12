@@ -428,7 +428,7 @@ export default function CotacoesManager() {
                                 </Button>
                             </div>
 
-                            <div className="border rounded-lg overflow-hidden mt-4">
+                            <div className="border rounded-lg overflow-x-auto mt-4 min-w-0">
                               <Table>
                                   <TableHeader className="bg-gray-50">
                                       <TableRow>

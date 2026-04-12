@@ -245,7 +245,7 @@ const PedidosCompraTab = () => {
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
+            <div className="hidden md:block min-w-0 overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
               <Table>
                 <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
                   <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
@@ -326,7 +326,7 @@ const PedidosCompraTab = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Criação</p>
                         <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
@@ -339,7 +339,7 @@ const PedidosCompraTab = () => {
                           {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM') : '-'}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Total</p>
                         <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                           R$ {formatValor(pedido.valor_total)}

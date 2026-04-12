@@ -34,7 +34,7 @@ export default function Armazenagem() {
         </div>
 
         <Tabs defaultValue="separacao" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm overflow-hidden gap-0.5">
             <TabsTrigger
               value="separacao"
               title="Fila de Separação"

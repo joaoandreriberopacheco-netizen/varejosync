@@ -303,7 +303,7 @@ export default function FinanceiroAprovacoesPage() {
             </div>
           ) : (
             <>
-              <div className="hidden md:block border-0 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+              <div className="hidden md:block border-0 shadow-sm rounded-xl min-w-0 overflow-x-auto bg-white dark:bg-gray-800">
                 <Table>
                   <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
                     <TableRow className="border-0">

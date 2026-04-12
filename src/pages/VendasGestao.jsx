@@ -399,7 +399,7 @@ export default function VendasGestaoPage() {
             </div>
 
             {/* Desktop: Tabela de Rascunhos */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-gray-200 dark:border-gray-700">
@@ -529,7 +529,7 @@ export default function VendasGestaoPage() {
             </div>
 
             {/* Desktop: Tabela */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-gray-200 dark:border-gray-700">

@@ -126,7 +126,7 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
             ))}
           </div>
 
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-gray-200 dark:border-gray-700">

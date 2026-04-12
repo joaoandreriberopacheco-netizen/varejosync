@@ -245,7 +245,7 @@ export default function PainelGerente() {
       <Card>
         <CardContent className="p-4">
           <h3 className="text-sm font-semibold text-gray-500 mb-4">PEDIDOS DO PERÍODO</h3>
-          <div className="overflow-x-auto">
+          <div className="min-w-0 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-gray-200 dark:border-gray-700">
                 <tr>

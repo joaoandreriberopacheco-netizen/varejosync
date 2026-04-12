@@ -14,7 +14,7 @@ export default function OperacoesPage() {
       </div>
 
       {/* Links Rápidos - SEM CORES */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Link to={createPageUrl('Estoque')}>
           <div className="p-6 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
             <Package className="w-8 h-8 text-gray-700 dark:text-gray-400 mb-3" />

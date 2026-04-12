@@ -102,6 +102,7 @@ export default function IntervenientesPage() {
                     {isLoading ? (
                         <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
                     ) : (
+                        <div className="min-w-0 overflow-x-auto -mx-1">
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
@@ -149,6 +150,7 @@ export default function IntervenientesPage() {
                                 )}
                             </TableBody>
                         </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>

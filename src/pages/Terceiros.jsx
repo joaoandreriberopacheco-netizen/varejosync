@@ -191,7 +191,7 @@ export default function TerceirosPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm min-w-0 overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-800">
               <TableRow className="border-b border-gray-100 dark:border-gray-700">

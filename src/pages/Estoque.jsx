@@ -104,7 +104,7 @@ export default function EstoquePage() {
           <TabsContent value="atual" className="mt-0">
             <div className="space-y-6">
               {/* KPIs - SEM CORES */}
-              <div className="grid grid-cols-3 gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                 <div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Entradas</div>
                   <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{stats.totalEntradas}</div>

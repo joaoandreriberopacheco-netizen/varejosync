@@ -86,7 +86,7 @@ export default function AuditoriaPins() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-gray-800 dark:text-white">{usuarios.length}</p>
           <p className="text-xs text-gray-400 mt-0.5 flex items-center justify-center gap-1"><Users className="w-3 h-3" /> Total</p>

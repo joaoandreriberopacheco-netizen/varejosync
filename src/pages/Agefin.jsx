@@ -119,11 +119,11 @@ export default function Agefin() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 shadow-sm">
-        <div className="p-4 md:p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-quicksand font-bold text-gray-900 dark:text-white">
+      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 shadow-sm min-w-0">
+        <div className="p-4 md:p-6 min-w-0">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 min-w-0">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-quicksand font-bold text-gray-900 dark:text-white">
                 Agefin
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -132,7 +132,7 @@ export default function Agefin() {
             </div>
             <Button
               onClick={() => setShowImportDialog(true)}
-              className="rounded-2xl h-14 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base shadow-sm"
+              className="rounded-2xl h-12 sm:h-14 px-5 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base shadow-sm shrink-0 w-full sm:w-auto"
             >
               <Upload className="w-5 h-5 mr-2" />
               Importar
@@ -171,7 +171,7 @@ export default function Agefin() {
           </div>
 
           {/* Secondary Metrics */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <MetricPill label="Pendentes" value={stats.pendentes} icon={<DollarSign className="w-4 h-4" />} color="blue" />
             <MetricPill label="Com Boleto" value={stats.comBoleto} icon={<FileText className="w-4 h-4" />} color="green" />
             <MetricPill label="Valor Total" value={`R$ ${(stats.valorTotal / 1000).toFixed(1)}k`} icon={<TrendingUp className="w-4 h-4" />} color="purple" />

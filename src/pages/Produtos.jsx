@@ -1106,7 +1106,7 @@ function ProdutosPageContent() {
           {previewData && (
             <div className="space-y-4 py-4">
               {/* Resumo */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="text-center p-3 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800">
                   <div className="text-xl font-semibold text-green-700 dark:text-green-400">
                     {previewData.resumo.novos}
@@ -1141,8 +1141,8 @@ function ProdutosPageContent() {
 
               {/* Preview dos Produtos */}
               {previewData.produtos.length > 0 && (
-                <div className="border rounded-lg overflow-hidden dark:border-gray-700">
-                  <div className="max-h-96 overflow-y-auto">
+                <div className="border rounded-lg dark:border-gray-700 min-w-0">
+                  <div className="max-h-96 overflow-auto">
                     <Table>
                       <TableHeader className="bg-gray-50 sticky top-0 dark:bg-gray-800">
                         <TableRow>
@@ -1351,8 +1351,8 @@ function ProdutosPageContent() {
 
               {/* Tabela de Preview */}
               {previewCustosData.atualizacoes.length > 0 && (
-                <div className="border rounded-lg overflow-hidden dark:border-gray-700">
-                  <div className="max-h-96 overflow-y-auto">
+                <div className="border rounded-lg dark:border-gray-700 min-w-0">
+                  <div className="max-h-96 overflow-auto">
                     <Table>
                       <TableHeader className="bg-gray-50 sticky top-0 dark:bg-gray-800">
                         <TableRow>

@@ -142,7 +142,7 @@ export default function ImportacaoProdutosPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
             <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Produtos</span>
