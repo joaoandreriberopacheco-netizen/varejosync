@@ -43,11 +43,12 @@ export default function AnexoCompartilhado() {
   const carregarArquivoDoCache = async (fileUrl) => {
     try {
       const cache = await caches.open('VarejoSync-shared-files');
-      const resp = await cache.match(fileUrl);
+      const req = typeof fileUrl === 'string' ? new Request(fileUrl) : fileUrl;
+      const resp = await cache.match(req);
       if (!resp) return false;
       const blob = await resp.blob();
       if (blob.size === 0) return false;
-      await cache.delete(fileUrl);
+      await cache.delete(req);
       const fileName = fileUrl.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
       prepararArquivo(blob, fileName);
       return true;
@@ -115,16 +116,22 @@ export default function AnexoCompartilhado() {
     }
 
     const tentar = async () => {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('text') || params.get('url')) {
-        setArquivo({ file: null, previewUrl: null, nome: params.get('title') || 'Conteúdo', tipo: 'text/plain', texto: params.get('text') || params.get('url') });
+      const achouNoCache = await varrerCache();
+      if (achouNoCache) {
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;
       }
-      
-      const achouNoCache = await varrerCache();
-      if (achouNoCache) {
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('text') || params.get('url')) {
+        setArquivo({
+          file: null,
+          previewUrl: null,
+          nome: params.get('title') || 'Conteúdo',
+          tipo: 'text/plain',
+          texto: params.get('text') || params.get('url'),
+        });
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;
@@ -142,7 +149,7 @@ export default function AnexoCompartilhado() {
     if (!urlParams.get('share-target')) {
       tentar();
     } else {
-        pollingRef.current = setTimeout(() => tentar(), 2000);
+      pollingRef.current = setTimeout(() => tentar(), 400);
     }
 
     return () => {

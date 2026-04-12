@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v2';
+const CACHE_NAME = 'p38-erp-v4';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json'];
 
@@ -17,13 +17,40 @@ self.addEventListener('activate', (event) => {
           .filter((name) => name !== CACHE_NAME && name !== SHARED_CACHE)
           .map((name) => caches.delete(name))
       )
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+function isShareTargetPostUrl(url) {
+  const p = url.pathname || '';
+  return (
+    (p === '/AnexoCompartilhado' || p.endsWith('/AnexoCompartilhado')) &&
+    url.origin === self.location.origin
+  );
+}
+
+/** Chrome/Android podem usar "files", "file" ou outro nome no multipart. */
+function collectFilesFromFormData(formData) {
+  const out = [];
+  const add = (v) => {
+    if (v instanceof File && v.size > 0) out.push(v);
+  };
+  try {
+    formData.getAll('files').forEach(add);
+  } catch (_) {}
+  try {
+    formData.getAll('file').forEach(add);
+  } catch (_) {}
+  if (out.length === 0) {
+    try {
+      for (const [, val] of formData.entries()) add(val);
+    } catch (_) {}
+  }
+  return out;
+}
+
 /**
- * Web Share Target (PWA): POST com multipart → grava arquivo no cache e redireciona para AnexoCompartilhado.
+ * Web Share Target: POST multipart → Cache API (Request explícito) → redirect GET.
  */
 async function handleShareTargetPost(request) {
   const url = new URL(request.url);
@@ -33,20 +60,25 @@ async function handleShareTargetPost(request) {
   const urlParam = (formData.get('url') && String(formData.get('url'))) || '';
 
   const cache = await caches.open(SHARED_CACHE);
-  const fileEntries = formData.getAll('files');
+  const files = collectFilesFromFormData(formData);
 
-  for (const file of fileEntries) {
-    if (file && typeof file.arrayBuffer === 'function' && file.size > 0) {
-      const cacheUrl = `${self.location.origin}/shared/${Date.now()}-${encodeURIComponent(file.name || 'arquivo')}`;
-      await cache.put(cacheUrl, new Response(file, { headers: { 'Content-Type': file.type || 'application/octet-stream' } }));
-      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      clients.forEach((c) =>
-        c.postMessage({
-          type: 'SHARED_FILES',
-          files: [{ url: cacheUrl, name: file.name, textContent: null }],
-        })
-      );
-    }
+  for (const file of files) {
+    const safeName = (file.name || 'arquivo').replace(/[^\w.\-()+ ]/g, '_');
+    const cachePath = `/shared/${Date.now()}-${safeName}`;
+    const cacheUrl = `${self.location.origin}${cachePath}`;
+    const req = new Request(cacheUrl, { method: 'GET' });
+    const res = new Response(file, {
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
+    await cache.put(req, res);
+
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clients.forEach((c) =>
+      c.postMessage({
+        type: 'SHARED_FILES',
+        files: [{ url: cacheUrl, name: file.name || safeName, textContent: null }],
+      })
+    );
   }
 
   const redirectParams = new URLSearchParams();
@@ -62,7 +94,7 @@ async function handleShareTargetPost(request) {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  if (event.request.method === 'POST' && url.pathname === '/AnexoCompartilhado') {
+  if (event.request.method === 'POST' && isShareTargetPostUrl(url)) {
     event.respondWith(
       handleShareTargetPost(event.request).catch(() =>
         Response.redirect(`${self.location.origin}/AnexoCompartilhado?share-error=1`, 303)

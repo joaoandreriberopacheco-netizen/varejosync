@@ -6,7 +6,8 @@
     <title>P38 | ERP</title>
     <meta name="description" content="P38 ERP — sistema integrado de gestão empresarial." />
     <link rel="icon" type="image/svg+xml" href="/brand/p38-icon.svg" />
-    <link rel="apple-touch-icon" href="/brand/p38-icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/brand/p38-icon-192.png" />
+    <link rel="apple-touch-icon" href="/brand/p38-icon-192.png" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827" />
@@ -17,13 +18,13 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('ServiceWorker registered: ', registration);
+          navigator.serviceWorker
+            .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+            .then((registration) => {
+              registration.update();
+              console.log('ServiceWorker registered:', registration.scope);
             })
-            .catch(registrationError => {
-              console.log('ServiceWorker registration failed: ', registrationError);
-            });
+            .catch((e) => console.warn('ServiceWorker registration failed:', e));
         });
       }
     </script>
