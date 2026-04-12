@@ -240,6 +240,7 @@ export default function AnexoCompartilhado() {
         tipo_documento: tipoDocumento,
         origem: 'compartilhamento_web',
       });
+      setLancamentoVinculado(null);
       setEtapa('sucesso');
     } catch (error) {
       console.error('Erro no Upload:', error);
@@ -265,6 +266,7 @@ export default function AnexoCompartilhado() {
         tipo_documento: tipoDocumento,
         origem: 'compartilhamento_web',
       });
+      setLancamentoVinculado(null);
       setEtapa('sucesso');
     } catch (error) {
       console.error('Erro no Upload:', error);
@@ -275,7 +277,11 @@ export default function AnexoCompartilhado() {
   };
 
   const handleNovoCriado = async (lancamento) => {
-    if (!arquivo?.file || !lancamento) { setEtapa('sucesso'); return; }
+    if (lancamento) setLancamentoVinculado(lancamento);
+    if (!arquivo?.file || !lancamento) {
+      setEtapa('sucesso');
+      return;
+    }
     setUploadando(true);
     try {
       const base64 = await converterParaBase64(arquivo.file);
@@ -312,21 +318,34 @@ export default function AnexoCompartilhado() {
 
   if (etapa === 'sucesso' || etapa === 'sucesso_conta') {
     const titulo = etapa === 'sucesso_conta' ? 'Conta a pagar atualizada!' : 'Comprovante salvo!';
-    const destino = etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa';
-    const href = createPageUrl(etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa');
+    const anexosLancamentoId = etapa === 'sucesso' && lancamentoVinculado?.id ? lancamentoVinculado.id : null;
+    const href = anexosLancamentoId
+      ? `${createPageUrl('LancamentoAnexos')}?id=${encodeURIComponent(anexosLancamentoId)}`
+      : createPageUrl(etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa');
+    const ctaLabel = anexosLancamentoId
+      ? 'Ver anexos do lançamento'
+      : etapa === 'sucesso_conta'
+        ? 'Ir para Financeiro'
+        : 'Ir para Fluxo de caixa';
     return (
       <div className={`flex min-h-screen flex-col items-center justify-center px-6 gap-5 ${brandSurface.pageScreen}`}>
-        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center dark:bg-green-900/20">
-          <CheckCircle2 className="w-10 h-10 text-green-500" />
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20">
+          <CheckCircle2 className="h-10 w-10 text-green-500" />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{titulo}</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-foreground">{titulo}</h2>
           {etapa === 'sucesso_conta' && (
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Pode rever no AGEFIN e no atualizador de boletos.</p>
+            <p className={`mt-2 text-sm ${brandSurface.textMuted}`}>Pode rever no AGEFIN e no atualizador de boletos.</p>
           )}
         </div>
-        <button type="button" onClick={() => { window.location.href = href; }} className="h-14 w-full max-w-xs rounded-2xl bg-gray-900 px-6 py-4 font-semibold text-white dark:bg-white dark:text-gray-900">
-          Ir para {destino}
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = href;
+          }}
+          className="h-14 w-full max-w-xs rounded-2xl bg-primary px-6 py-4 font-semibold text-primary-foreground shadow-sm"
+        >
+          {ctaLabel}
         </button>
       </div>
     );
@@ -379,6 +398,8 @@ export default function AnexoCompartilhado() {
               tipos={tiposDocumentoDisponiveis}
               value={tipoDocumento}
               onChange={setTipoDocumento}
+              hideListUntilFocused
+              generousPadding
               onAdicionarTipoNovo={(t) =>
                 setTiposDocumentoCustom((prev) => (prev.includes(t) ? prev : [...prev, t]))
               }

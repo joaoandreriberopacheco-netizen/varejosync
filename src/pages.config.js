@@ -87,6 +87,7 @@ import ImportacaoProdutos from './pages/ImportacaoProdutos';
 import InterfaceSeparador from './pages/InterfaceSeparador';
 import Intervenientes from './pages/Intervenientes';
 import LogsAutenticacao from './pages/LogsAutenticacao';
+import LancamentoAnexos from './pages/LancamentoAnexos';
 import Manual from './pages/Manual';
 import MapaFuncionalidades from './pages/MapaFuncionalidades';
 import Operacoes from './pages/Operacoes';
@@ -150,6 +151,7 @@ export const PAGES = {
     "InterfaceSeparador": InterfaceSeparador,
     "Intervenientes": Intervenientes,
     "LogsAutenticacao": LogsAutenticacao,
+    "LancamentoAnexos": LancamentoAnexos,
     "Manual": Manual,
     "MapaFuncionalidades": MapaFuncionalidades,
     "Operacoes": Operacoes,

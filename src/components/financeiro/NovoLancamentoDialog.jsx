@@ -99,6 +99,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     setConfirmDialogMode('processing');
     setShowConfirmDialog(true);
 
+    let lancamentoParaCallback = null;
+
     const conta = contas.find(c => c.id === contaId);
     const pedidoCompra = pedidoCompraId ? pedidosCompra.find(p => p.id === pedidoCompraId) : null;
 
@@ -191,10 +193,11 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
       setLancamentoCriado(novoLancamento);
+      lancamentoParaCallback = novoLancamento;
     }
 
     toast({ title: 'Lançamento salvo!' });
-    onSaved?.();
+    onSaved?.(lancamentoParaCallback);
     setSaving(false);
     setConfirmDialogMode('success');
   };

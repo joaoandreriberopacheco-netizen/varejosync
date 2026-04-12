@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer, Plus } from 'lucide-react';
 import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
 import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
 import { TIPOS_DOCUMENTO_ANEXO, ORDEM_TIPOS_DOCUMENTO_ANEXO } from '@/lib/tiposDocumentoAnexo';
+import { brandSurface } from '@/lib/brandSurfaces';
 
 const TIPOS_DOCUMENTO = TIPOS_DOCUMENTO_ANEXO;
 const ORDER = ORDEM_TIPOS_DOCUMENTO_ANEXO;
@@ -17,7 +18,7 @@ function ThumbnailIcon({ anexo, large = false }) {
       <img
         src={anexo.url_thumbnail}
         alt={anexo.nome_arquivo}
-        className={`${size} object-cover flex-none`}
+        className={`${size} flex-none object-cover`}
         onError={() => setImgError(true)}
       />
     );
@@ -25,8 +26,14 @@ function ThumbnailIcon({ anexo, large = false }) {
   const isPdf = anexo.mime_type?.includes('pdf');
   const isImage = anexo.mime_type?.startsWith('image/');
   return (
-    <div className={`${size} bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-none`}>
-      {isPdf ? <FileText className={`${iconSize} text-gray-500 dark:text-gray-400`} /> : isImage ? <Image className={`${iconSize} text-gray-500 dark:text-gray-400`} /> : <File className={`${iconSize} text-gray-500 dark:text-gray-400`} />}
+    <div className={`${size} flex flex-none items-center justify-center bg-gray-200 dark:bg-muted`}>
+      {isPdf ? (
+        <FileText className={`${iconSize} text-gray-500 dark:text-muted-foreground`} />
+      ) : isImage ? (
+        <Image className={`${iconSize} text-gray-500 dark:text-muted-foreground`} />
+      ) : (
+        <File className={`${iconSize} text-gray-500 dark:text-muted-foreground`} />
+      )}
     </div>
   );
 }
@@ -41,33 +48,38 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 flex items-center gap-3">
+    <div className={`flex items-center gap-3 rounded-2xl p-3 ${brandSurface.card}`}>
       <ThumbnailIcon anexo={anexo} />
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <a
           href={anexo.url_drive}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-gray-800 dark:text-gray-100 flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-white"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-800 hover:text-gray-900 dark:text-foreground dark:hover:text-foreground"
         >
-          <span className="truncate text-sm">{anexo.nome_arquivo}</span>
-          <ExternalLink className="w-3.5 h-3.5 flex-none text-gray-500 dark:text-gray-400" />
+          <span className="truncate">{anexo.nome_arquivo}</span>
+          <ExternalLink className="h-3.5 w-3.5 flex-none text-gray-500 dark:text-muted-foreground" />
         </a>
         {anexo.origem_label && (
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{anexo.origem_label}</p>
+          <p className="mt-0.5 text-[10px] text-gray-400 dark:text-muted-foreground">{anexo.origem_label}</p>
         )}
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatSize(anexo.tamanho_bytes)}</p>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">{formatSize(anexo.tamanho_bytes)}</p>
         {anexo.descricao && (
-          <p className="mt-1 line-clamp-2 text-[11px] text-gray-400 dark:text-gray-500">{anexo.descricao}</p>
+          <p className="mt-1 line-clamp-2 text-[11px] text-gray-400 dark:text-muted-foreground">{anexo.descricao}</p>
         )}
       </div>
       {!readOnly && (
         <button
-          onClick={async () => { setDeleting(true); await onDelete(anexo); setDeleting(false); }}
+          type="button"
+          onClick={async () => {
+            setDeleting(true);
+            await onDelete(anexo);
+            setDeleting(false);
+          }}
           disabled={deleting}
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-none"
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400"
         >
-          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         </button>
       )}
     </div>
@@ -78,7 +90,12 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   const [tipoSelecionado, setTipoSelecionado] = useState('Comprovante');
   const [tiposCustomizados, setTiposCustomizados] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
   const inputRef = useRef();
+
+  useEffect(() => {
+    if (!isOpen) setAddSheetOpen(false);
+  }, [isOpen]);
 
   const handleExportPdf = async () => {
     if (exportingPdf || anexos.length === 0) return;
@@ -96,7 +113,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   const grupos = useMemo(() => {
     const ordemFinal = [...ORDER, ...tiposDisponiveis.filter((tipo) => !ORDER.includes(tipo))];
     return ordemFinal.reduce((acc, tipo) => {
-      const itens = anexos.filter(a => (a.tipo_documento || 'Comprovante') === tipo);
+      const itens = anexos.filter((a) => (a.tipo_documento || 'Comprovante') === tipo);
       if (itens.length > 0) acc.push({ tipo, itens });
       return acc;
     }, []);
@@ -107,94 +124,71 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
     if (!file) return;
     const tipoUsado = await onUpload(file, tipoSelecionado, e);
     if (tipoUsado && !TIPOS_DOCUMENTO.includes(tipoUsado)) {
-      setTiposCustomizados((prev) => prev.includes(tipoUsado) ? prev : [...prev, tipoUsado]);
+      setTiposCustomizados((prev) => (prev.includes(tipoUsado) ? prev : [...prev, tipoUsado]));
     }
+    setAddSheetOpen(false);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-gray-50 dark:bg-gray-950">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-4 gap-3 shrink-0">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">Anexos</h2>
-          {referenciaNomero && <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">{referenciaNomero}</p>}
+    <div className={`fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden ${brandSurface.pageScreen}`}>
+      <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-6">
+        <div className="min-w-0">
+          <h2 className="font-glacial text-xl font-semibold text-gray-900 dark:text-foreground">Anexos</h2>
+          {referenciaNomero && (
+            <p className="mt-0.5 truncate text-xs uppercase tracking-wide text-gray-500 dark:text-muted-foreground">{referenciaNomero}</p>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
+            type="button"
             onClick={handleExportPdf}
             disabled={exportingPdf || anexos.length === 0}
-            className="h-9 px-3 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors"
+            className="flex h-9 items-center justify-center gap-2 rounded-full bg-gray-200 px-3 transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-muted dark:hover:bg-muted/80"
           >
-            {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
-            <span className="text-xs font-medium">PDF</span>
+            {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+            <span className="text-xs font-medium text-gray-600 dark:text-foreground">PDF</span>
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 transition-colors hover:bg-gray-300 dark:bg-muted dark:hover:bg-muted/80"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4 text-gray-600 dark:text-foreground" />
           </button>
         </div>
       </div>
 
-      {!readOnly && (
-        <>
-          <div className="px-5 pb-3 shrink-0">
-            <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Tipo do documento</p>
-            <TipoDocumentoSearch
-              tipos={tiposDisponiveis}
-              value={tipoSelecionado}
-              onChange={setTipoSelecionado}
-              onAdicionarTipoNovo={(t) =>
-                setTiposCustomizados((prev) => (prev.includes(t) ? prev : [...prev, t]))
-              }
-            />
-          </div>
-
-          {/* Upload button */}
-          <div className="px-5 pb-4 shrink-0">
-            <button
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-200 py-4 text-gray-600 transition-colors dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
-            >
-              {uploading
-                ? <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm font-medium">Enviando...</span></>
-                : <><Upload className="w-5 h-5" /><span className="text-sm font-medium">Selecionar arquivo</span></>
-              }
-            </button>
-            <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
-          </div>
-        </>
-      )}
-
-      {/* Lista */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 rounded-t-3xl px-5 py-5 shadow-inner">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-t-3xl bg-white px-5 py-5 shadow-inner dark:bg-card">
         {anexos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <File className="w-7 h-7 text-gray-400 dark:text-gray-600" />
+          <div className="flex h-full min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-muted">
+              <File className="h-7 w-7 text-gray-400 dark:text-muted-foreground" />
             </div>
-            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum anexo ainda</p>
+            <p className="text-sm text-gray-400 dark:text-muted-foreground">Nenhum anexo ainda</p>
+            {!readOnly && (
+              <p className="max-w-xs text-xs text-gray-400 dark:text-muted-foreground">
+                Use o botão + para escolher o tipo de documento e enviar um arquivo.
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-5">
             {readOnly && (
-              <div className="rounded-2xl bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+              <div className={`rounded-2xl px-4 py-3 text-sm ${brandSurface.cardInset} text-gray-600 dark:text-muted-foreground`}>
                 Visualização apenas: você pode abrir os anexos, mas não pode adicionar nem excluir arquivos.
               </div>
             )}
             {grupos.map(({ tipo, itens }) => (
               <div key={tipo}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{tipo}</span>
-                  <span className="text-[0.65rem] text-gray-300 dark:text-gray-700">·</span>
-                  <span className="text-[0.65rem] text-gray-400 dark:text-gray-500">{itens.length}</span>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">{tipo}</span>
+                  <span className="text-[0.65rem] text-gray-300 dark:text-muted-foreground/50">·</span>
+                  <span className="text-[0.65rem] text-gray-400 dark:text-muted-foreground">{itens.length}</span>
                 </div>
                 <div className="space-y-2">
-                  {itens.map(anexo => (
+                  {itens.map((anexo) => (
                     <AnexoCard key={anexo.id} anexo={anexo} onDelete={onDelete} readOnly={readOnly} />
                   ))}
                 </div>
@@ -203,6 +197,70 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
           </div>
         )}
       </div>
+
+      {!readOnly && (
+        <>
+          <button
+            type="button"
+            onClick={() => setAddSheetOpen(true)}
+            className="fixed bottom-8 right-5 z-[102] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 md:bottom-10 md:right-8"
+            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+            title="Adicionar anexo"
+          >
+            <Plus className="h-7 w-7" />
+          </button>
+
+          {addSheetOpen && (
+            <div
+              className="fixed inset-0 z-[103] flex flex-col justify-end bg-black/45 backdrop-blur-[2px]"
+              role="presentation"
+              onClick={() => !uploading && setAddSheetOpen(false)}
+            >
+              <div
+                className="max-h-[88dvh] overflow-y-auto rounded-t-3xl border-t border-border bg-background px-5 pb-8 pt-5 shadow-2xl"
+                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+                role="dialog"
+                aria-label="Adicionar anexo"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30" />
+                <p className="mb-3 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-muted-foreground">
+                  Tipo do documento
+                </p>
+                <TipoDocumentoSearch
+                  tipos={tiposDisponiveis}
+                  value={tipoSelecionado}
+                  onChange={setTipoSelecionado}
+                  hideListUntilFocused
+                  generousPadding
+                  onAdicionarTipoNovo={(t) =>
+                    setTiposCustomizados((prev) => (prev.includes(t) ? prev : [...prev, t]))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  disabled={uploading || !String(tipoSelecionado || '').trim()}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted/50 py-4 text-gray-700 transition-colors hover:bg-muted dark:text-foreground disabled:opacity-40"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="text-sm font-medium">Enviando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5" />
+                      <span className="text-sm font-medium">Selecionar arquivo</span>
+                    </>
+                  )}
+                </button>
+                <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

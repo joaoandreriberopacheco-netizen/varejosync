@@ -15,11 +15,13 @@ export default function AnexosPanelIntegrado({
   inline = false,
   readOnly = false,
   uploadTarget = null,
+  initialModalOpen = false,
+  onModalClose = null,
 }) {
   const [anexos, setAnexos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(initialModalOpen);
 
   const alvoUpload = useMemo(() => {
     if (uploadTarget?.referencia_tipo && uploadTarget?.referencia_id) return uploadTarget;
@@ -68,6 +70,10 @@ export default function AnexosPanelIntegrado({
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refsKey cobre mudanças nas referências
   }, [refsKey]);
+
+  useEffect(() => {
+    if (initialModalOpen) setModalOpen(true);
+  }, [initialModalOpen]);
 
   const handleUpload = async (file, tipoSelecionado, e) => {
     if (!alvoUpload || readOnly) return tipoSelecionado;
@@ -131,7 +137,10 @@ export default function AnexosPanelIntegrado({
 
       <AnexosModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          onModalClose?.();
+        }}
         anexos={anexos}
         onUpload={handleUpload}
         onDelete={handleDelete}
