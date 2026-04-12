@@ -31,7 +31,7 @@ export function getFullPrice(produto, tabelaPreco) {
 
 /**
  * Lista (cadastro) riscada quando a tabela aplica fator ≠ 1; valor em destaque = piso na tabela.
- * variant="quickBudget" adiciona rótulos explícitos (orçamento rápido / consulta em cima de outra tela).
+ * variant="quickBudget" alinha à direita em coluna compacta (lista de busca).
  */
 export function PrecoVendaTabelaLinhas({
   produto,
@@ -45,35 +45,27 @@ export function PrecoVendaTabelaLinhas({
   const temAjuste = tabelaPreco && tabelaPreco.fator_ajuste !== 1;
   const qb = variant === 'quickBudget';
 
-  return (
+  const precos = (
     <>
       {temAjuste && precoOriginal > 0 && (
-        <div className={qb ? 'text-right' : ''}>
-          {qb && (
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Preço normal (cadastro)</p>
-          )}
-          <div className="text-xs text-gray-400 line-through tabular-nums whitespace-nowrap">
-            {formatCurrency(precoOriginal)}
-          </div>
+        <div className="text-xs text-gray-400 line-through tabular-nums whitespace-nowrap">
+          {formatCurrency(precoOriginal)}
         </div>
       )}
       {precoFinal > 0 && (
-        <div className={qb ? 'text-right' : ''}>
-          {qb && (
-            <p
-              className={`text-[10px] font-medium uppercase tracking-wide ${
-                temAjuste && precoOriginal > 0
-                  ? 'text-emerald-800 dark:text-emerald-400/90'
-                  : 'text-gray-400'
-              }`}
-            >
-              {temAjuste && precoOriginal > 0 ? 'Preço na tabela (piso de venda)' : 'Preço na tabela'}
-            </p>
-          )}
-          <div className={`tabular-nums whitespace-nowrap ${finalClassName}`}>
-            {formatCurrency(precoFinal)}
-          </div>
+        <div className={`tabular-nums whitespace-nowrap ${finalClassName}`}>
+          {formatCurrency(precoFinal)}
         </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {qb ? (
+        <div className="flex flex-col items-end justify-center gap-0.5">{precos}</div>
+      ) : (
+        precos
       )}
       {labelBottom != null && labelBottom !== false && (
         <p className="text-xs text-gray-400">{labelBottom}</p>

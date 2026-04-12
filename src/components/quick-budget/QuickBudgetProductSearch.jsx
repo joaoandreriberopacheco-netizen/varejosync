@@ -52,7 +52,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
                     {produto.codigo_interno && <span>#{produto.codigo_interno}</span>}
                   </div>
                 </div>
-                <div className="text-right flex-shrink-0 flex flex-col items-end">
+                <div className="flex-shrink-0 self-center">
                   <PrecoVendaTabelaLinhas
                     produto={produto}
                     tabelaPreco={tabelaPreco}
