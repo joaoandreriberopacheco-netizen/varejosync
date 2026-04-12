@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { navigateBackOr } from '@/lib/navigateBackOr';
 import { Produto } from '@/entities/Produto';
 import { Terceiro } from '@/entities/Terceiro';
 import { TabelaPreco } from '@/entities/TabelaPreco';
@@ -30,6 +32,7 @@ import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelector
 import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
 
 export default function PDVVendedor() {
+  const navigate = useNavigate();
   const [carrinho, setCarrinho] = useState([]);
   const [buscaProduto, setBuscaProduto] = useState('');
   const [produtosSugeridos, setProdutosSugeridos] = useState([]);
@@ -322,12 +325,12 @@ export default function PDVVendedor() {
         return;
       }
 
-      // ESC - Voltar ao Dashboard (só se nenhum dialog de cliente estiver aberto)
+      // ESC - Voltar à tela anterior (só se nenhum dialog de cliente estiver aberto)
       if (e.key === 'Escape' && !showClienteDialog && !showComprovante) {
         e.preventDefault();
-        const confirmExit = confirm('Deseja sair do PDV e voltar ao início?');
+        const confirmExit = confirm('Deseja sair do PDV e voltar à tela anterior?');
         if (confirmExit) {
-          window.location.href = createPageUrl('Home');
+          navigateBackOr(navigate);
         }
         return;
       }
@@ -878,9 +881,9 @@ export default function PDVVendedor() {
   };
 
   const handleSair = () => {
-    const confirmExit = confirm('Deseja sair do PDV e voltar ao início?');
+    const confirmExit = confirm('Deseja sair do PDV e voltar à tela anterior?');
     if (confirmExit) {
-      window.location.href = createPageUrl('Home');
+      navigateBackOr(navigate);
     }
   };
 

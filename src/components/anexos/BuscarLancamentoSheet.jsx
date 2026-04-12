@@ -404,7 +404,7 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
           {lancamento.descricao || '—'}
         </p>
         <p className={`mt-0.5 text-xs ${selecionado ? 'text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground'}`}>
-          {lancamento.data_vencimento ? format(new Date(lancamento.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy') : '—'}
+          {lancamento.data_vencimento ? formatVencimentoBR(lancamento.data_vencimento) : '—'}
           {lancamento.status && ` · ${lancamento.status}`}
         </p>
       </div>

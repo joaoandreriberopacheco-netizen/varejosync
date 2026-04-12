@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
@@ -66,6 +66,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Layout({ children, currentPageName }) {
+  const navigate = useNavigate();
   const { triggerTransition } = useNavigationTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -250,16 +251,10 @@ export default function Layout({ children, currentPageName }) {
     setIsOpen(false);
   }, []);
 
-  const handleNavigation = (page) => {
-    triggerTransition(() => {
-      window.location.href = createPageUrl(page);
-    });
-  };
-
   const handleNavigationLink = (e, to) => {
     e.preventDefault();
     triggerTransition(() => {
-      window.location.href = to;
+      navigate(to);
     });
   };
 

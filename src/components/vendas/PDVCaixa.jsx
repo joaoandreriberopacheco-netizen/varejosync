@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateBackOr } from '@/lib/navigateBackOr';
 import { createPageUrl } from '@/components/utils';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1164,7 +1165,7 @@ export default function PDVCaixa() {
           open={showSeletorCaixa} 
           onSelect={handleSelecionarCaixa}
           currentUser={currentUser}
-          onClose={() => navigate(createPageUrl('Home'))}
+          onClose={() => navigateBackOr(navigate)}
         />
       )}
 
@@ -1180,7 +1181,8 @@ export default function PDVCaixa() {
       {/* Header Minimalista */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
         <button
-          onClick={() => window.location.href = '/'}
+          type="button"
+          onClick={() => navigateBackOr(navigate)}
           className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />

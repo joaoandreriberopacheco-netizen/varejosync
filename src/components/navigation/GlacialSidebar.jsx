@@ -336,16 +336,17 @@ export default function GlacialSidebar({
 
                 <div style={{ height: 1, background: c.border, margin: '4px 0' }} />
 
-                <button
-                  onClick={() => { window.location.href = createPageUrl('Configuracoes'); setUserPanelOpen(false); }}
+                <Link
+                  to={createPageUrl('Configuracoes')}
+                  onClick={() => setUserPanelOpen(false)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
                   style={{ color: c.text }}
-                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <Settings size={15} style={{ color: c.iconColor }} />
                   <span className="text-sm">Configurações</span>
-                </button>
+                </Link>
 
                 <button
                   onClick={() => base44.auth.logout()}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { User, LogOut, Settings, Sun, Moon, X, HelpCircle, Shield } from 'lucide-react';
@@ -6,6 +7,7 @@ import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 
 export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showPin, setShowPin] = useState(false);
@@ -111,7 +113,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
 
               {/* Configurações */}
               <button
-                onClick={() => { window.location.href = createPageUrl('Configuracoes'); handleClose(); }}
+                onClick={() => { navigate(createPageUrl('Configuracoes')); handleClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Settings className="w-5 h-5 text-gray-500" />
