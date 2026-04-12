@@ -18,13 +18,13 @@ export default function VendasRelatorisFAB() {
       {/* Backdrop */}
       {isExpanded && (
         <div
-          className="fixed inset-0 z-40 backdrop-blur-[2px] bg-black/20"
+          className="fixed inset-0 z-[54] bg-black/20 backdrop-blur-[2px]"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
       {/* FAB Container */}
-      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col-reverse items-end gap-2">
+      <div className="fixed right-4 z-[55] flex flex-col-reverse items-end gap-2 p38-bottom-fab-mid lg:bottom-6 lg:right-6">
         {/* FAB Principal */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}

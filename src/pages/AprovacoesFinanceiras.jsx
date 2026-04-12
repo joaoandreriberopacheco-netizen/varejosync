@@ -389,7 +389,7 @@ export default function AprovacoesFinanceirasPage() {
       {/* FAB Histórico */}
       <button
         onClick={() => { setShowHistorico(true); loadHistorico(); }}
-        className="fixed bottom-24 md:bottom-8 right-6 h-12 w-12 rounded-full bg-gray-800 dark:bg-gray-700 text-white shadow-xl flex items-center justify-center z-40"
+        className="fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 text-white shadow-xl dark:bg-gray-700 p38-bottom-fab-mid lg:bottom-8"
         title="Histórico de aprovações"
       >
         <Clock className="w-5 h-5" />

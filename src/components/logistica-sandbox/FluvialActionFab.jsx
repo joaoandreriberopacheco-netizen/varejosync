@@ -20,7 +20,7 @@ export default function FluvialActionFab({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg dark:bg-gray-800 dark:text-slate-200 hover:shadow-xl transition-shadow"
+        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition-shadow hover:shadow-xl dark:bg-gray-800 dark:text-slate-200 p38-bottom-fab-mid"
       >
         <Sliders className="w-5 h-5" />
       </button>

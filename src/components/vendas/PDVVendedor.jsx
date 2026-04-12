@@ -1309,7 +1309,7 @@ export default function PDVVendedor() {
       </div>
 
       {/* Barra Inferior Mobile */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pointer-events-auto">
+          <div className="pointer-events-auto fixed left-0 right-0 z-[55] flex items-center gap-2 rounded-t-[26px] border-t border-gray-100 bg-white/90 px-3 pt-3 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/95 md:hidden p38-bottom-dock shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
               <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>

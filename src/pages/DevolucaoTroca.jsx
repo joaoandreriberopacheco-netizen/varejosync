@@ -125,7 +125,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 max-w-lg mx-auto w-full pb-36">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-4 p-4 pb-[calc(11rem+68px+env(safe-area-inset-bottom,0px))]">
       {/* Cabeçalho do pedido */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-4 shadow-sm">
         <div className="flex justify-between items-center">
@@ -259,7 +259,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
       </div>
 
       {/* Total + Botão fixo no rodapé */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 space-y-3 z-10">
+      <div className="fixed left-0 right-0 z-[55] space-y-3 border-t border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 p38-bottom-dock">
         <div className="flex justify-between items-center max-w-lg mx-auto">
           <span className="text-sm text-gray-500 dark:text-gray-400">Total a reembolsar</span>
           <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValor(totalDevolvido)}</span>

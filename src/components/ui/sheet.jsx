@@ -5,8 +5,12 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useOverlayHistorySync } from "@/hooks/useOverlayHistorySync"
 
-const Sheet = SheetPrimitive.Root
+const Sheet = ({ open, onOpenChange, ...props }) => {
+  useOverlayHistorySync(!!open, onOpenChange)
+  return <SheetPrimitive.Root open={open} onOpenChange={onOpenChange} {...props} />
+}
 
 const SheetTrigger = SheetPrimitive.Trigger
 

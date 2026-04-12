@@ -203,8 +203,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
           <button
             type="button"
             onClick={() => setAddSheetOpen(true)}
-            className="fixed bottom-8 right-5 z-[102] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 md:bottom-10 md:right-8"
-            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+            className="fixed right-5 z-[102] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 p38-bottom-fab1 lg:right-8"
             title="Adicionar anexo"
           >
             <Plus className="h-7 w-7" />

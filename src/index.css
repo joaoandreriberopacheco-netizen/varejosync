@@ -161,3 +161,50 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* GlacialBottomNav: h-[68px] + safe-area — FABs e barras fixas no mobile (<lg) */
+@layer utilities {
+  .p38-bottom-fab1 {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  /* Equiv. ~ bottom-24 + margem acima do menu */
+  .p38-bottom-fab-mid {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 96px);
+  }
+  /* Equiv. ~ bottom-28 */
+  .p38-bottom-fab-high {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 112px);
+  }
+  /* Pilha secundária acima do FAB principal (ex.: menu expandido) */
+  .p38-bottom-fab2 {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 88px);
+  }
+  .p38-bottom-dock {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Equiv. ~ bottom-32 */
+  .p38-bottom-fab-xl {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 128px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .p38-bottom-fab1 {
+    bottom: 1.5rem;
+  }
+  .p38-bottom-fab-mid {
+    bottom: 6rem;
+  }
+  .p38-bottom-fab-high {
+    bottom: 7rem;
+  }
+  .p38-bottom-fab2 {
+    bottom: 6rem;
+  }
+  .p38-bottom-fab-xl {
+    bottom: 8rem;
+  }
+  .p38-bottom-dock {
+    bottom: 0;
+  }
+}

@@ -217,7 +217,7 @@ export default function PDVAuditoria() {
       </div>
 
       {/* Lista de itens agrupados */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-40">
+      <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3 pb-[calc(10rem+68px+env(safe-area-inset-bottom,0px))]">
         {itensAgrupados.length === 0 && (
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
@@ -304,7 +304,7 @@ export default function PDVAuditoria() {
       </div>
 
       {/* Barra de busca */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-3 space-y-2 max-w-full overflow-x-hidden">
+      <div className="fixed left-0 right-0 z-[55] max-w-full space-y-2 overflow-x-hidden border-t border-gray-100 bg-white p-3 dark:border-gray-800 dark:bg-gray-900 p38-bottom-dock">
         {/* Resultados da busca */}
         {produtosFiltrados.length > 0 && (
           <div className="max-h-52 overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700">

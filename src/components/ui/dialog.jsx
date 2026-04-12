@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, { createContext, useContext, useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/components/utils"
+import { useOverlayHistorySync } from "@/hooks/useOverlayHistorySync"
 
 const DialogContext = createContext({})
 
@@ -10,6 +11,15 @@ const Dialog = ({ children, open, onOpenChange }) => {
     const isControlled = open !== undefined
     const isOpen = isControlled ? open : internalOpen
     const setOpen = isControlled ? onOpenChange : setInternalOpen
+
+    useOverlayHistorySync(
+      isOpen,
+      isControlled
+        ? onOpenChange
+        : (v) => {
+            if (v === false) setInternalOpen(false)
+          }
+    )
 
     return (
         <DialogContext.Provider value={{ open: isOpen, setOpen }}>

@@ -577,8 +577,8 @@ export default function ContasAbertas() {
       )}
 
       {/* FAB */}
-      {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
-      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
+      {fabOpen && <div className="fixed inset-0 z-[54] bg-black/20" onClick={() => setFabOpen(false)} />}
+      <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
         {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label, action }) => (
           <button key={tipo}
             onClick={action}

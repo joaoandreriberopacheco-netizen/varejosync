@@ -105,13 +105,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       {/* Backdrop */}
       {isExpanded && (
         <div
-          className="fixed inset-0 z-40 backdrop-blur-[2px] bg-black/20"
+          className="fixed inset-0 z-[54] bg-black/20 backdrop-blur-[2px]"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
       {/* FAB container */}
-      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col-reverse items-end gap-2 max-h-[70vh] overflow-y-auto">
+      <div className="fixed right-4 z-[55] flex max-h-[70vh] flex-col-reverse items-end gap-2 overflow-y-auto p38-bottom-fab-mid lg:bottom-6 lg:right-6">
         {/* FAB principal */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}

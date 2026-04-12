@@ -144,7 +144,7 @@ export default function PedidoCompraFAB({
 
   return (
     <>
-      <div data-pedido-compra-fab className="fixed bottom-[max(6rem,env(safe-area-inset-bottom)+5.5rem)] md:bottom-6 right-4 md:right-6 z-[999] flex flex-col-reverse items-end gap-2">
+      <div data-pedido-compra-fab className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 lg:bottom-6 lg:right-6">
           <button
             onClick={() => setIsExpanded(prev => !prev)}
             className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${

@@ -193,7 +193,7 @@ export default function DiscriminarVolumes() {
       </div>
 
       {/* Form */}
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 space-y-6">
+      <div className={`mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-6 ${volumes.length > 0 ? 'pb-[calc(8rem+68px+env(safe-area-inset-bottom,0px))]' : ''}`}>
         {/* Input de Descrição */}
         <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4">
           <Input
@@ -303,7 +303,7 @@ export default function DiscriminarVolumes() {
 
         {/* Botão Salvar Fixo */}
         {volumes.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="fixed left-0 right-0 z-[55] border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 p38-bottom-dock">
             <div className="max-w-2xl mx-auto">
               <Button
                 onClick={handleSave}

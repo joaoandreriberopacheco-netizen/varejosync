@@ -109,7 +109,7 @@ export default function AnexosPanelIntegrado({
 
   const fabClass = inline
     ? 'relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
-    : 'fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 dark:bg-gray-200 hover:bg-gray-700 dark:hover:bg-white shadow-lg transition-colors';
+    : 'fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 shadow-lg transition-colors hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-white p38-bottom-fab1';
   const iconClass = inline
     ? 'w-4 h-4 text-gray-500 dark:text-gray-300'
     : 'w-5 h-5 text-white dark:text-gray-800';

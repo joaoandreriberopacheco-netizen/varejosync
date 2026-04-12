@@ -801,7 +801,7 @@ export default function MobileProductSelector({
                 document.activeElement?.blur();
                 setShowNovoProduto(true);
               }}
-              className="fixed bottom-6 right-6 z-[70] w-14 h-14 bg-gray-800 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg transition-shadow hover:shadow-xl dark:bg-white dark:text-gray-900 p38-bottom-fab1"
               title="Criar novo produto"
             >
               <Plus className="w-6 h-6" />
