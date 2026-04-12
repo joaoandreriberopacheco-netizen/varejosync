@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 const PAGE_SIZE = 800;
@@ -296,12 +295,21 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         </button>
       )}
 
-      <Drawer open={filterOpen} onOpenChange={setFilterOpen} shouldScaleBackground={false}>
-        <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
-          <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-gray-900 dark:text-foreground">Filtros</DrawerTitle>
-          </DrawerHeader>
-          <div className="max-h-[70vh] space-y-5 overflow-y-auto">
+      {filterOpen && (
+        <div
+          className="fixed inset-0 z-[60000] flex flex-col justify-end bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filtros de lançamentos"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          onClick={() => setFilterOpen(false)}
+        >
+          <div
+            className="max-h-[78vh] space-y-5 overflow-y-auto overscroll-contain rounded-t-[28px] border border-border bg-card px-4 pb-6 pt-3 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
+            <p className="font-glacial text-lg font-semibold text-foreground">Filtros</p>
             <FilterChipRow
               label="Tipo"
               icon={BarChart3}
@@ -346,7 +354,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
                   setFilterStatus('todos');
                   setFilterPrazo('todos');
                 }}
-                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-gray-600 dark:bg-muted dark:text-muted-foreground"
+                className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground"
               >
                 Redefinir filtros
               </button>
@@ -359,8 +367,8 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
               </button>
             </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </div>
+      )}
     </div>
   );
 }

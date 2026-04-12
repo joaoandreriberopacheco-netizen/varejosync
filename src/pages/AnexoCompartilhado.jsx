@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, File, Link2, Plus, Loader2, CheckCircle2, ArrowLeft, ShoppingCart, Anchor, ChevronRight, Receipt, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
@@ -351,9 +352,153 @@ export default function AnexoCompartilhado() {
     );
   }
 
+  /** Fullscreen acima de tudo; fora da árvore do #root evita overflow/transform a partir do Layout/PWA. */
+  const portalAlvo = typeof document !== 'undefined' ? document.body : null;
+
+  const overlaysFullscreen =
+    portalAlvo &&
+    createPortal(
+      <>
+        {(etapa === 'vincular' || etapa === 'vincular_pedido' || etapa === 'vincular_evento') && (
+          <div
+            className={`fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}
+            style={{
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Selecionar destino do anexo"
+          >
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {etapa === 'vincular' ? (
+                <BuscarLancamentoSheet
+                  onSelecionar={handleVincular}
+                  onVoltar={() => setEtapa('opcoes')}
+                  uploadando={uploadando}
+                />
+              ) : etapa === 'vincular_pedido' ? (
+                <BuscarPedidoCompraParaAnexo
+                  onSelecionar={handleVincularPedido}
+                  onVoltar={() => setEtapa('opcoes')}
+                  uploadando={uploadando}
+                />
+              ) : (
+                <BuscarEventoLogisticoParaAnexo
+                  onSelecionar={handleVincularEvento}
+                  onVoltar={() => setEtapa('opcoes')}
+                  uploadando={uploadando}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {etapa === 'importar_pdf_conta' && arquivo?.file && (
+          <div
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-gray-50 dark:bg-gray-950"
+            style={{
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
+            <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => setEtapa('opcoes')}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Importar conta a pagar</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">O PDF já foi enviado; confira os dados sugeridos antes de salvar.</p>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <AgefinImportador
+                initialFile={arquivo.file}
+                onSuccess={(_data, meta) => {
+                  if (meta?.close) setEtapa('sucesso_conta');
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {etapa === 'atualizar_boleto' && arquivo?.file && (
+          <div
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-gray-50 dark:bg-gray-950"
+            style={{
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
+            <BoletoRecorrentePicker
+              onVoltar={() => setEtapa('opcoes')}
+              onSelectCard={({ contaMes }) => {
+                setContaMesBoletoAlvo(contaMes);
+                setEtapa('atualizar_boleto_import');
+              }}
+            />
+          </div>
+        )}
+
+        {etapa === 'atualizar_boleto_import' && arquivo?.file && contaMesBoletoAlvo && (
+          <div
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-gray-50 dark:bg-gray-950"
+            style={{
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
+            <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setContaMesBoletoAlvo(null);
+                  setEtapa('atualizar_boleto');
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">Atualizar boleto</p>
+                <p className="truncate text-xs text-gray-500 dark:text-gray-400">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <AgefinImportador
+                key={contaMesBoletoAlvo.id}
+                initialFile={arquivo.file}
+                modoAtualizacao
+                contaPrevistaId={contaMesBoletoAlvo.referencia_id || undefined}
+                lancamentoFinanceiroId={contaMesBoletoAlvo.id}
+                onSuccess={(_data, meta) => {
+                  if (meta?.close) {
+                    setContaMesBoletoAlvo(null);
+                    setEtapa('sucesso_conta');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {abrirNovo && (
+          <div className="fixed inset-0 z-[50010] flex min-h-[100dvh] items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-sm dark:bg-black/40">
+            <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />
+          </div>
+        )}
+      </>,
+      portalAlvo
+    );
+
   return (
+    <>
     <div className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}>
-      {/* Scroll só aqui: overlays fixed ficam fora para não serem cortados pelo overflow (WebView / Safari). */}
+      {/* Scroll só aqui: overlays fullscreen vão para document.body (portal). */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-3 px-4 pb-3 pt-5 md:px-5 md:pb-4">
         <button
@@ -480,137 +625,9 @@ export default function AnexoCompartilhado() {
         </div>
       )}
       </div>
-
-      {(etapa === 'vincular' || etapa === 'vincular_pedido' || etapa === 'vincular_evento') && (
-        <div
-          className={`fixed inset-0 z-[200] flex flex-col ${brandSurface.pageScreen}`}
-          style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-          }}
-        >
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {etapa === 'vincular' ? (
-              <BuscarLancamentoSheet
-                onSelecionar={handleVincular}
-                onVoltar={() => setEtapa('opcoes')}
-                uploadando={uploadando}
-              />
-            ) : etapa === 'vincular_pedido' ? (
-              <BuscarPedidoCompraParaAnexo
-                onSelecionar={handleVincularPedido}
-                onVoltar={() => setEtapa('opcoes')}
-                uploadando={uploadando}
-              />
-            ) : (
-              <BuscarEventoLogisticoParaAnexo
-                onSelecionar={handleVincularEvento}
-                onVoltar={() => setEtapa('opcoes')}
-                uploadando={uploadando}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {etapa === 'importar_pdf_conta' && arquivo?.file && (
-        <div
-          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
-          style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-          }}
-        >
-          <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-            <button
-              type="button"
-              onClick={() => setEtapa('opcoes')}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Importar conta a pagar</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">O PDF já foi enviado; confira os dados sugeridos antes de salvar.</p>
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <AgefinImportador
-              initialFile={arquivo.file}
-              onSuccess={(_data, meta) => {
-                if (meta?.close) setEtapa('sucesso_conta');
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {etapa === 'atualizar_boleto' && arquivo?.file && (
-        <div
-          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
-          style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-          }}
-        >
-          <BoletoRecorrentePicker
-            onVoltar={() => setEtapa('opcoes')}
-            onSelectCard={({ contaMes }) => {
-              setContaMesBoletoAlvo(contaMes);
-              setEtapa('atualizar_boleto_import');
-            }}
-          />
-        </div>
-      )}
-
-      {etapa === 'atualizar_boleto_import' && arquivo?.file && contaMesBoletoAlvo && (
-        <div
-          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
-          style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-          }}
-        >
-          <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-            <button
-              type="button"
-              onClick={() => {
-                setContaMesBoletoAlvo(null);
-                setEtapa('atualizar_boleto');
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">Atualizar boleto</p>
-              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <AgefinImportador
-              key={contaMesBoletoAlvo.id}
-              initialFile={arquivo.file}
-              modoAtualizacao
-              contaPrevistaId={contaMesBoletoAlvo.referencia_id || undefined}
-              lancamentoFinanceiroId={contaMesBoletoAlvo.id}
-              onSuccess={(_data, meta) => {
-                if (meta?.close) {
-                  setContaMesBoletoAlvo(null);
-                  setEtapa('sucesso_conta');
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {abrirNovo && (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-sm dark:bg-black/40">
-          <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />
-        </div>
-      )}
     </div>
+    {overlaysFullscreen}
+    </>
   );
 }
 
@@ -638,7 +655,15 @@ function OpcaoCard({ icon: Icon, titulo, descricao, onClick, disabled }) {
   return (
     <button
       type="button"
-      onClick={disabled ? undefined : onClick}
+      onClick={
+        disabled
+          ? undefined
+          : (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClick?.();
+            }
+      }
       disabled={disabled}
       className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left shadow-sm transition-colors md:flex-row md:gap-4 md:rounded-3xl md:p-5 ${
         brandSurface.card
