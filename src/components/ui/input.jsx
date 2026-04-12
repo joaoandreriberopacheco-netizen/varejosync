@@ -1,7 +1,7 @@
 import React from "react"
 import { cn } from "@/components/utils"
 
-const Input = React.forwardRef(({ className, type, inputMode, ...props }, ref) => {
+const Input = React.forwardRef(({ className, type, inputMode, autoComplete, ...props }, ref) => {
   // Teclado numérico nativo no mobile para campos numéricos
   const resolvedInputMode = inputMode ?? (type === 'number' ? 'decimal' : undefined);
   return (
@@ -14,6 +14,7 @@ const Input = React.forwardRef(({ className, type, inputMode, ...props }, ref) =
       )}
       ref={ref}
       {...props}
+      autoComplete={autoComplete ?? 'off'}
     />
   )
 })

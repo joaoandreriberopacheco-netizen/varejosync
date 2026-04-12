@@ -22,7 +22,7 @@ export default function FiltrosProdutosEmMassa({ filtros, onFiltrosChange, onAdi
     <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-3">
       <div className="flex-1 relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
+        <input autoComplete="off"
           type="text"
           placeholder="Buscar..."
           value={filtros.busca}

@@ -271,7 +271,7 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
                         />
                       </label>
                     ) : (
-                      <input
+                      <input autoComplete="off"
                         ref={inputRef}
                         type="text"
                         defaultValue={valor}

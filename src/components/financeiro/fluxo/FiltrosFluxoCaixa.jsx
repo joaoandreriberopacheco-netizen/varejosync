@@ -315,7 +315,7 @@ export default function FiltrosFluxoCaixa({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-white dark:bg-slate-800">
             <Search className="w-4 h-4 text-gray-400 flex-none" />
-            <input
+            <input autoComplete="off"
               value={search} onChange={e => onSearch(e.target.value)}
               placeholder="Buscar lançamento, categoria, tag..."
               className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 outline-none"

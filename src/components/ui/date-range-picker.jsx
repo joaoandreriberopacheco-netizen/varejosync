@@ -33,7 +33,7 @@ export function DatePickerWithRange({ className, date, setDate }) {
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">
                 <CalendarIcon className="w-4 h-4" />
             </span>
-            <input 
+            <input autoComplete="off" 
                 type="date"
                 className="w-full pl-8 pr-2 py-1 text-sm bg-transparent border-none focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
                 value={date?.from ? format(date.from, 'yyyy-MM-dd') : ''}
@@ -43,7 +43,7 @@ export function DatePickerWithRange({ className, date, setDate }) {
         </div>
         <span className="text-gray-400">-</span>
         <div className="relative flex-1">
-            <input 
+            <input autoComplete="off" 
                 type="date"
                 className="w-full px-2 py-1 text-sm bg-transparent border-none focus:ring-0 outline-none text-gray-700 dark:text-gray-200 text-right"
                 value={date?.to ? format(date.to, 'yyyy-MM-dd') : ''}

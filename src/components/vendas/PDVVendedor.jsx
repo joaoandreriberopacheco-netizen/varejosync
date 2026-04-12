@@ -1122,7 +1122,7 @@ export default function PDVVendedor() {
                       <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
                       <div className="relative flex-1">
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
-                        <input
+                        <input autoComplete="off"
                           ref={precoLivreInputRef}
                           type="number" step="0.01" inputMode="decimal" min={(produtoSelecionado.preco_custo_calculado || 0) * (produtoSelecionado.fator_conversao || 1)}
                           placeholder={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
@@ -1207,7 +1207,7 @@ export default function PDVVendedor() {
                          <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide whitespace-nowrap">Preço livre</span>
                          <div className="relative flex-1">
                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
-                           <input
+                           <input autoComplete="off"
                              type="number" step="0.01" inputMode="decimal"
                              value={item.preco_unitario_praticado?.toFixed(2)}
                              onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
@@ -1670,7 +1670,7 @@ export default function PDVVendedor() {
                           <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
                           <div className="relative flex-1 max-w-[160px]">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
-                            <input
+                            <input autoComplete="off"
                               type="number" step="0.01" inputMode="decimal"
                               value={item.preco_unitario_praticado?.toFixed(2)}
                               onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}

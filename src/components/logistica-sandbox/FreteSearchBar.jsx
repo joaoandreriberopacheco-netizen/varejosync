@@ -6,7 +6,7 @@ export default function FreteSearchBar({ value, onChange, placeholder = 'Buscar 
     <div className="relative">
       <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-2xl px-3 py-2.5 shadow-sm border border-gray-200 dark:border-gray-700">
         <Search className="w-4 h-4 text-gray-400" />
-        <input
+        <input autoComplete="off"
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}

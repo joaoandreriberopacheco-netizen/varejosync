@@ -591,7 +591,7 @@ export default function PDVSupermercado() {
                            <Icon className="w-5 h-5 text-gray-500" />
                            <span>{label}</span>
                         </div>
-                        <input 
+                        <input autoComplete="off" 
                            ref={refs[i]}
                            value={vals[i]}
                            onChange={() => {}}

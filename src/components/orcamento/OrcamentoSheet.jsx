@@ -101,7 +101,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
               <p className="text-[10px] text-amber-500 font-medium uppercase tracking-wide mb-1.5">Preço livre</p>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
-                <input
+                <input autoComplete="off"
                   ref={precoRef}
                   type="number" step="0.01" inputMode="decimal"
                   value={precoEditado}
@@ -345,7 +345,7 @@ function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
           <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide whitespace-nowrap">Preço livre</span>
           <div className="relative flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400">R$</span>
-            <input
+            <input autoComplete="off"
               type="number" step="0.01" inputMode="decimal"
               value={item.preco_unit.toFixed(2)}
               onChange={e => onUpdatePreco(item.id, parseFloat(e.target.value) || 0)}

@@ -344,7 +344,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                       onMouseDown={(e) => handleMouseDown(e, linha.id, col.key)}
                     >
                       {isEmEdicao ? (
-                        <input
+                        <input autoComplete="off"
                           ref={inputRef}
                           type="text"
                           value={valor}
@@ -362,7 +362,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                           className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-blue-500 text-gray-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       ) : (
-                        <input
+                        <input autoComplete="off"
                           type="text"
                           value={valor}
                           readOnly

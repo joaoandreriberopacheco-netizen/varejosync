@@ -211,7 +211,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         <div className="flex items-center gap-2">
           <div className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
             <Search className="h-4 w-4 flex-none text-gray-400 dark:text-muted-foreground" />
-            <input
+            <input autoComplete="off"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Nome, valor, vencimento (dd/mm)…"

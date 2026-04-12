@@ -1,7 +1,7 @@
 import React from "react"
 import { cn } from "@/components/utils"
 
-const Textarea = React.forwardRef(({ className, ...props }, ref) => {
+const Textarea = React.forwardRef(({ className, autoComplete, ...props }, ref) => {
   return (
     <textarea
       className={cn(
@@ -10,6 +10,7 @@ const Textarea = React.forwardRef(({ className, ...props }, ref) => {
       )}
       ref={ref}
       {...props}
+      autoComplete={autoComplete ?? 'off'}
     />
   )
 })

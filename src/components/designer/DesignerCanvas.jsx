@@ -237,7 +237,7 @@ function PropRow({ label, children }) {
 
 function NumInput({ value, onChange, min, max }) {
   return (
-    <input
+    <input autoComplete="off"
       type="number"
       className="w-full text-xs border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200"
       value={value}

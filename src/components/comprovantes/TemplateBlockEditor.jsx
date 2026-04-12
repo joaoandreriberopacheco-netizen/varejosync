@@ -143,6 +143,7 @@ export default function TemplateBlockEditor({ blocks, onBlocksChange, previewDat
                   value={selectedBlock.config.fontSize}
                   onChange={(e) => updateBlockConfig(selectedBlock.id, { fontSize: parseInt(e.target.value) })}
                   className="w-full"
+                  autoComplete="off"
                 />
               </div>
 

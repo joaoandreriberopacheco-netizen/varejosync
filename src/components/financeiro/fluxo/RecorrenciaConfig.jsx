@@ -39,7 +39,7 @@ export default function RecorrenciaConfig({ isRecorrente, onToggle, frequencia, 
           {frequencia === 'Parcelado' && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl px-4 py-3">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Número de Parcelas</p>
-              <input
+              <input autoComplete="off"
                 type="number"
                 min="2"
                 max="120"
@@ -55,7 +55,7 @@ export default function RecorrenciaConfig({ isRecorrente, onToggle, frequencia, 
           {frequencia && frequencia !== 'Parcelado' && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl px-4 py-3">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Encerrar em (opcional)</p>
-              <input
+              <input autoComplete="off"
                 type="date"
                 value={dataFim}
                 onChange={e => onDataFim(e.target.value)}

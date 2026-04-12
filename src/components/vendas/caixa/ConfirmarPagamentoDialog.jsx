@@ -179,7 +179,7 @@ export default function ConfirmarPagamentoDialog({
             {/* Vale Troca */}
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <input
+                <input autoComplete="off"
                   type="text"
                   placeholder="Código do Vale..."
                   value={codigoVale}
@@ -318,7 +318,7 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
         <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none">{label}</span>
-        <input
+        <input autoComplete="off"
           ref={inputRef}
           type="text"
           inputMode="numeric"

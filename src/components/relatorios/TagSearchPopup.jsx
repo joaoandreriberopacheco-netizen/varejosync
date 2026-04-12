@@ -15,7 +15,7 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
     <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 z-50 border border-gray-200 dark:border-gray-700 w-64 max-h-72 overflow-hidden flex flex-col">
       <div className="relative mb-3">
         <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
+        <input autoComplete="off"
           type="text"
           placeholder="Buscar..."
           value={searchTerm}

@@ -145,7 +145,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
 
               <div className="relative flex-1 min-w-0">
                 <Search className="w-3.5 h-3.5 text-gray-400 absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
+                <input autoComplete="off"
                   ref={inputRef}
                   type="text"
                   value={currentQuery}

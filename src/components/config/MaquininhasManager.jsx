@@ -327,19 +327,19 @@ export default function MaquininhasManager() {
                         <div className="flex-1 grid grid-cols-3 gap-1.5">
                           <div>
                             <div className="text-[9px] text-gray-400 mb-0.5 text-center">Débito</div>
-                            <input type="number" step="0.01" value={b.taxa_debito ?? 0}
+                            <input autoComplete="off" type="number" step="0.01" value={b.taxa_debito ?? 0}
                               onChange={e => updateBandeira(b.bandeira, 'taxa_debito', e.target.value)}
                               className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
                           </div>
                           <div>
                             <div className="text-[9px] text-gray-400 mb-0.5 text-center">Créd 1x</div>
-                            <input type="number" step="0.01" value={b.taxa_credito_1x ?? 0}
+                            <input autoComplete="off" type="number" step="0.01" value={b.taxa_credito_1x ?? 0}
                               onChange={e => updateBandeira(b.bandeira, 'taxa_credito_1x', e.target.value)}
                               className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
                           </div>
                           <div>
                             <div className="text-[9px] text-gray-400 mb-0.5 text-center">Interm. Parc.</div>
-                            <input type="number" step="0.01" value={b.taxa_intermediacao_parcelado ?? 0}
+                            <input autoComplete="off" type="number" step="0.01" value={b.taxa_intermediacao_parcelado ?? 0}
                               onChange={e => updateBandeira(b.bandeira, 'taxa_intermediacao_parcelado', e.target.value)}
                               className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
                           </div>
@@ -363,15 +363,15 @@ export default function MaquininhasManager() {
                           {(b.faixas_parcelamento || []).map((f, idx) => (
                             <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700/50 rounded-lg px-2 py-1.5">
                               <span className="text-[10px] text-gray-400 w-4">De</span>
-                              <input type="number" min="2" max="12" value={f.min_parcelas}
+                              <input autoComplete="off" type="number" min="2" max="12" value={f.min_parcelas}
                                 onChange={e => updateFaixa(b.bandeira, idx, 'min_parcelas', e.target.value)}
                                 className="w-10 h-6 text-center text-xs bg-gray-50 dark:bg-gray-700 rounded focus:outline-none dark:text-gray-200" />
                               <span className="text-[10px] text-gray-400">x até</span>
-                              <input type="number" min="2" max="12" value={f.max_parcelas}
+                              <input autoComplete="off" type="number" min="2" max="12" value={f.max_parcelas}
                                 onChange={e => updateFaixa(b.bandeira, idx, 'max_parcelas', e.target.value)}
                                 className="w-10 h-6 text-center text-xs bg-gray-50 dark:bg-gray-700 rounded focus:outline-none dark:text-gray-200" />
                               <span className="text-[10px] text-gray-400">x =</span>
-                              <input type="number" step="0.01" value={f.taxa_mensal_percentual}
+                              <input autoComplete="off" type="number" step="0.01" value={f.taxa_mensal_percentual}
                                 onChange={e => updateFaixa(b.bandeira, idx, 'taxa_mensal_percentual', e.target.value)}
                                 className="flex-1 h-6 text-center text-xs bg-gray-50 dark:bg-gray-700 rounded focus:outline-none dark:text-gray-200" />
                               <span className="text-[10px] text-gray-400">%/mês</span>

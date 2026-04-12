@@ -277,7 +277,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
             </div>
 
             {/* Input invisível para capturar teclado */}
-            <input
+            <input autoComplete="off"
               type="text"
               inputMode="decimal"
               value={saldoInicial}

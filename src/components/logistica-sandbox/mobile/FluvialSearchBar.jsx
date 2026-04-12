@@ -6,7 +6,7 @@ export default function FluvialSearchBar({ value, onChange }) {
     <div className="flex items-center gap-2">
       <div className="flex-1 rounded-3xl bg-white dark:bg-gray-800 shadow-sm px-3 py-2.5 flex items-center gap-2.5 min-w-0">
         <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-        <input
+        <input autoComplete="off"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Buscar embarcação"

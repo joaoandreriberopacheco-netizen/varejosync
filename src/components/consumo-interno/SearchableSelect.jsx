@@ -71,7 +71,7 @@ export default function SearchableSelect({
       {/* Trigger */}
       <div className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-gray-900 overflow-hidden">
         <Search className="h-4 w-4 shrink-0 text-gray-400" />
-        <input
+        <input autoComplete="off"
           ref={inputRef}
           type="text"
           placeholder={selectedLabel || placeholder}

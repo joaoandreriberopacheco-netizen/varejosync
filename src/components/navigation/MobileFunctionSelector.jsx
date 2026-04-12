@@ -98,7 +98,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
         <div className="flex items-center gap-2 px-3 h-11 rounded-2xl" style={{ background: c.searchBg }}>
           <Search className="w-4 h-4 flex-none" style={{ color: c.iconColor }} />
-          <input
+          <input autoComplete="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Pesquisar função..."

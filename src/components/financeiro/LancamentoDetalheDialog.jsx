@@ -241,7 +241,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         {isCartaoReceber && !isCancelado && (
           <div className="px-5 pt-4">
             <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Valor a receber</p>
-            <input
+            <input autoComplete="off"
               type="number"
               step="0.01"
               min="0"
@@ -268,7 +268,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Data</p>
-                <input
+                <input autoComplete="off"
                   type="date"
                   value={dataPagamento}
                   onChange={(e) => setDataPagamento(e.target.value)}
@@ -337,7 +337,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Data de liquidação</p>
-                <input
+                <input autoComplete="off"
                   type="date"
                   value={dataLiquidacao}
                   onChange={(e) => setDataLiquidacao(e.target.value)}

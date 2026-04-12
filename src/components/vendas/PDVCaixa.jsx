@@ -1345,7 +1345,7 @@ export default function PDVCaixa() {
                         <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
                         <p className="text-xs text-gray-400 dark:text-gray-500">{modoVisualizacao ? 'somente leitura' : 'toque para conferir'}</p>
                       </div>
-                      <input
+                      <input autoComplete="off"
                         id="input-dinheiro-conferido"
                         type="text"
                         inputMode="decimal"

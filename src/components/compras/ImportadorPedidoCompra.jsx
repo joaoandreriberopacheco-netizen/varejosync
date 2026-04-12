@@ -374,7 +374,7 @@ Retorne JSON:
                   />
                   {/* Número grande + setas */}
                   <div className="flex items-center gap-3">
-                    <input
+                    <input autoComplete="off"
                       type="number"
                       min="0"
                       max="100"

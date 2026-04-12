@@ -75,7 +75,7 @@ export default function TagsInput({ tags, onChange }) {
             </button>
           </span>
         ))}
-        <input
+        <input autoComplete="off"
           value={input}
           onChange={e => { setInput(e.target.value); setShowSugestoes(true); }}
           onKeyDown={handleKey}

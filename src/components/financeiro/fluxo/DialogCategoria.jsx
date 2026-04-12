@@ -20,7 +20,7 @@ export function NovaCategoriaInline({ tipo, onCriada, onCancelar }) {
 
   return (
     <div className="mt-2 bg-gray-50 dark:bg-gray-700 rounded-xl p-3 flex gap-2">
-      <input
+      <input autoComplete="off"
         autoFocus
         value={nome}
         onChange={e => setNome(e.target.value)}

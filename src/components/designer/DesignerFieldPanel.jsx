@@ -35,7 +35,7 @@ export default function DesignerFieldPanel({ campos }) {
   return (
     <div className="w-48 flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
       <div className="p-2 border-b border-gray-100 dark:border-gray-800">
-        <input
+        <input autoComplete="off"
           className="w-full text-xs border border-gray-200 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 placeholder-gray-400"
           placeholder="Buscar campo..."
           value={busca}

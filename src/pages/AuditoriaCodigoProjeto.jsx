@@ -195,7 +195,7 @@ export default function AuditoriaCodigoProjeto() {
 
                     {/* Nota inline */}
                     {editandoNota === item && (
-                      <input
+                      <input autoComplete="off"
                         autoFocus
                         type="text"
                         value={nota}

@@ -555,7 +555,7 @@ function CustomProductCombobox({ products, value, onSelect, onCreate, suggestedT
                     <div className="p-3 border-b border-gray-100 dark:border-gray-700">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 w-4 h-4 text-purple-500" />
-                            <input
+                            <input autoComplete="off"
                                 ref={inputRef}
                                 className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                                 placeholder="Buscar produto..."

@@ -40,7 +40,7 @@ export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaI
 
           <div>
             <Label className="text-xs text-gray-500 mb-2 block">Data do pagamento</Label>
-            <input
+            <input autoComplete="off"
               type="date"
               value={dataPagamento}
               onChange={(e) => setDataPagamento(e.target.value)}

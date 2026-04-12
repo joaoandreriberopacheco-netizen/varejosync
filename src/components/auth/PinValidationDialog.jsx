@@ -104,7 +104,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
           </div>
 
           {/* Input oculto para capturar teclado físico */}
-          <input
+          <input autoComplete="off"
             ref={inputRef}
             type="password"
             inputMode="numeric"

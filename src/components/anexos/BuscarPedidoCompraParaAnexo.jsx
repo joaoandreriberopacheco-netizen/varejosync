@@ -68,7 +68,7 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
 
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
+        <input autoComplete="off"
           value={query}
           onChange={handleSearch}
           placeholder="Número, fornecedor ou status..."

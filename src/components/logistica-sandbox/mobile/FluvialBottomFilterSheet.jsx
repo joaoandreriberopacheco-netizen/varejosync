@@ -51,7 +51,7 @@ export default function FluvialBottomFilterSheet({
             <label className="block text-xs uppercase tracking-[0.16em] text-indigo-200 font-medium">
               Simulador de Data
             </label>
-            <input
+            <input autoComplete="off"
               type="date"
               className="w-full rounded-2xl bg-white/8 border border-white/15 shadow-sm px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:bg-white/12 focus:border-indigo-400/50"
             />

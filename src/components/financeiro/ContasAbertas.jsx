@@ -426,7 +426,7 @@ export default function ContasAbertas() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-gray-100 dark:bg-slate-800">
             <Search className="w-4 h-4 text-gray-400 flex-none" />
-            <input
+            <input autoComplete="off"
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar..."
               className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-100 placeholder:text-gray-400 outline-none"
@@ -484,8 +484,8 @@ export default function ContasAbertas() {
 
             {periodo === 'personalizado' && (
               <div className="flex gap-2">
-                <input type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
-                <input type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
+                <input autoComplete="off" type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
+                <input autoComplete="off" type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
               </div>
             )}
 

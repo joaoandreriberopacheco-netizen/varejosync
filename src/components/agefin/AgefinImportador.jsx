@@ -501,7 +501,7 @@ Campos a interpretar do documento:
                     </span>
                   )}
                 </label>
-                <input
+                <input autoComplete="off"
                   type="text"
                   value={extractedData.descricao}
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
@@ -524,7 +524,7 @@ Campos a interpretar do documento:
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Beneficiário</label>
-                  <input
+                  <input autoComplete="off"
                     type="text"
                     value={extractedData.terceiro_nome}
                     onChange={(e) => setExtractedData({ ...extractedData, terceiro_nome: e.target.value })}
@@ -533,7 +533,7 @@ Campos a interpretar do documento:
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Competência</label>
-                  <input
+                  <input autoComplete="off"
                     type="date"
                     value={extractedData.periodo_referencia}
                     onChange={(e) => setExtractedData({ ...extractedData, periodo_referencia: e.target.value })}
@@ -545,7 +545,7 @@ Campos a interpretar do documento:
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Valor</label>
-                  <input
+                  <input autoComplete="off"
                     type="number"
                     value={extractedData.valor}
                     onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) || 0 })}
@@ -555,7 +555,7 @@ Campos a interpretar do documento:
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Vencimento</label>
-                  <input
+                  <input autoComplete="off"
                     type="date"
                     value={extractedData.data_vencimento}
                     onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
@@ -567,7 +567,7 @@ Campos a interpretar do documento:
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nº da parcela</label>
-                  <input
+                  <input autoComplete="off"
                     type="number"
                     value={extractedData.parcela_numero}
                     onChange={(e) => setExtractedData({ ...extractedData, parcela_numero: e.target.value })}

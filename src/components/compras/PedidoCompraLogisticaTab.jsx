@@ -77,7 +77,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
             {eta && !editandoEta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
             {editandoEta && (
               <div className="flex items-center gap-1.5">
-                <input
+                <input autoComplete="off"
                   type="date"
                   value={etaValue}
                   onChange={e => setEtaValue(e.target.value)}

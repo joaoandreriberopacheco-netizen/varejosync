@@ -124,7 +124,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
           {/* busca */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-800">
             <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <input
+            <input autoComplete="off"
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
@@ -161,7 +161,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
             </button>
           ) : (
             <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
-              <input
+              <input autoComplete="off"
                 autoFocus
                 value={nomeNova}
                 onChange={e => setNomeNova(e.target.value)}

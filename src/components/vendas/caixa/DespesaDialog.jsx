@@ -124,7 +124,7 @@ export default function DespesaDialog({
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 flex-1">
                 <div className="text-xs text-gray-500 dark:text-gray-400">{descricaoDespesa}</div>
                 <div className="text-xs text-gray-400 dark:text-gray-500">R$</div>
-                <input
+                <input autoComplete="off"
                   ref={valorRef}
                   autoFocus
                   type="text"

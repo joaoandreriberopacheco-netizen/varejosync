@@ -483,7 +483,7 @@ export default function RelatorioMargemVendas() {
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Buscar Produto</label>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input 
+                  <input autoComplete="off" 
                     type="text" 
                     placeholder="Produto ou código..."
                     value={searchTerm}

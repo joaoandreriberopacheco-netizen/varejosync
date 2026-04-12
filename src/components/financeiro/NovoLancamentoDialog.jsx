@@ -232,7 +232,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
           <div className="text-center w-full">
             <p className="text-[0.7rem] uppercase tracking-widest text-gray-400 mb-2">Valor</p>
-            <input
+            <input autoComplete="off"
               type="number" inputMode="decimal" min="0" step="0.01"
               value={valorNumerico === 0 ? '' : valorNumerico}
               onChange={e => setValorCents(Math.round(parseFloat(e.target.value || '0') * 100).toString() || '0')}
@@ -241,7 +241,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             />
             <p className="text-xs text-gray-400 mt-1">R$</p>
           </div>
-          <input
+          <input autoComplete="off"
             value={descricao} onChange={e => setDescricao(e.target.value)}
             placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Descrição *'}
             className="w-full text-center bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 py-2 text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 outline-none focus:border-gray-400 transition-colors"
@@ -263,7 +263,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           {/* Data */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
             <div className="px-4 py-1 text-[10px] text-gray-400 uppercase tracking-wider pt-3">Data de Vencimento</div>
-            <input type="date" value={data} onChange={e => setData(e.target.value)}
+            <input autoComplete="off" type="date" value={data} onChange={e => setData(e.target.value)}
               className="w-full bg-transparent px-4 pb-3 text-sm text-gray-800 dark:text-gray-200 outline-none" />
           </div>
 

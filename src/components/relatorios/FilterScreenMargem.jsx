@@ -48,7 +48,7 @@ export default function FilterScreenMargem({
           {/* Search Input */}
           <div className="relative mb-6">
             <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
+            <input autoComplete="off"
               type="text"
               placeholder="Procurar tags..."
               value={tagSearch}

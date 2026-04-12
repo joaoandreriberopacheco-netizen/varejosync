@@ -13,7 +13,7 @@ export default function TimelineDatePicker({ value, onChange, compact = false })
           <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">Ver situação em uma data projetada</p>
         </div>
       </div>
-      <input
+      <input autoComplete="off"
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}

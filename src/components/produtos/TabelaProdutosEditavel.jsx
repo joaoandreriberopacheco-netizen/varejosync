@@ -104,7 +104,7 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
                         />
                       ) : (
                         <div className="relative">
-                          <input
+                          <input autoComplete="off"
                             type={campo.tipo}
                             value={valor}
                             onChange={(e) => onAlteracao(produto.id, campo.key, e.target.value)}

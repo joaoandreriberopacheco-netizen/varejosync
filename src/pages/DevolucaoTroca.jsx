@@ -160,7 +160,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
                 >
                   <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </button>
-                <input
+                <input autoComplete="off"
                   type="number"
                   inputMode="numeric"
                   pattern="[0-9]*"

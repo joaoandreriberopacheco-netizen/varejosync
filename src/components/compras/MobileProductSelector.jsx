@@ -244,7 +244,7 @@ export default function MobileProductSelector({
               <span className={`text-5xl font-bold ${isDesconto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                 {isDesconto ? '−' : '+'}
               </span>
-              <input
+              <input autoComplete="off"
                 ref={discountInputRef}
                 type="number"
                 inputMode="decimal"

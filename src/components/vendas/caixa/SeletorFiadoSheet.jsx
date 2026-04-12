@@ -132,7 +132,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
           {/* Input customizado de data (opcional) */}
           <div className="space-y-1.5 mt-2">
             <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Ou selecione uma data específica</p>
-            <input
+            <input autoComplete="off"
               type="date"
               value={dataSelecionada ? format(dataSelecionada, 'yyyy-MM-dd') : ''}
               onChange={(e) => {
@@ -151,7 +151,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
         {/* Valor (opcional) */}
         <div className="space-y-1.5">
           <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Valor (opcional)</p>
-          <input
+          <input autoComplete="off"
             type="text"
             value={valor}
             onChange={(e) => {
