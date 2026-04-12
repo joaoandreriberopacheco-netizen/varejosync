@@ -276,7 +276,7 @@ export default function TabelaPrecosConsulta() {
       {/* FAB Orçamento */}
       <button
         onClick={() => setShowOrcamento(true)}
-        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 shadow-xl transition-all hover:bg-gray-700 active:scale-95 dark:bg-gray-100 dark:hover:bg-gray-200 p38-bottom-fab-mid lg:right-6"
+        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 shadow-xl transition-all hover:bg-gray-700 active:scale-95 dark:bg-gray-100 dark:hover:bg-gray-200 p38-bottom-fab1 lg:right-6"
         title="Novo Orçamento"
       >
         <Calculator className="w-6 h-6 text-white dark:text-gray-900" />

@@ -13,7 +13,7 @@ export default function FreteFAB({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-4 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition-shadow hover:shadow-xl dark:bg-gray-800 dark:text-slate-200 p38-bottom-fab-high"
+        className="fixed right-4 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition-shadow hover:shadow-xl dark:bg-gray-800 dark:text-slate-200 p38-bottom-fab2"
       >
         <Sliders className="w-5 h-5" />
       </button>

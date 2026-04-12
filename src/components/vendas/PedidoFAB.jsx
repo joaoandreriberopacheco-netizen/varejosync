@@ -71,7 +71,7 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
   return (
     <>
       {/* FAB Button */}
-      <div className="fixed right-6 z-[55] p38-bottom-fab-high">
+      <div className="fixed right-6 z-[55] p38-bottom-fab1">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`w-14 h-14 rounded-full shadow-lg transition-all duration-200 flex items-center justify-center ${

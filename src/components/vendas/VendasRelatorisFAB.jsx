@@ -24,7 +24,7 @@ export default function VendasRelatorisFAB() {
       )}
 
       {/* FAB Container */}
-      <div className="fixed right-4 z-[55] flex flex-col-reverse items-end gap-2 p38-bottom-fab-mid lg:bottom-6 lg:right-6">
+      <div className="fixed right-4 z-[55] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 lg:bottom-6 lg:right-6">
         {/* FAB Principal */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}

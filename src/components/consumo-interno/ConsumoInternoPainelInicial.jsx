@@ -146,7 +146,7 @@ export default function ConsumoInternoPainelInicial({
         </div>
       </div>
 
-      <div className="fixed right-4 z-[55] flex flex-col items-end gap-3 p38-bottom-fab-high lg:bottom-10 lg:right-6">
+      <div className="fixed right-4 z-[55] flex flex-col items-end gap-3 p38-bottom-fab1 lg:bottom-10 lg:right-6">
         {showFabMenu && (
           <div className="flex flex-col gap-2 rounded-[28px] bg-white p-2 shadow-2xl dark:bg-gray-800">
             <button

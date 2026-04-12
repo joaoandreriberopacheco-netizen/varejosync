@@ -5,7 +5,7 @@ import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicke
 
 export default function FluvialSimulationFab({ value, onChange }) {
   return (
-    <div className="fixed right-4 z-[55] md:hidden p38-bottom-fab-mid">
+    <div className="fixed right-4 z-[55] md:hidden p38-bottom-fab1">
       <Popover>
         <PopoverTrigger asChild>
           <button
