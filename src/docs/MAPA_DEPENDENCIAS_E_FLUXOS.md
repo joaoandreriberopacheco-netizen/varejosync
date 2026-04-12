@@ -175,11 +175,12 @@ flowchart TB
 
 ---
 
-## 6. Fuso horário (GMT-5 / Rio Branco)
+## 6. Fuso horário (Tabatinga, AM — UTC−5)
 
-- Regra de negócio: **`America/Rio_Branco` (UTC-5 fixo)** — ver `src/components/utils/dateUtils.jsx`.
-- **Não usar** `new Date().toISOString().slice(0, 10)` nem `.split('T')[0]` para “hoje” ou comparar com `data_vencimento` só-data: isso é o **dia civil em UTC**, não no fuso do sistema.
-- Usar **`dataHoje()`**, **`inicioDiaSistemaISO` / `fimDiaSistemaISO`** para filtros na API, **`boundsMesCivil`** para limites de mês, e **`formatarSoData`** para exibir vencimentos `YYYY-MM-DD`.
+- **Local do negócio:** Tabatinga, Amazonas, Brasil. O identificador IANA oficial do fuso é **`America/Rio_Branco`** (UTC−5 o ano todo; sem horário de verão). O nome da cidade no IANA não é “Tabatinga”, mas o offset é o mesmo.
+- Implementação: `src/components/utils/dateUtils.jsx` (`LOCAL_NEGOCIO`, `TIMEZONE_SISTEMA`, `dataHoje()`, `meioDiaSistemaISO()`, etc.).
+- **Não usar** `new Date().toISOString().slice(0, 10)` nem `.split('T')[0]` para “hoje” ou comparar com `data_vencimento` só-data: isso é o **dia civil em UTC**, não em Tabatinga.
+- Usar **`dataHoje()`**, **`inicioDiaSistemaISO` / `fimDiaSistemaISO`** para filtros na API, **`boundsMesCivil`** para limites de mês, **`meioDiaSistemaISO`** ao gravar só-data como instante, e **`formatarSoData`** para exibir vencimentos `YYYY-MM-DD`.
 
 ---
 

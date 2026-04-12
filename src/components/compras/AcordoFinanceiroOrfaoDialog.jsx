@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { base44 } from '@/api/base44Client';
 import { Handshake, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 // itensOrfaos: [{ produto_id, produto_nome, qtd_pendente, unidade_medida }]
 export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, itensOrfaos, onSuccess }) {
@@ -39,7 +40,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
           terceiro_id: pedido.fornecedor_id,
           terceiro_nome: pedido.fornecedor_nome,
           valor: parseFloat(valor),
-          data_vencimento: new Date().toISOString().substring(0, 10),
+          data_vencimento: dataHoje(),
           status: 'Em Aberto',
           conta_financeira_id: contaId,
           referencia_id: pedido.id,
@@ -58,7 +59,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
           terceiro_id: pedido.fornecedor_id,
           terceiro_nome: pedido.fornecedor_nome,
           valor: parseFloat(valor),
-          data_vencimento: new Date().toISOString().substring(0, 10),
+          data_vencimento: dataHoje(),
           status: 'Em Aberto',
           conta_financeira_id: contaId,
           referencia_id: pedido.id,

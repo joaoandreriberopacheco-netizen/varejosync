@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Upload, CheckCircle, AlertTriangle, Loader2, FileText, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
@@ -28,7 +29,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", `template_importacao_terceiros_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `template_importacao_terceiros_${dataHoje()}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();

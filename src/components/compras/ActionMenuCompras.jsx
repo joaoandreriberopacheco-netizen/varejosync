@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, FileText, X, Download, FileBarChart2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 // FAB radial — igual ao PedidoCompraFAB: arco acima-esquerda com backdrop blur
 const RADIUS = 72;
@@ -23,7 +24,7 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `RelatorioCompras_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.download = `RelatorioCompras_${dataHoje()}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       

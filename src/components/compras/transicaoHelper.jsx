@@ -7,7 +7,7 @@ import { agora } from '@/components/utils/dateUtils';
 
 /**
  * Registra uma transição de status no log da entidade TransicaoPedidoCompra.
- * Usa sempre o fuso do sistema (America/Rio_Branco) via utilitário centralizado.
+ * Usa sempre o fuso do negócio (Tabatinga, AM — IANA `America/Rio_Branco`) via `agora()` em dateUtils.
  *
  * @param {Object} params
  * @param {string} params.pedidoId - ID do PedidoCompra

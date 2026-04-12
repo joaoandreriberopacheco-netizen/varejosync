@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -23,7 +24,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `RelatorioCompras_${version}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.download = `RelatorioCompras_${version}_${dataHoje()}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
 

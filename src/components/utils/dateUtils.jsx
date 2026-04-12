@@ -1,17 +1,25 @@
 /**
  * Utilitário centralizado de data/hora do sistema VarejoSync.
  *
- * IMPORTANTE: O sistema opera SEMPRE no fuso horário America/Rio_Branco (UTC-5).
- * Nunca use `new Date()` diretamente para gravar timestamps — use `agora()`.
- * Isso garante que todos os registros de hora sigam o mesmo fuso, independente
- * do dispositivo ou localidade do usuário.
+ * Negócio: **Tabatinga, AM, Brasil** — fuso IANA `America/Rio_Branco` (UTC−5 o ano todo, sem horário de verão).
+ * Não confundir o nome IANA “Rio_Branco” com a cidade; é o identificador oficial do fuso do Acre/Amazonas ocidental.
+ * Para instantes persistidos use `agora()`; para “dia civil” do negócio use `dataHoje()` e funções deste módulo.
  */
+
+/** Metadados para UI / documentação (o fuso técnico é `TIMEZONE_SISTEMA`). */
+export const LOCAL_NEGOCIO = Object.freeze({
+  cidade: 'Tabatinga',
+  uf: 'AM',
+  pais: 'Brasil',
+  iana: 'America/Rio_Branco',
+  offsetLabel: 'UTC−5',
+});
 
 export const TIMEZONE_SISTEMA = 'America/Rio_Branco';
 
 /**
  * Timestamp atual em ISO UTC (instante absoluto). Use para `created_date`,
- * auditoria, etc. Para **chave de dia civil** no negócio (YYYY-MM-DD em Rio Branco),
+ * auditoria, etc. Para **chave de dia civil** no negócio (YYYY-MM-DD em Tabatinga),
  * use `dataHoje()` — nunca `toISOString().slice(0, 10)` (isso é o dia em UTC).
  */
 export function agora() {
@@ -33,7 +41,7 @@ export function dataHoje() {
 }
 
 /**
- * Data civil de hoje menos N dias (Rio Branco UTC-5 fixo; mesmo critério de `dataHoje`).
+ * Data civil de hoje menos N dias (UTC−5 Tabatinga; mesmo critério de `dataHoje`).
  * @param {number} diasAtras inteiro ≥ 0
  */
 export function dataMenosDiasSistema(diasAtras) {
@@ -58,18 +66,31 @@ export function boundsMesCivil(year, monthIndexZeroBased) {
   return { start, end: `${year}-${pad(m)}-${pad(ultimoDia)}` };
 }
 
+/** Offset fixo do negócio (Tabatinga / America/Rio_Branco). */
+const OFFSET_SISTEMA = '-05:00';
+
 /**
- * Início do dia civil em Rio Branco como ISO UTC (filtros `$gte` na API).
+ * Início do dia civil no fuso do negócio como ISO UTC (filtros `$gte` na API).
  */
 export function inicioDiaSistemaISO(dateStrYyyyMmDd) {
-  return new Date(`${dateStrYyyyMmDd}T00:00:00-05:00`).toISOString();
+  return new Date(`${dateStrYyyyMmDd}T00:00:00${OFFSET_SISTEMA}`).toISOString();
 }
 
 /**
- * Fim do dia civil em Rio Branco como ISO UTC (filtros `$lte` na API).
+ * Fim do dia civil no fuso do negócio como ISO UTC (filtros `$lte` na API).
  */
 export function fimDiaSistemaISO(dateStrYyyyMmDd) {
-  return new Date(`${dateStrYyyyMmDd}T23:59:59.999-05:00`).toISOString();
+  return new Date(`${dateStrYyyyMmDd}T23:59:59.999${OFFSET_SISTEMA}`).toISOString();
+}
+
+/**
+ * Converte `YYYY-MM-DD` (dia civil em Tabatinga) em ISO UTC do **meio-dia** local (−5).
+ * Use ao gravar campos “só data” quando a API espera um instante — evita deslocar o dia vs. `...Z` em UTC.
+ */
+export function meioDiaSistemaISO(dateStrYyyyMmDd) {
+  if (!dateStrYyyyMmDd) return null;
+  const d = String(dateStrYyyyMmDd).slice(0, 10);
+  return new Date(`${d}T12:00:00${OFFSET_SISTEMA}`).toISOString();
 }
 
 /**
@@ -89,7 +110,7 @@ export function inicioSemanaCivilDesdeYmd(ymd) {
 }
 
 /**
- * Converte uma data/timestamp para o horário de Rio Branco (UTC-5 fixo).
+ * Converte uma data/timestamp para o fuso do negócio (UTC−5 fixo, Tabatinga).
  * Usa offset manual como fallback garantido para Android/WebView.
  * @param {string|Date} valor
  * @returns {Date} objeto Date ajustado para UTC-5
@@ -100,7 +121,7 @@ function parseDateValue(valor) {
   if (typeof valor !== 'string') return null;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
-    return new Date(`${valor}T00:00:00-05:00`);
+    return new Date(`${valor}T00:00:00${OFFSET_SISTEMA}`);
   }
 
   const normalized = /([zZ]|[+-]\d{2}:\d{2})$/.test(valor) ? valor : `${valor}Z`;
@@ -206,7 +227,7 @@ export function formatarData(valor) { return formatarSoData(valor); }
  */
 export function inicioDiaHoje() {
   const hoje = dataHoje();
-  return new Date(`${hoje}T00:00:00-05:00`);
+  return new Date(`${hoje}T00:00:00${OFFSET_SISTEMA}`);
 }
 
 /**

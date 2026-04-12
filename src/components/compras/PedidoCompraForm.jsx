@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
-import { agora, formatarLogTime } from '@/components/utils/dateUtils';
+import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
@@ -806,7 +806,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               ...baseLancamento,
               descricao: `Compra de Mercadoria - ${currentPO.numero} (À Vista)`,
               valor: valorTotal,
-              data_vencimento: formData.data_primeiro_vencimento || dataHojeFormatado(),
+              data_vencimento: formData.data_primeiro_vencimento || dataHoje(),
               observacoes: `Pagamento à vista. Aguardando aprovação do financeiro.`,
             });
           } else {
@@ -866,14 +866,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     }
     
     setIsSaving(false);
-  };
-
-  // Helper interno — data de hoje no fuso do sistema como yyyy-MM-dd
-  const dataHojeFormatado = () => {
-    return new Intl.DateTimeFormat('sv-SE', {
-      timeZone: 'America/Rio_Branco',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-    }).format(new Date());
   };
 
   const formatCurrency = (value) => {

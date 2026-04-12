@@ -11,6 +11,7 @@ import { FileText, Plus, Users, ShoppingCart, Trophy, CheckCircle, Calendar, Upl
 import { format } from 'date-fns';
 import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function CotacoesManager() {
   const [cotacoes, setCotacoes] = useState([]);
@@ -220,7 +221,7 @@ export default function CotacoesManager() {
             numero: `COT-${String(nextNumber++).padStart(5, '0')}`,
             titulo: `Cotação via Foto - ${new Date().toLocaleDateString()}`,
             status: 'Rascunho',
-            data_abertura: new Date().toISOString().split('T')[0],
+            data_abertura: dataHoje(),
             itens: novosItens,
             fornecedores: [], // Inicialmente sem fornecedores
             respostas: []
@@ -290,7 +291,7 @@ export default function CotacoesManager() {
                                     numero: `COT-${String(nextNumber).padStart(5, '0')}`,
                                     titulo: novaCotacaoTitulo,
                                     status: 'Rascunho',
-                                    data_abertura: new Date().toISOString().split('T')[0],
+                                    data_abertura: dataHoje(),
                                     itens: [],
                                     fornecedores: [],
                                     respostas: []

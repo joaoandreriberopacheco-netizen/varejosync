@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function ExportarEstoque() {
   const [loading, setLoading] = useState(false);
@@ -91,7 +92,7 @@ export default function ExportarEstoque() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `estoque_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `estoque_${dataHoje()}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {

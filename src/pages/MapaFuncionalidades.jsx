@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, XCircle, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 const funcionalidades = [
   {
@@ -344,7 +345,7 @@ export default function MapaFuncionalidades() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `VarejoSync_Mapa_Completo_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `VarejoSync_Mapa_Completo_${dataHoje()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

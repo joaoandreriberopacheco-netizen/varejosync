@@ -9,6 +9,10 @@ import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { renderTemplate, prepararDadosVenda } from '@/lib/templateEngine';
+import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
+
+/** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
+const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
 
 // Formato brasileiro: virgula para decimais, ponto para milhares
 const fmtV = (v) => {
@@ -393,9 +397,6 @@ function TemplateRenderer({ htmlContent }) {
     />
   );
 }
-
-const TZ = 'America/Rio_Branco';
-const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);

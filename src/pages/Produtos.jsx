@@ -16,6 +16,7 @@ import { CheckCircle, Loader2, RefreshCw, TrendingUp } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
+import { dataHoje } from '@/components/utils/dateUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassImageUploader from '../components/produtos/MassImageUploader';
@@ -252,7 +253,7 @@ function ProdutosPageContent() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `catalogo_produtos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `catalogo_produtos_${dataHoje()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -365,7 +366,7 @@ function ProdutosPageContent() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `template_produtos_custos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `template_produtos_custos_${dataHoje()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -701,7 +702,7 @@ function ProdutosPageContent() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `template_atualizacao_custos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `template_atualizacao_custos_${dataHoje()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

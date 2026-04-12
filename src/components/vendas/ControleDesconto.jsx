@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle, Send } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tarefa } from '@/entities/Tarefa';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function ControleDesconto({ 
   percentualDesconto, 
@@ -25,7 +26,7 @@ export default function ControleDesconto({
       referencia_id: pedidoData.id,
       referencia_numero: pedidoData.numero,
       descricao: `Pedido para ${pedidoData.cliente_nome} - Desconto solicitado: ${percentualDesconto.toFixed(1)}% (Limite do vendedor: ${limiteUsuario}%)`,
-      data_vencimento: new Date().toISOString().split('T')[0]
+      data_vencimento: dataHoje()
     };
 
     await Tarefa.create(tarefa);

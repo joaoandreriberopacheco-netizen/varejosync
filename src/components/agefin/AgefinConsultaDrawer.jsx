@@ -2,10 +2,11 @@ import React from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { Calendar, CheckCircle2, CircleAlert, Paperclip, Receipt, Wallet } from 'lucide-react';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
+import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 
 function formatDate(value) {
   if (!value) return '—';
-  return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
+  return formatarSoData(value);
 }
 
 function formatCurrency(value) {
@@ -16,7 +17,7 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
   if (!conta) return null;
 
   const isPaid = conta.status === 'Pago';
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = dataHoje();
   const isOverdue = conta.status === 'Vencido' || (!isPaid && conta.data_vencimento && conta.data_vencimento < todayKey);
 
   return (

@@ -9,6 +9,7 @@ import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Box
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
+import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey } from '@/components/utils/dateUtils';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -221,11 +222,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     loadEventosLogisticos();
     setActiveTab('transporte');
     if (isEdicao) {
-      setDataDespacho(embarqueExistente.data_embarque ? new Date(embarqueExistente.data_embarque).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+      setDataDespacho(embarqueExistente.data_embarque ? toLocalDateKey(new Date(embarqueExistente.data_embarque)) : dataHoje());
       setTransportadoraId(embarqueExistente.transportadora_id || '');
       setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
       const etaVal = embarqueExistente.eta
-        ? new Date(embarqueExistente.eta).toISOString().slice(0, 10)
+        ? toLocalDateKey(new Date(embarqueExistente.eta))
         : '';
       setEta(etaVal);
       // Carrega volumes — verifica ambos campos (retrocompatibilidade)
@@ -244,7 +245,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       setQtdEmbarque(initQtd);
       setSelectedItems(initSel);
     } else {
-      setDataDespacho(new Date().toISOString().slice(0, 10));
+      setDataDespacho(dataHoje());
       setTransportadoraId('');
       setEventoLogisticoId('');
       setEta('');
@@ -353,8 +354,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       const volumesDetalhados = volumes.length > 0 ? volumes : [];
 
       const payloadEmbarque = {
-        data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : (embarqueExistente?.data_embarque || new Date().toISOString()),
-        eta: eta + 'T12:00:00.000Z',
+        data_embarque: dataDespacho ? meioDiaSistemaISO(dataDespacho) : (embarqueExistente?.data_embarque || agora()),
+        eta: meioDiaSistemaISO(eta),
         transportadora_id: transportadoraId,
         transportadora_nome: transportadora?.nome || '',
         evento_logistico_id: eventoLogisticoId || '',

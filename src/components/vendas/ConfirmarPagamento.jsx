@@ -14,6 +14,7 @@ import { CheckCircle, Plus, Trash2, Keyboard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
 import ComprovanteCompra from './ComprovanteCompra';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess }) {
   const [pagamentos, setPagamentos] = useState([{ forma_pagamento: 'Dinheiro', valor: '' }]);
@@ -139,8 +140,8 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
         terceiro_id: pedido.cliente_id,
         terceiro_nome: pedido.cliente_nome,
         valor: pedido.valor_total,
-        data_vencimento: new Date().toISOString().split('T')[0],
-        data_pagamento: new Date().toISOString().split('T')[0],
+        data_vencimento: dataHoje(),
+        data_pagamento: dataHoje(),
         status: 'Pago',
         categoria: 'Venda de Produto',
         referencia_id: pedido.id

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 // Índice (1-based) de colunas especiais
 function getColIndex(key) {
@@ -352,7 +353,7 @@ export default function ExportarPlanilha() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `produtos_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `produtos_${dataHoje()}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { Produto } from '@/entities/Produto';
 import { CustoDetalhado } from '@/entities/CustoDetalhado';
 import { Button } from '@/components/ui/button';
@@ -138,7 +139,7 @@ export default function EdicaoMassivaCustos() {
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", `custos_produtos_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `custos_produtos_${dataHoje()}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
