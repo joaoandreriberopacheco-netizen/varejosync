@@ -1,7 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ArrowLeft, Loader2, CheckCircle2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import {
+  Search,
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  ArrowDownLeft,
+  ArrowUpRight,
+  SlidersHorizontal,
+  X,
+  CalendarClock,
+  BarChart3,
+  RefreshCw,
+} from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 const PAGE_SIZE = 800;
 
@@ -16,12 +30,127 @@ function priorizarDespesas(lista) {
   });
 }
 
+/** Extrai número monetário de texto livre (ex.: "150,90", "R$ 100"). */
+function parseValorBusca(raw) {
+  const s = String(raw || '')
+    .trim()
+    .replace(/r\$\s*/gi, '')
+    .replace(/\s/g, '');
+  if (!s || !/\d/.test(s)) return null;
+  const normalized = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s.replace(',', '.');
+  const n = parseFloat(normalized);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatVencimentoBR(dataVenc) {
+  if (!dataVenc) return '';
+  try {
+    return format(new Date(`${String(dataVenc).slice(0, 10)}T12:00:00`), 'dd/MM/yyyy');
+  } catch {
+    return String(dataVenc);
+  }
+}
+
+function lancamentoMatchesSearch(l, qRaw) {
+  const q = qRaw.trim().toLowerCase();
+  if (!q) return true;
+
+  const textHit =
+    (l.descricao || '').toLowerCase().includes(q) ||
+    (l.terceiro_nome || '').toLowerCase().includes(q) ||
+    (l.categoria || '').toLowerCase().includes(q) ||
+    (l.conta_financeira_nome || '').toLowerCase().includes(q) ||
+    (l.referencia_numero || '').toLowerCase().includes(q) ||
+    (l.id || '').toLowerCase().includes(q) ||
+    (Array.isArray(l.tags) ? l.tags : []).some((t) => String(t).toLowerCase().includes(q));
+
+  if (textHit) return true;
+
+  const br = formatVencimentoBR(l.data_vencimento).toLowerCase();
+  const iso = (l.data_vencimento || '').slice(0, 10).toLowerCase();
+  if (br.includes(q) || iso.includes(q) || q.split(/[./-]/).some((part) => part && (br.includes(part) || iso.includes(part)))) {
+    return true;
+  }
+
+  const nQ = parseValorBusca(qRaw);
+  if (nQ != null) {
+    const v = Number(l.valor) || 0;
+    if (Math.abs(v - nQ) < 0.009) return true;
+    const formatted = v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (formatted.replace(/\s/g, '').includes(qRaw.replace(/\s/g, ''))) return true;
+  }
+
+  return false;
+}
+
+function isVencido(l) {
+  const todayKey = dataHoje();
+  const paid = l.status === 'Pago' || l.data_pagamento;
+  if (paid) return false;
+  return Boolean(l.data_vencimento && l.data_vencimento.slice(0, 10) < todayKey);
+}
+
+function filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo }) {
+  if (filterTipo !== 'todos' && l.tipo !== filterTipo) return false;
+
+  if (filterStatus !== 'todos') {
+    if (filterStatus === 'Vencido') {
+      if (!(l.status === 'Vencido' || isVencido(l))) return false;
+    } else if (l.status !== filterStatus) {
+      return false;
+    }
+  }
+
+  if (filterPrazo === 'vencidas') {
+    if (!isVencido(l)) return false;
+  } else if (filterPrazo === 'em_dia') {
+    const paid = l.status === 'Pago' || l.data_pagamento;
+    if (!paid && isVencido(l)) return false;
+  }
+
+  return true;
+}
+
+function FilterChipRow({ label, icon: Icon, options, value, onChange }) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => {
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange(opt.id)}
+              className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
+                active
+                  ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
+                  : 'bg-gray-100 text-gray-600 shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadando }) {
   const [query, setQuery] = useState('');
   const [cache, setCache] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterTipo, setFilterTipo] = useState('todos');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [filterPrazo, setFilterPrazo] = useState('todos');
 
   useEffect(() => {
     let cancelled = false;
@@ -48,24 +177,26 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
     };
   }, []);
 
+  const hasActiveFilters =
+    filterTipo !== 'todos' || filterStatus !== 'todos' || filterPrazo !== 'todos';
+
   const lancamentos = useMemo(() => {
-    if (!query.trim()) return cache;
-    const lower = query.trim().toLowerCase();
-    return cache.filter(
-      (l) =>
-        l.descricao?.toLowerCase().includes(lower) ||
-        l.terceiro_nome?.toLowerCase().includes(lower) ||
-        l.categoria?.toLowerCase().includes(lower) ||
-        l.id?.toLowerCase().includes(lower)
-    );
-  }, [cache, query]);
+    return cache.filter((l) => filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo })).filter((l) => lancamentoMatchesSearch(l, query));
+  }, [cache, query, filterTipo, filterStatus, filterPrazo]);
+
+  const limparFiltros = () => {
+    setFilterTipo('todos');
+    setFilterStatus('todos');
+    setFilterPrazo('todos');
+    setQuery('');
+  };
 
   const handleConfirmar = () => {
     if (selecionado) onSelecionar(selecionado);
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-1 flex-col gap-4 px-5 pb-6 pt-4">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col gap-3 px-5 pb-6 pt-4">
       <div className="flex shrink-0 items-center gap-3">
         <button
           type="button"
@@ -77,14 +208,45 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         <p className="text-sm font-medium text-gray-700 dark:text-foreground">Selecionar lançamento</p>
       </div>
 
-      <div className="relative shrink-0">
-        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por descrição, fornecedor..."
-          className="w-full rounded-2xl border-0 bg-white py-3 pl-10 pr-4 text-sm text-gray-800 shadow-sm outline-none dark:border dark:border-border dark:bg-card dark:text-foreground"
-        />
+      <div className="shrink-0 rounded-[20px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
+        <div className="flex items-center gap-2">
+          <div className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
+            <Search className="h-4 w-4 flex-none text-gray-400 dark:text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Nome, valor, vencimento (dd/mm)…"
+              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-foreground dark:placeholder:text-muted-foreground"
+            />
+            {query ? (
+              <button type="button" onClick={() => setQuery('')} className="shrink-0">
+                <X className="h-3.5 w-3.5 text-gray-400" />
+              </button>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
+          >
+            <SlidersHorizontal className="h-4 w-4 text-gray-800 dark:text-foreground" />
+            {hasActiveFilters ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                ·
+              </span>
+            ) : null}
+          </button>
+        </div>
+        <div className="flex items-center justify-between px-1 pt-2">
+          <p className="text-[11px] text-gray-500 dark:text-muted-foreground">
+            {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''}
+          </p>
+          {(hasActiveFilters || query) && (
+            <button type="button" onClick={limparFiltros} className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+              <X className="h-3 w-3" /> Limpar
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
@@ -101,7 +263,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
           <p className="py-10 text-center text-sm text-gray-400 dark:text-muted-foreground">
             {cache.length === 0
               ? 'Nenhum lançamento disponível. Crie ou importe contas no Financeiro.'
-              : 'Nenhum lançamento corresponde à busca.'}
+              : 'Nenhum lançamento corresponde à busca ou aos filtros.'}
           </p>
         ) : (
           lancamentos.map((l) => (
@@ -120,7 +282,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
           type="button"
           onClick={handleConfirmar}
           disabled={uploadando}
-          className="mt-auto flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50 dark:bg-primary dark:text-primary-foreground"
+          className="mt-auto flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50"
         >
           {uploadando ? (
             <>
@@ -133,6 +295,72 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
           )}
         </button>
       )}
+
+      <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+        <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-foreground">Filtros</DrawerTitle>
+          </DrawerHeader>
+          <div className="max-h-[70vh] space-y-5 overflow-y-auto">
+            <FilterChipRow
+              label="Tipo"
+              icon={BarChart3}
+              value={filterTipo}
+              onChange={setFilterTipo}
+              options={[
+                { id: 'todos', label: 'Todas' },
+                { id: 'Despesa', label: 'Despesa' },
+                { id: 'Receita', label: 'Receita' },
+                { id: 'Transferência', label: 'Transferência' },
+              ]}
+            />
+            <FilterChipRow
+              label="Situação"
+              icon={RefreshCw}
+              value={filterStatus}
+              onChange={setFilterStatus}
+              options={[
+                { id: 'todos', label: 'Todas' },
+                { id: 'Em Aberto', label: 'Em aberto' },
+                { id: 'Pago', label: 'Pago' },
+                { id: 'Vencido', label: 'Vencido / atrasado' },
+                { id: 'Cancelado', label: 'Cancelado' },
+              ]}
+            />
+            <FilterChipRow
+              label="Prazo"
+              icon={CalendarClock}
+              value={filterPrazo}
+              onChange={setFilterPrazo}
+              options={[
+                { id: 'todos', label: 'Todas' },
+                { id: 'vencidas', label: 'Vencidas' },
+                { id: 'em_dia', label: 'Em dia' },
+              ]}
+            />
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterTipo('todos');
+                  setFilterStatus('todos');
+                  setFilterPrazo('todos');
+                }}
+                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-gray-600 dark:bg-muted dark:text-muted-foreground"
+              >
+                Redefinir filtros
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="h-11 flex-1 rounded-2xl bg-primary text-sm font-medium text-primary-foreground"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
@@ -159,11 +387,7 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
       >
         <Icon
           className={`h-4 w-4 ${
-            selecionado
-              ? 'text-primary dark:text-primary'
-              : isReceita
-                ? 'text-green-500'
-                : 'text-red-400'
+            selecionado ? 'text-primary dark:text-primary' : isReceita ? 'text-green-500' : 'text-red-400'
           }`}
         />
       </div>
@@ -172,17 +396,13 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
           {lancamento.descricao || '—'}
         </p>
         <p className={`mt-0.5 text-xs ${selecionado ? 'text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground'}`}>
-          {lancamento.data_vencimento ? format(new Date(lancamento.data_vencimento + 'T00:00:00'), 'dd/MM/yyyy') : '—'}
+          {lancamento.data_vencimento ? format(new Date(lancamento.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy') : '—'}
           {lancamento.status && ` · ${lancamento.status}`}
         </p>
       </div>
       <span
         className={`flex-none text-sm font-semibold ${
-          selecionado
-            ? 'text-foreground'
-            : isReceita
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-red-500 dark:text-red-400'
+          selecionado ? 'text-foreground' : isReceita ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
         }`}
       >
         R$ {valor}

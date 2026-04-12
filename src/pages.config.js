@@ -50,6 +50,7 @@
 import AnexoCompartilhado from './pages/AnexoCompartilhado';
 import Agefin from './pages/Agefin';
 import Armazenagem from './pages/Armazenagem';
+import AtualizarBoletoRecorrente from './pages/AtualizarBoletoRecorrente';
 import AuditoriaEstoque from './pages/AuditoriaEstoque';
 import AuditoriaEstoqueV2 from './pages/AuditoriaEstoqueV2';
 import AutoAtendimento from './pages/AutoAtendimento';
@@ -114,6 +115,7 @@ export const PAGES = {
     "Agefin": Agefin,
     "AnexoCompartilhado": AnexoCompartilhado,
     "Armazenagem": Armazenagem,
+    "AtualizarBoletoRecorrente": AtualizarBoletoRecorrente,
     "AuditoriaEstoque": AuditoriaEstoque,
     "AuditoriaEstoqueV2": AuditoriaEstoqueV2,
     "AutoAtendimento": AutoAtendimento,

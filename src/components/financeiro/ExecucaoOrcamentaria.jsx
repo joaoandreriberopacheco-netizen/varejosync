@@ -92,6 +92,16 @@ export default function ExecucaoOrcamentaria() {
   const [urlReferenciaTipo, setUrlReferenciaTipo] = useState('');
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('aba') === 'agefin') {
+      setAbaContas('agefin');
+      params.delete('aba');
+      const next = params.toString();
+      window.history.replaceState({}, '', next ? `${window.location.pathname}?${next}` : window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
     // Ler params de URL e abrir dialog se fornecidos
     const params = new URLSearchParams(window.location.search);
     const desc = params.get('descricao');
