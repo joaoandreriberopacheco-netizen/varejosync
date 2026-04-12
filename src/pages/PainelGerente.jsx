@@ -17,11 +17,12 @@ import {
   Search,
   Filter
 } from 'lucide-react';
+import { dataHoje, inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 
 export default function PainelGerente() {
   const [filtros, setFiltros] = useState({
-    data_inicio: new Date().toISOString().split('T')[0],
-    data_fim: new Date().toISOString().split('T')[0],
+    data_inicio: dataHoje(),
+    data_fim: dataHoje(),
     status: 'todos',
     cliente: ''
   });
@@ -30,16 +31,10 @@ export default function PainelGerente() {
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['painel-gerente', filtros],
     queryFn: async () => {
-      const dataInicio = new Date(filtros.data_inicio);
-      dataInicio.setHours(0, 0, 0, 0);
-      
-      const dataFim = new Date(filtros.data_fim);
-      dataFim.setHours(23, 59, 59, 999);
-
       const query = {
         created_date: {
-          $gte: dataInicio.toISOString(),
-          $lte: dataFim.toISOString()
+          $gte: inicioDiaSistemaISO(filtros.data_inicio),
+          $lte: fimDiaSistemaISO(filtros.data_fim)
         }
       };
 

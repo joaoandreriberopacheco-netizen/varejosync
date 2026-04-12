@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { agora, formatarLogTime } from '@/components/utils/dateUtils';
+import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 
 export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
   const { toast } = useToast();
@@ -19,10 +19,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       quantidade_recebida: item.quantidade_recebida ?? item.quantidade_embarcada
     })) || []
   );
-  const [dataEntrada, setDataEntrada] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [dataEntrada, setDataEntrada] = useState(() => dataHoje());
   const [showDivergenciaDialog, setShowDivergenciaDialog] = useState(false);
   const [showModoDialog, setShowModoDialog] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);

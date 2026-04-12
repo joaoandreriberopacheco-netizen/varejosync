@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Calendar, Repeat2, Receipt, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgefinDetalheDrawer from '@/components/financeiro/AgefinDetalheDrawer';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -23,7 +24,7 @@ function getContaDoMes(contas, recorrente, monthKey) {
 function AgefinCard({ recorrente, contaMes, onOpen }) {
   const hasBoleto = Boolean(contaMes?.forma_pagamento_tipo === 'Boleto' || contaMes?.forma_pagamento === 'Boleto');
   const isPaid = contaMes?.status === 'Pago';
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = dataHoje();
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
   const boletoVencido = hasBoleto && isOverdue;
 

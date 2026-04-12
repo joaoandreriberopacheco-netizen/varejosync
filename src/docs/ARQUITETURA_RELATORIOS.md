@@ -297,5 +297,5 @@ export function useRelatorio(tipo, filtros) {
 1. **Criar tabela de relacionamentos** (spreadsheet: entidades × relatórios)
 2. **Implementar RelatorioDados** (entidade auxiliar para cache)
 3. **Scheduler de automações** (daily @ 2-3 AM)
-4. **Library de transformação** (`lib/reportPipeline.js`)
+4. **Transformação de dados** nos `entry.ts` em `base44/functions/` (ex.: `gerarRelatorioMargem`) e agregações no cliente onde aplicável
 5. **Testes de performance** (load com 10k+ registros)

@@ -5,15 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import AgefinConsultaDrawer from '@/components/agefin/AgefinConsultaDrawer';
-
-function monthBounds(date) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-  };
-}
+import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -85,7 +77,7 @@ function FilterChip({ active, onClick, children, tone = 'default' }) {
 }
 
 function ContaCard({ conta, onOpen }) {
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = dataHoje();
   const isPaid = conta.status === 'Pago';
   const isOverdue = conta.status === 'Vencido' || (!isPaid && conta.data_vencimento < todayKey);
   const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
@@ -113,7 +105,7 @@ function ContaCard({ conta, onOpen }) {
             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 shadow-sm">
-                <Calendar className="w-3.5 h-3.5" /> {new Date(`${conta.data_vencimento}T12:00:00`).toLocaleDateString('pt-BR')}
+                <Calendar className="w-3.5 h-3.5" /> {formatarSoData(conta.data_vencimento)}
               </span>
               <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 shadow-sm ${
                 isPaid
@@ -158,18 +150,18 @@ export default function AgefinConsulta() {
   }, []);
 
   const monthData = useMemo(() => {
-    const { start, end } = monthBounds(currentMonth);
+    const { start, end } = boundsMesCivil(currentMonth.getFullYear(), currentMonth.getMonth());
     return contas
       .filter((conta) => {
         if (!conta?.data_vencimento) return false;
         const vencimento = `${conta.data_vencimento}`.slice(0, 10);
         return vencimento >= start && vencimento <= end;
       })
-      .sort((a, b) => new Date(`${a.data_vencimento}T12:00:00`) - new Date(`${b.data_vencimento}T12:00:00`));
+      .sort((a, b) => new Date(`${a.data_vencimento}T12:00:00-05:00`) - new Date(`${b.data_vencimento}T12:00:00-05:00`));
   }, [contas, currentMonth]);
 
   const filteredData = useMemo(() => {
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = dataHoje();
     return monthData.filter((conta) => {
       const isPaid = conta.status === 'Pago';
       const isCancelled = conta.status === 'Cancelado';
@@ -190,7 +182,7 @@ export default function AgefinConsulta() {
   const kpis = useMemo(() => {
     const paid = filteredData.filter((c) => c.status === 'Pago');
     const unpaid = filteredData.filter((c) => c.status !== 'Pago' && c.status !== 'Cancelado');
-    const overdue = unpaid.filter((c) => c.status === 'Vencido' || c.data_vencimento < new Date().toISOString().slice(0, 10));
+    const overdue = unpaid.filter((c) => c.status === 'Vencido' || c.data_vencimento < dataHoje());
     return {
       totalValue: filteredData.reduce((sum, c) => sum + (c.valor || 0), 0),
       paidValue: paid.reduce((sum, c) => sum + (c.valor || 0), 0),
@@ -203,7 +195,7 @@ export default function AgefinConsulta() {
     const linhas = filteredData.map((conta) => `<tr>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.descricao}</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.terceiro_nome || '-'}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${new Date(`${conta.data_vencimento}T12:00:00`).toLocaleDateString('pt-BR')}</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${formatarSoData(conta.data_vencimento)}</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.status || '-'}</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${formatCurrency(conta.valor)}</td>
     </tr>`).join('');

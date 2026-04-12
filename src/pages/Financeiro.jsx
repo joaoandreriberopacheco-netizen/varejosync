@@ -5,7 +5,7 @@ import AgefinImportador from '../components/agefin/AgefinImportador';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Wallet, Landmark, ArrowLeftRight, Repeat2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from '@/components/ui/button';
 
 export default function FinanceiroPage() {

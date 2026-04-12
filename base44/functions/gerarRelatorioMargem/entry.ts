@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 /**
  * Backend Function: Gerar Relatório de Margem
  * 
- * Powered by reportPipeline: extrai vendas, calcula markups e margens,
+ * Pipeline de relatório: extrai vendas, calcula markups e margens,
  * agrupa por categoria e retorna dados transformados prontos para frontend.
  * 
  * Query Params:

@@ -10,10 +10,9 @@
 export const TIMEZONE_SISTEMA = 'America/Rio_Branco';
 
 /**
- * Retorna o timestamp atual como string ISO 8601 (sempre UTC internamente).
- * Use para TODOS os campos de data/hora persistidos na base de dados.
- * A hora é a mesma globalmente — o fuso só importa na EXIBIÇÃO.
- * @returns {string} ISO string e.g. "2026-03-16T15:32:00.000Z"
+ * Timestamp atual em ISO UTC (instante absoluto). Use para `created_date`,
+ * auditoria, etc. Para **chave de dia civil** no negócio (YYYY-MM-DD em Rio Branco),
+ * use `dataHoje()` — nunca `toISOString().slice(0, 10)` (isso é o dia em UTC).
  */
 export function agora() {
   return new Date().toISOString();
@@ -31,6 +30,62 @@ export function dataHoje() {
   const m = String(local.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(local.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${dd}`;
+}
+
+/**
+ * Data civil de hoje menos N dias (Rio Branco UTC-5 fixo; mesmo critério de `dataHoje`).
+ * @param {number} diasAtras inteiro ≥ 0
+ */
+export function dataMenosDiasSistema(diasAtras) {
+  const t = Date.now() - Number(diasAtras) * 86400000;
+  const local = new Date(t - 5 * 60 * 60 * 1000);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(local.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+/**
+ * Primeiro e último dia do mês civil em `YYYY-MM-DD` (calendário universal; seguro para vencimentos só-data).
+ * @param {number} year ex. 2026
+ * @param {number} monthIndexZeroBased 0 = janeiro
+ */
+export function boundsMesCivil(year, monthIndexZeroBased) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const m = monthIndexZeroBased + 1;
+  const start = `${year}-${pad(m)}-01`;
+  const ultimoDia = new Date(Date.UTC(year, monthIndexZeroBased + 1, 0)).getUTCDate();
+  return { start, end: `${year}-${pad(m)}-${pad(ultimoDia)}` };
+}
+
+/**
+ * Início do dia civil em Rio Branco como ISO UTC (filtros `$gte` na API).
+ */
+export function inicioDiaSistemaISO(dateStrYyyyMmDd) {
+  return new Date(`${dateStrYyyyMmDd}T00:00:00-05:00`).toISOString();
+}
+
+/**
+ * Fim do dia civil em Rio Branco como ISO UTC (filtros `$lte` na API).
+ */
+export function fimDiaSistemaISO(dateStrYyyyMmDd) {
+  return new Date(`${dateStrYyyyMmDd}T23:59:59.999-05:00`).toISOString();
+}
+
+/**
+ * Segunda-feira da mesma semana civil que o dia `YYYY-MM-DD` (semana começa na segunda).
+ * Usa apenas calendário gregoriano (sem depender do fuso do navegador).
+ */
+export function inicioSemanaCivilDesdeYmd(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d));
+  const dow = day.getUTCDay();
+  const diffToMon = (dow + 6) % 7;
+  const mon = new Date(Date.UTC(y, m - 1, d - diffToMon));
+  const yy = mon.getUTCFullYear();
+  const mm = String(mon.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(mon.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
 }
 
 /**

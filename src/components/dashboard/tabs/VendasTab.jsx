@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
-import { startOfDay, startOfWeek } from 'date-fns';
 import { Users, ShoppingBag } from 'lucide-react';
+import { dataHoje, inicioDiaSistemaISO, inicioSemanaCivilDesdeYmd } from '@/components/utils/dateUtils';
 
 export default function VendasTab() {
   const [data, setData] = useState({
@@ -17,8 +17,8 @@ export default function VendasTab() {
     const loadVendasData = async () => {
       setIsLoading(true);
       try {
-        const hoje = startOfDay(new Date()).toISOString();
-        const inicioSemana = startOfWeek(new Date()).toISOString();
+        const hoje = inicioDiaSistemaISO(dataHoje());
+        const inicioSemana = inicioDiaSistemaISO(inicioSemanaCivilDesdeYmd(dataHoje()));
 
         const [vendasHoje, vendasSemana, orcamentos, aguardandoPagamento] = await Promise.all([
           base44.entities.PedidoVenda.filter({ status: 'Finalizado', created_date: { $gte: hoje } }),

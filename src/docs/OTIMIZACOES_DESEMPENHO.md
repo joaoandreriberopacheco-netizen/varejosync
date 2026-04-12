@@ -84,39 +84,9 @@ Cache com TTL de 1 minuto para dados de dashboard:
 
 ---
 
-## 4. Renderização Condicional Otimizada (ConditionalRender)
+## 4. Renderização condicional por permissão
 
-### O Problema
-Renderizar componentes "escondidos" consome memória e aumenta o DOM.
-
-### A Solução
-Componente de renderização condicional que:
-- Valida permissões antes de renderizar
-- Suporta AND/OR lógicos
-- Evita renderizar o que não tem permissão
-
-### Benefícios
-- ✅ Reduz tamanho do DOM
-- ✅ Economia de memória (especialmente mobile)
-- ✅ Renderização mais rápida
-
-### Arquivo
-`components/guard/ConditionalRender.jsx`
-
-### Exemplo de Uso
-```jsx
-<ConditionalRender permissao="view_produtos">
-  <ProdutosPage />
-</ConditionalRender>
-
-<ConditionalRender permissoes={['edit_vendas', 'view_relatorios']}>
-  {/* Renderizar apenas se tiver TODAS as permissões */}
-</ConditionalRender>
-
-<ConditionalRender alguma={['admin', 'gerente']}>
-  {/* Renderizar se tiver ALGUMA das permissões */}
-</ConditionalRender>
-```
+O componente `ConditionalRender` foi **removido** do código por não estar integrado a nenhuma rota (código morto). Para o mesmo efeito, use **`temPermissao`** / **`resolverPermissoes`** de `components/config/usePermissoesResolvidas.jsx` ou o hook **`usePermissoesResolvidas`** em `hooks/usePermissoesResolvidas.js` e retorne `null` antes de montar subárvores pesadas.
 
 ---
 
@@ -167,7 +137,7 @@ onClick={() => {
 ## Boas Práticas
 
 1. **Use `usePermissoesResolvidas` em componentes de rota** para validação rápida
-2. **Use `ConditionalRender` para ocultar componentes** sem permissão
+2. **Evite montar componentes pesados** sem permissão (early return com `temPermissao` / hook de permissões)
 3. **Não sobrescreva o cache manualmente** — deixe os hooks gerenciarem
 4. **Para dados críticos**, considere refrescar manualmente: `await loadKPIs()`
 5. **Em modo offline**, o cache funciona normalmente até expirar

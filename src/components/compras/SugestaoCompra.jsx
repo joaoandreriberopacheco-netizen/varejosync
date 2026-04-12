@@ -9,6 +9,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import SearchableFilterSelect from '@/components/compras/SearchableFilterSelect';
 import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Truck, Search, Package, X, SlidersHorizontal } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function SugestaoCompra() {
   const [produtos, setProdutos] = useState([]);
@@ -180,7 +181,7 @@ export default function SugestaoCompra() {
         numero: `COT-${String(num).padStart(5, '0')}`,
         titulo: `Cotação - ${new Date().toLocaleDateString()}`,
         status: 'Rascunho',
-        data_abertura: new Date().toISOString().split('T')[0],
+        data_abertura: dataHoje(),
         itens: selected.map(p => ({
           produto_id: p.id,
           produto_nome: p.nome,

@@ -1,8 +1,8 @@
-export function cn(...inputs) {
-  return inputs.flat().filter(Boolean).join(" ");
-}
+export { cn } from '@/lib/utils';
+import { createPageUrl as createPageUrlBase } from '@/utils';
 
-export const createPageUrl = (pageName) => {
-    if (!pageName) return '/';
-    return `/${pageName}`;
-};
+/** Rotas da app: delega a `@/utils` (espaços → hífen) e trata nome vazio. */
+export function createPageUrl(pageName) {
+  if (!pageName) return '/';
+  return createPageUrlBase(pageName);
+}

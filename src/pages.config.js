@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AnexoCompartilhado from './pages/AnexoCompartilhado';
+import Agefin from './pages/Agefin';
 import Armazenagem from './pages/Armazenagem';
 import AuditoriaEstoque from './pages/AuditoriaEstoque';
 import AuditoriaEstoqueV2 from './pages/AuditoriaEstoqueV2';
@@ -61,6 +62,7 @@ import ConferenciaEstoque from './pages/ConferenciaEstoque';
 import ConferenciaItens from './pages/ConferenciaItens';
 import ConferenciaVolumes from './pages/ConferenciaVolumes';
 import Configuracoes from './pages/Configuracoes';
+import ContasFinanceiras from './pages/ContasFinanceiras';
 import ControleCaixasAtivos from './pages/ControleCaixasAtivos';
 import ControleEntregas from './pages/ControleEntregas';
 import Dashboard from './pages/Dashboard';
@@ -108,6 +110,7 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Agefin": Agefin,
     "AnexoCompartilhado": AnexoCompartilhado,
     "Armazenagem": Armazenagem,
     "AuditoriaEstoque": AuditoriaEstoque,
@@ -122,6 +125,7 @@ export const PAGES = {
     "ConferenciaItens": ConferenciaItens,
     "ConferenciaVolumes": ConferenciaVolumes,
     "Configuracoes": Configuracoes,
+    "ContasFinanceiras": ContasFinanceiras,
     "ControleCaixasAtivos": ControleCaixasAtivos,
     "ControleEntregas": ControleEntregas,
     "Dashboard": Dashboard,

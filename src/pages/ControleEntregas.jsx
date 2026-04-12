@@ -23,18 +23,14 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LiberacaoEntrega from '@/components/vendas/LiberacaoEntrega';
+import { dataHoje, dataMenosDiasSistema, inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 
 export default function ControleEntregas() {
   const queryClient = useQueryClient();
-  const getDefaultDates = () => {
-    const hoje = new Date();
-    const seteDiasAtras = new Date();
-    seteDiasAtras.setDate(hoje.getDate() - 7);
-    return {
-      inicio: seteDiasAtras.toISOString().split('T')[0],
-      fim: hoje.toISOString().split('T')[0]
-    };
-  };
+  const getDefaultDates = () => ({
+    inicio: dataMenosDiasSistema(7),
+    fim: dataHoje()
+  });
 
   const defaultDates = getDefaultDates();
   
@@ -59,12 +55,9 @@ export default function ControleEntregas() {
 
       // Filtro de data
       if (filtros.data_inicio && filtros.data_fim) {
-        const dataInicio = new Date(filtros.data_inicio + 'T00:00:00');
-        const dataFim = new Date(filtros.data_fim + 'T23:59:59');
-        
         query.created_date = {
-          $gte: dataInicio.toISOString(),
-          $lte: dataFim.toISOString()
+          $gte: inicioDiaSistemaISO(filtros.data_inicio),
+          $lte: fimDiaSistemaISO(filtros.data_fim)
         };
       }
 

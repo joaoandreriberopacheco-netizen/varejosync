@@ -9,7 +9,7 @@ const FASES = [
     itens: [
       'functions/migrarTagContaPagar',
       'functions/corrigirTagContaPagar',
-      'functions/migrarMovimentosParaLancamentos',
+      'base44/functions/migrarMovimentosParaLancamentos',
       'functions/migrarCustosParaProduto',
       'functions/migrarDadosLegadosEmbarqueRecebimento',
       'functions/migrarEmbarquesOriginais',

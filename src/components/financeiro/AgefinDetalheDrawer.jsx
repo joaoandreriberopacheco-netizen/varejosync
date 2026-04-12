@@ -5,10 +5,11 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
+import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 
 function formatDate(value) {
   if (!value) return '—';
-  return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
+  return formatarSoData(value);
 }
 
 function formatCurrency(value) {
@@ -21,8 +22,7 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
   if (!recorrente || !contaMes) return null;
 
   const isPaid = contaMes?.status === 'Pago';
-  const today = new Date();
-  const todayKey = today.toISOString().slice(0, 10);
+  const todayKey = dataHoje();
   const isDueToday = contaMes?.data_vencimento === todayKey;
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
   const hasBoleto = Boolean(contaMes?.boleto_url);

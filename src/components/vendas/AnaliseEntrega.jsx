@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Calendar as CalendarIcon, MapPin, Truck, Box } from 'lucide-react';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 // Mock data
 const frota = [
@@ -16,7 +17,7 @@ const frota = [
 
 export default function AnaliseEntrega({ pedido }) {
   const [veiculoSelecionado, setVeiculoSelecionado] = useState(frota[0]);
-  const [dataAgendamento, setDataAgendamento] = useState(new Date().toISOString().split('T')[0]);
+  const [dataAgendamento, setDataAgendamento] = useState(dataHoje());
   const [horaAgendamento, setHoraAgendamento] = useState('14:30');
 
   // Mocked data
