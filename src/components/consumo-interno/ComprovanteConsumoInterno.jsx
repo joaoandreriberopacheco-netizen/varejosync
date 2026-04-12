@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Printer, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+import { printOrShareElementAsPdf, shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { toast } from 'sonner';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -63,18 +64,29 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
     base44.entities.DadosEmpresa.list().then((r) => r?.length && setDadosEmpresa(r[0]));
   }, [open]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const el = document.getElementById('consumo-print');
     if (!el) return;
-    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${consumo?.numero || 'Minuta'}</title><style>*{box-sizing:border-box} @page { size:${pageSize}; margin:0; } body{margin:0;background:#fff}</style></head><body>${el.outerHTML}</body></html>`;
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
-    document.body.appendChild(iframe);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(html);
-    iframe.contentDocument.close();
-    iframe.onload = () => setTimeout(() => { iframe.contentWindow.print(); setTimeout(() => iframe.remove(), 1500); }, 300);
+    try {
+      await printOrShareElementAsPdf('consumo-print', {
+        formato: formato === 'a4' ? 'a4' : '80mm',
+        fileBaseName: `minuta-${consumo?.numero || 'consumo'}`,
+        title: `Minuta ${consumo?.numero || ''}`,
+        onDesktopPrint: () => {
+          const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
+          const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${consumo?.numero || 'Minuta'}</title><style>*{box-sizing:border-box} @page { size:${pageSize}; margin:0; } body{margin:0;background:#fff}</style></head><body>${el.outerHTML}</body></html>`;
+          const iframe = document.createElement('iframe');
+          iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+          document.body.appendChild(iframe);
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(html);
+          iframe.contentDocument.close();
+          iframe.onload = () => setTimeout(() => { iframe.contentWindow.print(); setTimeout(() => iframe.remove(), 1500); }, 300);
+        },
+      });
+    } catch {
+      toast.error('Não foi possível exportar');
+    }
   };
 
   const handleShare = async () => {
@@ -95,15 +107,8 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
         pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
       }
       const fileName = `minuta-${consumo?.numero || 'consumo'}.pdf`;
-      const pdfBlob = pdf.output('blob');
-      if (navigator.share && navigator.canShare) {
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Minuta ${consumo?.numero || ''}` });
-          return;
-        }
-      }
-      pdf.save(fileName);
+      const r = await shareOrDownloadBlob(pdf.output('blob'), fileName, 'application/pdf', `Minuta ${consumo?.numero || ''}`);
+      if (r === 'downloaded') toast.success('PDF gerado');
     } catch {
       toast.error('Erro ao gerar a minuta');
     } finally {

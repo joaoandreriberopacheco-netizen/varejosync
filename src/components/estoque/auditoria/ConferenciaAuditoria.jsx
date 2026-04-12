@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { openPrintWindowOrShareHtml } from "@/lib/mobilePrintAndShare";
 
 export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualizar }) {
   const [produtos, setProdutos] = useState([]);
@@ -100,7 +101,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
     onAtualizar();
   };
 
-  const imprimir = () => {
+  const imprimir = async () => {
     const dataFim = conferencia.data_fim ? format(new Date(conferencia.data_fim), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "";
     const linhas = comparativo.map(item => {
       const dif = item.diferenca;
@@ -115,8 +116,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
         </tr>`;
     }).join("");
 
-    const win = window.open("", "_blank");
-    win.document.write(`
+    const html = `
       <html>
         <head>
           <title>Relatório de Auditoria — ${conferencia.nome_conferencia}</title>
@@ -167,9 +167,16 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
           <div class="footer">Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })} · Status: ${conferencia.status}</div>
         </body>
       </html>
-    `);
-    win.document.close();
-    win.print();
+    `;
+    try {
+      await openPrintWindowOrShareHtml(
+        html,
+        `auditoria-${String(conferencia.nome_conferencia || "relatorio").replace(/\s+/g, "-")}.html`,
+        `Auditoria ${conferencia.nome_conferencia || ""}`
+      );
+    } catch {
+      /* popup bloqueado */
+    }
   };
 
   if (loading) return (

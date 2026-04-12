@@ -10,6 +10,7 @@ import {
  * Controla se este atalho aparece na lista de opções do "Personalizar"
  * para o usuário em questão.
  * Admins sempre veem tudo (tratado em Home.jsx antes de filtrar).
+ * `deprecated: true` — não aparece na home nem no seletor (funcionalidade descontinuada).
  */
 export const ALL_QUICK_ACTIONS = [
   {
@@ -59,6 +60,7 @@ export const ALL_QUICK_ACTIONS = [
     icon: Ship,
     label: 'Boats',
     page: 'ItinerarioFluvial',
+    deprecated: true,
     permissaoCheck: (p) => p?.estoque?.logistica || p?.estoque?.compras?.hub_logistico?.logistica,
   },
   {
@@ -150,3 +152,8 @@ export const ALL_QUICK_ACTIONS = [
 ];
 
 export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'estoque', 'compras', 'financeiro', 'caixas_ativos', 'agefin_consulta'];
+
+/** Atalhos ativos (exclui descontinuados). */
+export function quickActionsAtivos() {
+  return ALL_QUICK_ACTIONS.filter((a) => !a.deprecated);
+}

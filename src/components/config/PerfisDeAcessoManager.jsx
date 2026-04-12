@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { notify } from '@/components/ui/notify';
 import { Plus, Trash2, Shield, Users, Pencil } from 'lucide-react';
 import PerfilFormTela, { MODULOS, contarPermissoes } from './PerfilFormTela';
+import { garantirChavesPermissoes, perfilTemEscopoTotal } from '@/lib/perfilPermissoes';
 
 export default function PerfisDeAcessoManager() {
   const [perfis, setPerfis] = useState([]);
@@ -30,10 +31,17 @@ export default function PerfisDeAcessoManager() {
       return;
     }
     try {
+      const payload = {
+        ...form,
+        permissoes: garantirChavesPermissoes(form.permissoes, {
+          novasComo: false,
+          perfilAdministrador: perfilTemEscopoTotal(form),
+        }),
+      };
       if (editandoExistente) {
-        await base44.entities.PerfilDeAcesso.update(editando.id, form);
+        await base44.entities.PerfilDeAcesso.update(editando.id, payload);
       } else {
-        await base44.entities.PerfilDeAcesso.create(form);
+        await base44.entities.PerfilDeAcesso.create(payload);
       }
       notify.success(editandoExistente ? 'Perfil atualizado' : 'Perfil criado', 'As permissões foram salvas.');
       setEditando(null);

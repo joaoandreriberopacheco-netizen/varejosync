@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Printer, X, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -16,10 +17,7 @@ export default function PromissoriaDialog({ open, onClose, pedido, valorFiado, e
   const nomeCliente = pedido.cliente_nome || '___________________________';
   const numeroPedido = pedido.numero || '—';
 
-  const imprimir = () => {
-    const pw = window.open('', '_blank', 'width=500,height=700');
-    if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
-
+  const imprimir = async () => {
     const itensHtml = (pedido.itens || []).map(item =>
       `<tr>
         <td style="padding:3px 0;font-size:11px;">${item.produto_nome}</td>
@@ -29,7 +27,7 @@ export default function PromissoriaDialog({ open, onClose, pedido, valorFiado, e
       </tr>`
     ).join('');
 
-    pw.document.write(`<!DOCTYPE html>
+    const doc = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8"/>
@@ -112,10 +110,12 @@ ${pedido.valor_desconto > 0 ? `<div class="info" style="text-align:right">Descon
 
 <div class="obs">Não é documento fiscal · Pedido ${numeroPedido}</div>
 </body>
-</html>`);
-    pw.document.close();
-    pw.focus();
-    setTimeout(() => { pw.print(); pw.close(); }, 400);
+</html>`;
+    try {
+      await openPrintWindowOrShareHtml(doc, `promissoria-${numeroPedido}.html`, 'Promissória / fiado', { windowFeatures: 'width=500,height=700', printDelayMs: 400 });
+    } catch {
+      alert('Permita pop-ups para imprimir.');
+    }
   };
 
   return (

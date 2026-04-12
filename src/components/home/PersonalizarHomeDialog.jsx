@@ -1,21 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
-import { Check, GripVertical } from 'lucide-react';
-import { ALL_QUICK_ACTIONS } from './quickActions';
+import { Check } from 'lucide-react';
+import { quickActionsAtivos } from './quickActions';
+
+const MAX_ATALHOS = 9;
 
 export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSave, allowedActions }) {
   const [localSelected, setLocalSelected] = useState(selected || []);
 
-  // Filtra para mostrar apenas ações permitidas pelo perfil
-  const availableActions = allowedActions
-    ? ALL_QUICK_ACTIONS.filter(a => allowedActions.includes(a.id))
-    : ALL_QUICK_ACTIONS;
+  useEffect(() => {
+    if (isOpen) setLocalSelected(selected || []);
+  }, [isOpen, selected]);
+
+  const ativos = quickActionsAtivos();
+  const availableActions =
+    allowedActions === undefined
+      ? ativos
+      : ativos.filter((a) => allowedActions.includes(a.id));
 
   const toggle = (id) => {
-    setLocalSelected(prev => 
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    setLocalSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_ATALHOS) return prev;
+      return [...prev, id];
+    });
   };
 
   const handleSave = () => {
@@ -31,11 +40,11 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
              Personalizar Tela Inicial
            </DialogTitle>
            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-             Escolha os atalhos que deseja exibir (máx. 6)
+             Toque para incluir ou remover. Até {MAX_ATALHOS} atalhos na grade da tela inicial.
            </p>
          </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-2 py-2">
+        <div className="grid grid-cols-3 gap-2 py-2 max-h-[min(70vh,28rem)] overflow-y-auto">
           {availableActions.map(action => {
             const Icon = action.icon;
             const isSelected = localSelected.includes(action.id);

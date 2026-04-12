@@ -2,11 +2,11 @@ import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimentoCriado, tipoMovimento, currentUser, formatValor }) {
-  const printComprovante = () => {
-    const w = window.open('', '_blank', 'width=400,height=600');
-    w.document.write(`<html><head><title>Comprovante</title>
+  const printComprovante = async () => {
+    const html = `<html><head><title>Comprovante</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
       .center{text-align:center}.dashed{border-top:2px dashed #aaa;margin:12px 0}.big{font-size:22px;font-weight:bold}.row{display:flex;justify-content:space-between;margin:6px 0}
       </style></head><body>
@@ -21,9 +21,12 @@ export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimen
       <div class="dashed"></div>
       ${movimentoCriado?.observacao ? `<p><small>Obs: ${movimentoCriado.observacao}</small></p>` : ''}
       <div class="center"><small>Não é comprovante fiscal</small></div>
-      </body></html>`);
-    w.document.close(); w.focus();
-    setTimeout(() => { w.print(); w.close(); }, 300);
+      </body></html>`;
+    try {
+      await openPrintWindowOrShareHtml(html, `comprovante-movimento-${movimentoCriado?.numero || 'mov'}.html`, 'Comprovante', { windowFeatures: 'width=400,height=600' });
+    } catch {
+      /* popup bloqueado */
+    }
   };
 
   return (

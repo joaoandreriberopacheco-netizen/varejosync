@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, turnoAtivo, vendasFinalizadas, movimentos, formatValor }) {
   return (
@@ -24,12 +25,10 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
           </button>
           <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Saldo Consolidado</h2>
           <button
-            onClick={() => {
+            onClick={async () => {
               const el = document.getElementById('saldo-consolidado-print');
               const printContent = el ? el.innerHTML : '';
-              const printWindow = window.open('', '_blank', 'width=800,height=900');
-              if (!printWindow) { alert('Permita pop-ups para imprimir.'); return; }
-              printWindow.document.write(`
+              const doc = `
               <html><head><title>Saldo Consolidado</title>
               <style>
                 body { font-family: Inter, sans-serif; font-size: 12px; color: #111; margin: 10mm; }
@@ -58,10 +57,12 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 .space-y-1 > * + * { margin-top: 4px; }
                 .mt-0\\.5 { margin-top: 2px; }
               </style></head><body>${printContent}</body></html>
-            `);
-              printWindow.document.close();
-              printWindow.focus();
-              setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+            `;
+              try {
+                await openPrintWindowOrShareHtml(doc, `saldo-consolidado-${turnoAtivo?.numero || 'turno'}.html`, 'Saldo consolidado', { windowFeatures: 'width=800,height=900' });
+              } catch {
+                alert('Permita pop-ups para imprimir.');
+              }
             }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors print:hidden"
             style={{ minWidth: '44px', minHeight: '44px' }}>

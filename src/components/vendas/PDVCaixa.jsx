@@ -27,6 +27,7 @@ import ProcessarVendasView from './caixa/ProcessarVendasView';
 import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog.jsx';
 import PromissoriaDialog from './caixa/PromissoriaDialog';
 import FechamentoCaixaButton from '@/components/vendas/FechamentoCaixaButton';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
   Receipt,
   DollarSign,
@@ -1448,9 +1449,7 @@ export default function PDVCaixa() {
                      const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
                      const diferenca = totalConferido - esperado;
                      const temDiferenca = Math.abs(diferenca) > 0.01;
-                     const imprimirRelatorio = () => {
-                        const pw = window.open('', '_blank', 'width=800,height=900');
-                        if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
+                     const imprimirRelatorio = async () => {
                         const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);
                         // Vendas: linha principal + sub-linhas por forma de pagamento
                       const linhasVendas = vendasFinalizadas.map(v => {
@@ -1481,8 +1480,7 @@ export default function PDVCaixa() {
                        const linhasCancelamentos = cancelamentos.length > 0
                          ? cancelamentos.map(c => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af;padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
                          : '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda cancelada</p>';
-                       if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
-                       pw.document.write(`<html><head><title>Relatório de Fechamento</title><style>
+                       const html = `<html><head><title>Relatório de Fechamento</title><style>
                          body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
                          h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
                          .row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
@@ -1528,9 +1526,12 @@ export default function PDVCaixa() {
                          ${linhasCancelamentos}
                          <div class="dashed"></div>
                          <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Não é documento fiscal</p>
-                       </body></html>`);
-                       pw.document.close(); pw.focus();
-                       setTimeout(() => { pw.print(); pw.close(); }, 300);
+                       </body></html>`;
+                       try {
+                         await openPrintWindowOrShareHtml(html, `fechamento-pdv-${turnoAtivo?.numero || 'caixa'}.html`, 'Relatório de fechamento', { windowFeatures: 'width=800,height=900' });
+                       } catch {
+                         alert('Permita pop-ups para imprimir.');
+                       }
                      };
                      return (
                        <div id="secao-fechamento-caixa" className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">

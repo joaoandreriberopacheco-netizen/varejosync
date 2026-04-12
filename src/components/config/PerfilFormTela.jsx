@@ -39,6 +39,7 @@ export const MODULOS = [
       { key: 'acesso_vendedor', label: 'Interface de Vendedor' },
       { key: 'acesso_caixa', label: 'Interface de Caixa' },
       { key: 'acesso_supermercado', label: 'Modo Supermercado' },
+      { key: 'acesso_auto_atendimento', label: 'Auto-atendimento' },
       { key: 'aplicar_desconto', label: 'Aplicar Desconto' },
       { key: 'cancelar_item_venda', label: 'Cancelar Item' },
       { key: 'cancelar_venda', label: 'Cancelar Venda' },
@@ -86,7 +87,7 @@ export const MODULOS = [
           { key: 'cotacoes', label: 'Cotações' },
           { key: 'pedidos', label: 'Pedidos de Compra' },
           { key: 'conferencia', label: 'Conferência de Entrada' },
-          { key: 'logistica', label: 'Logística / Itinerário Fluvial' }
+          { key: 'logistica', label: 'Logística / Itinerário (Boats)', deprecated: true }
         ]
       },
       { key: 'armazenagem', label: 'Armazenagem' },
@@ -146,6 +147,7 @@ export function contarPermissoes(permissoes, moduloKey) {
 
   function contarRecursivo(submodulos, contexto) {
     submodulos.forEach(sub => {
+      if (sub.deprecated) return;
       total += 1;
       const val = contexto?.[sub.key];
       if (val === true) ativas++;
@@ -180,7 +182,8 @@ function getValueByPath(permissoes, moduloKey, caminhoCompleto) {
 }
 
 function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange, nivel = 0, expandedMap, onToggleExpand }) {
-  const temSubitens = item.submodulos && item.submodulos.length > 0;
+  if (item.deprecated) return null;
+  const temSubitens = item.submodulos && item.submodulos.filter((s) => !s.deprecated).length > 0;
   const caminhoCompleto = [...caminho, item.key];
   const valor = getValueByPath(permissoes, moduloKey, caminhoCompleto);
   const checked = valor === true;
@@ -236,7 +239,7 @@ function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange
 
       {temSubitens && isExpanded && (
         <div className="space-y-1 border-l border-gray-200/80 pl-1 dark:border-gray-700/80">
-          {item.submodulos.map((sub) => (
+          {item.submodulos.filter((s) => !s.deprecated).map((sub) => (
             <TreePermissionRow
               key={sub.key}
               item={sub}
@@ -288,7 +291,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
 
       {expandido && (
         <div className="border-t border-gray-100 px-2 pb-3 pt-2 dark:border-gray-700">
-          {modulo.submodulos?.map((item) => (
+          {modulo.submodulos?.filter((s) => !s.deprecated).map((item) => (
             <TreePermissionRow
               key={item.key}
               item={item}

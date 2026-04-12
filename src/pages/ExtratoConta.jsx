@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ArrowLeft, Plus, ArrowUpCircle, ArrowDownCircle, ArrowRightLeft, Calendar, Search, FileDown, Printer } from 'lucide-react';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
+import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
@@ -361,7 +362,13 @@ export default function ExtratoContaPage() {
   };
 
   const imprimir = () => {
-    window.print();
+    if (!conta) return;
+    void printOrShareElementAsPdf('extrato-print-root', {
+      formato: 'a4',
+      fileBaseName: `extrato-${String(conta.nome || 'conta').replace(/\s+/g, '_')}-${format(new Date(), 'yyyy-MM-dd')}`,
+      title: `Extrato ${conta.nome}`,
+      onDesktopPrint: () => window.print(),
+    });
   };
 
   if (isLoading) {
@@ -386,7 +393,7 @@ export default function ExtratoContaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-glacial">
+    <div id="extrato-print-root" className="min-h-screen bg-gray-50 dark:bg-gray-900 font-glacial">
       {/* Header fixo */}
       <div className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -407,7 +414,7 @@ export default function ExtratoContaPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">{conta.tipo}</p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 no-pdf-capture">
               <Button variant="ghost" size="icon" onClick={exportarCSV} title="Exportar CSV">
                 <FileDown className="w-5 h-5" />
               </Button>

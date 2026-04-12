@@ -19,6 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 
 export default function ControleCaixasAtivos() {
   const [caixas, setCaixas] = useState([]);
@@ -250,7 +251,12 @@ export default function ControleCaixasAtivos() {
   };
 
   const handleImprimir = () => {
-    window.print();
+    void printOrShareElementAsPdf('controle-caixas-print-root', {
+      formato: 'a4',
+      fileBaseName: `caixas-${String(caixaSelecionado?.nome || 'ativos').replace(/\s+/g, '_')}-${format(new Date(), 'yyyy-MM-dd')}`,
+      title: 'Controle de caixas',
+      onDesktopPrint: () => window.print(),
+    });
   };
 
   const resumo = calcularResumo();
@@ -271,7 +277,7 @@ export default function ControleCaixasAtivos() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div id="controle-caixas-print-root" className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -285,7 +291,7 @@ export default function ControleCaixasAtivos() {
           <Button
             onClick={handleImprimir}
             variant="outline"
-            className="gap-2 print:hidden border-gray-200 dark:border-gray-700">
+            className="gap-2 print:hidden border-gray-200 dark:border-gray-700 no-pdf-capture">
             <Printer className="w-4 h-4" />
             Imprimir
           </Button>

@@ -10,11 +10,16 @@ import {
 import P38Logo from '@/components/brand/P38Logo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS } from '@/components/home/quickActions';
+import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, quickActionsAtivos } from '@/components/home/quickActions';
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
-import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 import { useKPIsCache } from '@/hooks/useKPIsCache';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
+import {
+  resolverPermissoes,
+  idsAtalhosHomePermitidos,
+  usuarioLegadoSemMatrizPerfil,
+  perfilResolvidoParaUsuario,
+} from '@/lib/perfilPermissoes';
 
 const STORAGE_KEY = 'home_quick_actions';
 
@@ -26,23 +31,17 @@ export default function HomePage() {
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const { kpis, loadKPIs } = useKPIsCache();
 
-  // Resolve permissões no mesmo formato usado pelo menu lateral
+  // Mesma árvore que o menu lateral (inclui cache do perfil enquanto carrega)
   const permissoes = useMemo(() => {
     if (!currentUser || currentUser.role === 'admin') return null;
-    return resolverPermissoes(perfilDeAcesso, currentUser?.override_permissoes);
+    const perfil = perfilResolvidoParaUsuario(currentUser, perfilDeAcesso);
+    return resolverPermissoes(perfil, currentUser?.override_permissoes);
   }, [currentUser, perfilDeAcesso]);
 
-  // IDs dos atalhos que o usuário tem permissão de ver
-  const allowedActionIds = useMemo(() => {
-    if (!currentUser) return [];
-    if (currentUser.role === 'admin') return ALL_QUICK_ACTIONS.map(a => a.id);
-    // Sem perfil e sem overrides = vê tudo
-    if (!currentUser.perfil_acesso_id && !currentUser.override_permissoes) return ALL_QUICK_ACTIONS.map(a => a.id);
-    if (!permissoes || Object.keys(permissoes).length === 0) return ALL_QUICK_ACTIONS.map(a => a.id);
-    return ALL_QUICK_ACTIONS
-      .filter(a => !a.permissaoCheck || a.permissaoCheck(permissoes))
-      .map(a => a.id);
-  }, [currentUser, permissoes]);
+  const allowedActionIds = useMemo(
+    () => idsAtalhosHomePermitidos(currentUser, perfilDeAcesso, quickActionsAtivos()),
+    [currentUser, perfilDeAcesso]
+  );
 
   // Pode personalizar: admin sempre pode; user com perfil que permite; user sem perfil também pode
   const podePersonalizar = useMemo(() => {
@@ -52,11 +51,10 @@ export default function HomePage() {
     return true; // sem perfil vinculado → permite personalizar
   }, [currentUser, perfilDeAcesso]);
 
-  // Pode ver resumo de vendas: admin, ou quem tem dashboard.acesso, resumo_vendas_home, ou vendas.acesso
   const podeVerResumoVendas = useMemo(() => {
     if (!currentUser) return false;
     if (currentUser.role === 'admin') return true;
-    if (!permissoes) return true;
+    if (usuarioLegadoSemMatrizPerfil(currentUser)) return true;
     return !!(
       permissoes?.dashboard?.acesso ||
       permissoes?.dashboard?.resumo_vendas_home ||
@@ -206,7 +204,7 @@ export default function HomePage() {
             </button>
            )}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
@@ -214,7 +212,7 @@ export default function HomePage() {
                   key={action.id}
                   to={createPageUrl(action.page)}
                   className="bg-white dark:bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
-                  style={{ minHeight: '110px' }}
+                  style={{ minHeight: '100px' }}
                 >
                   <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
                     <Icon className="w-6 h-6 text-gray-700 dark:text-gray-300" strokeWidth={2} />
@@ -232,7 +230,9 @@ export default function HomePage() {
         {(() => {
           const temAvisos = kpis.estoqueAlerta > 0 || kpis.pedidosPendentes > 0;
           const podeVerCaixa = allowedActionIds.includes('pdv');
-          const podeVerEstoque = perfilDeAcesso?.permissoes?.estoque?.acesso || allowedActionIds.includes('estoque');
+          const podeVerEstoque =
+            allowedActionIds.includes('produtos') ||
+            allowedActionIds.includes('estoque');
           
           const temAvisoValido = (kpis.pedidosPendentes > 0 && podeVerCaixa) || (kpis.estoqueAlerta > 0 && podeVerEstoque);
           if (!temAvisos || !temAvisoValido) return null;
@@ -273,6 +273,7 @@ export default function HomePage() {
         })()}
 
         {/* Atalhos de lista adicionais — filtra por permissões */}
+        {allowedActionIds.includes('consumo_interno') && (
         <Link to="/ConsumoInterno" className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
           <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
             <ClipboardPenLine className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -283,9 +284,10 @@ export default function HomePage() {
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
         </Link>
+        )}
 
         {(() => {
-          const outrosAtalhos = ALL_QUICK_ACTIONS
+          const outrosAtalhos = quickActionsAtivos()
             .filter(a => allowedActionIds.includes(a.id) && !quickActionIds.includes(a.id))
             .slice(0, 3);
           

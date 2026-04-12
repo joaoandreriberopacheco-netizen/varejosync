@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { X, Search, Plus, Minus, Trash2, FileText, Printer, Package } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -11,7 +12,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
   const [formato, setFormato] = useState('80mm');
   const total = itens.reduce((acc, item) => acc + calcularPreco(item.produto) * item.qtd, 0);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const css80 = `
       @page { size: 80mm auto; margin: 4mm; }
       body { font-family: monospace; font-size: 10px; width: 72mm; }
@@ -95,8 +96,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
       <div class="footer">Orçamento gerado via VarejoSync · Válido por 7 dias</div>
     `;
 
-    const w = window.open('', '_blank');
-    w.document.write(`
+    const doc = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -106,10 +106,12 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
         </head>
         <body>${formato === '80mm' ? conteudo80 : conteudoA4}</body>
       </html>
-    `);
-    w.document.close();
-    w.focus();
-    w.print();
+    `;
+    try {
+      await openPrintWindowOrShareHtml(doc, `orcamento-tabela-${Date.now()}.html`, 'Orçamento');
+    } catch {
+      /* popup bloqueado no desktop */
+    }
   };
 
   return (

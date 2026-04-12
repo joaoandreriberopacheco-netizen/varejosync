@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Package } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
+import { getCachedUserSession } from '@/lib/userSessionCache';
+import { podeVisualizarCatalogoProdutos } from '@/lib/perfilPermissoes';
 
 export default function ProdutosAccessGuard({ children }) {
   const [acessoPermitido, setAcessoPermitido] = useState(null);
@@ -9,52 +11,45 @@ export default function ProdutosAccessGuard({ children }) {
   useEffect(() => {
     const checkAccess = async () => {
       try {
+        const cached = getCachedUserSession();
+        const userCached = cached?.user;
+        if (userCached && podeVisualizarCatalogoProdutos(userCached, cached?.perfilDeAcesso)) {
+          setAcessoPermitido(true);
+        }
+
         const user = await base44.auth.me();
         if (!user) {
           setAcessoPermitido(false);
           return;
         }
-        
-        // Admin BASE44 (não perfil customizado) sempre tem acesso
-        if (user.role === 'admin') {
-          setAcessoPermitido(true);
-          return;
+
+        let perfil = null;
+        if (user?.perfil_acesso_id) {
+          try {
+            const perfis = await base44.entities.PerfilDeAcesso.list();
+            perfil = perfis.find((p) => p.id === user.perfil_acesso_id) || null;
+          } catch (e) {
+            console.warn('Perfil de acesso:', e);
+          }
         }
 
-        // Para usuários regulares, verificar perfil de acesso customizado
-        if (user?.perfil_acesso_id) {
-          const perfis = await base44.entities.PerfilDeAcesso.list();
-          const perfil = perfis.find(p => p.id === user.perfil_acesso_id);
-          
-          // Perfil "Administrador" customizado tem acesso total
-          if (perfil?.nome?.toLowerCase().includes('administrador')) {
-            setAcessoPermitido(true);
-            return;
-          }
-          
-          // Verificar permissões específicas
-          const temAcesso = perfil?.permissoes?.estoque?.acesso === true || 
-                           perfil?.permissoes?.produtos?.acesso === true ||
-                           perfil?.acesso_geral === true;
-          setAcessoPermitido(temAcesso);
-        } else {
-          // Sem perfil vinculado = acesso padrão (permitir)
-          setAcessoPermitido(true);
-        }
+        setAcessoPermitido(podeVisualizarCatalogoProdutos(user, perfil));
       } catch (error) {
-        console.error("Erro ao validar acesso a Produtos:", error);
+        console.error('Erro ao validar acesso a Produtos:', error);
         setAcessoPermitido(false);
       }
     };
     checkAccess();
   }, []);
 
-  // Esperando validação
   if (acessoPermitido === null) {
-    return <div className="flex items-center justify-center min-h-screen"><div className="text-gray-500">Carregando...</div></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Carregando...</div>
+      </div>
+    );
   }
 
-  // Acesso negado
   if (!acessoPermitido) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 p-4">
@@ -66,8 +61,8 @@ export default function ProdutosAccessGuard({ children }) {
           <p className="text-gray-600 dark:text-gray-400 max-w-sm">
             Seu perfil de acesso não possui permissão para visualizar o catálogo de produtos.
           </p>
-          <a 
-            href={createPageUrl('Home')} 
+          <a
+            href={createPageUrl('Home')}
             className="inline-block mt-6 px-6 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             Voltar para Home
@@ -77,6 +72,5 @@ export default function ProdutosAccessGuard({ children }) {
     );
   }
 
-  // Acesso permitido
   return children;
 }

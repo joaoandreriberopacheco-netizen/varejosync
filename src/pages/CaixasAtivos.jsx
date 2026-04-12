@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket, RefreshCw } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -164,7 +165,7 @@ export default function CaixasAtivosPage() {
 
   const toggleDestinacao = (dest) => setDestinacoesExpandidas(prev => ({ ...prev, [dest]: !prev[dest] }));
 
-  const imprimirRelatorioConsumo = () => {
+  const imprimirRelatorioConsumo = async () => {
     const linhas = consumosPorDestinacao.map(([dest, data]) => {
       const itensAgrupados = {};
       consumosHoje
@@ -180,10 +181,11 @@ export default function CaixasAtivosPage() {
       return `<tr style="background:#f3f4f6"><td colspan="3" style="padding:6px 8px;font-weight:600">${dest} — R$ ${data.total.toLocaleString('pt-BR',{minimumFractionDigits:2})} (${data.registros} registro${data.registros>1?'s':''})</td></tr>${itensHtml}`;
     }).join('');
     const html = `<html><head><title>Consumo Interno — Hoje</title><style>body{font-family:sans-serif;font-size:13px;padding:16px}table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #e5e7eb}</style></head><body><h2 style="margin-bottom:8px">Consumo Interno — Hoje</h2><p style="margin-bottom:12px;color:#6b7280">Total: R$ ${totalConsumoHoje.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p><table><tbody>${linhas}</tbody></table></body></html>`;
-    const w = window.open('', '_blank');
-    w.document.write(html);
-    w.document.close();
-    w.print();
+    try {
+      await openPrintWindowOrShareHtml(html, `consumo-interno-${Date.now()}.html`, 'Consumo interno — hoje');
+    } catch {
+      /* popup bloqueado */
+    }
   };
 
   const formatValor = (valor) => {

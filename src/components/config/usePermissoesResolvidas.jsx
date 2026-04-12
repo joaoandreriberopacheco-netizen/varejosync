@@ -13,8 +13,12 @@
  *   etc.
  */
 
-import { MODULOS } from './PerfilFormTela';
-
+import {
+  resolverPermissoes,
+  perfilTemEscopoTotal,
+  usuarioLegadoSemMatrizPerfil,
+  perfilResolvidoParaUsuario,
+} from '@/lib/perfilPermissoes';
 import {
   LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
@@ -23,53 +27,57 @@ import {
   ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, TruckIcon, RefreshCcw, AlertCircle
 } from 'lucide-react';
 
-export function resolverPermissoes(perfilDeAcesso, overridePermissoes = {}) {
-  const base = perfilDeAcesso?.permissoes || {};
-  const resultado = JSON.parse(JSON.stringify(base));
-
-  Object.entries(overridePermissoes || {}).forEach(([chave, valor]) => {
-    const partes = chave.split('.');
-    if (partes.length === 2) {
-      const [modulo, permissao] = partes;
-      if (!resultado[modulo]) resultado[modulo] = {};
-      resultado[modulo][permissao] = valor;
-    } else if (partes.length === 3) {
-      const [modulo, permissao, subtipo] = partes;
-      if (!resultado[modulo]) resultado[modulo] = {};
-      if (!resultado[modulo][permissao]) resultado[modulo][permissao] = {};
-      resultado[modulo][permissao][subtipo] = valor;
-    }
-  });
-
-  return resultado;
-}
+export { resolverPermissoes };
 
 export function temPermissao(user, perfilDeAcesso, modulo, permissao, subtipo = null) {
   if (user?.role === 'admin') return true;
-  const permissoes = resolverPermissoes(perfilDeAcesso, user?.override_permissoes);
+  if (usuarioLegadoSemMatrizPerfil(user)) return true;
+  const perfil = perfilResolvidoParaUsuario(user, perfilDeAcesso);
+  if (user?.perfil_acesso_id && !perfil) return false;
+  if (perfilTemEscopoTotal(perfil)) return true;
+  const permissoes = resolverPermissoes(perfil, user?.override_permissoes);
   if (subtipo) {
     return permissoes?.[modulo]?.[permissao]?.[subtipo] === true;
   }
   return permissoes?.[modulo]?.[permissao] === true;
 }
 
+const MINIMAL_MENU_ITEMS = [
+  {
+    name: 'Início',
+    icon: LayoutDashboard,
+    page: 'Home',
+    permissaoCheck: () => true,
+  },
+];
+
 export function buildMenuItems(user, perfilDeAcesso) {
-  // Admins vêem tudo
   if (user?.role === 'admin') return ALL_MENU_ITEMS;
 
   const temPerfil = !!user?.perfil_acesso_id;
-  const temOverrides = user?.override_permissoes && Object.keys(user.override_permissoes).length > 0;
 
-  // Sem perfil E sem overrides = ve tudo (exceto adminOnly)
-  if (!temPerfil && !temOverrides) return ALL_MENU_ITEMS.filter(item => !item.adminOnly);
+  if (usuarioLegadoSemMatrizPerfil(user)) return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
 
-  // Tem perfil_acesso_id mas objeto ainda não carregou = aguarda
-  if (temPerfil && !perfilDeAcesso) return [];
+  const perfilEfetivo = perfilResolvidoParaUsuario(user, perfilDeAcesso);
+  if (temPerfil && !perfilEfetivo) return MINIMAL_MENU_ITEMS;
 
-  const permissoes = resolverPermissoes(perfilDeAcesso, user?.override_permissoes);
+  const permissoes = resolverPermissoes(perfilEfetivo, user?.override_permissoes);
 
-  // Perfil recém criado sem nenhuma permissão = mostra tudo
-  if (Object.keys(permissoes).length === 0) return ALL_MENU_ITEMS;
+  if (perfilTemEscopoTotal(perfilEfetivo)) {
+    return ALL_MENU_ITEMS.filter((item) => !item.adminOnly);
+  }
+
+  const algumaPermissao = Object.values(permissoes || {}).some((mod) => {
+    if (!mod || typeof mod !== 'object') return false;
+    const walk = (o) =>
+      Object.entries(o).some(([k, v]) => {
+        if (v === true) return true;
+        if (v && typeof v === 'object' && !Array.isArray(v)) return walk(v);
+        return false;
+      });
+    return walk(mod);
+  });
+  if (!algumaPermissao) return MINIMAL_MENU_ITEMS;
 
   return ALL_MENU_ITEMS
     .map(item => {
@@ -324,8 +332,8 @@ export const ALL_MENU_ITEMS = [
         icon: AlertCircle,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       }
-      ]
-      },
+    ]
+  },
   {
     name: 'Relatórios',
     icon: BookOpen,

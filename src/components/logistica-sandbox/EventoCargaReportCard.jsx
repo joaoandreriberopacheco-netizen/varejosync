@@ -1,18 +1,20 @@
 import React from 'react';
 import { Printer, Package2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
-function printReport(evento) {
+async function printReport(evento) {
   const fornecedores = (evento.resumo_fornecedores || []).map((fornecedor) => {
     const itens = (fornecedor.itens || []).map((item) => `<li>${item.produto_nome || 'Item'} — ${item.quantidade_embarcada || 0} ${item.unidade_medida || ''}</li>`).join('');
     return `<section style="margin-bottom:16px"><h3 style="margin:0 0 8px">${fornecedor.fornecedor_nome || 'Fornecedor'}</h3><ul style="margin:0;padding-left:18px">${itens}</ul></section>`;
   }).join('');
 
   const html = `<html><head><title>Relatório do Evento</title></head><body style="font-family:Inter,sans-serif;padding:24px"><h2>${evento.embarcacao_nome || 'Evento logístico'}</h2><p>${evento.codigo || ''}</p><p>Total de carga: ${(evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>${fornecedores || '<p>Sem embarques relacionados.</p>'}</body></html>`;
-  const win = window.open('', '_blank');
-  win.document.write(html);
-  win.document.close();
-  win.print();
+  try {
+    await openPrintWindowOrShareHtml(html, `evento-carga-${evento.codigo || Date.now()}.html`, evento.embarcacao_nome || 'Evento');
+  } catch {
+    /* popup bloqueado */
+  }
 }
 
 export default function EventoCargaReportCard({ evento }) {
@@ -28,7 +30,7 @@ export default function EventoCargaReportCard({ evento }) {
           <h3 className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100 font-glacial">{evento.embarcacao_nome}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">{evento.codigo || 'Sem código'}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => printReport(evento)} className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-700">
+        <Button variant="ghost" size="icon" onClick={() => void printReport(evento)} className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-700">
           <Printer className="w-4 h-4" />
         </Button>
       </div>

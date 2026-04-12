@@ -8,6 +8,7 @@ import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
 import ListaMovimentosDialog from './ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
@@ -114,10 +115,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
   const dinheiroNaGaveta = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0) - (caixaData.fiado || 0);
 
-  const imprimirRelatorio = () => {
-    const pw = window.open('', '_blank', 'width=800,height=900');
-    if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
-    
+  const imprimirRelatorio = async () => {
     const linhasVendas = (vendasFinalizadas || []).map(v => {
       const pagamentos = (v.pagamentos || []);
       const subLinhas = pagamentos.length > 1
@@ -143,7 +141,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor || 0).toFixed(2)}</span></div>`
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
 
-    pw.document.write(`<html><head><title>Relatório - ${caixaSelecionado.nome}</title><style>
+    const html = `<html><head><title>Relatório - ${caixaSelecionado.nome}</title><style>
       body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
       h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
       .row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
@@ -186,10 +184,14 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       ${linhasVendas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda registrada</p>'}
       <div class="dashed"></div>
       <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Relatório gerado em ${new Date().toLocaleString('pt-BR')} - Não é documento fiscal</p>
-    </body></html>`);
-    pw.document.close();
-    pw.focus();
-    setTimeout(() => { pw.print(); pw.close(); }, 300);
+    </body></html>`;
+    try {
+      await openPrintWindowOrShareHtml(html, `relatorio-caixa-${caixaSelecionado?.nome || 'caixa'}.html`, `Relatório ${caixaSelecionado?.nome || ''}`, {
+        windowFeatures: 'width=800,height=900',
+      });
+    } catch {
+      alert('Permita pop-ups para imprimir.');
+    }
   };
 
   if (loading) {

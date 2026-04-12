@@ -3,12 +3,13 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
 import { format } from 'date-fns';
+import { printOrShareElementAsPdf, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 
 export default function LiberacaoEntrega({ open, onClose, pedido }) {
   
-  // Impressão Automática
+  // Impressão automática só no desktop (mobile usa PDF/partilha)
   useEffect(() => {
-    if (open) {
+    if (open && !shouldUseMobileDocumentExport()) {
       setTimeout(() => window.print(), 500);
     }
   }, [open]);
@@ -109,7 +110,17 @@ export default function LiberacaoEntrega({ open, onClose, pedido }) {
           
           {/* Botões de Ação (Apenas na Tela) */}
           <div className="flex gap-2 my-4 no-print w-[300px] justify-end">
-            <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
+            <Button
+              onClick={() => {
+                void printOrShareElementAsPdf('area-liberacao', {
+                  formato: '80mm',
+                  fileBaseName: `liberacao-${pedido?.numero || 'pedido'}`,
+                  title: 'Liberação de entrega',
+                });
+              }}
+              size="sm"
+              className="h-8 bg-black text-white hover:bg-gray-800"
+            >
               <Printer className="w-4 h-4 mr-2" /> Imprimir
             </Button>
             <Button variant="outline" onClick={onClose} size="sm" className="h-8 border-black text-black">

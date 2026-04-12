@@ -4,7 +4,8 @@ import { Save, Download, Printer, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import FormularioPedidoImpresso from './FormularioPedidoImpresso';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
+import { openPrintWindowOrShareHtml, shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 
 export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empresa }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,8 +15,7 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
     const element = document.getElementById('formulario-impresso');
     if (!element) return;
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    const doc = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -30,9 +30,12 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
           <pre>${element.textContent}</pre>
         </body>
       </html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 250);
+    `;
+    try {
+      await openPrintWindowOrShareHtml(doc, `pedido-${pedido.numero || 'novo'}.html`, `Pedido ${pedido.numero || ''}`);
+    } catch {
+      /* popup bloqueado */
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -56,7 +59,13 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    pdf.save(`Pedido-${pedido.numero || 'novo'}.pdf`);
+    const name = `Pedido-${pedido.numero || 'novo'}.pdf`;
+    const blob = pdf.output('blob');
+    if (shouldUseMobileDocumentExport()) {
+      await shareOrDownloadBlob(blob, name, 'application/pdf', `Pedido ${pedido.numero || ''}`);
+    } else {
+      pdf.save(name);
+    }
   };
 
   return (

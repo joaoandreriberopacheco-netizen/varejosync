@@ -177,7 +177,7 @@ export default function Layout({ children, currentPageName }) {
   const menuItems = React.useMemo(() => {
    if (!currentUser) return [];
    return buildMenuItems(currentUser, perfilDeAcesso);
-  }, [currentUser?.id, currentUser?.role, perfilDeAcesso?.id]); // deps apenas de IDs mutáveis
+  }, [currentUser, perfilDeAcesso]);
 
   const allSearchableItems = React.useMemo(() => {
    const items = [];

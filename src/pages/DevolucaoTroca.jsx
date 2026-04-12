@@ -7,6 +7,7 @@ import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X, Uploa
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 // Step 1: Buscar pedido
 function BuscarPedidoStep({ onFound }) {
@@ -279,9 +280,8 @@ function SelecionarItensStep({ pedido, onConfirm }) {
 function ComprovanteStep({ resultado, onClose }) {
   const formatValor = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-  const imprimir = () => {
-    const w = window.open('', '_blank', 'width=400,height=650');
-    w.document.write(`<html><head><title>Comprovante de Devolução</title>
+  const imprimir = async () => {
+    const html = `<html><head><title>Comprovante de Devolução</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
       .center{text-align:center}.dashed{border-top:2px dashed #aaa;margin:12px 0}.big{font-size:20px;font-weight:bold}.row{display:flex;justify-content:space-between;margin:6px 0}
       .alert{background:#f0fdf4;border:1px solid #86efac;padding:10px;border-radius:6px;margin:8px 0;text-align:center}
@@ -306,9 +306,14 @@ function ComprovanteStep({ resultado, onClose }) {
       <div class="dashed"></div>
       ${resultado.motivo ? `<p><small>Motivo: ${resultado.motivo}</small></p>` : ''}
       <div class="center"><small>Não é documento fiscal</small></div>
-      </body></html>`);
-    w.document.close(); w.focus();
-    setTimeout(() => { w.print(); w.close(); }, 300);
+      </body></html>`;
+    try {
+      await openPrintWindowOrShareHtml(html, `comprovante-devolucao-${resultado.numero}.html`, 'Comprovante de devolução', {
+        windowFeatures: 'width=400,height=650',
+      });
+    } catch {
+      /* popup bloqueado */
+    }
   };
 
   return (

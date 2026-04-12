@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, Target, BrainCircuit, AlertTriangle, Building2, Mail, Info, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DecomposicaoIEP from '@/components/relatorios/DecomposicaoIEP';
+import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 
 const RelatorioPerformance = ({ dados, onClose }) => {
   // Mock de dados com contexto de negócio (categoria, lucro 90d, médias categoria)
@@ -76,7 +77,12 @@ const RelatorioPerformance = ({ dados, onClose }) => {
   };
 
   const handleImprimir = () => {
-    window.print();
+    void printOrShareElementAsPdf('dossie-performance-print', {
+      formato: 'a4',
+      fileBaseName: `dossie-${String(nome || 'produto').replace(/[^\w.-]+/g, '-')}`,
+      title: `Dossiê ${nome}`,
+      onDesktopPrint: () => window.print(),
+    });
   };
 
   const handleWhatsApp = () => {
@@ -111,7 +117,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
 
         {/* Corpo Scrollável */}
         <div className="flex-1 overflow-y-auto print:overflow-visible">
-          <div className="p-6 sm:p-8 print:p-0 print:min-h-screen print:flex print:flex-col print:justify-between">
+          <div id="dossie-performance-print" className="p-6 sm:p-8 print:p-0 print:min-h-screen print:flex print:flex-col print:justify-between">
             
             {/* Cabeçalho do Relatório */}
             <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6 print:pb-4 print:mb-4">

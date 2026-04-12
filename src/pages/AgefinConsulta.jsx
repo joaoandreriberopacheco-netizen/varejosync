@@ -6,6 +6,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, D
 import { Input } from '@/components/ui/input';
 import AgefinConsultaDrawer from '@/components/agefin/AgefinConsultaDrawer';
 import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -191,7 +192,7 @@ export default function AgefinConsulta() {
     };
   }, [filteredData]);
 
-  const imprimirRelatorio = () => {
+  const imprimirRelatorio = async () => {
     const linhas = filteredData.map((conta) => `<tr>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.descricao}</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.terceiro_nome || '-'}</td>
@@ -200,10 +201,11 @@ export default function AgefinConsulta() {
       <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${formatCurrency(conta.valor)}</td>
     </tr>`).join('');
     const html = `<html><head><title>Agefin ${formatMonth(currentMonth)}</title></head><body style="font-family:Inter,sans-serif;padding:24px"><h2>Agefin - ${formatMonth(currentMonth)}</h2><p>Total do período: ${formatCurrency(kpis.totalValue)}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Conta</th><th align="left">Favorecido</th><th align="left">Vencimento</th><th align="left">Status</th><th align="right">Valor</th></tr></thead><tbody>${linhas}</tbody></table></body></html>`;
-    const w = window.open('', '_blank');
-    w.document.write(html);
-    w.document.close();
-    w.print();
+    try {
+      await openPrintWindowOrShareHtml(html, `agefin-${currentMonth.getTime()}.html`, `Agefin ${formatMonth(currentMonth)}`);
+    } catch {
+      /* popup bloqueado no desktop */
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Printer, Ticket } from 'lucide-react';
+import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 
 export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValor }) {
   return (
@@ -38,10 +39,9 @@ export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValo
               Fechar
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 const { codigo, saldo } = saldoResidualVale;
-                const w = window.open('', '_blank', 'width=380,height=520');
-                w.document.write(`<html><head><title>Saldo Vale Troca</title>
+                const html = `<html><head><title>Saldo Vale Troca</title>
                   <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:300px;margin:0 auto;text-align:center}
                   .dashed{border-top:2px dashed #aaa;margin:12px 0}.big{font-size:26px;font-weight:bold}.code{font-size:22px;font-weight:bold;letter-spacing:2px}
                   .small{font-size:11px;color:#6b7280}
@@ -57,9 +57,12 @@ export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValo
                   <p class="small">Apresente este código na próxima compra.<br/>O código permanece válido até o saldo zerar.</p>
                   <div class="dashed"></div>
                   <p class="small">Não é documento fiscal</p>
-                  </body></html>`);
-                w.document.close(); w.focus();
-                setTimeout(() => { w.print(); w.close(); }, 300);
+                  </body></html>`;
+                try {
+                  await openPrintWindowOrShareHtml(html, `vale-${codigo}.html`, 'Saldo vale troca', { windowFeatures: 'width=380,height=520' });
+                } catch {
+                  /* popup bloqueado */
+                }
               }}
               className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-medium text-sm flex items-center justify-center gap-2">
               <Printer className="w-4 h-4" /> Imprimir

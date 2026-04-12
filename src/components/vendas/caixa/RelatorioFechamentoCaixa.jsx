@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { printOrShareElementAsPdf, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import SafeActionButton from '@/components/ui/safe-action-button';
@@ -43,7 +44,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
         </div>
 
         {/* Conteúdo imprimível */}
-        <div className="p-6 space-y-6" style={{ fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace" }}>
+        <div id="relatorio-fechamento-caixa-print" className="p-6 space-y-6" style={{ fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace" }}>
           {/* Cabeçalho */}
           <div className="text-center border-b-2 border-gray-900 dark:border-gray-100 pb-4">
             <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">FECHAMENTO DE CAIXA</div>
@@ -153,7 +154,13 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
         <div className="no-print flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="outline"
-            onClick={() => window.print()}
+            onClick={() => {
+              void printOrShareElementAsPdf('relatorio-fechamento-caixa-print', {
+                formato: '80mm',
+                fileBaseName: `fechamento-${turno?.numero || 'caixa'}`,
+                title: 'Relatório de fechamento',
+              });
+            }}
             className="flex-1 gap-2"
           >
             <Printer className="w-4 h-4" /> Imprimir

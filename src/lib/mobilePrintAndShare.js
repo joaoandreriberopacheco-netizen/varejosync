@@ -58,6 +58,8 @@ export async function renderElementToPdfBlob(element, { formato = '80mm' } = {})
     useCORS: true,
     backgroundColor: '#ffffff',
     logging: false,
+    ignoreElements: (node) =>
+      typeof node?.classList?.contains === 'function' && node.classList.contains('no-pdf-capture'),
   });
   const imgData = canvas.toDataURL('image/png');
   let pdf;
@@ -98,4 +100,76 @@ export async function exportCupomToPdfAndShareOrDownload(elementId, {
 export async function shareOrDownloadHtmlDocument(htmlString, filename, title) {
   const blob = new Blob([htmlString], { type: 'text/html;charset=utf-8' });
   return shareOrDownloadBlob(blob, filename, 'text/html', title || filename);
+}
+
+/**
+ * Desktop: abre HTML numa janela e imprime (opcionalmente fecha).
+ * Mobile: partilha ou descarrega ficheiro .html (sem popups).
+ *
+ * @param {string} htmlString documento completo ou fragmento (usa-se como corpo se não tiver <html)
+ * @param {string} filename ex.: `relatorio-${Date.now()}.html`
+ * @param {string} [title]
+ * @param {{ windowFeatures?: string, printDelayMs?: number, closeAfterPrint?: boolean }} [opts]
+ */
+export async function openPrintWindowOrShareHtml(htmlString, filename, title, opts = {}) {
+  const {
+    windowFeatures = '',
+    printDelayMs = 300,
+    closeAfterPrint = true,
+  } = opts;
+
+  const doc =
+    /<\s*html[\s>]/i.test(htmlString)
+      ? htmlString
+      : `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>${(title || filename || '').replace(/</g, '')}</title></head><body>${htmlString}</body></html>`;
+
+  if (shouldUseMobileDocumentExport()) {
+    return shareOrDownloadHtmlDocument(doc, filename.endsWith('.html') ? filename : `${filename}.html`, title);
+  }
+
+  const w = window.open('', '_blank', windowFeatures);
+  if (!w) {
+    const err = new Error('popup-blocked');
+    err.name = 'PopupBlocked';
+    throw err;
+  }
+  w.document.open();
+  w.document.write(doc);
+  w.document.close();
+  w.focus();
+  await new Promise((r) => setTimeout(r, printDelayMs));
+  try {
+    w.print();
+  } catch {
+    /* empty */
+  }
+  if (closeAfterPrint) {
+    try {
+      w.close();
+    } catch {
+      /* empty */
+    }
+  }
+  return 'printed';
+}
+
+/**
+ * Mobile: PDF a partir de um elemento (cupom, modal, etc.).
+ * Desktop: chama `onDesktopPrint()` (por defeito `window.print()`).
+ */
+export async function printOrShareElementAsPdf(elementId, {
+  formato = 'a4',
+  fileBaseName = 'documento',
+  title,
+  onDesktopPrint,
+} = {}) {
+  if (shouldUseMobileDocumentExport()) {
+    return exportCupomToPdfAndShareOrDownload(elementId, { formato, fileBaseName, title });
+  }
+  if (typeof onDesktopPrint === 'function') {
+    onDesktopPrint();
+  } else {
+    window.print();
+  }
+  return 'printed';
 }
