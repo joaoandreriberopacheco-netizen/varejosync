@@ -5,8 +5,14 @@ import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText, Ch
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
+import { TAG_LF_BOLETO_PDF, marcarLancamentosComoImportadosPorBoletoPdf } from '@/lib/agefinLancamentosRecorrencia';
 
-export default function AgefinImportador({ onSuccess, contaPrevistaId = null, modoAtualizacao = false }) {
+export default function AgefinImportador({
+  onSuccess,
+  contaPrevistaId = null,
+  lancamentoFinanceiroId = null,
+  modoAtualizacao = false,
+}) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
@@ -211,6 +217,16 @@ Campos a interpretar do documento:
       const contaFinanceira = contasFinanceiras.find((item) => item.id === contaFinanceiraId);
       let lancamentoCriado = null;
 
+      if (modoAtualizacao) {
+        await marcarLancamentosComoImportadosPorBoletoPdf(base44, {
+          contaPrevistaId: contaCriada?.id,
+          lancamentoFinanceiroId,
+          grupoLancamentoId: recorrenteFinal?.id,
+          dataVencimento: extractedData.data_vencimento,
+          valor: extractedData.valor,
+        });
+      }
+
       if (!modoAtualizacao) {
         const lancamentoPayload = {
           tipo: 'Despesa',
@@ -232,6 +248,7 @@ Campos a interpretar do documento:
             'conta_pagar',
             ...(payload.natureza === 'Recorrente' ? ['recorrente'] : []),
             ...(payload.natureza === 'Parcelado' ? ['parcelado'] : []),
+            ...(file?.url ? [TAG_LF_BOLETO_PDF] : []),
           ],
           is_recorrente: payload.natureza === 'Recorrente' || payload.natureza === 'Parcelado',
           frequencia_recorrencia: payload.natureza === 'Recorrente' ? selectedRecorrencia : payload.natureza === 'Parcelado' ? 'Parcelado' : undefined,

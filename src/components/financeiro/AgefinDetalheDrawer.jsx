@@ -127,7 +127,8 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
           <div className="max-h-[85vh] overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-950">
             <AgefinImportador
               modoAtualizacao
-              contaPrevistaId={contaMes?.id}
+              contaPrevistaId={contaMes?.referencia_id || undefined}
+              lancamentoFinanceiroId={contaMes?.id}
               onSuccess={() => {
                 setShowRefreshImport(false);
                 onClose?.();

@@ -48,6 +48,16 @@ export default function ItinerarioFluvial() {
     initialData: []
   });
 
+  useEffect(() => {
+    const unsub = base44.entities.LancamentoFinanceiro.subscribe((ev) => {
+      const d = ev.data || {};
+      if (d.referencia_tipo === 'EventosLogisticos' || ev.type === 'delete') {
+        queryClient.invalidateQueries({ queryKey: ['lancamentos-financeiros-fretes'] });
+      }
+    });
+    return typeof unsub === 'function' ? unsub : undefined;
+  }, [queryClient]);
+
   const eventosBase = useMemo(() => buildFluvialEvents({
     eventosLogisticos,
     embarques,

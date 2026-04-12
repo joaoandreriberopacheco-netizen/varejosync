@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -30,6 +30,7 @@ export default function ItinerarioFluvialMobile() {
   const [freteFilter, setFreteFilter] = useState('todos');
   const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
   const todayRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
     queryKey: ['evento-logistico'],
@@ -60,6 +61,16 @@ export default function ItinerarioFluvialMobile() {
     queryFn: () => base44.entities.LancamentoFinanceiro.filter({ referencia_tipo: 'EventosLogisticos' }, '-created_date', 500),
     initialData: []
   });
+
+  useEffect(() => {
+    const unsub = base44.entities.LancamentoFinanceiro.subscribe((ev) => {
+      const d = ev.data || {};
+      if (d.referencia_tipo === 'EventosLogisticos' || ev.type === 'delete') {
+        queryClient.invalidateQueries({ queryKey: ['lancamentos-financeiros-fretes'] });
+      }
+    });
+    return typeof unsub === 'function' ? unsub : undefined;
+  }, [queryClient]);
 
   const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, lancamentosFinanceiros }), [eventosLogisticos, embarques, lancamentosFinanceiros]);
 

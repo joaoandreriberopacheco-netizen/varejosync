@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DollarSign, LinkIcon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
@@ -13,6 +13,10 @@ function getContaStatusStyle(temConta, status, estaAtrasada) {
 export default function FreteDetailPanel({ evento, embarques, onBack }) {
   const [contaAtualizada, setContaAtualizada] = useState(evento.conta_frete);
   const [temConta, setTemConta] = useState(evento.tem_conta_frete);
+  const eventoIdRef = useRef(evento.id);
+  const contaIdRef = useRef(contaAtualizada?.id || null);
+  eventoIdRef.current = evento.id;
+  contaIdRef.current = contaAtualizada?.id || null;
 
   const calcularValorTotalEmbarques = () => {
     if (!embarques || embarques.length === 0) return 0;
@@ -24,38 +28,42 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
     }, 0);
   };
 
-  // Fetch conta vinculada ao evento
-  useEffect(() => {
-    const fetchContaVinculada = async () => {
-      const contas = await base44.entities.LancamentoFinanceiro.filter({
-        referencia_id: evento.id,
-        referencia_tipo: 'EventosLogisticos'
-      });
-      if (contas.length > 0) {
-        setContaAtualizada(contas[0]);
-        setTemConta(true);
-      }
-    };
-    fetchContaVinculada();
-  }, [evento.id]);
+  const fetchContaVinculada = useCallback(async () => {
+    const id = eventoIdRef.current;
+    const contas = await base44.entities.LancamentoFinanceiro.filter({
+      referencia_id: id,
+      referencia_tipo: 'EventosLogisticos',
+    });
+    const ativa = (contas || []).find((c) => c.status !== 'Cancelado') || null;
+    if (ativa) {
+      setContaAtualizada(ativa);
+      setTemConta(true);
+    } else {
+      setContaAtualizada(null);
+      setTemConta(false);
+    }
+  }, []);
 
-  // Subscribe para mudanças em tempo real
   useEffect(() => {
-    const unsubscribe = base44.entities.LancamentoFinanceiro.subscribe((event) => {
-      // Se é create/update de uma conta vinculada ao evento
-      if (event.data?.referencia_id === evento.id && event.data?.referencia_tipo === 'EventosLogisticos') {
-        if (event.type === 'delete' || event.data?.status === 'Cancelado') {
-          setContaAtualizada(null);
-          setTemConta(false);
-        } else if (event.type === 'create' || event.type === 'update') {
-          setContaAtualizada(event.data);
-          setTemConta(true);
-        }
+    fetchContaVinculada();
+  }, [evento.id, fetchContaVinculada]);
+
+  useEffect(() => {
+    const unsub = base44.entities.LancamentoFinanceiro.subscribe((ev) => {
+      const d = ev.data || {};
+      const mesmoEvento =
+        d.referencia_id === eventoIdRef.current && d.referencia_tipo === 'EventosLogisticos';
+      if (mesmoEvento) {
+        fetchContaVinculada();
+        return;
+      }
+      if (ev.type === 'delete') {
+        const delId = ev.id || d.id;
+        if (!delId || delId === contaIdRef.current) fetchContaVinculada();
       }
     });
-
-    return unsubscribe;
-  }, [evento.id]);
+    return typeof unsub === 'function' ? unsub : undefined;
+  }, [fetchContaVinculada]);
 
   const handleCreateContaFrete = () => {
     const eta = evento.data_previsao_chegada ? ` ETA ${new Date(evento.data_previsao_chegada).toLocaleDateString('pt-BR')}` : '';
@@ -75,6 +83,7 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
     if (!contaAtualizada?.id) return;
     try {
       await base44.entities.LancamentoFinanceiro.update(contaAtualizada.id, { status: 'Cancelado' });
+      await fetchContaVinculada();
     } catch (error) {
       console.error('Erro ao cancelar conta:', error);
     }
@@ -93,7 +102,6 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
         ← Voltar
       </button>
 
-      {/* Cabeçalho com Status */}
       <div className="rounded-3xl bg-white dark:bg-gray-800 p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <div>
@@ -111,7 +119,6 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
         <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">{label}</div>
       </div>
 
-      {/* Informações da Conta ou CTA para criar */}
       {temConta && contaAtualizada ? (
         <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-2 text-xs">
           <div className="flex justify-between">
@@ -147,10 +154,8 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
           <span>Criar Conta a Pagar</span>
           <LinkIcon className="w-4 h-4" />
         </button>
-      )
-      }
+      )}
 
-      {/* Valor Total do Frete */}
       <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -163,7 +168,6 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
         </div>
       </div>
 
-      {/* Resumo de Embarques */}
       <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-2">
         <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">Embarques vinculados</p>
         <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
@@ -187,16 +191,11 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
               {calcularValorTotalEmbarques().toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
-          </div>
-          </div>
+        </div>
+      </div>
 
-      {/* Seção de Anexos */}
       {contaAtualizada?.id && (
-        <AnexosPanel
-          referencia_id={contaAtualizada.id}
-          referencia_tipo="LancamentoFinanceiro"
-          titulo="Documentos"
-        />
+        <AnexosPanel referenciaId={contaAtualizada.id} referenciaTipo="LancamentoFinanceiro" />
       )}
       {!contaAtualizada?.id && (
         <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 text-center text-xs text-gray-500 dark:text-gray-400">
