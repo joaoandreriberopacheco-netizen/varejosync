@@ -6,6 +6,7 @@ import { formatCurrency } from './quickBudgetUtils';
 
 export default function QuickBudgetFlowItemEditor({
   selectedProduct,
+  precoReferenciaTabela = 0,
   stage,
   quantity,
   price,
@@ -53,7 +54,10 @@ export default function QuickBudgetFlowItemEditor({
             {isFreePrice && <span className="text-emerald-600 dark:text-emerald-400">Preço livre</span>}
           </div>
           <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
-            {formatCurrency(selectedProduct.preco_venda_padrao)}
+            {formatCurrency(precoReferenciaTabela)}
+          </p>
+          <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+            Preço da tabela (piso de venda)
           </p>
         </div>
       </div>
@@ -81,7 +85,7 @@ export default function QuickBudgetFlowItemEditor({
               ref={priceInputRef}
               type="number"
               inputMode="decimal"
-              min="0"
+              min={precoReferenciaTabela}
               step="0.01"
               value={price}
               onChange={(e) => onPriceChange(e.target.value)}

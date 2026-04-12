@@ -1,3 +1,5 @@
+import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
+
 export function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -16,38 +18,40 @@ export function getProductSearchText(produto) {
   ].filter(Boolean).join(' ').toLowerCase();
 }
 
-export function getMinimumPrice(produto) {
-  return Number(produto?.preco_custo_calculado || 0);
+/** Piso e referência: preço de venda da tabela (não custo). */
+export function getMinimumPrice(produto, tabelaPreco) {
+  return calcularPrecoVendaTabela(produto, tabelaPreco);
 }
 
-export function getFullPrice(produto) {
-  return Number(produto?.preco_venda_padrao || 0);
+/** Preço de tabela aplicado ao produto (mesmo que piso comercial). */
+export function getFullPrice(produto, tabelaPreco) {
+  return calcularPrecoVendaTabela(produto, tabelaPreco);
 }
 
-export function buildQuickBudgetItem(produto) {
-  const precoCheio = getFullPrice(produto);
-  const precoMinimo = getMinimumPrice(produto);
+export function buildQuickBudgetItem(produto, tabelaPreco) {
+  const precoTabela = calcularPrecoVendaTabela(produto, tabelaPreco);
   const quantidade = 1;
   return {
     produto_id: produto.id,
     produto_nome: produto.nome,
     codigo_interno: produto.codigo_interno || '',
     estoque_atual: Number(produto.estoque_atual || 0),
-    preco_cheio: precoCheio,
-    preco_minimo: precoMinimo,
-    preco_unitario: precoCheio,
+    preco_cheio: precoTabela,
+    preco_minimo: precoTabela,
+    preco_unitario: precoTabela,
     preco_livre: !!produto.preco_livre,
     desconto: 0,
     quantidade,
-    total: precoCheio * quantidade,
+    total: precoTabela * quantidade,
   };
 }
 
 export function recalculateItem(item) {
   const quantidade = Math.max(Number(item.quantidade || 0), 1);
   const desconto = Math.max(Number(item.desconto || 0), 0);
+  const precoMin = Number(item.preco_minimo || 0);
   const precoBase = Number(item.preco_unitario || 0);
-  const preco = item.preco_livre ? precoBase : Math.max(precoBase, Number(item.preco_minimo || 0));
+  const preco = Math.max(precoBase, precoMin);
   const subtotal = quantidade * preco;
   return {
     ...item,

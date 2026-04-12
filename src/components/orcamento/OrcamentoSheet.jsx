@@ -15,7 +15,8 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
   const inputRef = useRef(null);
   const precoRef = useRef(null);
   const precoLivre = produto?.preco_livre || false;
-  const custoCalculado = produto?.preco_custo_calculado || 0;
+  /** `preco` já é o valor da tabela (calcularPreco) — piso de venda, não custo. */
+  const precoMinimoVenda = preco;
 
   useEffect(() => {
     // Pequeno delay para garantir que o bottom-sheet está visível antes do focus
@@ -32,7 +33,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
 
   const handleConfirm = () => {
     if (qtdNum <= 0) return;
-    if (precoLivre && precoFinal < custoCalculado) return;
+    if (precoLivre && precoFinal < precoMinimoVenda) return;
     onConfirm(qtdNum, precoLivre ? precoFinal : undefined);
   };
 
@@ -109,8 +110,8 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
                   className="w-full pl-9 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-sm text-right border border-amber-200 dark:border-amber-800 focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                 />
               </div>
-              {parseFloat(precoEditado) < custoCalculado && custoCalculado > 0 && (
-                <p className="text-[11px] text-red-500 mt-1">Mínimo: R$ {fmtR(custoCalculado)} (custo)</p>
+              {precoLivre && parseFloat(precoEditado) < precoMinimoVenda && precoMinimoVenda > 0 && (
+                <p className="text-[11px] text-red-500 mt-1">Mínimo: R$ {fmtR(precoMinimoVenda)} (preço da tabela)</p>
               )}
             </div>
           )}
@@ -543,7 +544,13 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
     setItens(prev => {
       if (qtd <= 0) return prev.filter(i => i.id !== produto.id);
       const existe = prev.find(i => i.id === produto.id);
-      if (existe) return prev.map(i => i.id === produto.id ? { ...i, qtd, preco_unit: preco } : i);
+      if (existe) {
+        return prev.map(i =>
+          i.id === produto.id
+            ? { ...i, qtd, preco_unit: preco ?? i.preco_unit, preco_referencia_tabela: i.preco_referencia_tabela ?? preco }
+            : i
+        );
+      }
       return [...prev, {
         id: produto.id,
         nome: produto.nome,
@@ -551,7 +558,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         qtd,
         unidade: produto.unidade_principal || 'UN',
         preco_livre: produto.preco_livre || false,
-        custo_calculado: produto.preco_custo_calculado || 0
+        preco_referencia_tabela: preco,
       }];
     });
   }, []);
@@ -559,10 +566,11 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const handleUpdatePreco = useCallback((id, novoPreco) => {
     setItens(prev => prev.map(i => {
       if (i.id !== id) return i;
-      const preco = Math.max(novoPreco, i.custo_calculado || 0);
+      const piso = i.preco_referencia_tabela ?? calcularPreco(produtos.find((p) => p.id === id) || {});
+      const preco = Math.max(Number(novoPreco) || 0, piso || 0);
       return { ...i, preco_unit: preco };
     }));
-  }, []);
+  }, [calcularPreco, produtos]);
 
   const handleRemove = useCallback((id) => setItens(prev => prev.filter(i => i.id !== id)), []);
 

@@ -13,10 +13,6 @@ function resolvePrice(product, tableFactor) {
   return (product?.preco_venda_padrao || 0) * (tableFactor || 1);
 }
 
-function resolveMinPrice(product) {
-  return product?.preco_custo_calculado || 0;
-}
-
 function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove }) {
   const subtotal = item.price * item.quantity;
   const total = Math.max(subtotal - item.discount, 0);
@@ -28,8 +24,10 @@ function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove
           <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <span>Estoque {fmtNumber(item.stock)}</span>
-            <span>Cheio {fmtCurrency(item.price)}</span>
-            <span className="line-through">Limite {fmtCurrency(item.minPrice)}</span>
+            <span>Unit. {fmtCurrency(item.price)}</span>
+            {item.freePrice && (
+              <span className="text-amber-600 dark:text-amber-300">Piso tabela {fmtCurrency(item.minPrice)}</span>
+            )}
           </div>
         </div>
         <button onClick={() => onRemove(item.id)} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200">
@@ -153,7 +151,11 @@ function BudgetContent({ onClose, isMobile }) {
   const handleAdd = () => {
     if (!selectedProduct) return;
     const quantity = Math.max(Number(selectedQuantity) || 1, 1);
-    const price = Math.max(Number(selectedPrice) || 0, selectedProduct.preco_livre ? 0 : resolveMinPrice(selectedProduct));
+    const precoTabela = resolvePrice(selectedProduct, priceTable?.fator_ajuste || 1);
+    const parsed = Number(selectedPrice) || 0;
+    const price = selectedProduct.preco_livre
+      ? Math.max(parsed, precoTabela)
+      : precoTabela;
     const existing = items.find((item) => item.id === selectedProduct.id);
     if (existing) {
       setItems((current) => current.map((item) => item.id === selectedProduct.id ? { ...item, quantity: item.quantity + quantity, price } : item));
@@ -164,7 +166,7 @@ function BudgetContent({ onClose, isMobile }) {
         stock: selectedProduct.estoque_atual || 0,
         quantity,
         price,
-        minPrice: resolveMinPrice(selectedProduct),
+        minPrice: precoTabela,
         discount: 0,
         freePrice: !!selectedProduct.preco_livre,
       }]);
@@ -185,8 +187,12 @@ function BudgetContent({ onClose, isMobile }) {
   };
 
   const handlePriceChange = (id, value) => {
-    const price = Math.max(Number(value) || 0, 0);
-    setItems((current) => current.map((item) => item.id === id ? { ...item, price } : item));
+    const num = Number(value) || 0;
+    setItems((current) => current.map((item) => {
+      if (item.id !== id) return item;
+      const price = item.freePrice ? Math.max(num, item.minPrice) : item.price;
+      return { ...item, price };
+    }));
   };
 
   const handleRemove = (id) => setItems((current) => current.filter((item) => item.id !== id));

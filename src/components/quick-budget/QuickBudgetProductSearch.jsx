@@ -2,8 +2,9 @@ import React, { useMemo } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, matchesProduct } from './quickBudgetUtils';
+import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
 
-export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, onAddProduct, onSubmitFirstResult }) {
+export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, tabelaPreco, onAddProduct, onSubmitFirstResult }) {
   const resultados = useMemo(() => {
     const ordenados = [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
     if (!query?.trim()) return [];
@@ -53,8 +54,10 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(produto.preco_venda_padrao)}</p>
-                  <p className="text-xs text-gray-400">mín. {formatCurrency(produto.preco_custo_calculado)}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {formatCurrency(calcularPrecoVendaTabela(produto, tabelaPreco))}
+                  </p>
+                  <p className="text-xs text-gray-400">preço tabela</p>
                 </div>
               </div>
             </button>

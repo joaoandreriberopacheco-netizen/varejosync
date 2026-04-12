@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
 import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
+import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -172,10 +173,10 @@ export default function TabelaPrecosConsulta() {
     return lista;
   }, [produtos, searchTerm, ordenarAlfabetico]);
 
-  const calcularPreco = useCallback((produto) => {
-    if (!tabelaSelecionada) return produto.preco_venda_padrao || 0;
-    return (produto.preco_venda_padrao || 0) * (tabelaSelecionada.fator_ajuste || 1);
-  }, [tabelaSelecionada]);
+  const calcularPreco = useCallback(
+    (produto) => calcularPrecoVendaTabela(produto, tabelaSelecionada),
+    [tabelaSelecionada]
+  );
 
   // ── Tree engine ──────────────────────────────────────────────────────────────
   const tree = useTreeGrid(produtosFiltrados);

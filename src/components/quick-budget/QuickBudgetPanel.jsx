@@ -7,9 +7,11 @@ import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
 import { buildQuickBudgetItem, getBudgetSummary, getFullPrice, recalculateItem } from './quickBudgetUtils';
+import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
 
 export default function QuickBudgetPanel({ open, onOpenChange }) {
   const [produtos, setProdutos] = useState([]);
+  const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
@@ -32,7 +34,21 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   useEffect(() => {
     if (!open || produtos.length > 0) return;
-    base44.entities.Produto.filter({ ativo: true }).then((data) => setProdutos(data || []));
+    (async () => {
+      const [prods, tabelas, me] = await Promise.all([
+        base44.entities.Produto.filter({ ativo: true }),
+        base44.entities.TabelaPreco.filter({ ativo: true }).catch(() => []),
+        base44.auth.me().catch(() => null),
+      ]);
+      setProdutos(prods || []);
+      const list = tabelas || [];
+      const t =
+        list.find((x) => x.id === me?.tabela_preco_id) ||
+        list.find((x) => x.is_default) ||
+        list[0] ||
+        null;
+      setTabelaSelecionada(t);
+    })();
   }, [open, produtos.length]);
 
   const summary = useMemo(() => getBudgetSummary(items), [items]);
@@ -49,7 +65,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     setSelectedProduct(produto);
     setFlowStage('quantity');
     setQuantityDraft('1');
-    setPriceDraft(String(getFullPrice(produto)));
+    setPriceDraft(String(getFullPrice(produto, tabelaSelecionada)));
     setTimeout(() => quantityInputRef.current?.focus(), 50);
   };
 
@@ -71,11 +87,16 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   const handleSaveItem = () => {
     if (!selectedProduct) return;
-    const draft = buildQuickBudgetItem(selectedProduct);
+    const draft = buildQuickBudgetItem(selectedProduct, tabelaSelecionada);
+    const piso = calcularPrecoVendaTabela(selectedProduct, tabelaSelecionada);
+    let precoUnitario = draft.preco_unitario;
+    if (selectedProduct.preco_livre) {
+      precoUnitario = String(Math.max(Number(priceDraft) || 0, piso));
+    }
     const nextItem = recalculateItem({
       ...draft,
       quantidade: quantityDraft,
-      preco_unitario: selectedProduct.preco_livre ? priceDraft : draft.preco_unitario,
+      preco_unitario: selectedProduct.preco_livre ? precoUnitario : draft.preco_unitario,
     });
 
     setItems((prev) => {
@@ -208,6 +229,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
           query={query}
           onQueryChange={setQuery}
           produtos={produtos}
+          tabelaPreco={tabelaSelecionada}
           onAddProduct={handleSelectProduct}
           onSubmitFirstResult={handleSelectProduct}
         />
@@ -215,6 +237,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         {selectedProduct ? (
           <QuickBudgetFlowItemEditor
             selectedProduct={selectedProduct}
+            precoReferenciaTabela={calcularPrecoVendaTabela(selectedProduct, tabelaSelecionada)}
             stage={flowStage}
             quantity={quantityDraft}
             price={priceDraft}
