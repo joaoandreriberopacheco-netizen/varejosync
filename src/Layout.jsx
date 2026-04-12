@@ -85,7 +85,7 @@ export default function Layout({ children, currentPageName }) {
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
   const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
 
-  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe'];
+  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 

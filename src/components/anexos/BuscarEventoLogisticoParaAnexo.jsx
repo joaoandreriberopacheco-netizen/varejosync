@@ -6,16 +6,19 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
   const [query, setQuery] = useState('');
   const [eventos, setEventos] = useState([]);
   const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
 
   const buscar = async (q = '') => {
     setCarregando(true);
+    setErro(null);
     try {
       const todos = await base44.entities.EventosLogisticos.list('-created_date', 100);
+      const lista = todos || [];
       if (q) {
         const lower = q.toLowerCase();
         setEventos(
-          (todos || []).filter(
+          lista.filter(
             (ev) =>
               String(ev.codigo || '')
                 .toLowerCase()
@@ -29,8 +32,12 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           )
         );
       } else {
-        setEventos(todos || []);
+        setEventos(lista);
       }
+    } catch (e) {
+      console.error(e);
+      setErro(e?.message || 'Não foi possível carregar as viagens.');
+      setEventos([]);
     } finally {
       setCarregando(false);
     }
@@ -47,7 +54,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
   };
 
   return (
-    <div className="flex-1 flex flex-col px-5 gap-4">
+    <div className="flex h-full min-h-0 w-full flex-col gap-4 px-5 pb-6 pt-4">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -69,7 +76,12 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 max-h-[50vh]">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
+        {erro && (
+          <p className="rounded-2xl bg-red-50 px-4 py-3 text-center text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+            {erro}
+          </p>
+        )}
         {carregando ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />

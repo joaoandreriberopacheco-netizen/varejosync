@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
+import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText, CheckCircle2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
@@ -12,6 +12,8 @@ export default function AgefinImportador({
   contaPrevistaId = null,
   lancamentoFinanceiroId = null,
   modoAtualizacao = false,
+  /** Ficheiro já escolhido (ex.: partilha Web) — inicia leitura automática */
+  initialFile = null,
 }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -22,11 +24,12 @@ export default function AgefinImportador({
   const [successState, setSuccessState] = useState(null);
   const [contaFinanceiraId, setContaFinanceiraId] = useState('');
   const [contasFinanceiras, setContasFinanceiras] = useState([]);
+  const [descricaoSacralizadaLock, setDescricaoSacralizadaLock] = useState(false);
+  const initialFileHandled = useRef(false);
+  const sacredDescricaoFetchDone = useRef(false);
 
-  const handleFileUpload = async (e) => {
-    const selectedFile = e.target.files?.[0];
+  const processSelectedFile = useCallback(async (selectedFile) => {
     if (!selectedFile) return;
-
     setLoading(true);
     setError(null);
     try {
@@ -122,7 +125,33 @@ Campos a interpretar do documento:
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleFileUpload = async (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    await processSelectedFile(selectedFile);
   };
+
+  useEffect(() => {
+    if (!initialFile || initialFileHandled.current) return;
+    initialFileHandled.current = true;
+    processSelectedFile(initialFile);
+  }, [initialFile, processSelectedFile]);
+
+  useEffect(() => {
+    if (!modoAtualizacao || !contaPrevistaId || !extractedData || sacredDescricaoFetchDone.current) return;
+    sacredDescricaoFetchDone.current = true;
+    let cancelled = false;
+    base44.entities.ContaPrevista.get(contaPrevistaId).then((cp) => {
+      if (cancelled || !cp?.descricao_definida_pelo_usuario || !cp.descricao) return;
+      setDescricaoSacralizadaLock(true);
+      setExtractedData((prev) => (prev ? { ...prev, descricao: cp.descricao } : prev));
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [modoAtualizacao, contaPrevistaId, extractedData]);
 
   useEffect(() => {
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then((data) => {
@@ -140,6 +169,9 @@ Campos a interpretar do documento:
     setSelectedRecorrencia('Mensal');
     setError(null);
     setSuccessState(null);
+    setDescricaoSacralizadaLock(false);
+    initialFileHandled.current = false;
+    sacredDescricaoFetchDone.current = false;
   };
 
   const handleConfirm = async () => {
@@ -147,6 +179,18 @@ Campos a interpretar do documento:
 
     setLoading(true);
     try {
+      let descricaoReservadaExistente = null;
+      if (contaPrevistaId) {
+        try {
+          const cp = await base44.entities.ContaPrevista.get(contaPrevistaId);
+          if (cp?.descricao_definida_pelo_usuario && cp.descricao) {
+            descricaoReservadaExistente = cp.descricao;
+          }
+        } catch (_) {
+          /* ignora */
+        }
+      }
+
       const recorrentes = await base44.entities.ContaRecorrente.filter({ ativa: true }, '-created_date', 200);
       const mesReferencia = (extractedData.periodo_referencia || extractedData.data_vencimento || '').slice(0, 7);
       const recorrenteVinculado = recorrentes.find((recorrente) => {
@@ -189,8 +233,14 @@ Campos a interpretar do documento:
             .find((conta) => (conta.data_vencimento || '').slice(0, 7) === mesReferencia)
         : contaExistenteDoMes;
 
+      const descricaoFinal =
+        descricaoReservadaExistente != null
+          ? descricaoReservadaExistente
+          : recorrenteFinal?.nome_despesa || extractedData.descricao;
+
       const payload = {
-        descricao: recorrenteFinal?.nome_despesa || extractedData.descricao,
+        descricao: descricaoFinal,
+        descricao_definida_pelo_usuario: true,
         terceiro_id: recorrenteFinal?.terceiro_id || 'importado-manualmente',
         terceiro_nome: recorrenteFinal?.terceiro_nome || extractedData.terceiro_nome || 'Beneficiário não identificado',
         categoria_financeira_id: recorrenteFinal?.categoria_financeira_id || 'importacao-pendente',
@@ -230,7 +280,7 @@ Campos a interpretar do documento:
       if (!modoAtualizacao) {
         const lancamentoPayload = {
           tipo: 'Despesa',
-          descricao: payload.descricao,
+          descricao: descricaoFinal,
           terceiro_id: payload.terceiro_id,
           terceiro_nome: payload.terceiro_nome,
           valor: payload.valor,
@@ -443,13 +493,32 @@ Campos a interpretar do documento:
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Descrição
+                  {descricaoSacralizadaLock && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                      <Lock className="h-3 w-3" /> Fixa
+                    </span>
+                  )}
+                </label>
                 <input
                   type="text"
                   value={extractedData.descricao}
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
-                  className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  readOnly={descricaoSacralizadaLock}
+                  title={descricaoSacralizadaLock ? 'Esta conta já tem descrição confirmada; novos PDFs não a alteram.' : undefined}
+                  className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950 ${descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
                 />
+                {!descricaoSacralizadaLock && (
+                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    Sugestão do leitor automático — pode editar antes de salvar. Depois de salva, a descrição fica fixa para manter o mesmo nome mental nesta conta e nos meses seguintes.
+                  </p>
+                )}
+                {descricaoSacralizadaLock && (
+                  <p className="mt-1.5 text-xs text-amber-800/90 dark:text-amber-200/90">
+                    Descrição já confirmada nesta conta; o PDF só atualiza valores, vencimento e boleto.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

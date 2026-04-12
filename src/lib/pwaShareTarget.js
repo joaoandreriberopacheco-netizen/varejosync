@@ -17,6 +17,14 @@ export const SHARE_SUBTARGET_KEYS = {
   frete: 'vincular_evento',
   evento: 'vincular_evento',
   itinerario: 'vincular_evento',
+  /** Importar PDF direto para nova conta a pagar (AGEFIN) */
+  conta_pdf: 'importar_pdf_conta',
+  importar_pdf: 'importar_pdf_conta',
+  conta: 'importar_pdf_conta',
+  /** Escolher card do atualizador de boletos e atualizar com o PDF */
+  atualizar_boleto: 'atualizar_boleto',
+  boletos: 'atualizar_boleto',
+  atualizador: 'atualizar_boleto',
 };
 
 export function mapDestinoQueryToEtapa(destinoRaw) {

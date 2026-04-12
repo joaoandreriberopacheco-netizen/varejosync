@@ -2,9 +2,10 @@ import React, { useMemo, useRef, useState } from 'react';
 import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer } from 'lucide-react';
 import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
 import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
+import { TIPOS_DOCUMENTO_ANEXO, ORDEM_TIPOS_DOCUMENTO_ANEXO } from '@/lib/tiposDocumentoAnexo';
 
-const TIPOS_DOCUMENTO = ['Comprovante', 'Boleto', 'Nota Fiscal', 'Contrato', 'Orçamento', 'Outro'];
-const ORDER = ['Nota Fiscal', 'Boleto', 'Comprovante', 'Contrato', 'Orçamento', 'Outro'];
+const TIPOS_DOCUMENTO = TIPOS_DOCUMENTO_ANEXO;
+const ORDER = ORDEM_TIPOS_DOCUMENTO_ANEXO;
 
 function ThumbnailIcon({ anexo, large = false }) {
   const [imgError, setImgError] = useState(false);

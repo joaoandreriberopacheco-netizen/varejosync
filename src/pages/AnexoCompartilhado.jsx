@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Image as ImageIcon, File, Link2, Plus, Loader2, CheckCircle2, ArrowLeft, ShoppingCart, Anchor } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { FileText, File, Link2, Plus, Loader2, CheckCircle2, ArrowLeft, ShoppingCart, Anchor, ChevronRight, Receipt, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import BuscarLancamentoSheet from '@/components/anexos/BuscarLancamentoSheet';
 import BuscarPedidoCompraParaAnexo from '@/components/anexos/BuscarPedidoCompraParaAnexo';
 import BuscarEventoLogisticoParaAnexo from '@/components/anexos/BuscarEventoLogisticoParaAnexo';
 import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
+import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
+import { TIPOS_DOCUMENTO_ANEXO } from '@/lib/tiposDocumentoAnexo';
 import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarget';
+import AgefinImportador from '@/components/agefin/AgefinImportador';
+import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -17,6 +21,17 @@ export default function AnexoCompartilhado() {
   const [abrirNovo, setAbrirNovo] = useState(false);
   const pollingRef = useRef(null);
   const destinoDeepLinkHandled = useRef(false);
+  const [tipoDocumento, setTipoDocumento] = useState('Comprovante');
+  const [tiposDocumentoCustom, setTiposDocumentoCustom] = useState([]);
+  /** Passo antes da busca do destino: escolher tipo de anexo. */
+  const [passoVinculo, setPassoVinculo] = useState('tipo');
+  /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
+  const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
+
+  const tiposDocumentoDisponiveis = useMemo(
+    () => Array.from(new Set([...TIPOS_DOCUMENTO_ANEXO, ...tiposDocumentoCustom])),
+    [tiposDocumentoCustom]
+  );
 
   // NOVO: Função super segura para converter o ficheiro para o servidor
   const converterParaBase64 = (blob) => {
@@ -171,6 +186,31 @@ export default function AnexoCompartilhado() {
     }
   }, [carregando]);
 
+  useEffect(() => {
+    if (etapa === 'vincular' || etapa === 'vincular_pedido' || etapa === 'vincular_evento') {
+      setPassoVinculo('tipo');
+    }
+  }, [etapa]);
+
+  useEffect(() => {
+    if (carregando) return;
+    const precisaArquivo =
+      etapa === 'importar_pdf_conta' || etapa === 'atualizar_boleto' || etapa === 'atualizar_boleto_import';
+    if (precisaArquivo && !arquivo?.file) {
+      setContaMesBoletoAlvo(null);
+      setEtapa('opcoes');
+    }
+  }, [carregando, etapa, arquivo?.file]);
+
+  const tituloContextoVinculo =
+    etapa === 'vincular'
+      ? 'lançamento financeiro'
+      : etapa === 'vincular_pedido'
+        ? 'pedido de compra'
+        : etapa === 'vincular_evento'
+          ? 'viagem / frete'
+          : '';
+
   const handleVincular = async (lancamento) => {
     if (!arquivo?.file) return;
     setUploadando(true);
@@ -186,7 +226,7 @@ export default function AnexoCompartilhado() {
         referencia_tipo: 'LancamentoFinanceiro',
         referencia_id: lancamento.id,
         referencia_numero: lancamento.descricao || '',
-        tipo_documento: 'Comprovante',
+        tipo_documento: tipoDocumento,
         origem: 'compartilhamento_web',
       });
       setLancamentoVinculado(lancamento);
@@ -212,7 +252,7 @@ export default function AnexoCompartilhado() {
         referencia_tipo: 'PedidoCompra',
         referencia_id: pedido.id,
         referencia_numero: pedido.numero || '',
-        tipo_documento: 'Comprovante',
+        tipo_documento: tipoDocumento,
         origem: 'compartilhamento_web',
       });
       setEtapa('sucesso');
@@ -237,7 +277,7 @@ export default function AnexoCompartilhado() {
         referencia_tipo: 'EventosLogisticos',
         referencia_id: evento.id,
         referencia_numero: evento.codigo || '',
-        tipo_documento: 'Comprovante',
+        tipo_documento: tipoDocumento,
         origem: 'compartilhamento_web',
       });
       setEtapa('sucesso');
@@ -263,7 +303,7 @@ export default function AnexoCompartilhado() {
         referencia_tipo: 'LancamentoFinanceiro',
         referencia_id: lancamento.id,
         referencia_numero: lancamento.descricao || '',
-        tipo_documento: 'Comprovante',
+        tipo_documento: tipoDocumento,
         origem: 'compartilhamento_web',
       });
     } catch (error) {
@@ -285,17 +325,23 @@ export default function AnexoCompartilhado() {
     );
   }
 
-  if (etapa === 'sucesso') {
+  if (etapa === 'sucesso' || etapa === 'sucesso_conta') {
+    const titulo = etapa === 'sucesso_conta' ? 'Conta a pagar atualizada!' : 'Comprovante salvo!';
+    const destino = etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa';
+    const href = createPageUrl(etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa');
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 px-6 gap-5">
-        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center dark:bg-green-900/20">
           <CheckCircle2 className="w-10 h-10 text-green-500" />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Comprovante salvo!</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{titulo}</h2>
+          {etapa === 'sucesso_conta' && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Pode rever no AGEFIN e no atualizador de boletos.</p>
+          )}
         </div>
-        <button onClick={() => window.location.href = createPageUrl('FluxoCaixa')} className="w-full max-w-xs h-13 rounded-2xl bg-gray-900 text-white font-semibold px-6 py-4">
-          Ir para Fluxo de Caixa
+        <button type="button" onClick={() => { window.location.href = href; }} className="w-full max-w-xs h-13 rounded-2xl bg-gray-900 text-white font-semibold px-6 py-4 dark:bg-white dark:text-gray-900">
+          Ir para {destino}
         </button>
       </div>
     );
@@ -323,7 +369,26 @@ export default function AnexoCompartilhado() {
           <OpcaoCard icon={Link2} titulo="Lançamento financeiro" descricao="Conta a pagar / despesa existente" onClick={() => setEtapa('vincular')} />
           <OpcaoCard icon={ShoppingCart} titulo="Pedido de compra" descricao="Anexar ao processo de compras" onClick={() => setEtapa('vincular_pedido')} />
           <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
-          <OpcaoCard icon={Plus} titulo="Criar novo lançamento" descricao="Registrar despesa e anexar o arquivo" onClick={() => setAbrirNovo(true)} />
+          <OpcaoCard
+            icon={Receipt}
+            titulo="Importar conta a pagar (PDF)"
+            descricao="Ler boleto e criar conta no AGEFIN"
+            disabled={!arquivo?.file}
+            onClick={() => arquivo?.file && setEtapa('importar_pdf_conta')}
+          />
+          <OpcaoCard
+            icon={RefreshCw}
+            titulo="Atualizar boleto (recorrente)"
+            descricao="Escolher o mês e o card, depois aplicar este PDF"
+            disabled={!arquivo?.file}
+            onClick={() => arquivo?.file && setEtapa('atualizar_boleto')}
+          />
+          <OpcaoCard
+            icon={Plus}
+            titulo="Criar novo lançamento"
+            descricao="Registrar despesa e anexar o arquivo"
+            onClick={() => setEtapa('novo_tipo')}
+          />
           
           {!arquivo?.file && (
             <div className="flex flex-col gap-2 mt-4">
@@ -357,23 +422,218 @@ export default function AnexoCompartilhado() {
         </div>
       )}
 
-      {etapa === 'vincular' && (
-        <div className="flex flex-1 flex-col min-h-0">
-          <BuscarLancamentoSheet onSelecionar={handleVincular} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />
+      {(etapa === 'vincular' || etapa === 'vincular_pedido' || etapa === 'vincular_evento') && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {passoVinculo === 'tipo' ? (
+              <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-5 pb-6 pt-4">
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setEtapa('opcoes')}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Tipo do anexo</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Antes de vincular ao {tituloContextoVinculo}, classifique o documento.
+                    </p>
+                  </div>
+                </div>
+                <div className="min-h-0 shrink-0">
+                  <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+                    Busca alfabética · pode adicionar tipo novo
+                  </p>
+                  <TipoDocumentoSearch
+                    tipos={tiposDocumentoDisponiveis}
+                    value={tipoDocumento}
+                    onChange={setTipoDocumento}
+                    onAdicionarTipoNovo={(t) =>
+                      setTiposDocumentoCustom((prev) => (prev.includes(t) ? prev : [...prev, t]))
+                    }
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPassoVinculo('buscar')}
+                  disabled={!String(tipoDocumento || '').trim()}
+                  className="mt-auto flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-gray-900"
+                >
+                  Continuar para buscar
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            ) : etapa === 'vincular' ? (
+              <BuscarLancamentoSheet
+                onSelecionar={handleVincular}
+                onVoltar={() => setPassoVinculo('tipo')}
+                uploadando={uploadando}
+              />
+            ) : etapa === 'vincular_pedido' ? (
+              <BuscarPedidoCompraParaAnexo
+                onSelecionar={handleVincularPedido}
+                onVoltar={() => setPassoVinculo('tipo')}
+                uploadando={uploadando}
+              />
+            ) : (
+              <BuscarEventoLogisticoParaAnexo
+                onSelecionar={handleVincularEvento}
+                onVoltar={() => setPassoVinculo('tipo')}
+                uploadando={uploadando}
+              />
+            )}
+          </div>
         </div>
       )}
-      {etapa === 'vincular_pedido' && (
-        <div className="flex flex-1 flex-col min-h-0">
-          <BuscarPedidoCompraParaAnexo onSelecionar={handleVincularPedido} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />
+
+      {etapa === 'novo_tipo' && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-5 pb-6 pt-4">
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setEtapa('opcoes')}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Novo lançamento</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Escolha o tipo do anexo antes de preencher a despesa.</p>
+              </div>
+            </div>
+            <TipoDocumentoSearch
+              tipos={tiposDocumentoDisponiveis}
+              value={tipoDocumento}
+              onChange={setTipoDocumento}
+              onAdicionarTipoNovo={(t) =>
+                setTiposDocumentoCustom((prev) => (prev.includes(t) ? prev : [...prev, t]))
+              }
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setAbrirNovo(true);
+                setEtapa('opcoes');
+              }}
+              disabled={!String(tipoDocumento || '').trim()}
+              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-gray-900"
+            >
+              Abrir formulário de lançamento
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
-      {etapa === 'vincular_evento' && (
-        <div className="flex flex-1 flex-col min-h-0">
-          <BuscarEventoLogisticoParaAnexo onSelecionar={handleVincularEvento} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />
+
+      {etapa === 'importar_pdf_conta' && arquivo?.file && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={() => setEtapa('opcoes')}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Importar conta a pagar</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">O PDF já foi enviado; confira os dados sugeridos antes de salvar.</p>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <AgefinImportador
+              initialFile={arquivo.file}
+              onSuccess={(_data, meta) => {
+                if (meta?.close) setEtapa('sucesso_conta');
+              }}
+            />
+          </div>
         </div>
       )}
+
+      {etapa === 'atualizar_boleto' && arquivo?.file && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          <BoletoRecorrentePicker
+            onVoltar={() => setEtapa('opcoes')}
+            onSelectCard={({ contaMes }) => {
+              setContaMesBoletoAlvo(contaMes);
+              setEtapa('atualizar_boleto_import');
+            }}
+          />
+        </div>
+      )}
+
+      {etapa === 'atualizar_boleto_import' && arquivo?.file && contaMesBoletoAlvo && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col bg-gray-50 dark:bg-gray-950"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={() => {
+                setContaMesBoletoAlvo(null);
+                setEtapa('atualizar_boleto');
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">Atualizar boleto</p>
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <AgefinImportador
+              key={contaMesBoletoAlvo.id}
+              initialFile={arquivo.file}
+              modoAtualizacao
+              contaPrevistaId={contaMesBoletoAlvo.referencia_id || undefined}
+              lancamentoFinanceiroId={contaMesBoletoAlvo.id}
+              onSuccess={(_data, meta) => {
+                if (meta?.close) {
+                  setContaMesBoletoAlvo(null);
+                  setEtapa('sucesso_conta');
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {abrirNovo && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-sm dark:bg-black/40">
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-sm dark:bg-black/40">
           <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />
         </div>
       )}
@@ -401,9 +661,16 @@ function ArquivoPreview({ arquivo }) {
   );
 }
 
-function OpcaoCard({ icon: Icon, titulo, descricao, onClick }) {
+function OpcaoCard({ icon: Icon, titulo, descricao, onClick, disabled }) {
   return (
-    <button onClick={onClick} className="w-full bg-white rounded-3xl p-5 flex items-center gap-4 shadow-sm text-left">
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={`w-full rounded-3xl bg-white p-5 flex items-center gap-4 shadow-sm text-left dark:bg-gray-900 ${
+        disabled ? 'cursor-not-allowed opacity-45' : ''
+      }`}
+    >
       <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center flex-none">
         <Icon className="w-5 h-5 text-gray-600" />
       </div>

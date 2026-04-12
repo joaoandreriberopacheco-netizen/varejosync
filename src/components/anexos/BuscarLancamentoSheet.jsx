@@ -7,6 +7,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
   const [query, setQuery] = useState('');
   const [lancamentos, setLancamentos] = useState([]);
   const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
 
   useEffect(() => {
@@ -15,18 +16,30 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
 
   const buscar = async (q = '') => {
     setCarregando(true);
-    const todos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 50);
-    if (q) {
-      const lower = q.toLowerCase();
-      setLancamentos(todos.filter(l =>
-        l.descricao?.toLowerCase().includes(lower) ||
-        l.terceiro_nome?.toLowerCase().includes(lower) ||
-        l.categoria?.toLowerCase().includes(lower)
-      ));
-    } else {
-      setLancamentos(todos);
+    setErro(null);
+    try {
+      const todos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 50);
+      const lista = todos || [];
+      if (q) {
+        const lower = q.toLowerCase();
+        setLancamentos(
+          lista.filter(
+            (l) =>
+              l.descricao?.toLowerCase().includes(lower) ||
+              l.terceiro_nome?.toLowerCase().includes(lower) ||
+              l.categoria?.toLowerCase().includes(lower)
+          )
+        );
+      } else {
+        setLancamentos(lista);
+      }
+    } catch (e) {
+      console.error(e);
+      setErro(e?.message || 'Não foi possível carregar os lançamentos.');
+      setLancamentos([]);
+    } finally {
+      setCarregando(false);
     }
-    setCarregando(false);
   };
 
   const handleSearch = (e) => {
@@ -40,7 +53,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
   };
 
   return (
-    <div className="flex-1 flex flex-col px-5 gap-4">
+    <div className="flex h-full min-h-0 w-full flex-col gap-4 px-5 pb-6 pt-4">
       {/* Voltar */}
       <div className="flex items-center gap-3">
         <button
@@ -64,7 +77,12 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
       </div>
 
       {/* Lista */}
-      <div className="flex-1 overflow-y-auto space-y-2 max-h-[50vh]">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
+        {erro && (
+          <p className="rounded-2xl bg-red-50 px-4 py-3 text-center text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+            {erro}
+          </p>
+        )}
         {carregando ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
@@ -125,7 +143,7 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium truncate ${selecionado ? 'text-white dark:text-gray-900' : 'text-gray-800 dark:text-gray-100'}`}>
-          {lancamento.descricao}
+          {lancamento.descricao || '—'}
         </p>
         <p className={`text-xs mt-0.5 ${selecionado ? 'text-white/70 dark:text-gray-600' : 'text-gray-400'}`}>
           {lancamento.data_vencimento ? format(new Date(lancamento.data_vencimento + 'T00:00:00'), 'dd/MM/yyyy') : '—'}

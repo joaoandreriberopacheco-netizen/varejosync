@@ -225,7 +225,7 @@ export default function AgefinConsulta() {
 
   const filteredData = useMemo(() => {
     const todayKey = dataHoje();
-    return monthData.filter((conta) => {
+    const list = monthData.filter((conta) => {
       if (pagamentoFilter === 'pagos' && !lancamentoPago(conta)) return false;
       if (pagamentoFilter === 'nao_pagos' && (lancamentoPago(conta) || lancamentoCancelado(conta))) return false;
 
@@ -242,6 +242,9 @@ export default function AgefinConsulta() {
       const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
       return matchesFrom && matchesTo;
     });
+    return [...list].sort((a, b) =>
+      (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' })
+    );
   }, [monthData, pagamentoFilter, prazoFilter, cmvFilter, freteFilter, dateFrom, dateTo]);
 
   const kpis = useMemo(() => {
@@ -412,7 +415,7 @@ export default function AgefinConsulta() {
         ) : filteredData.length === 0 ? (
           <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-12 text-center text-gray-500 dark:text-gray-400">Nenhuma conta a pagar encontrada para esse mês e filtros.</div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 md:max-w-4xl">
             {filteredData.map((conta) => (
               <ContaCard key={conta.id} conta={conta} onOpen={() => setSelectedConta(conta)} />
             ))}
