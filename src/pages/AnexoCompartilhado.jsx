@@ -352,7 +352,9 @@ export default function AnexoCompartilhado() {
   }
 
   return (
-    <div className={`flex min-h-[100dvh] flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))] ${brandSurface.pageScreen}`}>
+    <div className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}>
+      {/* Scroll só aqui: overlays fixed ficam fora para não serem cortados pelo overflow (WebView / Safari). */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-3 px-4 pb-3 pt-5 md:px-5 md:pb-4">
         <button
           type="button"
@@ -477,6 +479,7 @@ export default function AnexoCompartilhado() {
           )}
         </div>
       )}
+      </div>
 
       {(etapa === 'vincular' || etapa === 'vincular_pedido' || etapa === 'vincular_evento') && (
         <div

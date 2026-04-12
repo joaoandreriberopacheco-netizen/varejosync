@@ -296,7 +296,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         </button>
       )}
 
-      <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+      <Drawer open={filterOpen} onOpenChange={setFilterOpen} shouldScaleBackground={false}>
         <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-gray-900 dark:text-foreground">Filtros</DrawerTitle>
