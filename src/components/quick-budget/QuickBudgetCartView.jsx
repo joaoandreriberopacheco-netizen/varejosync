@@ -27,7 +27,15 @@ export default function QuickBudgetCartView({ items, summary, onClose, onShare, 
             <div key={item.produto_id} className="rounded-2xl bg-gray-50 dark:bg-gray-800 px-3 py-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.produto_nome}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{item.quantidade} x {formatCurrency(item.preco_unitario)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                  <span>{item.quantidade} ×</span>
+                  {item.tem_ajuste_tabela && Number(item.preco_venda_lista) > 0 && (
+                    <span className="line-through text-gray-400">{formatCurrency(item.preco_venda_lista)}</span>
+                  )}
+                  <span className={item.tem_ajuste_tabela && Number(item.preco_venda_lista) > 0 ? 'font-semibold text-gray-700 dark:text-gray-300' : ''}>
+                    {formatCurrency(item.preco_unitario)}
+                  </span>
+                </p>
               </div>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(item.total)}</p>
             </div>

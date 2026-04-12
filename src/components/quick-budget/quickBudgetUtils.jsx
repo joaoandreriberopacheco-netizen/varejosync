@@ -1,3 +1,4 @@
+import React from 'react';
 import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
 
 export function formatCurrency(value) {
@@ -28,9 +29,35 @@ export function getFullPrice(produto, tabelaPreco) {
   return calcularPrecoVendaTabela(produto, tabelaPreco);
 }
 
+/** Mesma lógica que SkuCard em TabelaPrecosConsulta (lista riscada + preço da tabela). */
+export function PrecoVendaTabelaLinhas({ produto, tabelaPreco, finalClassName = 'text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums', labelBottom }) {
+  const precoFinal = calcularPrecoVendaTabela(produto, tabelaPreco);
+  const precoOriginal = Number(produto?.preco_venda_padrao || 0);
+  const temAjuste = tabelaPreco && tabelaPreco.fator_ajuste !== 1;
+  return (
+    <>
+      {temAjuste && precoOriginal > 0 && (
+        <div className="text-xs text-gray-400 line-through whitespace-nowrap tabular-nums">
+          {formatCurrency(precoOriginal)}
+        </div>
+      )}
+      {precoFinal > 0 && (
+        <div className={`whitespace-nowrap ${finalClassName}`}>
+          {formatCurrency(precoFinal)}
+        </div>
+      )}
+      {labelBottom != null && labelBottom !== false && (
+        <p className="text-xs text-gray-400">{labelBottom}</p>
+      )}
+    </>
+  );
+}
+
 export function buildQuickBudgetItem(produto, tabelaPreco) {
   const precoTabela = calcularPrecoVendaTabela(produto, tabelaPreco);
   const quantidade = 1;
+  const precoLista = Number(produto.preco_venda_padrao || 0);
+  const temAjusteTabela = !!(tabelaPreco && tabelaPreco.fator_ajuste !== 1);
   return {
     produto_id: produto.id,
     produto_nome: produto.nome,
@@ -39,6 +66,8 @@ export function buildQuickBudgetItem(produto, tabelaPreco) {
     preco_cheio: precoTabela,
     preco_minimo: precoTabela,
     preco_unitario: precoTabela,
+    preco_venda_lista: precoLista,
+    tem_ajuste_tabela: temAjusteTabela,
     preco_livre: !!produto.preco_livre,
     desconto: 0,
     quantidade,

@@ -2,11 +2,11 @@ import React from 'react';
 import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatCurrency } from './quickBudgetUtils';
+import { PrecoVendaTabelaLinhas, getMinimumPrice } from './quickBudgetUtils';
 
 export default function QuickBudgetFlowItemEditor({
   selectedProduct,
-  precoReferenciaTabela = 0,
+  tabelaPreco,
   stage,
   quantity,
   price,
@@ -39,6 +39,7 @@ export default function QuickBudgetFlowItemEditor({
   }
 
   const isFreePrice = !!selectedProduct.preco_livre;
+  const pisoVenda = getMinimumPrice(selectedProduct, tabelaPreco);
 
   return (
     <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm p-4 space-y-4">
@@ -53,12 +54,14 @@ export default function QuickBudgetFlowItemEditor({
             {selectedProduct.codigo_interno && <span>#{selectedProduct.codigo_interno}</span>}
             {isFreePrice && <span className="text-emerald-600 dark:text-emerald-400">Preço livre</span>}
           </div>
-          <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
-            {formatCurrency(precoReferenciaTabela)}
-          </p>
-          <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
-            Preço da tabela (piso de venda)
-          </p>
+          <div className="mt-2">
+            <PrecoVendaTabelaLinhas
+              produto={selectedProduct}
+              tabelaPreco={tabelaPreco}
+              finalClassName="text-lg font-bold text-gray-800 dark:text-gray-100 tabular-nums"
+              labelBottom="Preço da tabela (piso de venda)"
+            />
+          </div>
         </div>
       </div>
 
@@ -85,7 +88,7 @@ export default function QuickBudgetFlowItemEditor({
               ref={priceInputRef}
               type="number"
               inputMode="decimal"
-              min={precoReferenciaTabela}
+              min={pisoVenda}
               step="0.01"
               value={price}
               onChange={(e) => onPriceChange(e.target.value)}

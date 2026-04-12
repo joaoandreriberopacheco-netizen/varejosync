@@ -107,6 +107,10 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         return prev.map((item) => item.produto_id === selectedProduct.id
           ? recalculateItem({
               ...item,
+              preco_venda_lista: nextItem.preco_venda_lista,
+              tem_ajuste_tabela: nextItem.tem_ajuste_tabela,
+              preco_cheio: nextItem.preco_cheio,
+              preco_minimo: nextItem.preco_minimo,
               quantidade: Number(item.quantidade || 0) + Number(nextItem.quantidade || 0),
               preco_unitario: nextItem.preco_unitario,
             })
@@ -249,7 +253,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
         {selectedProduct ? (
           <QuickBudgetFlowItemEditor
             selectedProduct={selectedProduct}
-            precoReferenciaTabela={calcularPrecoVendaTabela(selectedProduct, tabelaSelecionada)}
+            tabelaPreco={tabelaSelecionada}
             stage={flowStage}
             quantity={quantityDraft}
             price={priceDraft}
@@ -269,7 +273,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
       </div>
 
       {isMobile && items.length > 0 && (
-        <div className="absolute inset-0 z-20 bg-gray-50 dark:bg-gray-950 flex flex-col" style={{ display: showCartMobile ? 'flex' : 'none' }}>
+        <div className="absolute inset-0 z-[100] bg-gray-50 dark:bg-gray-950 flex flex-col" style={{ display: showCartMobile ? 'flex' : 'none' }}>
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
             <button type="button" onClick={() => setShowCartMobile(false)} className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
               <X className="w-4 h-4" />
@@ -297,7 +301,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
       )}
 
       {items.length > 0 && (
-        <div className="border-t border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
+        <div className="relative z-40 border-t border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>

@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { formatCurrency, matchesProduct } from './quickBudgetUtils';
-import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
+import { matchesProduct, PrecoVendaTabelaLinhas } from './quickBudgetUtils';
 
 export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, tabelaPreco, onAddProduct, onSubmitFirstResult }) {
   const resultados = useMemo(() => {
@@ -19,6 +18,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
           ref={inputRef}
+          variant="search"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           onKeyDown={(e) => {
@@ -28,7 +28,6 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
             }
           }}
           placeholder="Buscar produto, código ou marca"
-          inputMode="search"
           className="h-14 md:h-12 pl-11 pr-4 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-base md:text-sm"
         />
       </div>
@@ -53,11 +52,13 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
                     {produto.codigo_interno && <span>#{produto.codigo_interno}</span>}
                   </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {formatCurrency(calcularPrecoVendaTabela(produto, tabelaPreco))}
-                  </p>
-                  <p className="text-xs text-gray-400">preço tabela</p>
+                <div className="text-right flex-shrink-0 flex flex-col items-end">
+                  <PrecoVendaTabelaLinhas
+                    produto={produto}
+                    tabelaPreco={tabelaPreco}
+                    finalClassName="text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums"
+                    labelBottom="preço tabela"
+                  />
                 </div>
               </div>
             </button>
