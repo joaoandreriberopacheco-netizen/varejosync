@@ -6,7 +6,6 @@ import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCac
 
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/sonner";
-import P38Logo from '@/components/brand/P38Logo';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';

@@ -3,6 +3,15 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 
+// Tema antes da primeira pintura (splash, login, etc.)
+try {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.classList.add('dark')
+  }
+} catch (_) {
+  /* ignore */
+}
+
 // Select-on-focus global: seleciona o texto ao clicar/focar em qualquer input numérico ou de texto
 document.addEventListener('focusin', (e) => {
   const el = e.target;

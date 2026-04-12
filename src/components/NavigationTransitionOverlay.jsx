@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
-import P38Logo from '@/components/brand/P38Logo';
+import P38Logo, { useBrandDarkMode } from '@/components/brand/P38Logo';
 
 export default function NavigationTransitionOverlay() {
   const { showTransition } = useNavigationTransition();
   const [phase, setPhase] = useState('in');
-  const darkMode = document.documentElement.classList.contains('dark');
+  const isDark = useBrandDarkMode();
 
   useEffect(() => {
     if (showTransition) {
@@ -24,8 +24,8 @@ export default function NavigationTransitionOverlay() {
 
   if (!showTransition) return null;
 
-  const bg = darkMode ? '#000000' : '#ffffff';
-  const fillColor = darkMode ? '#ffffff' : '#111827';
+  const bg = isDark ? '#000000' : '#ffffff';
+  const fillColor = isDark ? '#ffffff' : '#000000';
 
   return (
     <div

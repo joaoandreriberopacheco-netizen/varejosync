@@ -805,6 +805,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             await base44.entities.LancamentoFinanceiro.create({
               ...baseLancamento,
               descricao: `Compra de Mercadoria - ${currentPO.numero} (À Vista)`,
+              forma_pagamento_tipo: 'À Vista',
+              forma_pagamento_compra: 'À Vista',
               valor: valorTotal,
               data_vencimento: formData.data_primeiro_vencimento || dataHoje(),
               observacoes: `Pagamento à vista. Aguardando aprovação do financeiro.`,
@@ -821,6 +823,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               await base44.entities.LancamentoFinanceiro.create({
                 ...baseLancamento,
                 descricao: `Compra de Mercadoria - ${currentPO.numero} (${i + 1}/${numParcelas})`,
+                forma_pagamento_tipo: 'Parcelado',
+                forma_pagamento_compra: 'Parcelado',
                 valor: valorParcela,
                 data_vencimento: format(dataVencimento, 'yyyy-MM-dd'),
                 observacoes: `Parcela ${i + 1} de ${numParcelas}. Aguardando aprovação do financeiro.`,

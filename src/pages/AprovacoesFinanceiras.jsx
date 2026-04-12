@@ -164,6 +164,8 @@ export default function AprovacoesFinanceirasPage() {
               is_custo_mercadoria: true,
               pedido_compra_vinculado_id: pedido.id,
               pedido_compra_vinculado_numero: pedido.numero,
+              forma_pagamento_tipo: pedido.forma_pagamento_compra || undefined,
+              forma_pagamento_compra: pedido.forma_pagamento_compra || undefined,
             });
           } else {
             for (const l of lancamentos) {
@@ -176,6 +178,8 @@ export default function AprovacoesFinanceirasPage() {
                 pedido_compra_vinculado_id: pedido.id,
                 pedido_compra_vinculado_numero: pedido.numero,
                 observacoes: (l.observacoes || '') + notaAprovacao,
+                forma_pagamento_tipo: l.forma_pagamento_tipo || pedido.forma_pagamento_compra || undefined,
+                forma_pagamento_compra: l.forma_pagamento_compra || pedido.forma_pagamento_compra || undefined,
               });
             }
           }

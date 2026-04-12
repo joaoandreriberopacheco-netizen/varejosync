@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { Calendar, CheckCircle2, CircleAlert, Paperclip, Receipt, Wallet } from 'lucide-react';
-import AnexosPanel from '@/components/anexos/AnexosPanel';
+import AnexosPanelIntegrado from '@/components/anexos/AnexosPanelIntegrado';
+import { base44 } from '@/api/base44Client';
+import { referenciasAnexosBaseParaLancamento } from '@/lib/anexosReferenciasIntegradas';
 import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 
 function formatDate(value) {
@@ -14,6 +16,54 @@ function formatCurrency(value) {
 }
 
 export default function AgefinConsultaDrawer({ open, onClose, conta }) {
+  const [refsPedidosPorEmbarque, setRefsPedidosPorEmbarque] = useState([]);
+
+  const refsBase = useMemo(
+    () => (conta ? referenciasAnexosBaseParaLancamento(conta) : []),
+    [conta]
+  );
+
+  useEffect(() => {
+    if (!open || !conta || conta.referencia_tipo !== 'EventosLogisticos' || !conta.referencia_id) {
+      setRefsPedidosPorEmbarque([]);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const embs = await base44.entities.Embarque.filter({ evento_logistico_id: conta.referencia_id });
+        const ids = [...new Set((embs || []).map((e) => e.pedido_compra_id).filter(Boolean))];
+        if (!cancelled) {
+          setRefsPedidosPorEmbarque(
+            ids.map((id) => ({
+              referencia_tipo: 'PedidoCompra',
+              referencia_id: id,
+              label: 'Pedido de compra (embarque)',
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) setRefsPedidosPorEmbarque([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, conta?.referencia_tipo, conta?.referencia_id]);
+
+  const referenciasAnexos = useMemo(() => {
+    const merged = [...refsBase];
+    const seen = new Set(merged.map((r) => `${r.referencia_tipo}:${r.referencia_id}`));
+    refsPedidosPorEmbarque.forEach((r) => {
+      const k = `${r.referencia_tipo}:${r.referencia_id}`;
+      if (!seen.has(k)) {
+        seen.add(k);
+        merged.push(r);
+      }
+    });
+    return merged;
+  }, [refsBase, refsPedidosPorEmbarque]);
+
   if (!conta) return null;
 
   const isPaid = conta.status === 'Pago';
@@ -103,12 +153,12 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
               <div className="text-sm text-gray-700 dark:text-gray-200">
                 Ver boleto, comprovantes e documentos da conta
               </div>
-              <AnexosPanel
+              <AnexosPanelIntegrado
                 inline
-                referenciaId={conta.id}
-                referenciaTipo="LancamentoFinanceiro"
+                referencias={referenciasAnexos}
                 referenciaNomero={conta.referencia_numero || conta.descricao}
                 readOnly
+                uploadTarget={{ referencia_tipo: 'LancamentoFinanceiro', referencia_id: conta.id }}
               />
             </div>
           </div>

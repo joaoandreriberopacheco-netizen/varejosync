@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { DollarSign, LinkIcon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import AnexosPanel from '@/components/anexos/AnexosPanel';
+import AnexosPanelIntegrado from '@/components/anexos/AnexosPanelIntegrado';
+import { montarReferenciasFreteIntegradas } from '@/lib/anexosReferenciasIntegradas';
 
 function getContaStatusStyle(temConta, status, estaAtrasada) {
   if (!temConta) return { bgClass: 'bg-gray-50 dark:bg-gray-800', strokeColor: '#d1d5db', label: 'Sem vinculação' };
@@ -92,6 +93,21 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
   const statusConta = contaAtualizada?.status;
   const estaAtrasada = temConta && statusConta !== 'Pago' && contaAtualizada?.data_vencimento && new Date(contaAtualizada.data_vencimento) < new Date();
   const { bgClass, strokeColor, label } = getContaStatusStyle(temConta, statusConta, estaAtrasada);
+
+  const pedidosEmbarqueIds = useMemo(
+    () => [...new Set((embarques || []).map((e) => e.pedido_compra_id).filter(Boolean))],
+    [embarques]
+  );
+
+  const referenciasAnexosFrete = useMemo(
+    () =>
+      montarReferenciasFreteIntegradas({
+        contaLancamento: contaAtualizada,
+        eventoLogisticoId: evento?.id,
+        pedidosCompraIds: pedidosEmbarqueIds,
+      }),
+    [contaAtualizada, evento?.id, pedidosEmbarqueIds]
+  );
 
   return (
     <div className="space-y-4 pb-4">
@@ -194,12 +210,22 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
         </div>
       </div>
 
-      {contaAtualizada?.id && (
-        <AnexosPanel referenciaId={contaAtualizada.id} referenciaTipo="LancamentoFinanceiro" />
+      {referenciasAnexosFrete.length > 0 && (
+        <AnexosPanelIntegrado
+          referencias={referenciasAnexosFrete}
+          referenciaNomero={evento?.codigo || contaAtualizada?.descricao || ''}
+          uploadTarget={
+            contaAtualizada?.id
+              ? { referencia_tipo: 'LancamentoFinanceiro', referencia_id: contaAtualizada.id }
+              : evento?.id
+                ? { referencia_tipo: 'EventosLogisticos', referencia_id: evento.id }
+                : null
+          }
+        />
       )}
       {!contaAtualizada?.id && (
         <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 text-center text-xs text-gray-500 dark:text-gray-400">
-          Crie uma conta a pagar para adicionar documentos
+          Sem conta a pagar: novos arquivos serão anexados à viagem (frete). Crie a conta para vincular também ao lançamento financeiro.
         </div>
       )}
     </div>

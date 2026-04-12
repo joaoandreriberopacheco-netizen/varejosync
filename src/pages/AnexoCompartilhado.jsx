@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Image as ImageIcon, File, Link2, Plus, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { FileText, Image as ImageIcon, File, Link2, Plus, Loader2, CheckCircle2, ArrowLeft, ShoppingCart, Anchor } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import BuscarLancamentoSheet from '@/components/anexos/BuscarLancamentoSheet';
+import BuscarPedidoCompraParaAnexo from '@/components/anexos/BuscarPedidoCompraParaAnexo';
+import BuscarEventoLogisticoParaAnexo from '@/components/anexos/BuscarEventoLogisticoParaAnexo';
 import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
+import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarget';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -13,6 +16,7 @@ export default function AnexoCompartilhado() {
   const [lancamentoVinculado, setLancamentoVinculado] = useState(null);
   const [abrirNovo, setAbrirNovo] = useState(false);
   const pollingRef = useRef(null);
+  const destinoDeepLinkHandled = useRef(false);
 
   // NOVO: Função super segura para converter o ficheiro para o servidor
   const converterParaBase64 = (blob) => {
@@ -149,6 +153,17 @@ export default function AnexoCompartilhado() {
     };
   }, []);
 
+  useEffect(() => {
+    if (carregando || destinoDeepLinkHandled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const destino = params.get(SHARE_DESTINO_QUERY);
+    const etapaAlvo = mapDestinoQueryToEtapa(destino);
+    if (etapaAlvo) {
+      destinoDeepLinkHandled.current = true;
+      setEtapa(etapaAlvo);
+    }
+  }, [carregando]);
+
   const handleVincular = async (lancamento) => {
     if (!arquivo?.file) return;
     setUploadando(true);
@@ -172,6 +187,56 @@ export default function AnexoCompartilhado() {
     } catch (error) {
       console.error("Erro no Upload:", error);
       alert("Falha ao enviar! O servidor disse: " + (error.message || JSON.stringify(error)));
+    } finally {
+      setUploadando(false);
+    }
+  };
+
+  const handleVincularPedido = async (pedido) => {
+    if (!arquivo?.file) return;
+    setUploadando(true);
+    try {
+      const base64 = await converterParaBase64(arquivo.file);
+      await base44.functions.invoke('uploadAnexoDrive', {
+        file_base64: base64,
+        file_name: arquivo.nome,
+        file_type: arquivo.tipo || 'application/pdf',
+        file_size: arquivo.file.size,
+        referencia_tipo: 'PedidoCompra',
+        referencia_id: pedido.id,
+        referencia_numero: pedido.numero || '',
+        tipo_documento: 'Comprovante',
+        origem: 'compartilhamento_web',
+      });
+      setEtapa('sucesso');
+    } catch (error) {
+      console.error('Erro no Upload:', error);
+      alert('Falha ao enviar: ' + (error.message || JSON.stringify(error)));
+    } finally {
+      setUploadando(false);
+    }
+  };
+
+  const handleVincularEvento = async (evento) => {
+    if (!arquivo?.file) return;
+    setUploadando(true);
+    try {
+      const base64 = await converterParaBase64(arquivo.file);
+      await base44.functions.invoke('uploadAnexoDrive', {
+        file_base64: base64,
+        file_name: arquivo.nome,
+        file_type: arquivo.tipo || 'application/pdf',
+        file_size: arquivo.file.size,
+        referencia_tipo: 'EventosLogisticos',
+        referencia_id: evento.id,
+        referencia_numero: evento.codigo || '',
+        tipo_documento: 'Comprovante',
+        origem: 'compartilhamento_web',
+      });
+      setEtapa('sucesso');
+    } catch (error) {
+      console.error('Erro no Upload:', error);
+      alert('Falha ao enviar: ' + (error.message || JSON.stringify(error)));
     } finally {
       setUploadando(false);
     }
@@ -247,8 +312,11 @@ export default function AnexoCompartilhado() {
 
       {etapa === 'opcoes' && (
         <div className="px-5 space-y-3">
-          <OpcaoCard icon={Link2} titulo="Vincular a lançamento existente" descricao="Associar este comprovante a uma despesa" onClick={() => setEtapa('vincular')} />
-          <OpcaoCard icon={Plus} titulo="Criar novo lançamento" descricao="Registrar um novo lançamento financeiro" onClick={() => setAbrirNovo(true)} />
+          <p className="text-[11px] uppercase tracking-wider text-gray-400 px-1">Destino no P38</p>
+          <OpcaoCard icon={Link2} titulo="Lançamento financeiro" descricao="Conta a pagar / despesa existente" onClick={() => setEtapa('vincular')} />
+          <OpcaoCard icon={ShoppingCart} titulo="Pedido de compra" descricao="Anexar ao processo de compras" onClick={() => setEtapa('vincular_pedido')} />
+          <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
+          <OpcaoCard icon={Plus} titulo="Criar novo lançamento" descricao="Registrar despesa e anexar o arquivo" onClick={() => setAbrirNovo(true)} />
           
           {!arquivo?.file && (
             <div className="flex flex-col gap-2 mt-4">
@@ -282,7 +350,21 @@ export default function AnexoCompartilhado() {
         </div>
       )}
 
-      {etapa === 'vincular' && <BuscarLancamentoSheet onSelecionar={handleVincular} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />}
+      {etapa === 'vincular' && (
+        <div className="flex flex-1 flex-col min-h-0">
+          <BuscarLancamentoSheet onSelecionar={handleVincular} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />
+        </div>
+      )}
+      {etapa === 'vincular_pedido' && (
+        <div className="flex flex-1 flex-col min-h-0">
+          <BuscarPedidoCompraParaAnexo onSelecionar={handleVincularPedido} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />
+        </div>
+      )}
+      {etapa === 'vincular_evento' && (
+        <div className="flex flex-1 flex-col min-h-0">
+          <BuscarEventoLogisticoParaAnexo onSelecionar={handleVincularEvento} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />
+        </div>
+      )}
       {abrirNovo && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-sm dark:bg-black/40">
           <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />

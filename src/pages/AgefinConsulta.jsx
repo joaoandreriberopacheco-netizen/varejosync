@@ -15,6 +15,7 @@ import {
   lancamentoCancelado,
   lancamentoVencidoOuAtrasado,
   lancamentoEmDia,
+  lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
 
 function formatCurrency(value) {
@@ -172,11 +173,14 @@ export default function AgefinConsulta() {
     try {
       const data = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
       setContas(
-        (data || []).filter(
-          (item) =>
+        (data || []).filter((item) => {
+          if (lancamentoCancelado(item)) return false;
+          if (lancamentoCompraMercadoriaPedidoPagamentoAVista(item)) return false;
+          return (
             lancamentoEhContaPagar(item) ||
             (item?.tipo === 'Despesa' && item?.referencia_tipo === 'EventosLogisticos')
-        )
+          );
+        })
       );
     } catch (e) {
       console.error(e);

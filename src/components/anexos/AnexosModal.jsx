@@ -52,6 +52,9 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
           <span className="truncate text-sm">{anexo.nome_arquivo}</span>
           <ExternalLink className="w-3.5 h-3.5 flex-none text-gray-500 dark:text-gray-400" />
         </a>
+        {anexo.origem_label && (
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{anexo.origem_label}</p>
+        )}
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatSize(anexo.tamanho_bytes)}</p>
         {anexo.descricao && (
           <p className="mt-1 line-clamp-2 text-[11px] text-gray-400 dark:text-gray-500">{anexo.descricao}</p>
@@ -143,6 +146,9 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
               tipos={tiposDisponiveis}
               value={tipoSelecionado}
               onChange={setTipoSelecionado}
+              onAdicionarTipoNovo={(t) =>
+                setTiposCustomizados((prev) => (prev.includes(t) ? prev : [...prev, t]))
+              }
             />
           </div>
 

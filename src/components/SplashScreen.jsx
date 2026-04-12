@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import P38Logo from '@/components/brand/P38Logo';
+import P38Logo, { useBrandDarkMode } from '@/components/brand/P38Logo';
 
 /**
- * Tela Splash — logo centralizado com animação de entrada suave e barra de progresso
+ * Tela Splash — logotipo vertical oficial, animação de entrada e barra de progresso.
  */
-export default function SplashScreen({ onFinish, darkMode }) {
+export default function SplashScreen({ onFinish }) {
+  const isDark = useBrandDarkMode();
   const [phase, setPhase] = useState('in'); // 'in' | 'visible' | 'out'
   const [progress, setProgress] = useState(0);
 
@@ -36,7 +37,7 @@ export default function SplashScreen({ onFinish, darkMode }) {
     };
   }, [onFinish]);
 
-  const bg = darkMode ? '#0d0d0d' : '#ffffff';
+  const bg = isDark ? '#0d0d0d' : '#ffffff';
 
   return (
     <div
@@ -62,7 +63,7 @@ export default function SplashScreen({ onFinish, darkMode }) {
           opacity: phase === 'visible' ? 1 : 0,
         }}
       >
-        <P38Logo variant="horizontal" size="xl" />
+        <P38Logo variant="vertical" size="xxl" />
       </div>
 
       {/* Barra de progresso */}
@@ -72,7 +73,7 @@ export default function SplashScreen({ onFinish, darkMode }) {
           bottom: 80,
           width: 120,
           height: 2,
-          background: darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+          background: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
           borderRadius: 1,
           overflow: 'hidden',
           opacity: phase === 'visible' ? 1 : 0,
@@ -82,7 +83,7 @@ export default function SplashScreen({ onFinish, darkMode }) {
         <div
           style={{
             height: '100%',
-            background: darkMode ? '#ffffff' : '#111827',
+            background: isDark ? '#ffffff' : '#000000',
             width: `${progress}%`,
             transition: 'width 0.05s linear',
             borderRadius: 1,

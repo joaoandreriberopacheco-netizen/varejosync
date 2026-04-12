@@ -49,7 +49,6 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const [showSplash, setShowSplash] = React.useState(() => !sessionStorage.getItem('p38_splash_shown'));
-  const darkMode = React.useMemo(() => localStorage.getItem('theme') === 'dark', []);
 
   const handleSplashFinish = () => {
     sessionStorage.setItem('p38_splash_shown', '1');
@@ -57,7 +56,7 @@ const AuthenticatedApp = () => {
   };
 
   if (showSplash) {
-    return <SplashScreen onFinish={handleSplashFinish} darkMode={darkMode} />;
+    return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
 
