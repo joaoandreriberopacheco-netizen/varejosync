@@ -1,132 +1,67 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from '@/components/ui/button';
-import { Package, TrendingUp, History, BarChart3, RefreshCw } from 'lucide-react';
-import MovimentacaoEstoqueForm from '../components/estoque/MovimentacaoEstoqueForm';
-import HistoricoMovimentacoes from '../components/estoque/HistoricoMovimentacoes';
-import FilaSeparacao from '../components/estoque/FilaSeparacao';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Package, Ship, CheckSquare, PackageSearch } from 'lucide-react';
+import { createPageUrl } from '@/components/utils';
 
+/**
+ * A página antiga “Módulo de Estoque” (movimentações genéricas na mesma tela) foi descontinuada.
+ * O estoque continua sendo tratado em Conferência, Separação, Produtos e fluxos de compra/venda.
+ */
 export default function EstoquePage() {
-  const [stats, setStats] = useState({
-    totalEntradas: 0,
-    totalSaidas: 0,
-    totalMovimentacoes: 0
-  });
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
-    setIsLoading(true);
-    const movimentacoes = await base44.entities.MovimentacaoEstoque.list();
-    
-    const entradas = movimentacoes.filter(m => m.tipo === 'Entrada').length;
-    const saidas = movimentacoes.filter(m => m.tipo === 'Saída').length;
-    
-    setStats({
-      totalEntradas: entradas,
-      totalSaidas: saidas,
-      totalMovimentacoes: movimentacoes.length
-    });
-    setIsLoading(false);
-  };
-
-  const handleNewMovement = () => {
-    setIsFormOpen(true);
-  };
-
-  const handleSave = async () => {
-    await loadStats();
-    setIsFormOpen(false);
-  };
+  const links = [
+    {
+      to: createPageUrl('Produtos'),
+      icon: Package,
+      title: 'Produtos',
+      desc: 'Cadastro, estoque atual e ajustes vinculados ao catálogo',
+    },
+    {
+      to: createPageUrl('ConferenciaEstoque'),
+      icon: CheckSquare,
+      title: 'Conferência de estoque',
+      desc: 'Contagens e conferências formais',
+    },
+    {
+      to: createPageUrl('InterfaceSeparador'),
+      icon: PackageSearch,
+      title: 'Separação de pedidos',
+      desc: 'Fila e separação para expedição',
+    },
+    {
+      to: createPageUrl('ItinerarioFluvial'),
+      icon: Ship,
+      title: 'Boats',
+      desc: 'Itinerário fluvial e logística',
+    },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header - SEM CORES */}
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Módulo de Estoque</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Gerencie seu inventário, separação de pedidos, entradas, saídas e histórico completo
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
+      <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 p-5 dark:border-amber-900/50 dark:bg-amber-950/40">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Módulo de Estoque descontinuado</h1>
+        <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+          Esta tela unificada de movimentações não é mais usada. Use os fluxos abaixo, alinhados ao menu{' '}
+          <strong className="font-medium">Estoque</strong> e <strong className="font-medium">Compras</strong>.
         </p>
       </div>
 
-      <Tabs defaultValue="fila" className="w-full">
-        <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
-          <div className="flex justify-around w-full md:justify-start md:gap-8">
-            <TabsTrigger 
-              value="fila" 
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 md:py-2.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 min-h-[48px] md:min-h-[auto]"
-            >
-              <Package className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal">Fila de Separação</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="movimento"
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 md:py-2.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 min-h-[48px] md:min-h-[auto]"
-            >
-              <TrendingUp className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal">Nova Movimentação</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="historico"
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 md:py-2.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 min-h-[48px] md:min-h-[auto]"
-            >
-              <History className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal">Histórico</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="atual"
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 md:py-2.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 min-h-[48px] md:min-h-[auto]"
-            >
-              <BarChart3 className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal">Inventário Atual</span>
-            </TabsTrigger>
-          </div>
-        </TabsList>
-
-        <div className="mt-6">
-          <TabsContent value="fila" className="mt-0">
-            <FilaSeparacao />
-          </TabsContent>
-
-          <TabsContent value="movimento" className="mt-0">
-            <MovimentacaoEstoqueForm onSave={handleSave} />
-          </TabsContent>
-
-          <TabsContent value="historico" className="mt-0">
-            <HistoricoMovimentacoes />
-          </TabsContent>
-
-          <TabsContent value="atual" className="mt-0">
-            <div className="space-y-6">
-              {/* KPIs - SEM CORES */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Entradas</div>
-                  <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{stats.totalEntradas}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Saídas</div>
-                  <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{stats.totalSaidas}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Movimentações</div>
-                  <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{stats.totalMovimentacoes}</div>
-                </div>
-              </div>
-
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p>Inventário em desenvolvimento</p>
-              </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {links.map(({ to, icon: Icon, title, desc }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800/80"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+              <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </div>
-          </TabsContent>
-        </div>
-      </Tabs>
+            <div className="min-w-0">
+              <h2 className="font-medium text-gray-900 dark:text-white">{title}</h2>
+              <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{desc}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

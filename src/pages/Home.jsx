@@ -10,7 +10,12 @@ import {
 import P38Logo from '@/components/brand/P38Logo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, quickActionsAtivos } from '@/components/home/quickActions';
+import {
+  ALL_QUICK_ACTIONS,
+  DEFAULT_QUICK_ACTIONS,
+  quickActionsAtivos,
+  normalizeQuickActionIds,
+} from '@/components/home/quickActions';
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
 import { useKPIsCache } from '@/hooks/useKPIsCache';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
@@ -99,19 +104,21 @@ export default function HomePage() {
         if (podePersonalizar) {
           try {
             const saved = localStorage.getItem(STORAGE_KEY);
-            setQuickActionIds(saved ? JSON.parse(saved) : (perfil.atalhos_padrao || DEFAULT_QUICK_ACTIONS));
+            const raw = saved ? JSON.parse(saved) : (perfil.atalhos_padrao || DEFAULT_QUICK_ACTIONS);
+            setQuickActionIds(normalizeQuickActionIds(raw));
           } catch {
-            setQuickActionIds(perfil.atalhos_padrao || DEFAULT_QUICK_ACTIONS);
+            setQuickActionIds(normalizeQuickActionIds(perfil.atalhos_padrao || DEFAULT_QUICK_ACTIONS));
           }
         } else {
-          setQuickActionIds(perfil.atalhos_padrao || []);
+          setQuickActionIds(normalizeQuickActionIds(perfil.atalhos_padrao || []));
         }
       } else {
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
-          setQuickActionIds(saved ? JSON.parse(saved) : DEFAULT_QUICK_ACTIONS);
+          const raw = saved ? JSON.parse(saved) : DEFAULT_QUICK_ACTIONS;
+          setQuickActionIds(normalizeQuickActionIds(raw));
         } catch {
-          setQuickActionIds(DEFAULT_QUICK_ACTIONS);
+          setQuickActionIds(normalizeQuickActionIds(DEFAULT_QUICK_ACTIONS));
         }
       }
     };
@@ -120,7 +127,7 @@ export default function HomePage() {
   }, [loadKPIs]);
 
   const handleSaveActions = (ids) => {
-    const limited = ids.slice(0, 9);
+    const limited = normalizeQuickActionIds(ids);
     setQuickActionIds(limited);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
   };
@@ -232,7 +239,7 @@ export default function HomePage() {
           const podeVerCaixa = allowedActionIds.includes('pdv');
           const podeVerEstoque =
             allowedActionIds.includes('produtos') ||
-            allowedActionIds.includes('estoque');
+            allowedActionIds.includes('tabelaprecos');
           
           const temAvisoValido = (kpis.pedidosPendentes > 0 && podeVerCaixa) || (kpis.estoqueAlerta > 0 && podeVerEstoque);
           if (!temAvisos || !temAvisoValido) return null;

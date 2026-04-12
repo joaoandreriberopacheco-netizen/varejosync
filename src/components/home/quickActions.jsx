@@ -1,8 +1,8 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
-  Ship, BarChart3, Users, ClipboardList, Receipt, Warehouse,
-  FileText, QrCode, LayoutDashboard, Tag, Settings, Upload, MonitorCheck,
-  Scan, Tablet, ClipboardPenLine, ReceiptText
+  Ship, BarChart3, Users,
+  FileText, QrCode, Tag, Settings, Upload, MonitorCheck,
+  Tablet, ClipboardPenLine, ReceiptText
 } from 'lucide-react';
 
 /**
@@ -60,8 +60,12 @@ export const ALL_QUICK_ACTIONS = [
     icon: Ship,
     label: 'Boats',
     page: 'ItinerarioFluvial',
-    deprecated: true,
-    permissaoCheck: (p) => p?.estoque?.logistica || p?.estoque?.compras?.hub_logistico?.logistica,
+    permissaoCheck: (p) =>
+      p?.estoque?.logistica === true ||
+      p?.estoque?.compras?.logistica === true ||
+      p?.estoque?.compras?.hub_logistico?.logistica === true ||
+      p?.estoque?.compras?.hub_logistico?.conferencia === true ||
+      p?.estoque?.compras?.pedidos === true,
   },
   {
     id: 'dashboard',
@@ -69,13 +73,6 @@ export const ALL_QUICK_ACTIONS = [
     label: 'Dashboard',
     page: 'Dashboard',
     permissaoCheck: (p) => p?.dashboard?.acesso,
-  },
-  {
-    id: 'estoque',
-    icon: Warehouse,
-    label: 'Estoque',
-    page: 'Estoque',
-    permissaoCheck: (p) => p?.estoque?.conferencia_estoque || p?.estoque?.auditoria_estoque || p?.estoque?.armazenagem || p?.estoque?.separacao_pedidos,
   },
   {
     id: 'tabelaprecos',
@@ -151,9 +148,26 @@ export const ALL_QUICK_ACTIONS = [
   },
 ];
 
-export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'estoque', 'compras', 'financeiro', 'caixas_ativos', 'agefin_consulta'];
+export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'logistica', 'compras', 'financeiro', 'caixas_ativos', 'agefin_consulta'];
 
 /** Atalhos ativos (exclui descontinuados). */
 export function quickActionsAtivos() {
   return ALL_QUICK_ACTIONS.filter((a) => !a.deprecated);
+}
+
+/**
+ * Remove ids desconhecidos e troca o atalho legado `estoque` (página descontinuada) por `logistica` (Boats).
+ */
+export function normalizeQuickActionIds(ids) {
+  if (!Array.isArray(ids)) return [];
+  const valid = new Set(quickActionsAtivos().map((a) => a.id));
+  const seen = new Set();
+  const out = [];
+  for (const id of ids) {
+    const next = id === 'estoque' ? 'logistica' : id;
+    if (!valid.has(next) || seen.has(next)) continue;
+    seen.add(next);
+    out.push(next);
+  }
+  return out.slice(0, 9);
 }
