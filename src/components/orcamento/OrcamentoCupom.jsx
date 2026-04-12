@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { toast } from 'sonner';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtData = () => new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -232,14 +234,29 @@ function PreviewScaled({ formato, children }) {
 
 // ── Componente principal ────────────────────────────────────────────────────
 export default function OrcamentoCupom({ itens, total, desconto, subtotal, observacoes, formato, nomeTabela, clienteNome, empresa, onVoltar, onClose }) {
+  const [exportingPdf, setExportingPdf] = useState(false);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const el = document.getElementById('cupom-print');
     if (!el) return;
 
-    const isMobile = /iPhone|iPad|Android|mobile/i.test(navigator.userAgent);
+    if (shouldUseMobileDocumentExport()) {
+      setExportingPdf(true);
+      try {
+        await exportCupomToPdfAndShareOrDownload('cupom-print', {
+          formato: formato === 'a4' ? 'a4' : '80mm',
+          fileBaseName: `orcamento-${new Date().toISOString().slice(0, 10)}`,
+          title: 'Orçamento',
+        });
+      } catch (e) {
+        if (e?.name !== 'AbortError') toast.error('Não foi possível gerar o PDF');
+      } finally {
+        setExportingPdf(false);
+      }
+      return;
+    }
 
-    // HTML genérico para print em qualquer dispositivo
+    // HTML genérico para print em qualquer dispositivo (desktop)
     const html = `<!DOCTYPE html><html><head>
       <title>Orçamento</title>
       <meta charset="UTF-8">
@@ -259,35 +276,23 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
       </style>
     </head><body>${el.outerHTML}</body></html>`;
 
-    if (isMobile) {
-      // Mobile: usa blob para evitar dialog de impressora
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const printWindow = window.open(url, '_blank', 'toolbar=no,location=no,menubar=no');
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    } else {
-      // Desktop: iframe fixo
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.top = '-9999px';
-      iframe.style.left = '-9999px';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      document.body.appendChild(iframe);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-9999px';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    document.body.appendChild(iframe);
 
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
 
-      setTimeout(() => {
-        iframe.contentWindow.print();
-        setTimeout(() => document.body.removeChild(iframe), 2000);
-      }, 600);
-    }
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 2000);
+    }, 600);
   };
 
   return (
@@ -304,11 +309,12 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
         <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">Prévia</span>
         <Button
           onClick={handlePrint}
+          disabled={exportingPdf}
           size="sm"
           className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
         >
-          <Printer className="w-3.5 h-3.5" />
-          Imprimir
+          {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+          {exportingPdf ? 'Gerando…' : 'Imprimir'}
         </Button>
       </div>
 

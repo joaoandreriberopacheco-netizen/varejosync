@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { toast } from 'sonner';
+import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 
@@ -185,11 +187,30 @@ function PreviewScaled({ children }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function ComprovantePreVenda({ preVenda, open, onClose }) {
+  const [exportingPdf, setExportingPdf] = useState(false);
+
   if (!open || !preVenda) return null;
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const el = document.getElementById('cupom-print');
     if (!el) return;
+
+    if (shouldUseMobileDocumentExport()) {
+      setExportingPdf(true);
+      try {
+        await exportCupomToPdfAndShareOrDownload('cupom-print', {
+          formato: '80mm',
+          fileBaseName: `senha-${(preVenda.senha_atendimento || '').slice(-4) || 'atendimento'}`,
+          title: `Senha ${(preVenda.senha_atendimento || '').slice(-4)}`,
+        });
+      } catch (e) {
+        if (e?.name !== 'AbortError') toast.error('Não foi possível gerar o PDF');
+      } finally {
+        setExportingPdf(false);
+      }
+      return;
+    }
+
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0';
     document.body.appendChild(iframe);
@@ -230,11 +251,12 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
         </span>
         <Button
           onClick={handlePrint}
+          disabled={exportingPdf}
           size="sm"
           className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
         >
-          <Printer className="w-3.5 h-3.5" />
-          Imprimir
+          {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+          {exportingPdf ? 'Gerando…' : 'Imprimir'}
         </Button>
       </div>
 

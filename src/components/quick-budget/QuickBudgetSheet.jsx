@@ -5,6 +5,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Package, FileText, X, Percent, Minus, Plus } from 'lucide-react';
+import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { toast } from 'sonner';
 
 const fmtCurrency = (value) => `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtNumber = (value) => (Number(value) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -197,11 +199,8 @@ function BudgetContent({ onClose, isMobile }) {
 
   const handleRemove = (id) => setItems((current) => current.filter((item) => item.id !== id));
 
-  const handleGeneratePdf = () => {
+  const handleGeneratePdf = async () => {
     if (items.length === 0) return;
-
-    const win = window.open('', '_blank');
-    if (!win) return;
 
     const rows = items.map((item) => {
       const total = Math.max((item.price * item.quantity) - item.discount, 0);
@@ -216,7 +215,7 @@ function BudgetContent({ onClose, isMobile }) {
       `;
     }).join('');
 
-    win.document.write(`
+    const docHtml = `
       <html>
         <head>
           <meta charset="UTF-8" />
@@ -249,7 +248,21 @@ function BudgetContent({ onClose, isMobile }) {
           <div class="total">Total geral: ${fmtCurrency(quoteTotal)}</div>
         </body>
       </html>
-    `);
+    `;
+
+    if (shouldUseMobileDocumentExport()) {
+      try {
+        const r = await shareOrDownloadHtmlDocument(docHtml, `orcamento-rapido-${Date.now()}.html`, 'Orçamento rápido');
+        if (r === 'downloaded') toast.success('Arquivo baixado — abra e use Compartilhar se quiser');
+      } catch (e) {
+        if (e?.name !== 'AbortError') toast.error('Não foi possível exportar o orçamento');
+      }
+      return;
+    }
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(docHtml);
     win.document.close();
     win.focus();
     win.print();

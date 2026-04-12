@@ -10,6 +10,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { renderTemplate, prepararDadosVenda } from '@/lib/templateEngine';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
+import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -426,9 +427,28 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }).catch(() => {});
   }, [open]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const el = document.getElementById('cupom-print');
     if (!el) return;
+
+    if (shouldUseMobileDocumentExport()) {
+      setGerando(true);
+      try {
+        const pdf = await gerarPDF();
+        if (!pdf) {
+          toast.error('Não foi possível montar o PDF');
+          return;
+        }
+        const fileName = `pedido-${pedido?.numero || 'comprovante'}.pdf`;
+        const r = await shareOrDownloadBlob(pdf.output('blob'), fileName, 'application/pdf', `Pedido ${pedido?.numero || ''}`);
+        if (r === 'downloaded') toast.success('PDF pronto — use Abrir em para imprimir');
+      } catch (e) {
+        if (e?.name !== 'AbortError') toast.error('Erro ao gerar PDF');
+      } finally {
+        setGerando(false);
+      }
+      return;
+    }
 
     const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
 
@@ -511,18 +531,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       }
 
       const fileName = `pedido-${pedido?.numero || 'comprovante'}.pdf`;
-      const pdfBlob = pdf.output('blob');
-
-      if (navigator.share && navigator.canShare) {
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Pedido ${pedido?.numero || ''}` });
-          return;
-        }
-      }
-
-      pdf.save(fileName);
-      toast.success('PDF gerado com sucesso');
+      const r = await shareOrDownloadBlob(pdf.output('blob'), fileName, 'application/pdf', `Pedido ${pedido?.numero || ''}`);
+      if (r === 'downloaded') toast.success('PDF gerado com sucesso');
     } catch (e) {
       if (e.name !== 'AbortError') toast.error('Erro ao gerar PDF');
     } finally {
@@ -565,12 +575,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         <div className="flex items-center gap-2">
           <Button
             onClick={handlePrint}
+            disabled={gerando}
             size="sm"
             variant="outline"
             className="h-9 text-xs gap-1.5 rounded-xl px-3"
             title="Imprimir"
           >
-            <Printer className="w-3.5 h-3.5" />
+            {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
           </Button>
           <Button
             onClick={handleShare}

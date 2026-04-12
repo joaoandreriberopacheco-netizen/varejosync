@@ -8,6 +8,8 @@ import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
 import { buildQuickBudgetItem, getBudgetSummary, getFullPrice, recalculateItem } from './quickBudgetUtils';
 import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
+import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { toast } from 'sonner';
 
 export default function QuickBudgetPanel({ open, onOpenChange }) {
   const [produtos, setProdutos] = useState([]);
@@ -195,13 +197,23 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 </body>
 </html>`;
 
-    const shareWindow = window.open('', '_blank');
-    if (shareWindow) {
-      shareWindow.document.open();
-      shareWindow.document.write(html);
-      shareWindow.document.close();
+    try {
+      if (shouldUseMobileDocumentExport()) {
+        const r = await shareOrDownloadHtmlDocument(html, `orcamento-rapido-${Date.now()}.html`, 'Orçamento rápido');
+        if (r === 'downloaded') toast.success('Arquivo baixado — abra e use Compartilhar se quiser');
+      } else {
+        const shareWindow = window.open('', '_blank');
+        if (shareWindow) {
+          shareWindow.document.open();
+          shareWindow.document.write(html);
+          shareWindow.document.close();
+        }
+      }
+    } catch (e) {
+      if (e?.name !== 'AbortError') toast.error('Não foi possível exportar o orçamento');
+    } finally {
+      setIsSharing(false);
     }
-    setIsSharing(false);
   };
 
   const content = (
