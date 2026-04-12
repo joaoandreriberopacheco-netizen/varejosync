@@ -17,6 +17,7 @@ import {
   lancamentoEmDia,
   lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
+import { brandSurface } from '@/lib/brandSurfaces';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -28,24 +29,24 @@ function formatMonth(date) {
 
 function KpiCard({ label, value, tone = 'default' }) {
   const toneMap = {
-    default: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
-    danger: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
-    success: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
-    muted: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
+    default: `${brandSurface.card} text-gray-900 dark:text-white`,
+    danger: `${brandSurface.card} text-gray-900 dark:text-white`,
+    success: `${brandSurface.card} text-gray-900 dark:text-white`,
+    muted: `${brandSurface.card} text-gray-900 dark:text-white`,
   };
 
   const labelToneMap = {
-    default: 'text-gray-500 dark:text-gray-400',
-    success: 'text-emerald-700/80 dark:text-emerald-300/80',
-    danger: 'text-red-700/80 dark:text-red-300/80',
-    muted: 'text-gray-500 dark:text-gray-400',
+    default: 'text-gray-500 dark:text-muted-foreground',
+    success: 'text-emerald-700/80 dark:text-emerald-300/90',
+    danger: 'text-red-700/80 dark:text-red-300/90',
+    muted: 'text-gray-500 dark:text-muted-foreground',
   };
 
   const iconToneMap = {
-    default: 'text-gray-500 dark:text-gray-400',
-    success: 'text-emerald-700/80 dark:text-emerald-300/80',
-    danger: 'text-red-700/80 dark:text-red-300/80',
-    muted: 'text-gray-500 dark:text-gray-400',
+    default: 'text-gray-500 dark:text-muted-foreground',
+    success: 'text-emerald-700/80 dark:text-emerald-300/90',
+    danger: 'text-red-700/80 dark:text-red-300/90',
+    muted: 'text-gray-500 dark:text-muted-foreground',
   };
 
   const Icon = {
@@ -56,7 +57,7 @@ function KpiCard({ label, value, tone = 'default' }) {
   }[tone] || Wallet;
 
   return (
-    <div className={`min-w-0 rounded-[22px] shadow-sm px-4 py-3 ${toneMap[tone]}`}>
+    <div className={`min-w-0 rounded-[22px] px-3 py-2 shadow-sm md:px-4 md:py-3 ${toneMap[tone]}`}>
       <div className="flex items-center justify-between gap-3">
         <p className={`text-[10px] uppercase tracking-[0.16em] truncate ${labelToneMap[tone]}`}>{label}</p>
         <Icon className={`w-3.5 h-3.5 shrink-0 ${iconToneMap[tone]}`} />
@@ -107,47 +108,51 @@ function ContaCard({ conta, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="w-full text-left rounded-[28px] bg-white dark:bg-gray-900 p-1 shadow-sm transition-all hover:shadow-md"
+      className={`w-full text-left rounded-2xl p-0.5 shadow-sm transition-all hover:shadow-md md:rounded-[28px] md:p-1 ${brandSurface.card}`}
     >
-      <div className="rounded-[24px] bg-gray-50 dark:bg-gray-800/70 px-4 py-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className={`rounded-[20px] px-3 py-2.5 md:rounded-[24px] md:px-4 md:py-3.5 ${brandSurface.cardInset}`}>
+        <div className="flex items-start justify-between gap-2 md:gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="mb-1.5 flex flex-wrap items-center gap-1.5 md:mb-2 md:gap-2">
               {isPaid ? <CheckCircle2 className={iconClass} /> : isOverdue ? <CircleAlert className={iconClass} /> : <Wallet className={iconClass} />}
-              <p className="text-[15px] font-semibold text-gray-900 dark:text-white line-clamp-2">{conta.descricao}</p>
-              <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />
+              <p className="line-clamp-2 text-[14px] font-semibold text-gray-900 dark:text-white md:text-[15px]">{conta.descricao}</p>
+              <Paperclip className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-muted-foreground md:h-4 md:w-4" />
               {ehFrete && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-100">
-                  <Anchor className="w-3 h-3" /> Frete
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-900 dark:bg-sky-950/50 dark:text-sky-200">
+                  <Anchor className="h-3 w-3" /> Frete
                 </span>
               )}
               {ehCmv && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-900 dark:bg-violet-900/40 dark:text-violet-100">
-                  <Layers className="w-3 h-3" /> CMV
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-violet-900 dark:bg-violet-950/50 dark:text-violet-200">
+                  <Layers className="h-3 w-3" /> CMV
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <span className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 shadow-sm">
-                <Calendar className="w-3.5 h-3.5" /> {formatarSoData(conta.data_vencimento)}
+            <p className="line-clamp-1 text-[11px] text-gray-500 dark:text-muted-foreground md:text-xs">
+              {conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-muted-foreground md:mt-3 md:gap-2 md:text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-background/80 dark:ring-1 dark:ring-border">
+                <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5" /> {formatarSoData(conta.data_vencimento)}
               </span>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 shadow-sm ${
-                isPaid
-                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                  : isOverdue
-                    ? 'bg-pink-50 dark:bg-pink-500/10 text-pink-700 dark:text-pink-300'
-                    : hasBoleto
-                      ? 'bg-lime-50 dark:bg-lime-500/10 text-lime-700 dark:text-lime-300'
-                      : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-300'
-              }`}>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 shadow-sm md:px-2.5 md:py-1 ${
+                  isPaid
+                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
+                    : isOverdue
+                      ? 'bg-pink-50 text-pink-800 dark:bg-red-950/35 dark:text-red-200'
+                      : hasBoleto
+                        ? 'bg-lime-50 text-lime-800 dark:bg-lime-950/30 dark:text-lime-200'
+                        : 'bg-white text-gray-600 dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                }`}
+              >
                 {isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Atualizado' : 'Pendente'}
               </span>
             </div>
           </div>
-          <div className="text-right shrink-0 pl-2">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Valor</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(conta.valor)}</p>
+          <div className="shrink-0 pl-1 text-right md:pl-2">
+            <p className="text-[10px] text-gray-400 dark:text-muted-foreground md:text-xs">Valor</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-white md:text-lg">{formatCurrency(conta.valor)}</p>
           </div>
         </div>
       </div>
@@ -285,9 +290,9 @@ export default function AgefinConsulta() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-6 pb-24">
-      <div className="max-w-5xl mx-auto space-y-4">
-        <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-4 md:p-5">
+    <div className={`min-h-screen p-3 pb-24 md:p-6 ${brandSurface.pageScreen}`}>
+      <div className="mx-auto max-w-5xl space-y-3 md:space-y-4">
+        <div className={`rounded-[24px] p-4 md:rounded-[28px] md:p-5 ${brandSurface.card}`}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Consulta financeira</p>
@@ -403,7 +408,7 @@ export default function AgefinConsulta() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
           <KpiCard label="Total (filtro)" value={formatCurrency(kpis.totalValue)} />
           <KpiCard label="Pago" value={formatCurrency(kpis.paidValue)} tone="success" />
           <KpiCard label="Não pago" value={formatCurrency(kpis.unpaidValue)} tone="muted" />
@@ -413,9 +418,11 @@ export default function AgefinConsulta() {
         {loading ? (
           <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" /></div>
         ) : filteredData.length === 0 ? (
-          <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-12 text-center text-gray-500 dark:text-gray-400">Nenhuma conta a pagar encontrada para esse mês e filtros.</div>
+          <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
+            Nenhuma conta a pagar encontrada para esse mês e filtros.
+          </div>
         ) : (
-          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 md:max-w-4xl">
+          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-2 md:max-w-4xl md:gap-3">
             {filteredData.map((conta) => (
               <ContaCard key={conta.id} conta={conta} onOpen={() => setSelectedConta(conta)} />
             ))}
