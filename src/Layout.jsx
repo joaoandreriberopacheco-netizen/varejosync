@@ -276,7 +276,7 @@ export default function Layout({ children, currentPageName }) {
 
   if (isLoadingUser) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
+      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-background">
         <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" />
       </div>
     );
@@ -284,7 +284,7 @@ export default function Layout({ children, currentPageName }) {
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900 p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-background p-4">
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
           <WifiOff className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
@@ -302,7 +302,7 @@ export default function Layout({ children, currentPageName }) {
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <div className="min-h-screen bg-white dark:bg-gray-900">
+        <div className="min-h-screen bg-white dark:bg-background">
           {children}
         </div>
       </div>
@@ -312,7 +312,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-sans bg-white dark:bg-[#182132]">
+      <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
 
 
         {/* Sidebar Desktop */}
@@ -394,8 +394,8 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 fixed top-4 md:top-[20%] translate-y-0">
-          <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+        <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-card border-gray-200 dark:border-border fixed top-4 md:top-[20%] translate-y-0">
+          <div className="flex items-center px-4 border-b border-gray-200 dark:border-border sticky top-0 bg-white dark:bg-card z-10">
             <Search className="w-5 h-5 mr-3 text-gray-400" />
             <Input 
               className="flex-1 h-14 border-none bg-transparent focus-visible:ring-0 px-0 text-lg text-gray-800 dark:text-gray-200 placeholder:text-gray-400" 
@@ -404,7 +404,7 @@ export default function Layout({ children, currentPageName }) {
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
             />
-            <div className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">ESC</div>
+            <div className="text-xs text-gray-400 bg-gray-100 dark:bg-muted px-2 py-1 rounded border border-gray-200 dark:border-border">ESC</div>
           </div>
           <div className="max-h-[50vh] md:max-h-[300px] overflow-y-auto p-2">
              {filteredSearchItems.length === 0 && searchQuery && (

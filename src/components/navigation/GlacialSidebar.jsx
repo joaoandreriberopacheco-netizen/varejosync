@@ -78,15 +78,15 @@ export default function GlacialSidebar({
   const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
   const c = isDark ? {
-    bg: '#182132',
-    border: 'rgba(255,255,255,0.05)',
-    text: '#f1f5f9',
-    textSub: '#9fb0c9',
-    iconColor: '#94a3b8',
-    activeBg: 'rgba(255,255,255,0.06)',
-    hoverBg: 'rgba(255,255,255,0.035)',
-    chevron: '#6f84a3',
-    sectionLabel: '#6f84a3',
+    bg: '#111827',
+    border: 'rgba(255,255,255,0.06)',
+    text: '#ffffff',
+    textSub: '#9ca3af',
+    iconColor: '#9ca3af',
+    activeBg: 'rgba(255,255,255,0.08)',
+    hoverBg: 'rgba(255,255,255,0.05)',
+    chevron: '#6b7280',
+    sectionLabel: '#6b7280',
     subBorder: 'rgba(255,255,255,0.08)',
   } : {
     bg: '#ffffff',

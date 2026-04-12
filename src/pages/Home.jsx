@@ -136,7 +136,7 @@ export default function HomePage() {
   const formatValor = (valor) => formatCurrency(roundToTwoDecimals(valor || 0));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header com logo inline (desktop) + boas-vindas */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -155,7 +155,7 @@ export default function HomePage() {
 
         {/* Saldo Card — visível apenas com permissão de dashboard ou vendas */}
         {podeVerResumoVendas && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Resumo de Vendas</p>
@@ -179,7 +179,7 @@ export default function HomePage() {
             )}
             <Link
               to={createPageUrl('Dashboard')}
-              className="mt-4 flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              className="mt-4 flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-muted rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -213,7 +213,7 @@ export default function HomePage() {
                 <Link
                   key={action.id}
                   to={createPageUrl(action.page)}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
+                  className="bg-white dark:bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
                   style={{ minHeight: '110px' }}
                 >
                   <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
@@ -241,7 +241,7 @@ export default function HomePage() {
             <div className="space-y-2">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 px-1">Avisos</h2>
               {kpis.pedidosPendentes > 0 && podeVerCaixa && (
-                <Link to={createPageUrl('PDVCaixa')} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+                <Link to={createPageUrl('PDVCaixa')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
                     <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
@@ -255,7 +255,7 @@ export default function HomePage() {
                 </Link>
               )}
               {kpis.estoqueAlerta > 0 && podeVerEstoque && (
-                <Link to={createPageUrl('Produtos')} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+                <Link to={createPageUrl('Produtos')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
                     <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>
@@ -273,7 +273,7 @@ export default function HomePage() {
         })()}
 
         {/* Atalhos de lista adicionais — filtra por permissões */}
-        <Link to="/ConsumoInterno" className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+        <Link to="/ConsumoInterno" className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
           <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
             <ClipboardPenLine className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </div>
@@ -292,7 +292,7 @@ export default function HomePage() {
           if (outrosAtalhos.length === 0) return null;
           
           return (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+            <div className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial mb-3">Outros Atalhos</h3>
               <div className="space-y-2">
                 {outrosAtalhos.map((action) => {

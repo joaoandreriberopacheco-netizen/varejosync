@@ -40,7 +40,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/96 dark:bg-[#182132]/96 backdrop-blur-xl border-t border-slate-200/70 dark:border-white/5"
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/96 dark:bg-gray-900/96 backdrop-blur-xl border-t border-slate-200/70 dark:border-gray-800/80"
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
         boxShadow: '0 -6px 24px -12px rgba(15,23,42,0.28)'
@@ -59,7 +59,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
                   className={`transition-all duration-200 ${
                     active 
                       ? 'w-5 h-5 text-slate-900 dark:text-white stroke-[2]' 
-                      : 'w-5 h-5 text-slate-400 dark:text-slate-500 stroke-[1.75]'
+                      : 'w-5 h-5 text-slate-400 dark:text-gray-500 stroke-[1.75]'
                   }`} 
                 />
               </div>
@@ -67,7 +67,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
                 className={`text-[10px] font-medium transition-colors duration-200 ${
                   active 
                     ? 'text-slate-900 dark:text-white' 
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-400 dark:text-gray-500'
                 }`}
               >
                 {item.label}

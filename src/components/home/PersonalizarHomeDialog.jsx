@@ -25,7 +25,7 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm mx-auto dark:bg-gray-900 dark:border-gray-700">
+      <DialogContent className="max-w-sm mx-auto dark:bg-card dark:border-border">
         <DialogHeader>
            <DialogTitle className="text-base font-semibold text-gray-900 dark:text-white">
              Personalizar Tela Inicial
