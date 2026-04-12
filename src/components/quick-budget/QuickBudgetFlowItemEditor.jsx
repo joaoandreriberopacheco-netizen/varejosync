@@ -58,8 +58,9 @@ export default function QuickBudgetFlowItemEditor({
             <PrecoVendaTabelaLinhas
               produto={selectedProduct}
               tabelaPreco={tabelaPreco}
+              variant="quickBudget"
               finalClassName="text-lg font-bold text-gray-800 dark:text-gray-100 tabular-nums"
-              labelBottom="Preço da tabela (piso de venda)"
+              labelBottom={false}
             />
           </div>
         </div>

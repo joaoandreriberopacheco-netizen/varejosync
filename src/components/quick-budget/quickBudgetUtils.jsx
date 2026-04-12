@@ -29,21 +29,50 @@ export function getFullPrice(produto, tabelaPreco) {
   return calcularPrecoVendaTabela(produto, tabelaPreco);
 }
 
-/** Mesma lógica que SkuCard em TabelaPrecosConsulta (lista riscada + preço da tabela). */
-export function PrecoVendaTabelaLinhas({ produto, tabelaPreco, finalClassName = 'text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums', labelBottom }) {
+/**
+ * Lista (cadastro) riscada quando a tabela aplica fator ≠ 1; valor em destaque = piso na tabela.
+ * variant="quickBudget" adiciona rótulos explícitos (orçamento rápido / consulta em cima de outra tela).
+ */
+export function PrecoVendaTabelaLinhas({
+  produto,
+  tabelaPreco,
+  finalClassName = 'text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums',
+  labelBottom,
+  variant = 'default',
+}) {
   const precoFinal = calcularPrecoVendaTabela(produto, tabelaPreco);
   const precoOriginal = Number(produto?.preco_venda_padrao || 0);
   const temAjuste = tabelaPreco && tabelaPreco.fator_ajuste !== 1;
+  const qb = variant === 'quickBudget';
+
   return (
     <>
       {temAjuste && precoOriginal > 0 && (
-        <div className="text-xs text-gray-400 line-through whitespace-nowrap tabular-nums">
-          {formatCurrency(precoOriginal)}
+        <div className={qb ? 'text-right' : ''}>
+          {qb && (
+            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Preço normal (cadastro)</p>
+          )}
+          <div className="text-xs text-gray-400 line-through tabular-nums whitespace-nowrap">
+            {formatCurrency(precoOriginal)}
+          </div>
         </div>
       )}
       {precoFinal > 0 && (
-        <div className={`whitespace-nowrap ${finalClassName}`}>
-          {formatCurrency(precoFinal)}
+        <div className={qb ? 'text-right' : ''}>
+          {qb && (
+            <p
+              className={`text-[10px] font-medium uppercase tracking-wide ${
+                temAjuste && precoOriginal > 0
+                  ? 'text-emerald-800 dark:text-emerald-400/90'
+                  : 'text-gray-400'
+              }`}
+            >
+              {temAjuste && precoOriginal > 0 ? 'Preço na tabela (piso de venda)' : 'Preço na tabela'}
+            </p>
+          )}
+          <div className={`tabular-nums whitespace-nowrap ${finalClassName}`}>
+            {formatCurrency(precoFinal)}
+          </div>
         </div>
       )}
       {labelBottom != null && labelBottom !== false && (

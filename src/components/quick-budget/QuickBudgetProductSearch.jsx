@@ -56,8 +56,9 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
                   <PrecoVendaTabelaLinhas
                     produto={produto}
                     tabelaPreco={tabelaPreco}
+                    variant="quickBudget"
                     finalClassName="text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums"
-                    labelBottom="preço tabela"
+                    labelBottom={false}
                   />
                 </div>
               </div>

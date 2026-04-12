@@ -221,7 +221,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   };
 
   const content = (
-    <div className="relative flex flex-col h-full min-h-0 bg-gray-50 dark:bg-gray-950">
+    <div className="relative flex min-h-0 flex-1 flex-col bg-gray-50 dark:bg-gray-950">
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div>
           <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">Orçamento rápido</DialogTitle>
@@ -347,7 +347,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-transparent p-0 overflow-hidden z-[260]">
+        <DrawerContent className="mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 bg-gray-50 p-0 dark:bg-gray-950 [&>div:first-child]:hidden">
           {content}
         </DrawerContent>
       </Drawer>
@@ -356,7 +356,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 border-0 rounded-none overflow-hidden shadow-2xl bg-transparent z-[260]">
+      <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-gray-50 p-0 shadow-2xl dark:bg-gray-950 [&>button.absolute]:hidden">
         <DialogHeader className="hidden" />
         {content}
       </DialogContent>

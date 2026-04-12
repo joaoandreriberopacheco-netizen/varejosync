@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronUp, Search } from 'lucide-react';
 import QuickBudgetPanel from './QuickBudgetPanel';
+
+/** Acima de drawers/modais comuns (ex. z-310) para o atalho continuar acessível. */
+const LAUNCHER_Z = 520;
 
 export default function QuickBudgetLauncher() {
   const [open, setOpen] = useState(false);
@@ -53,28 +57,38 @@ export default function QuickBudgetLauncher() {
     resetDrag();
   };
 
+  const launcher =
+    isMobile &&
+    !open &&
+    typeof document !== 'undefined' &&
+    createPortal(
+      <div
+        className="pointer-events-none fixed left-0 p38-bottom-fab1"
+        style={{
+          zIndex: LAUNCHER_Z,
+          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+          transition: dragging ? 'none' : 'transform 180ms ease-out',
+        }}
+      >
+        <button
+          type="button"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={resetDrag}
+          className="pointer-events-auto flex h-16 w-9 select-none flex-col items-center justify-center gap-1 rounded-r-2xl border border-gray-200/80 bg-white/95 text-gray-500 shadow-lg backdrop-blur-sm dark:border-gray-700/80 dark:bg-gray-900/95 dark:text-gray-400 touch-pan-x"
+          aria-label="Arraste para cima e para a direita para abrir o orçamento rápido"
+        >
+          <Search className="h-4 w-4" />
+          <ChevronUp className="h-3 w-3 opacity-70" />
+        </button>
+      </div>,
+      document.body
+    );
+
   return (
     <>
-      {isMobile && (
-        <div
-          className="fixed left-0 z-[250] p38-bottom-fab1"
-          style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`, transition: dragging ? 'none' : 'transform 180ms ease-out' }}
-        >
-          <button
-            type="button"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={resetDrag}
-            className="h-16 w-9 rounded-r-2xl bg-white/92 dark:bg-gray-900/92 shadow-lg backdrop-blur-sm flex flex-col items-center justify-center gap-1 text-gray-500 select-none touch-pan-x"
-            aria-label="Arraste para abrir orçamento rápido"
-          >
-            <Search className="w-4 h-4" />
-            <ChevronUp className="w-3 h-3 opacity-70" />
-          </button>
-        </div>
-      )}
-
+      {launcher}
       <QuickBudgetPanel open={open} onOpenChange={setOpen} />
     </>
   );
