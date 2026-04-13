@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
 import { TAG_LF_BOLETO_PDF, marcarLancamentosComoImportadosPorBoletoPdf } from '@/lib/agefinLancamentosRecorrencia';
+import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 
 export default function AgefinImportador({
   onSuccess,
@@ -275,6 +276,18 @@ Campos a interpretar do documento:
           dataVencimento: extractedData.data_vencimento,
           valor: extractedData.valor,
         });
+        if (lancamentoFinanceiroId && file?.original) {
+          try {
+            await uploadAnexoParaLancamentoFinanceiro(base44, {
+              file: file.original,
+              lancamentoId: lancamentoFinanceiroId,
+              descricao: descricaoFinal,
+              origem: 'importador_agefin_pdf',
+            });
+          } catch (anexoErr) {
+            console.error('Anexo PDF (atualização boleto):', anexoErr);
+          }
+        }
       }
 
       if (!modoAtualizacao) {
@@ -307,6 +320,18 @@ Campos a interpretar do documento:
         };
 
         lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);
+        if (lancamentoCriado?.id && file?.original) {
+          try {
+            await uploadAnexoParaLancamentoFinanceiro(base44, {
+              file: file.original,
+              lancamentoId: lancamentoCriado.id,
+              descricao: descricaoFinal,
+              origem: 'importador_agefin_pdf',
+            });
+          } catch (anexoErr) {
+            console.error('Anexo PDF (nova conta):', anexoErr);
+          }
+        }
       }
 
       setSuccessState({

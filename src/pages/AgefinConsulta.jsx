@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import AgefinConsultaDrawer from '@/components/agefin/AgefinConsultaDrawer';
+import AgefinConsultaOrganizer from '@/components/agefin/AgefinConsultaOrganizer';
 import { boundsMesCivil, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
@@ -89,7 +90,11 @@ function FilterChip({ active, onClick, children, tone = 'default' }) {
   );
 }
 
-function ContaCard({ conta, onOpen }) {
+function grupoDomId(key) {
+  return `agefin-grupo-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao }) {
   const todayKey = dataHoje();
   const isPaid = lancamentoPago(conta);
   const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
@@ -107,13 +112,28 @@ function ContaCard({ conta, onOpen }) {
   return (
     <button
       type="button"
-      onClick={onOpen}
-      className={`w-full text-left rounded-2xl p-0.5 shadow-sm transition-all hover:shadow-md md:rounded-[28px] md:p-1 ${brandSurface.card}`}
+      onClick={() => {
+        if (modoSelecao) onToggleSelecao?.(conta);
+        else onOpen();
+      }}
+      className={`relative w-full text-left rounded-2xl p-0.5 shadow-sm transition-all hover:shadow-md md:rounded-[28px] md:p-1 ${brandSurface.card}`}
     >
+      {modoSelecao && selecionado && (
+        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-emerald-500/10 dark:bg-emerald-500/15 md:rounded-[24px]" />
+      )}
       <div className={`rounded-[20px] px-3 py-2.5 md:rounded-[24px] md:px-4 md:py-3.5 ${brandSurface.cardInset}`}>
         <div className="flex items-start justify-between gap-2 md:gap-3">
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex flex-wrap items-center gap-1.5 md:mb-2 md:gap-2">
+              {modoSelecao && (
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-200 dark:border-gray-600 ${
+                    selecionado ? 'border-emerald-500 bg-emerald-500 text-white' : 'bg-white dark:bg-gray-900'
+                  }`}
+                >
+                  {selecionado ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+                </span>
+              )}
               {isPaid ? <CheckCircle2 className={iconClass} /> : isOverdue ? <CircleAlert className={iconClass} /> : <Wallet className={iconClass} />}
               <p className="line-clamp-2 text-[14px] font-semibold text-gray-900 dark:text-white md:text-[15px]">{conta.descricao}</p>
               <Paperclip className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-muted-foreground md:h-4 md:w-4" />
@@ -171,7 +191,12 @@ export default function AgefinConsulta() {
   const [freteFilter, setFreteFilter] = useState('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [groupBy, setGroupBy] = useState('vencimento');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [modoSelecao, setModoSelecao] = useState(false);
+  const [selecionadosIds, setSelecionadosIds] = useState([]);
   const debounceRef = useRef(null);
+  const scrollMesAplicadoRef = useRef('');
 
   const loadContas = useCallback(async () => {
     setLoading(true);
@@ -247,10 +272,130 @@ export default function AgefinConsulta() {
       const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
       return matchesFrom && matchesTo;
     });
-    return [...list].sort((a, b) =>
-      (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' })
-    );
+    return list;
   }, [monthData, pagamentoFilter, prazoFilter, cmvFilter, freteFilter, dateFrom, dateTo]);
+
+  const contasOrdenadas = useMemo(() => {
+    const list = [...filteredData];
+    list.sort((a, b) => {
+      const da = (a.data_vencimento || '').slice(0, 10);
+      const db = (b.data_vencimento || '').slice(0, 10);
+      const c = da.localeCompare(db);
+      if (c !== 0) return sortOrder === 'asc' ? c : -c;
+      return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+    });
+    return list;
+  }, [filteredData, sortOrder]);
+
+  const grupos = useMemo(() => {
+    const todayKey = dataHoje();
+    const bucketStatus = (conta) => {
+      if (lancamentoPago(conta)) return { key: 'pago', label: 'Pagos', order: 0 };
+      if (lancamentoVencidoOuAtrasado(conta, todayKey)) return { key: 'vencido', label: 'Vencidos', order: 1 };
+      return { key: 'aberto', label: 'Em aberto', order: 2 };
+    };
+
+    const metaFor = (conta) => {
+      if (groupBy === 'vencimento') {
+        const d = (conta.data_vencimento || '').slice(0, 10) || 'sem-data';
+        const label =
+          d === 'sem-data' ? 'Sem data' : d === todayKey ? 'Hoje' : formatarSoData(d);
+        return { key: `v:${d}`, label, orderValue: d === 'sem-data' ? '9999-12-31' : d };
+      }
+      if (groupBy === 'favorecido') {
+        const nome = (conta.terceiro_nome || '').trim() || 'Sem favorecido';
+        return { key: `f:${nome}`, label: nome, orderValue: nome.toLowerCase() };
+      }
+      if (groupBy === 'categoria') {
+        const cat = (conta.categoria || '').trim() || 'Sem categoria';
+        return { key: `c:${cat}`, label: cat, orderValue: cat.toLowerCase() };
+      }
+      const b = bucketStatus(conta);
+      return { key: `s:${b.key}`, label: b.label, orderValue: String(b.order) };
+    };
+
+    const map = {};
+    contasOrdenadas.forEach((conta) => {
+      const m = metaFor(conta);
+      if (!map[m.key]) map[m.key] = { key: m.key, label: m.label, orderValue: m.orderValue, contas: [] };
+      map[m.key].contas.push(conta);
+    });
+
+    const compareGroups = (a, b) => {
+      if (groupBy === 'status') {
+        const ia = Number(a.orderValue);
+        const ib = Number(b.orderValue);
+        return sortOrder === 'asc' ? ia - ib : ib - ia;
+      }
+      const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', { sensitivity: 'base' });
+      return sortOrder === 'asc' ? cmp : -cmp;
+    };
+
+    return Object.values(map)
+      .sort(compareGroups)
+      .map((g) => ({
+        ...g,
+        contas: [...g.contas].sort((a, b) => {
+          const da = (a.data_vencimento || '').slice(0, 10);
+          const db = (b.data_vencimento || '').slice(0, 10);
+          const cmp = da.localeCompare(db);
+          if (cmp !== 0) return sortOrder === 'asc' ? cmp : -cmp;
+          return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+        }),
+      }));
+  }, [contasOrdenadas, groupBy, sortOrder]);
+
+  const anchorGrupoKey = useMemo(() => {
+    const tk = dataHoje();
+    for (const g of grupos) {
+      if (g.contas.some((c) => (c.data_vencimento || '').slice(0, 10) === tk)) return g.key;
+    }
+    if (groupBy === 'vencimento') {
+      const hoje = new Date(`${tk}T12:00:00`);
+      for (const g of grupos) {
+        const d = String(g.orderValue || '').slice(0, 10);
+        if (d && d !== '9999-12-31' && !Number.isNaN(new Date(`${d}T12:00:00`).getTime()) && new Date(`${d}T12:00:00`) >= hoje) {
+          return g.key;
+        }
+      }
+    }
+    return grupos[0]?.key || null;
+  }, [grupos, groupBy]);
+
+  useEffect(() => {
+    scrollMesAplicadoRef.current = '';
+  }, [currentMonth]);
+
+  useLayoutEffect(() => {
+    if (loading || modoSelecao) return;
+    const mk = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
+    if (scrollMesAplicadoRef.current === mk) return;
+    const id = anchorGrupoKey ? grupoDomId(anchorGrupoKey) : null;
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    scrollMesAplicadoRef.current = mk;
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [loading, currentMonth, anchorGrupoKey, modoSelecao]);
+
+  useEffect(() => {
+    if (!modoSelecao) setSelecionadosIds([]);
+  }, [modoSelecao]);
+
+  const toggleSelecaoConta = useCallback((conta) => {
+    if (!conta?.id) return;
+    setSelecionadosIds((prev) => (prev.includes(conta.id) ? prev.filter((x) => x !== conta.id) : [...prev, conta.id]));
+  }, []);
+
+  const somaSelecionados = useMemo(() => {
+    let s = 0;
+    for (const c of contasOrdenadas) {
+      if (selecionadosIds.includes(c.id)) s += Number(c.valor) || 0;
+    }
+    return s;
+  }, [contasOrdenadas, selecionadosIds]);
 
   const kpis = useMemo(() => {
     const paid = filteredData.filter((c) => lancamentoPago(c));
@@ -290,16 +435,34 @@ export default function AgefinConsulta() {
   };
 
   return (
-    <div className={`min-h-screen p-3 pb-24 md:p-6 ${brandSurface.pageScreen}`}>
+    <div className={`min-h-screen p-3 md:p-6 ${modoSelecao ? 'pb-40' : 'pb-24'} ${brandSurface.pageScreen}`}>
       <div className="mx-auto max-w-5xl space-y-3 md:space-y-4">
         <div className={`rounded-[24px] p-4 md:rounded-[28px] md:p-5 ${brandSurface.card}`}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Consulta financeira</p>
               <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white font-glacial">Agefin</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Todas as contas a pagar do mês. Filtros no ícone ao lado.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Contas do mês por vencimento (padrão). Agrupe pelo ícone; toque em &quot;Somar&quot; para escolher contas e ver o total.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <AgefinConsultaOrganizer
+                groupBy={groupBy}
+                sortOrder={sortOrder}
+                onGroupByChange={setGroupBy}
+                onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setModoSelecao((v) => !v)}
+                className={`h-10 gap-1.5 rounded-2xl px-3 text-xs font-medium ${modoSelecao ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
+              >
+                <Calculator className="h-4 w-4" />
+                {modoSelecao ? 'Somando' : 'Somar'}
+              </Button>
               <Drawer>
                 <DrawerTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
@@ -417,18 +580,58 @@ export default function AgefinConsulta() {
 
         {loading ? (
           <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" /></div>
-        ) : filteredData.length === 0 ? (
+        ) : contasOrdenadas.length === 0 ? (
           <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
             Nenhuma conta a pagar encontrada para esse mês e filtros.
           </div>
         ) : (
-          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-2 md:max-w-4xl md:gap-3">
-            {filteredData.map((conta) => (
-              <ContaCard key={conta.id} conta={conta} onOpen={() => setSelectedConta(conta)} />
+          <div className="mx-auto w-full max-w-3xl space-y-6 md:max-w-4xl">
+            {grupos.map((grupo) => (
+              <section key={grupo.key} id={grupoDomId(grupo.key)} className="scroll-mt-24 space-y-2 md:space-y-3">
+                <div className="flex items-baseline justify-between gap-2 px-0.5">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-muted-foreground">{grupo.label}</h2>
+                  <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                    {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 md:gap-3">
+                  {grupo.contas.map((conta) => (
+                    <ContaCard
+                      key={conta.id}
+                      conta={conta}
+                      modoSelecao={modoSelecao}
+                      selecionado={selecionadosIds.includes(conta.id)}
+                      onToggleSelecao={toggleSelecaoConta}
+                      onOpen={() => setSelectedConta(conta)}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}
       </div>
+
+      {modoSelecao && (
+        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Seleção para pagar</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {selecionadosIds.length} conta{selecionadosIds.length !== 1 ? 's' : ''} · {formatCurrency(somaSelecionados)}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" className="h-11 flex-1 rounded-2xl sm:flex-none" onClick={() => setSelecionadosIds([])}>
+                Limpar
+              </Button>
+              <Button type="button" size="sm" className="h-11 flex-1 rounded-2xl sm:flex-none" onClick={() => setModoSelecao(false)}>
+                Pronto
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AgefinConsultaDrawer open={Boolean(selectedConta)} onClose={() => setSelectedConta(null)} conta={selectedConta} />
     </div>
