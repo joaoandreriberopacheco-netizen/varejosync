@@ -1308,7 +1308,8 @@ export default function PDVVendedor() {
         </div>
       </div>
 
-      {/* Barra Inferior Mobile */}
+      {/* Barra inferior mobile: z-[55] fica acima do Dialog (z-50) — esconder com qualquer modal full-screen */}
+      {!showClienteDialog && !showReeditarDialog && !unitSelector.open && (
           <div className="pointer-events-auto fixed left-0 right-0 z-[55] flex items-center gap-2 rounded-t-[26px] border-t border-gray-100 bg-white/90 px-3 pt-3 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/95 md:hidden p38-bottom-dock shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
@@ -1342,6 +1343,7 @@ export default function PDVVendedor() {
               Cliente
             </button>
           </div>
+      )}
 
       {/* Dialog de cliente - GLACIAL PROTOCOL */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
