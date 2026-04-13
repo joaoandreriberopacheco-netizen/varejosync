@@ -447,8 +447,8 @@ Campos a interpretar do documento:
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="h-0 min-h-0 flex-1 overflow-y-scroll overscroll-y-contain px-5 pb-[calc(12rem+env(safe-area-inset-bottom))] pt-2 touch-pan-y [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]">
+    <div className="flex h-full min-h-0 max-h-full flex-1 flex-col overflow-hidden">
+      <div className="h-0 min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] md:[scrollbar-width:thin] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <div className="flex items-start gap-3">

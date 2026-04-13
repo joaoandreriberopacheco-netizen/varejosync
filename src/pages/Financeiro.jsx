@@ -62,17 +62,19 @@ export default function FinanceiroPage() {
         </Button>
 
         <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-          <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden">
-            <div className="p-5 border-b border-gray-100 dark:border-gray-800">
+          <DialogContent className="flex max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl">
+            <div className="shrink-0 border-b border-gray-100 p-5 dark:border-gray-800">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Importar conta</h2>
             </div>
-            <AgefinImportador
-              onSuccess={(_, options) => {
-                if (options?.close) {
-                  setShowImportDialog(false);
-                }
-              }}
-            />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <AgefinImportador
+                onSuccess={(_, options) => {
+                  if (options?.close) {
+                    setShowImportDialog(false);
+                  }
+                }}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>

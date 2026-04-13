@@ -244,13 +244,15 @@ export default function Agefin() {
 
       {/* Import Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent className="rounded-3xl border-0 shadow-lg">
-          <AgefinImportador
-            onSuccess={() => {
-              setShowImportDialog(false);
-              loadContas();
-            }}
-          />
+        <DialogContent className="flex max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-lg">
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <AgefinImportador
+              onSuccess={() => {
+                setShowImportDialog(false);
+                loadContas();
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
