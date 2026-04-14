@@ -8,13 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
+import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
   const gerarNomeCompleto = (data) => {
@@ -53,7 +54,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [tagInput, setTagInput] = useState('');
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
-  const [historicoOrder, setHistoricoOrder] = useState('desc');
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
   
@@ -334,6 +334,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
       setTemAlteracoesNaoSalvas(false);
       onSave();
+      if (produtoId) loadMovimentacoes();
       // onClose(); // Mantendo aberto para feedback
     } catch (error) {
       toast({ title: "Erro ao salvar produto", description: error.message, variant: "destructive", duration: 5000 });
@@ -346,15 +347,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const rounded = Math.round(numero * 100) / 100;
     return rounded.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
-
-  const movimentacoesOrdenadas = useMemo(() => {
-    const items = [...movimentacoes];
-    return items.sort((a, b) => {
-      const dateA = new Date(a.created_date).getTime();
-      const dateB = new Date(b.created_date).getTime();
-      return historicoOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-  }, [movimentacoes, historicoOrder]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-900">
@@ -915,97 +907,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
           </TabsContent>
 
-          {/* ABA HISTÓRICO */}
-          <TabsContent value="historico" className="space-y-4 mt-0">
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#1f2432] px-4 py-3 shadow-sm">
-              <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Histórico do produto</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Visual PDV com documento, pedido e cliente</p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setHistoricoOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="h-10 rounded-xl bg-white dark:bg-[#151a26] px-3 shadow-sm text-gray-700 dark:text-gray-200"
-              >
-                {historicoOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-                <span className="ml-2 hidden sm:inline">{historicoOrder === 'asc' ? 'Mais antigo' : 'Mais recente'}</span>
-              </Button>
-            </div>
-
-            {loadingMovimentacoes ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-              </div>
-            ) : movimentacoesOrdenadas.length === 0 ? (
-              <div className="text-center py-12">
-                <History className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma movimentação registrada</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {movimentacoesOrdenadas.map((mov) => {
-                  const isEntrada = mov.tipo === 'Entrada';
-                  const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
-                  const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '-';
-                  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '-';
-                  const origem = mov.referencia_tipo || mov.motivo || mov.tipo;
-
-                  return (
-                    <div key={mov.id} className="rounded-2xl bg-[#f8fafc] dark:bg-[#151a26] shadow-sm overflow-hidden">
-                      <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3 border-b border-gray-200/70 dark:border-white/5">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge className={`text-[10px] rounded-full border-0 ${isEntrada ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
-                              {origem}
-                            </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {format(new Date(mov.created_date), 'dd/MM/yyyy')} • {format(new Date(mov.created_date), 'HH:mm')}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                            {documento}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
-                            Cliente: {clienteNome}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-lg font-bold tabular-nums ${isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {isEntrada ? '+' : '-'}{mov.quantidade}
-                          </p>
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400">Qtd</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 py-3 text-xs">
-                        <div>
-                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Preço un.</p>
-                          <p className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums">
-                            {mov.custo_unitario > 0 ? `R$ ${mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Total</p>
-                          <p className={`font-semibold tabular-nums ${isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Responsável</p>
-                          <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{mov.usuario_responsavel || '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Tipo</p>
-                          <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{mov.tipo}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          {/* ABA HISTÓRICO — extrato PDV */}
+          <TabsContent value="historico" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-2 pt-2 sm:px-2">
+            <ProdutoHistoricoEstoqueTab
+              movimentacoes={movimentacoes}
+              estoqueAtual={formData.estoque_atual}
+              loading={loadingMovimentacoes}
+              onRefresh={loadMovimentacoes}
+            />
           </TabsContent>
 
           {/* ABA SISTEMA */}
