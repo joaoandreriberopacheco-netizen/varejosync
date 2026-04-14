@@ -102,11 +102,14 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
   const boletoVencido = hasBoleto && isOverdue;
   const atualizadoPdf = tagsOrigemBoleto(contaMes?.tags) === 'pdf';
 
-  const ringContorno = isPaid
-    ? 'ring-2 ring-[#5c6b3a] dark:ring-[#8a9a5c]'
-    : atualizadoPdf
-      ? 'ring-2 ring-lime-200 dark:ring-lime-400/50'
-      : 'dark:ring-1 dark:ring-border';
+  const iconRing =
+    !isPaid && hasBoleto && boletoVencido
+      ? 'ring-2 ring-red-400 dark:ring-red-400/75'
+      : isPaid
+        ? 'ring-2 ring-[#5c6b3a] dark:ring-[#8a9a5c]'
+        : atualizadoPdf
+          ? 'ring-2 ring-lime-200 dark:ring-lime-400/50'
+          : '';
 
   return (
     <div
@@ -116,28 +119,33 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onOpen();
       }}
-      className={`w-full cursor-pointer rounded-[28px] bg-white p-1 text-left shadow-sm dark:bg-card ${ringContorno}`}
+      className="w-full cursor-pointer rounded-[28px] bg-white p-1 text-left shadow-sm ring-1 ring-gray-200/90 dark:bg-card dark:ring-1 dark:ring-border"
     >
       <div className="space-y-2.5 rounded-[24px] bg-gray-50/95 px-3.5 py-3 dark:bg-muted/35">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-2.5">
-            {(isPaid || isOverdue) && (
-              <span
-                className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
-                  isPaid
-                    ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:bg-emerald-300 dark:shadow-[0_0_0_3px_rgba(110,231,183,0.12)]'
-                    : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.18)] dark:bg-red-400 dark:shadow-[0_0_0_3px_rgba(248,113,113,0.16)]'
-                }`}
-              />
+            {isOverdue && (
+              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.18)] dark:bg-red-400 dark:shadow-[0_0_0_3px_rgba(248,113,113,0.16)]" />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="line-clamp-2 text-[15px] font-semibold leading-5 text-gray-900 dark:text-foreground">{recorrente.nome_despesa}</p>
+                  <div className="flex items-start gap-1.5">
+                    {isPaid && (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                    )}
+                    <p className="line-clamp-2 text-[15px] font-semibold leading-5 text-gray-900 dark:text-foreground">{recorrente.nome_despesa}</p>
+                  </div>
                   <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-muted-foreground">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
                 </div>
                 <div className="shrink-0 pl-2 text-right">
-                  <p className="text-[11px] text-gray-400 dark:text-muted-foreground">Previsto</p>
+                  <p
+                    className={`text-[11px] ${
+                      isPaid ? 'font-medium text-emerald-700 dark:text-emerald-300' : 'text-gray-400 dark:text-muted-foreground'
+                    }`}
+                  >
+                    {isPaid ? 'Pago' : 'Previsto'}
+                  </p>
                   <p className="text-sm font-semibold text-gray-900 dark:text-foreground">{formatCurrency(recorrente.valor_previsto)}</p>
                 </div>
               </div>
@@ -159,15 +167,13 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
 
           <div className="relative shrink-0">
             <div
-              className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white shadow-sm dark:bg-card ${
-                !isPaid && hasBoleto && boletoVencido ? 'ring-2 ring-red-400 dark:ring-red-400/75' : ''
-              }`}
+              className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white shadow-sm dark:bg-card ${iconRing}`}
             >
               <FileText className="h-5 w-5 text-gray-500 dark:text-muted-foreground" />
             </div>
-            {hasBoleto && (
+            {hasBoleto && !isPaid && (
               <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white shadow-sm dark:bg-card">
-                <CheckCircle2 className={`h-3.5 w-3.5 ${isPaid ? 'text-emerald-500 dark:text-emerald-200' : 'text-gray-500 dark:text-muted-foreground'}`} />
+                <CheckCircle2 className="h-3.5 w-3.5 text-gray-500 dark:text-muted-foreground" />
               </span>
             )}
           </div>
@@ -316,7 +322,7 @@ export default function AgefinRecorrentes() {
       <div className="rounded-[28px] bg-white p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
         <div className="mb-3 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
           <p className="text-[11px] leading-4 text-gray-500 dark:text-muted-foreground">
-            Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima = boleto já atualizado por PDF; verde-oliva = pago.
+            Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima no ícone do boleto = PDF daquele mês registado; contorno verde-oliva no ícone = pago; check verde ao lado do título quando pago.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">
