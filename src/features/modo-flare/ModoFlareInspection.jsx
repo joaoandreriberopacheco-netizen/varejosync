@@ -347,9 +347,8 @@ export default function ModoFlareInspection({ onClose }) {
       requestAnimationFrame(() => briefingTextareaRef.current?.focus?.());
       if (confidence === 'medium') {
         toast({
-          title: 'Sem coordenada source-location',
-          description: 'Este alvo será salvo com confiança média. Detalhe a ação e inclua imagem.',
-          variant: 'destructive',
+          title: 'Sem coordenada de código neste elemento',
+          description: 'Será registado com confiança média. Detalhe a ação e inclua imagem se ajudar.',
         });
       }
     },
