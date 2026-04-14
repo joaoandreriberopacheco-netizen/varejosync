@@ -36,10 +36,13 @@ export default function ModoFlareInspection({ onClose }) {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [briefingDraft, setBriefingDraft] = useState('');
   const [pendingMeta, setPendingMeta] = useState(null);
+  const [pendingRect, setPendingRect] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [successMarker, setSuccessMarker] = useState(null);
   const recognitionRef = useRef(null);
   const skipClickAfterTouchRef = useRef(false);
+  const successMarkerTimerRef = useRef(null);
 
   const { data: pendingFlares = [], isError: pendingError } = useQuery({
     queryKey: ['targetFlares', 'pending'],
@@ -63,6 +66,15 @@ export default function ModoFlareInspection({ onClose }) {
       document.documentElement.removeAttribute('data-flare-inspection');
     };
   }, []);
+
+  useEffect(
+    () => () => {
+      if (successMarkerTimerRef.current) {
+        clearTimeout(successMarkerTimerRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const onKey = (e) => {
@@ -113,6 +125,13 @@ export default function ModoFlareInspection({ onClose }) {
     setPendingMeta({
       ...parsed,
       component_name: componentNameFromFilePath(parsed.file_path),
+    });
+    const rect = el.getBoundingClientRect();
+    setPendingRect({
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
     });
     setBriefingDraft('');
     setBriefingOpen(true);
@@ -226,11 +245,32 @@ export default function ModoFlareInspection({ onClose }) {
         briefing: text,
         route: location.pathname || '',
       });
-      await queryClient.invalidateQueries({ queryKey: ['targetFlares', 'pending'] });
-      toast({ title: 'Bandeirinha registada' });
+      // Fecha imediatamente para manter o fluxo de caça contínuo.
       setBriefingOpen(false);
       setPendingMeta(null);
+      setPendingRect(null);
       setBriefingDraft('');
+      stopRecognition();
+      if (pendingRect) {
+        setSuccessMarker({
+          top: pendingRect.top,
+          left: pendingRect.left,
+          width: pendingRect.width,
+          height: pendingRect.height,
+        });
+        if (successMarkerTimerRef.current) {
+          clearTimeout(successMarkerTimerRef.current);
+        }
+        successMarkerTimerRef.current = window.setTimeout(() => {
+          setSuccessMarker(null);
+          successMarkerTimerRef.current = null;
+        }, 1200);
+      }
+      void queryClient.invalidateQueries({ queryKey: ['targetFlares', 'pending'] });
+      toast({
+        title: 'Bandeirinha fincada com sucesso',
+        description: 'Podes continuar navegando e marcar outro elemento.',
+      });
     } catch (err) {
       toast({
         title: 'Erro ao guardar',
@@ -240,7 +280,7 @@ export default function ModoFlareInspection({ onClose }) {
     } finally {
       setSaving(false);
     }
-  }, [briefingDraft, location.pathname, pendingMeta, queryClient, toast]);
+  }, [briefingDraft, location.pathname, pendingMeta, pendingRect, queryClient, stopRecognition, toast]);
 
   const onBriefingKeyDown = useCallback(
     (e) => {
@@ -338,6 +378,20 @@ export default function ModoFlareInspection({ onClose }) {
         />
       )}
 
+      {successMarker && (
+        <div
+          className="pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500/90 text-base text-white shadow-lg"
+          style={{
+            top: successMarker.top + 4,
+            left: successMarker.left + successMarker.width - 16,
+            zIndex: HUD_Z + 4,
+          }}
+          title="Bandeirinha fincada com sucesso"
+        >
+          ✓
+        </div>
+      )}
+
       {pinPositions.map(
         (p) =>
           p.rect && (
@@ -403,6 +457,7 @@ export default function ModoFlareInspection({ onClose }) {
               onClick={() => {
                 setBriefingOpen(false);
                 setPendingMeta(null);
+                setPendingRect(null);
                 setBriefingDraft('');
                 stopRecognition();
               }}

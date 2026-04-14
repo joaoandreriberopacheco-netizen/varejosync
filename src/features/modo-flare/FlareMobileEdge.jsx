@@ -2,11 +2,12 @@ import React, { useCallback, useRef } from 'react';
 import { Flag } from 'lucide-react';
 import { useModoFlare } from '@/features/modo-flare/ModoFlareContext';
 
-const UP_MIN = 44;
+const DOWN_MIN = 44;
 const LEFT_MIN = 44;
 
 /**
- * Faixa lateral esquerda: toque longo abre o Flare; gesto em L (cima depois esquerda) também.
+ * Botão discreto no topo direito: toque longo abre o Flare;
+ * gesto em L invertido (baixo e depois esquerda) também.
  */
 export default function FlareMobileEdge() {
   const { openFlare } = useModoFlare();
@@ -42,10 +43,10 @@ export default function FlareMobileEdge() {
       const dx = t.clientX - startRef.current.x;
       const dy = t.clientY - startRef.current.y;
 
-      if (phaseRef.current === 'idle' && dy < -UP_MIN && Math.abs(dx) < 28) {
-        phaseRef.current = 'up';
+      if (phaseRef.current === 'idle' && dy > DOWN_MIN && Math.abs(dx) < 28) {
+        phaseRef.current = 'down';
         clearLongPress();
-      } else if (phaseRef.current === 'up' && dx < -LEFT_MIN && dy < 20) {
+      } else if (phaseRef.current === 'down' && dx < -LEFT_MIN && dy > 12) {
         phaseRef.current = 'done';
         clearLongPress();
         openFlare();
@@ -64,7 +65,7 @@ export default function FlareMobileEdge() {
 
   return (
     <div
-      className="fixed left-0 top-[28%] z-[10040] flex h-40 w-9 items-center justify-center rounded-r-md bg-amber-950/25 opacity-40 hover:opacity-70 lg:hidden"
+      className="fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[10040] flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100/80 text-gray-600 shadow-sm backdrop-blur-sm opacity-65 transition-opacity hover:opacity-90 active:opacity-100 dark:bg-gray-800/85 dark:text-gray-300 lg:hidden"
       style={{ touchAction: 'none' }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -72,7 +73,7 @@ export default function FlareMobileEdge() {
       onTouchCancel={onTouchEnd}
       aria-hidden
     >
-      <Flag className="h-5 w-5 text-amber-200" strokeWidth={1.5} />
+      <Flag className="h-4 w-4" strokeWidth={1.75} />
     </div>
   );
 }
