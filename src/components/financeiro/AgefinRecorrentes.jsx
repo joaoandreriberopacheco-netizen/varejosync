@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import AgefinConsultaOrganizer from '@/components/agefin/AgefinConsultaOrganizer';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -184,6 +185,8 @@ export default function AgefinRecorrentes() {
   const [filterOrigem, setFilterOrigem] = useState('todos');
   const [search, setSearch] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [groupBy, setGroupBy] = useState('nome');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   const monthKey = getMonthKey(currentMonth);
 
@@ -233,10 +236,58 @@ export default function AgefinRecorrentes() {
       out = out.filter((item) => cardMatchesSearch(item, search));
     }
 
-    return [...out].sort((a, b) =>
-      (a.recorrente.nome_despesa || '').localeCompare(b.recorrente.nome_despesa || '', 'pt-BR', { sensitivity: 'base' })
-    );
+    return out;
   }, [recorrentes, contas, monthKey, filterPagamento, filterPrazo, filterOrigem, search]);
+
+  const gruposCards = useMemo(() => {
+    const todayKey = dataHoje();
+    const metaFor = (item) => {
+      const { recorrente, contaMes } = item;
+      if (groupBy === 'nome') {
+        const nome = (recorrente.nome_despesa || '').trim() || 'Sem nome';
+        return { key: `n:${nome}`, label: nome, orderValue: nome.toLowerCase() };
+      }
+      if (groupBy === 'dia') {
+        const d = String(recorrente.dia_vencimento ?? '');
+        return { key: `d:${d}`, label: `Dia ${d || '—'}`, orderValue: d.padStart(2, '0') };
+      }
+      if (groupBy === 'situacao') {
+        const pago = contaMes?.status === 'Pago';
+        const venc = !pago && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
+        const order = pago ? '0' : venc ? '1' : '2';
+        const label = pago ? 'Pagas' : venc ? 'Vencidas' : 'Em aberto';
+        return { key: `s:${order}`, label, orderValue: order };
+      }
+      const nomeFallback = (recorrente.nome_despesa || '').trim() || 'Sem nome';
+      return { key: `n:${nomeFallback}`, label: nomeFallback, orderValue: nomeFallback.toLowerCase() };
+    };
+
+    const map = {};
+    filteredCards.forEach((item) => {
+      const m = metaFor(item);
+      if (!map[m.key]) map[m.key] = { key: m.key, label: m.label, orderValue: m.orderValue, items: [] };
+      map[m.key].items.push(item);
+    });
+
+    const compareGroups = (a, b) => {
+      if (groupBy === 'situacao') {
+        const ia = Number(a.orderValue);
+        const ib = Number(b.orderValue);
+        return sortOrder === 'asc' ? ia - ib : ib - ia;
+      }
+      const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', { sensitivity: 'base' });
+      return sortOrder === 'asc' ? cmp : -cmp;
+    };
+
+    return Object.values(map)
+      .sort(compareGroups)
+      .map((g) => ({
+        ...g,
+        items: [...g.items].sort((a, b) =>
+          (a.recorrente.nome_despesa || '').localeCompare(b.recorrente.nome_despesa || '', 'pt-BR', { sensitivity: 'base' })
+        ),
+      }));
+  }, [filteredCards, groupBy, sortOrder]);
 
   const hasActiveFilters =
     filterPagamento !== 'todos' || filterPrazo !== 'todos' || filterOrigem !== 'todos';
@@ -250,10 +301,13 @@ export default function AgefinRecorrentes() {
     setFilterOrigem('todos');
   };
 
-  const abrirAtualizacao = (recorrente) => {
-    const gid = recorrente.grupo_lancamento_id || recorrente.id;
-    navigate(`${createPageUrl('AtualizarBoletoRecorrente')}?grupo=${encodeURIComponent(gid)}&mes=${encodeURIComponent(monthKey)}`);
-  };
+  const abrirAtualizacao = useCallback(
+    (recorrente) => {
+      const gid = recorrente.grupo_lancamento_id || recorrente.id;
+      navigate(`${createPageUrl('AtualizarBoletoRecorrente')}?grupo=${encodeURIComponent(gid)}&mes=${encodeURIComponent(monthKey)}`);
+    },
+    [navigate, monthKey]
+  );
 
   return (
     <div className="space-y-4 pb-24">
@@ -288,9 +342,9 @@ export default function AgefinRecorrentes() {
       </div>
 
       <div className="rounded-[24px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
-        <div className="flex items-center gap-2">
-          <div className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
-            <Search className="h-4 w-4 flex-none text-gray-400 dark:text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
+            <Search className="h-4 w-4 shrink-0 text-gray-400 dark:text-muted-foreground" />
             <input autoComplete="off"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -303,6 +357,13 @@ export default function AgefinRecorrentes() {
               </button>
             ) : null}
           </div>
+          <AgefinConsultaOrganizer
+            variant="recorrentes"
+            groupBy={groupBy}
+            sortOrder={sortOrder}
+            onGroupByChange={setGroupBy}
+            onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+          />
           <button
             type="button"
             onClick={() => setFilterOpen(true)}
@@ -398,14 +459,24 @@ export default function AgefinRecorrentes() {
           <p className="text-sm text-gray-500 dark:text-muted-foreground">Altere o mês, a busca ou os filtros para ver outras contas.</p>
         </div>
       ) : (
-        <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-2.5 md:max-w-4xl">
-          {filteredCards.map(({ recorrente, contaMes }) => (
-            <AgefinCard
-              key={`${recorrente.grupo_lancamento_id}-${monthKey}`}
-              recorrente={recorrente}
-              contaMes={contaMes}
-              onOpen={() => abrirAtualizacao(recorrente)}
-            />
+        <div className="mx-auto w-full max-w-3xl space-y-6 md:max-w-4xl">
+          {gruposCards.map((grupo) => (
+            <section key={grupo.key} className="space-y-2.5">
+              <div className="flex items-baseline justify-between gap-2 px-0.5">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-muted-foreground">{grupo.label}</h3>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">{grupo.items.length}</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5">
+                {grupo.items.map(({ recorrente, contaMes }) => (
+                  <AgefinCard
+                    key={`${recorrente.grupo_lancamento_id}-${monthKey}-${grupo.key}`}
+                    recorrente={recorrente}
+                    contaMes={contaMes}
+                    onOpen={() => abrirAtualizacao(recorrente)}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

@@ -5,7 +5,12 @@ import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText, Ch
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
-import { TAG_LF_BOLETO_PDF, marcarLancamentosComoImportadosPorBoletoPdf } from '@/lib/agefinLancamentosRecorrencia';
+import {
+  TAG_LF_BOLETO_PDF,
+  criarParcelasIniciaisRecorrenteAposPrimeiro,
+  isLancamentoParcelasMensaisRecorrente,
+  marcarLancamentosComoImportadosPorBoletoPdf,
+} from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 
 export default function AgefinImportador({
@@ -330,6 +335,13 @@ Campos a interpretar do documento:
             });
           } catch (anexoErr) {
             console.error('Anexo PDF (nova conta):', anexoErr);
+          }
+        }
+        if (lancamentoCriado && isLancamentoParcelasMensaisRecorrente(lancamentoCriado)) {
+          try {
+            await criarParcelasIniciaisRecorrenteAposPrimeiro(base44, lancamentoCriado);
+          } catch (parcelasErr) {
+            console.error('Parcelas iniciais recorrente:', parcelasErr);
           }
         }
       }

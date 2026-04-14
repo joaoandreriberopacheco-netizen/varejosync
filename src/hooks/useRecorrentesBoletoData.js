@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { gerarLancamentosMensaisAteFimDoAno } from '@/lib/agefinLancamentosRecorrencia';
 
 export function getMonthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -23,6 +24,11 @@ export function useRecorrentesBoletoData() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      try {
+        await gerarLancamentosMensaisAteFimDoAno(base44);
+      } catch (e) {
+        console.error('Sincronizar recorrências mensais:', e);
+      }
       const contasData = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 500);
       const lancamentosRecorrentes = (contasData || []).filter(
         (item) =>

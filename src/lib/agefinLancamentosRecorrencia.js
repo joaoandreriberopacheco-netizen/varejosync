@@ -35,88 +35,208 @@ export function mesReferenciaLancamento(l) {
   return d.slice(0, 7);
 }
 
-/**
- * Para recorrência mensal com grupo_lancamento_id: gera lançamentos faltantes do ano corrente até 31/dez.
- * Usa o primeiro lançamento do grupo como modelo (valor, descrição, dia de vencimento).
- */
-export async function gerarLancamentosMensaisAteFimDoAno(base44, { ano } = {}) {
-  const year = ano ?? new Date().getFullYear();
-  const fimAno = `${year}-12-31`;
+/** Soma meses a YYYY-MM-DD (dia ajustado ao fim do mês de destino). */
+export function addMonthsYmd(ymdStr, deltaMonths) {
+  const s = (ymdStr || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  const totalM = y * 12 + (m - 1) + deltaMonths;
+  const ny = Math.floor(totalM / 12);
+  const nm = (totalM % 12) + 1;
+  const dim = new Date(ny, nm, 0).getDate();
+  const dd = Math.min(d, dim);
+  return `${ny}-${pad2(nm)}-${pad2(dd)}`;
+}
 
-  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 800);
-  const todos = lista || [];
+/** Recorrência mensal (conta a pagar) sujeita à janela automática / atualizador de boletos. */
+export function isLancamentoParcelasMensaisRecorrente(l) {
+  if (!l || l.status === 'Cancelado' || l.tipo !== 'Despesa') return false;
+  const tags = Array.isArray(l.tags) ? l.tags : [];
+  if (!tags.includes('conta_pagar') || !l.is_recorrente || !l.grupo_lancamento_id) return false;
+  if (tags.includes('parcelado')) return false;
+  const f = l.frequencia_recorrencia;
+  return !f || f === 'Mensal';
+}
 
-  const candidatos = todos.filter(
-    (l) =>
-      l.status !== 'Cancelado' &&
-      l.tipo === 'Despesa' &&
-      l.is_recorrente &&
-      l.grupo_lancamento_id &&
-      (l.frequencia_recorrencia === 'Mensal' || (l.is_recorrente && !l.frequencia_recorrencia)) &&
-      Array.isArray(l.tags) &&
-      l.tags.includes('conta_pagar')
+export async function maxDataVencimentoMensaisOutrosGrupos(base44, excludeGrupoId) {
+  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 2500);
+  let maxD = null;
+  for (const row of lista || []) {
+    if (!isLancamentoParcelasMensaisRecorrente(row)) continue;
+    if (excludeGrupoId && row.grupo_lancamento_id === excludeGrupoId) continue;
+    const d = (row.data_vencimento || '').slice(0, 10);
+    if (d && (!maxD || d > maxD)) maxD = d;
+  }
+  return maxD;
+}
+
+export async function maxDataVencimentoMensaisTodosGrupos(base44) {
+  return maxDataVencimentoMensaisOutrosGrupos(base44, null);
+}
+
+function lancamentoPayloadClonadoMensal(modelo, dataVencimento, mesKey) {
+  const baseTags = Array.from(new Set([...(modelo.tags || []), 'conta_pagar', 'recorrente', TAG_LF_GERADO_AUTO])).filter(
+    (t) => t !== TAG_LF_BOLETO_PDF
   );
+  return {
+    tipo: 'Despesa',
+    descricao: modelo.descricao,
+    terceiro_id: modelo.terceiro_id,
+    terceiro_nome: modelo.terceiro_nome,
+    valor: modelo.valor,
+    valor_liquido: modelo.valor_liquido ?? modelo.valor,
+    data_vencimento: dataVencimento,
+    status: 'Em Aberto',
+    status_conciliacao: modelo.status_conciliacao || 'N/A',
+    categoria: modelo.categoria,
+    categoria_id: modelo.categoria_id,
+    conta_financeira_id: modelo.conta_financeira_id,
+    conta_financeira_nome: modelo.conta_financeira_nome,
+    referencia_tipo: modelo.referencia_tipo || 'RecorrenciaAutomatica',
+    referencia_id: modelo.referencia_id || modelo.grupo_lancamento_id,
+    observacoes: `Competência ${mesKey} — gerado automaticamente (janela recorrente).`,
+    tags: baseTags,
+    is_recorrente: true,
+    frequencia_recorrencia: 'Mensal',
+    grupo_lancamento_id: modelo.grupo_lancamento_id,
+    forma_pagamento: modelo.forma_pagamento,
+    forma_pagamento_tipo: modelo.forma_pagamento_tipo,
+  };
+}
 
+/**
+ * Após o primeiro lançamento mensal do grupo: cria até 3 parcelas seguintes,
+ * totalizando 4 vencimentos, sem ultrapassar o maior vencimento já existente noutros grupos (alinhamento da frota).
+ */
+export async function criarParcelasIniciaisRecorrenteAposPrimeiro(base44, modelo) {
+  if (!modelo?.grupo_lancamento_id || !isLancamentoParcelasMensaisRecorrente(modelo)) return { criados: 0 };
+  const grupoId = modelo.grupo_lancamento_id;
+  const cap = await maxDataVencimentoMensaisOutrosGrupos(base44, grupoId);
+  const primeiro = (modelo.data_vencimento || '').slice(0, 10);
+  if (!primeiro) return { criados: 0 };
+
+  let criados = 0;
+  for (let i = 1; i <= 3; i += 1) {
+    const dt = addMonthsYmd(primeiro, i);
+    if (!dt) break;
+    if (cap && dt > cap) break;
+    const mesKey = dt.slice(0, 7);
+    const existentes = await base44.entities.LancamentoFinanceiro.filter({ grupo_lancamento_id: grupoId });
+    const jaTem = (existentes || []).some((x) => mesReferenciaLancamento(x) === mesKey);
+    if (jaTem) continue;
+    await base44.entities.LancamentoFinanceiro.create(lancamentoPayloadClonadoMensal(modelo, dt, mesKey));
+    criados += 1;
+  }
+  return { criados };
+}
+
+async function agruparMensaisRecorrentes(base44) {
+  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 2500);
+  const todos = lista || [];
+  const candidatos = todos.filter(isLancamentoParcelasMensaisRecorrente);
   const porGrupo = new Map();
   for (const l of candidatos) {
     const g = l.grupo_lancamento_id;
     if (!porGrupo.has(g)) porGrupo.set(g, []);
     porGrupo.get(g).push(l);
   }
+  for (const arr of porGrupo.values()) {
+    arr.sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''));
+  }
+  return { lista: todos, porGrupo, candidatos };
+}
 
+/** Grupos com vencimento máximo abaixo do máximo global recebem parcelas até alinhar (ex.: nova recorrente). */
+export async function alinharGruposRecorrentesAoHorizonteGlobal(base44) {
+  const { porGrupo } = await agruparMensaisRecorrentes(base44);
+  const globalMax = await maxDataVencimentoMensaisTodosGrupos(base44);
+  if (!globalMax) return { criados: 0 };
+
+  let criados = 0;
+  for (const [, grupoLista] of porGrupo) {
+    const modelo = grupoLista[0];
+    let gMax = (grupoLista[grupoLista.length - 1].data_vencimento || '').slice(0, 10);
+    if (!gMax) continue;
+    const mesesNoGrupo = () => new Set(grupoLista.map((x) => mesReferenciaLancamento(x)).filter(Boolean));
+
+    while (gMax < globalMax) {
+      const next = addMonthsYmd(gMax, 1);
+      if (!next || next > globalMax) break;
+      const mk = next.slice(0, 7);
+      const setMes = mesesNoGrupo();
+      if (setMes.has(mk)) {
+        gMax = next;
+        continue;
+      }
+      await base44.entities.LancamentoFinanceiro.create(lancamentoPayloadClonadoMensal(modelo, next, mk));
+      grupoLista.push({ data_vencimento: next, grupo_lancamento_id: modelo.grupo_lancamento_id });
+      grupoLista.sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''));
+      gMax = (grupoLista[grupoLista.length - 1].data_vencimento || '').slice(0, 10);
+      criados += 1;
+    }
+  }
+  return { criados };
+}
+
+const EXT_STORAGE_PREFIX = 'varejosync_lf_rec_ext_';
+
+/** Uma vez por mês civil: estende o maior vencimento global em +1 mês e replica para todos os grupos mensais. */
+export async function garantirExtensaoMensalRecorrentes(base44) {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+  if (typeof localStorage !== 'undefined' && localStorage.getItem(EXT_STORAGE_PREFIX + ym)) {
+    return { criados: 0, skipped: true };
+  }
+
+  const globalMax = await maxDataVencimentoMensaisTodosGrupos(base44);
+  if (!globalMax) {
+    return { criados: 0, skipped: false };
+  }
+
+  const newTarget = addMonthsYmd(globalMax, 1);
+  if (!newTarget) {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(EXT_STORAGE_PREFIX + ym, '1');
+    return { criados: 0 };
+  }
+
+  const { porGrupo } = await agruparMensaisRecorrentes(base44);
   let criados = 0;
 
   for (const [, grupoLista] of porGrupo) {
-    grupoLista.sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''));
     const modelo = grupoLista[0];
-    const dia = Math.min(
-      28,
-      Math.max(1, Number(String(modelo.data_vencimento || '').slice(8, 10)) || 15)
-    );
+    let gMax = (grupoLista[grupoLista.length - 1].data_vencimento || '').slice(0, 10);
+    if (!gMax) continue;
 
-    const existentesPorMes = new Set(grupoLista.map((x) => mesReferenciaLancamento(x)).filter(Boolean));
-
-    for (let m = 1; m <= 12; m++) {
-      const mesKey = `${year}-${pad2(m)}`;
-      if (existentesPorMes.has(mesKey)) continue;
-
-      const dataVenc = `${mesKey}-${pad2(dia)}`;
-      if (dataVenc > fimAno) break;
-
-      const baseTags = Array.from(new Set([...(modelo.tags || []), 'conta_pagar', 'recorrente', TAG_LF_GERADO_AUTO])).filter(
-        (t) => t !== TAG_LF_BOLETO_PDF
-      );
-
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Despesa',
-        descricao: modelo.descricao,
-        terceiro_id: modelo.terceiro_id,
-        terceiro_nome: modelo.terceiro_nome,
-        valor: modelo.valor,
-        valor_liquido: modelo.valor_liquido ?? modelo.valor,
-        data_vencimento: dataVenc,
-        status: 'Em Aberto',
-        status_conciliacao: modelo.status_conciliacao || 'N/A',
-        categoria: modelo.categoria,
-        categoria_id: modelo.categoria_id,
-        conta_financeira_id: modelo.conta_financeira_id,
-        conta_financeira_nome: modelo.conta_financeira_nome,
-        referencia_tipo: modelo.referencia_tipo || 'RecorrenciaAutomatica',
-        referencia_id: modelo.grupo_lancamento_id,
-        observacoes: `Competência ${mesKey} — gerado automaticamente até ${fimAno}.`,
-        tags: baseTags,
-        is_recorrente: true,
-        frequencia_recorrencia: 'Mensal',
-        grupo_lancamento_id: modelo.grupo_lancamento_id,
-        forma_pagamento: modelo.forma_pagamento,
-        forma_pagamento_tipo: modelo.forma_pagamento_tipo,
-      });
-      existentesPorMes.add(mesKey);
-      criados++;
+    while (gMax < newTarget) {
+      const next = addMonthsYmd(gMax, 1);
+      if (!next || next > newTarget) break;
+      const mk = next.slice(0, 7);
+      const jaTem = grupoLista.some((x) => mesReferenciaLancamento(x) === mk);
+      if (jaTem) {
+        gMax = next;
+        continue;
+      }
+      await base44.entities.LancamentoFinanceiro.create(lancamentoPayloadClonadoMensal(modelo, next, mk));
+      grupoLista.push({ data_vencimento: next });
+      grupoLista.sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''));
+      gMax = (grupoLista[grupoLista.length - 1].data_vencimento || '').slice(0, 10);
+      criados += 1;
     }
   }
 
-  return { criados, ano: year };
+  if (typeof localStorage !== 'undefined') localStorage.setItem(EXT_STORAGE_PREFIX + ym, '1');
+  return { criados, skipped: false };
+}
+
+/**
+ * Sincroniza recorrências mensais: alinha novos grupos ao horizonte existente e,
+ * no primeiro acesso de cada mês civil, estende um mês para todos.
+ * Substitui a geração em massa até dezembro.
+ */
+export async function gerarLancamentosMensaisAteFimDoAno(base44, _opts = {}) {
+  const a = await alinharGruposRecorrentesAoHorizonteGlobal(base44);
+  const b = await garantirExtensaoMensalRecorrentes(base44);
+  return { criados: (a.criados || 0) + (b.criados || 0), ano: new Date().getFullYear() };
 }
 
 /**

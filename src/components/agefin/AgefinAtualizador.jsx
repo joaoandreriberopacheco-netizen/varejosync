@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronRight, RefreshCw, Calendar, Repeat, Sparkles, FileText } from 'lucide-react';
+import { ChevronRight, RefreshCw, Calendar, Repeat, Sparkles, FileText, Search, SlidersHorizontal, X } from 'lucide-react';
 import AgefinAtualizacaoDialog from './AgefinAtualizacaoDialog';
 import {
   lancamentoEntraNoAtualizadorBoletos,
   gerarLancamentosMensaisAteFimDoAno,
   tagsOrigemBoleto,
 } from '@/lib/agefinLancamentosRecorrencia';
+import AgefinConsultaOrganizer from '@/components/agefin/AgefinConsultaOrganizer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 const FREQ_LABEL = {
   Semanal: 'Semanal',
@@ -18,11 +21,51 @@ const FREQ_LABEL = {
   Parcelado: 'Parcelado',
 };
 
+function grupoDomId(key) {
+  return `agefin-boleto-grupo-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+function FilterSection({ label, icon: Icon, options, value, onChange }) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 shrink-0" />
+        {label}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => {
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange(opt.id)}
+              className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
+                active
+                  ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
+                  : 'bg-gray-100 text-gray-600 shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function AgefinAtualizador({ onRefresh }) {
   const [lancamentos, setLancamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [msgGeracao, setMsgGeracao] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterOrigem, setFilterOrigem] = useState('todos');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [groupBy, setGroupBy] = useState('mes');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     loadLancamentos();
@@ -35,7 +78,9 @@ export default function AgefinAtualizador({ onRefresh }) {
 
       const { criados } = await gerarLancamentosMensaisAteFimDoAno(base44);
       if (criados > 0) {
-        setMsgGeracao(`${criados} competência${criados !== 1 ? 's' : ''} gerada${criados !== 1 ? 's' : ''} automaticamente até dez/${new Date().getFullYear()}.`);
+        setMsgGeracao(
+          `${criados} lançamento${criados !== 1 ? 's' : ''} sincronizado${criados !== 1 ? 's' : ''} (alinhamento ou extensão mensal de recorrências).`
+        );
       }
 
       const [comFlag, resto] = await Promise.all([
@@ -60,6 +105,88 @@ export default function AgefinAtualizador({ onRefresh }) {
     }
   };
 
+  const todayKey = dataHoje();
+
+  const filtradosBusca = useMemo(() => {
+    let list = lancamentos;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (l) =>
+          (l.descricao || '').toLowerCase().includes(q) ||
+          (l.terceiro_nome || '').toLowerCase().includes(q) ||
+          (l.data_vencimento || '').includes(q)
+      );
+    }
+    if (filterOrigem === 'pdf') {
+      list = list.filter((l) => tagsOrigemBoleto(l.tags) === 'pdf');
+    } else if (filterOrigem === 'auto') {
+      list = list.filter((l) => tagsOrigemBoleto(l.tags) === 'auto');
+    } else if (filterOrigem === 'outro') {
+      list = list.filter((l) => !tagsOrigemBoleto(l.tags));
+    }
+    if (filterStatus === 'aberto') {
+      list = list.filter((l) => l.status === 'Em Aberto');
+    } else if (filterStatus === 'vencido') {
+      list = list.filter((l) => l.status === 'Vencido' || (l.status !== 'Pago' && l.data_vencimento && l.data_vencimento < todayKey));
+    } else if (filterStatus === 'pago') {
+      list = list.filter((l) => l.status === 'Pago');
+    }
+    return list;
+  }, [lancamentos, search, filterOrigem, filterStatus, todayKey]);
+
+  const grupos = useMemo(() => {
+    const metaFor = (l) => {
+      if (groupBy === 'mes') {
+        const mk = (l.data_vencimento || '').slice(0, 7) || 'sem-mes';
+        return { key: `m:${mk}`, label: mk === 'sem-mes' ? 'Sem mês' : mk, orderValue: mk };
+      }
+      if (groupBy === 'grupo') {
+        const gid = l.grupo_lancamento_id || 'sem-grupo';
+        const label = gid === 'sem-grupo' ? 'Sem grupo' : (l.descricao || 'Série').slice(0, 40);
+        return { key: `g:${gid}`, label, orderValue: String(gid) };
+      }
+      if (groupBy === 'favorecido') {
+        const nome = (l.terceiro_nome || '').trim() || 'Sem favorecido';
+        return { key: `f:${nome}`, label: nome, orderValue: nome.toLowerCase() };
+      }
+      const o = tagsOrigemBoleto(l.tags);
+      const label = o === 'pdf' ? 'PDF importado' : o === 'auto' ? 'Automático' : 'Outro / manual';
+      const order = o === 'pdf' ? 0 : o === 'auto' ? 1 : 2;
+      return { key: `o:${o || 'x'}`, label, orderValue: String(order) };
+    };
+
+    const map = {};
+    filtradosBusca.forEach((l) => {
+      const m = metaFor(l);
+      if (!map[m.key]) map[m.key] = { key: m.key, label: m.label, orderValue: m.orderValue, items: [] };
+      map[m.key].items.push(l);
+    });
+
+    const compareGroups = (a, b) => {
+      if (groupBy === 'origem') {
+        const ia = Number(a.orderValue);
+        const ib = Number(b.orderValue);
+        return sortOrder === 'asc' ? ia - ib : ib - ia;
+      }
+      const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', { sensitivity: 'base' });
+      return sortOrder === 'asc' ? cmp : -cmp;
+    };
+
+    return Object.values(map)
+      .sort(compareGroups)
+      .map((g) => ({
+        ...g,
+        items: [...g.items].sort((a, b) => {
+          const c = (a.data_vencimento || '').localeCompare(b.data_vencimento || '');
+          if (c !== 0) return sortOrder === 'asc' ? c : -c;
+          return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+        }),
+      }));
+  }, [filtradosBusca, groupBy, sortOrder]);
+
+  const hasActiveFilters = filterOrigem !== 'todos' || filterStatus !== 'todos';
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
@@ -77,86 +204,204 @@ export default function AgefinAtualizador({ onRefresh }) {
           <strong className="text-gray-600 dark:text-gray-300">recorrência</strong> encontrado.
         </p>
         <p className="text-xs max-w-sm mx-auto">
-          Inclui contas pontuais (somente conta a pagar) e séries recorrentes. Competências mensais do ano são geradas
-          automaticamente quando houver grupo recorrente mensal.
+          Inclui contas pontuais e séries recorrentes. A janela de 4 meses e a extensão mensal são aplicadas ao carregar este painel ou o atualizador no fluxo de caixa.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {msgGeracao && (
-        <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+        <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 shrink-0" />
           {msgGeracao}
         </p>
       )}
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-        {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} para atualizar boleto
-        <span className="block mt-1 text-[11px]">
-          Origem: <span className="text-gray-500 dark:text-gray-400">automático</span> ou{' '}
-          <span className="text-gray-500 dark:text-gray-400">PDF importado</span> (tags no registro).
-        </span>
-      </p>
 
-      {lancamentos.map((l) => {
-        const origem = tagsOrigemBoleto(l.tags);
-        return (
-        <button
-          key={l.id}
-          onClick={() => setSelected(l)}
-          className="w-full px-4 py-3 bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-3"
-        >
-          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
-            <RefreshCw className="w-4 h-4 text-gray-400" />
+      <div className="rounded-[22px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
+            <Search className="h-4 w-4 shrink-0 text-gray-400 dark:text-muted-foreground" />
+            <input
+              autoComplete="off"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Descrição, favorecido, data…"
+              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-foreground dark:placeholder:text-muted-foreground"
+            />
+            {search ? (
+              <button type="button" onClick={() => setSearch('')} className="shrink-0">
+                <X className="h-3.5 w-3.5 text-gray-400" />
+              </button>
+            ) : null}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{l.descricao}</p>
-              {origem === 'pdf' && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                  <FileText className="w-3 h-3" /> PDF
-                </span>
-              )}
-              {origem === 'auto' && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
-                  <Sparkles className="w-3 h-3" /> Auto
-                </span>
-              )}
+          <AgefinConsultaOrganizer
+            variant="boleto"
+            groupBy={groupBy}
+            sortOrder={sortOrder}
+            onGroupByChange={setGroupBy}
+            onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+          />
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
+          >
+            <SlidersHorizontal className="h-4 w-4 text-gray-800 dark:text-foreground" />
+            {hasActiveFilters ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                ·
+              </span>
+            ) : null}
+          </button>
+        </div>
+        <p className="mt-2 px-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+          {filtradosBusca.length} de {lancamentos.length} lançamento{filtradosBusca.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+        <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-foreground">Filtros</DrawerTitle>
+          </DrawerHeader>
+          <div className="max-h-[70vh] space-y-5 overflow-y-auto">
+            <FilterSection
+              label="Origem"
+              icon={Sparkles}
+              value={filterOrigem}
+              onChange={setFilterOrigem}
+              options={[
+                { id: 'todos', label: 'Todas' },
+                { id: 'pdf', label: 'PDF importado' },
+                { id: 'auto', label: 'Automático' },
+                { id: 'outro', label: 'Outro / manual' },
+              ]}
+            />
+            <FilterSection
+              label="Situação"
+              icon={Calendar}
+              value={filterStatus}
+              onChange={setFilterStatus}
+              options={[
+                { id: 'todos', label: 'Todas' },
+                { id: 'aberto', label: 'Em aberto' },
+                { id: 'vencido', label: 'Vencido' },
+                { id: 'pago', label: 'Pago' },
+              ]}
+            />
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterOrigem('todos');
+                  setFilterStatus('todos');
+                }}
+                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-gray-600 dark:bg-muted dark:text-muted-foreground"
+              >
+                Redefinir
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="h-11 flex-1 rounded-2xl bg-primary text-sm font-medium text-primary-foreground"
+              >
+                Aplicar
+              </button>
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5 flex-wrap">
-              <Calendar className="w-3 h-3 shrink-0" />
-              {l.data_vencimento}
-              {l.frequencia_recorrencia && (
-                <span className="ml-1 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400">
-                  {FREQ_LABEL[l.frequencia_recorrencia] || l.frequencia_recorrencia}
-                </span>
-              )}
-              {l.terceiro_nome && <span className="ml-1">· {l.terceiro_nome}</span>}
-            </p>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-              R$ {(l.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-            <span className={`text-xs ${
-              l.status === 'Em Aberto' ? 'text-amber-500' :
-              l.status === 'Vencido' ? 'text-red-500' :
-              l.status === 'Pago' ? 'text-green-600' : 'text-gray-400'
-            }`}>{l.status}</span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0" />
-        </button>
-      );
-      })}
+        </DrawerContent>
+      </Drawer>
+
+      {filtradosBusca.length === 0 ? (
+        <div className="rounded-[24px] bg-white py-10 text-center text-sm text-gray-500 shadow-sm dark:bg-card dark:ring-1 dark:ring-border dark:text-muted-foreground">
+          Nenhum resultado com os filtros e a pesquisa atuais.
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {grupos.map((grupo) => (
+            <section key={grupo.key} id={grupoDomId(grupo.key)} className="scroll-mt-20 space-y-2">
+              <div className="flex items-baseline justify-between gap-2 px-0.5">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-muted-foreground">{grupo.label}</h3>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">{grupo.items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {grupo.items.map((l) => {
+                  const origem = tagsOrigemBoleto(l.tags);
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => setSelected(l)}
+                      className="flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-all hover:shadow-md dark:bg-gray-900"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                        <RefreshCw className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{l.descricao}</p>
+                          {origem === 'pdf' && (
+                            <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                              <FileText className="h-3 w-3" /> PDF
+                            </span>
+                          )}
+                          {origem === 'auto' && (
+                            <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                              <Sparkles className="h-3 w-3" /> Auto
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          {l.data_vencimento}
+                          {l.frequencia_recorrencia && (
+                            <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                              {FREQ_LABEL[l.frequencia_recorrencia] || l.frequencia_recorrencia}
+                            </span>
+                          )}
+                          {l.terceiro_nome && <span className="ml-1">· {l.terceiro_nome}</span>}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                          R$ {(l.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <span
+                          className={`text-xs ${
+                            l.status === 'Em Aberto'
+                              ? 'text-amber-500'
+                              : l.status === 'Vencido'
+                                ? 'text-red-500'
+                                : l.status === 'Pago'
+                                  ? 'text-green-600'
+                                  : 'text-gray-400'
+                          }`}
+                        >
+                          {l.status}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600" />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
 
       {selected && (
         <AgefinAtualizacaoDialog
           open={!!selected}
           lancamento={selected}
           onClose={() => setSelected(null)}
-          onRefresh={() => { setSelected(null); loadLancamentos(); onRefresh?.(); }}
+          onRefresh={() => {
+            setSelected(null);
+            loadLancamentos();
+            onRefresh?.();
+          }}
         />
       )}
     </div>

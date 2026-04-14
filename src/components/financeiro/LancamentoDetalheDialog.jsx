@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -45,11 +45,29 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [showEscopo, setShowEscopo] = useState(false);
   const [pendingSave, setPendingSave] = useState(null);
   const [showCancelarDialog, setShowCancelarDialog] = useState(false);
+  const [cadDescricao, setCadDescricao] = useState(lancamento.descricao || '');
+  const [cadVencimento, setCadVencimento] = useState((lancamento.data_vencimento || '').slice(0, 10));
+  const [cadValor, setCadValor] = useState(String(lancamento.valor ?? ''));
+  const [cadObs, setCadObs] = useState(lancamento.observacoes || '');
   const { toast } = useToast();
   const isCancelado = lancamento.status === 'Cancelado';
-
   const isReceita = lancamento.tipo === 'Receita';
   const isTransf = lancamento.tipo === 'Transferência';
+  const ehDespesaEditavel = lancamento.tipo === 'Despesa' && !isTransf && !isCancelado;
+
+  useEffect(() => {
+    setCadDescricao(lancamento.descricao || '');
+    setCadVencimento((lancamento.data_vencimento || '').slice(0, 10));
+    setCadValor(String(lancamento.valor ?? ''));
+    setCadObs(lancamento.observacoes || '');
+  }, [
+    lancamento.id,
+    lancamento.descricao,
+    lancamento.data_vencimento,
+    lancamento.valor,
+    lancamento.observacoes,
+  ]);
+
   const isPagoOriginal = lancamento.status === 'Pago';
   const isPendente = lancamento.status_conciliacao === 'Pendente';
   const isCartaoReceber = isReceita && ['Cartão Débito', 'Cartão Crédito'].includes(lancamento.forma_pagamento_tipo);
@@ -178,6 +196,30 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setSaving(false);
   };
 
+  const handleSalvarCadastro = async () => {
+    setSaving(true);
+    try {
+      const v = parseFloat(String(cadValor).replace(',', '.')) || 0;
+      if (v <= 0) {
+        toast({ title: 'Informe um valor válido', variant: 'destructive' });
+        return;
+      }
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        descricao: (cadDescricao || '').trim() || lancamento.descricao,
+        data_vencimento: cadVencimento || lancamento.data_vencimento,
+        valor: v,
+        valor_liquido: v,
+        observacoes: cadObs || '',
+      });
+      toast({ title: 'Dados da conta atualizados', className: 'bg-gray-100 text-gray-800' });
+      onSaved?.();
+    } catch {
+      toast({ title: 'Não foi possível guardar', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   let Icon = ArrowRightLeft;
   let iconClass = 'text-gray-400';
   if (!isTransf) {
@@ -237,6 +279,69 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         </div>
 
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
+
+        {ehDespesaEditavel && (
+          <>
+            <div className="px-5 pt-4 space-y-3">
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-200">Editar conta a pagar</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 leading-snug">
+                Inclui lançamentos criados por importação de PDF. Alterar vencimento ou valor não regista pagamento.
+              </p>
+              <div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Descrição</p>
+                <input
+                  autoComplete="off"
+                  value={cadDescricao}
+                  onChange={(e) => setCadDescricao(e.target.value)}
+                  className="w-full h-10 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Vencimento</p>
+                  <input
+                    autoComplete="off"
+                    type="date"
+                    value={cadVencimento}
+                    onChange={(e) => setCadVencimento(e.target.value)}
+                    className="w-full h-10 px-2 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Valor</p>
+                  <input
+                    autoComplete="off"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={cadValor}
+                    onChange={(e) => setCadValor(e.target.value)}
+                    className="w-full h-10 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Observações</p>
+                <textarea
+                  value={cadObs}
+                  onChange={(e) => setCadObs(e.target.value)}
+                  rows={2}
+                  className="w-full resize-none rounded-xl bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSalvarCadastro}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                Guardar alterações
+              </button>
+            </div>
+            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+          </>
+        )}
 
         {isCartaoReceber && !isCancelado && (
           <div className="px-5 pt-4">

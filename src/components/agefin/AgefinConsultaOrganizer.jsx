@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Building2, Tag, Wallet, ArrowDownUp } from 'lucide-react';
+import { CalendarDays, Building2, Tag, Wallet, ArrowDownUp, Layers, Sparkles } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,14 +7,40 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const OPTIONS = [
+const OPTIONS_CONSULTA = [
   { value: 'vencimento', label: 'Data de vencimento', icon: CalendarDays },
   { value: 'favorecido', label: 'Favorecido', icon: Building2 },
   { value: 'status', label: 'Status', icon: Wallet },
   { value: 'categoria', label: 'Categoria', icon: Tag },
 ];
 
-export default function AgefinConsultaOrganizer({ groupBy, sortOrder, onGroupByChange, onSortOrderToggle }) {
+const OPTIONS_BOLETO = [
+  { value: 'mes', label: 'Mês de vencimento', icon: CalendarDays },
+  { value: 'grupo', label: 'Série / grupo', icon: Layers },
+  { value: 'favorecido', label: 'Favorecido', icon: Building2 },
+  { value: 'origem', label: 'Origem', icon: Sparkles },
+];
+
+const OPTIONS_RECORRENTES = [
+  { value: 'nome', label: 'Nome da despesa', icon: Tag },
+  { value: 'dia', label: 'Dia de vencimento', icon: CalendarDays },
+  { value: 'situacao', label: 'Situação', icon: Wallet },
+];
+
+const VARIANT_MAP = {
+  consulta: OPTIONS_CONSULTA,
+  boleto: OPTIONS_BOLETO,
+  recorrentes: OPTIONS_RECORRENTES,
+};
+
+export default function AgefinConsultaOrganizer({
+  variant = 'consulta',
+  groupBy,
+  sortOrder,
+  onGroupByChange,
+  onSortOrderToggle,
+}) {
+  const OPTIONS = VARIANT_MAP[variant] || VARIANT_MAP.consulta;
   const current = OPTIONS.find((option) => option.value === groupBy) || OPTIONS[0];
   const CurrentIcon = current.icon;
 
