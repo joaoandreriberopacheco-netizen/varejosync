@@ -7,6 +7,18 @@ import { brandSurface } from '@/lib/brandSurfaces';
 
 const TIPOS_DOCUMENTO = TIPOS_DOCUMENTO_ANEXO;
 const ORDER = ORDEM_TIPOS_DOCUMENTO_ANEXO;
+const sendDebugLog = (payload) => {
+  fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0cc0d0' },
+    body: JSON.stringify({
+      sessionId: '0cc0d0',
+      runId: 'initial',
+      timestamp: Date.now(),
+      ...payload,
+    }),
+  }).catch(() => {});
+};
 
 function ThumbnailIcon({ anexo, large = false }) {
   const [imgError, setImgError] = useState(false);
@@ -96,6 +108,26 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   useEffect(() => {
     if (!isOpen) setAddSheetOpen(false);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const modalRoot = document.querySelector('.fixed.inset-0.z-\\[100\\]');
+    const addFab = document.querySelector('button[title="Adicionar anexo"]');
+    // #region agent log
+    sendDebugLog({
+      hypothesisId: 'H2',
+      location: 'AnexosModal.jsx:113',
+      message: 'Anexos modal layering snapshot',
+      data: {
+        isOpen,
+        addSheetOpen,
+        modalClass: modalRoot?.className || null,
+        addFabClass: addFab?.className || null,
+        addFabRect: addFab?.getBoundingClientRect() || null,
+      },
+    });
+    // #endregion
+  }, [isOpen, addSheetOpen, anexos.length]);
 
   const handleExportPdf = async () => {
     if (exportingPdf || anexos.length === 0) return;

@@ -7,6 +7,18 @@ import { listarAnexos } from '@/functions/listarAnexos';
 
 // Raio em px — aumentado para não sair da tela
 const RADIUS = 72;
+const sendDebugLog = (payload) => {
+  fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0cc0d0' },
+    body: JSON.stringify({
+      sessionId: '0cc0d0',
+      runId: 'initial',
+      timestamp: Date.now(),
+      ...payload,
+    }),
+  }).catch(() => {});
+};
 
 export default function PedidoCompraFAB({
   pedido,
@@ -78,6 +90,26 @@ export default function PedidoCompraFAB({
   useEffect(() => {
     if (showAnexosModal) carregarAnexos();
   }, [showAnexosModal]);
+
+  useEffect(() => {
+    if (!showAnexosModal && !isExpanded) return;
+    const fabRoot = document.querySelector('[data-pedido-compra-fab]');
+    const mainFabButton = fabRoot?.querySelector('button');
+    // #region agent log
+    sendDebugLog({
+      hypothesisId: 'H1',
+      location: 'PedidoCompraFAB.jsx:95',
+      message: 'FAB state and layering snapshot',
+      data: {
+        isExpanded,
+        showAnexosModal,
+        fabRootClass: fabRoot?.className || null,
+        fabRootZClass: fabRoot?.className?.includes('z-[999]') || false,
+        mainFabRect: mainFabButton?.getBoundingClientRect() || null,
+      },
+    });
+    // #endregion
+  }, [isExpanded, showAnexosModal]);
 
   const handlePrintPDF = async () => {
     if (!pedido?.id) {
