@@ -39,7 +39,6 @@ import AuditoriaPins from '@/pages/AuditoriaPins';
 import AgefinConsulta from '@/pages/AgefinConsulta';
 import ItinerarioFluvial from '@/pages/ItinerarioFluvial.jsx';
 import AuditoriaCodigoProjeto from '@/pages/AuditoriaCodigoProjeto';
-import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -204,11 +203,9 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <NavigationTransitionProvider>
           <Router>
-            <ModoFlareProvider>
-              <NavigationTracker />
-              <NavigationTransitionOverlay />
-              <AuthenticatedApp />
-            </ModoFlareProvider>
+            <NavigationTracker />
+            <NavigationTransitionOverlay />
+            <AuthenticatedApp />
           </Router>
           <VisualEditAgent />
         </NavigationTransitionProvider>

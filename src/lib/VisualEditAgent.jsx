@@ -98,7 +98,6 @@ export default function VisualEditAgent() {
 
 	// Handle mouse over event
 	const handleMouseOver = (e) => {
-		if (document.documentElement.hasAttribute('data-flare-inspection')) return;
 		if (!isVisualEditModeRef.current || isPopoverDraggingRef.current) return;
 
 		// Prevent hover effects when a dropdown is open
@@ -155,7 +154,6 @@ export default function VisualEditAgent() {
 
 	// Handle element click
 	const handleElementClick = (e) => {
-		if (document.documentElement.hasAttribute('data-flare-inspection')) return;
 		if (!isVisualEditModeRef.current) return;
 
 		// Close dropdowns when clicking anywhere in iframe if a dropdown is open
