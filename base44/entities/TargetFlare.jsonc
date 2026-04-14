@@ -1,0 +1,40 @@
+{
+  "name": "TargetFlare",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["pending", "resolved"],
+      "description": "Estado do alvo de manutenção"
+    },
+    "file_path": {
+      "type": "string",
+      "description": "Caminho do ficheiro fonte (ex.: src/pages/Home.jsx)"
+    },
+    "line": {
+      "type": "number",
+      "description": "Linha JSX no ficheiro"
+    },
+    "column": {
+      "type": "number",
+      "description": "Coluna JSX no ficheiro"
+    },
+    "source_location_raw": {
+      "type": "string",
+      "description": "Valor bruto de data-source-location (filename:line:column)"
+    },
+    "component_name": {
+      "type": "string",
+      "description": "Nome derivado do ficheiro ou componente"
+    },
+    "briefing": {
+      "type": "string",
+      "description": "Descrição do bug ou melhoria"
+    },
+    "route": {
+      "type": "string",
+      "description": "Rota React (pathname) quando o alvo foi criado"
+    }
+  },
+  "required": ["status", "file_path", "line", "column", "briefing"]
+}
