@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { gerarLancamentosMensaisAteFimDoAno } from '@/lib/agefinLancamentosRecorrencia';
+import {
+  gerarLancamentosMensaisAteFimDoAno,
+  lancamentoRecorrenteContaPagarParaListaBoleto,
+  tagsOrigemBoleto,
+} from '@/lib/agefinLancamentosRecorrencia';
 
 export function getMonthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -29,32 +33,34 @@ export function useRecorrentesBoletoData() {
       } catch (e) {
         console.error('Sincronizar recorrências mensais:', e);
       }
-      const contasData = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 500);
-      const lancamentosRecorrentes = (contasData || []).filter(
-        (item) =>
-          item.tipo === 'Despesa' &&
-          item.is_recorrente &&
-          item.grupo_lancamento_id &&
-          Array.isArray(item.tags) &&
-          item.tags.includes('conta_pagar') &&
-          item.tags.includes('recorrente')
-      );
-      const grupos = Array.from(
-        new Map(
-          lancamentosRecorrentes.map((item) => [
-            item.grupo_lancamento_id,
-            {
-              id: item.grupo_lancamento_id,
-              grupo_lancamento_id: item.grupo_lancamento_id,
-              nome_despesa: item.descricao,
-              terceiro_nome: item.terceiro_nome,
-              valor_previsto: item.valor,
-              frequencia: item.frequencia_recorrencia,
-              dia_vencimento: Number((item.data_vencimento || '').slice(8, 10)) || 1,
-            },
-          ])
-        ).values()
-      );
+      const contasData = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+      const lancamentosRecorrentes = (contasData || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
+
+      const byGrupo = new Map();
+      for (const item of lancamentosRecorrentes) {
+        const gid = item.grupo_lancamento_id;
+        if (!byGrupo.has(gid)) byGrupo.set(gid, []);
+        byGrupo.get(gid).push(item);
+      }
+
+      const grupos = [];
+      for (const [gid, rows] of byGrupo) {
+        const sorted = [...rows].sort((a, b) =>
+          (b.data_vencimento || '').localeCompare(a.data_vencimento || '')
+        );
+        const comPdf = sorted.find((x) => tagsOrigemBoleto(x.tags) === 'pdf');
+        const rep = comPdf || sorted[0];
+        grupos.push({
+          id: gid,
+          grupo_lancamento_id: gid,
+          nome_despesa: rep.descricao,
+          terceiro_nome: rep.terceiro_nome,
+          valor_previsto: rep.valor,
+          frequencia: rep.frequencia_recorrencia || 'Mensal',
+          dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 1,
+        });
+      }
+
       setRecorrentes(grupos);
       setContas(lancamentosRecorrentes);
     } finally {

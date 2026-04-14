@@ -19,8 +19,10 @@ import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { createPageUrl } from '@/utils';
-import { TAG_LF_BOLETO_PDF, TAG_LF_GERADO_AUTO } from '@/lib/agefinLancamentosRecorrencia';
+import { base44 } from '@/api/base44Client';
+import { TAG_LF_BOLETO_PDF, TAG_LF_GERADO_AUTO, aplicarRegrasRecorrenciaEmLegado } from '@/lib/agefinLancamentosRecorrencia';
 import { getMonthKey, getContaDoMes, useRecorrentesBoletoData } from '@/hooks/useRecorrentesBoletoData';
+import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 
 function formatCurrency(value) {
@@ -178,8 +180,10 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
 
 export default function AgefinRecorrentes() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { recorrentes, contas, loading } = useRecorrentesBoletoData();
+  const [migrandoLegado, setMigrandoLegado] = useState(false);
+  const { recorrentes, contas, loading, reload } = useRecorrentesBoletoData();
   const [filterPagamento, setFilterPagamento] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
   const [filterOrigem, setFilterOrigem] = useState('todos');
@@ -309,12 +313,52 @@ export default function AgefinRecorrentes() {
     [navigate, monthKey]
   );
 
+  const aplicarLegadoRecorrencia = useCallback(async () => {
+    setMigrandoLegado(true);
+    try {
+      const r = await aplicarRegrasRecorrenciaEmLegado(base44);
+      await reload();
+      const partes = [
+        r.tagsAtualizados ? `${r.tagsAtualizados} lançamento(s) com tags alinhadas` : null,
+        r.parcelasIniciais ? `${r.parcelasIniciais} parcela(s) inicial(is)` : null,
+        r.geracaoSync ? `${r.geracaoSync} na sincronização do horizonte` : null,
+      ].filter(Boolean);
+      toast({
+        title: 'Regras aplicadas às recorrências antigas',
+        description:
+          partes.length > 0
+            ? partes.join(' · ')
+            : 'Nada pendente: tags e parcelas já estavam em dia.',
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100',
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Não foi possível concluir', variant: 'destructive' });
+    } finally {
+      setMigrandoLegado(false);
+    }
+  }, [reload, toast]);
+
   return (
     <div className="space-y-4 pb-24">
       <div className="rounded-[28px] bg-white p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
-        <div className="mb-3 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
+        <div className="mb-3 space-y-2 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
           <p className="text-[11px] leading-4 text-gray-500 dark:text-muted-foreground">
             Este painel é integrado às contas a pagar e ao fluxo financeiro: quando a conta é paga ou atualizada, o status aqui acompanha automaticamente.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={migrandoLegado || loading}
+            onClick={aplicarLegadoRecorrencia}
+            className="h-9 w-full gap-2 rounded-xl border-dashed text-xs font-medium sm:w-auto"
+          >
+            <Sparkles className={`h-3.5 w-3.5 shrink-0 ${migrandoLegado ? 'animate-pulse' : ''}`} />
+            {migrandoLegado ? 'Aplicando…' : 'Alinhar recorrências antigas (tags + parcelas)' }
+          </Button>
+          <p className="text-[10px] leading-snug text-gray-400 dark:text-muted-foreground">
+            Use uma vez se criou contas recorrentes antes das regras automáticas: normaliza tags e preenche a janela de parcelas mensais como nas séries novas.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">

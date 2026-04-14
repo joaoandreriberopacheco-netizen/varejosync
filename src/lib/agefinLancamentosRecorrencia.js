@@ -2,6 +2,27 @@
  * AGEFIN — regras de exibição e geração de LancamentoFinanceiro (contas a pagar / recorrentes).
  */
 
+import { lancamentoEhContaPagar, lancamentoEhCmv, lancamentoCancelado } from '@/lib/agefinConsultaFilters';
+
+/**
+ * Séries recorrentes (conta a pagar) para o atualizador de boletos / Agefin Recorrentes.
+ * Alinhado ao que entra na Agefin Consulta (tag conta_pagar), sem exigir a tag `recorrente`
+ * em lançamentos antigos — CMV fica de fora deste fluxo.
+ */
+export function lancamentoRecorrenteContaPagarParaListaBoleto(l) {
+  if (!l || l.tipo !== 'Despesa' || l.status === 'Cancelado' || lancamentoCancelado(l)) return false;
+  if (lancamentoEhCmv(l)) return false;
+  if (!lancamentoEhContaPagar(l)) return false;
+  if (!l.grupo_lancamento_id) return false;
+  const tags = Array.isArray(l.tags) ? l.tags : [];
+  if (tags.includes('parcelado')) return false;
+  return (
+    Boolean(l.is_recorrente) ||
+    Boolean(l.frequencia_recorrencia && l.frequencia_recorrencia !== 'Único') ||
+    tags.includes('recorrente')
+  );
+}
+
 /** Inclusão no atualizador de boletos: conta a pagar OU marcado como recorrente */
 export function lancamentoEntraNoAtualizadorBoletos(l) {
   if (!l || l.status === 'Cancelado') return false;
@@ -59,7 +80,7 @@ export function isLancamentoParcelasMensaisRecorrente(l) {
 }
 
 export async function maxDataVencimentoMensaisOutrosGrupos(base44, excludeGrupoId) {
-  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 2500);
+  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
   let maxD = null;
   for (const row of lista || []) {
     if (!isLancamentoParcelasMensaisRecorrente(row)) continue;
@@ -131,7 +152,7 @@ export async function criarParcelasIniciaisRecorrenteAposPrimeiro(base44, modelo
 }
 
 async function agruparMensaisRecorrentes(base44) {
-  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 2500);
+  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
   const todos = lista || [];
   const candidatos = todos.filter(isLancamentoParcelasMensaisRecorrente);
   const porGrupo = new Map();
@@ -237,6 +258,57 @@ export async function gerarLancamentosMensaisAteFimDoAno(base44, _opts = {}) {
   const a = await alinharGruposRecorrentesAoHorizonteGlobal(base44);
   const b = await garantirExtensaoMensalRecorrentes(base44);
   return { criados: (a.criados || 0) + (b.criados || 0), ano: new Date().getFullYear() };
+}
+
+/**
+ * Normaliza tags e aplica a janela inicial de parcelas + alinhamento/extensão em séries
+ * que já existiam antes das regras atuais (ex.: sem tag `recorrente`).
+ * Idempotente: só atualiza quando falta tag; parcelas só criam meses em falta.
+ */
+export async function aplicarRegrasRecorrenciaEmLegado(base44) {
+  const lista = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  let tagsAtualizados = 0;
+
+  for (const l of lista || []) {
+    if (!l?.id || l.tipo !== 'Despesa' || l.status === 'Cancelado' || lancamentoCancelado(l)) continue;
+    if (!l.grupo_lancamento_id || !l.is_recorrente) continue;
+    if (!lancamentoEhContaPagar(l)) continue;
+    const tags = Array.isArray(l.tags) ? [...l.tags] : [];
+    if (tags.includes('parcelado')) continue;
+
+    let changed = false;
+    if (!tags.includes('conta_pagar')) {
+      tags.push('conta_pagar');
+      changed = true;
+    }
+    if (!tags.includes('recorrente')) {
+      tags.push('recorrente');
+      changed = true;
+    }
+    if (changed) {
+      await base44.entities.LancamentoFinanceiro.update(l.id, { tags });
+      tagsAtualizados += 1;
+    }
+  }
+
+  const { porGrupo } = await agruparMensaisRecorrentes(base44);
+  let parcelasIniciais = 0;
+  for (const [, grupoLista] of porGrupo) {
+    const sorted = [...grupoLista].sort((a, b) =>
+      (a.data_vencimento || '').localeCompare(b.data_vencimento || '')
+    );
+    const modelo = sorted.find((x) => isLancamentoParcelasMensaisRecorrente(x));
+    if (!modelo) continue;
+    const r = await criarParcelasIniciaisRecorrenteAposPrimeiro(base44, modelo);
+    parcelasIniciais += r.criados || 0;
+  }
+
+  const sync = await gerarLancamentosMensaisAteFimDoAno(base44);
+  return {
+    tagsAtualizados,
+    parcelasIniciais,
+    geracaoSync: sync.criados || 0,
+  };
 }
 
 /**
