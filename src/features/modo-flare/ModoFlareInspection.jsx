@@ -36,6 +36,37 @@ function componentNameFromFilePath(filePath) {
   return base.replace(/\.(jsx?|tsx?)$/i, '') || base;
 }
 
+function buildDomPath(el) {
+  if (!el || !el.parentElement) return '';
+  const parts = [];
+  let node = el;
+  while (node && node.nodeType === 1 && parts.length < 8) {
+    const parent = node.parentElement;
+    if (!parent) break;
+    const tag = (node.tagName || '').toLowerCase();
+    const siblings = Array.from(parent.children).filter((c) => c.tagName === node.tagName);
+    const idx = Math.max(0, siblings.indexOf(node));
+    parts.unshift(`${tag}:${idx}`);
+    node = parent;
+    if (tag === 'body') break;
+  }
+  return parts.join('/');
+}
+
+function findElementByDomPath(path) {
+  if (!path) return null;
+  const parts = String(path).split('/').filter(Boolean);
+  let current = document.body;
+  for (const part of parts) {
+    const [tag, idxStr] = part.split(':');
+    const idx = Number(idxStr);
+    if (!current || !Number.isFinite(idx)) return null;
+    const matches = Array.from(current.children).filter((c) => c.tagName.toLowerCase() === tag);
+    current = matches[idx] || null;
+  }
+  return current || null;
+}
+
 function readLocalPins() {
   try {
     const raw = localStorage.getItem(LOCAL_PINS_KEY);
@@ -155,17 +186,22 @@ export default function ModoFlareInspection({ onClose }) {
     (el) => {
       const raw = el.getAttribute('data-source-location');
       const parsed = parseDataSourceLocation(raw);
-      if (!parsed) {
-        toast({
-          title: 'Origem desconhecida',
-          description: 'Este elemento não tem data-source-location.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      const runtimePath = buildDomPath(el);
+      const runtimeText = (el.textContent || '').trim().slice(0, 80);
+      const finalMeta = parsed || {
+        file_path: 'runtime/unknown',
+        line: 0,
+        column: 0,
+        source_location_raw: '',
+      };
       setPendingMeta({
-        ...parsed,
-        component_name: componentNameFromFilePath(parsed.file_path),
+        ...finalMeta,
+        runtime_dom_path: runtimePath,
+        runtime_tag: (el.tagName || 'div').toLowerCase(),
+        runtime_text: runtimeText,
+        component_name: parsed
+          ? componentNameFromFilePath(finalMeta.file_path)
+          : (el.tagName || 'Elemento').toLowerCase(),
       });
       const rect = el.getBoundingClientRect();
       setPendingRect({
@@ -174,11 +210,11 @@ export default function ModoFlareInspection({ onClose }) {
         width: rect.width,
         height: rect.height,
       });
-      setBriefingDraft('');
+      setBriefingDraft(parsed ? '' : `[Runtime] ${runtimeText || 'alvo visual sem metadado de fonte'}`);
       setBriefingOpen(true);
       requestAnimationFrame(() => briefingTextareaRef.current?.focus?.());
     },
-    [toast]
+    []
   );
 
   const handlePointer = useCallback(
@@ -294,6 +330,7 @@ export default function ModoFlareInspection({ onClose }) {
             {
               id: `local-${Date.now()}`,
               source_location_raw: pendingMeta.source_location_raw,
+              runtime_dom_path: pendingMeta.runtime_dom_path || '',
               briefing: text,
               scope: 'local',
             },
@@ -312,6 +349,7 @@ export default function ModoFlareInspection({ onClose }) {
             {
               id: `remote-${Date.now()}`,
               source_location_raw: pendingMeta.source_location_raw,
+              runtime_dom_path: pendingMeta.runtime_dom_path || '',
               briefing: text,
               scope: 'remote',
             },
@@ -359,13 +397,17 @@ export default function ModoFlareInspection({ onClose }) {
   const pinPositions = (localPins || [])
     .map((flare) => {
       const raw = flare.source_location_raw;
-      if (!raw) return null;
       let el = null;
-      try {
-        const q = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(raw) : raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        el = document.querySelector(`[data-source-location="${q}"]`);
-      } catch {
-        el = null;
+      if (raw) {
+        try {
+          const q = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(raw) : raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          el = document.querySelector(`[data-source-location="${q}"]`);
+        } catch {
+          el = null;
+        }
+      }
+      if (!el && flare.runtime_dom_path) {
+        el = findElementByDomPath(flare.runtime_dom_path);
       }
       if (!el) return { flare, rect: null };
       const r = el.getBoundingClientRect();
