@@ -21,6 +21,14 @@ export function writeLocalPins(pins) {
   }
 }
 
+export function clearLocalPins() {
+  try {
+    localStorage.removeItem(LOCAL_PINS_KEY);
+  } catch {
+    // noop
+  }
+}
+
 function normalizeRemoteFlare(item, index) {
   return {
     id: item.id || `remote-${index}`,
@@ -80,6 +88,21 @@ export async function listPendingFlaresLocalFirst() {
     const normalized = (Array.isArray(fallback) ? fallback : []).map(normalizeLocalFlare);
     return { mode: 'local', items: sortPendingFlares(normalized.filter((it) => it.status === 'pending')) };
   }
+}
+
+export async function listAllRemoteFlares() {
+  const rows = await base44.entities.TargetFlare.list('-created_date', 5000);
+  const normalized = (Array.isArray(rows) ? rows : []).map(normalizeRemoteFlare);
+  return sortPendingFlares(normalized);
+}
+
+export async function purgeAllRemoteFlares() {
+  const rows = await listAllRemoteFlares();
+  if (!rows.length) return { removed: 0, failed: 0 };
+  const settled = await Promise.allSettled(rows.map((item) => base44.entities.TargetFlare.delete(item.id)));
+  const removed = settled.filter((item) => item.status === 'fulfilled').length;
+  const failed = settled.length - removed;
+  return { removed, failed };
 }
 
 export async function resolveFlareById(flare, resolutionPrecision = 'unknown') {

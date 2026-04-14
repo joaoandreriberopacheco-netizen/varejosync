@@ -6,7 +6,10 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  clearLocalPins,
+  listAllRemoteFlares,
   listPendingFlaresLocalFirst,
+  purgeAllRemoteFlares,
   resolveFlareById,
   writeLocalPins,
 } from '@/features/modo-flare/flareQueue';
@@ -57,8 +60,17 @@ export default function ModoFlareInspection({ onClose }) {
   const [syncMode, setSyncMode] = useState('loading');
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [actionBriefingDraft, setActionBriefingDraft] = useState('');
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [precheckCount, setPrecheckCount] = useState(null);
+  const [smokeRunning, setSmokeRunning] = useState(false);
   const recognitionRef = useRef(null);
   const successMarkerTimerRef = useRef(null);
+
+  const reloadPins = useCallback(async () => {
+    const result = await listPendingFlaresLocalFirst();
+    setLocalPins(result.items);
+    setSyncMode(result.mode);
+  }, []);
 
   const resolvePin = useCallback(
     async (flare) => {
@@ -102,6 +114,105 @@ export default function ModoFlareInspection({ onClose }) {
       isMounted = false;
     };
   }, []);
+
+  const runPrecheckCount = useCallback(async () => {
+    setAdminBusy(true);
+    try {
+      const all = await listAllRemoteFlares();
+      setPrecheckCount(all.length);
+      toast({
+        title: 'Precheck concluído',
+        description: `${all.length} flare(s) remoto(s) encontrados antes da limpeza.`,
+      });
+      return all.length;
+    } catch {
+      setPrecheckCount(null);
+      toast({
+        title: 'Precheck indisponível',
+        description: 'Não foi possível consultar o backend agora.',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setAdminBusy(false);
+    }
+  }, [toast]);
+
+  const runFullCleanup = useCallback(async () => {
+    setAdminBusy(true);
+    try {
+      const before = await runPrecheckCount();
+      const purge = await purgeAllRemoteFlares();
+      clearLocalPins();
+      writeLocalPins([]);
+      await reloadPins();
+      const afterRows = await listAllRemoteFlares();
+      const after = afterRows.length;
+      toast({
+        title: 'Limpeza de flares concluída',
+        description: `Antes: ${before ?? '?'} · removidos: ${purge.removed} · falhas: ${purge.failed} · depois: ${after}.`,
+        variant: after === 0 && purge.failed === 0 ? 'default' : 'destructive',
+      });
+    } catch {
+      toast({
+        title: 'Falha na limpeza total',
+        description: 'Não foi possível completar a limpeza remota/local.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAdminBusy(false);
+    }
+  }, [reloadPins, runPrecheckCount, toast]);
+
+  const runSmokeNewFlare = useCallback(async () => {
+    setSmokeRunning(true);
+    try {
+      const targetEl = document.querySelector('[data-source-location]');
+      if (!targetEl) {
+        toast({
+          title: 'Smoke test sem alvo',
+          description: 'Nenhum elemento com data-source-location disponível nesta tela.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const raw = targetEl.getAttribute('data-source-location');
+      const parsed = parseDataSourceLocation(raw);
+      if (!parsed) {
+        toast({
+          title: 'Smoke test inválido',
+          description: 'Elemento encontrado sem coordenada válida.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const created = await base44.entities.TargetFlare.create({
+        status: 'pending',
+        ...parsed,
+        component_name: componentNameFromFilePath(parsed.file_path),
+        briefing: 'Smoke test pós-limpeza',
+        action_briefing: 'Validar fluxo pending -> resolved após limpeza total',
+        context_image_url: '',
+        confidence: 'high',
+        route: window.location.pathname || '',
+      });
+      await reloadPins();
+      await resolveFlareById({ id: created?.id, scope: 'remote', confidence: 'high' }, 'high');
+      await reloadPins();
+      toast({
+        title: 'Smoke test concluído',
+        description: 'Novo flare criado e resolvido com sucesso após limpeza.',
+      });
+    } catch {
+      toast({
+        title: 'Falha no smoke test',
+        description: 'Não foi possível validar criação/resolução pós-limpeza.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSmokeRunning(false);
+    }
+  }, [reloadPins, toast]);
 
   useEffect(
     () => () => {
@@ -484,6 +595,50 @@ export default function ModoFlareInspection({ onClose }) {
         data-flare-control="1"
       >
         <p className="mb-2 text-[11px] uppercase tracking-wide text-amber-200/90">Fila local de caça</p>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] pointer-events-auto"
+            data-flare-control="1"
+            onClick={() => {
+              void runPrecheckCount();
+            }}
+            disabled={adminBusy}
+          >
+            Precheck
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] pointer-events-auto"
+            data-flare-control="1"
+            onClick={() => {
+              void runFullCleanup();
+            }}
+            disabled={adminBusy}
+          >
+            Limpar tudo
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] pointer-events-auto"
+            data-flare-control="1"
+            onClick={() => {
+              void runSmokeNewFlare();
+            }}
+            disabled={smokeRunning || adminBusy}
+          >
+            Smoke
+          </Button>
+        </div>
+        {precheckCount != null ? (
+          <p className="mb-2 text-[10px] opacity-80">Precheck remoto: {precheckCount} registro(s).</p>
+        ) : null}
         <div className="max-h-56 space-y-2 overflow-auto pr-1">
           {localPins.slice(0, 8).map((flare) => (
             <div key={flare.id} className="rounded border border-amber-500/20 bg-amber-950/20 p-2">
