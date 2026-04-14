@@ -7,6 +7,27 @@ import { Button } from '@/components/ui/button';
 const ModoFlareInspection = React.lazy(() => import('@/features/modo-flare/ModoFlareInspection.jsx'));
 
 const FLARE_PIN = '240793';
+const FLARE_UNLOCK_KEY = 'p38_flare_unlock_v2';
+const FLARE_UNLOCK_TTL_MS = 8 * 60 * 60 * 1000;
+
+function isUnlockStillValid() {
+  try {
+    const raw = sessionStorage.getItem(FLARE_UNLOCK_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return typeof parsed?.ts === 'number' && Date.now() - parsed.ts < FLARE_UNLOCK_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+
+function markUnlock() {
+  try {
+    sessionStorage.setItem(FLARE_UNLOCK_KEY, JSON.stringify({ ts: Date.now() }));
+  } catch {
+    // noop
+  }
+}
 
 export default function ModoFlareProvider({ children }) {
   const [pinOpen, setPinOpen] = useState(false);
@@ -15,6 +36,10 @@ export default function ModoFlareProvider({ children }) {
   const [inspectionOpen, setInspectionOpen] = useState(false);
 
   const openFlare = useCallback(() => {
+    if (isUnlockStillValid()) {
+      setInspectionOpen(true);
+      return;
+    }
     setPinError(false);
     setPinValue('');
     setPinOpen(true);
@@ -37,6 +62,7 @@ export default function ModoFlareProvider({ children }) {
 
   const submitPin = useCallback(() => {
     if (String(pinValue).trim() === FLARE_PIN) {
+      markUnlock();
       setPinOpen(false);
       setPinError(false);
       setPinValue('');

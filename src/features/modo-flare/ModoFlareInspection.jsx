@@ -73,6 +73,7 @@ export default function ModoFlareInspection({ onClose }) {
   const recognitionRef = useRef(null);
   const skipClickAfterTouchRef = useRef(false);
   const successMarkerTimerRef = useRef(null);
+  const lastTouchPointRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-flare-inspection', '1');
@@ -203,6 +204,17 @@ export default function ModoFlareInspection({ onClose }) {
       if (el) openBriefingForElement(el);
     },
     [briefingOpen, openBriefingForElement]
+  );
+
+  const handleTouchStart = useCallback(
+    (e) => {
+      if (briefingOpen) return;
+      const t = e.touches?.[0];
+      if (!t) return;
+      lastTouchPointRef.current = { x: t.clientX, y: t.clientY };
+      updateHighlight(t.clientX, t.clientY);
+    },
+    [briefingOpen, updateHighlight]
   );
 
   const stopRecognition = useCallback(() => {
@@ -390,19 +402,26 @@ export default function ModoFlareInspection({ onClose }) {
       onMouseMove={handlePointer}
       onMouseLeave={() => setHighlight(null)}
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
       onTouchMove={(e) => {
         const t = e.touches[0];
-        if (t) handlePointer(e);
+        if (t) {
+          lastTouchPointRef.current = { x: t.clientX, y: t.clientY };
+          handlePointer(e);
+        }
       }}
       onTouchEnd={(e) => {
         if (briefingOpen) return;
-        const t = e.changedTouches[0];
-        if (!t) return;
+        const t = e.changedTouches?.[0];
+        const point = t
+          ? { x: t.clientX, y: t.clientY }
+          : lastTouchPointRef.current;
+        if (!point) return;
         skipClickAfterTouchRef.current = true;
         window.setTimeout(() => {
           skipClickAfterTouchRef.current = false;
         }, 500);
-        const el = pickElementBehindPortal(portalRef.current, t.clientX, t.clientY);
+        const el = pickElementBehindPortal(portalRef.current, point.x, point.y);
         if (el) openBriefingForElement(el);
       }}
       role="presentation"
@@ -413,13 +432,16 @@ export default function ModoFlareInspection({ onClose }) {
       >
         <span className="font-medium">Modo Inspeção (Flare)</span>
         <span className="opacity-90">Clique no elemento · Esc para sair</span>
-        <button
-          type="button"
-          className="pointer-events-auto rounded-md bg-amber-800 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
-          onClick={onClose}
-        >
-          Sair
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-amber-900/60 px-2 py-1 text-[11px]">{pinPositions.length} alvo(s)</span>
+          <button
+            type="button"
+            className="pointer-events-auto rounded-md bg-amber-800 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+            onClick={onClose}
+          >
+            Sair
+          </button>
+        </div>
       </div>
 
       {highlight && (
