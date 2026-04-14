@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Mic, MicOff } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 const HUD_Z = 10060;
 const BRIEF_Z = 10070;
+const LOCAL_PINS_KEY = 'p38_flare_local_pins';
 
 function pickElementBehindPortal(portalEl, clientX, clientY) {
   if (!portalEl) return null;
@@ -34,6 +36,25 @@ function componentNameFromFilePath(filePath) {
   return base.replace(/\.(jsx?|tsx?)$/i, '') || base;
 }
 
+function readLocalPins() {
+  try {
+    const raw = localStorage.getItem(LOCAL_PINS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalPins(pins) {
+  try {
+    localStorage.setItem(LOCAL_PINS_KEY, JSON.stringify(pins));
+  } catch {
+    // noop
+  }
+}
+
 export default function ModoFlareInspection({ onClose }) {
   const { toast } = useToast();
   const portalRef = useRef(null);
@@ -48,6 +69,7 @@ export default function ModoFlareInspection({ onClose }) {
   const [isListening, setIsListening] = useState(false);
   const [successMarker, setSuccessMarker] = useState(null);
   const [localPins, setLocalPins] = useState([]);
+  const [syncMode, setSyncMode] = useState('loading');
   const recognitionRef = useRef(null);
   const skipClickAfterTouchRef = useRef(false);
   const successMarkerTimerRef = useRef(null);
@@ -56,6 +78,35 @@ export default function ModoFlareInspection({ onClose }) {
     document.documentElement.setAttribute('data-flare-inspection', '1');
     return () => {
       document.documentElement.removeAttribute('data-flare-inspection');
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPins = async () => {
+      try {
+        const rows = await base44.entities.TargetFlare.filter({ status: 'pending' });
+        if (!isMounted) return;
+        const normalized = (Array.isArray(rows) ? rows : []).map((item, index) => ({
+          id: item.id || `remote-${index}`,
+          source_location_raw: item.source_location_raw || '',
+          briefing: item.briefing || '',
+          scope: 'remote',
+        }));
+        setLocalPins(normalized);
+        setSyncMode('remote');
+      } catch {
+        if (!isMounted) return;
+        const fallback = readLocalPins();
+        setLocalPins(Array.isArray(fallback) ? fallback : []);
+        setSyncMode('local');
+      }
+    };
+
+    loadPins();
+    return () => {
+      isMounted = false;
     };
   }, []);
 
@@ -228,20 +279,60 @@ export default function ModoFlareInspection({ onClose }) {
     }
     setSaving(true);
     try {
-      setLocalPins((prev) => [
-        {
-          id: `local-${Date.now()}`,
+      const createRemote = async () => {
+        await base44.entities.TargetFlare.create({
+          status: 'pending',
+          file_path: pendingMeta.file_path,
+          line: pendingMeta.line,
+          column: pendingMeta.column,
           source_location_raw: pendingMeta.source_location_raw,
+          component_name: pendingMeta.component_name,
           briefing: text,
-        },
-        ...prev,
-      ]);
+          route: window.location.pathname || '',
+        });
+      };
+
+      const saveLocalFallback = () => {
+        setSyncMode('local');
+        setLocalPins((prev) => {
+          const next = [
+            {
+              id: `local-${Date.now()}`,
+              source_location_raw: pendingMeta.source_location_raw,
+              briefing: text,
+              scope: 'local',
+            },
+            ...prev.filter((p) => p.scope !== 'remote'),
+          ];
+          writeLocalPins(next);
+          return next;
+        });
+      };
+
+      const saveRemoteOrLocal = async () => {
+        try {
+          await createRemote();
+          setSyncMode('remote');
+          setLocalPins((prev) => [
+            {
+              id: `remote-${Date.now()}`,
+              source_location_raw: pendingMeta.source_location_raw,
+              briefing: text,
+              scope: 'remote',
+            },
+            ...prev,
+          ]);
+        } catch {
+          saveLocalFallback();
+        }
+      };
 
       setBriefingOpen(false);
       setPendingMeta(null);
       setPendingRect(null);
       setBriefingDraft('');
       stopRecognition();
+      void saveRemoteOrLocal();
 
       if (pendingRect) {
         setSuccessMarker({
@@ -260,12 +351,15 @@ export default function ModoFlareInspection({ onClose }) {
       }
       toast({
         title: 'Bandeirinha fincada com sucesso',
-        description: 'Podes continuar navegando e marcar outro elemento.',
+        description:
+          syncMode === 'remote'
+            ? 'Podes continuar navegando e marcar outro elemento.'
+            : 'Guardada localmente. Podes continuar navegando e marcar outro elemento.',
       });
     } finally {
       setSaving(false);
     }
-  }, [briefingDraft, pendingMeta, pendingRect, stopRecognition, toast]);
+  }, [briefingDraft, pendingMeta, pendingRect, stopRecognition, syncMode, toast]);
 
   const pinPositions = (localPins || [])
     .map((flare) => {
@@ -377,7 +471,11 @@ export default function ModoFlareInspection({ onClose }) {
         className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md bg-gray-900/90 px-3 py-2 text-xs text-white"
         style={{ zIndex: HUD_Z + 2 }}
       >
-        Fase 1 ativa: bandeirinhas locais (sem backend).
+        {syncMode === 'remote'
+          ? 'Fase 2 ativa: bandeirinhas sincronizadas com backend.'
+          : syncMode === 'loading'
+            ? 'Fase 2: verificando backend...'
+            : 'Fase 2 ativa: fallback local (backend indisponível).'}
       </div>
     </div>
   );
