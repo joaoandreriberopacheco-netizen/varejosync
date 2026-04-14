@@ -415,7 +415,7 @@ export default function AnexoCompartilhado() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">O PDF já foi enviado; confira os dados sugeridos antes de salvar.</p>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <AgefinImportador
                 initialFile={arquivo.file}
                 onSuccess={(_data, meta) => {
@@ -468,7 +468,7 @@ export default function AnexoCompartilhado() {
                 <p className="truncate text-xs text-gray-500 dark:text-gray-400">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <AgefinImportador
                 key={contaMesBoletoAlvo.id}
                 initialFile={arquivo.file}

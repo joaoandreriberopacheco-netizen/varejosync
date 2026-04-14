@@ -20,6 +20,10 @@ export default function AgefinImportador({
   modoAtualizacao = false,
   /** Ficheiro já escolhido (ex.: partilha Web) — inicia leitura automática */
   initialFile = null,
+  /** Lista recorrentes: descrição/terceiro da conta já criada; sucesso volta ao painel */
+  fluxoLoopAtualizadorRecorrente = false,
+  /** { descricao, terceiro_nome?, conta_financeira_id? } — após ler o PDF */
+  dadosContaExistente = null,
 }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -114,7 +118,7 @@ Campos a interpretar do documento:
 
       setSelectedNatureza(naturezaValida);
       setSelectedRecorrencia(frequenciaValida);
-      setExtractedData({
+      const baseExtracted = {
         descricao: descricaoFallback || 'Conta importada',
         valor: extracted.valor_pagamento ?? 0,
         data_vencimento: extracted.data_vencimento || dataHoje(),
@@ -124,14 +128,39 @@ Campos a interpretar do documento:
         linha_digitavel: extracted.linha_digitavel || '',
         codigo_pix_copia_cola: extracted.codigo_pix_copia_cola || '',
         observacoes: extracted.instrucoes || '',
-      });
+      };
+      if (modoAtualizacao && fluxoLoopAtualizadorRecorrente && dadosContaExistente) {
+        if (dadosContaExistente.descricao) baseExtracted.descricao = dadosContaExistente.descricao;
+        if (dadosContaExistente.terceiro_nome) baseExtracted.terceiro_nome = dadosContaExistente.terceiro_nome;
+      }
+      setExtractedData(baseExtracted);
     } catch (err) {
       setError('Não consegui ler este documento com precisão. Tente outra imagem ou PDF mais nítido.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [modoAtualizacao, fluxoLoopAtualizadorRecorrente, dadosContaExistente]);
+
+  useEffect(() => {
+    if (fluxoLoopAtualizadorRecorrente && modoAtualizacao) {
+      setSelectedNatureza('Recorrente');
+    }
+  }, [fluxoLoopAtualizadorRecorrente, modoAtualizacao]);
+
+  useEffect(() => {
+    if (fluxoLoopAtualizadorRecorrente && dadosContaExistente?.conta_financeira_id) {
+      setContaFinanceiraId(String(dadosContaExistente.conta_financeira_id));
+    }
+  }, [fluxoLoopAtualizadorRecorrente, dadosContaExistente?.conta_financeira_id]);
+
+  useEffect(() => {
+    if (!successState || !fluxoLoopAtualizadorRecorrente) return;
+    const t = setTimeout(() => {
+      onSuccess?.(null, { close: true, voltarAtualizador: true });
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [successState, fluxoLoopAtualizadorRecorrente, onSuccess]);
 
   const handleFileUpload = async (e) => {
     const selectedFile = e.target.files?.[0];
@@ -146,7 +175,7 @@ Campos a interpretar do documento:
   }, [initialFile, processSelectedFile]);
 
   useEffect(() => {
-    if (!modoAtualizacao || !contaPrevistaId || !extractedData || sacredDescricaoFetchDone.current) return;
+    if (!modoAtualizacao || !contaPrevistaId || !extractedData || fluxoLoopAtualizadorRecorrente || sacredDescricaoFetchDone.current) return;
     sacredDescricaoFetchDone.current = true;
     let cancelled = false;
     base44.entities.ContaPrevista.get(contaPrevistaId).then((cp) => {
@@ -157,7 +186,7 @@ Campos a interpretar do documento:
     return () => {
       cancelled = true;
     };
-  }, [modoAtualizacao, contaPrevistaId, extractedData]);
+  }, [modoAtualizacao, contaPrevistaId, extractedData, fluxoLoopAtualizadorRecorrente]);
 
   useEffect(() => {
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then((data) => {
@@ -181,9 +210,11 @@ Campos a interpretar do documento:
   };
 
   const handleConfirm = async () => {
-    if (!extractedData || !selectedNatureza || !contaFinanceiraId) return;
+    if (!extractedData || !contaFinanceiraId) return;
+    if (!fluxoLoopAtualizadorRecorrente && !selectedNatureza) return;
 
     setLoading(true);
+    setError(null);
     try {
       let descricaoReservadaExistente = null;
       if (contaPrevistaId) {
@@ -240,9 +271,11 @@ Campos a interpretar do documento:
         : contaExistenteDoMes;
 
       const descricaoFinal =
-        descricaoReservadaExistente != null
-          ? descricaoReservadaExistente
-          : recorrenteFinal?.nome_despesa || extractedData.descricao;
+        fluxoLoopAtualizadorRecorrente && (extractedData.descricao || '').trim()
+          ? extractedData.descricao.trim()
+          : descricaoReservadaExistente != null
+            ? descricaoReservadaExistente
+            : recorrenteFinal?.nome_despesa || extractedData.descricao;
 
       const payload = {
         descricao: descricaoFinal,
@@ -350,18 +383,34 @@ Campos a interpretar do documento:
         descricao: payload.descricao,
         recorrenteCriada: Boolean(!recorrenteVinculado && recorrenteFinal),
       });
-      onSuccess?.({ contaPrevista: contaCriada, lancamento: lancamentoCriado });
+      if (!fluxoLoopAtualizadorRecorrente) {
+        onSuccess?.({ contaPrevista: contaCriada, lancamento: lancamentoCriado });
+      }
     } catch (err) {
-      setError('Erro ao salvar conta');
+      const raw = String(err?.message || err || '').toLowerCase();
+      const rede =
+        typeof navigator !== 'undefined' && !navigator.onLine
+          ? true
+          : raw.includes('fetch') || raw.includes('network') || raw.includes('failed');
+      setError(
+        rede
+          ? 'Sem ligação ou falha de rede. Verifique a internet e tente novamente.'
+          : 'Erro ao salvar conta. Tente novamente.'
+      );
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  /** Atualizador de boletos (lista): formulário sem natureza/recorrência nova */
+  const fluxoListaRecorrentes = Boolean(modoAtualizacao && fluxoLoopAtualizadorRecorrente);
+
   if (successState) {
     return (
-      <div className="flex h-full min-h-[32rem] flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5">
+      <div
+        className={`flex h-full flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5 ${fluxoLoopAtualizadorRecorrente ? 'min-h-0' : 'min-h-[32rem]'}`}
+      >
         <div className="rounded-[32px] bg-white p-6 shadow-sm dark:bg-gray-800">
           <div className="mb-5 flex items-start gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
@@ -383,24 +432,39 @@ Campos a interpretar do documento:
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
               <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela também já pode aparecer no AGEFIN quando for recorrente.'}</p>
             </div>
+            {fluxoLoopAtualizadorRecorrente && (
+              <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">A regressar ao atualizador para escolher outra conta…</p>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-4">
-          <Button
-            variant="outline"
-            onClick={() => onSuccess?.(null, { close: true })}
-            className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
-          >
-            Fechar
-          </Button>
-          <Button
-            onClick={resetState}
-            className="h-14 rounded-2xl bg-emerald-100 text-base font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-200 dark:text-emerald-900 dark:hover:bg-emerald-100"
-          >
-            Importar outra
-          </Button>
-        </div>
+        {fluxoLoopAtualizadorRecorrente ? (
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              onClick={() => onSuccess?.(null, { close: true, voltarAtualizador: true })}
+              className="h-12 w-full rounded-2xl border-0 bg-[#2e2629] text-sm font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+            >
+              Voltar já
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => onSuccess?.(null, { close: true })}
+              className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+            >
+              Fechar
+            </Button>
+            <Button
+              onClick={resetState}
+              className="h-14 rounded-2xl bg-emerald-100 text-base font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-200 dark:text-emerald-900 dark:hover:bg-emerald-100"
+            >
+              Importar outra
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -484,8 +548,8 @@ Campos a interpretar do documento:
   }
 
   return (
-    <div className="flex h-full min-h-0 max-h-full flex-1 flex-col overflow-hidden">
-      <div className="h-0 min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] md:[scrollbar-width:thin] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
+    <div className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <div className="flex items-start gap-3">
@@ -509,7 +573,14 @@ Campos a interpretar do documento:
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pré-preenchimento</p>
-                <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">Revisar dados</h3>
+                <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">
+                  {fluxoListaRecorrentes ? 'Rever boleto desta conta' : 'Revisar dados'}
+                </h3>
+                {fluxoListaRecorrentes && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    A recorrência já está definida no cadastro. Confirme valor, vencimento e dados do PDF.
+                  </p>
+                )}
               </div>
               <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">PDV style</span>
             </div>
@@ -532,7 +603,7 @@ Campos a interpretar do documento:
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Descrição
-                  {descricaoSacralizadaLock && (
+                  {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
                       <Lock className="h-3 w-3" /> Fixa
                     </span>
@@ -542,16 +613,21 @@ Campos a interpretar do documento:
                   type="text"
                   value={extractedData.descricao}
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
-                  readOnly={descricaoSacralizadaLock}
-                  title={descricaoSacralizadaLock ? 'Esta conta já tem descrição confirmada; novos PDFs não a alteram.' : undefined}
-                  className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950 ${descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
+                  readOnly={!fluxoListaRecorrentes && descricaoSacralizadaLock}
+                  title={!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'Esta conta já tem descrição confirmada; novos PDFs não a alteram.' : undefined}
+                  className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950 ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
                 />
-                {!descricaoSacralizadaLock && (
+                {fluxoListaRecorrentes && (
+                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    Nome da conta no cadastro (pode editar). O leitor do PDF não substitui este título — só ajuda em valor, vencimento e anexo.
+                  </p>
+                )}
+                {!fluxoListaRecorrentes && !descricaoSacralizadaLock && (
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     Sugestão do leitor automático — pode editar antes de salvar. Depois de salva, a descrição fica fixa para manter o mesmo nome mental nesta conta e nos meses seguintes.
                   </p>
                 )}
-                {descricaoSacralizadaLock && (
+                {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
                   <p className="mt-1.5 text-xs text-amber-800/90 dark:text-amber-200/90">
                     Descrição já confirmada nesta conta; o PDF só atualiza valores, vencimento e boleto.
                   </p>
@@ -601,6 +677,7 @@ Campos a interpretar do documento:
                 </div>
               </div>
 
+              {!fluxoListaRecorrentes && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nº da parcela</label>
@@ -628,6 +705,7 @@ Campos a interpretar do documento:
                   </Select>
                 </div>
               </div>
+              )}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digitável</label>
@@ -658,6 +736,7 @@ Campos a interpretar do documento:
             </div>
           </div>
 
+          {!fluxoListaRecorrentes && (
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
             <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
@@ -667,6 +746,7 @@ Campos a interpretar do documento:
               </p>
             )}
           </div>
+          )}
 
           {error && (
             <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
@@ -690,10 +770,10 @@ Campos a interpretar do documento:
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={loading || !selectedNatureza || !contaFinanceiraId}
+            disabled={loading || (!fluxoListaRecorrentes && !selectedNatureza) || !contaFinanceiraId}
             className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-white"
           >
-            {loading ? 'Salvando...' : 'Salvar Conta'}
+            {loading ? 'Salvando...' : fluxoListaRecorrentes ? 'Guardar boleto' : 'Salvar Conta'}
           </Button>
         </div>
       </div>

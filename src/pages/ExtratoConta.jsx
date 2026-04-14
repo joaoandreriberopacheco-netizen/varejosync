@@ -627,13 +627,13 @@ export default function ExtratoContaPage() {
 
       {/* Dialog Receita/Despesa */}
       <Dialog open={dialogType === 'receita' || dialogType === 'despesa'} onOpenChange={() => setDialogType(null)}>
-        <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[min(92vh,36rem)] min-h-0 flex-col gap-0 overflow-hidden dark:border-gray-700 dark:bg-gray-800 sm:max-w-md">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="text-gray-800 dark:text-gray-200">
               {dialogType === 'receita' ? 'Nova Receita' : 'Nova Despesa'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4 [scrollbar-gutter:stable]">
             <div>
               <Label className="text-gray-700 dark:text-gray-300">Descrição</Label>
               <Input
@@ -676,7 +676,7 @@ export default function ExtratoContaPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t border-gray-700/50 pt-4 dark:border-gray-600/50">
             <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-gray-700 dark:border-gray-600">
               Cancelar
             </Button>
@@ -692,11 +692,11 @@ export default function ExtratoContaPage() {
 
       {/* Dialog Transferência */}
       <Dialog open={dialogType === 'transferencia'} onOpenChange={() => setDialogType(null)}>
-        <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[min(92vh,32rem)] min-h-0 flex-col gap-0 overflow-hidden dark:border-gray-700 dark:bg-gray-800 sm:max-w-md">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="text-gray-800 dark:text-gray-200">Nova Transferência</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4 [scrollbar-gutter:stable]">
             <div>
               <Label className="text-gray-700 dark:text-gray-300">Conta de Destino</Label>
               <Select 
@@ -734,7 +734,7 @@ export default function ExtratoContaPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t border-gray-700/50 pt-4 dark:border-gray-600/50">
             <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-gray-700 dark:border-gray-600">
               Cancelar
             </Button>

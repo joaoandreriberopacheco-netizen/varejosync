@@ -34,7 +34,7 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="mx-auto flex max-h-[min(92dvh,40rem)] max-w-md flex-col gap-0 overflow-hidden p-0 dark:border-border dark:bg-card sm:max-w-lg">
+      <DialogContent className="mx-auto flex max-h-[min(92dvh,40rem)] min-h-0 max-w-md flex-col gap-0 overflow-hidden p-0 dark:border-border dark:bg-card sm:max-w-lg">
         <DialogHeader className="shrink-0 space-y-1 border-b border-gray-100 px-4 pb-3 pt-4 dark:border-gray-800">
           <DialogTitle className="text-left text-base font-semibold text-gray-900 dark:text-white">
             Personalizar Tela Inicial

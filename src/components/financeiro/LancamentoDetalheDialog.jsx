@@ -313,8 +313,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   return (
     <>
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-sm p-0 gap-0 dark:bg-gray-900 dark:border-gray-700 overflow-hidden rounded-2xl [&~div[data-radix-dialog-overlay]]:bg-white/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
+      <DialogContent className="flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-gray-700 dark:bg-gray-900 sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-white/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
 
+        <div className="shrink-0">
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1 pr-3">{lancamento.descricao}</p>
@@ -362,6 +363,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         </div>
 
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
 
         {ehDespesaEditavel && (
           <>
@@ -543,7 +547,10 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
+        </div>
+
         {/* Footer: clipe + botão cancelar */}
+        <div className="shrink-0 border-t border-gray-100 bg-gray-50/90 dark:border-gray-800 dark:bg-gray-900/95">
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
         <div className="px-5 py-4 flex items-center justify-between gap-3">
           {!isCancelado && (
@@ -571,6 +578,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
            inline
           />
           </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

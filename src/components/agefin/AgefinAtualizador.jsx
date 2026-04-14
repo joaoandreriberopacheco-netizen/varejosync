@@ -2,11 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ChevronRight, RefreshCw, Calendar, Repeat, Sparkles, FileText, Search, SlidersHorizontal, X } from 'lucide-react';
 import AgefinAtualizacaoDialog from './AgefinAtualizacaoDialog';
-import {
-  lancamentoEntraNoAtualizadorBoletos,
-  gerarLancamentosMensaisAteFimDoAno,
-  tagsOrigemBoleto,
-} from '@/lib/agefinLancamentosRecorrencia';
+import { lancamentoEntraNoAtualizadorBoletos, tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
 import AgefinConsultaOrganizer from '@/components/agefin/AgefinConsultaOrganizer';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -59,7 +55,6 @@ export default function AgefinAtualizador({ onRefresh }) {
   const [lancamentos, setLancamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [msgGeracao, setMsgGeracao] = useState(null);
   const [search, setSearch] = useState('');
   const [filterOrigem, setFilterOrigem] = useState('todos');
   const [filterStatus, setFilterStatus] = useState('todos');
@@ -74,15 +69,6 @@ export default function AgefinAtualizador({ onRefresh }) {
   const loadLancamentos = async () => {
     try {
       setLoading(true);
-      setMsgGeracao(null);
-
-      const { criados } = await gerarLancamentosMensaisAteFimDoAno(base44);
-      if (criados > 0) {
-        setMsgGeracao(
-          `${criados} lançamento${criados !== 1 ? 's' : ''} sincronizado${criados !== 1 ? 's' : ''} (alinhamento ou extensão mensal de recorrências).`
-        );
-      }
-
       const [comFlag, resto] = await Promise.all([
         base44.entities.LancamentoFinanceiro.filter({ is_recorrente: true }, '-data_vencimento', 400),
         base44.entities.LancamentoFinanceiro.list('-data_vencimento', 400),
@@ -96,7 +82,8 @@ export default function AgefinAtualizador({ onRefresh }) {
       });
 
       const filtrados = unicos.filter(lancamentoEntraNoAtualizadorBoletos);
-      filtrados.sort((a, b) => (b.data_vencimento || '').localeCompare(a.data_vencimento || ''));
+      /* Mais antigo primeiro — alinha ao padrão do atualizador de recorrentes */
+      filtrados.sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''));
       setLancamentos(filtrados);
     } catch (error) {
       console.error('Erro ao carregar lançamentos:', error);
@@ -204,7 +191,7 @@ export default function AgefinAtualizador({ onRefresh }) {
           <strong className="text-gray-600 dark:text-gray-300">recorrência</strong> encontrado.
         </p>
         <p className="text-xs max-w-sm mx-auto">
-          Inclui contas pontuais e séries recorrentes. A janela de 4 meses e a extensão mensal são aplicadas ao carregar este painel ou o atualizador no fluxo de caixa.
+          Inclui contas pontuais e séries recorrentes. A sincronização mensal das parcelas continua ao abrir o fluxo de caixa (Contas abertas / recorrentes).
         </p>
       </div>
     );
@@ -212,13 +199,6 @@ export default function AgefinAtualizador({ onRefresh }) {
 
   return (
     <div className="space-y-3">
-      {msgGeracao && (
-        <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 shrink-0" />
-          {msgGeracao}
-        </p>
-      )}
-
       <div className="rounded-[22px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">

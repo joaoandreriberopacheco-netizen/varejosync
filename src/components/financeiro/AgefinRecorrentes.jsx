@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import AgefinConsultaOrganizer from '@/components/agefin/AgefinConsultaOrganizer';
-import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,12 +16,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { createPageUrl } from '@/utils';
-import { base44 } from '@/api/base44Client';
-import { TAG_LF_BOLETO_PDF, TAG_LF_GERADO_AUTO, aplicarRegrasRecorrenciaEmLegado } from '@/lib/agefinLancamentosRecorrencia';
+import { TAG_LF_BOLETO_PDF, TAG_LF_GERADO_AUTO, tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
 import { getMonthKey, getContaDoMes, useRecorrentesBoletoData } from '@/hooks/useRecorrentesBoletoData';
-import { useToast } from '@/components/ui/use-toast';
+import AgefinImportador from '@/components/agefin/AgefinImportador';
 import { format } from 'date-fns';
 
 function formatCurrency(value) {
@@ -102,6 +100,13 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
   const todayKey = dataHoje();
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
   const boletoVencido = hasBoleto && isOverdue;
+  const atualizadoPdf = tagsOrigemBoleto(contaMes?.tags) === 'pdf';
+
+  const ringContorno = isPaid
+    ? 'ring-2 ring-[#5c6b3a] dark:ring-[#8a9a5c]'
+    : atualizadoPdf
+      ? 'ring-2 ring-lime-200 dark:ring-lime-400/50'
+      : 'dark:ring-1 dark:ring-border';
 
   return (
     <div
@@ -111,7 +116,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onOpen();
       }}
-      className="w-full cursor-pointer rounded-[28px] bg-white p-1 text-left shadow-sm dark:bg-card dark:ring-1 dark:ring-border"
+      className={`w-full cursor-pointer rounded-[28px] bg-white p-1 text-left shadow-sm dark:bg-card ${ringContorno}`}
     >
       <div className="space-y-2.5 rounded-[24px] bg-gray-50/95 px-3.5 py-3 dark:bg-muted/35">
         <div className="flex items-start justify-between gap-3">
@@ -155,13 +160,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
           <div className="relative shrink-0">
             <div
               className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white shadow-sm dark:bg-card ${
-                isPaid
-                  ? 'ring-2 ring-emerald-300 dark:ring-emerald-300/60'
-                  : hasBoleto
-                    ? boletoVencido
-                      ? 'ring-2 ring-red-400 dark:ring-red-400/75'
-                      : 'ring-2 ring-lime-300 dark:ring-emerald-300/60'
-                    : ''
+                !isPaid && hasBoleto && boletoVencido ? 'ring-2 ring-red-400 dark:ring-red-400/75' : ''
               }`}
             >
               <FileText className="h-5 w-5 text-gray-500 dark:text-muted-foreground" />
@@ -179,10 +178,8 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
 }
 
 export default function AgefinRecorrentes() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [migrandoLegado, setMigrandoLegado] = useState(false);
+  const [importAlvo, setImportAlvo] = useState(null);
   const { recorrentes, contas, loading, reload } = useRecorrentesBoletoData();
   const [filterPagamento, setFilterPagamento] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
@@ -287,9 +284,13 @@ export default function AgefinRecorrentes() {
       .sort(compareGroups)
       .map((g) => ({
         ...g,
-        items: [...g.items].sort((a, b) =>
-          (a.recorrente.nome_despesa || '').localeCompare(b.recorrente.nome_despesa || '', 'pt-BR', { sensitivity: 'base' })
-        ),
+        items: [...g.items].sort((a, b) => {
+          const da = (a.contaMes?.data_vencimento || '').slice(0, 10);
+          const db = (b.contaMes?.data_vencimento || '').slice(0, 10);
+          const c = da.localeCompare(db);
+          if (c !== 0) return sortOrder === 'asc' ? c : -c;
+          return (a.recorrente.nome_despesa || '').localeCompare(b.recorrente.nome_despesa || '', 'pt-BR', { sensitivity: 'base' });
+        }),
       }));
   }, [filteredCards, groupBy, sortOrder]);
 
@@ -305,60 +306,17 @@ export default function AgefinRecorrentes() {
     setFilterOrigem('todos');
   };
 
-  const abrirAtualizacao = useCallback(
-    (recorrente) => {
-      const gid = recorrente.grupo_lancamento_id || recorrente.id;
-      navigate(`${createPageUrl('AtualizarBoletoRecorrente')}?grupo=${encodeURIComponent(gid)}&mes=${encodeURIComponent(monthKey)}`);
-    },
-    [navigate, monthKey]
-  );
-
-  const aplicarLegadoRecorrencia = useCallback(async () => {
-    setMigrandoLegado(true);
-    try {
-      const r = await aplicarRegrasRecorrenciaEmLegado(base44);
-      await reload();
-      const partes = [
-        r.tagsAtualizados ? `${r.tagsAtualizados} lançamento(s) com tags alinhadas` : null,
-        r.parcelasIniciais ? `${r.parcelasIniciais} parcela(s) inicial(is)` : null,
-        r.geracaoSync ? `${r.geracaoSync} na sincronização do horizonte` : null,
-      ].filter(Boolean);
-      toast({
-        title: 'Regras aplicadas às recorrências antigas',
-        description:
-          partes.length > 0
-            ? partes.join(' · ')
-            : 'Nada pendente: tags e parcelas já estavam em dia.',
-        className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100',
-      });
-    } catch (e) {
-      console.error(e);
-      toast({ title: 'Não foi possível concluir', variant: 'destructive' });
-    } finally {
-      setMigrandoLegado(false);
-    }
-  }, [reload, toast]);
+  const abrirAtualizacao = useCallback((recorrente, contaMes) => {
+    if (!contaMes?.id) return;
+    setImportAlvo({ recorrente, contaMes });
+  }, []);
 
   return (
     <div className="space-y-4 pb-24">
       <div className="rounded-[28px] bg-white p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
-        <div className="mb-3 space-y-2 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
+        <div className="mb-3 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
           <p className="text-[11px] leading-4 text-gray-500 dark:text-muted-foreground">
-            Este painel é integrado às contas a pagar e ao fluxo financeiro: quando a conta é paga ou atualizada, o status aqui acompanha automaticamente.
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={migrandoLegado || loading}
-            onClick={aplicarLegadoRecorrencia}
-            className="h-9 w-full gap-2 rounded-xl border-dashed text-xs font-medium sm:w-auto"
-          >
-            <Sparkles className={`h-3.5 w-3.5 shrink-0 ${migrandoLegado ? 'animate-pulse' : ''}`} />
-            {migrandoLegado ? 'Aplicando…' : 'Alinhar recorrências antigas (tags + parcelas)' }
-          </Button>
-          <p className="text-[10px] leading-snug text-gray-400 dark:text-muted-foreground">
-            Use uma vez se criou contas recorrentes antes das regras automáticas: normaliza tags e preenche a janela de parcelas mensais como nas séries novas.
+            Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima = boleto já atualizado por PDF; verde-oliva = pago.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">
@@ -516,7 +474,7 @@ export default function AgefinRecorrentes() {
                     key={`${recorrente.grupo_lancamento_id}-${monthKey}-${grupo.key}`}
                     recorrente={recorrente}
                     contaMes={contaMes}
-                    onOpen={() => abrirAtualizacao(recorrente)}
+                    onOpen={() => abrirAtualizacao(recorrente, contaMes)}
                   />
                 ))}
               </div>
@@ -524,6 +482,38 @@ export default function AgefinRecorrentes() {
           ))}
         </div>
       )}
+
+      <Dialog open={Boolean(importAlvo)} onOpenChange={(open) => !open && setImportAlvo(null)}>
+        <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
+          <DialogHeader className="shrink-0 border-b border-gray-100 px-5 pb-3 pt-5 dark:border-gray-800">
+            <DialogTitle className="text-gray-900 dark:text-white">
+              {importAlvo ? `Atualizar boleto · ${importAlvo.recorrente?.nome_despesa || 'Recorrente'}` : 'Atualizar boleto'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
+            {importAlvo?.contaMes?.id ? (
+              <AgefinImportador
+                key={importAlvo.contaMes.id}
+                modoAtualizacao
+                fluxoLoopAtualizadorRecorrente
+                contaPrevistaId={importAlvo.contaMes.referencia_id || undefined}
+                lancamentoFinanceiroId={importAlvo.contaMes.id}
+                dadosContaExistente={{
+                  descricao: importAlvo.recorrente?.nome_despesa || importAlvo.contaMes.descricao || '',
+                  terceiro_nome: importAlvo.recorrente?.terceiro_nome || importAlvo.contaMes.terceiro_nome || '',
+                  conta_financeira_id: importAlvo.contaMes.conta_financeira_id || undefined,
+                }}
+                onSuccess={(_, meta) => {
+                  if (meta?.close) {
+                    setImportAlvo(null);
+                    reload();
+                  }
+                }}
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

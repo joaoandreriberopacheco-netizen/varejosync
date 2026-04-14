@@ -85,9 +85,9 @@ export default function ConfirmarPagamentoDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg p-0 gap-0 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 border-0 shadow-2xl">
+        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
           {/* Header */}
-          <DialogHeader className="px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800">
+          <DialogHeader className="shrink-0 border-b border-gray-100 px-5 pb-4 pt-5 dark:border-gray-800">
             <DialogTitle className="flex items-center justify-between">
               <span className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
                 {pedidoSelecionado.cliente_nome || 'Avulso'}
@@ -112,7 +112,7 @@ export default function ConfirmarPagamentoDialog({
           </DialogHeader>
 
           {/* Formas de pagamento */}
-          <div className="overflow-y-auto max-h-[60vh] px-4 py-3 space-y-1.5">
+          <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-3 [scrollbar-gutter:stable]">
 
             {/* Dinheiro */}
             <InputPagamento
@@ -245,7 +245,7 @@ export default function ConfirmarPagamentoDialog({
           </div>
 
           {/* Botões */}
-          <div className="px-4 pb-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex gap-2.5">
+          <div className="flex shrink-0 gap-2.5 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-gray-800">
             <button
               onClick={() => setShowRetornoDialog(true)}
               className="h-12 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2 flex-shrink-0"

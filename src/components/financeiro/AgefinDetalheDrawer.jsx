@@ -123,8 +123,8 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
       </Drawer>
 
       <Dialog open={showRefreshImport} onOpenChange={setShowRefreshImport}>
-        <DialogContent className="z-[120] max-w-3xl border-0 bg-transparent p-0 shadow-none">
-          <div className="max-h-[85vh] overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-950">
+        <DialogContent className="z-[120] flex min-h-0 max-h-[90vh] max-w-3xl flex-col overflow-hidden border-0 bg-transparent p-0 shadow-none">
+          <div className="flex min-h-0 max-h-[85vh] flex-1 flex-col overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-950">
             <AgefinImportador
               modoAtualizacao
               contaPrevistaId={contaMes?.referencia_id || undefined}

@@ -383,11 +383,11 @@ export default function ExecucaoOrcamentaria() {
 
         <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => { setShowNovo(false); setFabOpen(false); }} onSaved={load} />
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-          <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
+          <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
               <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
             </DialogHeader>
-            <div className="min-h-0 flex-1 overflow-hidden overscroll-none">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
               <AgefinImportador
                 onSuccess={(_, options) => {
                   load();
@@ -480,11 +480,11 @@ export default function ExecucaoOrcamentaria() {
           />
 
           <Dialog open={conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(false)}>
-            <DialogContent className="dark:bg-gray-800 dark:border-gray-700 w-[calc(100vw-1rem)] max-w-3xl h-[85vh] p-0 flex flex-col overflow-hidden">
-              <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-3">
+            <DialogContent className="flex h-[85vh] max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden border-gray-700 p-0 dark:border-gray-700 dark:bg-gray-800">
+              <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
                 <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
               </DialogHeader>
-              <div className="flex-1 min-h-0 overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
                 <ConciliacaoBancaria
                   contaId={conciliacaoConta?.id || null}
                   contaNome={conciliacaoConta?.nome || 'Todas as contas'}
