@@ -71,9 +71,7 @@ export default function ModoFlareInspection({ onClose }) {
   const [localPins, setLocalPins] = useState([]);
   const [syncMode, setSyncMode] = useState('loading');
   const recognitionRef = useRef(null);
-  const skipClickAfterTouchRef = useRef(false);
   const successMarkerTimerRef = useRef(null);
-  const lastTouchPointRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-flare-inspection', '1');
@@ -194,35 +192,12 @@ export default function ModoFlareInspection({ onClose }) {
     [briefingOpen, updateHighlight]
   );
 
-  const handleClick = useCallback(
-    (e) => {
-      if (briefingOpen) return;
-      if (skipClickAfterTouchRef.current) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const el = pickElementBehindPortal(portalRef.current, e.clientX, e.clientY);
-      if (el) openBriefingForElement(el);
-    },
-    [briefingOpen, openBriefingForElement]
-  );
-
   const selectElementAtPoint = useCallback(
     (x, y) => {
       const el = pickElementBehindPortal(portalRef.current, x, y);
       if (el) openBriefingForElement(el);
     },
     [openBriefingForElement]
-  );
-
-  const handleTouchStart = useCallback(
-    (e) => {
-      if (briefingOpen) return;
-      const t = e.touches?.[0];
-      if (!t) return;
-      lastTouchPointRef.current = { x: t.clientX, y: t.clientY };
-      updateHighlight(t.clientX, t.clientY);
-    },
-    [briefingOpen, updateHighlight]
   );
 
   const stopRecognition = useCallback(() => {
@@ -409,44 +384,16 @@ export default function ModoFlareInspection({ onClose }) {
       onWheel={(e) => e.preventDefault()}
       onMouseMove={handlePointer}
       onMouseLeave={() => setHighlight(null)}
-      onClick={handleClick}
       onPointerMove={(e) => {
         if (briefingOpen) return;
-        if (e.pointerType !== 'touch') return;
-        lastTouchPointRef.current = { x: e.clientX, y: e.clientY };
         updateHighlight(e.clientX, e.clientY);
       }}
       onPointerUp={(e) => {
         if (briefingOpen) return;
-        if (e.pointerType !== 'touch') return;
-        skipClickAfterTouchRef.current = true;
-        window.setTimeout(() => {
-          skipClickAfterTouchRef.current = false;
-        }, 500);
+        const target = e.target;
+        if (target?.closest?.('[data-flare-control]')) return;
         e.preventDefault();
         selectElementAtPoint(e.clientX, e.clientY);
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={(e) => {
-        const t = e.touches[0];
-        if (t) {
-          lastTouchPointRef.current = { x: t.clientX, y: t.clientY };
-          handlePointer(e);
-        }
-      }}
-      onTouchEnd={(e) => {
-        if (briefingOpen) return;
-        const t = e.changedTouches?.[0];
-        const point = t
-          ? { x: t.clientX, y: t.clientY }
-          : lastTouchPointRef.current;
-        if (!point) return;
-        skipClickAfterTouchRef.current = true;
-        window.setTimeout(() => {
-          skipClickAfterTouchRef.current = false;
-        }, 500);
-        e.preventDefault();
-        selectElementAtPoint(point.x, point.y);
       }}
       role="presentation"
     >
@@ -456,10 +403,11 @@ export default function ModoFlareInspection({ onClose }) {
       >
         <span className="font-medium">Modo Inspeção (Flare)</span>
         <span className="opacity-90">Clique no elemento · Esc para sair</span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-flare-control="1">
           <span className="rounded bg-amber-900/60 px-2 py-1 text-[11px]">{pinPositions.length} alvo(s)</span>
           <button
             type="button"
+            data-flare-control="1"
             className="pointer-events-auto rounded-md bg-amber-800 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
             onClick={onClose}
           >
