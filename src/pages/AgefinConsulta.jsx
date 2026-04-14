@@ -68,6 +68,26 @@ function KpiCard({ label, value, tone = 'default' }) {
   );
 }
 
+function CmvQuickToggle({ checked, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 ${
+        checked ? 'bg-gray-900 dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+          checked ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  );
+}
+
 function FilterChip({ active, onClick, children, tone = 'default' }) {
   const activeStyles = {
     default: 'bg-gray-900 text-white dark:bg-white dark:text-gray-900',
@@ -188,6 +208,8 @@ export default function AgefinConsulta() {
   const [pagamentoFilter, setPagamentoFilter] = useState('todos');
   const [prazoFilter, setPrazoFilter] = useState('todos');
   const [cmvFilter, setCmvFilter] = useState('todos');
+  /** Interruptor rápido: ocultar linhas CMV da lista sem abrir filtros */
+  const [mostrarCmvRapido, setMostrarCmvRapido] = useState(true);
   const [freteFilter, setFreteFilter] = useState('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -264,6 +286,7 @@ export default function AgefinConsulta() {
 
       if (cmvFilter === 'cmv' && !lancamentoEhCmv(conta)) return false;
       if (cmvFilter === 'normal' && lancamentoEhCmv(conta)) return false;
+      if (!mostrarCmvRapido && lancamentoEhCmv(conta)) return false;
 
       if (freteFilter === 'fretes' && !lancamentoEhFreteItinerario(conta)) return false;
       if (freteFilter === 'sem_fretes' && lancamentoEhFreteItinerario(conta)) return false;
@@ -273,7 +296,7 @@ export default function AgefinConsulta() {
       return matchesFrom && matchesTo;
     });
     return list;
-  }, [monthData, pagamentoFilter, prazoFilter, cmvFilter, freteFilter, dateFrom, dateTo]);
+  }, [monthData, pagamentoFilter, prazoFilter, cmvFilter, freteFilter, dateFrom, dateTo, mostrarCmvRapido]);
 
   const contasOrdenadas = useMemo(() => {
     const list = [...filteredData];
@@ -445,6 +468,13 @@ export default function AgefinConsulta() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Contas do mês por vencimento (padrão). Agrupe pelo ícone; toque em &quot;Somar&quot; para escolher contas e ver o total.
               </p>
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 px-3 py-2 md:max-w-sm">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-gray-800 dark:text-gray-200">CMV na lista</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Desligue para ocultar sem abrir filtros</p>
+                </div>
+                <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
+              </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <AgefinConsultaOrganizer

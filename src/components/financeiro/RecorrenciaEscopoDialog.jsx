@@ -1,27 +1,41 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { RefreshCw, Calendar, ChevronRight } from 'lucide-react';
+import { RefreshCw, ChevronRight, FileEdit } from 'lucide-react';
 
-const OPCOES = [
+const OPCOES_PAGAMENTO = [
   { value: 'apenas_esta',  label: 'Apenas esta',          desc: 'Altera somente este lançamento' },
   { value: 'todas',        label: 'Todas',                 desc: 'Altera todas do grupo (exceto pagas)' },
   { value: 'futuras',      label: 'Esta e futuras',        desc: 'A partir desta data (exceto pagas)' },
   { value: 'passadas',     label: 'Esta e anteriores',     desc: 'Até esta data (exceto pagas)' },
 ];
 
-export default function RecorrenciaEscopoDialog({ open, onClose, onConfirm }) {
+const OPCOES_CADASTRO = [
+  { value: 'apenas_esta', label: 'Só esta parcela', desc: 'Descrição, valor e vencimento só neste mês.' },
+  { value: 'futuras', label: 'Esta e as futuras', desc: 'Parcelas em aberto a partir desta competência (valor e descrição iguais; dia de vencimento ajustado em cada mês).' },
+  { value: 'todas', label: 'Todas em aberto', desc: 'Todas as parcelas não pagas desta recorrência.' },
+];
+
+export default function RecorrenciaEscopoDialog({ open, onClose, onConfirm, mode = 'pagamento' }) {
   if (!open) return null;
+  const opcoes = mode === 'cadastro' ? OPCOES_CADASTRO : OPCOES_PAGAMENTO;
+  const Icon = mode === 'cadastro' ? FileEdit : RefreshCw;
+  const titulo = mode === 'cadastro' ? 'Recorrência — dados da conta' : 'Lançamento recorrente';
+  const subtitulo =
+    mode === 'cadastro'
+      ? 'Aplicar descrição, valor e vencimento onde?'
+      : 'Como deseja aplicar a alteração?';
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="sm:max-w-xs p-0 gap-0 dark:bg-gray-900 dark:border-gray-700 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 text-gray-400" />
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Lançamento recorrente</p>
+          <Icon className="w-4 h-4 text-gray-400" />
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{titulo}</p>
         </div>
-        <p className="text-xs text-gray-400 px-5 pb-3">Como deseja aplicar a alteração?</p>
+        <p className="text-xs text-gray-400 px-5 pb-3">{subtitulo}</p>
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
         <div className="divide-y divide-gray-50 dark:divide-gray-800">
-          {OPCOES.map(op => (
+          {opcoes.map(op => (
             <button
               key={op.value}
               onClick={() => { onConfirm(op.value); onClose(); }}

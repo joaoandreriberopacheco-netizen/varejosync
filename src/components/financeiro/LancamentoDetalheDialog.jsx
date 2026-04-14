@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatarSoData, dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
+import { formatarSoData, dataHoje, toLocalDateKey, vencimentoComMesmoDiaNoMes } from '@/components/utils/dateUtils';
 
 const mesAnoLabel = (dataStr) => {
   if (!dataStr) return '';
@@ -43,6 +43,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [isPagoLocal, setIsPagoLocal] = useState(lancamento.status === 'Pago');
   const [saving, setSaving] = useState(false);
   const [showEscopo, setShowEscopo] = useState(false);
+  const [showEscopoCadastro, setShowEscopoCadastro] = useState(false);
   const [pendingSave, setPendingSave] = useState(null);
   const [showCancelarDialog, setShowCancelarDialog] = useState(false);
   const [cadDescricao, setCadDescricao] = useState(lancamento.descricao || '');
@@ -54,6 +55,34 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const isReceita = lancamento.tipo === 'Receita';
   const isTransf = lancamento.tipo === 'Transferência';
   const ehDespesaEditavel = lancamento.tipo === 'Despesa' && !isTransf && !isCancelado;
+
+  const cadastroDirty = useMemo(() => {
+    if (!ehDespesaEditavel) return false;
+    const d0 = (lancamento.descricao || '').trim();
+    const d1 = (cadDescricao || '').trim();
+    const v0 = Number(lancamento.valor ?? 0);
+    const v1 = parseFloat(String(cadValor).replace(',', '.')) || 0;
+    const ven0 = (lancamento.data_vencimento || '').slice(0, 10);
+    const ven1 = (cadVencimento || '').slice(0, 10);
+    const obs0 = lancamento.observacoes || '';
+    const obs1 = cadObs || '';
+    return (
+      d0 !== d1 ||
+      ven0 !== ven1 ||
+      Math.abs(v0 - v1) > 0.009 ||
+      obs0 !== obs1
+    );
+  }, [
+    ehDespesaEditavel,
+    lancamento.descricao,
+    lancamento.valor,
+    lancamento.data_vencimento,
+    lancamento.observacoes,
+    cadDescricao,
+    cadVencimento,
+    cadValor,
+    cadObs,
+  ]);
 
   useEffect(() => {
     setCadDescricao(lancamento.descricao || '');
@@ -196,7 +225,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setSaving(false);
   };
 
-  const handleSalvarCadastro = async () => {
+  const aplicarCadastroComEscopo = async (escopo = 'apenas_esta') => {
     setSaving(true);
     try {
       const v = parseFloat(String(cadValor).replace(',', '.')) || 0;
@@ -204,20 +233,74 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         toast({ title: 'Informe um valor válido', variant: 'destructive' });
         return;
       }
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-        descricao: (cadDescricao || '').trim() || lancamento.descricao,
-        data_vencimento: cadVencimento || lancamento.data_vencimento,
+      const descricao = (cadDescricao || '').trim() || lancamento.descricao;
+      const obs = cadObs || '';
+      const venAtual = (cadVencimento || '').slice(0, 10) || (lancamento.data_vencimento || '').slice(0, 10);
+      const basePayload = {
+        descricao,
         valor: v,
         valor_liquido: v,
-        observacoes: cadObs || '',
+        observacoes: obs,
+      };
+
+      if (!lancamento.is_recorrente || !lancamento.grupo_lancamento_id || escopo === 'apenas_esta') {
+        await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+          ...basePayload,
+          data_vencimento: venAtual || lancamento.data_vencimento,
+        });
+        toast({ title: 'Dados da conta atualizados', className: 'bg-gray-100 text-gray-800' });
+        onSaved?.();
+        return;
+      }
+
+      const grupo = await base44.entities.LancamentoFinanceiro.filter({
+        grupo_lancamento_id: lancamento.grupo_lancamento_id,
       });
-      toast({ title: 'Dados da conta atualizados', className: 'bg-gray-100 text-gray-800' });
+      const hStr = (lancamento.data_vencimento || '').slice(0, 10);
+      const alvos = (grupo || []).filter((l) => {
+        if (l.status === 'Pago') return false;
+        if (escopo === 'todas') return true;
+        if (escopo === 'futuras') return (l.data_vencimento || '').slice(0, 10) >= hStr;
+        return false;
+      });
+
+      for (const l of alvos) {
+        const novaData =
+          l.id === lancamento.id
+            ? venAtual || (l.data_vencimento || '').slice(0, 10)
+            : vencimentoComMesmoDiaNoMes(cadVencimento || l.data_vencimento, l.data_vencimento);
+        await base44.entities.LancamentoFinanceiro.update(l.id, {
+          ...basePayload,
+          data_vencimento: novaData,
+        });
+      }
+      toast({
+        title: `${alvos.length} lançamento(s) atualizados`,
+        className: 'bg-gray-100 text-gray-800',
+      });
       onSaved?.();
     } catch {
       toast({ title: 'Não foi possível guardar', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSalvarCadastro = async () => {
+    const v = parseFloat(String(cadValor).replace(',', '.')) || 0;
+    if (v <= 0) {
+      toast({ title: 'Informe um valor válido', variant: 'destructive' });
+      return;
+    }
+    if (!cadastroDirty) {
+      toast({ title: 'Nada foi alterado', className: 'bg-gray-100 text-gray-800' });
+      return;
+    }
+    if (lancamento.is_recorrente && lancamento.grupo_lancamento_id) {
+      setShowEscopoCadastro(true);
+      return;
+    }
+    await aplicarCadastroComEscopo('apenas_esta');
   };
 
   let Icon = ArrowRightLeft;
@@ -497,7 +580,13 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       onClose={() => { setShowEscopo(false); setPendingSave(null); setSaving(false); }}
       onConfirm={(escopo) => aplicarPagamento(escopo)}
     />
-    
+    <RecorrenciaEscopoDialog
+      mode="cadastro"
+      open={showEscopoCadastro}
+      onClose={() => setShowEscopoCadastro(false)}
+      onConfirm={(escopo) => aplicarCadastroComEscopo(escopo)}
+    />
+
     <CancelarLancamentoDialog
       lancamento={lancamento}
       isOpen={showCancelarDialog}

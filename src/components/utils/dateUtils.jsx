@@ -66,6 +66,26 @@ export function boundsMesCivil(year, monthIndexZeroBased) {
   return { start, end: `${year}-${pad(m)}-${pad(ultimoDia)}` };
 }
 
+/**
+ * Mantém o mês/ano de `alvoYmd` e aplica o dia civil de `referenciaYmd`,
+ * limitando ao último dia do mês de destino (ex.: 31 → fevereiro vira 28/29).
+ * @param {string} referenciaYmd YYYY-MM-DD (fonte do dia)
+ * @param {string} alvoYmd YYYY-MM-DD (competência de destino)
+ */
+export function vencimentoComMesmoDiaNoMes(referenciaYmd, alvoYmd) {
+  const ref = String(referenciaYmd || '').slice(0, 10);
+  const alvo = String(alvoYmd || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref) || !/^\d{4}-\d{2}-\d{2}$/.test(alvo)) return alvo || ref;
+  const diaRef = parseInt(ref.slice(8, 10), 10);
+  const y = parseInt(alvo.slice(0, 4), 10);
+  const m = parseInt(alvo.slice(5, 7), 10);
+  const mi = m - 1;
+  const ultimo = new Date(Date.UTC(y, mi + 1, 0)).getUTCDate();
+  const dia = Math.min(diaRef, ultimo);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${y}-${p(m)}-${p(dia)}`;
+}
+
 /** Offset fixo do negócio (Tabatinga / America/Rio_Branco). */
 const OFFSET_SISTEMA = '-05:00';
 
