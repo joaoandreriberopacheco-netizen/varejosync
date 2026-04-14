@@ -250,8 +250,14 @@ export default function ConsumoInternoPage() {
   };
 
   const handleSubmit = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H1',location:'src/pages/ConsumoInterno.jsx:handleSubmit:start',message:'handleSubmit called',data:{isSubmitting,editandoConsumo:Boolean(editandoConsumo),destinacao:formData.destinacao,responsavel:formData.responsavel_recebimento,itensCount:formData.itens?.length||0},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (isSubmitting) return;
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
+      // #region agent log
+      fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H1',location:'src/pages/ConsumoInterno.jsx:handleSubmit:validation',message:'validation failed',data:{destinacao:formData.destinacao,responsavel:formData.responsavel_recebimento,itensCount:formData.itens?.length||0},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       toast.error('Preencha destinação, responsável e itens');
       return;
     }
@@ -272,30 +278,56 @@ export default function ConsumoInternoPage() {
       let created;
       if (editandoConsumo) {
         created = await base44.entities.ConsumoInterno.update(editandoConsumo.id, payload);
+        // #region agent log
+        fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H2',location:'src/pages/ConsumoInterno.jsx:handleSubmit:update',message:'consumo updated',data:{consumoId:created?.id,itensCount:formData.itens?.length||0},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         toast.success('Consumo atualizado');
       } else {
         const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
         const numero = response?.data?.numero || `CI-${Date.now()}`;
         created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
+        // #region agent log
+        fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H2',location:'src/pages/ConsumoInterno.jsx:handleSubmit:createConsumo',message:'consumo created',data:{consumoId:created?.id,numero,itensCount:formData.itens?.length||0},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
 
         await Promise.all(formData.itens.map(async (item) => {
-          await base44.entities.MovimentacaoEstoque.create({
-            produto_id: item.produto_id,
-            produto_nome: item.produto_nome,
-            tipo: 'Saída',
-            motivo: 'Consumo Interno',
-            quantidade: item.quantidade,
-            custo_unitario: item.custo_unitario,
-            referencia_tipo: 'ConsumoInterno',
-            referencia_id: created.id,
-            referencia_numero: numero,
-            observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
-            usuario_responsavel: currentUser?.full_name || currentUser?.email,
-          });
-          const produtoAtual = produtos.find((p) => p.id === item.produto_id);
-          if (produtoAtual) {
-            const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
-            await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
+          try {
+            // #region agent log
+            fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H3',location:'src/pages/ConsumoInterno.jsx:handleSubmit:beforeMovimentacao',message:'creating movimentacao item',data:{consumoId:created?.id,produtoId:item?.produto_id,quantidade:item?.quantidade,custo:item?.custo_unitario},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            const movimento = await base44.entities.MovimentacaoEstoque.create({
+              produto_id: item.produto_id,
+              produto_nome: item.produto_nome,
+              tipo: 'Saída',
+              motivo: 'Consumo Interno',
+              quantidade: item.quantidade,
+              custo_unitario: item.custo_unitario,
+              referencia_tipo: 'ConsumoInterno',
+              referencia_id: created.id,
+              referencia_numero: numero,
+              observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
+              usuario_responsavel: currentUser?.full_name || currentUser?.email,
+            });
+            // #region agent log
+            fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H3',location:'src/pages/ConsumoInterno.jsx:handleSubmit:afterMovimentacao',message:'movimentacao created',data:{movimentacaoId:movimento?.id,produtoId:item?.produto_id},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            const produtoAtual = produtos.find((p) => p.id === item.produto_id);
+            if (produtoAtual) {
+              const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
+              await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
+              // #region agent log
+              fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H4',location:'src/pages/ConsumoInterno.jsx:handleSubmit:produtoUpdate',message:'produto estoque updated',data:{produtoId:item?.produto_id,estoqueAnterior:produtoAtual?.estoque_atual,estoqueNovo:novoEstoque},timestamp:Date.now()})}).catch(()=>{});
+              // #endregion
+            } else {
+              // #region agent log
+              fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H4',location:'src/pages/ConsumoInterno.jsx:handleSubmit:produtoNotFound',message:'produto not found in local state',data:{produtoId:item?.produto_id},timestamp:Date.now()})}).catch(()=>{});
+              // #endregion
+            }
+          } catch (error) {
+            // #region agent log
+            fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H5',location:'src/pages/ConsumoInterno.jsx:handleSubmit:itemError',message:'error while creating movimentacao or updating produto',data:{produtoId:item?.produto_id,errorMessage:error?.message||String(error)},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            throw error;
           }
         }));
 
@@ -319,6 +351,9 @@ export default function ConsumoInternoPage() {
       setShowForm(false);
       setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '', anexos_temporarios: [], fotos_temporarias: [] });
       await loadData();
+      // #region agent log
+      fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a3b2ef'},body:JSON.stringify({sessionId:'a3b2ef',runId:'initial',hypothesisId:'H2',location:'src/pages/ConsumoInterno.jsx:handleSubmit:completed',message:'handleSubmit completed',data:{createdId:created?.id,editandoConsumo:Boolean(editandoConsumo)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     } finally {
       setIsSubmitting(false);
     }
