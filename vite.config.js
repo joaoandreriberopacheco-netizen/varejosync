@@ -1,6 +1,7 @@
 import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import sourceLocationBabelPlugin from './build/sourceLocationBabelPlugin.cjs'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,6 +18,10 @@ export default defineConfig({
         process.env.BASE44_LEGACY_SDK_IMPORTS !== 'false' &&
         process.env.BASE44_LEGACY_SDK_IMPORTS !== '0',
     }),
-    react(),
+    react({
+      babel: {
+        plugins: [sourceLocationBabelPlugin],
+      },
+    }),
   ]
 });

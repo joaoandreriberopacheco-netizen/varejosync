@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v5';
+const CACHE_NAME = 'p38-erp-v6';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json'];
 
