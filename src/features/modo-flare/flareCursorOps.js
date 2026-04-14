@@ -1,5 +1,27 @@
 import { listPendingFlaresLocalFirst, resolveFlareById } from '@/features/modo-flare/flareQueue';
 
+function isPurchaseFlare(flare) {
+  const file = String(flare?.file_path || '').toLowerCase();
+  const route = String(flare?.route || '').toLowerCase();
+  const component = String(flare?.component_name || '').toLowerCase();
+  const text = `${file} ${route} ${component}`;
+  return (
+    text.includes('pedidocompra') ||
+    text.includes('pedido_compra') ||
+    text.includes('pedido-compra') ||
+    text.includes('compras')
+  );
+}
+
+function sortByConfidenceThenRecent(a, b) {
+  if (a.confidence !== b.confidence) {
+    return a.confidence === 'high' ? -1 : 1;
+  }
+  const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+  const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+  return tb - ta;
+}
+
 function buildPinpoint(flare) {
   const hasCoordinate = Boolean(flare.file_path && flare.line && flare.column);
   return {
@@ -21,6 +43,15 @@ export async function readPendingFlaresForCursor() {
   return {
     mode: result.mode,
     items: result.items.map(buildPinpoint),
+  };
+}
+
+export async function readPendingPurchaseFlaresForCursor() {
+  const result = await listPendingFlaresLocalFirst();
+  const purchase = result.items.filter(isPurchaseFlare).sort(sortByConfidenceThenRecent);
+  return {
+    mode: result.mode,
+    items: purchase.map(buildPinpoint),
   };
 }
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -65,6 +65,29 @@ export default function ModoFlareInspection({ onClose }) {
   const [smokeRunning, setSmokeRunning] = useState(false);
   const recognitionRef = useRef(null);
   const successMarkerTimerRef = useRef(null);
+  const purchasePins = useMemo(() => {
+    return localPins
+      .filter((flare) => {
+        const file = String(flare?.file_path || '').toLowerCase();
+        const route = String(flare?.route || '').toLowerCase();
+        const component = String(flare?.component_name || '').toLowerCase();
+        const text = `${file} ${route} ${component}`;
+        return (
+          text.includes('pedidocompra') ||
+          text.includes('pedido_compra') ||
+          text.includes('pedido-compra') ||
+          text.includes('compras')
+        );
+      })
+      .sort((a, b) => {
+        if (a.confidence !== b.confidence) {
+          return a.confidence === 'high' ? -1 : 1;
+        }
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+      });
+  }, [localPins]);
 
   const reloadPins = useCallback(async () => {
     const result = await listPendingFlaresLocalFirst();
@@ -213,6 +236,34 @@ export default function ModoFlareInspection({ onClose }) {
       setSmokeRunning(false);
     }
   }, [reloadPins, toast]);
+
+  const resolveAllPurchasePins = useCallback(async () => {
+    if (!purchasePins.length) {
+      toast({ title: 'Sem flares de compras pendentes' });
+      return;
+    }
+    setAdminBusy(true);
+    try {
+      await Promise.all(
+        purchasePins.map((flare) =>
+          resolveFlareById(flare, flare?.confidence === 'high' ? 'high' : 'medium')
+        )
+      );
+      await reloadPins();
+      toast({
+        title: 'Rodada de compras concluída',
+        description: `${purchasePins.length} flare(s) marcado(s) como resolved.`,
+      });
+    } catch {
+      toast({
+        title: 'Falha ao fechar rodada',
+        description: 'Não foi possível resolver todos os flares de compras.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAdminBusy(false);
+    }
+  }, [purchasePins, reloadPins, toast]);
 
   useEffect(
     () => () => {
@@ -635,17 +686,51 @@ export default function ModoFlareInspection({ onClose }) {
           >
             Smoke
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] pointer-events-auto"
+            data-flare-control="1"
+            onClick={() => {
+              void resolveAllPurchasePins();
+            }}
+            disabled={adminBusy}
+          >
+            Fechar compras
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] pointer-events-auto"
+            data-flare-control="1"
+            onClick={() => {
+              void reloadPins();
+            }}
+            disabled={adminBusy}
+          >
+            Recarregar
+          </Button>
         </div>
         {precheckCount != null ? (
           <p className="mb-2 text-[10px] opacity-80">Precheck remoto: {precheckCount} registro(s).</p>
         ) : null}
+        <p className="mb-2 text-[10px] opacity-80">
+          Compras: {purchasePins.length} pendente(s) · Total: {localPins.length}
+        </p>
         <div className="max-h-56 space-y-2 overflow-auto pr-1">
-          {localPins.slice(0, 8).map((flare) => (
+          {purchasePins.slice(0, 8).map((flare) => (
             <div key={flare.id} className="rounded border border-amber-500/20 bg-amber-950/20 p-2">
               <p className="line-clamp-2 text-[11px]">{flare.action_briefing || flare.briefing}</p>
               <p className="mt-1 text-[10px] opacity-80">
                 {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
               </p>
+              {(flare.file_path && flare.line && flare.column) ? (
+                <p className="mt-1 break-all font-mono text-[10px] opacity-70">
+                  {flare.file_path}:{flare.line}:{flare.column}
+                </p>
+              ) : null}
               <Button
                 type="button"
                 size="sm"
@@ -660,7 +745,9 @@ export default function ModoFlareInspection({ onClose }) {
               </Button>
             </div>
           ))}
-          {localPins.length === 0 ? <p className="text-[11px] opacity-75">Sem alvos pendentes.</p> : null}
+          {purchasePins.length === 0 ? (
+            <p className="text-[11px] opacity-75">Sem alvos pendentes de compras.</p>
+          ) : null}
         </div>
       </div>
 
