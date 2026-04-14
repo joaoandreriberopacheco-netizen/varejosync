@@ -89,6 +89,17 @@ export default function ModoFlareInspection({ onClose }) {
       });
   }, [localPins]);
 
+  const listStatusFooter = useMemo(() => {
+    const n = localPins.length;
+    if (syncMode === 'loading') {
+      return `Alvos na lista: ${n} · A carregar origem…`;
+    }
+    if (syncMode === 'remote') {
+      return `Alvos na lista: ${n} · Origem: nuvem`;
+    }
+    return `Alvos na lista: ${n} · Origem: neste dispositivo`;
+  }, [syncMode, localPins.length]);
+
   const reloadPins = useCallback(async () => {
     const result = await listPendingFlaresLocalFirst();
     setLocalPins(result.items);
@@ -145,7 +156,7 @@ export default function ModoFlareInspection({ onClose }) {
       setPrecheckCount(all.length);
       toast({
         title: 'Precheck concluído',
-        description: `${all.length} flare(s) remoto(s) encontrados antes da limpeza.`,
+        description: `Total na nuvem: ${all.length} registo(s).`,
       });
       return all.length;
     } catch {
@@ -429,7 +440,7 @@ export default function ModoFlareInspection({ onClose }) {
     }
   }, [isListening, stopRecognition, toast]);
 
-  const saveBriefing = useCallback(() => {
+  const saveBriefing = useCallback(async () => {
     if (!pendingMeta) return;
     const text = briefingDraft.trim();
     const actionText = actionBriefingDraft.trim() || text;
@@ -449,50 +460,76 @@ export default function ModoFlareInspection({ onClose }) {
       });
       return;
     }
+
+    const meta = pendingMeta;
+    const rectSnapshot = pendingRect;
     setSaving(true);
     setUploadingImage(Boolean(selectedImageFile));
-    const saveRemoteOrLocal = async () => {
-      let imageUrl = '';
-      if (selectedImageFile) {
-        try {
-          const upload = await base44.integrations.Core.UploadFile({ file: selectedImageFile });
-          imageUrl = upload?.file_url || '';
-        } catch {
-          imageUrl = '';
-        }
+
+    let imageUrl = '';
+    if (selectedImageFile) {
+      try {
+        const upload = await base44.integrations.Core.UploadFile({ file: selectedImageFile });
+        imageUrl = upload?.file_url || '';
+      } catch {
+        imageUrl = '';
       }
-      const createRemote = async () => {
+    }
+
+    let savedOrigin = 'local';
+    try {
+      try {
         await base44.entities.TargetFlare.create({
           status: 'pending',
-          file_path: pendingMeta.file_path,
-          line: pendingMeta.line,
-          column: pendingMeta.column,
-          source_location_raw: pendingMeta.source_location_raw,
-          component_name: pendingMeta.component_name,
+          file_path: meta.file_path,
+          line: meta.line,
+          column: meta.column,
+          source_location_raw: meta.source_location_raw,
+          component_name: meta.component_name,
           briefing: text,
           action_briefing: actionText,
           context_image_url: imageUrl,
-          confidence: pendingMeta.confidence,
+          confidence: meta.confidence,
           route: window.location.pathname || '',
         });
-      };
-
-      const saveLocalFallback = () => {
+        savedOrigin = 'remote';
+        setSyncMode('remote');
+        setLocalPins((prev) => [
+          {
+            id: `remote-${Date.now()}`,
+            source_location_raw: meta.source_location_raw,
+            file_path: meta.file_path,
+            line: meta.line,
+            column: meta.column,
+            component_name: meta.component_name,
+            route: window.location.pathname || '',
+            briefing: text,
+            action_briefing: actionText,
+            context_image_url: imageUrl,
+            confidence: meta.confidence,
+            scope: 'remote',
+            status: 'pending',
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      } catch {
+        savedOrigin = 'local';
         setSyncMode('local');
         setLocalPins((prev) => {
           const next = [
             {
               id: `local-${Date.now()}`,
-              source_location_raw: pendingMeta.source_location_raw,
-              file_path: pendingMeta.file_path,
-              line: pendingMeta.line,
-              column: pendingMeta.column,
-              component_name: pendingMeta.component_name,
+              source_location_raw: meta.source_location_raw,
+              file_path: meta.file_path,
+              line: meta.line,
+              column: meta.column,
+              component_name: meta.component_name,
               route: window.location.pathname || '',
               briefing: text,
               action_briefing: actionText,
               context_image_url: imageUrl,
-              confidence: pendingMeta.confidence,
+              confidence: meta.confidence,
               scope: 'local',
               status: 'pending',
               created_at: new Date().toISOString(),
@@ -502,39 +539,8 @@ export default function ModoFlareInspection({ onClose }) {
           writeLocalPins(next);
           return next;
         });
-      };
+      }
 
-      const saveRemoteOrLocal = async () => {
-        try {
-          await createRemote();
-          setSyncMode('remote');
-          setLocalPins((prev) => [
-            {
-              id: `remote-${Date.now()}`,
-              source_location_raw: pendingMeta.source_location_raw,
-              file_path: pendingMeta.file_path,
-              line: pendingMeta.line,
-              column: pendingMeta.column,
-              component_name: pendingMeta.component_name,
-              route: window.location.pathname || '',
-              briefing: text,
-              action_briefing: actionText,
-              context_image_url: imageUrl,
-              confidence: pendingMeta.confidence,
-              scope: 'remote',
-              status: 'pending',
-              created_at: new Date().toISOString(),
-            },
-            ...prev,
-          ]);
-        } catch {
-          saveLocalFallback();
-        }
-      };
-      await saveRemoteOrLocal();
-    };
-
-    try {
       setBriefingOpen(false);
       setPendingMeta(null);
       setPendingRect(null);
@@ -542,14 +548,13 @@ export default function ModoFlareInspection({ onClose }) {
       setActionBriefingDraft('');
       setSelectedImageFile(null);
       stopRecognition();
-      void saveRemoteOrLocal();
 
-      if (pendingRect) {
+      if (rectSnapshot) {
         setSuccessMarker({
-          top: pendingRect.top,
-          left: pendingRect.left,
-          width: pendingRect.width,
-          height: pendingRect.height,
+          top: rectSnapshot.top,
+          left: rectSnapshot.left,
+          width: rectSnapshot.width,
+          height: rectSnapshot.height,
         });
         if (successMarkerTimerRef.current) {
           clearTimeout(successMarkerTimerRef.current);
@@ -560,11 +565,10 @@ export default function ModoFlareInspection({ onClose }) {
         }, 1200);
       }
       toast({
-        title: 'Bandeirinha fincada com sucesso',
-        description:
-          syncMode === 'remote'
-            ? 'Podes continuar navegando e marcar outro elemento.'
-            : 'Guardada localmente. Podes continuar navegando e marcar outro elemento.',
+        title: 'Bandeirinha registada',
+        description: `Podes continuar a marcar outros elementos. Origem: ${
+          savedOrigin === 'remote' ? 'nuvem' : 'neste dispositivo'
+        }.`,
       });
     } finally {
       setUploadingImage(false);
@@ -577,7 +581,6 @@ export default function ModoFlareInspection({ onClose }) {
     pendingRect,
     selectedImageFile,
     stopRecognition,
-    syncMode,
     toast,
   ]);
 
@@ -645,7 +648,7 @@ export default function ModoFlareInspection({ onClose }) {
         style={{ zIndex: HUD_Z + 2 }}
         data-flare-control="1"
       >
-        <p className="mb-2 text-[11px] uppercase tracking-wide text-amber-200/90">Fila local de caça</p>
+        <p className="mb-2 text-[11px] uppercase tracking-wide text-amber-200/90">Fila de caça</p>
         <div className="mb-2 flex flex-wrap gap-1.5">
           <Button
             type="button"
@@ -714,7 +717,7 @@ export default function ModoFlareInspection({ onClose }) {
           </Button>
         </div>
         {precheckCount != null ? (
-          <p className="mb-2 text-[10px] opacity-80">Precheck remoto: {precheckCount} registro(s).</p>
+          <p className="mb-2 text-[10px] opacity-80">Nuvem: {precheckCount} registo(s) no total.</p>
         ) : null}
         <p className="mb-2 text-[10px] opacity-80">
           Compras: {purchasePins.length} pendente(s) · Total: {localPins.length}
@@ -722,6 +725,9 @@ export default function ModoFlareInspection({ onClose }) {
         <div className="max-h-56 space-y-2 overflow-auto pr-1">
           {purchasePins.slice(0, 8).map((flare) => (
             <div key={flare.id} className="rounded border border-amber-500/20 bg-amber-950/20 p-2">
+              <p className="mb-1 text-[9px] uppercase tracking-wide text-amber-300/90">
+                {flare.scope === 'remote' ? 'Nuvem' : 'Dispositivo'}
+              </p>
               <p className="line-clamp-2 text-[11px]">{flare.action_briefing || flare.briefing}</p>
               <p className="mt-1 text-[10px] opacity-80">
                 {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
@@ -800,11 +806,7 @@ export default function ModoFlareInspection({ onClose }) {
         className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md bg-gray-900/90 px-3 py-2 text-xs text-white"
         style={{ zIndex: HUD_Z + 2 }}
       >
-        {syncMode === 'remote'
-          ? 'Fase 2 ativa: bandeirinhas sincronizadas com backend.'
-          : syncMode === 'loading'
-            ? 'Fase 2: verificando backend...'
-            : 'Fase 2 ativa: fallback local (backend indisponível).'}
+        {listStatusFooter}
       </div>
     </div>
   );
@@ -822,7 +824,7 @@ export default function ModoFlareInspection({ onClose }) {
           <p className="mb-3 font-mono text-xs text-muted-foreground">
             {(pendingMeta.file_path && pendingMeta.line && pendingMeta.column)
               ? `${pendingMeta.file_path}:${pendingMeta.line}:${pendingMeta.column}`
-              : 'Sem source-location (fallback visual)'}{' '}
+              : 'Sem coordenada de código neste elemento'}{' '}
             · {pendingMeta.component_name} · confiança {pendingMeta.confidence}
           </p>
           <Textarea
@@ -832,7 +834,7 @@ export default function ModoFlareInspection({ onClose }) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
-                saveBriefing();
+                void saveBriefing();
               }
             }}
             placeholder="Descreva o bug ou melhoria…"
@@ -861,7 +863,14 @@ export default function ModoFlareInspection({ onClose }) {
               {isListening ? <MicOff className="mr-1 h-4 w-4" /> : <Mic className="mr-1 h-4 w-4" />}
               {isListening ? 'Parar' : 'Microfone'}
             </Button>
-            <Button type="button" size="sm" onClick={saveBriefing} disabled={saving}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                void saveBriefing();
+              }}
+              disabled={saving}
+            >
               {saving || uploadingImage ? 'A guardar…' : 'Guardar (Ctrl+Enter)'}
             </Button>
             <Button
