@@ -101,13 +101,15 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
   const boletoVencido = hasBoleto && isOverdue;
   const atualizadoPdf = tagsOrigemBoleto(contaMes?.tags) === 'pdf';
+  /** Lima só com tag de PDF e conta como boleto — evita destaque com tag órfã ou despesa sem boleto. */
+  const boletoMarcadoComoAtualizadoPdf = atualizadoPdf && hasBoleto;
 
   const iconRing =
     !isPaid && hasBoleto && boletoVencido
       ? 'ring-2 ring-red-400 dark:ring-red-400/75'
       : isPaid
         ? 'ring-2 ring-[#5c6b3a] dark:ring-[#8a9a5c]'
-        : atualizadoPdf
+        : boletoMarcadoComoAtualizadoPdf
           ? 'ring-2 ring-lime-200 dark:ring-lime-400/50'
           : '';
 
@@ -322,7 +324,7 @@ export default function AgefinRecorrentes() {
       <div className="rounded-[28px] bg-white p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
         <div className="mb-3 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
           <p className="text-[11px] leading-4 text-gray-500 dark:text-muted-foreground">
-            Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima no ícone do boleto = PDF daquele mês registado; contorno verde-oliva no ícone = pago; check verde ao lado do título quando pago.
+            Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima no ícone = conta como boleto e lançamento marcado com PDF nesse mês; contorno verde-oliva no ícone = pago; check verde ao lado do título quando pago.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">

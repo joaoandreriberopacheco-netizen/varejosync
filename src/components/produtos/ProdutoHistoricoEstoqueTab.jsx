@@ -23,12 +23,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   calcularExtratoComSaldo,
   deltaQuantidadeMovimento,
   movimentacaoPassaFiltros,
   textoReferenciaTipo,
 } from '@/components/produtos/produtoHistoricoEstoque';
+
+/** Larguras + posições left (px) para colunas sticky alinhadas */
+const STICKY_COL = {
+  dataW: 124,
+  docW: 132,
+  saldoW: 88,
+  docLeft: 124,
+  saldoLeft: 124 + 132,
+};
 
 function formatQtd(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '0';
@@ -279,106 +289,146 @@ export default function ProdutoHistoricoEstoqueTab({
           ) : null}
         </div>
       ) : (
-        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
-          {linhasParaExibir.map(({ mov, saldoApos }, idx) => {
-            const isEntrada = mov.tipo === 'Entrada';
-            const delta = deltaQuantidadeMovimento(mov);
-            const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
-            const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '—';
-            const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '—';
-            const origem = textoReferenciaTipo(mov);
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
+          <p className="shrink-0 border-b border-gray-100 bg-gray-50 px-3 py-2 text-[10px] leading-snug text-gray-500 dark:border-white/5 dark:bg-[#1a1f2e] dark:text-gray-400">
+            Colunas fixas: data, documento e saldo. Deslize para a direita para ver origem, valores e responsável.
+          </p>
+          <div className="min-h-0 flex-1 overflow-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+            <table className="w-max min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
+              <TableHeader className="sticky top-0 z-30 bg-gray-100 shadow-sm dark:bg-[#252a38] [&_tr]:border-gray-200 dark:[&_tr]:border-gray-700">
+                <TableRow className="border-b hover:bg-transparent">
+                  <TableHead
+                    className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300`}
+                    style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
+                  >
+                    Data
+                  </TableHead>
+                  <TableHead
+                    className="sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300"
+                    style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
+                  >
+                    Documento
+                  </TableHead>
+                  <TableHead
+                    className="sticky top-0 z-[45] h-10 border-b border-r border-gray-200 bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.2)] dark:border-gray-600 dark:bg-[#252a38] dark:text-gray-300 dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]"
+                    style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
+                  >
+                    Saldo após
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[5.5rem] whitespace-nowrap border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Origem
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[7rem] border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Cliente / terceiro
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Tipo
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[4rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Movimento
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    P. un.
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Total R$
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[6rem] border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Responsável
+                  </TableHead>
+                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Qtd
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {linhasParaExibir.map(({ mov, saldoApos }, idx) => {
+                  const isEntrada = mov.tipo === 'Entrada';
+                  const delta = deltaQuantidadeMovimento(mov);
+                  const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
+                  const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '—';
+                  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '—';
+                  const origem = textoReferenciaTipo(mov);
+                  const rowKey = mov.id != null ? mov.id : `mov-${idx}`;
+                  const stickyBg =
+                    'bg-white group-hover:bg-gray-50 dark:bg-[#151a26] dark:group-hover:bg-[#1c2230]';
 
-            return (
-              <div
-                key={mov.id != null ? mov.id : `mov-${idx}`}
-                className="overflow-hidden rounded-[22px] bg-[#f8fafc] shadow-sm dark:bg-[#151a26]"
-              >
-                <div className="flex gap-3 border-b border-gray-200/70 px-3 py-3 dark:border-white/5 sm:px-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge
-                        className={`rounded-full border-0 text-[10px] ${
-                          isEntrada
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/35 dark:text-emerald-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/35 dark:text-red-200'
+                  return (
+                    <TableRow key={rowKey} className="group border-gray-100 dark:border-gray-800">
+                      <TableCell
+                        className={`sticky z-20 whitespace-nowrap border-b border-gray-100 px-2 py-2 tabular-nums text-gray-700 dark:border-gray-800 dark:text-gray-200 ${stickyBg}`}
+                        style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
+                      >
+                        {mov.created_date
+                          ? `${format(new Date(mov.created_date), 'dd/MM/yy')} ${format(new Date(mov.created_date), 'HH:mm')}`
+                          : '—'}
+                      </TableCell>
+                      <TableCell
+                        className={`sticky z-20 max-w-[132px] truncate border-b border-gray-100 px-2 py-2 font-medium text-gray-900 dark:border-gray-800 dark:text-gray-100 ${stickyBg}`}
+                        style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
+                        title={String(documento)}
+                      >
+                        {documento}
+                      </TableCell>
+                      <TableCell
+                        className={`sticky z-20 border-b border-r border-gray-200 px-2 py-2 text-right font-glacial text-sm font-bold tabular-nums text-gray-900 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:border-gray-700 dark:text-white dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)] ${stickyBg}`}
+                        style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
+                      >
+                        {saldoApos != null ? formatQtd(saldoApos) : '—'}
+                      </TableCell>
+                      <TableCell className="border-b border-gray-100 px-2 py-2 dark:border-gray-800">
+                        <Badge
+                          className={`max-w-[8rem] truncate rounded-full border-0 text-[9px] ${
+                            isEntrada
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/35 dark:text-emerald-200'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/35 dark:text-red-200'
+                          }`}
+                          title={origem}
+                        >
+                          {origem}
+                        </Badge>
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[10rem] truncate border-b border-gray-100 px-2 py-2 text-gray-600 dark:border-gray-800 dark:text-gray-300"
+                        title={clienteNome}
+                      >
+                        {clienteNome}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap border-b border-gray-100 px-2 py-2 text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                        {mov.tipo}
+                      </TableCell>
+                      <TableCell
+                        className={`border-b border-gray-100 px-2 py-2 text-right font-semibold tabular-nums dark:border-gray-800 ${
+                          isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-300'
                         }`}
                       >
-                        {origem}
-                      </Badge>
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                        {mov.created_date
-                          ? `${format(new Date(mov.created_date), 'dd/MM/yyyy')} · ${format(new Date(mov.created_date), 'HH:mm')}`
+                        {delta >= 0 ? '+' : ''}
+                        {formatQtd(delta)}
+                      </TableCell>
+                      <TableCell className="border-b border-gray-100 px-2 py-2 text-right tabular-nums text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                        {mov.custo_unitario > 0
+                          ? `R$ ${Number(mov.custo_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                           : '—'}
-                      </span>
-                    </div>
-                    <p className="mt-2 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{documento}</p>
-                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{clienteNome}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p
-                      className={`font-glacial text-lg font-bold tabular-nums ${
-                        isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-300'
-                      }`}
-                    >
-                      {delta >= 0 ? '+' : ''}
-                      {formatQtd(delta)}
-                    </p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-500">movimento</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 bg-white/60 px-3 py-2.5 dark:bg-black/20 sm:px-4">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                      Saldo após
-                    </p>
-                    <p className="font-glacial text-lg font-bold tabular-nums text-gray-900 dark:text-white">
-                      {saldoApos != null ? formatQtd(saldoApos) : '—'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500">Tipo</p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{mov.tipo}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 border-t border-gray-100 px-3 py-3 text-xs dark:border-white/5 sm:grid-cols-4 sm:px-4">
-                  <div>
-                    <p className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Preço un.</p>
-                    <p className="font-semibold tabular-nums text-gray-800 dark:text-gray-200">
-                      {mov.custo_unitario > 0
-                        ? `R$ ${Number(mov.custo_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                        : '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Total R$</p>
-                    <p
-                      className={`font-semibold tabular-nums ${
-                        isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-300'
-                      }`}
-                    >
-                      {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                      Responsável
-                    </p>
-                    <p className="truncate font-semibold text-gray-800 dark:text-gray-200">
-                      {mov.usuario_responsavel || '—'}
-                    </p>
-                  </div>
-                  <div className="min-w-0 sm:text-right">
-                    <p className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Qtd</p>
-                    <p className="font-semibold tabular-nums text-gray-800 dark:text-gray-200">
-                      {formatQtd(mov.quantidade)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                      </TableCell>
+                      <TableCell
+                        className={`border-b border-gray-100 px-2 py-2 text-right tabular-nums dark:border-gray-800 ${
+                          isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-300'
+                        }`}
+                      >
+                        {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                      </TableCell>
+                      <TableCell className="max-w-[7rem] truncate border-b border-gray-100 px-2 py-2 text-gray-700 dark:border-gray-800 dark:text-gray-300">
+                        {mov.usuario_responsavel || '—'}
+                      </TableCell>
+                      <TableCell className="border-b border-gray-100 px-2 py-2 text-right tabular-nums text-gray-800 dark:border-gray-800 dark:text-gray-200">
+                        {formatQtd(mov.quantidade)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </table>
+          </div>
         </div>
       )}
     </div>

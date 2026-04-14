@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, ShoppingCart } from 'lucide-react';
@@ -26,7 +27,10 @@ const FREQS_MAP = {
   'Anual': (d, i) => addYears(d, i),
 };
 
-export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial, descricaoInicial, valorInicial, referenciaId, referenciaTipo, origemContaPagar }) {
+/**
+ * @param {'center' | 'bottomSheet'} [presentation] — Se omitido: `bottomSheet` quando `origemContaPagar`, senão `center`.
+ */
+export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial, descricaoInicial, valorInicial, referenciaId, referenciaTipo, origemContaPagar, presentation }) {
   const [tipo, setTipo] = useState(tipoInicial || 'Despesa');
   const [contas, setContas] = useState([]);
   const [valorCents, setValorCents] = useState(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
@@ -82,6 +86,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial]);
 
   if (!open) return null;
+
+  const layout = presentation ?? (origemContaPagar ? 'bottomSheet' : 'center');
+  const rootClassName =
+    layout === 'bottomSheet'
+      ? 'relative flex h-[min(58dvh,520px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-gray-50 dark:bg-gray-900 shadow-2xl'
+      : 'relative flex h-[min(100dvh,820px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-900 shadow-2xl md:max-h-[calc(100vh-3rem)]';
 
   const valorNumerico = parseInt(valorCents || '0', 10) / 100;
   const display = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
@@ -202,8 +212,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     setConfirmDialogMode('success');
   };
 
-  return (
-    <div className="relative flex h-[min(100dvh,820px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-900 shadow-2xl md:max-h-[calc(100vh-3rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+  const panel = (
+    <div className={rootClassName} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-5 pb-3">
         <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800 active:scale-95">
@@ -401,4 +411,28 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       />
     </div>
   );
+
+  if (layout === 'bottomSheet') {
+    return createPortal(
+      <>
+        <button
+          type="button"
+          aria-label="Fechar"
+          className="fixed inset-0 z-[59] cursor-default bg-slate-950/25 dark:bg-slate-950/40"
+          onClick={onClose}
+        />
+        <div
+          className="fixed inset-x-0 bottom-0 z-[60] flex justify-center px-0"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="pointer-events-auto w-full max-w-2xl" role="dialog" aria-modal="true">
+            {panel}
+          </div>
+        </div>
+      </>,
+      document.body
+    );
+  }
+
+  return panel;
 }
