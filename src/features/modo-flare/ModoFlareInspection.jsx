@@ -206,6 +206,14 @@ export default function ModoFlareInspection({ onClose }) {
     [briefingOpen, openBriefingForElement]
   );
 
+  const selectElementAtPoint = useCallback(
+    (x, y) => {
+      const el = pickElementBehindPortal(portalRef.current, x, y);
+      if (el) openBriefingForElement(el);
+    },
+    [openBriefingForElement]
+  );
+
   const handleTouchStart = useCallback(
     (e) => {
       if (briefingOpen) return;
@@ -402,6 +410,22 @@ export default function ModoFlareInspection({ onClose }) {
       onMouseMove={handlePointer}
       onMouseLeave={() => setHighlight(null)}
       onClick={handleClick}
+      onPointerMove={(e) => {
+        if (briefingOpen) return;
+        if (e.pointerType !== 'touch') return;
+        lastTouchPointRef.current = { x: e.clientX, y: e.clientY };
+        updateHighlight(e.clientX, e.clientY);
+      }}
+      onPointerUp={(e) => {
+        if (briefingOpen) return;
+        if (e.pointerType !== 'touch') return;
+        skipClickAfterTouchRef.current = true;
+        window.setTimeout(() => {
+          skipClickAfterTouchRef.current = false;
+        }, 500);
+        e.preventDefault();
+        selectElementAtPoint(e.clientX, e.clientY);
+      }}
       onTouchStart={handleTouchStart}
       onTouchMove={(e) => {
         const t = e.touches[0];
@@ -421,8 +445,8 @@ export default function ModoFlareInspection({ onClose }) {
         window.setTimeout(() => {
           skipClickAfterTouchRef.current = false;
         }, 500);
-        const el = pickElementBehindPortal(portalRef.current, point.x, point.y);
-        if (el) openBriefingForElement(el);
+        e.preventDefault();
+        selectElementAtPoint(point.x, point.y);
       }}
       role="presentation"
     >
