@@ -31,6 +31,24 @@
       "type": "string",
       "description": "Descrição do bug ou melhoria"
     },
+    "action_briefing": {
+      "type": "string",
+      "description": "Ação objetiva esperada para correção"
+    },
+    "context_image_url": {
+      "type": "string",
+      "description": "URL opcional de imagem para contexto visual"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium"],
+      "description": "Nível de precisão do alvo para pinpoint"
+    },
+    "resolution_precision": {
+      "type": "string",
+      "enum": ["high", "medium", "unknown"],
+      "description": "Precisão utilizada na resolução do alvo"
+    },
     "route": {
       "type": "string",
       "description": "Rota React (pathname) quando o alvo foi criado"
@@ -43,6 +61,8 @@
     "column",
     "source_location_raw",
     "component_name",
-    "briefing"
+    "briefing",
+    "action_briefing",
+    "confidence"
   ]
 }

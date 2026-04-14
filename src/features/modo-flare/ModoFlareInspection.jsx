@@ -5,11 +5,14 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  listPendingFlaresLocalFirst,
+  resolveFlareById,
+  writeLocalPins,
+} from '@/features/modo-flare/flareQueue';
 
 const HUD_Z = 10060;
 const BRIEF_Z = 10070;
-const LOCAL_PINS_KEY = 'p38_flare_local_pins';
-
 function pickElementBehindPortal(portalEl, clientX, clientY) {
   if (!portalEl) return null;
   const prev = portalEl.style.visibility;
@@ -36,25 +39,6 @@ function componentNameFromFilePath(filePath) {
   return base.replace(/\.(jsx?|tsx?)$/i, '') || base;
 }
 
-function readLocalPins() {
-  try {
-    const raw = localStorage.getItem(LOCAL_PINS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeLocalPins(pins) {
-  try {
-    localStorage.setItem(LOCAL_PINS_KEY, JSON.stringify(pins));
-  } catch {
-    // noop
-  }
-}
-
 export default function ModoFlareInspection({ onClose }) {
   const { toast } = useToast();
   const portalRef = useRef(null);
@@ -66,12 +50,35 @@ export default function ModoFlareInspection({ onClose }) {
   const [pendingMeta, setPendingMeta] = useState(null);
   const [pendingRect, setPendingRect] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [successMarker, setSuccessMarker] = useState(null);
   const [localPins, setLocalPins] = useState([]);
   const [syncMode, setSyncMode] = useState('loading');
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [actionBriefingDraft, setActionBriefingDraft] = useState('');
   const recognitionRef = useRef(null);
   const successMarkerTimerRef = useRef(null);
+
+  const resolvePin = useCallback(
+    async (flare) => {
+      try {
+        await resolveFlareById(flare, flare?.confidence === 'high' ? 'high' : 'medium');
+        setLocalPins((prev) => prev.filter((item) => item.id !== flare.id));
+        toast({
+          title: 'Alvo resolvido',
+          description: `Precisão usada: ${flare?.confidence === 'high' ? 'high' : 'medium'}.`,
+        });
+      } catch {
+        toast({
+          title: 'Falha ao resolver alvo',
+          description: 'Não foi possível atualizar o status para resolved.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [toast]
+  );
 
   useEffect(() => {
     document.documentElement.setAttribute('data-flare-inspection', '1');
@@ -84,23 +91,10 @@ export default function ModoFlareInspection({ onClose }) {
     let isMounted = true;
 
     const loadPins = async () => {
-      try {
-        const rows = await base44.entities.TargetFlare.filter({ status: 'pending' });
-        if (!isMounted) return;
-        const normalized = (Array.isArray(rows) ? rows : []).map((item, index) => ({
-          id: item.id || `remote-${index}`,
-          source_location_raw: item.source_location_raw || '',
-          briefing: item.briefing || '',
-          scope: 'remote',
-        }));
-        setLocalPins(normalized);
-        setSyncMode('remote');
-      } catch {
-        if (!isMounted) return;
-        const fallback = readLocalPins();
-        setLocalPins(Array.isArray(fallback) ? fallback : []);
-        setSyncMode('local');
-      }
+      const result = await listPendingFlaresLocalFirst();
+      if (!isMounted) return;
+      setLocalPins(result.items);
+      setSyncMode(result.mode);
     };
 
     loadPins();
@@ -127,6 +121,8 @@ export default function ModoFlareInspection({ onClose }) {
           setPendingMeta(null);
           setPendingRect(null);
           setBriefingDraft('');
+          setActionBriefingDraft('');
+          setSelectedImageFile(null);
           return;
         }
         onClose();
@@ -155,17 +151,14 @@ export default function ModoFlareInspection({ onClose }) {
     (el) => {
       const raw = el.getAttribute('data-source-location');
       const parsed = parseDataSourceLocation(raw);
-      if (!parsed) {
-        toast({
-          title: 'Elemento sem rastreio de código',
-          description: 'Sem data-source-location. Build/deploy sem instrumentação source-first.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      const confidence = parsed ? 'high' : 'medium';
       setPendingMeta({
-        ...parsed,
-        component_name: componentNameFromFilePath(parsed.file_path),
+        file_path: parsed?.file_path || '',
+        line: parsed?.line || null,
+        column: parsed?.column || null,
+        source_location_raw: parsed?.source_location_raw || '',
+        component_name: componentNameFromFilePath(parsed?.file_path || ''),
+        confidence,
       });
       const rect = el.getBoundingClientRect();
       setPendingRect({
@@ -175,8 +168,17 @@ export default function ModoFlareInspection({ onClose }) {
         height: rect.height,
       });
       setBriefingDraft('');
+      setActionBriefingDraft('');
+      setSelectedImageFile(null);
       setBriefingOpen(true);
       requestAnimationFrame(() => briefingTextareaRef.current?.focus?.());
+      if (confidence === 'medium') {
+        toast({
+          title: 'Sem coordenada source-location',
+          description: 'Este alvo será salvo com confiança média. Detalhe a ação e inclua imagem.',
+          variant: 'destructive',
+        });
+      }
     },
     [toast]
   );
@@ -268,12 +270,35 @@ export default function ModoFlareInspection({ onClose }) {
   const saveBriefing = useCallback(() => {
     if (!pendingMeta) return;
     const text = briefingDraft.trim();
+    const actionText = actionBriefingDraft.trim() || text;
     if (!text) {
       toast({ title: 'Escreva ou dite o briefing', variant: 'destructive' });
       return;
     }
+    if (!actionText) {
+      toast({ title: 'Descreva a ação esperada', variant: 'destructive' });
+      return;
+    }
+    if (pendingMeta.confidence === 'medium' && (!selectedImageFile || text.length < 30)) {
+      toast({
+        title: 'Alvo de média precisão incompleto',
+        description: 'Inclua imagem e um briefing mais detalhado para permitir pinpoint.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setSaving(true);
-    try {
+    setUploadingImage(Boolean(selectedImageFile));
+    const saveRemoteOrLocal = async () => {
+      let imageUrl = '';
+      if (selectedImageFile) {
+        try {
+          const upload = await base44.integrations.Core.UploadFile({ file: selectedImageFile });
+          imageUrl = upload?.file_url || '';
+        } catch {
+          imageUrl = '';
+        }
+      }
       const createRemote = async () => {
         await base44.entities.TargetFlare.create({
           status: 'pending',
@@ -283,6 +308,9 @@ export default function ModoFlareInspection({ onClose }) {
           source_location_raw: pendingMeta.source_location_raw,
           component_name: pendingMeta.component_name,
           briefing: text,
+          action_briefing: actionText,
+          context_image_url: imageUrl,
+          confidence: pendingMeta.confidence,
           route: window.location.pathname || '',
         });
       };
@@ -294,8 +322,18 @@ export default function ModoFlareInspection({ onClose }) {
             {
               id: `local-${Date.now()}`,
               source_location_raw: pendingMeta.source_location_raw,
+              file_path: pendingMeta.file_path,
+              line: pendingMeta.line,
+              column: pendingMeta.column,
+              component_name: pendingMeta.component_name,
+              route: window.location.pathname || '',
               briefing: text,
+              action_briefing: actionText,
+              context_image_url: imageUrl,
+              confidence: pendingMeta.confidence,
               scope: 'local',
+              status: 'pending',
+              created_at: new Date().toISOString(),
             },
             ...prev.filter((p) => p.scope !== 'remote'),
           ];
@@ -312,8 +350,18 @@ export default function ModoFlareInspection({ onClose }) {
             {
               id: `remote-${Date.now()}`,
               source_location_raw: pendingMeta.source_location_raw,
+              file_path: pendingMeta.file_path,
+              line: pendingMeta.line,
+              column: pendingMeta.column,
+              component_name: pendingMeta.component_name,
+              route: window.location.pathname || '',
               briefing: text,
+              action_briefing: actionText,
+              context_image_url: imageUrl,
+              confidence: pendingMeta.confidence,
               scope: 'remote',
+              status: 'pending',
+              created_at: new Date().toISOString(),
             },
             ...prev,
           ]);
@@ -321,11 +369,16 @@ export default function ModoFlareInspection({ onClose }) {
           saveLocalFallback();
         }
       };
+      await saveRemoteOrLocal();
+    };
 
+    try {
       setBriefingOpen(false);
       setPendingMeta(null);
       setPendingRect(null);
       setBriefingDraft('');
+      setActionBriefingDraft('');
+      setSelectedImageFile(null);
       stopRecognition();
       void saveRemoteOrLocal();
 
@@ -352,9 +405,19 @@ export default function ModoFlareInspection({ onClose }) {
             : 'Guardada localmente. Podes continuar navegando e marcar outro elemento.',
       });
     } finally {
+      setUploadingImage(false);
       setSaving(false);
     }
-  }, [briefingDraft, pendingMeta, pendingRect, stopRecognition, syncMode, toast]);
+  }, [
+    actionBriefingDraft,
+    briefingDraft,
+    pendingMeta,
+    pendingRect,
+    selectedImageFile,
+    stopRecognition,
+    syncMode,
+    toast,
+  ]);
 
   const pinPositions = (localPins || [])
     .map((flare) => {
@@ -413,6 +476,36 @@ export default function ModoFlareInspection({ onClose }) {
           >
             Sair
           </button>
+        </div>
+      </div>
+      <div
+        className="absolute right-4 top-14 w-[360px] rounded-md border border-amber-500/30 bg-black/75 p-3 text-xs text-amber-50"
+        style={{ zIndex: HUD_Z + 2 }}
+        data-flare-control="1"
+      >
+        <p className="mb-2 text-[11px] uppercase tracking-wide text-amber-200/90">Fila local de caça</p>
+        <div className="max-h-56 space-y-2 overflow-auto pr-1">
+          {localPins.slice(0, 8).map((flare) => (
+            <div key={flare.id} className="rounded border border-amber-500/20 bg-amber-950/20 p-2">
+              <p className="line-clamp-2 text-[11px]">{flare.action_briefing || flare.briefing}</p>
+              <p className="mt-1 text-[10px] opacity-80">
+                {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2 h-6 px-2 text-[10px] pointer-events-auto"
+                data-flare-control="1"
+                onClick={() => {
+                  void resolvePin(flare);
+                }}
+              >
+                Marcar resolved
+              </Button>
+            </div>
+          ))}
+          {localPins.length === 0 ? <p className="text-[11px] opacity-75">Sem alvos pendentes.</p> : null}
         </div>
       </div>
 
@@ -485,7 +578,10 @@ export default function ModoFlareInspection({ onClose }) {
         <div className="relative w-full max-w-lg rounded-lg border bg-background p-6 shadow-xl">
           <h2 className="mb-1 text-lg font-semibold">Briefing do alvo</h2>
           <p className="mb-3 font-mono text-xs text-muted-foreground">
-            {pendingMeta.file_path}:{pendingMeta.line}:{pendingMeta.column} · {pendingMeta.component_name}
+            {(pendingMeta.file_path && pendingMeta.line && pendingMeta.column)
+              ? `${pendingMeta.file_path}:${pendingMeta.line}:${pendingMeta.column}`
+              : 'Sem source-location (fallback visual)'}{' '}
+            · {pendingMeta.component_name} · confiança {pendingMeta.confidence}
           </p>
           <Textarea
             ref={briefingTextareaRef}
@@ -500,13 +596,31 @@ export default function ModoFlareInspection({ onClose }) {
             placeholder="Descreva o bug ou melhoria…"
             className="min-h-[120px] resize-y"
           />
+          <Textarea
+            value={actionBriefingDraft}
+            onChange={(e) => setActionBriefingDraft(e.target.value)}
+            placeholder="Ação esperada (ex.: alinhar botão, corrigir validação, ajustar cálculo)"
+            className="mt-3 min-h-[80px] resize-y"
+          />
+          <div className="mt-3">
+            <label className="mb-1 block text-xs text-muted-foreground">Imagem de contexto (opcional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setSelectedImageFile(e.target.files?.[0] || null)}
+              className="block w-full text-xs"
+            />
+            {selectedImageFile ? (
+              <p className="mt-1 text-xs text-muted-foreground">Anexo: {selectedImageFile.name}</p>
+            ) : null}
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={toggleVoice}>
               {isListening ? <MicOff className="mr-1 h-4 w-4" /> : <Mic className="mr-1 h-4 w-4" />}
               {isListening ? 'Parar' : 'Microfone'}
             </Button>
             <Button type="button" size="sm" onClick={saveBriefing} disabled={saving}>
-              {saving ? 'A guardar…' : 'Guardar (Ctrl+Enter)'}
+              {saving || uploadingImage ? 'A guardar…' : 'Guardar (Ctrl+Enter)'}
             </Button>
             <Button
               type="button"
@@ -517,6 +631,8 @@ export default function ModoFlareInspection({ onClose }) {
                 setPendingMeta(null);
                 setPendingRect(null);
                 setBriefingDraft('');
+                setActionBriefingDraft('');
+                setSelectedImageFile(null);
                 stopRecognition();
               }}
             >

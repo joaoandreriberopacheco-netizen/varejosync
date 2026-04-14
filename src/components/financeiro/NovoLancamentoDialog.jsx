@@ -284,7 +284,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
                 <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-gray-200 text-sm px-4">
                   <SelectValue placeholder={tipo === 'Transferência' ? 'Conta Origem *' : 'Conta *'} />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="z-[70] dark:bg-gray-800 dark:border-gray-700">
                   {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -297,7 +297,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
                 <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-gray-200 text-sm px-4">
                   <SelectValue placeholder="Conta Destino *" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="z-[70] dark:bg-gray-800 dark:border-gray-700">
                   {contas.filter(c => c.id !== contaId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -343,12 +343,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
                   {isCustoMercadoria && (
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-                      <Select value={pedidoCompraId} onValueChange={setPedidoCompraId}>
+                      <Select value={pedidoCompraId || '__none__'} onValueChange={(value) => setPedidoCompraId(value === '__none__' ? '' : value)}>
                         <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-gray-200 text-sm px-4">
                           <SelectValue placeholder="Vincular a Pedido de Compra (opcional)" />
                         </SelectTrigger>
-                        <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                          <SelectItem value={null}>Nenhum</SelectItem>
+                        <SelectContent className="z-[70] dark:bg-gray-800 dark:border-gray-700">
+                          <SelectItem value="__none__">Nenhum</SelectItem>
                           {pedidosCompra.map(p => (
                             <SelectItem key={p.id} value={p.id}>
                               {p.numero} - {p.fornecedor_nome} - R$ {(p.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
