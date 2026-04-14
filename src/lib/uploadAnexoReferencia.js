@@ -26,3 +26,19 @@ export async function uploadAnexoParaLancamentoFinanceiro(base44, { file, lancam
     origem,
   });
 }
+
+export async function uploadAnexoParaContaPrevista(base44, { file, contaPrevistaId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
+  if (!file || !contaPrevistaId) return;
+  const base64 = await fileBlobToBase64(file);
+  await base44.functions.invoke('uploadAnexoDrive', {
+    file_base64: base64,
+    file_name: file.name || 'documento.pdf',
+    file_type: file.type || 'application/pdf',
+    file_size: file.size,
+    referencia_tipo: 'ContaPrevista',
+    referencia_id: contaPrevistaId,
+    referencia_numero: descricao || '',
+    tipo_documento: tipoDocumento,
+    origem,
+  });
+}

@@ -11,7 +11,7 @@ import {
   isLancamentoParcelasMensaisRecorrente,
   marcarLancamentosComoImportadosPorBoletoPdf,
 } from '@/lib/agefinLancamentosRecorrencia';
-import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
+import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 
 export default function AgefinImportador({
   onSuccess,
@@ -302,6 +302,19 @@ Campos a interpretar do documento:
         : contaDoMesFinal
           ? await base44.entities.ContaPrevista.update(contaDoMesFinal.id, payload)
           : await base44.entities.ContaPrevista.create(payload);
+
+      if (contaCriada?.id && file?.original) {
+        try {
+          await uploadAnexoParaContaPrevista(base44, {
+            file: file.original,
+            contaPrevistaId: contaCriada.id,
+            descricao: descricaoFinal,
+            origem: 'importador_agefin_pdf',
+          });
+        } catch (anexoContaErr) {
+          console.error('Anexo PDF (conta prevista):', anexoContaErr);
+        }
+      }
 
       const contaFinanceira = contasFinanceiras.find((item) => item.id === contaFinanceiraId);
       let lancamentoCriado = null;
