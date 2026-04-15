@@ -115,8 +115,13 @@ See `FUNCTIONS_MANIFEST.json` for full list.
 | `base44.asServiceRole.entities.X` | `createClient(URL, SERVICE_ROLE_KEY).from('x')` |
 | `base44.integrations.Core.SendEmail(...)` | `resend.emails.send(...)` |
 | `base44.integrations.Core.UploadFile(...)` | `supabase.storage.from('bucket').upload(...)` |
+| `base44.integrations.Core.GenerateImage(...)` | OpenAI Images / Replicate — then store URL in Storage |
 | `base44.integrations.Core.InvokeLLM(...)` | `openai.chat.completions.create(...)` |
 | `base44.integrations.Core.ExtractDataFromUploadedFile(...)` | Parse XLSX/CSV directly in Edge Fn |
+| `connectors.getConnection('googledrive')` | Google Drive API OAuth (upload + delete) |
+| `connectors.getConnection('github')` | GitHub REST API + PAT or GitHub App |
+
+> **Auditoria 2026-04-15:** ver `FUNCTIONS_MANIFEST.json` → `audit_notes` e `integrations_used_summary` (alinhado com `grep` em `base44/functions/**/entry.ts`).
 
 ---
 

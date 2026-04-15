@@ -4,6 +4,20 @@
   "source": "base44",
   "runtime": "Deno Deploy (Base44 managed)",
   "repo_parity": "All functions listed here exist in functions/ directory in the GitHub repo. There is NO hidden cloud-only logic — what is in functions/ IS production.",
+  "audit_notes": {
+    "last_audit": "2026-04-15",
+    "audited_by": "varejosync repo scan (grep integrations.Core + connectors.getConnection on base44/functions/**/entry.ts)",
+    "moonshot": "Manifest aligned with source truth; ask Base44 for any function deployed only in cloud.",
+    "discrepancies_resolved": [
+      "gerenciarPin: added Core.SendEmail (was missing)",
+      "gerarRelatorioConferencia: added Core.UploadFile (was missing)",
+      "deletarAnexo: removed wrong Core.UploadFile; uses googledrive connector DELETE",
+      "gerarExtratoFluxoCaixa: removed InvokeLLM — entry.ts uses jsPDF only",
+      "enhanceLogo: added Core.GenerateImage (was absent from manifest)",
+      "github connector: added commitBabelPlugin, syncCodebaseToGithub; removed commitRunbook (no such function in repo)",
+      "flareStatusSync / flareMetrics: listed in older manifest but no folder in this repo — verify on Base44 or remove"
+    ]
+  },
   "invoke_contract": {
     "from_frontend": "import { fnName } from '@/functions/fnName'; const res = await fnName(payload);",
     "from_backend": "await base44.functions.invoke('fnName', payload);",
@@ -114,7 +128,8 @@
       "entities_written": [],
       "entities_read": ["LancamentoFinanceiro", "ContasFinanceiras"],
       "admin_only": false,
-      "integrations_used": ["Core.InvokeLLM (optional summary)"],
+      "integrations_used": [],
+      "note": "PDF via jsPDF in entry.ts — no InvokeLLM in server code (verified 2026-04-15).",
       "critical": false
     },
     {
@@ -166,8 +181,9 @@
       "entities_written": ["User"],
       "entities_read": ["User"],
       "admin_only": false,
+      "integrations_used": ["Core.SendEmail"],
       "critical": true,
-      "note": "PIN stored as hash on User entity. Must port hashing logic exactly."
+      "note": "PIN stored as hash on User entity. Must port hashing logic exactly. SendEmail for PIN delivery (asServiceRole)."
     },
     {
       "name": "listarAnexos",
@@ -179,12 +195,13 @@
     },
     {
       "name": "deletarAnexo",
-      "description": "Remove AnexoDocumento e arquivo do storage.",
+      "description": "Remove AnexoDocumento e, se existir drive_file_id, apaga ficheiro no Google Drive.",
       "entities_written": ["AnexoDocumento"],
-      "entities_read": ["AnexoDocumento"],
+      "entities_read": ["AnexoDocumento", "ContaPrevista"],
       "admin_only": false,
-      "integrations_used": ["Core.UploadFile (storage)"],
-      "critical": false
+      "integrations_used": ["googledrive connector (DELETE via Drive API)"],
+      "critical": false,
+      "note": "No Core.UploadFile in entry.ts — uses connectors.getConnection('googledrive') + DELETE."
     },
     {
       "name": "imprimirCupomTermico",
@@ -270,7 +287,19 @@
       "entities_written": [],
       "entities_read": ["ConferenciaEstoque"],
       "admin_only": false,
-      "critical": false
+      "integrations_used": ["Core.UploadFile"],
+      "critical": false,
+      "note": "UploadFile (asServiceRole) for generated report file."
+    },
+    {
+      "name": "enhanceLogo",
+      "description": "Gera variante melhorada do logo via IA (imagem); prompt fixo no código.",
+      "entities_written": [],
+      "entities_read": [],
+      "admin_only": false,
+      "integrations_used": ["Core.GenerateImage"],
+      "critical": false,
+      "note": "Added 2026-04-15 — was missing from original manifest."
     },
     {
       "name": "uploadAnexoDrive",
@@ -284,13 +313,21 @@
   ],
   "integrations_used_summary": {
     "Core.InvokeLLM": {
-      "used_by": ["gerarExtratoFluxoCaixa (opcional)"],
+      "used_by": ["(frontend + many src/ files — not in server functions grep)"],
+      "server_functions": [],
       "supabase_equivalent": "Direct call to OpenAI/Anthropic API with your own key",
       "migration_effort": "low"
     },
     "Core.UploadFile": {
-      "used_by": ["importarProdutos", "importarPedidosCompra", "deletarAnexo"],
+      "used_by": ["gerarRelatorioConferencia", "import flows in src/ (not duplicated here)"],
+      "server_functions": ["gerarRelatorioConferencia"],
       "supabase_equivalent": "supabase.storage.from('bucket').upload(path, file)",
+      "migration_effort": "low"
+    },
+    "Core.GenerateImage": {
+      "used_by": ["enhanceLogo"],
+      "server_functions": ["enhanceLogo"],
+      "supabase_equivalent": "OpenAI Images API, Replicate, or Stability — store result URL in Storage",
       "migration_effort": "low"
     },
     "Core.ExtractDataFromUploadedFile": {
@@ -299,18 +336,19 @@
       "migration_effort": "medium — need to choose parser"
     },
     "Core.SendEmail": {
-      "used_by": ["convidarUsuarios"],
+      "used_by": ["convidarUsuarios", "gerenciarPin"],
       "supabase_equivalent": "Resend API (resend.com) — drop-in replacement, same DX",
       "migration_effort": "low"
     },
     "github_connector": {
-      "used_by": ["exportFlareToGithub", "flareStatusSync", "commitRunbook"],
+      "used_by": ["exportFlareToGithub", "syncCodebaseToGithub", "commitBabelPlugin"],
+      "not_in_this_repo": ["flareStatusSync", "commitRunbook — verify names on Base44"],
       "supabase_equivalent": "Direct GitHub API calls with PAT stored in Supabase Vault",
-      "migration_effort": "low — connector is just OAuth token, replace with PAT"
+      "migration_effort": "low — connector is OAuth token; replace with PAT or GitHub App"
     },
     "googledrive_connector": {
-      "used_by": ["uploadAnexoDrive"],
-      "supabase_equivalent": "Google Drive API with OAuth2 — implement app-user connector pattern",
+      "used_by": ["uploadAnexoDrive", "deletarAnexo (DELETE file when drive_file_id present)"],
+      "supabase_equivalent": "Google Drive API with OAuth2 — same pattern for upload + delete",
       "migration_effort": "medium"
     }
   }

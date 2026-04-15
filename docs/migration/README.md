@@ -6,6 +6,7 @@ Este diretório é o **canal versionado** para pedidos, respostas e artefactos d
 
 - **[REQUEST_BASE44_AUTOMATED_MIGRATION_DISCLOSURE.md](./REQUEST_BASE44_AUTOMATED_MIGRATION_DISCLOSURE.md)** — Pedido formal ao Base44 para **revelar todo o âmbito** de integrações, análise e automações em formatos **automatizáveis** (migração o menos manual possível).
 - **[REQUEST_BASE44_SIZING_FOR_SUPABASE.md](./REQUEST_BASE44_SIZING_FOR_SUPABASE.md)** — Pedido para o Base44 **verificar e reportar** métricas críticas (BD, storage, egress, MAU, invocações, realtime, integrações) para dimensionar **Supabase Pro**.
+- **[SIZING_REPORT_BASE44.md](./SIZING_REPORT_BASE44.md)** — **Estimativas** devolvidas pelo assistente Base44 (tamanho BD, storage, MAU, egress, etc.) + métricas que exigem **ticket oficial**.
 
 ## Como usar com o assistente Base44
 
@@ -27,6 +28,12 @@ O conteúdo **não existe no Git** até colares ou fazeres upload. Nomes típico
 ## Follow-up ao Base44
 
 - **[PROMPT_BASE44_STORAGE_FOLLOWUP.md](./PROMPT_BASE44_STORAGE_FOLLOWUP.md)** — Leitura rápida da primeira resposta + **prompt para copiar/colar** sobre métricas de **armazenamento** (e egress de ficheiros).
+
+## Manifestos gerados / auditados (código)
+
+Os ficheiros `ENTITIES_MANIFEST.json`, `AUTOMATIONS_MANIFEST.json`, `FUNCTIONS_MANIFEST.json` e `MIGRATION_CHECKLIST.md` estão em **`src/docs/migration/`** (não nesta pasta `docs/migration/`).
+
+- **`FUNCTIONS_MANIFEST.json`** — inclui `audit_notes` após verificação com `grep` no repo (integrações Core + conectores).
 
 ## Ligações úteis no código
 
