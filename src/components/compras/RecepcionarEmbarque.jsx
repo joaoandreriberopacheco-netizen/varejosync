@@ -11,14 +11,19 @@ import { useToast } from '@/components/ui/use-toast';
 import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 
+function getItensDoEmbarque(embarque) {
+  const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
+    ? embarque.itens_embarcados
+    : (Array.isArray(embarque?.itens) ? embarque.itens : []);
+  return baseItens.map((item) => ({
+    ...item,
+    quantidade_recebida: item.quantidade_recebida ?? item.quantidade_embarcada ?? 0,
+  }));
+}
+
 export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
   const { toast } = useToast();
-  const [itens, setItens] = useState(() => 
-    embarque?.itens_embarcados?.map(item => ({
-      ...item,
-      quantidade_recebida: item.quantidade_recebida ?? item.quantidade_embarcada
-    })) || []
-  );
+  const [itens, setItens] = useState(() => getItensDoEmbarque(embarque));
   const [dataEntrada, setDataEntrada] = useState(() => dataHoje());
   const [showDivergenciaDialog, setShowDivergenciaDialog] = useState(false);
   const [showModoDialog, setShowModoDialog] = useState(false);
@@ -38,6 +43,12 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       base44.entities.Produto.list().then(setProdutos);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setItens(getItensDoEmbarque(embarque));
+    setDataEntrada(dataHoje());
+  }, [isOpen, embarque]);
 
   const handleQuantidadeChange = (index, value) => {
     const newItens = [...itens];
@@ -187,6 +198,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           status: novoEmbarque.status,
           status_recebimento: statusRecebimento,
           itens,
+          itens_embarcados: itens,
           observacoes: novoEmbarque.observacoes,
         });
       }

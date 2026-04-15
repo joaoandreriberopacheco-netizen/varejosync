@@ -62,6 +62,13 @@ function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
   return Math.min(100, Number(((valorEmbarcado / valorTotalPedido) * 100).toFixed(2)));
 }
 
+function getItensEmbarque(embarque) {
+  if (Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0) {
+    return embarque.itens_embarcados;
+  }
+  return Array.isArray(embarque?.itens) ? embarque.itens : [];
+}
+
 // ── TransportadoraSearch ──────────────────────────────────────────────────────
 
 function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova }) {
@@ -237,8 +244,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       setObservacoes(embarqueExistente.observacoes || '');
       const initQtd = {};
       const initSel = {};
+      const itensDoEmbarque = getItensEmbarque(embarqueExistente);
       (pedido.itens || []).forEach((item) => {
-        const embItem = (embarqueExistente.itens_embarcados || []).find(i => i.produto_id === item.produto_id);
+        const embItem = itensDoEmbarque.find(i => i.produto_id === item.produto_id);
         initQtd[item.produto_id] = embItem ? String(embItem.quantidade_embarcada) : '0';
         initSel[item.produto_id] = !!embItem;
       });
