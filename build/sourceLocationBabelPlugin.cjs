@@ -1,37 +1,36 @@
-function toPosixPath(input) {
-  return String(input || "").replace(/\\/g, "/");
-}
-
-module.exports = function sourceLocationBabelPlugin() {
+/**
+ * Babel plugin: injeta data-source-location em elementos JSX.
+ * Usado pelo Modo Flare para localizar posições no código fonte.
+ */
+function sourceLocationBabelPlugin({ types: t }) {
   return {
-    name: "inject-data-source-location",
+    name: 'source-location-babel-plugin',
     visitor: {
-      JSXOpeningElement(path, state) {
-        const attrs = path.node.attributes || [];
-        const hasSource = attrs.some(
+      JSXOpeningElement(nodePath, state) {
+        const filename = state.filename || '';
+        const loc = nodePath.node.loc;
+        if (!loc) return;
+        if (!filename.includes('/src/')) return;
+
+        const hasAttr = nodePath.node.attributes.some(
           (attr) =>
-            attr &&
-            attr.type === "JSXAttribute" &&
-            attr.name &&
-            attr.name.type === "JSXIdentifier" &&
-            attr.name.name === "data-source-location"
+            t.isJSXAttribute(attr) &&
+            t.isJSXIdentifier(attr.name, { name: 'data-source-location' })
         );
-        if (hasSource) return;
+        if (hasAttr) return;
 
-        const loc = path.node.loc && path.node.loc.start;
-        const line = loc && Number.isFinite(loc.line) ? loc.line : 1;
-        const column = loc && Number.isFinite(loc.column) ? loc.column : 0;
-        const filename = toPosixPath(
-          state?.file?.opts?.filename || state?.filename || "unknown"
+        const relPath = filename.replace(/.*\/src\//, 'src/');
+        const value = `${relPath}:${loc.start.line}:${loc.start.column}`;
+
+        nodePath.node.attributes.push(
+          t.jsxAttribute(
+            t.jsxIdentifier('data-source-location'),
+            t.stringLiteral(value)
+          )
         );
-        const value = `${filename}:${line}:${column}`;
-
-        attrs.unshift({
-          type: "JSXAttribute",
-          name: { type: "JSXIdentifier", name: "data-source-location" },
-          value: { type: "StringLiteral", value },
-        });
       },
     },
   };
-};
+}
+
+module.exports = sourceLocationBabelPlugin;
