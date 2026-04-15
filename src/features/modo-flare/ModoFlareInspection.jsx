@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Mic, MicOff } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Mic, MicOff } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   clearLocalPins,
   listAllRemoteFlares,
@@ -63,6 +64,8 @@ export default function ModoFlareInspection({ onClose }) {
   const [precheckCount, setPrecheckCount] = useState(null);
   const [smokeRunning, setSmokeRunning] = useState(false);
   const [reportExporting, setReportExporting] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
   const recognitionRef = useRef(null);
   const voiceSessionActiveRef = useRef(false);
   const successMarkerTimerRef = useRef(null);
@@ -91,15 +94,29 @@ export default function ModoFlareInspection({ onClose }) {
       });
   }, [localPins]);
 
+  const otherPins = useMemo(() => {
+    const purchaseIds = new Set(purchasePins.map((p) => p.id));
+    return localPins
+      .filter((flare) => !purchaseIds.has(flare.id))
+      .sort((a, b) => {
+        if (a.confidence !== b.confidence) {
+          return a.confidence === 'high' ? -1 : 1;
+        }
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+      });
+  }, [localPins, purchasePins]);
+
   const listStatusFooter = useMemo(() => {
     const n = localPins.length;
     if (syncMode === 'loading') {
-      return `Alvos na lista: ${n} · A carregar origem…`;
+      return `${n} marcas · a sincronizar origem…`;
     }
     if (syncMode === 'remote') {
-      return `Alvos na lista: ${n} · Origem: nuvem`;
+      return `${n} marcas · origem: nuvem`;
     }
-    return `Alvos na lista: ${n} · Origem: neste dispositivo`;
+    return `${n} marcas · origem: neste dispositivo`;
   }, [syncMode, localPins.length]);
 
   const applyPendingListResult = useCallback(
@@ -112,10 +129,9 @@ export default function ModoFlareInspection({ onClose }) {
       if (result.remoteFetchFailed && !remoteListFailureNotifiedRef.current) {
         remoteListFailureNotifiedRef.current = true;
         toast({
-          title: 'Nuvem indisponível para a fila',
+          title: 'Ligação à nuvem em pausa',
           description:
-            'A mostrar só alvos neste dispositivo. Export e listas na Base44 podem ficar vazios até a ligação funcionar.',
-          variant: 'destructive',
+            'Estamos a mostrar só as marcas deste dispositivo. Quando a ligação voltar, a lista na nuvem atualiza.',
         });
       }
     },
@@ -133,13 +149,13 @@ export default function ModoFlareInspection({ onClose }) {
         await resolveFlareById(flare, flare?.confidence === 'high' ? 'high' : 'medium');
         setLocalPins((prev) => prev.filter((item) => item.id !== flare.id));
         toast({
-          title: 'Alvo resolvido',
-          description: `Precisão usada: ${flare?.confidence === 'high' ? 'high' : 'medium'}.`,
+          title: 'Marca resolvida',
+          description: `Precisão: ${flare?.confidence === 'high' ? 'alta' : 'média'}.`,
         });
       } catch {
         toast({
-          title: 'Falha ao resolver alvo',
-          description: 'Não foi possível atualizar o status para resolved.',
+          title: 'Não foi possível concluir',
+          description: 'Não conseguimos marcar esta entrada como resolvida. Tenta outra vez.',
           variant: 'destructive',
         });
       }
@@ -719,150 +735,239 @@ export default function ModoFlareInspection({ onClose }) {
       role="presentation"
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between border-b border-amber-500/40 bg-amber-950/85 px-4 py-2 text-sm text-amber-100"
+        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between border-b border-slate-700/50 bg-slate-900/90 px-4 py-2 text-sm text-slate-100 backdrop-blur-sm"
         style={{ zIndex: HUD_Z + 1 }}
       >
-        <span className="font-medium">Modo Inspeção (Flare)</span>
-        <span className="opacity-90">Clique no elemento · Esc para sair</span>
+        <span className="font-medium">Marcar melhorias</span>
+        <span className="hidden opacity-90 sm:inline">Toca num elemento · Esc para sair</span>
         <div className="flex items-center gap-2" data-flare-control="1">
-          <span className="rounded bg-amber-900/60 px-2 py-1 text-[11px]">{pinPositions.length} alvo(s)</span>
+          <span className="rounded-md border border-slate-600/50 bg-slate-800/80 px-2 py-1 text-[11px] text-slate-200">
+            {pinPositions.length} marcas
+          </span>
           <button
             type="button"
             data-flare-control="1"
-            className="pointer-events-auto rounded-md bg-amber-800 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+            className="pointer-events-auto rounded-md bg-slate-700 px-3 py-1 text-xs font-medium text-white hover:bg-slate-600"
             onClick={onClose}
           >
             Sair
           </button>
         </div>
       </div>
-      <div
-        className="absolute right-4 top-14 w-[360px] rounded-md border border-amber-500/30 bg-black/75 p-3 text-xs text-amber-50"
-        style={{ zIndex: HUD_Z + 2 }}
-        data-flare-control="1"
-      >
-        <p className="mb-2 text-[11px] uppercase tracking-wide text-amber-200/90">Fila de caça</p>
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          <Button
+      {!queueOpen ? (
+        <div className="absolute right-4 top-14" style={{ zIndex: HUD_Z + 2 }} data-flare-control="1">
+          <button
             type="button"
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] pointer-events-auto"
             data-flare-control="1"
-            onClick={() => {
-              void runPrecheckCount();
-            }}
-            disabled={adminBusy}
+            className="pointer-events-auto flex items-center gap-1.5 rounded-lg border border-slate-600/50 bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-100 shadow-md backdrop-blur-sm hover:bg-slate-800/95"
+            onClick={() => setQueueOpen(true)}
           >
-            Precheck
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] pointer-events-auto"
-            data-flare-control="1"
-            onClick={() => {
-              void runFullCleanup();
-            }}
-            disabled={adminBusy}
-          >
-            Limpar tudo
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] pointer-events-auto"
-            data-flare-control="1"
-            onClick={() => {
-              void runSmokeNewFlare();
-            }}
-            disabled={smokeRunning || adminBusy}
-          >
-            Smoke
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] pointer-events-auto"
-            data-flare-control="1"
-            onClick={() => {
-              void resolveAllPurchasePins();
-            }}
-            disabled={adminBusy}
-          >
-            Fechar compras
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] pointer-events-auto"
-            data-flare-control="1"
-            onClick={() => {
-              void reloadPins();
-            }}
-            disabled={adminBusy}
-          >
-            Recarregar
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] pointer-events-auto"
-            data-flare-control="1"
-            onClick={() => {
-              void exportFlarePendingReport();
-            }}
-            disabled={adminBusy || reportExporting}
-            title="Descarrega JSON no mesmo formato que npm run flare:export"
-          >
-            {reportExporting ? 'A exportar…' : 'Exportar relatório'}
-          </Button>
+            Pendentes ({localPins.length})
+            <ChevronDown className="h-4 w-4 opacity-80" aria-hidden />
+          </button>
         </div>
-        {precheckCount != null ? (
-          <p className="mb-2 text-[10px] opacity-80">Nuvem: {precheckCount} registo(s) no total.</p>
-        ) : null}
-        <p className="mb-2 text-[10px] opacity-80">
-          Compras: {purchasePins.length} pendente(s) · Total: {localPins.length}
-        </p>
-        <div className="max-h-56 space-y-2 overflow-auto pr-1">
-          {purchasePins.slice(0, 8).map((flare) => (
-            <div key={flare.id} className="rounded border border-amber-500/20 bg-amber-950/20 p-2">
-              <p className="mb-1 text-[9px] uppercase tracking-wide text-amber-300/90">
-                {flare.scope === 'remote' ? 'Nuvem' : 'Dispositivo'}
-              </p>
-              <p className="line-clamp-2 text-[11px]">{flare.action_briefing || flare.briefing}</p>
-              <p className="mt-1 text-[10px] opacity-80">
-                {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
-              </p>
-              {(flare.file_path && flare.line && flare.column) ? (
-                <p className="mt-1 break-all font-mono text-[10px] opacity-70">
-                  {flare.file_path}:{flare.line}:{flare.column}
-                </p>
+      ) : (
+        <div
+          className="absolute right-4 top-14 w-[360px] rounded-lg border border-slate-600/40 bg-slate-950/90 p-3 text-xs text-slate-100 shadow-xl backdrop-blur-sm"
+          style={{ zIndex: HUD_Z + 2 }}
+          data-flare-control="1"
+        >
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-slate-50">Marcas pendentes</p>
+            <button
+              type="button"
+              data-flare-control="1"
+              className="pointer-events-auto flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/80 px-2 py-1 text-[11px] text-slate-200 hover:bg-slate-700/80"
+              onClick={() => setQueueOpen(false)}
+              title="Fechar painel"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden />
+              Fechar
+            </button>
+          </div>
+          <p className="mb-2 text-[10px] text-slate-400">
+            Compras: {purchasePins.length} · Outros: {otherPins.length} · Total: {localPins.length}
+          </p>
+          <Collapsible open={teamOpen} onOpenChange={setTeamOpen} className="mb-3">
+            <CollapsibleTrigger
+              type="button"
+              data-flare-control="1"
+              className="pointer-events-auto flex w-full items-center justify-between rounded-md border border-slate-600/40 bg-slate-900/60 px-2 py-1.5 text-left text-[11px] font-medium text-slate-200 hover:bg-slate-800/80"
+            >
+              Equipa (avançado)
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform ${teamOpen ? 'rotate-180' : ''}`}
+                aria-hidden
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  data-flare-control="1"
+                  onClick={() => {
+                    void runPrecheckCount();
+                  }}
+                  disabled={adminBusy}
+                >
+                  Precheck
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  data-flare-control="1"
+                  onClick={() => {
+                    void runFullCleanup();
+                  }}
+                  disabled={adminBusy}
+                >
+                  Limpar tudo
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  data-flare-control="1"
+                  onClick={() => {
+                    void runSmokeNewFlare();
+                  }}
+                  disabled={smokeRunning || adminBusy}
+                >
+                  Smoke
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  data-flare-control="1"
+                  onClick={() => {
+                    void resolveAllPurchasePins();
+                  }}
+                  disabled={adminBusy}
+                >
+                  Fechar compras
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  data-flare-control="1"
+                  onClick={() => {
+                    void reloadPins();
+                  }}
+                  disabled={adminBusy}
+                >
+                  Recarregar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  data-flare-control="1"
+                  onClick={() => {
+                    void exportFlarePendingReport();
+                  }}
+                  disabled={adminBusy || reportExporting}
+                  title="Descarrega JSON no mesmo formato que npm run flare:export"
+                >
+                  {reportExporting ? 'A exportar…' : 'Exportar relatório'}
+                </Button>
+              </div>
+              {precheckCount != null ? (
+                <p className="text-[10px] text-slate-500">Nuvem (total): {precheckCount} registo(s).</p>
               ) : null}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="mt-2 h-6 px-2 text-[10px] pointer-events-auto"
-                data-flare-control="1"
-                onClick={() => {
-                  void resolvePin(flare);
-                }}
-              >
-                Marcar resolved
-              </Button>
-            </div>
-          ))}
-          {purchasePins.length === 0 ? (
-            <p className="text-[11px] opacity-75">Sem alvos pendentes de compras.</p>
-          ) : null}
+            </CollapsibleContent>
+          </Collapsible>
+          <div className="max-h-56 space-y-3 overflow-auto pr-1">
+            {purchasePins.length > 0 ? (
+              <div>
+                <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Compras</p>
+                <div className="space-y-2">
+                  {purchasePins.slice(0, 8).map((flare) => (
+                    <div key={flare.id} className="rounded-md border border-slate-600/40 bg-slate-900/50 p-2">
+                      <p className="mb-1 text-[9px] uppercase tracking-wide text-slate-500">
+                        {flare.scope === 'remote' ? 'Nuvem' : 'Dispositivo'}
+                      </p>
+                      <p className="line-clamp-2 text-[11px] text-slate-100">{flare.action_briefing || flare.briefing}</p>
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
+                      </p>
+                      {flare.file_path && flare.line && flare.column ? (
+                        <p className="mt-1 break-all font-mono text-[10px] text-slate-500">
+                          {flare.file_path}:{flare.line}:{flare.column}
+                        </p>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 h-6 border-slate-600 px-2 text-[10px] pointer-events-auto text-slate-200"
+                        data-flare-control="1"
+                        onClick={() => {
+                          void resolvePin(flare);
+                        }}
+                      >
+                        Marcar como resolvida
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {otherPins.length > 0 ? (
+              <div>
+                <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Outros</p>
+                <div className="space-y-2">
+                  {otherPins.slice(0, 24).map((flare) => (
+                    <div key={flare.id} className="rounded-md border border-slate-600/40 bg-slate-900/50 p-2">
+                      <p className="mb-1 text-[9px] uppercase tracking-wide text-slate-500">
+                        {flare.scope === 'remote' ? 'Nuvem' : 'Dispositivo'}
+                      </p>
+                      <p className="line-clamp-2 text-[11px] text-slate-100">{flare.action_briefing || flare.briefing}</p>
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
+                      </p>
+                      {flare.file_path && flare.line && flare.column ? (
+                        <p className="mt-1 break-all font-mono text-[10px] text-slate-500">
+                          {flare.file_path}:{flare.line}:{flare.column}
+                        </p>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 h-6 border-slate-600 px-2 text-[10px] pointer-events-auto text-slate-200"
+                        data-flare-control="1"
+                        onClick={() => {
+                          void resolvePin(flare);
+                        }}
+                      >
+                        Marcar como resolvida
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {purchasePins.length === 0 && otherPins.length === 0 ? (
+              <p className="rounded-md border border-dashed border-slate-600/50 bg-slate-900/30 p-3 text-[11px] leading-relaxed text-slate-400">
+                {syncMode === 'loading'
+                  ? 'A sincronizar…'
+                  : 'Nada por aqui — marca um elemento no ecrã ou espera pela sincronização com a equipa.'}
+              </p>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
 
       {highlight && (
         <div
@@ -910,7 +1015,7 @@ export default function ModoFlareInspection({ onClose }) {
       )}
 
       <div
-        className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md bg-gray-900/90 px-3 py-2 text-xs text-white"
+        className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md border border-slate-700/40 bg-slate-900/90 px-3 py-2 text-xs text-slate-200 backdrop-blur-sm"
         style={{ zIndex: HUD_Z + 2 }}
       >
         {listStatusFooter}
@@ -927,7 +1032,7 @@ export default function ModoFlareInspection({ onClose }) {
         aria-modal="true"
       >
         <div className="relative w-full max-w-lg rounded-lg border bg-background p-6 shadow-xl">
-          <h2 className="mb-1 text-lg font-semibold">Briefing do alvo</h2>
+          <h2 className="mb-1 text-lg font-semibold">Nota para este ponto</h2>
           <p className="mb-3 font-mono text-xs text-muted-foreground">
             {(pendingMeta.file_path && pendingMeta.line && pendingMeta.column)
               ? `${pendingMeta.file_path}:${pendingMeta.line}:${pendingMeta.column}`
@@ -944,7 +1049,7 @@ export default function ModoFlareInspection({ onClose }) {
                 void saveBriefing();
               }
             }}
-            placeholder="Descreva o bug ou melhoria…"
+            placeholder="Descreva o problema ou a melhoria…"
             className="min-h-[120px] resize-y"
           />
           <div className="mt-3">
@@ -959,11 +1064,23 @@ export default function ModoFlareInspection({ onClose }) {
               <p className="mt-1 text-xs text-muted-foreground">Anexo: {selectedImageFile.name}</p>
             ) : null}
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={toggleVoice}>
-              {isListening ? <MicOff className="mr-1 h-4 w-4" /> : <Mic className="mr-1 h-4 w-4" />}
-              {isListening ? 'Parar' : 'Microfone'}
-            </Button>
+          <div className="mt-3 flex flex-wrap items-start gap-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-none">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleVoice}
+                aria-pressed={isListening}
+                aria-label={isListening ? 'Parar ditado por voz' : 'Iniciar ditado por voz em português'}
+              >
+                {isListening ? <MicOff className="mr-1 h-4 w-4" /> : <Mic className="mr-1 h-4 w-4" />}
+                {isListening ? 'Parar' : 'Microfone'}
+              </Button>
+              <p className="max-w-[min(100%,18rem)] text-[11px] text-muted-foreground">
+                Fale em português. Funciona melhor em Chrome ou Edge (HTTPS).
+              </p>
+            </div>
             <Button
               type="button"
               size="sm"

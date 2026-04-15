@@ -87,9 +87,11 @@ export default function ModoFlareProvider({ children }) {
         >
           <div className="w-full max-w-sm rounded-lg border bg-background p-6 shadow-xl">
             <h2 id="flare-pin-title" className="mb-2 text-lg font-semibold">
-              Modo Flare
+              Marcar melhorias
             </h2>
-            <p className="mb-4 text-sm text-muted-foreground">Introduza a senha para abrir o modo inspeção.</p>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Introduza a senha da equipa para abrir o modo de marcação (Flare).
+            </p>
             <Input
               type="password"
               autoComplete="off"
