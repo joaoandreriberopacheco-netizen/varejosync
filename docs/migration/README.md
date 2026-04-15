@@ -28,6 +28,7 @@ O conteúdo **não existe no Git** até colares ou fazeres upload. Nomes típico
 ## Follow-up ao Base44
 
 - **[PROMPT_BASE44_STORAGE_FOLLOWUP.md](./PROMPT_BASE44_STORAGE_FOLLOWUP.md)** — Leitura rápida da primeira resposta + **prompt para copiar/colar** sobre métricas de **armazenamento** (e egress de ficheiros).
+- **[PROMPT_BASE44_WHAT_IS_STILL_MISSING.md](./PROMPT_BASE44_WHAT_IS_STILL_MISSING.md)** — Prompt em **português** ao Base44: detalhe de **“mapa elétrico”** (contratos Core, fluxos botão→função→entidade, auth, realtime, conectores) para **paridade de funcionamento** fora da plataforma; sem foco jurídico.
 
 ## Manifestos gerados / auditados (código)
 
