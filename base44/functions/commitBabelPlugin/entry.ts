@@ -52,18 +52,36 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Usa o conector GitHub autorizado (scope: repo)
-  const { accessToken } = await base44.asServiceRole.connectors.getConnection('github');
+  // Try GITHUB_TOKEN secret first, fallback to OAuth connector
+  let accessToken = Deno.env.get('GITHUB_TOKEN');
+  if (!accessToken) {
+    try {
+      const conn = await base44.asServiceRole.connectors.getConnection('github');
+      accessToken = conn.accessToken;
+    } catch (_) {}
+  }
+
   const owner = Deno.env.get('FLARE_GITHUB_OWNER');
   const repo = Deno.env.get('FLARE_GITHUB_REPO');
   const branch = Deno.env.get('FLARE_GITHUB_BRANCH') || 'main';
 
   if (!owner || !repo) {
-    return Response.json({ error: 'Missing FLARE_GITHUB_OWNER or FLARE_GITHUB_REPO' }, { status: 400 });
+    return Response.json({ error: 'Missing FLARE_GITHUB_OWNER or FLARE_GITHUB_REPO', owner, repo }, { status: 400 });
   }
 
   if (!accessToken) {
-    return Response.json({ error: 'GitHub connector not authorized' }, { status: 400 });
+    return Response.json({ error: 'No GitHub token available' }, { status: 400 });
+  }
+
+  // First verify the repo is accessible
+  const repoCheckUrl = 'https://api.github.com/repos/' + owner + '/' + repo;
+  const repoCheck = await fetch(repoCheckUrl, {
+    headers: { Authorization: 'Bearer ' + accessToken, Accept: 'application/vnd.github.v3+json' },
+  });
+
+  if (!repoCheck.ok) {
+    const repoData = await repoCheck.json();
+    return Response.json({ error: 'Repo not accessible', owner, repo, details: repoData }, { status: repoCheck.status });
   }
 
   const filePath = 'build/sourceLocationBabelPlugin.cjs';
