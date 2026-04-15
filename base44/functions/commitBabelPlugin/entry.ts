@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const { accessToken } = await base44.asServiceRole.connectors.getConnection('github');
+  const accessToken = Deno.env.get('GITHUB_TOKEN');
   const owner = Deno.env.get('FLARE_GITHUB_OWNER');
   const repo = Deno.env.get('FLARE_GITHUB_REPO');
   const branch = Deno.env.get('FLARE_GITHUB_BRANCH') || 'main';
