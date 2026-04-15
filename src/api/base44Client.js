@@ -1,13 +1,5 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
+import { p38 } from '@/integrations/p38';
 
-const { appId, serverUrl, token, functionsVersion } = appParams;
-
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  serverUrl,
-  token,
-  functionsVersion,
-  requiresAuth: false
-});
+// Compatibilidade: mantemos o nome "base44" enquanto migramos imports.
+export const base44 = p38.legacyClient;
+export { p38 };
