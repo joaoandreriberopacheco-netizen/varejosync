@@ -183,7 +183,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       setHistoryIndex(prev => prev - 1);
       if (previousState.formData) {
         setFormData(previousState.formData);
-        if (previousState.custos) setCustos(previousState.custos);
       } else {
         setFormData(previousState);
       }
@@ -196,7 +195,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       setHistoryIndex(prev => prev + 1);
       if (nextState.formData) {
         setFormData(nextState.formData);
-        if (nextState.custos) setCustos(nextState.custos);
       } else {
         setFormData(nextState);
       }

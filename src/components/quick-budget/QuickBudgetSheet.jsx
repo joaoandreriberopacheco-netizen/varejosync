@@ -15,6 +15,10 @@ function resolvePrice(product, tableFactor) {
   return (product?.preco_venda_padrao || 0) * (tableFactor || 1);
 }
 
+function resolveMinPrice(product) {
+  return product?.preco_venda_padrao || 0;
+}
+
 function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove }) {
   const subtotal = item.price * item.quantity;
   const total = Math.max(subtotal - item.discount, 0);
