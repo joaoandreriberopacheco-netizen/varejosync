@@ -9,7 +9,10 @@ export function createBase44Adapter(base44Client) {
     auth: base44Client.auth,
     entities: base44Client.entities,
     functions: {
-      invoke(name, body) {
+      invoke(name, body, requestContext = {}) {
+        if (requestContext?.requestId) {
+          console.debug(`[P38][base44] invoke ${name}`, { requestId: requestContext.requestId });
+        }
         return base44Client.functions.invoke(name, body);
       }
     },

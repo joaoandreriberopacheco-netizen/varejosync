@@ -7,6 +7,12 @@ Este diretório é o **canal versionado** para pedidos, respostas e artefactos d
 - **[REQUEST_BASE44_AUTOMATED_MIGRATION_DISCLOSURE.md](./REQUEST_BASE44_AUTOMATED_MIGRATION_DISCLOSURE.md)** — Pedido formal ao Base44 para **revelar todo o âmbito** de integrações, análise e automações em formatos **automatizáveis** (migração o menos manual possível).
 - **[REQUEST_BASE44_SIZING_FOR_SUPABASE.md](./REQUEST_BASE44_SIZING_FOR_SUPABASE.md)** — Pedido para o Base44 **verificar e reportar** métricas críticas (BD, storage, egress, MAU, invocações, realtime, integrações) para dimensionar **Supabase Pro**.
 - **[SIZING_REPORT_BASE44.md](./SIZING_REPORT_BASE44.md)** — **Estimativas** devolvidas pelo assistente Base44 (tamanho BD, storage, MAU, egress, etc.) + métricas que exigem **ticket oficial**.
+- **[GAPS_E_LIGACOES_DETALHADAS_2.0.md](./GAPS_E_LIGACOES_DETALHADAS_2.0.md)** — Versão de referência atualizada (2.0) para lacunas e ligações da transição P38/Base44 → SubPayze.
+- **[PARALLEL_REPO_SETUP.md](./PARALLEL_REPO_SETUP.md)** — Setup do repositório paralelo (espelho), governança de branches e política de sincronização com o principal.
+- **[P38_CONSOLIDATION.md](./P38_CONSOLIDATION.md)** — Estado da consolidação da camada P38 e contrato operacional do adapter SubPayze em sandbox.
+- **[SUPABASE_TEST_SETUP.md](./SUPABASE_TEST_SETUP.md)** — Provisionamento do Supabase de homologação com migrações versionadas e seed de teste.
+- **[CRITICAL_PARITY_VALIDATION.md](./CRITICAL_PARITY_VALIDATION.md)** — Matriz de testes de paridade dos fluxos críticos e query pack de validação.
+- **[CUTOVER_RUNBOOK.md](./CUTOVER_RUNBOOK.md)** — Critérios go/no-go, sequência de virada definitiva e rollback.
 
 ## Como usar com o assistente Base44
 

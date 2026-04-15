@@ -2,6 +2,7 @@ import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
 import { createBase44Adapter } from './base44Adapter';
 import { createSubpayzeAdapter } from './subpayzeAdapter';
+import { createRequestContext } from './requestContext';
 import {
   getP38Providers,
   isP38SafeModeEnabled,
@@ -81,6 +82,7 @@ export const p38 = {
   },
   adapter: activeAdapter,
   base44Fallback: base44Adapter,
+  createRequestContext,
   // Mantemos acesso ao client legado durante a fase de compatibilidade.
   legacyClient: base44SdkClient,
   auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter.auth),
