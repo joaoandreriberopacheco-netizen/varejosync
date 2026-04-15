@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-04-15T00:00:00Z",
+  "source": "base44",
+  "runtime": "Deno Deploy (Base44 managed)",
+  "invoke_contract": {
+    "from_frontend": "import { fnName } from '@/functions/fnName'; const res = await fnName(payload);",
+    "from_backend": "await base44.functions.invoke('fnName', payload);",
+    "auth": "All functions receive the caller's auth context via createClientFromRequest(req).",
+    "supabase_equivalent": "supabase.functions.invoke('fn-name', { body: payload })"
+  },
+  "functions": [
+    {
+      "name": "processarVendaCaixa",
+      "description": "Processa venda PDV: valida turno, cria LancamentosFinanceiros, atualiza estoque, fecha venda.",
+      "entities_written": [
+        "LancamentoFinanceiro",
+        "MovimentacaoEstoque",
+        "PedidoVenda",
+        "TurnoCaixa",
+        "PagamentoCartaoDetalhe"
+      ],
+      "critical": true
+    },
+    {
+      "name": "sincronizarEstoquePorMovimentacao",
+      "description": "Recalcula estoque_atual em Produto.",
+      "entities_written": [
+        "Produto"
+      ],
+      "trigger": "entity automation on MovimentacaoEstoque",
+      "critical": true
+    },
+    {
+      "name": "gerarLancamentosCartao",
+      "description": "Processa PagamentoCartaoDetalhe pendentes, gera LancamentosFinanceiros.",
+      "trigger": "scheduled daily 05:00 UTC",
+      "critical": true
+    },
+    {
+      "name": "gerarContasPrevistasRecorrentes",
+      "description": "Gera ContasPrevistas dos próximos 3 meses.",
+      "trigger": "scheduled 1st of month 06:00 UTC",
+      "critical": true
+    },
+    {
+      "name": "sincronizarContaPrevia",
+      "description": "Quando ContaPrevista.status → 'Pago', cria LancamentoFinanceiro.",
+      "trigger": "entity automation on ContaPrevista update",
+      "critical": true
+    },
+    {
+      "name": "sincronizarExclusaoContaRecorrente",
+      "description": "Remove ContasPrevistas e Lançamentos ao deletar ContaRecorrente.",
+      "critical": false
+    },
+    {
+      "name": "sincronizarDelecaoLancamentos",
+      "description": "INATIVO. Sincronizava deleção de lançamentos de MovimentosCaixa.",
+      "is_active": false,
+      "critical": false
+    },
+    {
+      "name": "gerarNumeroSequencial",
+      "description": "Gera número sequencial formatado (PC-00001, PV-00001, etc.).",
+      "critical": true,
+      "note": "Used by many functions. Migrate first."
+    },
+    {
+      "name": "cancelarLancamentoFinanceiro",
+      "description": "Cancela LancamentoFinanceiro e reverte saldo.",
+      "critical": true
+    },
+    {
+      "name": "auditarSaldosContas",
+      "description": "Recalcula saldo_atual de todas ContasFinanceiras.",
+      "admin_only": true,
+      "critical": true
+    },
+    {
+      "name": "enviarFinanceiroLote",
+      "description": "Marca múltiplos LancamentosFinanceiros como pagos em lote.",
+      "critical": true
+    },
+    {
+      "name": "gerarExtratoFluxoCaixa",
+      "description": "Gera extrato de fluxo de caixa filtrado por período/conta.",
+      "critical": false
+    },
+    {
+      "name": "gerarRelatorioMargem",
+      "description": "Calcula margem bruta por produto/período.",
+      "critical": false
+    },
+    {
+      "name": "gerarRelatorioPedidosCompra",
+      "description": "Relatório consolidado de pedidos de compra.",
+      "critical": false
+    },
+    {
+      "name": "importarProdutos",
+      "description": "Importa produtos em massa de XLS/CSV.",
+      "admin_only": true,
+      "integrations_used": [
+        "Core.ExtractDataFromUploadedFile"
+      ],
+      "critical": false
+    },
+    {
+      "name": "importarPedidosCompra",
+      "description": "Importa pedidos de compra de planilha.",
+      "admin_only": true,
+      "critical": false
+    },
+    {
+      "name": "recalcularEstoqueProduto",
+      "description": "Recalcula estoque_atual de produto(s).",
+      "admin_only": true,
+      "critical": true
+    },
+    {
+      "name": "gerenciarPin",
+      "description": "Cria, valida e gerencia PINs de autenticação.",
+      "critical": true,
+      "note": "PIN stored as hash. Port hashing exactly."
+    },
+    {
+      "name": "listarAnexos",
+      "description": "Lista AnexoDocumento por referência.",
+      "critical": false
+    },
+    {
+      "name": "deletarAnexo",
+      "description": "Remove AnexoDocumento e arquivo do storage.",
+      "critical": false
+    },
+    {
+      "name": "imprimirCupomTermico",
+      "description": "Gera HTML/PDF de cupom térmico.",
+      "critical": false
+    },
+    {
+      "name": "exportFlareToGithub",
+      "description": "Exporta TargetFlares pendentes como JSON para GitHub.",
+      "integrations_used": [
+        "github connector"
+      ],
+      "required_secrets": [
+        "FLARE_GITHUB_OWNER",
+        "FLARE_GITHUB_REPO",
+        "FLARE_GITHUB_BRANCH"
+      ],
+      "critical": false
+    },
+    {
+      "name": "atualizarStatusLancamentos",
+      "description": "Atualiza status de LancamentosFinanceiros vencidos.",
+      "critical": true
+    },
+    {
+      "name": "zerarEntidade",
+      "description": "Apaga todos os registros de uma entidade (admin only).",
+      "admin_only": true,
+      "critical": false
+    },
+    {
+      "name": "convidarUsuarios",
+      "description": "Convida usuários para a app via email.",
+      "admin_only": true,
+      "integrations_used": [
+        "Core.SendEmail"
+      ],
+      "critical": false
+    },
+    {
+      "name": "uploadAnexoDrive",
+      "description": "Upload de arquivo para Google Drive.",
+      "integrations_used": [
+        "googledrive connector"
+      ],
+      "critical": false
+    },
+    {
+      "name": "calcularIEP",
+      "description": "Calcula Índice de Eficiência de Pedidos.",
+      "critical": false
+    },
+    {
+      "name": "commitMigrationManifests",
+      "description": "Commita os manifestos de migração (entities, automations, functions, checklist) para o GitHub.",
+      "admin_only": true,
+      "critical": false
+    }
+  ],
+  "integrations_used_summary": {
+    "Core.InvokeLLM": {
+      "supabase_equivalent": "Direct OpenAI/Anthropic API call",
+      "migration_effort": "low"
+    },
+    "Core.UploadFile": {
+      "supabase_equivalent": "supabase.storage.from('bucket').upload(path, file)",
+      "migration_effort": "low"
+    },
+    "Core.ExtractDataFromUploadedFile": {
+      "supabase_equivalent": "LlamaParse API or xlsx/csv parsing in Edge Function",
+      "migration_effort": "medium"
+    },
+    "Core.SendEmail": {
+      "supabase_equivalent": "Resend API — drop-in replacement",
+      "migration_effort": "low"
+    },
+    "github_connector": {
+      "supabase_equivalent": "Direct GitHub API calls with PAT in Supabase Vault",
+      "migration_effort": "low"
+    },
+    "googledrive_connector": {
+      "supabase_equivalent": "Google Drive API with OAuth2",
+      "migration_effort": "medium"
+    }
+  }
+}
