@@ -4,6 +4,7 @@
 - Camada inicial `P38` criada para desacoplar o app do SDK Base44.
 - Fluxo atual continua estável com fallback Base44 por padrão (`VITE_P38_PROVIDER=base44`).
 - Entrada SubPayze preparada em adapter dedicado para evolução incremental.
+- Segurança reforçada: SubPayze só recebe tráfego com dupla liberação explícita.
 
 ## Ligações implementadas nesta etapa
 - `src/integrations/p38/index.js`
@@ -26,6 +27,9 @@
 
 ## Variáveis de ambiente previstas
 - `VITE_P38_PROVIDER=base44|subpayze`
+- `VITE_P38_SAFE_MODE=true|false` (padrão `true`)
+- `VITE_P38_ENABLE_SUBPAYZE=true|false` (padrão `false`)
+- `VITE_P38_SUBPAYZE_READY=true|false` (padrão `false`)
 - `VITE_SUBPAYZE_API_URL`
 - `VITE_SUBPAYZE_API_KEY`
 - `VITE_SUBPAYZE_WEBHOOK_SECRET`
@@ -33,3 +37,8 @@
 ## Diretriz operacional
 - Ativar `subpayze` somente em sandbox até homologação completa.
 - Manter fallback automático para Base44 durante o canário de produção.
+- Para não interromper Base44, liberar SubPayze somente quando:
+  1. `VITE_P38_PROVIDER=subpayze`
+  2. `VITE_P38_ENABLE_SUBPAYZE=true`
+  3. `VITE_P38_SUBPAYZE_READY=true`
+  4. credenciais SubPayze válidas no ambiente
