@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronLeft, Mic, MicOff } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Mic } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -54,12 +54,10 @@ export default function ModoFlareInspection({ onClose }) {
   const [pendingMeta, setPendingMeta] = useState(null);
   const [pendingRect, setPendingRect] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [successMarker, setSuccessMarker] = useState(null);
   const [localPins, setLocalPins] = useState([]);
   const [syncMode, setSyncMode] = useState('loading');
-  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [adminBusy, setAdminBusy] = useState(false);
   const [precheckCount, setPrecheckCount] = useState(null);
   const [smokeRunning, setSmokeRunning] = useState(false);
@@ -68,6 +66,8 @@ export default function ModoFlareInspection({ onClose }) {
   const [teamOpen, setTeamOpen] = useState(false);
   const recognitionRef = useRef(null);
   const voiceSessionActiveRef = useRef(false);
+  const voiceBaseTextRef = useRef('');
+  const voiceFinalTextRef = useRef('');
   const successMarkerTimerRef = useRef(null);
   const remoteListFailureNotifiedRef = useRef(false);
   const purchasePins = useMemo(() => {
@@ -369,7 +369,7 @@ export default function ModoFlareInspection({ onClose }) {
           setPendingMeta(null);
           setPendingRect(null);
           setBriefingDraft('');
-          setSelectedImageFile(null);
+          stopRecognition();
           return;
         }
         onClose();
@@ -377,7 +377,7 @@ export default function ModoFlareInspection({ onClose }) {
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [briefingOpen, onClose]);
+  }, [briefingOpen, onClose, stopRecognition]);
 
   const updateHighlight = useCallback((clientX, clientY) => {
     const el = pickElementBehindPortal(portalRef.current, clientX, clientY);
@@ -415,7 +415,6 @@ export default function ModoFlareInspection({ onClose }) {
         height: rect.height,
       });
       setBriefingDraft('');
-      setSelectedImageFile(null);
       setBriefingOpen(true);
       requestAnimationFrame(() => briefingTextareaRef.current?.focus?.());
       if (confidence === 'medium') {
@@ -483,13 +482,14 @@ export default function ModoFlareInspection({ onClose }) {
         return;
       }
     }
+    voiceBaseTextRef.current = (briefingTextareaRef.current?.value || briefingDraft || '').trim();
+    voiceFinalTextRef.current = '';
     briefingTextareaRef.current?.focus?.();
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
     recognition.interimResults = true;
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.maxAlternatives = 1;
-    let finalTranscript = '';
     voiceSessionActiveRef.current = true;
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => {
@@ -500,6 +500,7 @@ export default function ModoFlareInspection({ onClose }) {
       }
       window.setTimeout(() => {
         if (!voiceSessionActiveRef.current || recognitionRef.current !== recognition) return;
+        if (document.visibilityState === 'hidden') return;
         try {
           recognition.start();
         } catch {
@@ -507,7 +508,7 @@ export default function ModoFlareInspection({ onClose }) {
           setIsListening(false);
           recognitionRef.current = null;
         }
-      }, 0);
+      }, 250);
     };
     recognition.onerror = (event) => {
       const code = event?.error || '';
@@ -534,12 +535,14 @@ export default function ModoFlareInspection({ onClose }) {
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const texto = event.results[i][0]?.transcript || '';
         if (event.results[i].isFinal) {
-          finalTranscript = `${finalTranscript} ${texto}`.trim();
+          voiceFinalTextRef.current = `${voiceFinalTextRef.current} ${texto}`.trim();
         } else {
           partial = `${partial} ${texto}`.trim();
         }
       }
-      setBriefingDraft(`${finalTranscript} ${partial}`.trim());
+      const spoken = `${voiceFinalTextRef.current} ${partial}`.trim();
+      const next = [voiceBaseTextRef.current, spoken].filter(Boolean).join(' ').trim();
+      setBriefingDraft(next);
     };
     recognitionRef.current = recognition;
     try {
@@ -554,7 +557,7 @@ export default function ModoFlareInspection({ onClose }) {
         variant: 'destructive',
       });
     }
-  }, [isListening, stopRecognition, toast]);
+  }, [briefingDraft, isListening, stopRecognition, toast]);
 
   const saveBriefing = useCallback(async () => {
     if (!pendingMeta) return;
@@ -563,10 +566,10 @@ export default function ModoFlareInspection({ onClose }) {
       toast({ title: 'Escreva ou dite o briefing', variant: 'destructive' });
       return;
     }
-    if (pendingMeta.confidence === 'medium' && (!selectedImageFile || text.length < 30)) {
+    if (pendingMeta.confidence === 'medium' && text.length < 30) {
       toast({
         title: 'Alvo de média precisão incompleto',
-        description: 'Inclua imagem e um briefing mais detalhado para permitir pinpoint.',
+        description: 'Descreva o briefing com mais detalhe para permitir pinpoint.',
         variant: 'destructive',
       });
       return;
@@ -575,17 +578,7 @@ export default function ModoFlareInspection({ onClose }) {
     const meta = pendingMeta;
     const rectSnapshot = pendingRect;
     setSaving(true);
-    setUploadingImage(Boolean(selectedImageFile));
-
-    let imageUrl = '';
-    if (selectedImageFile) {
-      try {
-        const upload = await base44.integrations.Core.UploadFile({ file: selectedImageFile });
-        imageUrl = upload?.file_url || '';
-      } catch {
-        imageUrl = '';
-      }
-    }
+    const imageUrl = '';
 
     let savedOrigin = 'local';
     try {
@@ -656,7 +649,6 @@ export default function ModoFlareInspection({ onClose }) {
       setPendingMeta(null);
       setPendingRect(null);
       setBriefingDraft('');
-      setSelectedImageFile(null);
       stopRecognition();
 
       if (rectSnapshot) {
@@ -681,14 +673,12 @@ export default function ModoFlareInspection({ onClose }) {
         }.`,
       });
     } finally {
-      setUploadingImage(false);
       setSaving(false);
     }
   }, [
     briefingDraft,
     pendingMeta,
     pendingRect,
-    selectedImageFile,
     stopRecognition,
     toast,
   ]);
@@ -1032,8 +1022,8 @@ export default function ModoFlareInspection({ onClose }) {
         aria-modal="true"
       >
         <div className="relative w-full max-w-lg rounded-lg border bg-background p-6 shadow-xl">
-          <h2 className="mb-1 text-lg font-semibold">Nota para este ponto</h2>
-          <p className="mb-3 font-mono text-xs text-muted-foreground">
+          <h2 className="mb-2 text-lg font-semibold">Nota para este ponto</h2>
+          <p className="mb-4 font-mono text-xs text-muted-foreground">
             {(pendingMeta.file_path && pendingMeta.line && pendingMeta.column)
               ? `${pendingMeta.file_path}:${pendingMeta.line}:${pendingMeta.column}`
               : 'Sem coordenada de código neste elemento'}{' '}
@@ -1052,35 +1042,18 @@ export default function ModoFlareInspection({ onClose }) {
             placeholder="Descreva o problema ou a melhoria…"
             className="min-h-[120px] resize-y"
           />
-          <div className="mt-3">
-            <label className="mb-1 block text-xs text-muted-foreground">Imagem de contexto (opcional)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setSelectedImageFile(e.target.files?.[0] || null)}
-              className="block w-full text-xs"
-            />
-            {selectedImageFile ? (
-              <p className="mt-1 text-xs text-muted-foreground">Anexo: {selectedImageFile.name}</p>
-            ) : null}
-          </div>
-          <div className="mt-3 flex flex-wrap items-start gap-2">
-            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-none">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={toggleVoice}
-                aria-pressed={isListening}
-                aria-label={isListening ? 'Parar ditado por voz' : 'Iniciar ditado por voz em português'}
-              >
-                {isListening ? <MicOff className="mr-1 h-4 w-4" /> : <Mic className="mr-1 h-4 w-4" />}
-                {isListening ? 'Parar' : 'Microfone'}
-              </Button>
-              <p className="max-w-[min(100%,18rem)] text-[11px] text-muted-foreground">
-                Fale em português. Funciona melhor em Chrome ou Edge (HTTPS).
-              </p>
-            </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant={isListening ? 'default' : 'outline'}
+              size="sm"
+              onClick={toggleVoice}
+              aria-pressed={isListening}
+              aria-label={isListening ? 'Parar fala para texto' : 'Iniciar fala para texto'}
+            >
+              <Mic className="mr-1 h-4 w-4" />
+              {isListening ? 'Parar fala para texto' : 'Fala para texto'}
+            </Button>
             <Button
               type="button"
               size="sm"
@@ -1089,22 +1062,7 @@ export default function ModoFlareInspection({ onClose }) {
               }}
               disabled={saving}
             >
-              {saving || uploadingImage ? 'A guardar…' : 'Guardar (Ctrl+Enter)'}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setBriefingOpen(false);
-                setPendingMeta(null);
-                setPendingRect(null);
-                setBriefingDraft('');
-                setSelectedImageFile(null);
-                stopRecognition();
-              }}
-            >
-              Cancelar
+              {saving ? 'A guardar…' : 'Guardar'}
             </Button>
           </div>
         </div>

@@ -176,34 +176,36 @@ export default function PedidoCompraFAB({
 
   return (
     <>
-      <div data-pedido-compra-fab className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 lg:bottom-6 lg:right-6">
-          <button
-            onClick={() => setIsExpanded(prev => !prev)}
-            className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-              isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
-            } text-white`}
-            title="Ações do pedido"
-          >
-            {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
-          </button>
-
-          {isExpanded && actions.map((action, idx) => (
+      {!showAnexosModal && (
+        <div data-pedido-compra-fab className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 lg:bottom-6 lg:right-6">
             <button
-              key={idx}
-              onClick={action.onClick}
-              disabled={action.disabled}
-              title={action.label}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
-              style={{
-                animation: `fadeSlideUp 0.18s ease both`,
-                animationDelay: `${idx * 30}ms`,
-              }}
+              onClick={() => setIsExpanded(prev => !prev)}
+              className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
+              } text-white`}
+              title="Ações do pedido"
             >
-              {action.icon}
-              {action.label}
+              {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
             </button>
-          ))}
-        </div>
+
+            {isExpanded && actions.map((action, idx) => (
+              <button
+                key={idx}
+                onClick={action.onClick}
+                disabled={action.disabled}
+                title={action.label}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
+                style={{
+                  animation: `fadeSlideUp 0.18s ease both`,
+                  animationDelay: `${idx * 30}ms`,
+                }}
+              >
+                {action.icon}
+                {action.label}
+              </button>
+            ))}
+          </div>
+      )}
 
         <style>{`
         @keyframes fadeSlideUp {
