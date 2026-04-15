@@ -1,43 +1,41 @@
 /**
  * Babel plugin that injects data-source-location attributes into JSX elements.
- * This enables the Modo Flare inspection system to locate source code positions.
+ * Used by the Flare debug mode to identify component source positions.
  */
-
-const path = require('path');
-
-function sourceLocationBabelPlugin({ types: t }) {
+module.exports = function sourceLocationBabelPlugin({ types: t }) {
   return {
     name: 'source-location-babel-plugin',
     visitor: {
-      JSXOpeningElement(nodePath, state) {
-        const filename = state.filename || '';
-        const loc = nodePath.node.loc;
-        if (!loc) return;
+      JSXOpeningElement(path, state) {
+        const filename = state.filename || 'unknown';
+        const { line, column } = path.node.loc ? path.node.loc.start : { line: 0, column: 0 };
 
-        // Only annotate elements in src/ directory
-        if (!filename.includes('/src/')) return;
+        // Skip built-in HTML elements (lowercase) and fragments
+        const nameNode = path.node.name;
+        if (t.isJSXIdentifier(nameNode) && /^[a-z]/.test(nameNode.name)) return;
+        if (t.isJSXMemberExpression(nameNode)) return;
 
-        // Skip elements that already have the attribute
-        const hasAttr = nodePath.node.attributes.some(
+        // Normalize path: strip leading /app_temp/ or similar prefixes
+        const normalizedPath = filename.replace(/^.*\/src\//, 'src/');
+
+        const locationValue = `${normalizedPath}:${line}:${column}`;
+
+        // Check if attribute already exists
+        const exists = path.node.attributes.some(
           (attr) =>
             t.isJSXAttribute(attr) &&
             t.isJSXIdentifier(attr.name, { name: 'data-source-location' })
         );
-        if (hasAttr) return;
 
-        // Build relative path from project root
-        const relPath = filename.replace(/.*\/src\//, 'src/');
-        const value = `${relPath}:${loc.start.line}:${loc.start.column}`;
-
-        nodePath.node.attributes.push(
-          t.jsxAttribute(
-            t.jsxIdentifier('data-source-location'),
-            t.stringLiteral(value)
-          )
-        );
+        if (!exists) {
+          path.node.attributes.push(
+            t.jsxAttribute(
+              t.jsxIdentifier('data-source-location'),
+              t.stringLiteral(locationValue)
+            )
+          );
+        }
       },
     },
   };
-}
-
-module.exports = sourceLocationBabelPlugin;
+};
