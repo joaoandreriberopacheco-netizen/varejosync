@@ -2,11 +2,11 @@
   "_meta": {
     "schema_version": "1.1",
     "generated_by": "base44/exportFlareToGithub",
-    "exported_at": "2026-04-15T03:38:07.882Z",
+    "exported_at": "2026-04-15T14:34:12.483Z",
     "environment": "production",
     "app": "varejosync",
-    "count": 0,
-    "content_hash": "00000000",
+    "count": 3,
+    "content_hash": "6b4e5c5a",
     "valid_statuses": [
       "pending",
       "in_progress",
@@ -22,5 +22,57 @@
       "path": "docs/flare-export/flare-pending.json"
     }
   },
-  "items": []
+  "items": [
+    {
+      "id": "69dfa1d23962211c9090157d",
+      "status": "pending",
+      "file_path": "src/components/anexos/AnexosModal.jsx",
+      "line": 235,
+      "column": 10,
+      "source_location_raw": "src/components/anexos/AnexosModal.jsx:235:10",
+      "component_name": "AnexosModal",
+      "briefing": "Esse fab esta debaixo do FAB do pedido de compra (intruso nesta tela)",
+      "action_briefing": "Esse fab esta debaixo do FAB do pedido de compra (intruso nesta tela)",
+      "confidence": "high",
+      "resolution_precision": null,
+      "context_image_url": "",
+      "route": "/PedidoCompraDetalhe",
+      "created_date": "2026-04-15T14:33:54.538000",
+      "updated_date": "2026-04-15T14:33:54.538000"
+    },
+    {
+      "id": "69dfa173439d857402dcf677",
+      "status": "pending",
+      "file_path": "src/components/compras/ImportadorPedidoCompra.jsx",
+      "line": 320,
+      "column": 14,
+      "source_location_raw": "src/components/compras/ImportadorPedidoCompra.jsx:320:14",
+      "component_name": "ImportadorPedidoCompra",
+      "briefing": "Esse importador deve ser alvo donWrb Target Share (depois da torre de controle pra quando ele distribui) pode ser Novo Pedido de compra - PDF+",
+      "action_briefing": "Esse importador deve ser alvo donWrb Target Share (depois da torre de controle pra quando ele distribui) pode ser Novo Pedido de compra - PDF+",
+      "confidence": "high",
+      "resolution_precision": null,
+      "context_image_url": "",
+      "route": "/PedidoCompraDetalhe",
+      "created_date": "2026-04-15T14:32:19.416000",
+      "updated_date": "2026-04-15T14:32:19.416000"
+    },
+    {
+      "id": "69df9ebe48dab5b98713f98e",
+      "status": "pending",
+      "file_path": "src/components/compras/FiltrosCompras.jsx",
+      "line": 97,
+      "column": 10,
+      "source_location_raw": "src/components/compras/FiltrosCompras.jsx:97:10",
+      "component_name": "FiltrosCompras",
+      "briefing": "Quando vamos pesquisar um fornecedor, ja no seletor de filtros, e vc digita o fornecedor a tela sobe e vc nao ve o que esta digitando, tem que baixar o teclado",
+      "action_briefing": "Quando vamos pesquisar um fornecedor, ja no seletor de filtros, e vc digita o fornecedor a tela sobe e vc nao ve o que esta digitando, tem que baixar o teclado",
+      "confidence": "high",
+      "resolution_precision": null,
+      "context_image_url": "https://base44.app/api/apps/68a91b1a009497f8d44af37e/files/mp/public/68a91b1a009497f8d44af37e/1afadf30f_1000231548.jpg",
+      "route": "/PedidosCompra",
+      "created_date": "2026-04-15T14:20:46.375000",
+      "updated_date": "2026-04-15T14:20:46.375000"
+    }
+  ]
 }
