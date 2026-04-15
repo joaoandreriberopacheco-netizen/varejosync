@@ -4,7 +4,9 @@ Este ficheiro `flare-pending.json` é **gerado localmente** e está **gitignored
 
 ## Gerar ou atualizar
 
-Com credenciais Base44 no ambiente (mesmas variáveis que `npm run flare:list`):
+**Na app (browser):** no Modo Flare, painel **Fila de caça**, botão **Exportar relatório** — descarrega um `.json` com o mesmo formato (`exportedAt`, `count`, `items`) que o script abaixo. Podes guardar o ficheiro em `docs/flare-export/flare-pending.json` à mão para o Cursor ler.
+
+**No terminal** — com credenciais Base44 no ambiente (mesmas variáveis que `npm run flare:list`):
 
 ```bash
 npm run flare:export

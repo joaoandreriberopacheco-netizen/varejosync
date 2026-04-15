@@ -62,6 +62,7 @@ export default function ModoFlareInspection({ onClose }) {
   const [adminBusy, setAdminBusy] = useState(false);
   const [precheckCount, setPrecheckCount] = useState(null);
   const [smokeRunning, setSmokeRunning] = useState(false);
+  const [reportExporting, setReportExporting] = useState(false);
   const recognitionRef = useRef(null);
   const voiceSessionActiveRef = useRef(false);
   const successMarkerTimerRef = useRef(null);
@@ -294,6 +295,45 @@ export default function ModoFlareInspection({ onClose }) {
       setAdminBusy(false);
     }
   }, [purchasePins, reloadPins, toast]);
+
+  const exportFlarePendingReport = useCallback(async () => {
+    setReportExporting(true);
+    try {
+      const rows = await base44.entities.TargetFlare.filter({ status: 'pending' }, '-created_date', 500);
+      const items = Array.isArray(rows) ? rows : rows?.data ?? [];
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        count: items.length,
+        items,
+      };
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `flare-pending-${stamp}.json`;
+      const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], {
+        type: 'application/json;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: 'Relatório exportado',
+        description: `${items.length} pendente(s). Ficheiro: ${filename} — podes copiar para docs/flare-export/ para o Cursor.`,
+      });
+    } catch {
+      toast({
+        title: 'Exportação falhou',
+        description: 'Não foi possível obter os pendentes na nuvem. Verifica sessão e permissões.',
+        variant: 'destructive',
+      });
+    } finally {
+      setReportExporting(false);
+    }
+  }, [toast]);
 
   useEffect(
     () => () => {
@@ -767,6 +807,20 @@ export default function ModoFlareInspection({ onClose }) {
             disabled={adminBusy}
           >
             Recarregar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] pointer-events-auto"
+            data-flare-control="1"
+            onClick={() => {
+              void exportFlarePendingReport();
+            }}
+            disabled={adminBusy || reportExporting}
+            title="Descarrega JSON no mesmo formato que npm run flare:export"
+          >
+            {reportExporting ? 'A exportar…' : 'Exportar relatório'}
           </Button>
         </div>
         {precheckCount != null ? (
