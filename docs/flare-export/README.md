@@ -1,48 +1,48 @@
-# Export da fila Flare (Cursor)
+# Contrato de Dados — flare-pending.json
 
-Este ficheiro `flare-pending.json` é **gerado localmente** e está **gitignored**. Serve para o Cursor (ou outras ferramentas) lerem a lista de `TargetFlare` pendentes sem aceder à API manualmente.
+> Schema Version: 1.1 | Caminho: `docs/flare-export/flare-pending.json`
 
-## Gerar ou atualizar
+## Estrutura
 
-**Na app (browser):** no Modo Flare, painel **Fila de caça**, botão **Exportar relatório** — descarrega um `.json` com o mesmo formato (`exportedAt`, `count`, `items`) que o script abaixo. Podes guardar o ficheiro em `docs/flare-export/flare-pending.json` à mão para o Cursor ler.
-
-**No terminal** — com credenciais Base44 no ambiente (mesmas variáveis que `npm run flare:list`):
-
-```bash
-npm run flare:export
+```json
+{
+  "_meta": {
+    "schema_version": "1.1",
+    "generated_by": "base44/exportFlareToGithub",
+    "exported_at": "ISO8601",
+    "environment": "production",
+    "app": "varejosync",
+    "count": 0,
+    "content_hash": "hex8chars",
+    "valid_statuses": ["pending","in_progress","ready_for_verify","resolved","reopened","ignored"],
+    "github": { "owner": "...", "repo": "...", "branch": "main", "path": "docs/flare-export/flare-pending.json" }
+  },
+  "items": [{
+    "id": "string (UUID Base44)",
+    "status": "pending | in_progress | ready_for_verify | resolved | reopened | ignored",
+    "file_path": "src/pages/Home.jsx",
+    "line": 42,
+    "column": 6,
+    "source_location_raw": "src/pages/Home.jsx:42:6",
+    "component_name": "Home",
+    "briefing": "Descrição do problema",
+    "action_briefing": "Acção objectiva esperada",
+    "confidence": "high | medium",
+    "resolution_precision": "high | medium | unknown | null",
+    "context_image_url": "https://... | null",
+    "route": "/rota-react | null",
+    "created_date": "ISO8601",
+    "updated_date": "ISO8601"
+  }]
+}
 ```
 
-Saída por defeito: `docs/flare-export/flare-pending.json`.
+## Política de Versionamento
+- **Patch** (1.1 → 1.2): novos campos opcionais — retrocompatível
+- **Minor** (1.x → 2.0): campos removidos ou renomeados — breaking
+- Cursor DEVE verificar `_meta.schema_version` antes de consumir
+- Breaking changes: 2 sprints de deprecação antes da remoção
 
-Outro caminho:
-
-```bash
-node scripts/export-flare-pending.mjs --out=./meu-caminho.json
-```
-
-## API local (dev)
-
-```bash
-npm run flare:api
-```
-
-- `GET http://127.0.0.1:3844/pending` — JSON dos pendentes  
-- `GET http://127.0.0.1:3844/export` — grava o ficheiro e devolve o mesmo payload  
-- `GET http://127.0.0.1:3844/health` — verifica se há credenciais no processo  
-
-Porta: variável `FLARE_API_PORT` (padrão 3844). O token só existe no processo Node, não no browser.
-
-## Nuvem (admin)
-
-Função Base44 `listFlarePending`: `POST` autenticado, apenas **admin**, devolve `{ count, items }` para integrações.
-
-## Caçar bandeirinhas no Cursor
-
-1. Correr `npm run flare:export` (ou abrir o JSON existente).  
-2. Ler `docs/flare-export/flare-pending.json`.  
-3. Priorizar `confidence: high`, aplicar `action_briefing`, abrir `file_path` na linha indicada.  
-4. Marcar registos como `resolved` após correção.
-
-## Busca de flares (frase de arranque)
-
-No Cursor, depois de gerares o JSON, podes dizer **busca de flares**: a regra do projeto em [`.cursor/rules/busca-de-flares.mdc`](../../.cursor/rules/busca-de-flares.mdc) orienta o assistente a ler o export, montar um **plano ordenado** e **só executar** depois da tua aprovação (“bombs away”).
+## Idempotência
+O campo `content_hash` identifica unicamente o estado do payload.
+Se o hash não mudou desde o último commit, a função faz skip sem commit duplicado.
