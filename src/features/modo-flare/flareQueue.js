@@ -82,11 +82,15 @@ export async function listPendingFlaresLocalFirst() {
   try {
     const rows = await base44.entities.TargetFlare.filter({ status: 'pending' });
     const normalized = (Array.isArray(rows) ? rows : []).map(normalizeRemoteFlare);
-    return { mode: 'remote', items: sortPendingFlares(normalized) };
+    return { mode: 'remote', items: sortPendingFlares(normalized), remoteFetchFailed: false };
   } catch {
     const fallback = readLocalPins();
     const normalized = (Array.isArray(fallback) ? fallback : []).map(normalizeLocalFlare);
-    return { mode: 'local', items: sortPendingFlares(normalized.filter((it) => it.status === 'pending')) };
+    return {
+      mode: 'local',
+      items: sortPendingFlares(normalized.filter((it) => it.status === 'pending')),
+      remoteFetchFailed: true,
+    };
   }
 }
 

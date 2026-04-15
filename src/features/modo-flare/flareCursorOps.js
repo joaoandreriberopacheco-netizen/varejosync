@@ -43,6 +43,7 @@ export async function readPendingFlaresForCursor() {
   return {
     mode: result.mode,
     items: result.items.map(buildPinpoint),
+    remoteFetchFailed: Boolean(result.remoteFetchFailed),
   };
 }
 
@@ -52,6 +53,7 @@ export async function readPendingPurchaseFlaresForCursor() {
   return {
     mode: result.mode,
     items: purchase.map(buildPinpoint),
+    remoteFetchFailed: Boolean(result.remoteFetchFailed),
   };
 }
 

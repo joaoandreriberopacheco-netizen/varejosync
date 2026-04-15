@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.26';
 
 /**
  * Lista TargetFlare pendentes para consumo por ferramentas (export / Cursor).

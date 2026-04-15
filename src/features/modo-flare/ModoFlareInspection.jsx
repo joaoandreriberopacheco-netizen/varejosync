@@ -65,6 +65,7 @@ export default function ModoFlareInspection({ onClose }) {
   const [smokeRunning, setSmokeRunning] = useState(false);
   const recognitionRef = useRef(null);
   const successMarkerTimerRef = useRef(null);
+  const remoteListFailureNotifiedRef = useRef(false);
   const purchasePins = useMemo(() => {
     return localPins
       .filter((flare) => {
@@ -100,11 +101,30 @@ export default function ModoFlareInspection({ onClose }) {
     return `Alvos na lista: ${n} · Origem: neste dispositivo`;
   }, [syncMode, localPins.length]);
 
+  const applyPendingListResult = useCallback(
+    (result) => {
+      setLocalPins(result.items);
+      setSyncMode(result.mode);
+      if (result.mode === 'remote' && !result.remoteFetchFailed) {
+        remoteListFailureNotifiedRef.current = false;
+      }
+      if (result.remoteFetchFailed && !remoteListFailureNotifiedRef.current) {
+        remoteListFailureNotifiedRef.current = true;
+        toast({
+          title: 'Nuvem indisponível para a fila',
+          description:
+            'A mostrar só alvos neste dispositivo. Export e listas na Base44 podem ficar vazios até a ligação funcionar.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [toast]
+  );
+
   const reloadPins = useCallback(async () => {
     const result = await listPendingFlaresLocalFirst();
-    setLocalPins(result.items);
-    setSyncMode(result.mode);
-  }, []);
+    applyPendingListResult(result);
+  }, [applyPendingListResult]);
 
   const resolvePin = useCallback(
     async (flare) => {
@@ -139,15 +159,14 @@ export default function ModoFlareInspection({ onClose }) {
     const loadPins = async () => {
       const result = await listPendingFlaresLocalFirst();
       if (!isMounted) return;
-      setLocalPins(result.items);
-      setSyncMode(result.mode);
+      applyPendingListResult(result);
     };
 
     loadPins();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [applyPendingListResult]);
 
   const runPrecheckCount = useCallback(async () => {
     setAdminBusy(true);
