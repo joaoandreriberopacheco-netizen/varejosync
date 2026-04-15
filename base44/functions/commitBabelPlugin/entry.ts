@@ -52,13 +52,18 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const accessToken = Deno.env.get('GITHUB_TOKEN');
+  // Usa o conector GitHub autorizado (scope: repo)
+  const { accessToken } = await base44.asServiceRole.connectors.getConnection('github');
   const owner = Deno.env.get('FLARE_GITHUB_OWNER');
   const repo = Deno.env.get('FLARE_GITHUB_REPO');
   const branch = Deno.env.get('FLARE_GITHUB_BRANCH') || 'main';
 
   if (!owner || !repo) {
     return Response.json({ error: 'Missing FLARE_GITHUB_OWNER or FLARE_GITHUB_REPO' }, { status: 400 });
+  }
+
+  if (!accessToken) {
+    return Response.json({ error: 'GitHub connector not authorized' }, { status: 400 });
   }
 
   const filePath = 'build/sourceLocationBabelPlugin.cjs';
@@ -96,6 +101,6 @@ Deno.serve(async (req) => {
     action: sha ? 'updated' : 'created',
     path: filePath,
     commit: data.commit?.sha,
-    message: 'File committed to GitHub. Sync will pull it to platform automatically.',
+    message: 'File committed to GitHub successfully.',
   });
 });
