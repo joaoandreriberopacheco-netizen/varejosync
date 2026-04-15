@@ -1,6 +1,6 @@
 /**
  * Babel plugin: injeta data-source-location em elementos JSX.
- * Usado pelo Modo Flare para localizar posicoes no codigo fonte.
+ * Usado pelo Modo Flare para localizar posições no código fonte.
  */
 function sourceLocationBabelPlugin({ types: t }) {
   return {
