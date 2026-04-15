@@ -15,7 +15,9 @@ import {
   Users,
   AlertCircle,
   Search,
-  Filter
+  Filter,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { dataHoje, inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 

@@ -1117,7 +1117,7 @@ export default function PDVCaixa() {
       }
 
       setShowFechamentoDialog(false);
-      setShowFechamentoSucessoDialog(true);
+      handleConcluirFechamentoSucesso();
     } catch (error) {
       toast({
         title: "Erro ao fechar caixa",
@@ -1130,7 +1130,6 @@ export default function PDVCaixa() {
   };
 
   const handleConcluirFechamentoSucesso = () => {
-    setShowFechamentoSucessoDialog(false);
     setShowSeletorCaixa(true);
     setCaixaSelecionado(null);
     setTurnoAtivo(null);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer, Receipt, Eye } from 'lucide-react';
+import { format } from 'date-fns';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 

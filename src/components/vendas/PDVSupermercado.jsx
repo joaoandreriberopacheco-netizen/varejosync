@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import BarcodeScanner from './BarcodeScanner';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWarning';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);

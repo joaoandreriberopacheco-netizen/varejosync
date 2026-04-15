@@ -353,8 +353,6 @@ export default function PedidosCompraPage() {
       await base44.entities.PedidoCompra.create(newPedido);
     }
     await loadData();
-    setIsFormOpen(false);
-    setPedidoSelecionado(null);
   };
 
   const handleDownloadTemplate = () => {
