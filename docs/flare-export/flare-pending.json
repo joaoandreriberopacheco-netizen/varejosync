@@ -1,0 +1,40 @@
+{
+  "exportedAt": "2026-04-15T02:41:29.903Z",
+  "count": 2,
+  "items": [
+    {
+      "id": "69def7dad4399743b2da1802",
+      "status": "pending",
+      "file_path": "pages/Home",
+      "line": 152,
+      "column": 12,
+      "source_location_raw": "pages/Home:152:12",
+      "component_name": "Home",
+      "briefing": "falso positivo",
+      "action_briefing": "falso positivo",
+      "confidence": "high",
+      "resolution_precision": null,
+      "context_image_url": "",
+      "route": "/",
+      "created_date": "2026-04-15T02:28:42.344000",
+      "updated_date": "2026-04-15T02:28:42.344000"
+    },
+    {
+      "id": "69def7a8288bb68f3045f16f",
+      "status": "pending",
+      "file_path": "pages/Home",
+      "line": 149,
+      "column": 12,
+      "source_location_raw": "pages/Home:149:12",
+      "component_name": "Home",
+      "briefing": "Falso positivo. teste de verificação",
+      "action_briefing": "Falso positivo. teste de verificação",
+      "confidence": "high",
+      "resolution_precision": null,
+      "context_image_url": "",
+      "route": "/",
+      "created_date": "2026-04-15T02:27:52.592000",
+      "updated_date": "2026-04-15T02:27:52.592000"
+    }
+  ]
+}
