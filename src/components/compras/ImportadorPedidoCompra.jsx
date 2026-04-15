@@ -285,8 +285,8 @@ Retorne JSON:
               <X className="w-4 h-4" />
             </Button>
             <div>
-              <p className="font-glacial text-lg text-gray-900 dark:text-white">Importar para pedido</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">PDF ou foto direto nos itens</p>
+              <p className="font-glacial text-lg text-gray-900 dark:text-white">Importar novo pedido</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Lê PDF e boas imagens para preencher os itens</p>
             </div>
           </div>
           {step === 'review' && (
@@ -309,8 +309,8 @@ Retorne JSON:
               <Button variant={mode === 'pdf' ? 'default' : 'outline'} onClick={() => setMode('pdf')} className="flex-1 border-0 shadow-sm">
                 <FileText className="w-4 h-4 mr-2" />PDF
               </Button>
-              <Button variant={mode === 'foto' ? 'default' : 'outline'} onClick={() => setMode('foto')} className="flex-1 border-0 shadow-sm">
-                <Camera className="w-4 h-4 mr-2" />Foto
+                <Button variant={mode === 'foto' ? 'default' : 'outline'} onClick={() => setMode('foto')} className="flex-1 border-0 shadow-sm">
+                  <Camera className="w-4 h-4 mr-2" />Imagem
               </Button>
             </div>
             <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/60 p-8 md:p-14 text-center shadow-sm">
@@ -318,7 +318,7 @@ Retorne JSON:
                 {mode === 'pdf' ? <FileText className="w-8 h-8 text-gray-600" /> : <Sparkles className="w-8 h-8 text-gray-600" />}
               </div>
               <p className="font-glacial text-xl text-gray-900 dark:text-white mb-2">
-                {mode === 'pdf' ? 'Enviar PDF do fornecedor' : 'Enviar foto da lista'}
+                {mode === 'pdf' ? 'Enviar PDF do fornecedor' : 'Enviar imagem da lista'}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">A importação vai preencher os itens do pedido.</p>
               <div className="relative inline-block">

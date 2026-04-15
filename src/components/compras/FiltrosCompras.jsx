@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Search, X, SlidersHorizontal, Tag } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,7 @@ export default function FiltrosCompras({
   const [showFilters, setShowFilters] = useState(false);
   const [searchFornecedor, setSearchFornecedor] = useState('');
   const [searchTag, setSearchTag] = useState('');
+  const fornecedorInputRef = useRef(null);
 
   const tagsFiltradas = useMemo(() => {
     const sorted = [...(todasTags || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
@@ -88,6 +89,13 @@ export default function FiltrosCompras({
   const fornecedoresSelecionadosNomes = fornecedorSel.length > 0
     ? fornecedores.filter(f => fornecedorSel.includes(f.id)).map(f => f.nome).join(', ')
     : '';
+
+  const keepInputVisibleOnMobileKeyboard = (inputRef) => {
+    if (typeof window === 'undefined' || !inputRef?.current) return;
+    window.setTimeout(() => {
+      inputRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 220);
+  };
 
   return (
     <div className="space-y-3">
@@ -198,7 +206,14 @@ export default function FiltrosCompras({
                 <div className="space-y-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                    <Input placeholder="Buscar fornecedor..." className="pl-8 h-11 text-xs bg-gray-100 dark:bg-slate-800 border-0 shadow-sm rounded-2xl" value={searchFornecedor} onChange={e => setSearchFornecedor(e.target.value)} />
+                    <Input
+                      ref={fornecedorInputRef}
+                      placeholder="Buscar fornecedor..."
+                      className="pl-8 h-11 text-xs bg-gray-100 dark:bg-slate-800 border-0 shadow-sm rounded-2xl"
+                      value={searchFornecedor}
+                      onFocus={() => keepInputVisibleOnMobileKeyboard(fornecedorInputRef)}
+                      onChange={e => setSearchFornecedor(e.target.value)}
+                    />
                   </div>
                   <div className="max-h-40 overflow-y-auto space-y-0.5 pr-1">
                     {fornecedoresFiltrados.map(f => (
