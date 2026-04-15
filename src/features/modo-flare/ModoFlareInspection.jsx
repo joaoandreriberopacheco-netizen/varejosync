@@ -59,11 +59,11 @@ export default function ModoFlareInspection({ onClose }) {
   const [localPins, setLocalPins] = useState([]);
   const [syncMode, setSyncMode] = useState('loading');
   const [selectedImageFile, setSelectedImageFile] = useState(null);
-  const [actionBriefingDraft, setActionBriefingDraft] = useState('');
   const [adminBusy, setAdminBusy] = useState(false);
   const [precheckCount, setPrecheckCount] = useState(null);
   const [smokeRunning, setSmokeRunning] = useState(false);
   const recognitionRef = useRef(null);
+  const voiceSessionActiveRef = useRef(false);
   const successMarkerTimerRef = useRef(null);
   const remoteListFailureNotifiedRef = useRef(false);
   const purchasePins = useMemo(() => {
@@ -244,7 +244,7 @@ export default function ModoFlareInspection({ onClose }) {
         ...parsed,
         component_name: componentNameFromFilePath(parsed.file_path),
         briefing: 'Smoke test pós-limpeza',
-        action_briefing: 'Validar fluxo pending -> resolved após limpeza total',
+        action_briefing: 'Smoke test pós-limpeza',
         context_image_url: '',
         confidence: 'high',
         route: window.location.pathname || '',
@@ -313,7 +313,6 @@ export default function ModoFlareInspection({ onClose }) {
           setPendingMeta(null);
           setPendingRect(null);
           setBriefingDraft('');
-          setActionBriefingDraft('');
           setSelectedImageFile(null);
           return;
         }
@@ -360,14 +359,13 @@ export default function ModoFlareInspection({ onClose }) {
         height: rect.height,
       });
       setBriefingDraft('');
-      setActionBriefingDraft('');
       setSelectedImageFile(null);
       setBriefingOpen(true);
       requestAnimationFrame(() => briefingTextareaRef.current?.focus?.());
       if (confidence === 'medium') {
         toast({
           title: 'Sem coordenada de código neste elemento',
-          description: 'Será registado com confiança média. Detalhe a ação e inclua imagem se ajudar.',
+          description: 'Será registado com confiança média. Detalhe o briefing e inclua imagem se ajudar.',
         });
       }
     },
@@ -394,6 +392,7 @@ export default function ModoFlareInspection({ onClose }) {
   );
 
   const stopRecognition = useCallback(() => {
+    voiceSessionActiveRef.current = false;
     try {
       recognitionRef.current?.stop?.();
     } catch {
@@ -419,7 +418,13 @@ export default function ModoFlareInspection({ onClose }) {
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        // optional
+        toast({
+          title: 'Microfone bloqueado',
+          description:
+            'Permita o microfone para este site (ícone na barra de endereço) e volte a tocar em Microfone.',
+          variant: 'destructive',
+        });
+        return;
       }
     }
     briefingTextareaRef.current?.focus?.();
@@ -429,14 +434,44 @@ export default function ModoFlareInspection({ onClose }) {
     recognition.continuous = true;
     recognition.maxAlternatives = 1;
     let finalTranscript = '';
+    voiceSessionActiveRef.current = true;
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => {
-      setIsListening(false);
-      recognitionRef.current = null;
+      if (!voiceSessionActiveRef.current || recognitionRef.current !== recognition) {
+        setIsListening(false);
+        recognitionRef.current = null;
+        return;
+      }
+      window.setTimeout(() => {
+        if (!voiceSessionActiveRef.current || recognitionRef.current !== recognition) return;
+        try {
+          recognition.start();
+        } catch {
+          voiceSessionActiveRef.current = false;
+          setIsListening(false);
+          recognitionRef.current = null;
+        }
+      }, 0);
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      const code = event?.error || '';
+      if (code === 'no-speech') return;
+      if (code === 'aborted' && voiceSessionActiveRef.current) return;
+      voiceSessionActiveRef.current = false;
       setIsListening(false);
       recognitionRef.current = null;
+      const descriptions = {
+        'not-allowed':
+          'Permissão negada para microfone ou reconhecimento de voz. Verifique HTTPS e as permissões do site.',
+        'audio-capture': 'Não foi possível captar áudio. Verifique o microfone.',
+        network: 'Falha de rede no serviço de reconhecimento de voz.',
+        'service-not-allowed': 'Serviço de voz não permitido neste contexto (navegador ou política).',
+      };
+      toast({
+        title: 'Reconhecimento de voz',
+        description: descriptions[code] || (code ? `Erro: ${code}` : 'Erro desconhecido.'),
+        variant: 'destructive',
+      });
     };
     recognition.onresult = (event) => {
       let partial = '';
@@ -454,20 +489,22 @@ export default function ModoFlareInspection({ onClose }) {
     try {
       recognition.start();
     } catch {
+      voiceSessionActiveRef.current = false;
       setIsListening(false);
+      recognitionRef.current = null;
+      toast({
+        title: 'Microfone',
+        description: 'Não foi possível iniciar o reconhecimento de voz.',
+        variant: 'destructive',
+      });
     }
   }, [isListening, stopRecognition, toast]);
 
   const saveBriefing = useCallback(async () => {
     if (!pendingMeta) return;
     const text = briefingDraft.trim();
-    const actionText = actionBriefingDraft.trim() || text;
     if (!text) {
       toast({ title: 'Escreva ou dite o briefing', variant: 'destructive' });
-      return;
-    }
-    if (!actionText) {
-      toast({ title: 'Descreva a ação esperada', variant: 'destructive' });
       return;
     }
     if (pendingMeta.confidence === 'medium' && (!selectedImageFile || text.length < 30)) {
@@ -505,7 +542,7 @@ export default function ModoFlareInspection({ onClose }) {
           source_location_raw: meta.source_location_raw,
           component_name: meta.component_name,
           briefing: text,
-          action_briefing: actionText,
+          action_briefing: text,
           context_image_url: imageUrl,
           confidence: meta.confidence,
           route: window.location.pathname || '',
@@ -522,7 +559,7 @@ export default function ModoFlareInspection({ onClose }) {
             component_name: meta.component_name,
             route: window.location.pathname || '',
             briefing: text,
-            action_briefing: actionText,
+            action_briefing: text,
             context_image_url: imageUrl,
             confidence: meta.confidence,
             scope: 'remote',
@@ -545,7 +582,7 @@ export default function ModoFlareInspection({ onClose }) {
               component_name: meta.component_name,
               route: window.location.pathname || '',
               briefing: text,
-              action_briefing: actionText,
+              action_briefing: text,
               context_image_url: imageUrl,
               confidence: meta.confidence,
               scope: 'local',
@@ -563,7 +600,6 @@ export default function ModoFlareInspection({ onClose }) {
       setPendingMeta(null);
       setPendingRect(null);
       setBriefingDraft('');
-      setActionBriefingDraft('');
       setSelectedImageFile(null);
       stopRecognition();
 
@@ -593,7 +629,6 @@ export default function ModoFlareInspection({ onClose }) {
       setSaving(false);
     }
   }, [
-    actionBriefingDraft,
     briefingDraft,
     pendingMeta,
     pendingRect,
@@ -858,12 +893,6 @@ export default function ModoFlareInspection({ onClose }) {
             placeholder="Descreva o bug ou melhoria…"
             className="min-h-[120px] resize-y"
           />
-          <Textarea
-            value={actionBriefingDraft}
-            onChange={(e) => setActionBriefingDraft(e.target.value)}
-            placeholder="Ação esperada (ex.: alinhar botão, corrigir validação, ajustar cálculo)"
-            className="mt-3 min-h-[80px] resize-y"
-          />
           <div className="mt-3">
             <label className="mb-1 block text-xs text-muted-foreground">Imagem de contexto (opcional)</label>
             <input
@@ -900,7 +929,6 @@ export default function ModoFlareInspection({ onClose }) {
                 setPendingMeta(null);
                 setPendingRect(null);
                 setBriefingDraft('');
-                setActionBriefingDraft('');
                 setSelectedImageFile(null);
                 stopRecognition();
               }}

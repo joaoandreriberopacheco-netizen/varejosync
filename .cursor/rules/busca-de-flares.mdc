@@ -1,0 +1,40 @@
+---
+description: Ritual "busca de flares" — ler pendentes, plano ordenado, aprovação antes de corrigir.
+alwaysApply: true
+---
+
+# Busca de flares
+
+Quando o utilizador pedir **busca de flares** (ou a mesma ideia em português/inglês: listar flares pendentes e planear correções), segue **nesta ordem**. Não apliques patches até o utilizador **aprovar** o plano.
+
+## 1. Fonte de dados
+
+1. Lê [`docs/flare-export/flare-pending.json`](docs/flare-export/flare-pending.json) se existir no workspace (resultado de `npm run flare:export`).
+2. Se o ficheiro não existir ou estiver vazio, indica claramente: correr `npm run flare:export` com credenciais Base44 no ambiente (ver [`docs/flare-export/README.md`](docs/flare-export/README.md)) e volta a pedir **busca de flares**.
+
+Payload esperado: `exportedAt`, `count`, `items[]` com pelo menos `status`, `file_path`, `line`, `column`, `briefing`, `action_briefing` ou espelho, `confidence`, `route`, `component_name` quando existirem.
+
+## 2. Ordenação do plano
+
+Ordena `items` com `status === 'pending'` assim:
+
+1. `confidence === 'high'` antes de `medium`.
+2. Dentro do mesmo nível, mais recentes primeiro (`created_date` / `createdAt` / `created_at` quando existir).
+
+## 3. Plano para aprovação (bombs away só depois)
+
+Apresenta um **plano numerado** (1..N). Para cada item inclui:
+
+- ID curto ou `file_path:line:column`
+- `briefing` (resumo em uma linha se for longo)
+- Ficheiro a abrir e tipo de alteração esperada (inferida do briefing, sem assumir demais)
+
+Diz explicitamente: **"Aprova este plano para eu executar as alterações"** (ou equivalente). **Não** edites ficheiros nem corras refactors até o utilizador aprovar.
+
+## 4. Depois da aprovação
+
+Executa o plano na ordem; após cada correção relevante, lembra marcar o flare como `resolved` na entidade (ou documentar se fica para o utilizador no app).
+
+## 5. Segurança
+
+Não peças nem repitas tokens Base44. Não commits `flare-pending.json` com dados sensíveis se a política do repo o proibir (está gitignored por defeito).

@@ -40,3 +40,7 @@ Função Base44 `listFlarePending`: `POST` autenticado, apenas **admin**, devolv
 2. Ler `docs/flare-export/flare-pending.json`.  
 3. Priorizar `confidence: high`, aplicar `action_briefing`, abrir `file_path` na linha indicada.  
 4. Marcar registos como `resolved` após correção.
+
+## Busca de flares (frase de arranque)
+
+No Cursor, depois de gerares o JSON, podes dizer **busca de flares**: a regra do projeto em [`.cursor/rules/busca-de-flares.mdc`](../../.cursor/rules/busca-de-flares.mdc) orienta o assistente a ler o export, montar um **plano ordenado** e **só executar** depois da tua aprovação (“bombs away”).

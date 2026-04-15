@@ -33,7 +33,7 @@
     },
     "action_briefing": {
       "type": "string",
-      "description": "Ação objetiva esperada para correção"
+      "description": "Espelho opcional do briefing (legado); o cliente envia igual a briefing"
     },
     "context_image_url": {
       "type": "string",
@@ -62,7 +62,6 @@
     "source_location_raw",
     "component_name",
     "briefing",
-    "action_briefing",
     "confidence"
   ]
 }
