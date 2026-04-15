@@ -1,5 +1,26 @@
 {
-  "exportedAt": "2026-04-15T02:50:58.362Z",
-  "count": 0,
+  "_meta": {
+    "schema_version": "1.1",
+    "generated_by": "base44/exportFlareToGithub",
+    "exported_at": "2026-04-15T03:38:07.882Z",
+    "environment": "production",
+    "app": "varejosync",
+    "count": 0,
+    "content_hash": "00000000",
+    "valid_statuses": [
+      "pending",
+      "in_progress",
+      "ready_for_verify",
+      "resolved",
+      "reopened",
+      "ignored"
+    ],
+    "github": {
+      "owner": "joaoandreriberopacheco-netizen",
+      "repo": "varejosync",
+      "branch": "main",
+      "path": "docs/flare-export/flare-pending.json"
+    }
+  },
   "items": []
 }
