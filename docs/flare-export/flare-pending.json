@@ -2,11 +2,11 @@
   "_meta": {
     "schema_version": "1.1",
     "generated_by": "base44/exportFlareToGithub",
-    "exported_at": "2026-04-15T03:38:07.882Z",
+    "exported_at": "2026-04-15T14:21:03.718Z",
     "environment": "production",
     "app": "varejosync",
-    "count": 0,
-    "content_hash": "00000000",
+    "count": 1,
+    "content_hash": "5853fe92",
     "valid_statuses": [
       "pending",
       "in_progress",
@@ -22,5 +22,23 @@
       "path": "docs/flare-export/flare-pending.json"
     }
   },
-  "items": []
+  "items": [
+    {
+      "id": "69df9ebe48dab5b98713f98e",
+      "status": "pending",
+      "file_path": "src/components/compras/FiltrosCompras.jsx",
+      "line": 97,
+      "column": 10,
+      "source_location_raw": "src/components/compras/FiltrosCompras.jsx:97:10",
+      "component_name": "FiltrosCompras",
+      "briefing": "Quando vamos pesquisar um fornecedor, ja no seletor de filtros, e vc digita o fornecedor a tela sobe e vc nao ve o que esta digitando, tem que baixar o teclado",
+      "action_briefing": "Quando vamos pesquisar um fornecedor, ja no seletor de filtros, e vc digita o fornecedor a tela sobe e vc nao ve o que esta digitando, tem que baixar o teclado",
+      "confidence": "high",
+      "resolution_precision": null,
+      "context_image_url": "https://base44.app/api/apps/68a91b1a009497f8d44af37e/files/mp/public/68a91b1a009497f8d44af37e/1afadf30f_1000231548.jpg",
+      "route": "/PedidosCompra",
+      "created_date": "2026-04-15T14:20:46.375000",
+      "updated_date": "2026-04-15T14:20:46.375000"
+    }
+  ]
 }
