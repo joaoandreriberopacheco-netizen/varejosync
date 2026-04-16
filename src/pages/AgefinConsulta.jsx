@@ -507,7 +507,7 @@ export default function AgefinConsulta() {
       ? `<div style="margin:14px 0 14px"><p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:4px 9px;border-radius:999px;background:#f8fafc;color:#475569;font-size:12px;line-height:1.3;border:1px solid #e2e8f0">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
       : '';
 
-    const cabecalhoColunasHtml = `<div style="display:grid;grid-template-columns:86px 74px minmax(0,1fr) 108px;column-gap:8px;align-items:end;margin:6px 0 8px;padding:0 6px;color:#64748b;border-bottom:1px solid #dbe3ef;padding-bottom:4px"><div style="font-size:12px;line-height:1.2;font-weight:700">Vencimento</div><div style="font-size:12px;line-height:1.2;font-weight:700">Status</div><div style="font-size:12px;line-height:1.2;font-weight:700">Conta</div><div style="font-size:12px;line-height:1.2;font-weight:700;text-align:right">Valor</div></div>`;
+    const cabecalhoColunasHtml = `<div style="display:grid;grid-template-columns:88px 76px minmax(0,1fr) 102px;column-gap:8px;align-items:end;margin:6px 0 9px;padding:0 8px;color:#475569;border-bottom:1px solid #cfd8e3;padding-bottom:5px"><div style="font-size:12px;line-height:1.2;font-weight:700">Vencimento</div><div style="font-size:12px;line-height:1.2;font-weight:700">Status</div><div style="font-size:12px;line-height:1.2;font-weight:700">Conta</div><div style="font-size:12px;line-height:1.2;font-weight:700;text-align:right">Valor</div></div>`;
 
     const gruposHtml = gruposParaImpressao.map((grupo) => {
       const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
@@ -515,28 +515,27 @@ export default function AgefinConsulta() {
         const pago = lancamentoPago(conta);
         const vencido = lancamentoVencidoOuAtrasado(conta);
         const statusLabel = pago ? 'Pago' : vencido ? 'Vencido' : 'Em aberto';
-        const statusIcon = pago ? '✓' : vencido ? '!' : '○';
-        const statusBg = pago ? '#ecfdf5' : vencido ? '#fef2f2' : '#eff6ff';
-        const statusColor = pago ? '#047857' : vencido ? '#b91c1c' : '#1d4ed8';
+        const statusIcon = pago ? '•' : vencido ? '•' : '•';
+        const statusBg = '#eef2f7';
+        const statusColor = pago ? '#556b2f' : vencido ? '#8b2f2f' : '#334155';
 
-        return `<div style="padding:4px 6px;border-bottom:1px solid #edf2f7">
-          <div style="display:grid;grid-template-columns:86px 74px minmax(0,1fr) 108px;column-gap:8px;row-gap:1px;align-items:start">
-            <div style="grid-row:1 / span 2;font-size:12px;line-height:1.2;color:#334155;padding-top:1px">${escapeHtml(formatarSoData(conta.data_vencimento))}</div>
-            <div style="grid-row:1 / span 2;display:flex;align-items:center;gap:4px;padding-top:1px">
-              <span style="font-size:10px;line-height:1;color:${statusColor};font-weight:700">${statusIcon}</span>
-              <span style="font-size:11px;line-height:1.15;color:${statusColor};font-weight:700">${statusLabel}</span>
+        return `<div style="padding:6px 8px;border-bottom:1px solid #dde5ef">
+          <div style="display:grid;grid-template-columns:88px 76px minmax(0,1fr) 102px;column-gap:8px;row-gap:2px;align-items:start">
+            <div style="grid-row:1 / span 2;font-size:12px;line-height:1.25;color:#334155;padding-top:1px">${escapeHtml(formatarSoData(conta.data_vencimento))}</div>
+            <div style="grid-row:1 / span 2;display:flex;align-items:center;padding-top:0">
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;background:${statusBg};border:1px solid #d8e1ec;color:${statusColor};font-size:10.8px;line-height:1.2;font-weight:700;white-space:nowrap"><span style="font-size:12px;line-height:1">${statusIcon}</span>${statusLabel}</span>
             </div>
-            <div style="min-width:0;font-size:12.6px;line-height:1.22;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</div>
-            <div style="grid-row:1 / span 2;text-align:right;padding-top:1px;font-size:12.6px;line-height:1.22;font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(conta.valor))}</div>
-            <div style="min-width:0;font-size:11px;line-height:1.15;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.terceiro_nome || 'Sem favorecido')}${conta.categoria ? ` · ${escapeHtml(conta.categoria)}` : ''}</div>
+            <div style="min-width:0;font-size:12.7px;line-height:1.25;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</div>
+            <div style="grid-row:1 / span 2;text-align:right;padding-top:1px;font-size:12.7px;line-height:1.25;font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(conta.valor))}</div>
+            <div style="min-width:0;font-size:11.2px;line-height:1.2;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.terceiro_nome || 'Sem favorecido')}${conta.categoria ? ` · ${escapeHtml(conta.categoria)}` : ''}</div>
           </div>
         </div>`;
       }).join('');
 
-      return `<section style="margin-top:10px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#ffffff"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 8px;background:#f8fafc;border-bottom:1px solid #e2e8f0"><div style="font-size:12px;line-height:1.15;font-weight:700;color:#334155">Vencimento ${escapeHtml(grupo.label)}</div><div style="text-align:right"><span style="font-size:11px;line-height:1.15;color:#64748b">${grupo.contas.length} · </span><span style="font-size:12px;line-height:1.15;font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(subtotal))}</span></div></div>${linhas}</section>`;
+      return `<section style="margin-top:10px;border:1px solid #d5dde8;border-radius:8px;overflow:hidden;background:#f1f3f5"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 8px;background:#eceff3;border-bottom:1px solid #d5dde8"><div style="font-size:12px;line-height:1.2;font-weight:700;color:#334155">Vencimento ${escapeHtml(grupo.label)}</div><div style="text-align:right"><span style="font-size:11px;line-height:1.2;color:#64748b">${grupo.contas.length} · </span><span style="font-size:12px;line-height:1.2;font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(subtotal))}</span></div></div>${linhas}</section>`;
     }).join('');
 
-    const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:Inter,Arial,sans-serif;padding:18px;color:#111827;font-size:12px;line-height:1.3"><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:18px;line-height:1.1;color:#0f172a">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#64748b;font-size:12px;line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#64748b;font-size:12px;line-height:1.2">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0;color:#64748b;font-size:12px;line-height:1.2">Total impresso: <span style="font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(totalParaImpressao))}</span></p>${modoSelecao ? `<p style="margin:2px 0 0;color:#64748b;font-size:12px;line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}</body></html>`;
+    const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:18px;color:#111827;font-size:12px;line-height:1.3"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:18px;line-height:1.1;color:#0f172a">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#64748b;font-size:12px;line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#64748b;font-size:12px;line-height:1.2">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0;color:#64748b;font-size:12px;line-height:1.2">Total impresso: <span style="font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(totalParaImpressao))}</span></p>${modoSelecao ? `<p style="margin:2px 0 0;color:#64748b;font-size:12px;line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}</body></html>`;
     try {
       await openPrintWindowOrShareHtml(html, `agefin-${currentMonth.getTime()}.html`, `Agefin ${formatMonth(currentMonth)}`);
     } catch {
