@@ -29,19 +29,22 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
   const { data: eventosLogisticos = [] } = useQuery({
     queryKey: ['evento-logistico-selector'],
     queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 500),
-    initialData: []
+    initialData: [],
+    enabled: open,
   });
 
   const { data: embarques = [] } = useQuery({
     queryKey: ['embarques-logistica-selector'],
     queryFn: () => base44.entities.Embarque.list('-created_date', 500),
-    initialData: []
+    initialData: [],
+    enabled: open,
   });
 
   const { data: contasPrevistas = [] } = useQuery({
     queryKey: ['contas-previstas-frete-selector'],
     queryFn: () => base44.entities.ContaPrevista.list('-data_vencimento', 500),
-    initialData: []
+    initialData: [],
+    enabled: open,
   });
 
   const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, contasPrevistas }), [eventosLogisticos, embarques, contasPrevistas]);

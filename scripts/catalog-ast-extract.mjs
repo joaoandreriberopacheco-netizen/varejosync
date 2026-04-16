@@ -304,7 +304,7 @@ function collectImportedComponentSections({
 /**
  * Página completa: ficheiro da rota + N ficheiros importados (limite)
  */
-export function extractPageAst(pageKey, root, pageFileAbs, maxImportFiles = 18) {
+export function extractPageAst(pageKey, root, pageFileAbs, maxImportFiles = 64) {
   const pageStable = `CAT-PG-${pageKey}`;
   const counters = new Map();
   const sections = [];

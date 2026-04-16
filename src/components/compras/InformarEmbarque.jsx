@@ -229,7 +229,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   );
 
   useEffect(() => {
-    if (!isOpen || !pedido) return;
+    if (!isOpen) {
+      setShowTripSelector(false);
+      setShowVolumesDialog(false);
+      return;
+    }
+    if (!pedido) return;
+    setShowTripSelector(false);
     loadTransportadoras();
     loadEventosLogisticos(embarqueExistente);
     loadFornecedores();
@@ -570,7 +576,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   >
                     <ShipWheel className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     <span className={`flex-1 truncate ${eventoSelecionado ? 'text-white' : 'text-slate-400'}`}>
-                      {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Selecionar viagem no itinerário'}
+                      {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Informar viagem no itinerário'}
                     </span>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
@@ -712,11 +718,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         onChange={setVolumes}
       />
 
-      <FluvialTripSelectorFullscreen
-        open={showTripSelector}
-        onClose={() => setShowTripSelector(false)}
-        onSelect={handleSelectTrip}
-      />
+      {showTripSelector ? (
+        <FluvialTripSelectorFullscreen
+          open
+          onClose={() => setShowTripSelector(false)}
+          onSelect={handleSelectTrip}
+        />
+      ) : null}
 
       <OperacaoAuthenticator
         isOpen={authFornecedorOpen}

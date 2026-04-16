@@ -30,6 +30,36 @@ function normalizeToSrcPath(value) {
   return normalized;
 }
 
+/** 7 chars, determinístico — alinhado ao espírito do manifesto quando não há linha AST */
+function shortCodeFromLocationRaw(raw) {
+  let h = 2166136261;
+  const s = String(raw);
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  let n = h >>> 0;
+  let base36 = n.toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (base36.length < 7) base36 = (n ^ 0x9e3779b9).toString(36).toUpperCase() + base36;
+  return base36.replace(/[^A-Z0-9]/g, '').padStart(7, '0').slice(0, 7);
+}
+
+const NEAREST_LINE_MAX_DELTA = 48;
+
+function makeUnmappedItem(domFile, match2, match3, rawAttr) {
+  const key = `${domFile}:${match2}:${match3}`;
+  return {
+    source_location_raw: key,
+    file: domFile,
+    short_code: shortCodeFromLocationRaw(rawAttr),
+    code: 'CAT-RUNTIME-NATIVO',
+    kind: 'nativo',
+    scope: 'sem-manifesto-AST',
+    hint: 'Instrumentado no build (data-source-location), ainda sem linha no catálogo gerado.',
+    unmapped: true,
+  };
+}
+
 function collectBadges(index) {
   const nodes = Array.from(document.querySelectorAll('[data-source-location]'));
   const rawBadges = [];
@@ -54,29 +84,39 @@ function collectBadges(index) {
     const domLine = Number(match[2]);
 
     const candidates = itemsByFile[domFile];
-    if (!candidates || !candidates.length) continue;
 
     // Primeiro tenta match exato (incluindo coluna)
-    let item = candidates.find((c) => c.source_location_raw === `${domFile}:${match[2]}:${match[3]}`);
+    let item = null;
+    let bestDelta = Infinity;
 
-    // Se não houver, escolhe o mais próximo em linha para este ficheiro
-    if (!item) {
-      let best = null;
-      let bestDelta = Infinity;
-      for (const c of candidates) {
-        const m2 = String(c.source_location_raw || '').match(/^.+:(\d+):\d+$/);
-        if (!m2) continue;
-        const line = Number(m2[1]);
-        const delta = Math.abs(line - domLine);
-        if (delta < bestDelta) {
-          bestDelta = delta;
-          best = c;
+    if (candidates?.length) {
+      item = candidates.find((c) => c.source_location_raw === `${domFile}:${match[2]}:${match[3]}`);
+
+      if (!item) {
+        let best = null;
+        for (const c of candidates) {
+          const m2 = String(c.source_location_raw || '').match(/^.+:(\d+):\d+$/);
+          if (!m2) continue;
+          const line = Number(m2[1]);
+          const delta = Math.abs(line - domLine);
+          if (delta < bestDelta) {
+            bestDelta = delta;
+            best = c;
+          }
         }
+        if (best && bestDelta <= NEAREST_LINE_MAX_DELTA) {
+          item = best;
+        }
+      } else {
+        bestDelta = 0;
       }
-      item = best;
     }
 
-    if (!item) continue;
+    if (!item) {
+      item = makeUnmappedItem(domFile, match[2], match[3], rawAttr);
+    }
+
+    const unmapped = Boolean(item.unmapped);
     const rect = el.getBoundingClientRect();
     if (rect.width < 8 || rect.height < 8) continue;
     if (rect.bottom < 0 || rect.top > window.innerHeight) continue;
@@ -97,6 +137,7 @@ function collectBadges(index) {
       kind: item.kind,
       scope: item.scope,
       hint: item.hint,
+      unmapped,
       top: Math.max(4, rect.top),
       left: Math.max(4, rect.left),
       targetTop: rect.top,
@@ -387,9 +428,14 @@ export default function CatalogOverlay() {
           const targetY = badge.targetTop + Math.min(16, badge.targetHeight / 2);
           const angle = Math.atan2(targetY - anchorY, targetX - anchorX) * (180 / Math.PI);
           const lineWidth = Math.max(10, Math.hypot(targetX - anchorX, targetY - anchorY));
+          const um = Boolean(badge.unmapped);
+          const lineGrad = um
+            ? 'linear-gradient(90deg, rgba(255,196,107,0.95), rgba(255,196,107,0.12))'
+            : 'linear-gradient(90deg, rgba(125,255,179,0.95), rgba(125,255,179,0.15))';
+          const lineShadow = um ? '0 0 0 1px rgba(139,90,43,0.2)' : '0 0 0 1px rgba(47,92,69,0.12)';
 
           return (
-            <React.Fragment key={`${badge.short_code}:${badge.badgeTop}:${badge.badgeLeft}`}>
+            <React.Fragment key={badge.source_location_raw || `${badge.short_code}:${badge.badgeTop}:${badge.badgeLeft}`}>
               <div
                 aria-hidden
                 style={{
@@ -400,8 +446,8 @@ export default function CatalogOverlay() {
                   height: 1,
                   transformOrigin: '0 0',
                   transform: `rotate(${angle}deg)`,
-                  background: 'linear-gradient(90deg, rgba(125,255,179,0.95), rgba(125,255,179,0.15))',
-                  boxShadow: '0 0 0 1px rgba(47,92,69,0.12)',
+                  background: lineGrad,
+                  boxShadow: lineShadow,
                 }}
               />
               <button
@@ -413,9 +459,9 @@ export default function CatalogOverlay() {
                   top: badge.badgeTop,
                   left: badge.badgeLeft,
                   transform: 'translateY(-100%)',
-                  background: 'rgba(14,24,19,0.95)',
-                  color: '#7dffb3',
-                  border: '1px solid #2f5c45',
+                  background: um ? 'rgba(40,28,10,0.96)' : 'rgba(14,24,19,0.95)',
+                  color: um ? '#ffc46b' : '#7dffb3',
+                  border: um ? '1px solid #8b5a2b' : '1px solid #2f5c45',
                   borderRadius: 6,
                   padding: '2px 6px',
                   fontSize: 11,
@@ -458,10 +504,19 @@ export default function CatalogOverlay() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'start' }}>
             <div>
-              <div style={{ color: '#7dffb3', fontWeight: 700, fontFamily: 'ui-monospace, monospace' }}>
+              <div
+                style={{
+                  color: selected.unmapped ? '#ffc46b' : '#7dffb3',
+                  fontWeight: 700,
+                  fontFamily: 'ui-monospace, monospace',
+                }}
+              >
                 {selected.short_code}
               </div>
-              <div style={{ fontSize: 12, opacity: 0.75 }}>{selected.kind}</div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>
+                {selected.kind}
+                {selected.unmapped ? ' · fora do manifesto AST (ainda)' : ''}
+              </div>
             </div>
             <Button size="icon" variant="ghost" onClick={() => setSelected(null)}>
               <X className="h-4 w-4" />
@@ -470,9 +525,21 @@ export default function CatalogOverlay() {
           <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.4, wordBreak: 'break-word' }}>
             <div style={{ color: '#e8c96b', fontFamily: 'ui-monospace, monospace' }}>{selected.code}</div>
             {selected.hint ? <div style={{ marginTop: 6, opacity: 0.82 }}>{selected.hint}</div> : null}
-            <div style={{ marginTop: 6, opacity: 0.7 }}>
-              Telemetria travada neste alvo. Use o código curto para falar do item e o código longo para localizar no catálogo.
-            </div>
+            {selected.unmapped ? (
+              <div style={{ marginTop: 6, opacity: 0.78, color: '#ffc46b' }}>
+                Este elemento está instrumentado no build, mas ainda não tem linha no catálogo gerado (import além do limite ou tipo não listado no AST).
+                Depois de rodar <code className="text-xs">npm run catalogo:build-preview</code> com mais cobertura, o código pode virar verde.
+              </div>
+            ) : (
+              <div style={{ marginTop: 6, opacity: 0.7 }}>
+                Telemetria travada neste alvo. Use o código curto para falar do item e o código longo para localizar no catálogo.
+              </div>
+            )}
+            {selected.source_location_raw ? (
+              <div style={{ marginTop: 8, fontSize: 11, opacity: 0.65, fontFamily: 'ui-monospace, monospace', wordBreak: 'break-all' }}>
+                {selected.source_location_raw}
+              </div>
+            ) : null}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={handleCopy}>
