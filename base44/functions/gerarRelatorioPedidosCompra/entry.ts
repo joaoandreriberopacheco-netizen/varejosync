@@ -106,20 +106,20 @@ const custoCalculadoProduto = (produto = {}) =>
   - (Number(produto.desconto_compra_padrao) || 0);
 
 const TEXT_VERTICAL_SCALE = 1.75;
-const EXPANDED_ITEMS_TABLE_FONT_SIZE = 9; // ~12px visual size in the generated PDF
-const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7.5; // ~10px visual size in the generated PDF
-const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 10;
-const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 8.5;
-const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.25;
+const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // ~11px visual size in the generated PDF
+const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
+const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
+const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.25;
+const EXPANDED_ITEMS_TABLE_TEXT_Y = 3.9;
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
   qtd: 2,
   descricao: 14,
-  vlrUnit: 66,
-  frete: 83,
-  outros: 100,
-  custo: 117,
-  total: 136,
-  venda: 154,
+  vlrUnit: 70,
+  frete: 88,
+  outros: 106,
+  custo: 124,
+  total: 143,
+  venda: 161,
   markup: 171,
 };
 
@@ -475,16 +475,16 @@ Deno.serve(async (req) => {
       doc.roundedRect(TM, y, TW, scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT), 2, 2, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE);
-      doc.setTextColor(...C.muted);
-      doc.text('QTD', TM + EXPANDED_ITEMS_TABLE_COLUMNS.qtd, y + scaledHeight(6));
-      doc.text('DESCRICAO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(6));
-      doc.text('VLR. UN. (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(6), { align: 'right' });
-      doc.text('FRETE (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(6), { align: 'right' });
-      doc.text('OUTROS (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(6), { align: 'right' });
-      doc.text('CUSTO (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(6), { align: 'right' });
-      doc.text('TOTAL (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(6), { align: 'right' });
-      doc.text('VENDA (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(6), { align: 'right' });
-      doc.text('MARKUP', TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(6), { align: 'right' });
+      doc.setTextColor(...C.text);
+      doc.text('QTD', TM + EXPANDED_ITEMS_TABLE_COLUMNS.qtd, y + scaledHeight(7));
+      doc.text('DESCRICAO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(7));
+      doc.text(['VLR. UN.', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(5.2), { align: 'right' });
+      doc.text(['FRETE', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(5.2), { align: 'right' });
+      doc.text(['OUTROS', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(5.2), { align: 'right' });
+      doc.text(['CUSTO', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(5.2), { align: 'right' });
+      doc.text(['TOTAL', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(5.2), { align: 'right' });
+      doc.text(['VENDA', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(5.2), { align: 'right' });
+      doc.text('MARKUP', TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(7), { align: 'right' });
       y += scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2);
 
       itens.forEach((item, idx) => {
@@ -501,17 +501,21 @@ Deno.serve(async (req) => {
         totCusto += totalCusto;
         totVenda += qtd * venda;
 
-        ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT));
+        const nomeLinhas = doc.splitTextToSize(
+          safe(item.produto_nome || prod.nome || '-'),
+          EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit - EXPANDED_ITEMS_TABLE_COLUMNS.descricao - 4
+        ).slice(0, 2);
+        const rowHeight = Math.max(EXPANDED_ITEMS_TABLE_ROW_HEIGHT, 4 + (nomeLinhas.length * 3.3));
+        ensureSpace(scaledHeight(rowHeight));
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(TM, y - 1, TW, scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT - 1), 1.5, 1.5, 'F');
+          doc.roundedRect(TM, y - 1, TW, scaledHeight(rowHeight - 1), 1.5, 1.5, 'F');
         }
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
         doc.setTextColor(...C.text);
-        const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
         doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(nome,             TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(nomeLinhas,       TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(3.5));
         doc.text(moedaSemSimbolo(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
@@ -519,7 +523,7 @@ Deno.serve(async (req) => {
         doc.text(moedaSemSimbolo(totalLiq),  TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(venda),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(percentual(mk),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        y += scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT);
+        y += scaledHeight(rowHeight);
       });
 
       ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT));
