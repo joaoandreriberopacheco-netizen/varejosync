@@ -21,15 +21,61 @@ function loadInitialState() {
   }
 }
 
+function normalizeToSrcPath(value) {
+  const normalized = String(value || '').replace(/\\/g, '/');
+  const marker = '/src/';
+  const idx = normalized.lastIndexOf(marker);
+  if (idx !== -1) return `src/${normalized.slice(idx + marker.length)}`;
+  if (normalized.startsWith('src/')) return normalized;
+  return normalized;
+}
+
 function collectBadges(index) {
   const nodes = Array.from(document.querySelectorAll('[data-source-location]'));
   const badges = [];
   const seen = new Set();
 
+  // Pré-indexa por ficheiro para conseguir aproximação por linha
+  const itemsByFile = {};
+  for (const item of Object.values(index || {})) {
+    if (!item?.file) continue;
+    const key = normalizeToSrcPath(item.file);
+    if (!itemsByFile[key]) itemsByFile[key] = [];
+    itemsByFile[key].push(item);
+  }
+
   for (const el of nodes) {
-    const raw = el.getAttribute('data-source-location');
-    if (!raw) continue;
-    const item = index[raw];
+    const rawAttr = el.getAttribute('data-source-location');
+    if (!rawAttr) continue;
+
+    const match = String(rawAttr).trim().match(/^(.+):(\d+):(\d+)$/);
+    if (!match) continue;
+    const domFile = normalizeToSrcPath(match[1]);
+    const domLine = Number(match[2]);
+
+    const candidates = itemsByFile[domFile];
+    if (!candidates || !candidates.length) continue;
+
+    // Primeiro tenta match exato (incluindo coluna)
+    let item = candidates.find((c) => c.source_location_raw === `${domFile}:${match[2]}:${match[3]}`);
+
+    // Se não houver, escolhe o mais próximo em linha para este ficheiro
+    if (!item) {
+      let best = null;
+      let bestDelta = Infinity;
+      for (const c of candidates) {
+        const m2 = String(c.source_location_raw || '').match(/^.+:(\d+):\d+$/);
+        if (!m2) continue;
+        const line = Number(m2[1]);
+        const delta = Math.abs(line - domLine);
+        if (delta < bestDelta) {
+          bestDelta = delta;
+          best = c;
+        }
+      }
+      item = best;
+    }
+
     if (!item) continue;
     const rect = el.getBoundingClientRect();
     if (rect.width < 8 || rect.height < 8) continue;
