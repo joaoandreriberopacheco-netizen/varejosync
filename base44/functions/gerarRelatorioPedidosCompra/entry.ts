@@ -122,6 +122,8 @@ const EXPANDED_ITEMS_TABLE_COLUMNS = {
   venda: 159,
   markup: 173,
 };
+/** Margem horizontal (mm) entre fim da coluna descrição e coluna VLR. UN. (evita sobreposição ao imprimir). */
+const EXPANDED_DESC_TO_VLR_GAP_MM = 9;
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
@@ -506,21 +508,35 @@ Deno.serve(async (req) => {
         totCusto += totalCusto;
         totVenda += qtd * venda;
 
+        // splitTextToSize deve usar o MESMO fontSize do desenho — senão a largura calculada fica errada e o texto invade VLR. UN.
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
+        const descMaxW = Math.max(
+          18,
+          EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit -
+            EXPANDED_ITEMS_TABLE_COLUMNS.descricao -
+            EXPANDED_DESC_TO_VLR_GAP_MM
+        );
         const nomeLinhas = doc.splitTextToSize(
           safe(item.produto_nome || prod.nome || '-'),
-          EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit - EXPANDED_ITEMS_TABLE_COLUMNS.descricao - 4
-        ).slice(0, 2);
-        const rowHeight = Math.max(EXPANDED_ITEMS_TABLE_ROW_HEIGHT, 4 + (nomeLinhas.length * 3.3));
+          descMaxW
+        );
+        const descLineStep = scaledHeight(3.7);
+        const firstDescY = y + scaledHeight(3.5);
+        const rowHeight = Math.max(
+          EXPANDED_ITEMS_TABLE_ROW_HEIGHT,
+          3.4 + nomeLinhas.length * 2.55
+        );
         ensureSpace(scaledHeight(rowHeight));
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
           doc.roundedRect(TM, y - 1, TW, scaledHeight(rowHeight - 1), 1.5, 1.5, 'F');
         }
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
         doc.setTextColor(...C.text);
         doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(nomeLinhas,       TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(3.5));
+        nomeLinhas.forEach((line, li) => {
+          doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
+        });
         doc.text(moedaSemSimbolo(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
@@ -531,11 +547,21 @@ Deno.serve(async (req) => {
         y += scaledHeight(rowHeight);
       });
 
-      ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT));
+      ensureSpace(scaledHeight(22));
       doc.setDrawColor(229, 231, 235);
       doc.setLineWidth(0.2);
       doc.line(M, y + scaledHeight(1), M + CW, y + scaledHeight(1));
-      y += scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT);
+      y += scaledHeight(4);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(7.5);
+      doc.setTextColor(...C.text);
+      doc.text(`Custo total (itens): ${moeda(totCusto)}`, M + 2, y + scaledHeight(3.5));
+      doc.text(`Valor de venda total (referência): ${moeda(totVenda)}`, M + 2, y + scaledHeight(9));
+      y += scaledHeight(12);
+      doc.setFontSize(6.2);
+      doc.setTextColor(...C.mutedLight);
+      doc.text('Relatório gerado pelo VarejoSync.', M + 2, y + scaledHeight(2.5));
+      y += scaledHeight(8);
     };
 
     // ════════════════════════════════════════════════════════════════════════

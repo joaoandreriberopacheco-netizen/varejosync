@@ -493,7 +493,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       {/* modal=false enquanto há portal por cima: Radix bloqueia pointer-events no resto da página em modal=true */}
       <Dialog open={isOpen} onOpenChange={onClose} modal={!bloquearFecharPorPortalAberto}>
         <DialogContent
-          className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl bg-[#111827] border-0 text-white"
+          className="max-w-lg max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0 rounded-2xl bg-[#111827] border-0 text-white shadow-2xl"
           onInteractOutside={(e) => {
             if (bloquearFecharPorPortalAberto) {
               e.preventDefault();
@@ -516,7 +516,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           }}
         >
 
-        <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-white/5">
+        <div className="flex flex-shrink-0 items-center gap-3 px-6 pt-6 pb-4 border-b border-white/5">
           <div className="w-10 h-10 rounded-3xl bg-[#1f2937] flex items-center justify-center shadow-sm">
             <Truck className="w-4 h-4 text-slate-200 flex-shrink-0" />
           </div>
@@ -526,8 +526,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           </h2>
         </div>
 
-        <div className="px-6 py-5 overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 pb-10 scroll-smooth">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 pb-2">
             <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-[#1f2937] p-1 w-full">
               <TabsTrigger value="transporte" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><Route className="w-4 h-4" />Transporte</TabsTrigger>
               <TabsTrigger value="itens" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4" />Itens relacionados</TabsTrigger>
@@ -766,8 +766,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
             </Tabs>
           </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-3 px-6 py-5 border-t border-gray-100 dark:border-gray-800">
+          {/* Footer — fixo na base do modal; corpo acima rola com respiro (evita “fim seco”) */}
+          <div className="flex flex-shrink-0 justify-end gap-3 px-6 pt-4 pb-6 border-t border-white/10 bg-[#111827]">
             <Button variant="outline" onClick={onClose} disabled={loading}
               className="h-12 px-6 rounded-xl border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50">
               Cancelar
