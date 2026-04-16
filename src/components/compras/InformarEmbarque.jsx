@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Boxes, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Boxes, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
@@ -198,7 +198,9 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, embarqueExistente }) {
+const PAUSA_ANTES_RECEPCAO_MS = 2200;
+
+export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, onIrParaRecepcao, embarqueExistente }) {
   const isEdicao = !!embarqueExistente;
   const [transportadoras, setTransportadoras] = useState([]);
   const [eventosLogisticos, setEventosLogisticos] = useState([]);
@@ -461,11 +463,21 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       // Cloud (Base44): deve recalcular só com base em recebido/movimentos — ver nota em embarqueFilters.js
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
-      toast.success(isEdicao ? 'Despacho atualizado com sucesso!' : 'Despacho efetuado com sucesso!');
+      const msgOk = isEdicao ? 'Despacho atualizado com sucesso.' : 'Despacho registrado com sucesso.';
+      toast.success(msgOk, {
+        description: 'Aguarde: vamos para a aba Recepção em instantes.',
+        duration: 4500,
+      });
+      await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
       onSuccess?.();
+      onIrParaRecepcao?.();
       onClose();
     } catch (err) {
-      toast.error('Erro ao salvar embarque: ' + (err.message || 'Erro desconhecido'));
+      const det = err?.message || err?.response?.data?.error || 'Erro desconhecido';
+      toast.error('Não foi possível salvar o despacho', {
+        description: det,
+        duration: 6000,
+      });
     } finally {
       setLoading(false);
     }
@@ -754,12 +766,21 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
           {/* Footer */}
           <div className="flex justify-end gap-3 px-6 py-5 border-t border-gray-100 dark:border-gray-800">
             <Button variant="outline" onClick={onClose} disabled={loading}
-              className="h-12 px-6 rounded-xl border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              className="h-12 px-6 rounded-xl border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50">
               Cancelar
             </Button>
             <Button onClick={handleSalvar} disabled={loading}
-              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white min-w-[160px]">
-              {loading ? 'Salvando...' : isEdicao ? 'Salvar Despacho' : 'Registrar Despacho'}
+              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                  Processando…
+                </>
+              ) : isEdicao ? (
+                'Salvar Despacho'
+              ) : (
+                'Registrar Despacho'
+              )}
             </Button>
           </div>
 

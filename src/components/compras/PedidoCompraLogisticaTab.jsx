@@ -185,7 +185,7 @@ function ItensOrfaos({ itens, onAcordo }) {
 
 }
 
-export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
+export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIrParaRecepcao }) {
   const [embarqueOpen, setEmbarqueOpen] = useState(false);
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
@@ -327,6 +327,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         isOpen={embarqueOpen}
         onClose={() => {setEmbarqueOpen(false);setEmbarqueEditando(null);}}
         onSuccess={handleSuccess}
+        onIrParaRecepcao={onIrParaRecepcao}
         embarqueExistente={embarqueEditando} />
       
 

@@ -119,6 +119,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [novoFornecedor, setNovoFornecedor] = useState({ nome: '', email: '', telefone: '', endereco: '' });
   const [isImportadorPedidoOpen, setIsImportadorPedidoOpen] = useState(false);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
+  const [abaPedidoDesktop, setAbaPedidoDesktop] = useState('dados-gerais');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -978,7 +979,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
+        <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex w-full">
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
@@ -1245,6 +1246,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             {pedido?.id ? (
               <PedidoCompraLogisticaTab
                 pedido={pedidoLogistica || pedido}
+                onIrParaRecepcao={() => setAbaPedidoDesktop('recepcao')}
                 onPedidoUpdated={async () => {
                   const pedidoId = (pedidoLogistica || pedido)?.id;
                   if (!pedidoId) return;
