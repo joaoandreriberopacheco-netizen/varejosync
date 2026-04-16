@@ -507,7 +507,7 @@ export default function AgefinConsulta() {
       ? `<div style="margin:16px 0 18px"><p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#374151">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:6px 10px;border-radius:999px;background:#f3f4f6;color:#374151;font-size:12px;line-height:1.4">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
       : '';
 
-    const cabecalhoColunasHtml = `<div style="display:grid;grid-template-columns:88px 86px minmax(0,1fr) 112px;gap:14px;align-items:end;margin:10px 0 14px;padding:0 2px;color:#6b7280"><div style="font-size:12px;line-height:1.4;font-weight:600">Vencimento</div><div style="font-size:12px;line-height:1.4;font-weight:600">Status</div><div style="font-size:12px;line-height:1.4;font-weight:600">Conta</div><div style="font-size:12px;line-height:1.4;font-weight:600;text-align:right">Valor</div></div>`;
+    const cabecalhoColunasHtml = `<div style="display:grid;grid-template-columns:84px 72px minmax(0,1fr) 104px;column-gap:10px;align-items:end;margin:8px 0 10px;padding:0 12px 0 14px;color:#6b7280"><div style="font-size:12px;line-height:1.3;font-weight:600">Vencimento</div><div style="font-size:12px;line-height:1.3;font-weight:600">Status</div><div style="font-size:12px;line-height:1.3;font-weight:600">Conta</div><div style="font-size:12px;line-height:1.3;font-weight:600;text-align:right">Valor</div></div>`;
 
     const gruposHtml = gruposParaImpressao.map((grupo) => {
       const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
@@ -519,26 +519,23 @@ export default function AgefinConsulta() {
         const statusBg = pago ? '#ecfdf5' : vencido ? '#fef2f2' : '#eff6ff';
         const statusColor = pago ? '#047857' : vencido ? '#b91c1c' : '#1d4ed8';
 
-        return `<div style="padding:12px 14px;border-bottom:1px solid #e5e7eb">
-          <div style="display:grid;grid-template-columns:88px 86px minmax(0,1fr) 112px;gap:14px;align-items:start">
-            <div style="font-size:12px;line-height:1.45;color:#374151">${escapeHtml(formatarSoData(conta.data_vencimento))}</div>
-            <div style="display:flex;align-items:center;gap:6px;min-width:0">
-              <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:${statusBg};color:${statusColor};font-size:12px;font-weight:700;flex:none">${statusIcon}</span>
-              <span style="font-size:12px;line-height:1.45;color:${statusColor};font-weight:600;min-width:0">${statusLabel}</span>
+        return `<div style="padding:8px 14px;border-bottom:1px solid #eef2f7">
+          <div style="display:grid;grid-template-columns:84px 72px minmax(0,1fr) 104px;column-gap:10px;row-gap:2px;align-items:center">
+            <div style="grid-row:1 / span 2;font-size:12px;line-height:1.3;color:#475569;align-self:start;padding-top:1px">${escapeHtml(formatarSoData(conta.data_vencimento))}</div>
+            <div style="grid-row:1 / span 2;display:flex;align-items:center;gap:4px;min-width:0;align-self:start;padding-top:1px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:${statusBg};color:${statusColor};font-size:11px;font-weight:700;flex:none">${statusIcon}</span>
+              <span style="font-size:11px;line-height:1.25;color:${statusColor};font-weight:600;min-width:0">${statusLabel}</span>
             </div>
-            <div style="min-width:0">
-              <div style="font-size:13px;line-height:1.45;font-weight:700;color:#111827">${escapeHtml(conta.descricao || '-')}</div>
-              <div style="font-size:12px;line-height:1.45;color:#9ca3af;font-weight:400">${escapeHtml(conta.terceiro_nome || 'Sem favorecido')}</div>
-              <div style="font-size:12px;line-height:1.4;color:#6b7280">${escapeHtml(conta.categoria || 'Sem categoria')}</div>
+            <div style="min-width:0;font-size:13px;line-height:1.35;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</div>
+            <div style="grid-row:1 / span 2;text-align:right;align-self:start;padding-top:1px">
+              <div style="font-size:13px;line-height:1.35;font-weight:700;color:#111827">${escapeHtml(formatCurrency(conta.valor))}</div>
             </div>
-            <div style="text-align:right">
-              <div style="font-size:13px;line-height:1.45;font-weight:700;color:#111827">${escapeHtml(formatCurrency(conta.valor))}</div>
-            </div>
+            <div style="min-width:0;font-size:12px;line-height:1.3;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.terceiro_nome || 'Sem favorecido')}${conta.categoria ? ` · ${escapeHtml(conta.categoria)}` : ''}</div>
           </div>
         </div>`;
       }).join('');
 
-      return `<section style="margin-top:22px;border:1px solid #d7dce3;border-radius:16px;overflow:hidden;background:#ffffff;box-shadow:0 1px 2px rgba(15,23,42,0.04)"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb"><div><h3 style="margin:0 0 2px;font-size:14px;font-weight:700;color:#111827">Vencimento ${escapeHtml(grupo.label)}</h3><p style="margin:0;font-size:12px;line-height:1.4;color:#64748b">Leitura consolidada das contas deste dia</p></div><div style="text-align:right"><div style="font-size:12px;line-height:1.4;color:#64748b">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</div><div style="font-size:13px;line-height:1.45;font-weight:700;color:#111827">${escapeHtml(formatCurrency(subtotal))}</div></div></div>${linhas}</section>`;
+      return `<section style="margin-top:16px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#ffffff"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 14px;background:#f8fafc;border-bottom:1px solid #eef2f7"><div style="font-size:12px;line-height:1.3;font-weight:600;color:#475569">Vencimento ${escapeHtml(grupo.label)}</div><div style="text-align:right"><span style="font-size:12px;line-height:1.3;color:#64748b">${grupo.contas.length} · </span><span style="font-size:12px;line-height:1.3;font-weight:700;color:#334155">${escapeHtml(formatCurrency(subtotal))}</span></div></div>${linhas}</section>`;
     }).join('');
 
     const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:Inter,Arial,sans-serif;padding:24px;color:#111827;font-size:12px;line-height:1.45"><h2 style="margin:0 0 4px;font-size:20px;line-height:1.3">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 4px;color:#4b5563;font-size:12px;line-height:1.45">Contas filtradas da consulta financeira</p><p style="margin:0 0 4px;color:#4b5563;font-size:12px;line-height:1.45">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0 0 4px;color:#4b5563;font-size:12px;line-height:1.45">Total impresso: ${escapeHtml(formatCurrency(totalParaImpressao))}</p>${modoSelecao ? `<p style="margin:0 0 4px;color:#4b5563;font-size:12px;line-height:1.45">Modo Somar: apenas contas selecionadas</p>` : ''}${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}</body></html>`;
