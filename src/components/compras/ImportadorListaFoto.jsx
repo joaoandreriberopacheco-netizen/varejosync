@@ -196,8 +196,8 @@ Retorne JSON:
                 {/* Header */}
                 <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
                     <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                    <div className="flex items-center gap-3 md:gap-4">
                                 <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg">
                                     <X className="w-5 h-5" />
                                 </Button>
@@ -206,18 +206,18 @@ Retorne JSON:
                                         <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Importação Inteligente</h2>
-                                        <p className="text-sm text-gray-500">IA identifica produtos e sugere quantidades</p>
+                                        <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">Importação Inteligente</h2>
+                                        <p className="text-xs md:text-sm text-gray-500">IA identifica produtos e sugere quantidades</p>
                                     </div>
                                 </div>
                             </div>
                             {step === 'review' && (
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-between md:justify-end gap-3">
                                     <div className="hidden md:flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-4 py-2 rounded-full">
                                         <Calculator className="w-3.5 h-3.5" />
                                         <span>Sugestão Automática Ativa</span>
                                     </div>
-                                    <Button onClick={handleCreateQuotation} className="bg-gray-900 hover:bg-black text-white rounded-lg shadow-lg">
+                                    <Button onClick={handleCreateQuotation} className="bg-gray-900 hover:bg-black text-white rounded-lg shadow-lg w-full md:w-auto">
                                         Gerar Cotação
                                     </Button>
                                 </div>
@@ -273,7 +273,7 @@ Retorne JSON:
                     {step === 'review' && (
                         <div className="space-y-6">
                             <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
-                                <div className="overflow-x-auto">
+                                <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full">
                                         <thead className="bg-gray-50 dark:bg-gray-900/50">
                                             <tr>
@@ -357,11 +357,69 @@ Retorne JSON:
                                         </tbody>
                                     </table>
                                 </div>
+                                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                                    {analyzedItems.map((item, idx) => {
+                                        const product = products.find(p => p.id === item.selected_product_id);
+                                        return (
+                                            <div key={idx} className={`p-4 space-y-3 ${item.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : ''}`}>
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-sm text-gray-900 dark:text-white">{item.texto_identificado}</p>
+                                                        {item.quantidade_escrita && (
+                                                            <p className="text-xs text-gray-400 mt-1">Escrito: {item.quantidade_escrita}</p>
+                                                        )}
+                                                    </div>
+                                                    <Checkbox
+                                                        checked={!item.ignored}
+                                                        onCheckedChange={(checked) => {
+                                                            const newItems = [...analyzedItems];
+                                                            newItems[idx].ignored = !checked;
+                                                            setAnalyzedItems(newItems);
+                                                        }}
+                                                        className="rounded-md w-5 h-5"
+                                                    />
+                                                </div>
+                                                <ProductSearchInputPDV
+                                                    item={item}
+                                                    index={idx}
+                                                    produtos={products}
+                                                    getSuggestedProduct={getSuggestedProduct}
+                                                    setItems={updateAnalyzedItems}
+                                                    setProductSearch={setProductSearch}
+                                                    productSearch={productSearch}
+                                                    onProductCreated={(novoProduto) => setProducts((prev) => [...prev, novoProduto])}
+                                                />
+                                                <div className="flex items-center justify-between gap-3 text-xs">
+                                                    <div className="text-gray-500 dark:text-gray-400">
+                                                        Estoque: <span className="font-semibold text-gray-700 dark:text-gray-300">{product?.estoque_atual || 0}</span>
+                                                        <span className="ml-2">Min: {product?.estoque_minimo || 0}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Input
+                                                            type="number"
+                                                            className="h-9 w-20 text-right font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border-0 rounded-lg"
+                                                            value={item.quantity}
+                                                            onChange={(e) => {
+                                                                const newItems = [...analyzedItems];
+                                                                newItems[idx].quantity = e.target.value;
+                                                                setAnalyzedItems(newItems);
+                                                            }}
+                                                            disabled={item.ignored}
+                                                        />
+                                                        <span className="text-xs text-gray-400 font-medium">
+                                                            {product?.unidade_principal || 'UN'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
-                            <div className="flex justify-between items-center text-sm text-gray-500">
+                            <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center text-sm text-gray-500">
                                 <span>{analyzedItems.filter(i => !i.ignored).length} itens selecionados</span>
-                                <Button variant="ghost" onClick={() => setStep('upload')} className="text-gray-500">
+                                <Button variant="ghost" onClick={() => setStep('upload')} className="text-gray-500 w-full md:w-auto">
                                     Voltar e Reenviar
                                 </Button>
                             </div>

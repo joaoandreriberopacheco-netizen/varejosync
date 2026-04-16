@@ -108,9 +108,9 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
             "rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm transition-all",
             isFocused && "ring-1 ring-gray-300 dark:ring-gray-600"
           )}>
-            <div className="flex items-center gap-2 px-3 h-12">
+            <div className="flex items-center gap-2 px-2 sm:px-3 h-12">
               <span className={cn(
-                "text-xs truncate max-w-[110px] text-right",
+                "text-[11px] sm:text-xs truncate max-w-[90px] sm:max-w-[110px] text-right",
                 item.selected_product_id === 'create_new' ? 'text-gray-600 dark:text-gray-300' :
                 selectedProduct ? 'text-emerald-700 dark:text-emerald-400' :
                 suggestedProduct ? 'text-emerald-600 dark:text-emerald-400' :
@@ -130,7 +130,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                   value={currentQuery}
                   onChange={handleChange}
                   onFocus={() => setIsFocused(true)}
-                  className="w-full h-10 bg-transparent pl-5 pr-1 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 outline-none"
+                  className="w-full h-10 bg-transparent pl-5 pr-1 text-xs sm:text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 outline-none"
                   placeholder="Buscar item"
                 />
               </div>
@@ -170,7 +170,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
             </div>
 
             {isFocused && (
-              <div className="border-t border-gray-100 dark:border-gray-800 max-h-52 overflow-y-auto">
+                <div className="border-t border-gray-100 dark:border-gray-800 max-h-52 overflow-y-auto">
                 {visibleProducts.length > 0 ? (
                   visibleProducts.map(produto => (
                     <button
@@ -178,7 +178,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                       type="button"
                       tabIndex={0}
                       onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProdutoLabel(produto)); }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
+                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
                     >
                       {getProdutoLabel(produto)}
                     </button>
