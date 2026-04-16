@@ -104,6 +104,7 @@ const custoCalculadoProduto = (produto = {}) =>
   - (Number(produto.desconto_compra_padrao) || 0);
 
 const TEXT_VERTICAL_SCALE = 1.75;
+const EXPANDED_ITEMS_TABLE_FONT_SIZE = 9; // ~12px visual size in the generated PDF
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
@@ -456,7 +457,7 @@ Deno.serve(async (req) => {
       doc.setFillColor(...C.soft);
       doc.roundedRect(TM, y, TW, scaledHeight(8), 2, 2, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(5.8);
+      doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
       doc.setTextColor(...C.muted);
       ['QTD','DESCRICAO','VLR. UN.','FRETE','OUTROS','CUSTO','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
         doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + scaledHeight(5));
@@ -483,7 +484,7 @@ Deno.serve(async (req) => {
           doc.roundedRect(TM, y - 1, TW, scaledHeight(7), 1.5, 1.5, 'F');
         }
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5.6);
+        doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
         doc.setTextColor(...C.text);
         const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
         doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(3.5));
