@@ -11,7 +11,9 @@ Este diretório é o **canal versionado** para pedidos, respostas e artefactos d
 - **[PARALLEL_REPO_SETUP.md](./PARALLEL_REPO_SETUP.md)** — Setup do repositório paralelo (espelho), governança de branches e política de sincronização com o principal.
 - **[P38_CONSOLIDATION.md](./P38_CONSOLIDATION.md)** — Estado da consolidação da camada P38 e contrato operacional do adapter SubPayze em sandbox.
 - **[SUPABASE_TEST_SETUP.md](./SUPABASE_TEST_SETUP.md)** — Provisionamento do Supabase de homologação com migrações versionadas e seed de teste.
+- **[PHASE_1_HOMOLOGACAO.md](./PHASE_1_HOMOLOGACAO.md)** — Fase 1: schema alinhado ao manifesto (18 entidades), homolog local/cloud, **sem cutover** de produção.
 - **[CRITICAL_PARITY_VALIDATION.md](./CRITICAL_PARITY_VALIDATION.md)** — Matriz de testes de paridade dos fluxos críticos e query pack de validação.
+- **[API_DOC_VS_REALITY_CHECKLIST.md](./API_DOC_VS_REALITY_CHECKLIST.md)** — Checklist para validar documentação de APIs externas contra comportamento real (auth, paginação, erros, webhooks) antes de espelhar na casca 2.0.
 - **[CUTOVER_RUNBOOK.md](./CUTOVER_RUNBOOK.md)** — Critérios go/no-go, sequência de virada definitiva e rollback.
 
 ## Como usar com o assistente Base44

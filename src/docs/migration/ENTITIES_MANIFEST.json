@@ -473,6 +473,26 @@
       "required": ["status","file_path","line","column","source_location_raw","component_name","briefing","action_briefing","confidence"],
       "relations": [],
       "lifecycle": ["pending","in_progress","ready_for_verify","resolved","reopened","ignored"]
+    },
+    {
+      "name": "CatalogoInterface",
+      "description": "Catálogo hierárquico da UI (manual dinâmico / tree grid)",
+      "required": ["stable_code", "kind", "titulo", "lifecycle_status"],
+      "relations": [{ "field": "parent_id", "references": "CatalogoInterface.id" }],
+      "fields": [
+        { "name": "stable_code", "type": "string", "pg_type": "TEXT NOT NULL UNIQUE" },
+        { "name": "parent_id", "type": "string", "pg_type": "TEXT" },
+        { "name": "kind", "type": "enum", "values": ["modulo","pagina","aba","cartao","campo","botao","outro"], "pg_type": "TEXT NOT NULL" },
+        { "name": "titulo", "type": "string", "pg_type": "TEXT NOT NULL" },
+        { "name": "descricao", "type": "string", "pg_type": "TEXT" },
+        { "name": "ordem", "type": "number", "default": 0, "pg_type": "NUMERIC(12,4) DEFAULT 0" },
+        { "name": "page_key", "type": "string", "pg_type": "TEXT" },
+        { "name": "rota", "type": "string", "pg_type": "TEXT" },
+        { "name": "nome_componente", "type": "string", "pg_type": "TEXT" },
+        { "name": "lifecycle_status", "type": "enum", "values": ["ativo","descontinuado","rascunho"], "pg_type": "TEXT NOT NULL" },
+        { "name": "substituido_por_stable_code", "type": "string", "pg_type": "TEXT" },
+        { "name": "metadados", "type": "object", "pg_type": "JSONB DEFAULT '{}'" }
+      ]
     }
   ]
 }

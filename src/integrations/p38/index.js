@@ -3,6 +3,7 @@ import { appParams } from '@/lib/app-params';
 import { createBase44Adapter } from './base44Adapter';
 import { createSubpayzeAdapter } from './subpayzeAdapter';
 import { createRequestContext } from './requestContext';
+import { resolveLegacyClient } from './linkedBase44Client';
 import {
   getP38Providers,
   isP38SafeModeEnabled,
@@ -20,6 +21,9 @@ const base44SdkClient = createClient({
   functionsVersion,
   requiresAuth: false
 });
+
+/** Exportado como `base44` em `base44Client.js` — pode incluir datalink Supabase nas entidades mapeadas. */
+const linkedLegacyClient = resolveLegacyClient(base44SdkClient);
 
 const base44Adapter = createBase44Adapter(base44SdkClient);
 const subpayzeAdapter = createSubpayzeAdapter({
@@ -84,7 +88,7 @@ export const p38 = {
   base44Fallback: base44Adapter,
   createRequestContext,
   // Mantemos acesso ao client legado durante a fase de compatibilidade.
-  legacyClient: base44SdkClient,
+  legacyClient: linkedLegacyClient,
   auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter.auth),
   entities: withSafeFallback('entities', activeAdapter.entities, base44Adapter.entities),
   functions: withSafeFallback('functions', activeAdapter.functions, base44Adapter.functions),

@@ -7,8 +7,12 @@ Subir um ambiente de teste para validar paridade dos fluxos críticos antes do c
 ## Estrutura criada
 
 - `supabase/config.toml`
-- `supabase/migrations/001_p38_core_homologation.sql`
+- `supabase/migrations/001_p38_core_homologation.sql` — núcleo PDV/financeiro
+- `supabase/migrations/002_phase1_manifest_entities.sql` — restantes entidades do manifesto + `target_flare`
+- `supabase/migrations/003_phase1_extras_manifest_overflow.sql` — coluna `extras` (JSONB) no núcleo para overflow do manifesto
 - `supabase/seed.sql`
+
+Ver também **[PHASE_1_HOMOLOGACAO.md](./PHASE_1_HOMOLOGACAO.md)** (Fase 1 completa: homolog sem cutover).
 
 ## Passos locais (CLI)
 
@@ -34,6 +38,16 @@ Subir um ambiente de teste para validar paridade dos fluxos críticos antes do c
 - `VITE_SUBPAYZE_API_URL`
 - `VITE_SUBPAYZE_API_KEY`
 - `VITE_SUBPAYZE_WEBHOOK_SECRET`
+
+### Datalink híbrido (entidades → Postgres Supabase)
+
+Com o stack local a correr (`supabase start`), no `.env.local` na raiz do app:
+
+- `VITE_SUPABASE_URL=http://127.0.0.1:54321`
+- `VITE_SUPABASE_ANON_KEY=` (key **Publishable** do output do CLI)
+- `VITE_USE_SUPABASE_ENTITIES=true`
+
+O export `base44` passa a ler/escrever nas tabelas mapeadas em `src/integrations/p38/entityTableMap.js`; auth e funções serverless continuam no Base44 até serem portados. Em homolog local os avisos de RLS no Studio são esperados; em cloud ativa RLS antes de expor a anon key.
 
 ## Critério mínimo de pronto
 

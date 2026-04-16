@@ -53,3 +53,47 @@ values (
   current_date, current_date, 'cf_demo_caixa', 'PedidoVenda', 'pv_demo_001'
 )
 on conflict (id) do nothing;
+
+-- Piloto CatalogoInterface (manual dinâmico / tree grid)
+insert into public.catalogo_interface (
+  id, stable_code, parent_id, kind, titulo, descricao, ordem,
+  page_key, lifecycle_status, metadados
+)
+values
+  (
+    'cat_piloto_raiz',
+    'CAT-APP-RAIZ',
+    null,
+    'modulo',
+    'Aplicação (raiz)',
+    'Nó raiz de exemplo para o catálogo hierárquico',
+    0,
+    null,
+    'ativo',
+    '{}'::jsonb
+  ),
+  (
+    'cat_piloto_fin',
+    'CAT-FIN-PAGINA-FLUXO',
+    'cat_piloto_raiz',
+    'pagina',
+    'Fluxo de caixa (exemplo)',
+    'Página exemplo ligada a page_key quando existir mapeamento',
+    1,
+    'FluxoCaixa',
+    'ativo',
+    '{}'::jsonb
+  ),
+  (
+    'cat_piloto_legacy',
+    'CAT-FIN-BTN-LEGACY',
+    'cat_piloto_fin',
+    'botao',
+    'Ação legada (descontinuada)',
+    'Exemplo de nó descontinuado — omitido por listarCatalogoInterface sem incluir_descontinuados',
+    0,
+    null,
+    'descontinuado',
+    '{"oculto_por_stable_code":"CAT-FIN-CARD-NOVO"}'::jsonb
+  )
+on conflict (id) do nothing;

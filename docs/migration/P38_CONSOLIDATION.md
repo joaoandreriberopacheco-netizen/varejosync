@@ -34,6 +34,10 @@ SubPayze só recebe tráfego se os 3 sinais estiverem ativos:
 2. `VITE_P38_ENABLE_SUBPAYZE=true`
 3. `VITE_P38_SUBPAYZE_READY=true`
 
+## Datalink Supabase (entidades)
+
+Com `VITE_USE_SUPABASE_ENTITIES=true` e `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`, o export `base44` passa a usar **PostgREST** para as entidades listadas em `src/integrations/p38/entityTableMap.js` (ex.: `Produto`, `TargetFlare`, `LancamentoFinanceiro`). Auth, `functions.invoke` e entidades não mapeadas continuam no SDK Base44. Realtime (`subscribe`) nas entidades Supabase é noop até ligar canais.
+
 ## Pendências para produção
 
 1. Trocar validação de assinatura webhook por HMAC real conforme especificação SubPayze.
