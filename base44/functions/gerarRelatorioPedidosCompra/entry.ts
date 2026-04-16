@@ -105,6 +105,9 @@ const custoCalculadoProduto = (produto = {}) =>
 
 const TEXT_VERTICAL_SCALE = 1.75;
 const EXPANDED_ITEMS_TABLE_FONT_SIZE = 9; // ~12px visual size in the generated PDF
+const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 10;
+const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 10;
+const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.8;
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
@@ -453,16 +456,16 @@ Deno.serve(async (req) => {
 
       let totCusto = 0, totVenda = 0;
 
-      ensureSpace(scaledHeight(12));
+      ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2));
       doc.setFillColor(...C.soft);
-      doc.roundedRect(TM, y, TW, scaledHeight(8), 2, 2, 'F');
+      doc.roundedRect(TM, y, TW, scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT), 2, 2, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
       doc.setTextColor(...C.muted);
       ['QTD','DESCRICAO','VLR. UN.','FRETE','OUTROS','CUSTO','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
-        doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + scaledHeight(5));
+        doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + scaledHeight(6));
       });
-      y += scaledHeight(10);
+      y += scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2);
 
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
@@ -478,32 +481,32 @@ Deno.serve(async (req) => {
         totCusto += totalCusto;
         totVenda += qtd * venda;
 
-        ensureSpace(scaledHeight(8));
+        ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT));
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(TM, y - 1, TW, scaledHeight(7), 1.5, 1.5, 'F');
+          doc.roundedRect(TM, y - 1, TW, scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT - 1), 1.5, 1.5, 'F');
         }
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
         doc.setTextColor(...C.text);
         const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
-        doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(3.5));
-        doc.text(nome,             TM + 14,  y + scaledHeight(3.5));
-        doc.text(moeda(liq),       TM + 54,  y + scaledHeight(3.5));
-        doc.text(moeda(frete),     TM + 71,  y + scaledHeight(3.5));
-        doc.text(moeda(outros),    TM + 86,  y + scaledHeight(3.5));
-        doc.text(moeda(custo),     TM + 103, y + scaledHeight(3.5));
-        doc.text(moeda(totalLiq),  TM + 121, y + scaledHeight(3.5));
-        doc.text(moeda(venda),     TM + 139, y + scaledHeight(3.5));
-        doc.text(percentual(mk),   TM + 156, y + scaledHeight(3.5));
-        y += scaledHeight(8);
+        doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(nome,             TM + 14,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(liq),       TM + 54,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(frete),     TM + 71,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(outros),    TM + 86,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(custo),     TM + 103, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(totalLiq),  TM + 121, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(venda),     TM + 139, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(percentual(mk),   TM + 156, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        y += scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT);
       });
 
-      ensureSpace(scaledHeight(8));
+      ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT));
       doc.setDrawColor(229, 231, 235);
       doc.setLineWidth(0.2);
       doc.line(M, y + scaledHeight(1), M + CW, y + scaledHeight(1));
-      y += scaledHeight(8);
+      y += scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT);
     };
 
     // ════════════════════════════════════════════════════════════════════════
