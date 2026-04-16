@@ -28,6 +28,15 @@ function formatMonth(date) {
   return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function KpiCard({ label, value, tone = 'default' }) {
   const toneMap = {
     default: `${brandSurface.card} text-gray-900 dark:text-white`,
@@ -432,6 +441,27 @@ export default function AgefinConsulta() {
     };
   }, [filteredData]);
 
+  const filtrosAtivosResumo = useMemo(() => {
+    const filtros = [];
+    if (pagamentoFilter !== 'todos') filtros.push(`Pagamento: ${pagamentoFilter}`);
+    if (prazoFilter !== 'todos') filtros.push(`Prazo: ${prazoFilter}`);
+    if (cmvFilter !== 'todos') filtros.push(`Tipo: ${cmvFilter}`);
+    if (freteFilter !== 'todos') filtros.push(`Frete: ${freteFilter}`);
+    if (!mostrarCmvRapido) filtros.push('CMV na lista: oculto');
+    if (dateFrom || dateTo) filtros.push(`Período: ${dateFrom || '...'} até ${dateTo || '...'}`);
+    return filtros;
+  }, [pagamentoFilter, prazoFilter, cmvFilter, freteFilter, mostrarCmvRapido, dateFrom, dateTo]);
+
+  const contasParaImpressao = useMemo(() => {
+    if (!modoSelecao) return contasOrdenadas;
+    return contasOrdenadas.filter((conta) => selecionadosIds.includes(conta.id));
+  }, [modoSelecao, contasOrdenadas, selecionadosIds]);
+
+  const totalParaImpressao = useMemo(
+    () => contasParaImpressao.reduce((sum, conta) => sum + (Number(conta.valor) || 0), 0),
+    [contasParaImpressao]
+  );
+
   const limparFiltros = () => {
     setPagamentoFilter('todos');
     setPrazoFilter('todos');
@@ -442,14 +472,28 @@ export default function AgefinConsulta() {
   };
 
   const imprimirRelatorio = async () => {
-    const linhas = filteredData.map((conta) => `<tr>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.descricao}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.terceiro_nome || '-'}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${formatarSoData(conta.data_vencimento)}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.status || '-'}</td>
-      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${formatCurrency(conta.valor)}</td>
+    if (modoSelecao && selecionadosIds.length === 0) {
+      window.alert('Selecione ao menos uma conta no modo Somar para imprimir o relatório.');
+      return;
+    }
+
+    if (contasParaImpressao.length === 0) {
+      window.alert('Não há contas para imprimir com os filtros atuais.');
+      return;
+    }
+
+    const filtrosHtml = filtrosAtivosResumo.length > 0
+      ? `<div style="margin:16px 0 18px"><p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#374151">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#f3f4f6;color:#374151;font-size:12px">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
+      : '';
+
+    const linhas = contasParaImpressao.map((conta) => `<tr>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${escapeHtml(conta.descricao || '-')}</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${escapeHtml(conta.terceiro_nome || '-')}</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${escapeHtml(formatarSoData(conta.data_vencimento))}</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb">${escapeHtml(conta.status || '-')}</td>
+      <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${escapeHtml(formatCurrency(conta.valor))}</td>
     </tr>`).join('');
-    const html = `<html><head><title>Agefin ${formatMonth(currentMonth)}</title></head><body style="font-family:Inter,sans-serif;padding:24px"><h2>Agefin - ${formatMonth(currentMonth)}</h2><p>Total do período: ${formatCurrency(kpis.totalValue)}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Conta</th><th align="left">Favorecido</th><th align="left">Vencimento</th><th align="left">Status</th><th align="right">Valor</th></tr></thead><tbody>${linhas}</tbody></table></body></html>`;
+    const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:Inter,Arial,sans-serif;padding:24px;color:#111827"><h2 style="margin:0 0 4px">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 4px;color:#4b5563">Contas filtradas da consulta financeira</p><p style="margin:0 0 4px;color:#4b5563">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0 0 4px;color:#4b5563">Total impresso: ${escapeHtml(formatCurrency(totalParaImpressao))}</p>${modoSelecao ? `<p style="margin:0 0 4px;color:#4b5563">Modo Somar: apenas contas selecionadas</p>` : ''}${filtrosHtml}<table style="width:100%;border-collapse:collapse"><thead><tr><th align="left" style="padding:8px;border-bottom:1px solid #d1d5db">Conta</th><th align="left" style="padding:8px;border-bottom:1px solid #d1d5db">Favorecido</th><th align="left" style="padding:8px;border-bottom:1px solid #d1d5db">Vencimento</th><th align="left" style="padding:8px;border-bottom:1px solid #d1d5db">Status</th><th align="right" style="padding:8px;border-bottom:1px solid #d1d5db">Valor</th></tr></thead><tbody>${linhas}</tbody></table></body></html>`;
     try {
       await openPrintWindowOrShareHtml(html, `agefin-${currentMonth.getTime()}.html`, `Agefin ${formatMonth(currentMonth)}`);
     } catch {

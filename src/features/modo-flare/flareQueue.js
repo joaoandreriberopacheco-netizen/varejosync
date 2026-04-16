@@ -78,6 +78,27 @@ function sortPendingFlares(items) {
   });
 }
 
+function componentNameFromFilePath(filePath) {
+  const base = (filePath || '').split('/').pop() || 'Desconhecido';
+  return base.replace(/\.(jsx?|tsx?)$/i, '') || base;
+}
+
+function normalizeCreateMeta(meta) {
+  return {
+    source_location_raw: meta?.source_location_raw || '',
+    file_path: meta?.file_path || '',
+    line: Number(meta?.line) || null,
+    column: Number(meta?.column) || null,
+    component_name: meta?.component_name || componentNameFromFilePath(meta?.file_path || ''),
+    route: meta?.route || window.location.pathname || '',
+    confidence: meta?.confidence === 'medium' ? 'medium' : 'high',
+    short_code: meta?.short_code || '',
+    catalog_code: meta?.catalog_code || meta?.code || '',
+    catalog_kind: meta?.catalog_kind || meta?.kind || '',
+    catalog_scope: meta?.catalog_scope || meta?.scope || '',
+  };
+}
+
 export async function listPendingFlaresLocalFirst() {
   try {
     const rows = await base44.entities.TargetFlare.filter({ status: 'pending' });
@@ -91,6 +112,53 @@ export async function listPendingFlaresLocalFirst() {
       items: sortPendingFlares(normalized.filter((it) => it.status === 'pending')),
       remoteFetchFailed: true,
     };
+  }
+}
+
+export async function createFlareEntry(meta, briefing, extra = {}) {
+  const normalized = normalizeCreateMeta(meta);
+  const text = String(briefing || '').trim();
+  const imageUrl = extra.context_image_url || '';
+
+  const payload = {
+    status: 'pending',
+    file_path: normalized.file_path,
+    line: normalized.line,
+    column: normalized.column,
+    source_location_raw: normalized.source_location_raw,
+    component_name: normalized.component_name,
+    briefing: text,
+    action_briefing: text,
+    context_image_url: imageUrl,
+    confidence: normalized.confidence,
+    route: normalized.route,
+    short_code: normalized.short_code,
+    catalog_code: normalized.catalog_code,
+    catalog_kind: normalized.catalog_kind,
+    catalog_scope: normalized.catalog_scope,
+  };
+
+  try {
+    await base44.entities.TargetFlare.create(payload);
+    return {
+      origin: 'remote',
+      item: {
+        id: `remote-${Date.now()}`,
+        ...payload,
+        scope: 'remote',
+        created_at: new Date().toISOString(),
+      },
+    };
+  } catch {
+    const item = {
+      id: `local-${Date.now()}`,
+      ...payload,
+      scope: 'local',
+      created_at: new Date().toISOString(),
+    };
+    const next = [item, ...readLocalPins().filter((p) => p.scope !== 'remote')];
+    writeLocalPins(next);
+    return { origin: 'local', item };
   }
 }
 

@@ -1,9 +1,15 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Copy, Flag, Layers3, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
 import overlayManifest from '@/generated/catalog-overlay-index.json';
+import { createFlareEntry } from '@/features/modo-flare/flareQueue';
 
 const OVERLAY_STORAGE_KEY = 'p38_catalog_overlay_open';
 const OVERLAY_Z = 10058;
+const LONG_PRESS_MS = 650;
 
 function loadInitialState() {
   try {
@@ -36,9 +42,12 @@ function collectBadges(index) {
     seen.add(dedupeKey);
 
     badges.push({
+      source_location_raw: item.source_location_raw,
+      file: item.file,
       short_code: item.short_code,
       code: item.code,
       kind: item.kind,
+      scope: item.scope,
       hint: item.hint,
       top: Math.max(4, rect.top + window.scrollY),
       left: Math.max(4, rect.left + window.scrollX),
@@ -49,10 +58,32 @@ function collectBadges(index) {
 }
 
 export default function CatalogOverlay() {
+  const { toast } = useToast();
   const [open, setOpen] = useState(loadInitialState);
   const [badges, setBadges] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const longPressTimer = useRef(null);
 
   const index = useMemo(() => overlayManifest?.index || {}, []);
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
+
+  const parseSourceLocation = useCallback((raw) => {
+    const match = String(raw || '').trim().match(/^(.+):(\d+):(\d+)$/);
+    if (!match) return { file_path: '', line: null, column: null, source_location_raw: raw || '' };
+    return {
+      file_path: match[1].replace(/\\/g, '/'),
+      line: Number(match[2]),
+      column: Number(match[3]),
+      source_location_raw: raw,
+    };
+  }, []);
+
+  const openPanelForBadge = useCallback((badge) => {
+    setSelected(badge);
+    setDraft('');
+  }, []);
 
   useEffect(() => {
     const handler = () => setOpen((prev) => !prev);
@@ -82,6 +113,10 @@ export default function CatalogOverlay() {
     } catch {
       // noop
     }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) setSelected(null);
   }, [open]);
 
   useLayoutEffect(() => {
@@ -115,8 +150,80 @@ export default function CatalogOverlay() {
 
   if (!open) return null;
 
+  const handleCopy = async () => {
+    if (!selected) return;
+    const text = `${selected.short_code} | ${selected.code}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'Código copiado', description: text });
+    } catch {
+      toast({ title: 'Não foi possível copiar', variant: 'destructive' });
+    }
+  };
+
+  const handleCreateFlare = async () => {
+    if (!selected) return;
+    const text = draft.trim();
+    if (!text) {
+      toast({ title: 'Descreva a malfuncionamento', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const parsed = parseSourceLocation(selected.source_location_raw);
+      const created = await createFlareEntry(
+        {
+          ...parsed,
+          component_name: selected.file?.split('/').pop()?.replace(/\.(jsx?|tsx?)$/i, '') || selected.kind,
+          confidence: 'high',
+          short_code: selected.short_code,
+          catalog_code: selected.code,
+          catalog_kind: selected.kind,
+          catalog_scope: selected.scope,
+          route: window.location.pathname || '',
+        },
+        text
+      );
+      toast({
+        title: 'Malfuncionamento registrado',
+        description: `Item ${selected.short_code} · origem: ${created.origin === 'remote' ? 'nuvem' : 'local'}`,
+      });
+      setDraft('');
+    } catch {
+      toast({ title: 'Falha ao registrar', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startMobileLongPress = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = window.setTimeout(() => {
+      setOpen((prev) => !prev);
+      longPressTimer.current = null;
+    }, LONG_PRESS_MS);
+  };
+  const stopMobileLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   return createPortal(
     <>
+      <div
+        className="fixed right-3 top-[max(3.5rem,env(safe-area-inset-top)+2.5rem)] z-[10040] flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100/80 text-emerald-700 shadow-sm backdrop-blur-sm opacity-75 transition-opacity hover:opacity-95 active:opacity-100 dark:bg-emerald-900/75 dark:text-emerald-200 lg:hidden"
+        style={{ touchAction: 'none' }}
+        onTouchStart={startMobileLongPress}
+        onTouchEnd={stopMobileLongPress}
+        onTouchCancel={stopMobileLongPress}
+        onClick={() => setOpen((prev) => !prev)}
+        title="Catalog overlay"
+        aria-hidden
+      >
+        <Layers3 className="h-4 w-4" strokeWidth={1.8} />
+      </div>
       <div
         style={{
           position: 'fixed',
@@ -133,14 +240,27 @@ export default function CatalogOverlay() {
           boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
         }}
       >
-        <div style={{ fontWeight: 600, color: '#7dffb3' }}>Catalog Overlay</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontWeight: 600, color: '#7dffb3' }}>Catalog Overlay</div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            style={{ all: 'unset', cursor: 'pointer', color: '#e8edf4', opacity: 0.75 }}
+            aria-label="Fechar overlay"
+          >
+            <X size={14} />
+          </button>
+        </div>
         <div style={{ opacity: 0.8 }}>{badges.length} componentes visíveis</div>
         <div style={{ opacity: 0.7 }}>Atalho: Ctrl+Alt+K</div>
+        <div style={{ opacity: 0.7 }}>{isMobile ? 'Toque no badge para detalhe' : 'Clique no badge para detalhe'}</div>
       </div>
       <div style={{ position: 'absolute', inset: 0, zIndex: OVERLAY_Z, pointerEvents: 'none' }}>
         {badges.map((badge) => (
-          <div
+          <button
+            type="button"
             key={`${badge.short_code}:${badge.top}:${badge.left}`}
+            onClick={() => openPanelForBadge(badge)}
             title={`${badge.short_code} · ${badge.code}${badge.hint ? ` · ${badge.hint}` : ''}`}
             style={{
               position: 'absolute',
@@ -159,12 +279,68 @@ export default function CatalogOverlay() {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              pointerEvents: 'auto',
+              cursor: 'pointer',
             }}
           >
             {badge.short_code}
-          </div>
+          </button>
         ))}
       </div>
+      {selected ? (
+        <div
+          style={{
+            position: 'fixed',
+            right: isMobile ? 8 : 12,
+            left: isMobile ? 8 : 'auto',
+            bottom: isMobile ? 8 : 12,
+            top: isMobile ? 'auto' : 72,
+            width: isMobile ? 'auto' : 380,
+            maxHeight: isMobile ? '50vh' : 'calc(100vh - 84px)',
+            overflow: 'auto',
+            zIndex: OVERLAY_Z + 2,
+            background: 'rgba(10,13,17,0.96)',
+            color: '#e8edf4',
+            border: '1px solid #2f5c45',
+            borderRadius: 12,
+            padding: 12,
+            boxShadow: '0 12px 30px rgba(0,0,0,0.45)',
+            pointerEvents: 'auto',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'start' }}>
+            <div>
+              <div style={{ color: '#7dffb3', fontWeight: 700, fontFamily: 'ui-monospace, monospace' }}>
+                {selected.short_code}
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>{selected.kind}</div>
+            </div>
+            <Button size="icon" variant="ghost" onClick={() => setSelected(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.4, wordBreak: 'break-word' }}>
+            <div style={{ color: '#e8c96b', fontFamily: 'ui-monospace, monospace' }}>{selected.code}</div>
+            {selected.hint ? <div style={{ marginTop: 6, opacity: 0.82 }}>{selected.hint}</div> : null}
+          </div>
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Descreva a malfuncionamento deste item do catálogo..."
+            className="mt-3 min-h-24 bg-black/20"
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={handleCopy}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar código
+            </Button>
+            <Button type="button" onClick={handleCreateFlare} disabled={saving}>
+              <Flag className="mr-2 h-4 w-4" />
+              {saving ? 'Registrando...' : 'Registrar malfuncionamento'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </>,
     document.body
   );

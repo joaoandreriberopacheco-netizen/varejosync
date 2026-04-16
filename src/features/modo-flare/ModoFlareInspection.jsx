@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   clearLocalPins,
+  createFlareEntry,
   listAllRemoteFlares,
   listPendingFlaresLocalFirst,
   purgeAllRemoteFlares,
@@ -582,68 +583,22 @@ export default function ModoFlareInspection({ onClose }) {
 
     let savedOrigin = 'local';
     try {
-      try {
-        await base44.entities.TargetFlare.create({
-          status: 'pending',
-          file_path: meta.file_path,
-          line: meta.line,
-          column: meta.column,
-          source_location_raw: meta.source_location_raw,
-          component_name: meta.component_name,
-          briefing: text,
-          action_briefing: text,
-          context_image_url: imageUrl,
-          confidence: meta.confidence,
+      const created = await createFlareEntry(
+        {
+          ...meta,
           route: window.location.pathname || '',
-        });
-        savedOrigin = 'remote';
-        setSyncMode('remote');
-        setLocalPins((prev) => [
-          {
-            id: `remote-${Date.now()}`,
-            source_location_raw: meta.source_location_raw,
-            file_path: meta.file_path,
-            line: meta.line,
-            column: meta.column,
-            component_name: meta.component_name,
-            route: window.location.pathname || '',
-            briefing: text,
-            action_briefing: text,
-            context_image_url: imageUrl,
-            confidence: meta.confidence,
-            scope: 'remote',
-            status: 'pending',
-            created_at: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
-      } catch {
-        savedOrigin = 'local';
-        setSyncMode('local');
-        setLocalPins((prev) => {
-          const next = [
-            {
-              id: `local-${Date.now()}`,
-              source_location_raw: meta.source_location_raw,
-              file_path: meta.file_path,
-              line: meta.line,
-              column: meta.column,
-              component_name: meta.component_name,
-              route: window.location.pathname || '',
-              briefing: text,
-              action_briefing: text,
-              context_image_url: imageUrl,
-              confidence: meta.confidence,
-              scope: 'local',
-              status: 'pending',
-              created_at: new Date().toISOString(),
-            },
-            ...prev.filter((p) => p.scope !== 'remote'),
-          ];
-          writeLocalPins(next);
-          return next;
-        });
-      }
+        },
+        text,
+        { context_image_url: imageUrl }
+      );
+      savedOrigin = created.origin;
+      setSyncMode(created.origin === 'remote' ? 'remote' : 'local');
+      setLocalPins((prev) => {
+        if (created.origin === 'remote') {
+          return [created.item, ...prev];
+        }
+        return [created.item, ...prev.filter((p) => p.scope !== 'remote')];
+      });
 
       setBriefingOpen(false);
       setPendingMeta(null);
