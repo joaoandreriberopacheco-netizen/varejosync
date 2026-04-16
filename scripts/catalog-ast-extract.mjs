@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import { parse } from '@babel/parser';
 import _traverse from '@babel/traverse';
 
@@ -20,14 +20,20 @@ function normalizeToSrcPath(fileLabel) {
 
 const RELEVANT_BASE = new Set([
   'Button',
+  'button',
   'Input',
+  'input',
   'Textarea',
+  'textarea',
   'Select',
+  'select',
   'SelectTrigger',
   'SelectValue',
   'SelectItem',
   'SelectContent',
   'Label',
+  'label',
+  'a',
   'Dialog',
   'DialogTitle',
   'DialogContent',
@@ -188,14 +194,29 @@ export function walkComponentFile(absPath, pageStable, relativeLabel, counters =
   let code = readFileSync(absPath, 'utf8');
   if (code.length > maxBytes) code = code.slice(0, maxBytes);
   const label = relativeLabel || absPath.replace(/\\/g, '/');
-  return extractWidgetsFromSource(code, label, pageStable, counters);
+  const extracted = extractWidgetsFromSource(code, label, pageStable, counters);
+  return { ...extracted, code, label };
 }
 
-export function resolveImportToAbs(importPath, root) {
-  if (!importPath.startsWith('@/')) return null;
-  const rel = importPath.replace('@/', join(root, 'src') + '/');
-  for (const ext of ['.jsx', '.tsx', '.js']) {
-    const p = rel + ext;
+function resolveCandidates(basePath) {
+  const out = [basePath];
+  for (const ext of ['.jsx', '.tsx', '.js']) out.push(basePath + ext);
+  for (const ext of ['.jsx', '.tsx', '.js']) out.push(join(basePath, `index${ext}`));
+  return out;
+}
+
+export function resolveImportToAbs(importPath, root, fromAbsPath = null) {
+  let basePath = null;
+  if (importPath.startsWith('@/')) {
+    basePath = importPath.replace('@/', join(root, 'src') + '/');
+  } else if (importPath.startsWith('./') || importPath.startsWith('../')) {
+    const baseDir = fromAbsPath ? dirname(fromAbsPath) : root;
+    basePath = resolve(baseDir, importPath);
+  } else {
+    return null;
+  }
+
+  for (const p of resolveCandidates(basePath)) {
     if (existsSync(p)) return p;
   }
   return null;
@@ -206,14 +227,17 @@ export function listDomainImportsFromSource(src) {
   const patterns = [
     /import\s+(\w+)\s+from\s+['"](@\/components\/[^'"]+)['"]/g,
     /import\s+(\w+)\s+from\s+['"](\.\.\/components\/[^'"]+)['"]/g,
+    /import\s+(\w+)\s+from\s+['"](\.\/[^'"]+)['"]/g,
+    /import\s+(\w+)\s+from\s+['"](\.\.\/[^'"]+)['"]/g,
   ];
   const out = [];
   for (const re of patterns) {
     let m;
     while ((m = re.exec(src)) !== null) {
       let p = m[2];
-      if (p.startsWith('../')) p = '@/components/' + p.replace(/^\.\.\/components\//, '');
+      if (/^\.\.\/components\//.test(p)) p = '@/components/' + p.replace(/^\.\.\/components\//, '');
       if (p.includes('/ui/')) continue;
+      if (!p.startsWith('@/components/') && !p.startsWith('./') && !p.startsWith('../')) continue;
       out.push({ name: m[1], path: p });
     }
   }
@@ -223,6 +247,58 @@ export function listDomainImportsFromSource(src) {
     seen.add(x.path);
     return true;
   });
+}
+
+function collectImportedComponentSections({
+  src,
+  root,
+  ownerAbsPath,
+  pageStable,
+  importsWalked,
+  visitedAbs,
+  maxImportFiles,
+  depth = 0,
+}) {
+  if (!src || importsWalked.length >= maxImportFiles) return [];
+
+  const imports = listDomainImportsFromSource(src);
+  const sections = [];
+
+  for (const imp of imports) {
+    if (importsWalked.length >= maxImportFiles) break;
+    const abs = resolveImportToAbs(imp.path, root, ownerAbsPath);
+    if (!abs || visitedAbs.has(abs)) continue;
+
+    visitedAbs.add(abs);
+    importsWalked.push(imp.path);
+
+    const subStable = `${pageStable}.${imp.name}`;
+    const sub = walkComponentFile(abs, subStable, null, new Map());
+    sections.push({
+      type: depth === 0 ? 'import' : 'nested-import',
+      componentName: imp.name,
+      label: abs.replace(root + '/', '').replace(/\\/g, '/'),
+      widgets: sub.widgets,
+      parseError: sub.parseError,
+    });
+
+    if (sub.code && !sub.parseError) {
+      sections.push(
+        ...collectImportedComponentSections({
+          src: sub.code,
+          root,
+          ownerAbsPath: abs,
+          pageStable: subStable,
+          importsWalked,
+          visitedAbs,
+          maxImportFiles,
+          depth: depth + 1,
+        })
+      );
+    }
+  }
+
+  return sections;
 }
 
 /**
@@ -248,23 +324,20 @@ export function extractPageAst(pageKey, root, pageFileAbs, maxImportFiles = 18) 
   );
   sections.push({ type: 'route', label: pageFileAbs.replace(root + '/', '').replace(/\\/g, '/'), widgets: main.widgets, parseError: main.parseError });
 
-  const imports = listDomainImportsFromSource(pageSrc).slice(0, maxImportFiles);
   const importsWalked = [];
-
-  for (const imp of imports) {
-    const abs = resolveImportToAbs(imp.path, root);
-    if (!abs) continue;
-    importsWalked.push(imp.path);
-    const subStable = `${pageStable}.${imp.name}`;
-    const sub = walkComponentFile(abs, subStable, null, new Map());
-    sections.push({
-      type: 'import',
-      componentName: imp.name,
-      label: abs.replace(root + '/', '').replace(/\\/g, '/'),
-      widgets: sub.widgets,
-      parseError: sub.parseError,
-    });
-  }
+  const visitedAbs = new Set([pageFileAbs]);
+  sections.push(
+    ...collectImportedComponentSections({
+      src: pageSrc,
+      root,
+      ownerAbsPath: pageFileAbs,
+      pageStable,
+      importsWalked,
+      visitedAbs,
+      maxImportFiles,
+      depth: 0,
+    })
+  );
 
   return {
     pageKey,

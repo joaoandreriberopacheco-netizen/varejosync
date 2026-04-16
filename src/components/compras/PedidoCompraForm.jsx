@@ -39,6 +39,7 @@ import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
+import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -1252,12 +1253,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
                   ]);
                   if (atualizado?.[0]) {
-                    const embarquesVisiveis = (embarquesAtualizados || []).filter((emb) => {
-                      const tipoNecessidade = emb?.tipo === 'Necessidade';
-                      const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
-                      const statusDormindo = !emb?.status || emb?.status === 'Pendente';
-                      return !(tipoNecessidade && semVidaOperacional && statusDormindo);
-                    });
+                    const embarquesVisiveis = filterEmbarquesVisiveisParaPedido(embarquesAtualizados || []);
                     const pedidoCompleto = { ...atualizado[0], _embarques: embarquesVisiveis };
                     setPedidoLogistica(pedidoCompleto);
                     setFormData(prev => ({ ...prev, ...pedidoCompleto }));

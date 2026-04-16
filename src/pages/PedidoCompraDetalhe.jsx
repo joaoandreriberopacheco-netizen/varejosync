@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
+import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — apenas Desktop.
@@ -33,13 +34,7 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
-    const embarques = (embarquesRes || []).filter((emb) => {
-      const tipoNecessidade = emb?.tipo === 'Necessidade';
-      const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
-      const statusDormindo = !emb?.status || emb?.status === 'Pendente';
-      const temItensPendentes = (emb?.itens || emb?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_pedida) || 0) > 0);
-      return !(tipoNecessidade && semVidaOperacional && statusDormindo && !temItensPendentes);
-    });
+    const embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]

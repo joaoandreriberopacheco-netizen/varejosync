@@ -32,7 +32,7 @@ function normalizeToSrcPath(value) {
 
 function collectBadges(index) {
   const nodes = Array.from(document.querySelectorAll('[data-source-location]'));
-  const badges = [];
+  const rawBadges = [];
   const seen = new Set();
 
   // Pré-indexa por ficheiro para conseguir aproximação por linha
@@ -87,7 +87,7 @@ function collectBadges(index) {
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
-    badges.push({
+    rawBadges.push({
       source_location_raw: item.source_location_raw,
       file: item.file,
       short_code: item.short_code,
@@ -97,10 +97,32 @@ function collectBadges(index) {
       hint: item.hint,
       top: Math.max(4, rect.top + window.scrollY),
       left: Math.max(4, rect.left + window.scrollX),
+      targetTop: rect.top + window.scrollY,
+      targetLeft: rect.left + window.scrollX,
+      targetWidth: rect.width,
+      targetHeight: rect.height,
     });
   }
 
-  return badges;
+  rawBadges.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+
+  const placed = [];
+  return rawBadges.map((badge) => {
+    let lane = 0;
+    for (const prev of placed) {
+      const nearX = Math.abs(prev.left - badge.left) < 56;
+      const nearY = Math.abs(prev.top - badge.top) < 28;
+      if (nearX && nearY) lane = Math.max(lane, (prev.lane || 0) + 1);
+    }
+    const next = {
+      ...badge,
+      lane,
+      badgeTop: Math.max(4, badge.top - lane * 20),
+      badgeLeft: badge.left + lane * 8,
+    };
+    placed.push(next);
+    return next;
+  });
 }
 
 export default function CatalogOverlay() {
@@ -325,14 +347,14 @@ export default function CatalogOverlay() {
             <X size={14} />
           </button>
         </div>
-        <div style={{ opacity: 0.8 }}>{badges.length} componentes visíveis</div>
+        <div style={{ opacity: 0.9 }}>{badges.length} alvos visíveis na telemetria</div>
         <div style={{ opacity: 0.7 }}>Atalho: Ctrl+Alt+K</div>
         <div style={{ opacity: 0.7 }}>
           {mode === 'flare'
-            ? 'Flare ativo: feche o registro para navegar'
+            ? 'Flare ativo: feche o registro para voltar a navegar'
             : isMobile
-              ? 'Toque no badge para detalhe'
-              : 'Clique no badge para detalhe'}
+              ? 'Toque no código para travar um alvo'
+              : 'Clique no código para inspecionar e marcar melhoria'}
         </div>
       </div>
       {mode === 'flare' ? (
@@ -348,36 +370,61 @@ export default function CatalogOverlay() {
         />
       ) : null}
       <div style={{ position: 'absolute', inset: 0, zIndex: OVERLAY_Z, pointerEvents: 'none' }}>
-        {badges.map((badge) => (
-          <button
-            type="button"
-            key={`${badge.short_code}:${badge.top}:${badge.left}`}
-            onClick={() => openPanelForBadge(badge)}
-            title={`${badge.short_code} · ${badge.code}${badge.hint ? ` · ${badge.hint}` : ''}`}
-            style={{
-              position: 'absolute',
-              top: badge.top,
-              left: badge.left,
-              transform: 'translateY(-100%)',
-              background: 'rgba(14,24,19,0.95)',
-              color: '#7dffb3',
-              border: '1px solid #2f5c45',
-              borderRadius: 6,
-              padding: '2px 6px',
-              fontSize: 11,
-              fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-              maxWidth: 180,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-              pointerEvents: 'auto',
-              cursor: 'pointer',
-            }}
-          >
-            {badge.short_code}
-          </button>
-        ))}
+        {badges.map((badge) => {
+          const anchorX = badge.badgeLeft + 18;
+          const anchorY = badge.badgeTop - 2;
+          const targetX = badge.targetLeft + Math.min(24, badge.targetWidth / 2);
+          const targetY = badge.targetTop + Math.min(16, badge.targetHeight / 2);
+          const lineHeight = Math.max(12, targetY - anchorY);
+          const angle = Math.atan2(targetY - anchorY, targetX - anchorX) * (180 / Math.PI);
+          const lineWidth = Math.max(10, Math.hypot(targetX - anchorX, targetY - anchorY));
+
+          return (
+            <React.Fragment key={`${badge.short_code}:${badge.badgeTop}:${badge.badgeLeft}`}>
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: anchorY,
+                  left: anchorX,
+                  width: lineWidth,
+                  height: 1,
+                  transformOrigin: '0 0',
+                  transform: `rotate(${angle}deg)`,
+                  background: 'linear-gradient(90deg, rgba(125,255,179,0.95), rgba(125,255,179,0.15))',
+                  boxShadow: '0 0 0 1px rgba(47,92,69,0.12)',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => openPanelForBadge(badge)}
+                title={`${badge.short_code} · ${badge.code}${badge.hint ? ` · ${badge.hint}` : ''}`}
+                style={{
+                  position: 'absolute',
+                  top: badge.badgeTop,
+                  left: badge.badgeLeft,
+                  transform: 'translateY(-100%)',
+                  background: 'rgba(14,24,19,0.95)',
+                  color: '#7dffb3',
+                  border: '1px solid #2f5c45',
+                  borderRadius: 6,
+                  padding: '2px 6px',
+                  fontSize: 11,
+                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                  maxWidth: 180,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                  pointerEvents: 'auto',
+                  cursor: 'pointer',
+                }}
+              >
+                {badge.short_code}
+              </button>
+            </React.Fragment>
+          );
+        })}
       </div>
       {selected ? (
         <div
@@ -414,6 +461,9 @@ export default function CatalogOverlay() {
           <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.4, wordBreak: 'break-word' }}>
             <div style={{ color: '#e8c96b', fontFamily: 'ui-monospace, monospace' }}>{selected.code}</div>
             {selected.hint ? <div style={{ marginTop: 6, opacity: 0.82 }}>{selected.hint}</div> : null}
+            <div style={{ marginTop: 6, opacity: 0.7 }}>
+              Telemetria travada neste alvo. Use o código curto para falar do item e o código longo para localizar no catálogo.
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={handleCopy}>

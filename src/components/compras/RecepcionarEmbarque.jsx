@@ -15,10 +15,26 @@ function getItensDoEmbarque(embarque) {
   const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
     ? embarque.itens_embarcados
     : (Array.isArray(embarque?.itens) ? embarque.itens : []);
-  return baseItens.map((item) => ({
-    ...item,
-    quantidade_recebida: item.quantidade_recebida ?? item.quantidade_embarcada ?? 0,
-  }));
+  const statusRec = embarque?.status_recebimento || embarque?.status_recebimento_embarque || 'Pendente';
+  const aguardandoRecepcao = !statusRec || statusRec === 'Pendente';
+
+  return baseItens.map((item) => {
+    const hasExplicitRecebida = item.quantidade_recebida != null && item.quantidade_recebida !== '';
+    let quantidade_recebida;
+    if (!aguardandoRecepcao) {
+      quantidade_recebida = hasExplicitRecebida
+        ? Number(item.quantidade_recebida) || 0
+        : (Number(item.quantidade_embarcada) || 0);
+    } else if (hasExplicitRecebida) {
+      quantidade_recebida = Number(item.quantidade_recebida) || 0;
+    } else {
+      quantidade_recebida = 0;
+    }
+    return {
+      ...item,
+      quantidade_recebida,
+    };
+  });
 }
 
 export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
@@ -49,6 +65,20 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
     setItens(getItensDoEmbarque(embarque));
     setDataEntrada(dataHoje());
   }, [isOpen, embarque]);
+
+  const copiarQuantidadesEmbarcado = () => {
+    setItens((prev) =>
+      prev.map((item) => {
+        const qtdEmb = Number(item.quantidade_embarcada) || 0;
+        return {
+          ...item,
+          quantidade_recebida: qtdEmb,
+          divergencia_tipo: item.divergencia_tipo === 'Quantidade A Menor' ? 'Nenhuma' : item.divergencia_tipo,
+        };
+      })
+    );
+    toast({ title: 'Quantidades iguais ao embarcado', className: 'bg-green-100 text-green-800' });
+  };
 
   const handleQuantidadeChange = (index, value) => {
     const newItens = [...itens];
@@ -217,6 +247,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
+      // Movimentos de compra abaixo; a função cloud não deve duplicar entrada (ver embarqueFilters.js)
       // Gerar movimentações de estoque
       for (const item of itens) {
         if (item.quantidade_recebida > 0) {
@@ -308,8 +339,20 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
             {/* Itens - PDV Style */}
             <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 px-1">Itens do Embarque</h3>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-1 mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Itens do Embarque</h3>
+                {!isReadOnly && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={copiarQuantidadesEmbarcado}
+                    className="h-9 rounded-xl border-0 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 shrink-0"
+                  >
+                    <Copy className="w-3.5 h-3.5 mr-1.5" />
+                    Igual ao embarcado
+                  </Button>
+                )}
               </div>
               {itens.map((item, idx) => {
                 const hasDivergencia = item.divergencia_tipo !== 'Nenhuma';

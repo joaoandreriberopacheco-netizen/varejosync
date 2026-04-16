@@ -3,6 +3,7 @@ import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse } from 'luc
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
+import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 
 export default function AbaRecepção({ pedido }) {
   const [movimentos, setMovimentos] = useState([]);
@@ -221,7 +222,10 @@ export default function AbaRecepção({ pedido }) {
                 base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
               ]);
               if (atualizado?.[0]) {
-                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+                setPedidoAtual({
+                  ...atualizado[0],
+                  _embarques: filterEmbarquesVisiveisParaPedido(embarquesAtualizados || []),
+                });
               }
             }
             loadMovimentos();

@@ -392,6 +392,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         });
       }
 
+      // Cloud (Base44): deve recalcular só com base em recebido/movimentos — ver nota em embarqueFilters.js
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
       toast.success(isEdicao ? 'Despacho atualizado com sucesso!' : 'Despacho efetuado com sucesso!');
