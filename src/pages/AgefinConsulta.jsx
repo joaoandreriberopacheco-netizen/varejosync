@@ -530,17 +530,17 @@ export default function AgefinConsulta() {
             : '';
 
         return `<tr>
-          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;font-size:12px;line-height:1.3;color:#000"> </td>
+          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;font-size:13px;line-height:1.3;color:#000"> </td>
           <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef">
             ${statusLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;border:1px solid #d8e1ec;background:#f8fafc;color:${statusColor};font-size:11px;line-height:1.15;font-weight:700;white-space:nowrap">${statusIconSvg}<span>${statusLabel}</span></span>` : ''}
           </td>
           <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2">
             <div style="display:flex;align-items:center;gap:6px;min-width:0">
               ${metaIconSvg ? `<span style="display:inline-flex;align-items:center;justify-content:center;flex:none">${metaIconSvg}</span>` : ''}
-              <span style="font-size:12px;line-height:1.25;font-weight:400;color:#000;letter-spacing:0.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</span>
+              <span style="font-size:13px;line-height:1.25;font-weight:400;color:#000;letter-spacing:0.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</span>
             </div>
           </td>
-          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;text-align:right;font-size:12px;line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(conta.valor))}</td>
+          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;text-align:right;font-size:13px;line-height:1.25;font-weight:400;color:#000">${escapeHtml(formatCurrency(conta.valor))}</td>
         </tr>`;
       }).join('');
 
