@@ -11,6 +11,7 @@ import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -235,6 +236,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       return;
     }
     if (!pedido) return;
+    logDespachoAudit({ action: 'despacho_aberto', pedidoId: pedido.id, edicao: !!embarqueExistente });
     setShowTripSelector(false);
     loadTransportadoras();
     loadEventosLogisticos(embarqueExistente);
@@ -323,6 +325,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   };
 
   const handleSelectTrip = (evento) => {
+    logDespachoAudit({ action: 'viagem_selecionada', eventoId: evento?.id, codigo: evento?.codigo });
     setEventoLogisticoId(evento?.id || '');
     setTransportadoraId(evento?.transportadora_id || '');
     const dataSaida = evento?.data_saida_origem || evento?.data_referencia;
@@ -330,6 +333,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     if (dataSaida) setDataDespacho(String(dataSaida).slice(0, 10));
     if (dataEta) setEta(String(dataEta).slice(0, 10));
     setShowTripSelector(false);
+    logDespachoAudit({ action: 'viagem_selector_fechado_apos_escolha' });
   };
 
   const toggleItem = (produtoId) => {
@@ -343,6 +347,32 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
   const totalVolumesQtd = volumes.reduce((s, v) => s + (v.quantidade || 0), 0);
   const totalPesoKg = volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0);
+
+  const bloquearFecharPorPortalAberto = showTripSelector || showVolumesDialog || authFornecedorOpen;
+
+  useEffect(() => {
+    if (!isOpen || !pedido) return;
+    logDespachoAudit({
+      action: 'state_snapshot',
+      showTripSelector,
+      showVolumesDialog,
+      authFornecedorOpen,
+      podeEscolherFornecedor,
+      activeTab,
+      eventoLogisticoId: eventoLogisticoId || null,
+      radixModalDespacho: !bloquearFecharPorPortalAberto,
+    });
+  }, [
+    isOpen,
+    pedido?.id,
+    showTripSelector,
+    showVolumesDialog,
+    authFornecedorOpen,
+    podeEscolherFornecedor,
+    activeTab,
+    eventoLogisticoId,
+    bloquearFecharPorPortalAberto,
+  ]);
 
   const handleSalvar = async () => {
     if (!eta) return toast.error('Informe a data de chegada prevista (ETA)');
@@ -446,12 +476,30 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   return (
     <>
       {/* modal=false enquanto há portal por cima: Radix bloqueia pointer-events no resto da página em modal=true */}
-      <Dialog
-        open={isOpen}
-        onOpenChange={onClose}
-        modal={!showTripSelector && !showVolumesDialog && !authFornecedorOpen}
-      >
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl bg-[#111827] border-0 text-white">
+      <Dialog open={isOpen} onOpenChange={onClose} modal={!bloquearFecharPorPortalAberto}>
+        <DialogContent
+          className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl bg-[#111827] border-0 text-white"
+          onInteractOutside={(e) => {
+            if (bloquearFecharPorPortalAberto) {
+              e.preventDefault();
+              logDespachoAudit({ action: 'radix_interact_outside_prevented', motivo: 'portal_viagem_volumes_ou_auth' });
+            }
+          }}
+          onPointerDownOutside={(e) => {
+            if (bloquearFecharPorPortalAberto) e.preventDefault();
+          }}
+          onFocusOutside={(e) => {
+            if (bloquearFecharPorPortalAberto) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (!bloquearFecharPorPortalAberto) return;
+            e.preventDefault();
+            if (showTripSelector) setShowTripSelector(false);
+            else if (showVolumesDialog) setShowVolumesDialog(false);
+            else if (authFornecedorOpen) setAuthFornecedorOpen(false);
+            logDespachoAudit({ action: 'escape_fechou_portal' });
+          }}
+        >
 
         <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-white/5">
           <div className="w-10 h-10 rounded-3xl bg-[#1f2937] flex items-center justify-center shadow-sm">
@@ -576,7 +624,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   </label>
                   <button
                     type="button"
-                    onClick={() => setShowTripSelector(true)}
+                    onClick={() => {
+                      logDespachoAudit({ action: 'click_informar_viagem' });
+                      setShowTripSelector(true);
+                    }}
                     className="w-full h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white px-4 flex items-center gap-3 text-left"
                   >
                     <ShipWheel className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -726,7 +777,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       {showTripSelector ? (
         <FluvialTripSelectorFullscreen
           open
-          onClose={() => setShowTripSelector(false)}
+          onClose={() => {
+            logDespachoAudit({ action: 'viagem_selector_fechado_usuario' });
+            setShowTripSelector(false);
+          }}
           onSelect={handleSelectTrip}
         />
       ) : null}
@@ -740,6 +794,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         }}
         operationName="Alterar fornecedor do pedido no despacho"
       />
+
+      <InformarDespachoAuditStrip isOpen={isOpen} />
     </>
   );
 }
