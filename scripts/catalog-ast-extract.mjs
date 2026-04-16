@@ -162,8 +162,10 @@ export function extractWidgetsFromSource(code, fileLabel, pageStable, counters) 
         kind,
         scope,
         line,
+        column: path.node.loc?.start?.column ?? 0,
         hint,
         file: fileLabel,
+        source_location_raw: `${fileLabel}:${line}:${path.node.loc?.start?.column ?? 0}`,
       });
     },
   });

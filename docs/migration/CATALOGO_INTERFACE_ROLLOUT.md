@@ -32,6 +32,12 @@ Três camadas, por ordem de automação:
 - O script analisa cada `src/pages/*.jsx`: imports de `@/components` (exceto `ui/`) e `../components/`, e **por baixo** de cada bloco lista subcomponentes (imports relativos `./` e outros `@/components` no mesmo ficheiro). Cada nó mostra um **código hierárquico**, ex.: `CAT-PG-PDV.PDVVendedor.ComprovantePreVenda`.
 - **Zonas sem ficheiro próprio** (barra de pesquisa, lista): podes marcar no JSX `data-catalog-code="CAT-PG-PDV.PDVVendedor.zona_busca"` no elemento raiz da zona, ou `{/* @catalog CAT-PG-PDV.PDVVendedor.lista_sugestoes */}` — o gerador recolhe esses códigos na secção «Marcadores explícitos».
 - Também procura `CardTitle`, `TabsTrigger` e `DialogTitle` por regex. Não depende de Base44 — é documentação visual do código.
+- O gerador também produz `src/generated/catalog-overlay-index.json` para a app.
+- Overlay no sistema inteiro:
+  - atalho: `Ctrl+Alt+K`
+  - URL: `?catalogOverlay=1`
+  - console: `window.toggleCatalogOverlay()`
+  - os badges usam o `short_code` alfanumérico de 7 caracteres e ficam sobre elementos JSX com `data-source-location` que tenham correspondência no manifesto gerado.
 
 ## Bootstrap do catálogo (módulos → páginas)
 

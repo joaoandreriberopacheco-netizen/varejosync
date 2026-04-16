@@ -5,7 +5,7 @@
  * npm run catalogo:build-preview
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -41,7 +41,6 @@ function attachShortCodes(widgets) {
 /** Marcadores explícitos no JSX (zonas: barra de pesquisa, etc.) */
 function extractExplicitMarkers(code, pageStable) {
   const out = [];
-  let i = 0;
   for (const m of code.matchAll(/\bdata-catalog-code\s*=\s*["']([^"']+)["']/g)) {
     const line = code.slice(0, m.index).split('\n').length;
     out.push({
@@ -49,8 +48,10 @@ function extractExplicitMarkers(code, pageStable) {
       kind: 'marcador',
       scope: 'explicit',
       line,
+      column: 0,
       hint: 'data-catalog-code',
       file: 'inline',
+      source_location_raw: `inline:${line}:0`,
     });
   }
   for (const m of code.matchAll(/\{\/\*\s*@catalog\s+([A-Za-z0-9._-]+)\s*\*\/\s*\}/g)) {
@@ -60,8 +61,10 @@ function extractExplicitMarkers(code, pageStable) {
       kind: 'marcador',
       scope: 'comment',
       line,
+      column: 0,
       hint: '@catalog',
       file: 'inline',
+      source_location_raw: `inline:${line}:0`,
     });
   }
   return out;
@@ -96,8 +99,37 @@ function buildPayload() {
   };
 }
 
+function buildOverlayManifest(payload) {
+  const items = [];
+  for (const page of Object.values(payload.pageDetails || {})) {
+    for (const section of page.sections || []) {
+      for (const widget of section.widgets || []) {
+        if (!widget.source_location_raw || String(widget.file || '').startsWith('inline')) continue;
+        items.push({
+          short_code: widget.short_code,
+          code: widget.code,
+          kind: widget.kind,
+          scope: widget.scope,
+          hint: widget.hint || null,
+          file: widget.file,
+          source_location_raw: widget.source_location_raw,
+        });
+      }
+    }
+  }
+  const index = {};
+  for (const item of items) index[item.source_location_raw] = item;
+  return {
+    generated_at: payload.generated_at,
+    total: items.length,
+    items,
+    index,
+  };
+}
+
 function main() {
   const payload = buildPayload();
+  const overlayManifest = buildOverlayManifest(payload);
   const jsonStr = JSON.stringify(payload);
   const b64 = Buffer.from(jsonStr, 'utf8').toString('base64');
 
@@ -182,7 +214,6 @@ function main() {
     }
     .kind { color: #7dffb3; font-size: 0.72rem; margin-right: 0.35rem; }
     .hint { color: var(--muted); font-size: 0.72rem; }
-    .line { color: #6b7c90; font-size: 0.68rem; }
     table.w { width: 100%; border-collapse: collapse; font-size: 0.76rem; margin: 0.35rem 0 0.5rem 1rem; }
     table.w td { padding: 0.2rem 0.4rem; border-bottom: 1px solid var(--line); vertical-align: top; }
     table.w td:first-child { white-space: nowrap; }
@@ -276,7 +307,7 @@ function main() {
         det.className = 'scope';
         det.open = scopes.length <= 3;
         const sm = document.createElement('summary');
-        sm.innerHTML = '<strong>' + esc(sc) + '</strong> <span class="line">(' + by[sc].length + ')</span>';
+        sm.innerHTML = '<strong>' + esc(sc) + '</strong> <span style="color:#6b7c90;font-size:0.68rem">(' + by[sc].length + ')</span>';
         det.appendChild(sm);
         const tbl = document.createElement('table');
         tbl.className = 'w';
@@ -287,8 +318,7 @@ function main() {
           const hint = (w.hint || '').replace(/</g, '&lt;');
           tr.innerHTML = '<td><span class="shortz">' + shortCode + '</span> <span class="codez">' + code + '</span></td>' +
             '<td><span class="kind">' + esc(w.kind) + '</span></td>' +
-            '<td class="hint">' + esc(hint || '—') + '</td>' +
-            '<td class="line">L' + (w.line || '?') + '</td>';
+            '<td class="hint">' + esc(hint || '—') + '</td>';
           tbl.appendChild(tr);
         }
         det.appendChild(tbl);
@@ -303,7 +333,7 @@ function main() {
       det.open = false;
       const sum = document.createElement('summary');
       sum.innerHTML = '<span style="color:#5ed4b8">' + esc(mod.stable_code) + '</span> — ' + esc(mod.titulo) +
-        ' <span class="line">(' + mod.pages.length + ' páginas)</span>';
+        ' <span style="color:#6b7c90;font-size:0.68rem">(' + mod.pages.length + ' páginas)</span>';
       det.appendChild(sum);
 
       for (const pk of mod.pages) {
@@ -358,7 +388,11 @@ function main() {
 
   const out = join(root, 'docs', 'migration', 'catalogo_interface_preview.html');
   writeFileSync(out, html, 'utf8');
+  const overlayOut = join(root, 'src', 'generated', 'catalog-overlay-index.json');
+  mkdirSync(join(root, 'src', 'generated'), { recursive: true });
+  writeFileSync(overlayOut, JSON.stringify(overlayManifest, null, 2), 'utf8');
   console.log('Gerado:', out);
+  console.log('Overlay:', overlayOut);
   console.log('Páginas AST:', Object.keys(payload.pageDetails).length);
 }
 

@@ -40,6 +40,7 @@ import AgefinConsulta from '@/pages/AgefinConsulta';
 import ItinerarioFluvial from '@/pages/ItinerarioFluvial.jsx';
 import AuditoriaCodigoProjeto from '@/pages/AuditoriaCodigoProjeto';
 import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
+import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -208,6 +209,7 @@ function App() {
               <NavigationTracker />
               <NavigationTransitionOverlay />
               <AuthenticatedApp />
+              <CatalogOverlay />
             </ModoFlareProvider>
           </Router>
           <VisualEditAgent />
