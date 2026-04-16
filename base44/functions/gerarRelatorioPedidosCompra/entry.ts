@@ -493,7 +493,8 @@ Deno.serve(async (req) => {
         const liq = Number(item.custo_unitario) || Number(prod.valor_compra) || 0;
         const frete = Number(prod.custo_frete_padrao) || 0;
         const outros = (Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0);
-        const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+        // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
+        const custo = liq + frete + outros;
         const venda = Number(prod.preco_venda_padrao) || 0;
         const totalLiq = qtd * liq;
         const totalCusto = qtd * custo;

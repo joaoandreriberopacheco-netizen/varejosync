@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, Plus, Users, ShoppingCart, Trophy, CheckCircle, Calendar, UploadCloud, AlertCircle, Camera } from 'lucide-react';
+import { FileText, Plus, Trophy, CheckCircle, UploadCloud, AlertCircle, Camera, Trash2, Search, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
@@ -22,6 +22,9 @@ export default function CotacoesManager() {
   const [isImportadorFotoOpen, setIsImportadorFotoOpen] = useState(false);
   const [isNovaCotacaoOpen, setIsNovaCotacaoOpen] = useState(false);
   const [novaCotacaoTitulo, setNovaCotacaoTitulo] = useState('');
+  const [produtosCatalogo, setProdutosCatalogo] = useState([]);
+  const [manualSearch, setManualSearch] = useState('');
+  const [manualCart, setManualCart] = useState([]);
   const { toast } = useToast();
 
   const [precosInput, setPrecosInput] = useState({});
@@ -39,6 +42,8 @@ export default function CotacoesManager() {
       ]);
       setCotacoes(cotacoesData);
       setFornecedores(fornecedoresData);
+      const produtosData = await base44.entities.Produto.filter({ tipo: 'Produto', ativo: true });
+      setProdutosCatalogo(produtosData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -104,6 +109,114 @@ export default function CotacoesManager() {
       ...prev,
       [`${fornecedorId}_${produtoId}`]: valor
     }));
+  };
+
+  const filteredManualProducts = useMemo(() => {
+    const query = manualSearch.trim().toLowerCase();
+    if (!query) return [];
+    return produtosCatalogo
+      .filter((produto) => {
+        const searchText = [
+          produto.nome,
+          produto.codigo_interno,
+          produto.codigo_barras,
+          produto.marca
+        ].filter(Boolean).join(' ').toLowerCase();
+        return query.split(/\s+/).every((word) => searchText.includes(word));
+      })
+      .slice(0, 20);
+  }, [manualSearch, produtosCatalogo]);
+
+  const handleOpenAnaliseCotacao = (cotacao) => {
+    setSelectedCotacao(cotacao);
+    const inputs = {};
+    cotacao.respostas?.forEach(r => {
+      inputs[`${r.fornecedor_id}_${r.produto_id}`] = r.preco_unitario;
+    });
+    setPrecosInput(inputs);
+    setManualSearch('');
+    setManualCart(
+      (cotacao.itens || []).map((item) => ({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        quantidade: item.quantidade || 1,
+        unidade: item.unidade || 'UN'
+      }))
+    );
+  };
+
+  const handleAddManualProduct = (produto) => {
+    setManualCart((prev) => {
+      const index = prev.findIndex((item) => item.produto_id === produto.id);
+      if (index >= 0) {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          quantidade: (parseFloat(next[index].quantidade) || 0) + 1
+        };
+        return next;
+      }
+      return [
+        ...prev,
+        {
+          produto_id: produto.id,
+          produto_nome: produto.nome,
+          quantidade: 1,
+          unidade: produto.unidade_principal || 'UN'
+        }
+      ];
+    });
+  };
+
+  const handleManualQtyChange = (produtoId, nextValue) => {
+    setManualCart((prev) => prev.map((item) => (
+      item.produto_id === produtoId
+        ? { ...item, quantidade: nextValue }
+        : item
+    )));
+  };
+
+  const handleRemoveManualItem = (produtoId) => {
+    setManualCart((prev) => prev.filter((item) => item.produto_id !== produtoId));
+  };
+
+  const handleSaveManualItems = async () => {
+    if (!selectedCotacao) return;
+    const itensValidos = manualCart
+      .map((item) => ({ ...item, quantidade: parseFloat(item.quantidade) || 0 }))
+      .filter((item) => item.quantidade > 0);
+
+    if (itensValidos.length === 0) {
+      toast({ title: "Sem itens válidos", description: "Adicione pelo menos um item com quantidade.", variant: "destructive" });
+      return;
+    }
+
+    await base44.entities.Cotacao.update(selectedCotacao.id, { itens: itensValidos });
+    toast({ title: "Itens atualizados", className: "bg-green-100 text-green-800" });
+    await loadData();
+    const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
+    setSelectedCotacao(updated);
+    setManualCart((updated.itens || []).map((item) => ({
+      produto_id: item.produto_id,
+      produto_nome: item.produto_nome,
+      quantidade: item.quantidade || 1,
+      unidade: item.unidade || 'UN'
+    })));
+  };
+
+  const handleDeleteCotacao = async (cotacao) => {
+    const confirmDelete = window.confirm(`Excluir a cotação "${cotacao.titulo}"? Essa ação não pode ser desfeita.`);
+    if (!confirmDelete) return;
+    try {
+      await base44.entities.Cotacao.delete(cotacao.id);
+      toast({ title: "Cotação excluída", className: "bg-green-100 text-green-800" });
+      if (selectedCotacao?.id === cotacao.id) {
+        setSelectedCotacao(null);
+      }
+      loadData();
+    } catch (error) {
+      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+    }
   };
 
   const handleImportComplete = async (fornecedorId, respostasImportadas, descontoGlobal) => {
@@ -331,7 +444,7 @@ export default function CotacoesManager() {
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-start">
                   <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                           <h4 className="font-medium text-gray-900 dark:text-gray-100">{cotacao.titulo}</h4>
                       </div>
                       <span className="text-xs font-mono text-gray-400 mt-0.5">{cotacao.numero}</span>
@@ -362,15 +475,8 @@ export default function CotacoesManager() {
 
               <div className="pt-2 border-t border-gray-50 dark:border-gray-700">
                   <Dialog>
-                      <DialogTrigger asChild>
-                          <Button variant="outline" className="w-full border-gray-200 text-gray-600 hover:text-teal-600 hover:bg-teal-50 h-9 text-sm font-normal" onClick={() => {
-                                setSelectedCotacao(cotacao);
-                                const inputs = {};
-                                cotacao.respostas?.forEach(r => {
-                                    inputs[`${r.fornecedor_id}_${r.produto_id}`] = r.preco_unitario;
-                                });
-                                setPrecosInput(inputs);
-                            }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full border-gray-200 text-gray-600 hover:text-teal-600 hover:bg-teal-50 h-9 text-sm font-normal" onClick={() => handleOpenAnaliseCotacao(cotacao)}>
                                 <Trophy className="w-4 h-4 mr-2" />
                                 Analisar & Preços
                             </Button>
@@ -380,52 +486,79 @@ export default function CotacoesManager() {
                                 <DialogTitle className="text-xl font-light">Análise de Cotação: {cotacao.titulo}</DialogTitle>
                             </DialogHeader>
                             
-                            {/* Adicionar Item Manualmente */}
-                            <div className="flex gap-2 mb-4 bg-gray-50 p-3 rounded-lg items-end border border-gray-100">
-                                <div className="flex-1">
-                                    <Label className="text-xs">Produto / Item</Label>
-                                    <Input id="novo-item-nome" placeholder="Nome do produto..." className="h-8 text-sm bg-white" />
+                            {/* Lançamento Manual: seletor + carrinho */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <div className="space-y-2">
+                                    <Label className="text-xs">Selecionar Produto</Label>
+                                    <div className="relative">
+                                      <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                      <Input
+                                        value={manualSearch}
+                                        onChange={(e) => setManualSearch(e.target.value)}
+                                        placeholder="Buscar por nome, código, barras ou marca..."
+                                        className="h-9 text-sm bg-white pl-8"
+                                      />
+                                    </div>
+                                    <div className="max-h-44 overflow-y-auto rounded-md border bg-white">
+                                      {filteredManualProducts.length === 0 ? (
+                                        <p className="text-xs text-gray-400 p-3">Digite para buscar produtos.</p>
+                                      ) : (
+                                        filteredManualProducts.map((produto) => (
+                                          <button
+                                            key={produto.id}
+                                            type="button"
+                                            className="w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-gray-50"
+                                            onClick={() => handleAddManualProduct(produto)}
+                                          >
+                                            <p className="text-sm text-gray-800">{produto.nome}</p>
+                                            <p className="text-[11px] text-gray-500">
+                                              {(produto.codigo_interno || produto.codigo_barras || 'Sem código')} • {produto.unidade_principal || 'UN'}
+                                            </p>
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
                                 </div>
-                                <div className="w-24">
-                                    <Label className="text-xs">Qtd</Label>
-                                    <Input id="novo-item-qtd" type="number" placeholder="1" className="h-8 text-sm bg-white" />
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Carrinho da Cotação</Label>
+                                    <span className="text-xs text-gray-500">{manualCart.length} itens</span>
+                                  </div>
+                                  <div className="max-h-44 overflow-y-auto rounded-md border bg-white">
+                                    {manualCart.length === 0 ? (
+                                      <p className="text-xs text-gray-400 p-3">Nenhum item adicionado.</p>
+                                    ) : (
+                                      manualCart.map((item) => (
+                                        <div key={item.produto_id} className="px-3 py-2 border-b last:border-b-0">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <p className="text-sm text-gray-800">{item.produto_nome}</p>
+                                            <button type="button" onClick={() => handleRemoveManualItem(item.produto_id)} className="text-red-500 hover:text-red-700">
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          </div>
+                                          <div className="flex items-center gap-2 mt-2">
+                                            <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleManualQtyChange(item.produto_id, Math.max(0, (parseFloat(item.quantidade) || 0) - 1))}>
+                                              <Minus className="w-3 h-3" />
+                                            </Button>
+                                            <Input
+                                              value={item.quantidade}
+                                              type="number"
+                                              className="h-7 text-xs w-20"
+                                              onChange={(e) => handleManualQtyChange(item.produto_id, e.target.value)}
+                                            />
+                                            <span className="text-xs text-gray-500">{item.unidade || 'UN'}</span>
+                                            <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleManualQtyChange(item.produto_id, (parseFloat(item.quantidade) || 0) + 1)}>
+                                              <Plus className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                  <Button size="sm" className="h-8 bg-blue-600 text-white w-full" onClick={handleSaveManualItems}>
+                                    <Plus className="w-4 h-4 mr-1" /> Salvar Itens no Carrinho
+                                  </Button>
                                 </div>
-                                <div className="w-24">
-                                    <Label className="text-xs">Unid.</Label>
-                                    <Input id="novo-item-un" placeholder="UN" className="h-8 text-sm bg-white" />
-                                </div>
-                                <Button 
-                                    size="sm"
-                                    className="h-8 bg-blue-600 text-white"
-                                    onClick={async () => {
-                                        const nome = document.getElementById('novo-item-nome').value;
-                                        const qtd = document.getElementById('novo-item-qtd').value;
-                                        const un = document.getElementById('novo-item-un').value;
-                                        
-                                        if (!nome || !qtd) return;
-                                        
-                                        const novoItem = {
-                                            produto_id: `TEMP-${Date.now()}`, // ID temporário se não for produto cadastrado
-                                            produto_nome: nome,
-                                            quantidade: parseFloat(qtd),
-                                            unidade: un || 'UN'
-                                        };
-                                        
-                                        const novosItens = [...(selectedCotacao.itens || []), novoItem];
-                                        await base44.entities.Cotacao.update(selectedCotacao.id, { itens: novosItens });
-                                        
-                                        // Limpar campos
-                                        document.getElementById('novo-item-nome').value = '';
-                                        document.getElementById('novo-item-qtd').value = '';
-                                        document.getElementById('novo-item-un').value = '';
-                                        
-                                        loadData();
-                                        const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
-                                        setSelectedCotacao(updated);
-                                    }}
-                                >
-                                    <Plus className="w-4 h-4 mr-1" /> Add
-                                </Button>
                             </div>
 
                             <div className="border rounded-lg overflow-x-auto mt-4 min-w-0">
@@ -510,16 +643,27 @@ export default function CotacoesManager() {
 
 
 
-                    {cotacao.status !== 'Finalizada' && (
-                        <Button 
-                            size="sm" 
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white ml-auto rounded-lg font-normal"
-                            onClick={() => handleCreatePedido(cotacao)}
-                        >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Gerar Pedidos
-                        </Button>
-                    )}
+                    <div className="flex gap-2 ml-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-lg font-normal text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => handleDeleteCotacao(cotacao)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir
+                      </Button>
+                      {cotacao.status !== 'Finalizada' && (
+                          <Button 
+                              size="sm" 
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-normal"
+                              onClick={() => handleCreatePedido(cotacao)}
+                          >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Gerar Pedidos
+                          </Button>
+                      )}
+                    </div>
                 </div>
               </div>
             </div>

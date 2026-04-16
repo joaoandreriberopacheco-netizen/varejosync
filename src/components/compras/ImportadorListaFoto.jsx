@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Image as ImageIcon, Sparkles, Calculator, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
+import { buildProdutoMatchingPromptBase, matchesProductQuery } from '@/components/compras/productMatchingUtils';
 
 export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -64,6 +64,39 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
         return products.find((product) => product.id === item.produto_id_match) || null;
     };
 
+    const findLocalBestMatch = (textoIdentificado) => {
+        const query = (textoIdentificado || '').trim();
+        if (!query) return null;
+
+        const direct = products.find((produto) => matchesProductQuery(produto, query));
+        if (direct) return direct;
+
+        const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean);
+        let best = null;
+        let bestScore = 0;
+
+        products.forEach((produto) => {
+            const baseText = [
+                produto.nome,
+                produto.codigo_interno,
+                produto.codigo_barras,
+                produto.marca
+            ].filter(Boolean).join(' ').toLowerCase();
+
+            const score = queryWords.reduce((sum, word) => {
+                if (baseText.includes(word)) return sum + 1;
+                return sum;
+            }, 0);
+
+            if (score > bestScore) {
+                bestScore = score;
+                best = produto;
+            }
+        });
+
+        return bestScore >= Math.max(2, Math.ceil(queryWords.length / 2)) ? best : null;
+    };
+
     const updateAnalyzedItems = (updater) => {
         setAnalyzedItems((prev) => {
             const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -97,6 +130,7 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
             const prompt = `ATENÇÃO: Analise esta imagem de lista manuscrita detalhadamente.
 Sua prioridade ABSOLUTA é transcrever TODOS os itens visíveis na imagem, linha por linha.
 Não ignore nenhum item. Se houver 20 itens escritos, retorne 20 itens.
+Se houver qualquer dúvida, ainda assim retorne o item transcrito com confianca "baixa" e um possível match.
 
 ${buildProdutoMatchingPromptBase({
     produtos: products.slice(0, 400),
@@ -142,12 +176,16 @@ Retorne JSON:
 
             const itens = Array.isArray(result.itens) ? result.itens : [];
             const processedItems = itens.map(item => {
-                const matchedProduct = products.find(p => p.id === item.produto_id_match);
+                const fallbackProduct = !item.produto_id_match ? findLocalBestMatch(item.texto_identificado) : null;
+                const selectedProductId = item.produto_id_match || fallbackProduct?.id || null;
+                const matchedProduct = products.find(p => p.id === selectedProductId);
                 const suggestedQty = calculateSuggestion(matchedProduct);
 
                 return {
                     ...item,
-                    selected_product_id: item.produto_id_match || null,
+                    produto_id_match: selectedProductId,
+                    confianca: item.confianca || (fallbackProduct ? 'baixa' : 'baixa'),
+                    selected_product_id: selectedProductId,
                     quantity: suggestedQty,
                     ignored: false
                 };

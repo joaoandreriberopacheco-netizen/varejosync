@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, getProdutoLabel } from '@/components/compras/productMatchingUtils';
+import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -34,6 +34,34 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
     const updateMappings = (updater) => {
         setMappings((prev) => (typeof updater === 'function' ? updater(prev) : updater));
+    };
+
+    const findLocalBestMatch = (textoIdentificado, catalogoProdutos) => {
+        const query = (textoIdentificado || '').trim();
+        if (!query) return null;
+
+        const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query));
+        if (direct) return direct;
+
+        const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+        let best = null;
+        let bestScore = 0;
+
+        catalogoProdutos.forEach((produto) => {
+            const searchable = [
+                produto.nome,
+                produto.codigo_interno,
+                produto.codigo_barras,
+                produto.marca
+            ].filter(Boolean).join(' ').toLowerCase();
+            const score = words.reduce((sum, word) => sum + (searchable.includes(word) ? 1 : 0), 0);
+            if (score > bestScore) {
+                bestScore = score;
+                best = produto;
+            }
+        });
+
+        return bestScore >= Math.max(2, Math.ceil(words.length / 2)) ? best : null;
     };
 
     const handleFileUpload = async (e) => {
@@ -141,11 +169,17 @@ Retorne um JSON com:
             
             // Defensive check for itens array
             const itens = Array.isArray(result.itens) ? result.itens : [];
-            setMappings(itens.map(item => ({
-                ...item,
-                selected_product_id: item.produto_sistema_match_id || '',
-                ignored: !item.produto_sistema_match_id
-            })));
+            setMappings(itens.map(item => {
+                const fallback = !item.produto_sistema_match_id ? findLocalBestMatch(item.descricao_pdf, produtos) : null;
+                const selectedId = item.produto_sistema_match_id || fallback?.id || '';
+                return {
+                    ...item,
+                    produto_sistema_match_id: selectedId || null,
+                    selected_product_id: selectedId,
+                    confianca_match: item.confianca_match || (fallback ? 'baixa' : 'baixa'),
+                    ignored: !selectedId
+                };
+            }));
             setProductSearch({});
 
             setFornecedorInfo({
