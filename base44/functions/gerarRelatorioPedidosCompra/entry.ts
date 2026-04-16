@@ -67,6 +67,8 @@ const getStatusProgress = (status) => {
 
 const moeda = (valor = 0) =>
   `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const moedaSemSimbolo = (valor = 0) =>
+  Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const percentual = (valor = 0) =>
   `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 const dataFmt = (valor) => {
@@ -105,6 +107,7 @@ const custoCalculadoProduto = (produto = {}) =>
 
 const TEXT_VERTICAL_SCALE = 1.75;
 const EXPANDED_ITEMS_TABLE_FONT_SIZE = 9; // ~12px visual size in the generated PDF
+const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7.5; // ~10px visual size in the generated PDF
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 10;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 10;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.8;
@@ -471,16 +474,16 @@ Deno.serve(async (req) => {
       doc.setFillColor(...C.soft);
       doc.roundedRect(TM, y, TW, scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT), 2, 2, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
+      doc.setFontSize(EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE);
       doc.setTextColor(...C.muted);
       doc.text('QTD', TM + EXPANDED_ITEMS_TABLE_COLUMNS.qtd, y + scaledHeight(6));
       doc.text('DESCRICAO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(6));
-      doc.text('VLR. UN.', TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(6), { align: 'right' });
-      doc.text('FRETE', TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(6), { align: 'right' });
-      doc.text('OUTROS', TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(6), { align: 'right' });
-      doc.text('CUSTO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(6), { align: 'right' });
-      doc.text('TOTAL', TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(6), { align: 'right' });
-      doc.text('VENDA', TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(6), { align: 'right' });
+      doc.text('VLR. UN. (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(6), { align: 'right' });
+      doc.text('FRETE (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(6), { align: 'right' });
+      doc.text('OUTROS (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(6), { align: 'right' });
+      doc.text('CUSTO (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(6), { align: 'right' });
+      doc.text('TOTAL (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(6), { align: 'right' });
+      doc.text('VENDA (R$)', TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(6), { align: 'right' });
       doc.text('MARKUP', TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(6), { align: 'right' });
       y += scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2);
 
@@ -509,12 +512,12 @@ Deno.serve(async (req) => {
         const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
         doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         doc.text(nome,             TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moeda(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moeda(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moeda(custo),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moeda(totalLiq),  TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moeda(venda),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimbolo(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimbolo(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimbolo(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimbolo(custo),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimbolo(totalLiq),  TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimbolo(venda),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(percentual(mk),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         y += scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT);
       });
