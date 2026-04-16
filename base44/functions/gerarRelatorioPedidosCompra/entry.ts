@@ -108,6 +108,17 @@ const EXPANDED_ITEMS_TABLE_FONT_SIZE = 9; // ~12px visual size in the generated 
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 10;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 10;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.8;
+const EXPANDED_ITEMS_TABLE_COLUMNS = {
+  qtd: 2,
+  descricao: 14,
+  vlrUnit: 66,
+  frete: 83,
+  outros: 100,
+  custo: 117,
+  total: 136,
+  venda: 154,
+  markup: 171,
+};
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
@@ -462,9 +473,15 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
       doc.setTextColor(...C.muted);
-      ['QTD','DESCRICAO','VLR. UN.','FRETE','OUTROS','CUSTO','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
-        doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + scaledHeight(6));
-      });
+      doc.text('QTD', TM + EXPANDED_ITEMS_TABLE_COLUMNS.qtd, y + scaledHeight(6));
+      doc.text('DESCRICAO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(6));
+      doc.text('VLR. UN.', TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(6), { align: 'right' });
+      doc.text('FRETE', TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(6), { align: 'right' });
+      doc.text('OUTROS', TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(6), { align: 'right' });
+      doc.text('CUSTO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(6), { align: 'right' });
+      doc.text('TOTAL', TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(6), { align: 'right' });
+      doc.text('VENDA', TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(6), { align: 'right' });
+      doc.text('MARKUP', TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(6), { align: 'right' });
       y += scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2);
 
       itens.forEach((item, idx) => {
@@ -491,14 +508,14 @@ Deno.serve(async (req) => {
         doc.setTextColor(...C.text);
         const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
         doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(nome,             TM + 14,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(liq),       TM + 54,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(frete),     TM + 71,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(outros),    TM + 86,  y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(custo),     TM + 103, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(totalLiq),  TM + 121, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(moeda(venda),     TM + 139, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(percentual(mk),   TM + 156, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(nome,             TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(moeda(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moeda(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moeda(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moeda(custo),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moeda(totalLiq),  TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moeda(venda),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(percentual(mk),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         y += scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT);
       });
 
