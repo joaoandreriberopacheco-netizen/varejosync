@@ -42,10 +42,14 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
   const totalVolumes = (volumes || []).reduce((s, v) => s + (v.quantidade || 0), 0);
 
   return ReactDOM.createPortal(
-    <>
-      <div className="fixed inset-0 z-[600] bg-black/30" onClick={onClose} />
-      <div className="fixed inset-0 z-[601] flex items-center justify-center p-4" onClick={e => e.stopPropagation()}>
-        <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+    <div
+      className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
 
           {/* Header */}
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
@@ -141,8 +145,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
           </div>
 
         </div>
-      </div>
-    </>,
+    </div>,
     document.body
   );
 }

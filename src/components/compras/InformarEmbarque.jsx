@@ -9,7 +9,8 @@ import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Box
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
-import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey } from '@/components/utils/dateUtils';
+import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
+import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -212,6 +213,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   const [showTripSelector, setShowTripSelector] = useState(false);
   const [qtdEmbarque, setQtdEmbarque] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
+  const [fornecedores, setFornecedores] = useState([]);
+  const [fornecedorLocal, setFornecedorLocal] = useState({ id: '', nome: '' });
+  const [authFornecedorOpen, setAuthFornecedorOpen] = useState(false);
+  const [podeEscolherFornecedor, setPodeEscolherFornecedor] = useState(false);
 
   const eventoSelecionado = useMemo(
     () => eventosLogisticos.find((evento) => evento.id === eventoLogisticoId) || null,
@@ -226,7 +231,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   useEffect(() => {
     if (!isOpen || !pedido) return;
     loadTransportadoras();
-    loadEventosLogisticos();
+    loadEventosLogisticos(embarqueExistente);
+    loadFornecedores();
+    setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
+    setPodeEscolherFornecedor(false);
     setActiveTab('transporte');
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? toLocalDateKey(new Date(embarqueExistente.data_embarque)) : dataHoje());
@@ -280,30 +288,33 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     }
   };
 
-  const loadEventosLogisticos = async () => {
+  const loadEventosLogisticos = async (embarqueRef) => {
     try {
       const data = await base44.entities.EventoLogisticoSandbox.list('-data_referencia', 100);
-      setEventosLogisticos(data || []);
+      let merged = data || [];
+      const needId = embarqueRef?.evento_logistico_id;
+      if (needId && !merged.find((e) => e.id === needId)) {
+        try {
+          const extra = await base44.entities.EventoLogisticoSandbox.filter({ id: needId });
+          if (extra?.[0]) merged = [...merged, extra[0]];
+        } catch {
+          /* ignora evento removido do sandbox */
+        }
+      }
+      setEventosLogisticos(merged);
     } catch {
       toast.error('Erro ao carregar eventos logísticos');
     }
   };
 
-  useEffect(() => {
-    if (!eventoSelecionado) return;
-
-    setTransportadoraId(eventoSelecionado.transportadora_id || '');
-
-    const dataSaida = eventoSelecionado.data_saida_origem || eventoSelecionado.data_referencia;
-    if (dataSaida) {
-      setDataDespacho(String(dataSaida).slice(0, 10));
+  const loadFornecedores = async () => {
+    try {
+      const data = await base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 500);
+      setFornecedores(data || []);
+    } catch {
+      toast.error('Erro ao carregar fornecedores');
     }
-
-    const dataEta = eventoSelecionado.previsao_chegada || eventoSelecionado.data_chegada_destino;
-    if (dataEta) {
-      setEta(String(dataEta).slice(0, 10));
-    }
-  }, [eventoSelecionado]);
+  };
 
   const handleSelectTrip = (evento) => {
     setEventoLogisticoId(evento?.id || '');
@@ -330,8 +341,25 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   const handleSalvar = async () => {
     if (!eta) return toast.error('Informe a data de chegada prevista (ETA)');
 
+    const fornecedorIdFinal = fornecedorLocal.id || pedido.fornecedor_id;
+    const fornecedorNomeFinal = fornecedorLocal.nome || pedido.fornecedor_nome;
+    if (podeEscolherFornecedor && !fornecedorIdFinal) {
+      return toast.error('Selecione um fornecedor ou cancele a alteração');
+    }
+
     setLoading(true);
     try {
+      if (fornecedorIdFinal && fornecedorIdFinal !== pedido.fornecedor_id) {
+        const rows = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+        const atual = rows?.[0] || pedido;
+        await base44.entities.PedidoCompra.update(pedido.id, {
+          ...atual,
+          fornecedor_id: fornecedorIdFinal,
+          fornecedor_nome: fornecedorNomeFinal,
+          historico: `${atual.historico || ''}\n[Fornecedor alterado no despacho — ${fornecedorNomeFinal} — ${formatarLogTime()}]`,
+        });
+      }
+
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
       const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
@@ -366,6 +394,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         eta: meioDiaSistemaISO(eta),
         transportadora_id: transportadoraId,
         transportadora_nome: transportadora?.nome || '',
+        fornecedor_id: fornecedorIdFinal,
+        fornecedor_nome: fornecedorNomeFinal,
         evento_logistico_id: eventoLogisticoId || '',
         volumes: volumesTexto,
         volumes_detalhados: volumesDetalhados,
@@ -382,8 +412,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         await base44.entities.Embarque.create({
           pedido_compra_id: pedido.id,
           pedido_compra_numero: pedido.numero,
-          fornecedor_id: pedido.fornecedor_id,
-          fornecedor_nome: pedido.fornecedor_nome,
+          fornecedor_id: fornecedorIdFinal,
+          fornecedor_nome: fornecedorNomeFinal,
           numero: String(embarquesExistentes.length + 1).padStart(2, '0'),
           codigo_exibicao: `${pedido.numero}-${letraExibicao}`,
           tipo: 'Embarque',
@@ -430,6 +460,50 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
             </TabsList>
 
               <TabsContent value="transporte" className="space-y-5 mt-0">
+                <div className="space-y-2 rounded-xl border border-white/10 bg-[#1a2230] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-400">Fornecedor do pedido</p>
+                      <p className="text-sm font-medium text-white truncate">{fornecedorLocal.nome || '—'}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAuthFornecedorOpen(true)}
+                      className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+                    >
+                      Alterar (senha)
+                    </button>
+                  </div>
+                  {podeEscolherFornecedor && (
+                    <div className="space-y-1.5 pt-1 border-t border-white/10">
+                      <label className="text-xs text-slate-400">Selecionar fornecedor</label>
+                      <select
+                        value={fornecedorLocal.id}
+                        onChange={(e) => {
+                          const fn = fornecedores.find((f) => f.id === e.target.value);
+                          setFornecedorLocal({ id: fn?.id || '', nome: fn?.nome || '' });
+                        }}
+                        className="w-full h-11 rounded-xl border-0 bg-[#1f2937] px-3 text-sm text-white"
+                      >
+                        <option value="">Selecione...</option>
+                        {fornecedores.map((f) => (
+                          <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="text-xs text-slate-500 hover:text-slate-300"
+                        onClick={() => {
+                          setPodeEscolherFornecedor(false);
+                          setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
+                        }}
+                      >
+                        Cancelar alteração
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
@@ -440,8 +514,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                       type="date"
                       value={dataDespacho}
                       onChange={e => setDataDespacho(e.target.value)}
-                      disabled={!!eventoLogisticoId}
-                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white disabled:opacity-70"
+                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -453,8 +526,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                       type="date"
                       value={eta}
                       onChange={e => setEta(e.target.value)}
-                      disabled={!!eventoLogisticoId}
-                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white disabled:opacity-70"
+                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white"
                     />
                   </div>
                 </div>
@@ -463,14 +535,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   <label className="text-sm text-gray-500 dark:text-gray-400">
                     Transportadora <span className="text-xs text-gray-400 font-normal">(opcional)</span>
                   </label>
-                  <div className={eventoLogisticoId ? 'pointer-events-none opacity-70' : ''}>
-                    <TransportadoraSearch
-                      transportadoras={transportadoras}
-                      value={transportadoraId}
-                      onChange={setTransportadoraId}
-                      onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
-                    />
-                  </div>
+                  <TransportadoraSearch
+                    transportadoras={transportadoras}
+                    value={transportadoraId}
+                    onChange={setTransportadoraId}
+                    onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -483,18 +553,18 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                     className="w-full h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white px-4 flex items-center gap-3 text-left"
                   >
                     <ShipWheel className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-white' : 'text-slate-400'}`}>
                       {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Selecionar viagem no itinerário'}
                     </span>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
                   {eventoSelecionado ? (
                     <div className="flex items-center justify-between gap-3 px-1">
-                      <p className="text-xs text-gray-400">
-                        Transportadora e datas serão sobrescritas automaticamente pela viagem.
+                      <p className="text-xs text-slate-400">
+                        Ao escolher a viagem, datas e transportadora foram preenchidas; você pode ajustar manualmente.
                       </p>
-                      <button type="button" onClick={() => setEventoLogisticoId('')} className="text-xs text-gray-500 dark:text-gray-400">
-                        Limpar
+                      <button type="button" onClick={() => setEventoLogisticoId('')} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
+                        Limpar vínculo
                       </button>
                     </div>
                   ) : null}
@@ -630,6 +700,16 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         open={showTripSelector}
         onClose={() => setShowTripSelector(false)}
         onSelect={handleSelectTrip}
+      />
+
+      <OperacaoAuthenticator
+        isOpen={authFornecedorOpen}
+        onClose={() => setAuthFornecedorOpen(false)}
+        onSuccess={() => {
+          setAuthFornecedorOpen(false);
+          setPodeEscolherFornecedor(true);
+        }}
+        operationName="Alterar fornecedor do pedido no despacho"
       />
     </>
   );
