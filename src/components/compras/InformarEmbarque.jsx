@@ -343,8 +343,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
     const fornecedorIdFinal = fornecedorLocal.id || pedido.fornecedor_id;
     const fornecedorNomeFinal = fornecedorLocal.nome || pedido.fornecedor_nome;
-    if (podeEscolherFornecedor && !fornecedorIdFinal) {
-      return toast.error('Selecione um fornecedor ou cancele a alteração');
+    if (podeEscolherFornecedor) {
+      return toast.error('Confirme ou cancele a alteração de fornecedor antes de salvar o despacho.');
     }
 
     setLoading(true);
@@ -475,7 +475,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                     </button>
                   </div>
                   {podeEscolherFornecedor && (
-                    <div className="space-y-1.5 pt-1 border-t border-white/10">
+                    <div className="space-y-2 pt-1 border-t border-white/10">
                       <label className="text-xs text-slate-400">Selecionar fornecedor</label>
                       <select
                         value={fornecedorLocal.id}
@@ -490,16 +490,32 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                           <option key={f.id} value={f.id}>{f.nome}</option>
                         ))}
                       </select>
-                      <button
-                        type="button"
-                        className="text-xs text-slate-500 hover:text-slate-300"
-                        onClick={() => {
-                          setPodeEscolherFornecedor(false);
-                          setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
-                        }}
-                      >
-                        Cancelar alteração
-                      </button>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-500"
+                          onClick={() => {
+                            if (!fornecedorLocal.id) {
+                              toast.error('Selecione um fornecedor');
+                              return;
+                            }
+                            setPodeEscolherFornecedor(false);
+                            toast.success('Fornecedor definido para este despacho. Salve o formulário para gravar.');
+                          }}
+                        >
+                          Confirmar alteração
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/20"
+                          onClick={() => {
+                            setPodeEscolherFornecedor(false);
+                            setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

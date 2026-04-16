@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
@@ -136,8 +137,9 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
 
-  return (
-    <div className="fixed inset-0 z-[120] bg-gray-50 dark:bg-gray-900 overflow-hidden">
+  /* Portal em document.body + z alto: o modal de despacho (Radix z-50) ficava por cima quando o seletor era filho de #root */
+  return createPortal(
+    <div className="fixed inset-0 z-[10050] bg-gray-50 dark:bg-gray-900 overflow-hidden">
       <div className="flex h-full flex-col w-full md:max-w-2xl md:mx-auto">
         <div className="sticky top-0 z-30 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-3 pt-3 pb-2 space-y-3">
           <div className="flex items-center gap-3">
@@ -246,6 +248,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
