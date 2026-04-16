@@ -24,3 +24,17 @@ Três camadas, por ordem de automação:
 
 - Tabela `public.catalogo_interface` espelha a entidade; ver migração `004_catalogo_interface.sql`.
 - Em produção, apertar políticas RLS (hoje homologação permite leitura/escrita a `authenticated` — ajustar para escrita só admin ou `service_role` quando o modelo de auth estiver fechado).
+
+## Bootstrap do catálogo (módulos → páginas)
+
+1. **Gerar ficheiros** (a partir da lista em `scripts/generate-catalogo-interface-seed.mjs`):
+   ```bash
+   npm run catalogo:generate-seed
+   ```
+   Produz:
+   - `supabase/seeds/generated_catalogo_interface.sql` — `INSERT` com módulos e uma linha `pagina` por rota em `pages.config.js` (sob o pai `cat_piloto_raiz` do `seed.sql`).
+   - `docs/migration/catalogo_interface_bootstrap.json` — resumo dos módulos e páginas.
+
+2. **Supabase:** com a migração `004` aplicada e o `seed.sql` base (nó `cat_piloto_raiz`), executar o SQL gerado no Studio ou `psql` (ou incluir o ficheiro num pipeline de seeds). Usa `on conflict (id) do nothing` para ser idempotente.
+
+3. **Só Base44 (sem Postgres):** importar registos equivalentes na entidade (por UI, script com SDK, ou exportar a partir do Supabase após seed). O SQL não corre no runtime Base44 puro; o gerador pode ser alinhado no futuro a um JSON em massa se a plataforma expuser API de bulk create.

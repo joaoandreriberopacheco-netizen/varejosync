@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "root_id": "cat_piloto_raiz",
+  "generated_at": "2026-04-16T05:01:56.853Z",
+  "modules": [
+    {
+      "id": "cvi_mod_geral",
+      "stable_code": "CAT-MOD-GERAL",
+      "titulo": "Visão geral e painéis",
+      "ordem": 0,
+      "pages": [
+        "Home",
+        "Dashboard",
+        "DashboardCaixa",
+        "DashboardVendedor",
+        "PainelGerente"
+      ]
+    },
+    {
+      "id": "cvi_mod_vendas",
+      "stable_code": "CAT-MOD-VENDAS",
+      "titulo": "Vendas",
+      "ordem": 1,
+      "pages": [
+        "PDV",
+        "Vendas",
+        "VendasGestao",
+        "VendasPerdidas",
+        "DevolucaoTroca",
+        "AutoAtendimento",
+        "Campanhas",
+        "TabelasPreco"
+      ]
+    },
+    {
+      "id": "cvi_mod_compras",
+      "stable_code": "CAT-MOD-COMPRAS",
+      "titulo": "Compras e conferência",
+      "ordem": 2,
+      "pages": [
+        "Compras",
+        "ConferenciaEditor",
+        "ConferenciaEntrada",
+        "ConferenciaEstoque",
+        "ConferenciaItens",
+        "ConferenciaVolumes",
+        "InterfaceSeparador",
+        "DiscriminarVolumes"
+      ]
+    },
+    {
+      "id": "cvi_mod_estoque",
+      "stable_code": "CAT-MOD-ESTOQUE",
+      "titulo": "Estoque e produtos",
+      "ordem": 3,
+      "pages": [
+        "Estoque",
+        "Produtos",
+        "ImportacaoProdutos",
+        "AuditoriaEstoque",
+        "AuditoriaEstoqueV2",
+        "OtimizacaoEstoqueIA",
+        "EditarProdutosEmMassa",
+        "EdicaoMassivaCustos",
+        "EstimativaEmbalagensIA",
+        "ExclusaoDocumentos"
+      ]
+    },
+    {
+      "id": "cvi_mod_financeiro",
+      "stable_code": "CAT-MOD-FINANCEIRO",
+      "titulo": "Financeiro e caixa",
+      "ordem": 4,
+      "pages": [
+        "Financeiro",
+        "FinanceiroModulo",
+        "FinanceiroAprovacoes",
+        "FluxoCaixa",
+        "ContasFinanceiras",
+        "ExtratoConta",
+        "LancamentoAnexos",
+        "Agefin",
+        "AtualizarBoletoRecorrente",
+        "TurnosFechados",
+        "CaixasAtivos",
+        "ControleCaixasAtivos",
+        "PDVAuditoria"
+      ]
+    },
+    {
+      "id": "cvi_mod_logistica",
+      "stable_code": "CAT-MOD-LOGISTICA",
+      "titulo": "Logística",
+      "ordem": 5,
+      "pages": [
+        "HubLogistico",
+        "Expedicao",
+        "Veiculos",
+        "ControleEntregas",
+        "Armazenagem",
+        "ReimpressaoDocumentos"
+      ]
+    },
+    {
+      "id": "cvi_mod_config",
+      "stable_code": "CAT-MOD-CONFIG",
+      "titulo": "Configuração e cadastros",
+      "ordem": 6,
+      "pages": [
+        "Configuracoes",
+        "Terceiros",
+        "Intervenientes",
+        "Operacoes",
+        "Manual",
+        "MapaFuncionalidades",
+        "LogsAutenticacao",
+        "AnexoCompartilhado"
+      ]
+    },
+    {
+      "id": "cvi_mod_relatorios",
+      "stable_code": "CAT-MOD-RELATORIOS",
+      "titulo": "Relatórios",
+      "ordem": 7,
+      "pages": [
+        "Relatorios",
+        "RelatorioMargem",
+        "RelatorioPerformance"
+      ]
+    }
+  ],
+  "unassigned_if_any": []
+}

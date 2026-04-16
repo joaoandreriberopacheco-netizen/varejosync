@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "catalogo:generate-seed": "node scripts/generate-catalogo-interface-seed.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.26",
