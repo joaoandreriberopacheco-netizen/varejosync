@@ -40,6 +40,7 @@ import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
+import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -641,6 +642,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   const handleReopenForEdit = async (authData) => {
     try {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
+      if (temLancamentoPagoParaPedido(lancs)) {
+        toast({
+          title: 'Não é possível reabrir',
+          description: 'Há parcelas já pagas neste pedido. Regularize no financeiro antes de reabrir.',
+          variant: 'destructive',
+        });
+        setIsReopenAuthOpen(false);
+        return;
+      }
+      const refNote = `| Ref: ${authData.operationCode} | ${formatarLogTime()}`;
+      await cancelarLancamentosNaoPagosPedidoCompra(base44, pedido.id, refNote);
       const authNote = `\n[Reaberto para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${formatarLogTime()}]`;
       
       await base44.entities.PedidoCompra.update(pedido.id, {
@@ -671,9 +684,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const isLocked = pedido && (
     pedido.status === 'Aguardando Aprovação Financeira' ||
     pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
-    pedido.status_aprovacao_financeira === 'Aprovado' || 
-    pedido.status_aprovacao_financeira === 'Rejeitado'
+    pedido.status_aprovacao_financeira === 'Aprovado' ||
+    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ||
+    pedido.status_aprovacao_financeira === 'Rejeitado' ||
+    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ||
+    pedido.status_aprovacao_financeira === 'Solicitação de Edição Pendente'
   );
+
+  const solicitacaoEdicaoPendente = pedido?.status_aprovacao_financeira === 'Solicitação de Edição Pendente';
+  const podeSolicitarCorrecao =
+    !!pedido?.id &&
+    isLocked &&
+    !solicitacaoEdicaoPendente &&
+    pedido.status_aprovacao_financeira !== 'Rejeitado' &&
+    pedido.status_aprovacao_financeira !== 'Rejeitado Financeiramente';
 
   const isLogisticaEnabled = true;
 
@@ -737,7 +761,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setIsSaving(true);
     
     try {
-      const tsAgora = agora();
       const authNote = `\n[Autenticado: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${formatarLogTime()}]`;
       
       const statusAnterior = pedido?.status || 'Rascunho';
@@ -772,15 +795,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         });
       }
 
-      clearDraft();
-      toast({
-        title: "Sucesso",
-        description: "Pedido salvo com sucesso!",
-        className: "bg-green-100 text-green-800 border-green-200"
-      });
-      
       // Verificar se mudou para "Aguardando Liberação" APÓS salvar
       const mudouParaAguardando = statusNovo === 'Aguardando Aprovação Financeira' && statusAnterior !== 'Aguardando Aprovação Financeira';
+      let reenvioFinanceiroBloqueado = false;
 
       if (mudouParaAguardando && pedidoId) {
         // Buscar o pedido atualizado para ter certeza que tem todos os dados
@@ -788,6 +805,24 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         const currentPO = pedidosAtualizados[0];
 
         if (currentPO) {
+          const lancsExistentes = await listarLancamentosPedidoCompra(base44, pedidoId);
+          if (temLancamentoPagoParaPedido(lancsExistentes)) {
+            const revertNote = `\n[Reenvio ao financeiro cancelado: há parcelas pagas | ${formatarLogTime()}]`;
+            await base44.entities.PedidoCompra.update(pedidoId, {
+              status: statusAnterior,
+              status_aprovacao_financeira: pedido?.status_aprovacao_financeira || 'Pendente',
+              historico: (currentPO.historico || '') + revertNote,
+            });
+            reenvioFinanceiroBloqueado = true;
+            toast({
+              title: 'Reenvio bloqueado',
+              description: 'Este pedido tem parcelas já pagas. O financeiro precisa alinhar os pagamentos antes de um novo envio.',
+              variant: 'destructive',
+            });
+          } else {
+          const notaCancel = `| Reenvio ao financeiro | Ref: ${authData.operationCode || ''} | ${formatarLogTime()}`;
+          await cancelarLancamentosNaoPagosPedidoCompra(base44, pedidoId, notaCancel);
+
           // 1. Criar Lançamentos Financeiros (Em Aberto, bloqueados para aprovação)
           const baseLancamento = {
             tipo: 'Despesa',
@@ -860,7 +895,21 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             description: `Conta a pagar criada e tarefa de acompanhamento gerada.`,
             className: "bg-emerald-100 text-emerald-800"
           });
+          }
         }
+      }
+
+      clearDraft();
+      if (mudouParaAguardando && reenvioFinanceiroBloqueado) {
+        // Pedido revertido no servidor; evitar toast de sucesso enganoso
+      } else if (mudouParaAguardando && pedidoId) {
+        // Sucesso já coberto pelo toast verde dentro do bloco de envio
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Pedido salvo com sucesso!",
+          className: "bg-green-100 text-green-800 border-green-200"
+        });
       }
       
     } catch (error) {
@@ -1374,6 +1423,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
            onSave={handleInitiateSave}
            isSaving={isSaving}
            isDisabled={isSaving}
+           mostrarSolicitarEdicao={podeSolicitarCorrecao}
+           onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
            />
            )}
 

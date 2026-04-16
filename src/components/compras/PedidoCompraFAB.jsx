@@ -146,7 +146,7 @@ export default function PedidoCompraFAB({
     },
     mostrarSolicitarEdicao && {
       icon: <Wrench className="w-5 h-5" />,
-      label: 'Reabrir',
+      label: 'Solicitar correção',
       onClick: () => { onSolicitarEdicao?.(); setIsExpanded(false); },
       color: 'bg-amber-500 text-white',
     },

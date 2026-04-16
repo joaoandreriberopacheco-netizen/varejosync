@@ -222,6 +222,28 @@ export function resolveImportToAbs(importPath, root, fromAbsPath = null) {
   return null;
 }
 
+/**
+ * Prioridade para percorrer imports antes de atingir maxImportFiles.
+ * FAB, modais e fluxos críticos de compras/logística entram primeiro.
+ */
+const IMPORT_WALK_PRIORITY_RULES = [
+  { re: /FAB|Fab\b|p38-bottom-fab/i, score: 100 },
+  { re: /Modal|Dialog|Drawer|Sheet|Popover|AlertDialog|CommandDialog/i, score: 92 },
+  { re: /Embarque|Despacho|Informar\w*Embarque|Informar\w*Despacho/i, score: 88 },
+  { re: /Anexos|Attachment|Upload/i, score: 84 },
+  { re: /Wizard|Checkout|Stepper|MultiStep/i, score: 72 },
+  { re: /Inspector|Overlay|QuickPanel|SidePanel/i, score: 68 },
+];
+
+function importWalkPriority(imp) {
+  const hay = `${imp.name || ''} ${imp.path || ''}`.replace(/\\/g, '/');
+  let best = 0;
+  for (const { re, score } of IMPORT_WALK_PRIORITY_RULES) {
+    if (re.test(hay)) best = Math.max(best, score);
+  }
+  return best;
+}
+
 /** Imports de domínio a seguir (mesma regra que build-catalogo-preview) */
 export function listDomainImportsFromSource(src) {
   const patterns = [
@@ -261,7 +283,12 @@ function collectImportedComponentSections({
 }) {
   if (!src || importsWalked.length >= maxImportFiles) return [];
 
-  const imports = listDomainImportsFromSource(src);
+  const rawImports = listDomainImportsFromSource(src);
+  const imports = rawImports
+    .map((imp, index) => ({ imp, index, prio: importWalkPriority(imp) }))
+    .sort((a, b) => b.prio - a.prio || a.index - b.index)
+    .map(({ imp }) => imp);
+
   const sections = [];
 
   for (const imp of imports) {

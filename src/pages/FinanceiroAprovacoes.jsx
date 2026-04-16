@@ -16,6 +16,11 @@ import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import AprovacaoPedidoMobile from '@/components/compras/AprovacaoPedidoMobile';
+import {
+  cancelarLancamentosNaoPagosPedidoCompra,
+  listarLancamentosPedidoCompra,
+  temLancamentoPagoParaPedido,
+} from '@/lib/pedidoCompraFinanceiro';
 
 export default function FinanceiroAprovacoesPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -734,6 +739,21 @@ export default function FinanceiroAprovacoesPage() {
         onClose={() => setIsAprovacaoEdicaoAuthOpen(false)}
         onSuccess={async (authData) => {
           try {
+            const lancs = await listarLancamentosPedidoCompra(base44, selectedSolicitacao.id);
+            if (temLancamentoPagoParaPedido(lancs)) {
+              toast({
+                title: 'Não é possível liberar edição',
+                description:
+                  'Existem parcelas já pagas neste pedido. Ajuste ou estorne no financeiro antes de liberar a edição do pedido.',
+                variant: 'destructive',
+              });
+              setIsAprovacaoEdicaoAuthOpen(false);
+              setSelectedSolicitacao(null);
+              return;
+            }
+            const nota = `| Liberar edição | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
+            await cancelarLancamentosNaoPagosPedidoCompra(base44, selectedSolicitacao.id, nota);
+
             await base44.entities.PedidoCompra.update(selectedSolicitacao.id, {
               status_aprovacao_financeira: 'Pendente',
               status: 'Rascunho',
@@ -743,7 +763,7 @@ export default function FinanceiroAprovacoesPage() {
 
             toast({
               title: "Edição liberada",
-              description: "O pedido foi liberado para edição pelo setor de compras.",
+              description: "Parcelas em aberto foram canceladas. Compras pode corrigir o pedido e reenviar ao financeiro.",
               className: "bg-gray-100 text-gray-800"
             });
 
