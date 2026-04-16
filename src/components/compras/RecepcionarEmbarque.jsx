@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
+import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
+import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 
 function getItensDoEmbarque(embarque) {
   const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
@@ -23,10 +24,10 @@ function getItensDoEmbarque(embarque) {
     let quantidade_recebida;
     if (!aguardandoRecepcao) {
       quantidade_recebida = hasExplicitRecebida
-        ? Number(item.quantidade_recebida) || 0
-        : (Number(item.quantidade_embarcada) || 0);
+        ? roundToTwoDecimals(Number(item.quantidade_recebida) || 0)
+        : roundToTwoDecimals(Number(item.quantidade_embarcada) || 0);
     } else if (hasExplicitRecebida) {
-      quantidade_recebida = Number(item.quantidade_recebida) || 0;
+      quantidade_recebida = roundToTwoDecimals(Number(item.quantidade_recebida) || 0);
     } else {
       quantidade_recebida = 0;
     }
@@ -69,7 +70,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const copiarQuantidadesEmbarcado = () => {
     setItens((prev) =>
       prev.map((item) => {
-        const qtdEmb = Number(item.quantidade_embarcada) || 0;
+        const qtdEmb = roundToTwoDecimals(Number(item.quantidade_embarcada) || 0);
         return {
           ...item,
           quantidade_recebida: qtdEmb,
@@ -82,7 +83,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
   const handleQuantidadeChange = (index, value) => {
     const newItens = [...itens];
-    newItens[index].quantidade_recebida = parseFloat(value) || 0;
+    newItens[index].quantidade_recebida = roundToTwoDecimals(parseFloat(value) || 0);
     
     // Auto-detectar divergência de quantidade
     const qtdEmb = newItens[index].quantidade_embarcada;
@@ -162,9 +163,16 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const handleConfirmarRecebimento = async () => {
     setIsSaving(true);
     try {
-      const novoEmbarque = { ...embarque, itens: itens, itens_embarcados: itens };
-      const temDivergencia = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
-      const todosRecebidos = itens.every(i => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0));
+      const itensNorm = itens.map((item) => ({
+        ...item,
+        quantidade_embarcada: roundToTwoDecimals(item.quantidade_embarcada),
+        quantidade_recebida: roundToTwoDecimals(item.quantidade_recebida),
+      }));
+      const novoEmbarque = { ...embarque, itens: itensNorm, itens_embarcados: itensNorm };
+      const temDivergencia = itensNorm.some(i => i.divergencia_tipo !== 'Nenhuma');
+      const todosRecebidos = itensNorm.every(
+        (i) => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0)
+      );
       
       let statusRecebimento = 'Recebido OK';
       if (temDivergencia) {
@@ -179,8 +187,10 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : []);
       const outrosEmbarques = embarques.filter(e => e.id !== embarque.id);
 
-      const itensOrfaos = itens.map((item) => {
-        const saldo = Math.max(0, Number(item.quantidade_embarcada || 0) - Number(item.quantidade_recebida || 0));
+      const itensOrfaos = itensNorm.map((item) => {
+        const saldo = roundToTwoDecimals(
+          Math.max(0, Number(item.quantidade_embarcada || 0) - Number(item.quantidade_recebida || 0))
+        );
         if (!saldo) return null;
         return {
           produto_id: item.produto_id,
@@ -227,8 +237,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         await base44.entities.Embarque.update(embarque.id, {
           status: novoEmbarque.status,
           status_recebimento: statusRecebimento,
-          itens,
-          itens_embarcados: itens,
+          itens: itensNorm,
+          itens_embarcados: itensNorm,
           observacoes: novoEmbarque.observacoes,
         });
       }
@@ -237,9 +247,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         await base44.entities.Embarque.create(embarqueOrfao);
       }
 
-      const divergenciasCount = itens.filter(i => i.divergencia_tipo !== 'Nenhuma').length;
+      const divergenciasCount = itensNorm.filter(i => i.divergencia_tipo !== 'Nenhuma').length;
       const divergenciasDesc = divergenciasCount > 0 ? ` | ${divergenciasCount} divergência(s)` : '';
-      const resumoItens = itens.map(i => `${i.produto_nome}: ${i.quantidade_recebida}/${i.quantidade_embarcada}`).join('; ');
+      const resumoItens = itensNorm.map(i => `${i.produto_nome}: ${formatQuantity(i.quantidade_recebida)}/${formatQuantity(i.quantidade_embarcada)}`).join('; ');
 
       await base44.entities.PedidoCompra.update(pedido.id, {
         historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`
@@ -249,7 +259,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
       // Movimentos de compra abaixo; a função cloud não deve duplicar entrada (ver embarqueFilters.js)
       // Gerar movimentações de estoque
-      for (const item of itens) {
+      for (const item of itensNorm) {
         if (item.quantidade_recebida > 0) {
           const produtoId = item.produto_id_recebido_diferente || item.produto_id;
           await base44.entities.MovimentacaoEstoque.create({
@@ -365,7 +375,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                           {item.produto_nome}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Embarcado: <span className="font-medium text-gray-900 dark:text-white">{item.quantidade_embarcada} {item.unidade_medida}</span>
+                          Embarcado: <span className="font-medium text-gray-900 dark:text-white">{formatQuantity(item.quantidade_embarcada)} {item.unidade_medida}</span>
                         </p>
                       </div>
                       {hasDivergencia && (

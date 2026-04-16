@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 import ComprovanteCompra from './ComprovanteCompra';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess }) {
   const [pagamentos, setPagamentos] = useState([{ forma_pagamento: 'Dinheiro', valor: '' }]);
@@ -73,8 +74,10 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
     setPagamentos(newPagamentos);
   };
 
-  const totalPago = pagamentos.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
-  const faltaPagar = pedido?.valor_total - totalPago;
+  const totalPago = roundToTwoDecimals(
+    pagamentos.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0)
+  );
+  const faltaPagar = roundToTwoDecimals((pedido?.valor_total || 0) - totalPago);
   const pagamentoCompleto = Math.abs(faltaPagar) < 0.01;
 
   const handleConfirmar = async () => {

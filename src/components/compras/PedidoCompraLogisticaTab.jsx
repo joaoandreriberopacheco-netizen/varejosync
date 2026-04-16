@@ -7,13 +7,16 @@ import AcordoFinanceiroOrfaoDialog from './AcordoFinanceiroOrfaoDialog';
 import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 
 // Calcula total embarcado por produto em TODOS os embarques
 function calcularTotalEmbarcado(embarques) {
   const map = {};
   (embarques || []).forEach((emb) => {
     (emb.itens_embarcados || emb.itens || []).forEach((item) => {
-      map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
+      const prev = map[item.produto_id] || 0;
+      const add = Number(item.quantidade_embarcada) || 0;
+      map[item.produto_id] = roundToTwoDecimals(prev + add);
     });
   });
   return map;
@@ -34,7 +37,9 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const dataEmb = parseValidDate(embarque.data_embarque);
   const eta = parseValidDate(embarque.eta);
   const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
-  const totalItens = itensEmbarque.reduce((s, i) => s + (i.quantidade_embarcada || 0), 0);
+  const totalItens = roundToTwoDecimals(
+    itensEmbarque.reduce((s, i) => s + (Number(i.quantidade_embarcada) || 0), 0)
+  );
   const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
   const podeExcluir = !['Recebido OK', 'Recebido Parcial', 'Concluído', 'Concluído OK', 'Concluído com Divergência'].includes(statusRecebimento);
@@ -91,7 +96,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
             {embarque.volumes && <span>{embarque.volumes}</span>}
             {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
             <span>{statusRecebimento}</span>
-            <span className="text-gray-500">{totalItens} un. embarcadas</span>
+            <span className="text-gray-500">{formatQuantity(totalItens)} un. embarcadas</span>
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
@@ -121,7 +126,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
         <div key={item.produto_id} className="flex items-center justify-between">
               <span className="text-xs text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{item.produto_nome}</span>
               <span className="text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                {item.quantidade_embarcada} / {item.quantidade_pedida} {item.unidade_medida}
+                {formatQuantity(item.quantidade_embarcada)} / {formatQuantity(item.quantidade_pedida)} {item.unidade_medida}
               </span>
             </div>
         )}
@@ -168,7 +173,7 @@ function ItensOrfaos({ itens, onAcordo }) {
         <div key={item.produto_id} className="flex items-start justify-between gap-3">
             <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-tight">{item.produto_nome}</span>
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap flex-shrink-0">
-              {item.qtd_pendente} <span className="text-gray-400 font-normal">{item.unidade_medida}</span> <span className="text-xs text-gray-400">pend.</span>
+              {formatQuantity(item.qtd_pendente)} <span className="text-gray-400 font-normal">{item.unidade_medida}</span> <span className="text-xs text-gray-400">pend.</span>
             </span>
           </div>
         )}
@@ -204,7 +209,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
     return (pedido?.itens || []).
     map((item) => ({
       ...item,
-      qtd_pendente: Math.max(0, (item.quantidade || 0) - (totalEmbarcado[item.produto_id] || 0))
+      qtd_pendente: roundToTwoDecimals(
+        Math.max(0, (Number(item.quantidade) || 0) - (totalEmbarcado[item.produto_id] || 0))
+      )
     })).
     filter((item) => item.qtd_pendente > 0);
   }, [pedido, totalEmbarcado]);

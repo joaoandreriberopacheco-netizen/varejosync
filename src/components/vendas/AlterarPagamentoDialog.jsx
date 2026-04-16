@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Search, CheckCircle2, CreditCard, Banknote, Smartphone, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 function BuscarPedidoStep({ onFound }) {
   const [numeroPedido, setNumeroPedido] = useState('');
@@ -66,8 +67,10 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
   const formas = ['Dinheiro', 'PIX', 'Cartão de Débito', 'Cartão de Crédito', 'Vale Compra'];
   const formatValor = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-  const totalPago = pagamentos.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
-  const diferenca = totalPago - pedido.valor_total;
+  const totalPago = roundToTwoDecimals(
+    pagamentos.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0)
+  );
+  const diferenca = roundToTwoDecimals(totalPago - (pedido.valor_total || 0));
 
   const atualizarPagamento = (id, campo, valor) => {
     setPagamentos(prev => prev.map(p => p._id === id ? { ...p, [campo]: valor } : p));
@@ -87,7 +90,10 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
       toast({ title: `Diferença de ${formatValor(Math.abs(diferenca))}`, description: 'O total dos pagamentos deve ser igual ao valor do pedido.', variant: 'destructive' });
       return;
     }
-    const limpos = pagamentos.map(({ _id, ...rest }) => ({ ...rest, valor: parseFloat(rest.valor) || 0 }));
+    const limpos = pagamentos.map(({ _id, ...rest }) => ({
+      ...rest,
+      valor: roundToTwoDecimals(parseFloat(rest.valor) || 0),
+    }));
     onConfirm(limpos);
   };
 

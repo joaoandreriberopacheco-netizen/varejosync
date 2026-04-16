@@ -12,6 +12,7 @@ import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelec
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,8 @@ function calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistenteId) {
   embarques.forEach((emb) => {
     if (embarqueExistenteId && emb.id === embarqueExistenteId) return;
     (emb.itens || emb.itens_embarcados || []).forEach((item) => {
-      map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
+      const prev = map[item.produto_id] || 0;
+      map[item.produto_id] = roundToTwoDecimals(prev + (Number(item.quantidade_embarcada) || 0));
     });
   });
   return map;
@@ -34,9 +36,9 @@ function calcularStatusEmbarque(itens, jaEmbarcado, qtdEmbarque, selectedItems) 
     const pedida = item.quantidade || 0;
     const anterior = jaEmbarcado[item.produto_id] || 0;
     const selecionado = selectedItems[item.produto_id] !== false;
-    const nova = selecionado ? (parseFloat(qtdEmbarque[item.produto_id]) || 0) : 0;
-    totalPedido += pedida;
-    totalEmbarcado += Math.min(anterior + nova, pedida);
+    const nova = selecionado ? roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0) : 0;
+    totalPedido = roundToTwoDecimals(totalPedido + pedida);
+    totalEmbarcado = roundToTwoDecimals(totalEmbarcado + Math.min(anterior + nova, pedida));
   });
   if (totalEmbarcado <= 0) return 'Nenhum';
   if (totalEmbarcado >= totalPedido) return 'Total';
@@ -52,7 +54,8 @@ function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
   (embarquesAtualizados || []).forEach((emb) => {
     if (emb.status === 'Pendente') return;
     (emb.itens_embarcados || []).forEach((item) => {
-      qtdPorProduto[item.produto_id] = (qtdPorProduto[item.produto_id] || 0) + (Number(item.quantidade_embarcada) || 0);
+      const prevQ = qtdPorProduto[item.produto_id] || 0;
+      qtdPorProduto[item.produto_id] = roundToTwoDecimals(prevQ + (Number(item.quantidade_embarcada) || 0));
     });
   });
 
@@ -347,8 +350,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     [pedido, jaEmbarcado, qtdEmbarque, selectedItems]
   );
 
-  const totalVolumesQtd = volumes.reduce((s, v) => s + (v.quantidade || 0), 0);
-  const totalPesoKg = volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0);
+  const totalVolumesQtd = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.quantidade || 0), 0));
+  const totalPesoKg = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0));
 
   const bloquearFecharPorPortalAberto = showTripSelector || showVolumesDialog || authFornecedorOpen;
 
@@ -407,7 +410,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           produto_id: item.produto_id,
           produto_nome: item.produto_nome,
           quantidade_pedida: item.quantidade,
-          quantidade_embarcada: parseFloat(qtdEmbarque[item.produto_id]) || 0,
+          quantidade_embarcada: roundToTwoDecimals(parseFloat(qtdEmbarque[item.produto_id]) || 0),
           unidade_medida: item.unidade_medida
         }))
         .filter(i => i.quantidade_embarcada > 0);

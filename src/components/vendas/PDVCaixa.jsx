@@ -67,6 +67,7 @@ import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { processarMovimentoCaixa } from '@/lib/caixaHelper';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 export default function PDVCaixa() {
   const navigate = useNavigate();
@@ -215,14 +216,21 @@ export default function PDVCaixa() {
   const [showComprovanteDespesa, setShowComprovanteDespesa] = useState(false);
   const { toast } = useToast();
 
-  const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito + pagamentosVale + pagamentosContaPagar;
-  const valorRestante = pedidoSelecionado ? pedidoSelecionado.valor_total - totalPago : 0;
+  const totalPago = roundToTwoDecimals(
+    pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito + pagamentosVale + pagamentosContaPagar
+  );
+  const valorRestante = pedidoSelecionado
+    ? roundToTwoDecimals((pedidoSelecionado.valor_total || 0) - totalPago)
+    : 0;
   const troco = valorRestante < 0 ? Math.abs(valorRestante) : 0;
-  const pagamentoValido = pedidoSelecionado ? totalPago >= pedidoSelecionado.valor_total : false;
+  const pagamentoValido = pedidoSelecionado
+    ? roundToTwoDecimals(totalPago) >= roundToTwoDecimals(pedidoSelecionado.valor_total || 0)
+    : false;
 
   // Formatar valor para exibição (1234.56 -> "1.234,56")
   const formatarValorExibicao = (valor) => {
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const num = roundToTwoDecimals(valor ?? 0);
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   // Máscara de valor - digita números e formata automaticamente (centavos -> reais)
@@ -485,28 +493,32 @@ export default function PDVCaixa() {
       const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + (m.valor || 0), 0);
       const totalDespesas = todasDespesas.reduce((sum, d) => sum + (d.valor || 0), 0);
 
-      const saldoInicial = turno.saldo_inicial || 0;
+      const saldoInicial = roundToTwoDecimals(turno.saldo_inicial || 0);
       // Saldo em caixa (dinheiro na gaveta) = saldo inicial + dinheiro recebido + reforços - recolhimentos - despesas
-      const saldoCaixaCalculado = saldoInicial + totalDinheiro + totalReforcos - totalSangrias - totalDespesas;
+      const saldoCaixaCalculado = roundToTwoDecimals(
+        saldoInicial + totalDinheiro + totalReforcos - totalSangrias - totalDespesas
+      );
       // Liquidez total do turno = apenas vendas MONETÁRIAS (excluindo fiado que não entrou no caixa)
-      const liquidezTurno = saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas;
+      const liquidezTurno = roundToTwoDecimals(
+        saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
+      );
 
       setCaixaData({
         saldoInicial: saldoInicial,
         saldoAtual: saldoCaixaCalculado,
         liquidez: liquidezTurno,
-        totalVendas: totalVendas,
+        totalVendas: roundToTwoDecimals(totalVendas),
         recebimentos: {
-          dinheiro: totalDinheiro,
-          pix: totalPix,
-          credito: totalCredito,
-          debito: totalDebito,
-          vale: totalVale,
-          fiado: totalFiado,
+          dinheiro: roundToTwoDecimals(totalDinheiro),
+          pix: roundToTwoDecimals(totalPix),
+          credito: roundToTwoDecimals(totalCredito),
+          debito: roundToTwoDecimals(totalDebito),
+          vale: roundToTwoDecimals(totalVale),
+          fiado: roundToTwoDecimals(totalFiado),
         },
-        reforcos: totalReforcos,
-        sangrias: totalSangrias,
-        despesas: totalDespesas,
+        reforcos: roundToTwoDecimals(totalReforcos),
+        sangrias: roundToTwoDecimals(totalSangrias),
+        despesas: roundToTwoDecimals(totalDespesas),
         despesasLista: todasDespesas,
       });
     } catch (error) {
@@ -1037,12 +1049,18 @@ export default function PDVCaixa() {
       cedulas.moeda010 * 0.10 +
       cedulas.moeda005 * 0.05
     );
-    return total;
+    return roundToTwoDecimals(total);
   };
 
   useEffect(() => {
     // Auto-preencher recebimentos: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
-    const dinheiroCalculado = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0);
+    const dinheiroCalculado = roundToTwoDecimals(
+      caixaData.liquidez -
+        (caixaData.recebimentos?.pix || 0) -
+        (caixaData.recebimentos?.credito || 0) -
+        (caixaData.recebimentos?.debito || 0) -
+        (caixaData.recebimentos?.vale || 0)
+    );
     setRecebimentosDinheiro(formatarValorExibicao(dinheiroCalculado));
     setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos?.pix || 0));
     setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos?.credito || 0));
@@ -1052,10 +1070,14 @@ export default function PDVCaixa() {
   const handleFecharCaixa = async () => {
     if (fechandoCaixa) return;
 
-    const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-    const totalConferido = dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-    const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-    const diferenca = totalConferido - esperado;
+    const dinheiroContado = roundToTwoDecimals(
+      parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
+    );
+    const totalConferido = roundToTwoDecimals(
+      dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0)
+    );
+    const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
+    const diferenca = roundToTwoDecimals(totalConferido - esperado);
 
     if (Math.abs(diferenca) > 0.01) {
       toast({
@@ -1072,10 +1094,14 @@ export default function PDVCaixa() {
   const handleConfirmarFechamentoCaixa = async () => {
     if (fechandoCaixa) return;
 
-    const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-    const totalConferido = dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-    const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-    const diferenca = totalConferido - esperado;
+    const dinheiroContado = roundToTwoDecimals(
+      parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
+    );
+    const totalConferido = roundToTwoDecimals(
+      dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0)
+    );
+    const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
+    const diferenca = roundToTwoDecimals(totalConferido - esperado);
 
     setFechandoCaixa(true);
     try {
@@ -1144,7 +1170,7 @@ export default function PDVCaixa() {
   };
 
   const formatValor = (valor) => {
-    const num = valor || 0;
+    const num = roundToTwoDecimals(valor ?? 0);
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
@@ -1402,12 +1428,16 @@ export default function PDVCaixa() {
                     {/* Total e Diferença */}
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
                       {(() => {
-                        const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                        const dinheiroConferido = roundToTwoDecimals(
+                          parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
+                        );
                         // Total conferido = dinheiro(conferido) + pix + crédito + débito (fiado não entra — é a receber)
-                        const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                        const totalConferido = roundToTwoDecimals(
+                          dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0)
+                        );
                         // Esperado = liquidez (já exclui fiado e vale)
-                        const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-                        const diferenca = totalConferido - esperado;
+                        const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
+                        const diferenca = roundToTwoDecimals(totalConferido - esperado);
                         const temDiferenca = Math.abs(diferenca) > 0.01;
 
                         return (
@@ -1444,11 +1474,15 @@ export default function PDVCaixa() {
 
                    {/* Fechamento inline no balanço */}
                    {!modoVisualizacao && (() => {
-                     const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                     const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                     const dinheiroConferido = roundToTwoDecimals(
+                       parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
+                     );
+                     const totalConferido = roundToTwoDecimals(
+                       dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0)
+                     );
                      // Vale é não-monetário, então não entra na comparação do fechamento
-                     const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-                     const diferenca = totalConferido - esperado;
+                     const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
+                     const diferenca = roundToTwoDecimals(totalConferido - esperado);
                      const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = async () => {
                         const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);

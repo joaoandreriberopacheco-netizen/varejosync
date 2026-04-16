@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import SafeActionButton from '@/components/ui/safe-action-button';
 import { Printer, X, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
-const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+const fmt = (v) =>
+  `R$ ${roundToTwoDecimals(v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClose, onContinuar, isContinuing = false }) {
   const jaImprimiu = useRef(false);
@@ -22,14 +24,15 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
 
   if (!turno || !caixaData) return null;
 
-  const dinheiroConferido = caixaData.dinheiroConferido || 0;
-  const totalConferido = 
+  const dinheiroConferido = roundToTwoDecimals(caixaData.dinheiroConferido || 0);
+  const totalConferido = roundToTwoDecimals(
     dinheiroConferido +
-    caixaData.recebimentos.pix +
-    (caixaData.recebimentos.credito || 0) +
-    (caixaData.recebimentos.debito || 0);
-  const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-  const diferenca = totalConferido - esperado;
+      caixaData.recebimentos.pix +
+      (caixaData.recebimentos.credito || 0) +
+      (caixaData.recebimentos.debito || 0)
+  );
+  const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
+  const diferenca = roundToTwoDecimals(totalConferido - esperado);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

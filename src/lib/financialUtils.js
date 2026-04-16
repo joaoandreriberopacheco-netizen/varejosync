@@ -1,9 +1,23 @@
 /**
- * Arredonda um valor financeiro para 2 casas decimais
+ * Arredonda número (ou string numérica) para 2 casas decimais.
+ * Evita caudas de ponto flutuante em totais de caixa, quantidades embarcadas, etc.
  */
 export const roundToTwoDecimals = (value) => {
-  if (typeof value !== 'number' || isNaN(value)) return 0;
-  return Math.round(value * 100) / 100;
+  if (value === null || value === undefined || value === '') return 0;
+  const n = typeof value === 'number' ? value : parseFloat(String(value).replace(',', '.'));
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100) / 100;
+};
+
+/**
+ * Exibe quantidade com no máximo 2 decimais (pt-BR), sem poluir a UI com IEEE 754.
+ */
+export const formatQuantity = (value) => {
+  const r = roundToTwoDecimals(value);
+  return r.toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
 };
 
 /**

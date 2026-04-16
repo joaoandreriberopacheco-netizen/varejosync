@@ -4,6 +4,7 @@ import { Lock } from 'lucide-react';
 import SafeActionButton from '@/components/ui/safe-action-button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
 
 /**
@@ -27,15 +28,17 @@ export default function FechamentoCaixaButton({
   const handleFechar = async () => {
     if (isClosing) return;
     setIsClosing(true);
-    const dinheiroConferido =
-      parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-    const totalConferido =
+    const dinheiroConferido = roundToTwoDecimals(
+      parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
+    );
+    const totalConferido = roundToTwoDecimals(
       dinheiroConferido +
-      caixaData.recebimentos.pix +
-      (caixaData.recebimentos.credito || 0) +
-      (caixaData.recebimentos.debito || 0);
-    const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
-    const diferenca = totalConferido - esperado;
+        caixaData.recebimentos.pix +
+        (caixaData.recebimentos.credito || 0) +
+        (caixaData.recebimentos.debito || 0)
+    );
+    const esperado = roundToTwoDecimals(caixaData.liquidez - (caixaData.recebimentos.vale || 0));
+    const diferenca = roundToTwoDecimals(totalConferido - esperado);
 
     try {
       await base44.entities.TurnoCaixa.update(turnoAtivo.id, {

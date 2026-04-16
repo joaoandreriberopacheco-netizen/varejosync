@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
   const navigate = useNavigate();
@@ -139,7 +140,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
       return;
     }
 
-    const saldoFloat = parseFloat(saldoInicial.replace(',', '.'));
+    const saldoFloat = roundToTwoDecimals(parseFloat(saldoInicial.replace(',', '.')) || 0);
     
     try {
       const todosTurnos = await base44.entities.TurnoCaixa.list();
@@ -160,7 +161,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
       });
 
       // Atualizar saldo da conta se diferente
-      if (Math.abs(caixaSelecionado.saldo_atual - saldoFloat) > 0.01) {
+      if (Math.abs(roundToTwoDecimals(caixaSelecionado.saldo_atual - saldoFloat)) > 0.01) {
         await base44.entities.ContasFinanceiras.update(caixaSelecionado.id, {
           saldo_atual: saldoFloat
         });

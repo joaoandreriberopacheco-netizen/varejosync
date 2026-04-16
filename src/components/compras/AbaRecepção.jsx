@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
+import { formatQuantity } from '@/lib/financialUtils';
 
 export default function AbaRecepção({ pedido }) {
   const [movimentos, setMovimentos] = useState([]);
@@ -183,7 +184,7 @@ export default function AbaRecepção({ pedido }) {
                       </p>
                       {movimentosDoEmbarque.map(mov => (
                         <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">{mov.quantidade}</span> un. - {mov.produto_nome}
+                          <span className="font-medium">{formatQuantity(mov.quantidade)}</span> un. - {mov.produto_nome}
                         </div>
                       ))}
                     </div>

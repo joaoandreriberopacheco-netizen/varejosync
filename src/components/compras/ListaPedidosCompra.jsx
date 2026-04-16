@@ -3,6 +3,7 @@ import PedidoProgressBar from '@/components/compras/PedidoProgressBar';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
 import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck, CalendarDays } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { formatQuantity } from '@/lib/financialUtils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,7 +72,7 @@ function EmbarquesInfo({ pedido }) {
       </span>
       {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
         <span className="text-red-500 dark:text-red-400 font-medium">
-          {pedido._quantidade_pendente} un. faltando embarcar
+          {formatQuantity(pedido._quantidade_pendente)} un. faltando embarcar
         </span>
       )}
     </div>
@@ -232,10 +233,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
                   {pedido._is_necessidade
-                    ? (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un. pend.` : '')
+                    ? (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} un. pend.` : '')
                     : totalQtdEmbarcada > 0
-                      ? ` · ${totalQtdEmbarcada.toLocaleString('pt-BR')} de ${totalQtdPedidaCard.toLocaleString('pt-BR')} un.`
-                      : (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : '')}
+                      ? ` · ${formatQuantity(totalQtdEmbarcada)} de ${formatQuantity(totalQtdPedidaCard)} un.`
+                      : (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} un.` : '')}
                 </span>
               </span>
 
