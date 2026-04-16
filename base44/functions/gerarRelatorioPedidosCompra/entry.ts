@@ -457,9 +457,13 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(10);
       doc.setTextColor(...C.text);
-      const valorExp = isPendencia
-        ? itens.reduce((a, i) => a + i._qtdEfetiva * (Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0), 0)
-        : (pedido.valor_total || 0);
+      // Total do pedido no relatório expandido: valor unitário x quantidade.
+      // Custo permanece apenas como informação para análise de margem/markup.
+      const valorExp = itens.reduce((a, i) => {
+        const prod = produtosMap[i.produto_id] || {};
+        const valorUnitario = Number(i.custo_unitario) || Number(prod.valor_compra) || 0;
+        return a + (i._qtdEfetiva * valorUnitario);
+      }, 0);
       doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
       const totalQtdExp = itens.reduce((a, i) => a + i._qtdEfetiva, 0);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
