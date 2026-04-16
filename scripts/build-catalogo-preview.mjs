@@ -6,6 +6,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { extractPageAst } from './catalog-ast-extract.mjs';
@@ -21,6 +22,20 @@ const BOOTSTRAP = JSON.parse(
 function pageFileForKey(key) {
   const map = { Produtos: 'Produtos.jsx' };
   return join(pagesDir, map[key] || `${key}.jsx`);
+}
+
+function shortCodeFor(value) {
+  const hex = createHash('sha1').update(String(value)).digest('hex').slice(0, 12);
+  const num = BigInt(`0x${hex}`);
+  const base36 = num.toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return base36.padStart(7, '0').slice(0, 7);
+}
+
+function attachShortCodes(widgets) {
+  return (widgets || []).map((w) => ({
+    ...w,
+    short_code: shortCodeFor(w.code || `${w.kind}:${w.scope}:${w.hint || ''}`),
+  }));
 }
 
 /** Marcadores explícitos no JSX (zonas: barra de pesquisa, etc.) */
@@ -65,13 +80,17 @@ function buildPayload() {
           ast.sections[0].widgets = [...markers, ...ast.sections[0].widgets];
         }
       }
+      ast.sections = (ast.sections || []).map((section) => ({
+        ...section,
+        widgets: attachShortCodes(section.widgets),
+      }));
       pageDetails[pk] = ast;
     }
   }
   return {
     generated_at: new Date().toISOString(),
     description:
-      'Widgets extraídos por AST (Button, Input, Tabs, Dialog, Table, …) por âmbito de função; ficheiros importados de domínio em secções separadas.',
+      'Widgets extraídos por AST no sistema inteiro (Button, Input, Tabs, Dialog, Table, …) por âmbito de função; cada item recebe código hierárquico e short_code alfanumérico de 7 caracteres.',
     modules: BOOTSTRAP.modules,
     pageDetails,
   };
@@ -87,7 +106,7 @@ function main() {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Catálogo de UI — inventário AST</title>
+  <title>Catálogo de UI — inventário AST do sistema</title>
   <style>
     :root {
       --bg: #0a0d11;
@@ -151,6 +170,16 @@ function main() {
       border-radius: 4px;
       border: 1px solid #3d4f66;
     }
+    .shortz {
+      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      color: #7DFFB3;
+      background: #0e1813;
+      padding: 0.1rem 0.38rem;
+      border-radius: 4px;
+      border: 1px solid #2f5c45;
+      margin-right: 0.35rem;
+    }
     .kind { color: #7dffb3; font-size: 0.72rem; margin-right: 0.35rem; }
     .hint { color: var(--muted); font-size: 0.72rem; }
     .line { color: #6b7c90; font-size: 0.68rem; }
@@ -181,12 +210,14 @@ function main() {
   </style>
 </head>
 <body>
-  <h1>Catálogo de UI — inventário por AST</h1>
+  <h1>Catálogo de UI — inventário AST do sistema inteiro</h1>
   <p class="sub">
     Cada linha é um controlo relevante (botão, input, tab, diálogo, tabela, …) com <strong>código hierárquico</strong>
-    para apontar em correções («vamos tratar o <em>CAT-PG-Compras.PedidosCompraTab.Button.2</em>»).
+    e <strong>código curto alfanumérico</strong> de 7 caracteres para apontar em correções
+    («vamos tratar o <em>7X2A9QK</em> / <em>CAT-PG-Compras.PedidosCompraTab.Button.2</em>»).
     A rota analisa o ficheiro da página e os <strong>componentes de domínio importados</strong> (ex.: formulário de pedido).
-    Actualização: voltar a correr o comando após alterar o código. Sem linhas de código nem links — só tipo, código, âmbito e dica (placeholder quando existe).
+    Isto não é só de Compras: cobre <strong>todo o sistema</strong> listado no catálogo. Actualização: voltar a correr o comando após alterar o código.
+    Sem links — só tipo, código, âmbito e dica (placeholder quando existe).
   </p>
   <p class="sub" style="margin-top:-0.5rem">Gerado em <span id="gen"></span></p>
 
@@ -252,8 +283,9 @@ function main() {
         for (const w of by[sc]) {
           const tr = document.createElement('tr');
           const code = (w.code || '').replace(/</g, '&lt;');
+          const shortCode = (w.short_code || '').replace(/</g, '&lt;');
           const hint = (w.hint || '').replace(/</g, '&lt;');
-          tr.innerHTML = '<td><span class="codez">' + code + '</span></td>' +
+          tr.innerHTML = '<td><span class="shortz">' + shortCode + '</span> <span class="codez">' + code + '</span></td>' +
             '<td><span class="kind">' + esc(w.kind) + '</span></td>' +
             '<td class="hint">' + esc(hint || '—') + '</td>' +
             '<td class="line">L' + (w.line || '?') + '</td>';
