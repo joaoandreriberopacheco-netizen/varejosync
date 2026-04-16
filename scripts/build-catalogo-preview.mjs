@@ -20,7 +20,10 @@ const BOOTSTRAP = JSON.parse(
 );
 
 function pageFileForKey(key) {
-  const map = { Produtos: 'Produtos.jsx' };
+  const map = {
+    Produtos: 'Produtos.jsx',
+    Agefin: 'AgefinConsulta.jsx',
+  };
   return join(pagesDir, map[key] || `${key}.jsx`);
 }
 

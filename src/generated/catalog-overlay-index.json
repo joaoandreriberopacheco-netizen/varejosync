@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-16T12:21:40.986Z",
-  "total": 2847,
+  "generated_at": "2026-04-16T17:04:27.247Z",
+  "total": 2828,
   "items": [
     {
       "short_code": "J9G9AXB",
@@ -585,7 +585,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon · Orçamentos recentes",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1017:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1028:14"
     },
     {
       "short_code": "2PZPBE5",
@@ -594,7 +594,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon · Reeditar rascunho",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1021:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1032:14"
     },
     {
       "short_code": "P9OJ9T4",
@@ -603,7 +603,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1025:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1036:14"
     },
     {
       "short_code": "2CJDPW7",
@@ -612,7 +612,7 @@
       "scope": "PDVVendedor",
       "hint": "Buscar por nome, código ou código de barras...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1042:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1053:18"
     },
     {
       "short_code": "1UGQQF9",
@@ -621,7 +621,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1050:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1061:18"
     },
     {
       "short_code": "1QOL64V",
@@ -630,7 +630,7 @@
       "scope": "PDVVendedor",
       "hint": "Qtd",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1056:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1067:18"
     },
     {
       "short_code": "MIABRGQ",
@@ -639,7 +639,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=sm",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1155:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1169:18"
     },
     {
       "short_code": "2NOORJS",
@@ -648,7 +648,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1159:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1173:18"
     },
     {
       "short_code": "2R5KUUJ",
@@ -657,7 +657,7 @@
       "scope": "PDVVendedor",
       "hint": "0",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1276:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1290:20"
     },
     {
       "short_code": "TYGZHY2",
@@ -666,7 +666,7 @@
       "scope": "PDVVendedor",
       "hint": "0,00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1285:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1299:20"
     },
     {
       "short_code": "1I3IJPS",
@@ -675,7 +675,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1300:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1314:12"
     },
     {
       "short_code": "17PYLXU",
@@ -684,7 +684,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1349:6"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1363:6"
     },
     {
       "short_code": "IFAYTMV",
@@ -693,7 +693,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1350:8"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1364:8"
     },
     {
       "short_code": "2DFS3VL",
@@ -702,7 +702,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1351:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1365:10"
     },
     {
       "short_code": "1CVP2MT",
@@ -711,7 +711,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1352:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1366:12"
     },
     {
       "short_code": "1WYBDDC",
@@ -720,7 +720,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1359:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1373:18"
     },
     {
       "short_code": "2LP2VKD",
@@ -729,7 +729,7 @@
       "scope": "PDVVendedor",
       "hint": "Digite nome, documento ou telefone...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1362:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1376:20"
     },
     {
       "short_code": "L6O6P1V",
@@ -738,7 +738,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1411:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1425:20"
     },
     {
       "short_code": "2BKZDFW",
@@ -747,7 +747,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1439:16"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1453:16"
     },
     {
       "short_code": "1N6DSYB",
@@ -756,7 +756,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1452:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1466:18"
     },
     {
       "short_code": "12JT5SQ",
@@ -765,7 +765,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1453:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1467:18"
     },
     {
       "short_code": "OE5MGKK",
@@ -774,7 +774,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1459:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1473:22"
     },
     {
       "short_code": "2A3C45C",
@@ -783,7 +783,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1460:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1474:22"
     },
     {
       "short_code": "D6RPQQG",
@@ -792,7 +792,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1473:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1487:22"
     },
     {
       "short_code": "1Q9KCZ0",
@@ -801,7 +801,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1474:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1488:22"
     },
     {
       "short_code": "D216DN2",
@@ -810,7 +810,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1487:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1501:18"
     },
     {
       "short_code": "2IOCFN6",
@@ -819,7 +819,7 @@
       "scope": "PDVVendedor",
       "hint": "Nome do cliente...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1488:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1502:18"
     },
     {
       "short_code": "1WOMWAC",
@@ -828,7 +828,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1500:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1514:20"
     },
     {
       "short_code": "2KRMWBT",
@@ -837,7 +837,7 @@
       "scope": "PDVVendedor",
       "hint": "(00) 00000-0000",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1501:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1515:20"
     },
     {
       "short_code": "2PWPOEP",
@@ -846,7 +846,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1512:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1526:20"
     },
     {
       "short_code": "2JUPF65",
@@ -855,7 +855,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1513:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1527:20"
     },
     {
       "short_code": "2RK4GTG",
@@ -864,7 +864,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1517:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1531:22"
     },
     {
       "short_code": "1L5XEV8",
@@ -873,7 +873,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1518:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1532:24"
     },
     {
       "short_code": "2F84LI5",
@@ -882,7 +882,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1520:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1534:22"
     },
     {
       "short_code": "1GES6FK",
@@ -891,7 +891,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1521:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1535:24"
     },
     {
       "short_code": "1JNO3GV",
@@ -900,7 +900,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1522:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1536:24"
     },
     {
       "short_code": "KFI2SLZ",
@@ -909,7 +909,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1523:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1537:24"
     },
     {
       "short_code": "21D9L6O",
@@ -918,7 +918,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1524:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1538:24"
     },
     {
       "short_code": "1XGVP4O",
@@ -927,7 +927,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1525:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1539:24"
     },
     {
       "short_code": "2768W3Y",
@@ -936,7 +936,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1526:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1540:24"
     },
     {
       "short_code": "1BRDLS1",
@@ -945,7 +945,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1533:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1547:18"
     },
     {
       "short_code": "ORZYHFJ",
@@ -954,7 +954,7 @@
       "scope": "PDVVendedor",
       "hint": "000.000.000-00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1534:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1548:18"
     },
     {
       "short_code": "1XSNR1G",
@@ -963,7 +963,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1543:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1557:20"
     },
     {
       "short_code": "1QBWWOL",
@@ -972,7 +972,7 @@
       "scope": "PDVVendedor",
       "hint": "Rua, número, bairro, cidade...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1544:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1558:20"
     },
     {
       "short_code": "IEAZ7N7",
@@ -981,7 +981,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1555:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1569:22"
     },
     {
       "short_code": "1ACPS6D",
@@ -990,7 +990,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1556:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1570:22"
     },
     {
       "short_code": "2A8BTXY",
@@ -999,7 +999,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1560:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1574:24"
     },
     {
       "short_code": "2JNBTBE",
@@ -1008,7 +1008,7 @@
       "scope": "PDVVendedor",
       "hint": "Selecione...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1561:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1575:26"
     },
     {
       "short_code": "2NIUPE0",
@@ -1017,7 +1017,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1563:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1577:24"
     },
     {
       "short_code": "2BTX5N2",
@@ -1026,7 +1026,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1564:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1578:26"
     },
     {
       "short_code": "HM0I73P",
@@ -1035,7 +1035,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1565:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1579:26"
     },
     {
       "short_code": "2BDRTDI",
@@ -1044,7 +1044,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1566:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1580:26"
     },
     {
       "short_code": "1YP1Y8E",
@@ -1053,7 +1053,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1567:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1581:26"
     },
     {
       "short_code": "2JGGZVF",
@@ -1062,7 +1062,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1573:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1587:22"
     },
     {
       "short_code": "1D44EA7",
@@ -1071,7 +1071,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1574:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1588:22"
     },
     {
       "short_code": "XP0L8MI",
@@ -1080,7 +1080,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1584:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1598:20"
     },
     {
       "short_code": "1QJPX66",
@@ -1089,7 +1089,7 @@
       "scope": "PDVVendedor",
       "hint": "Informações adicionais sobre o cliente...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1585:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1599:20"
     },
     {
       "short_code": "2QYBUS8",
@@ -1098,7 +1098,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1595:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1609:18"
     },
     {
       "short_code": "20E01E4",
@@ -1107,7 +1107,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1603:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1617:18"
     },
     {
       "short_code": "1FP8QNV",
@@ -1116,7 +1116,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1616:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1630:10"
     },
     {
       "short_code": "5DG48G8",
@@ -1125,7 +1125,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1617:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1631:14"
     },
     {
       "short_code": "2Q2E3TB",
@@ -1134,7 +1134,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1624:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1638:14"
     },
     {
       "short_code": "AHYABLS",
@@ -1143,7 +1143,7 @@
       "scope": "PDVVendedor",
       "hint": "0",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1733:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1747:18"
     },
     {
       "short_code": "R0DGY7H",
@@ -1152,7 +1152,7 @@
       "scope": "PDVVendedor",
       "hint": "0,00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1742:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1756:18"
     },
     {
       "short_code": "1623YV3",
@@ -1161,7 +1161,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1756:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1770:12"
     },
     {
       "short_code": "235PYWY",
@@ -1170,7 +1170,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1820:6"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1834:6"
     },
     {
       "short_code": "XK0KLVY",
@@ -1179,7 +1179,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1821:8"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1835:8"
     },
     {
       "short_code": "1LMF8ZN",
@@ -1188,7 +1188,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1822:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1836:10"
     },
     {
       "short_code": "ZNOY7GM",
@@ -1197,7 +1197,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1823:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1837:12"
     },
     {
       "short_code": "21YHY53",
@@ -1206,7 +1206,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1828:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1842:14"
     },
     {
       "short_code": "NC06GWV",
@@ -1215,7 +1215,7 @@
       "scope": "PDVVendedor",
       "hint": "0000",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1831:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1845:14"
     },
     {
       "short_code": "JCSRCOJ",
@@ -1224,7 +1224,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1857:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1871:10"
     },
     {
       "short_code": "DIAJGZ5",
@@ -1233,7 +1233,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1858:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1872:12"
     },
     {
       "short_code": "JVYDBWY",
@@ -1242,7 +1242,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1868:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1882:12"
     },
     {
       "short_code": "3S6YZFH",
@@ -2655,7 +2655,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon · Orçamentos recentes",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1017:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1028:14"
     },
     {
       "short_code": "1I2CPNN",
@@ -2664,7 +2664,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon · Reeditar rascunho",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1021:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1032:14"
     },
     {
       "short_code": "EZBBZBS",
@@ -2673,7 +2673,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1025:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1036:14"
     },
     {
       "short_code": "PP8NAHL",
@@ -2682,7 +2682,7 @@
       "scope": "PDVVendedor",
       "hint": "Buscar por nome, código ou código de barras...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1042:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1053:18"
     },
     {
       "short_code": "1QHJ2AL",
@@ -2691,7 +2691,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1050:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1061:18"
     },
     {
       "short_code": "2BGA2AQ",
@@ -2700,7 +2700,7 @@
       "scope": "PDVVendedor",
       "hint": "Qtd",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1056:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1067:18"
     },
     {
       "short_code": "23TFYFJ",
@@ -2709,7 +2709,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=sm",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1155:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1169:18"
     },
     {
       "short_code": "2Q52BFM",
@@ -2718,7 +2718,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1159:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1173:18"
     },
     {
       "short_code": "Z4HM3K8",
@@ -2727,7 +2727,7 @@
       "scope": "PDVVendedor",
       "hint": "0",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1276:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1290:20"
     },
     {
       "short_code": "GT3WVO0",
@@ -2736,7 +2736,7 @@
       "scope": "PDVVendedor",
       "hint": "0,00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1285:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1299:20"
     },
     {
       "short_code": "1TY8CXO",
@@ -2745,7 +2745,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1300:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1314:12"
     },
     {
       "short_code": "PBO2J7E",
@@ -2754,7 +2754,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1349:6"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1363:6"
     },
     {
       "short_code": "9SYHH44",
@@ -2763,7 +2763,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1350:8"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1364:8"
     },
     {
       "short_code": "2I349WJ",
@@ -2772,7 +2772,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1351:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1365:10"
     },
     {
       "short_code": "29CQ8Y6",
@@ -2781,7 +2781,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1352:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1366:12"
     },
     {
       "short_code": "203NZZH",
@@ -2790,7 +2790,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1359:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1373:18"
     },
     {
       "short_code": "UHPC56V",
@@ -2799,7 +2799,7 @@
       "scope": "PDVVendedor",
       "hint": "Digite nome, documento ou telefone...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1362:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1376:20"
     },
     {
       "short_code": "1DTLA3V",
@@ -2808,7 +2808,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1411:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1425:20"
     },
     {
       "short_code": "MD2IU1Q",
@@ -2817,7 +2817,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1439:16"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1453:16"
     },
     {
       "short_code": "14ZRFIF",
@@ -2826,7 +2826,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1452:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1466:18"
     },
     {
       "short_code": "2M15QDX",
@@ -2835,7 +2835,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1453:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1467:18"
     },
     {
       "short_code": "2IQS0QI",
@@ -2844,7 +2844,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1459:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1473:22"
     },
     {
       "short_code": "1LS2592",
@@ -2853,7 +2853,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1460:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1474:22"
     },
     {
       "short_code": "TL4U0CP",
@@ -2862,7 +2862,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1473:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1487:22"
     },
     {
       "short_code": "NV4JEG2",
@@ -2871,7 +2871,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1474:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1488:22"
     },
     {
       "short_code": "T7KDORD",
@@ -2880,7 +2880,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1487:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1501:18"
     },
     {
       "short_code": "158CDB5",
@@ -2889,7 +2889,7 @@
       "scope": "PDVVendedor",
       "hint": "Nome do cliente...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1488:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1502:18"
     },
     {
       "short_code": "1J8BPDN",
@@ -2898,7 +2898,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1500:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1514:20"
     },
     {
       "short_code": "1L63KKS",
@@ -2907,7 +2907,7 @@
       "scope": "PDVVendedor",
       "hint": "(00) 00000-0000",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1501:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1515:20"
     },
     {
       "short_code": "9WNGTC8",
@@ -2916,7 +2916,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1512:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1526:20"
     },
     {
       "short_code": "UISH65S",
@@ -2925,7 +2925,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1513:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1527:20"
     },
     {
       "short_code": "28ZKXGI",
@@ -2934,7 +2934,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1517:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1531:22"
     },
     {
       "short_code": "A91SNK8",
@@ -2943,7 +2943,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1518:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1532:24"
     },
     {
       "short_code": "2OSHSFT",
@@ -2952,7 +2952,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1520:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1534:22"
     },
     {
       "short_code": "29IKPB2",
@@ -2961,7 +2961,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1521:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1535:24"
     },
     {
       "short_code": "29YCDUJ",
@@ -2970,7 +2970,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1522:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1536:24"
     },
     {
       "short_code": "1YFKAGH",
@@ -2979,7 +2979,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1523:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1537:24"
     },
     {
       "short_code": "2AEO29Y",
@@ -2988,7 +2988,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1524:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1538:24"
     },
     {
       "short_code": "MJ3B8CP",
@@ -2997,7 +2997,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1525:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1539:24"
     },
     {
       "short_code": "NV2XK9C",
@@ -3006,7 +3006,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1526:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1540:24"
     },
     {
       "short_code": "10CE0AU",
@@ -3015,7 +3015,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1533:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1547:18"
     },
     {
       "short_code": "2BCTMAY",
@@ -3024,7 +3024,7 @@
       "scope": "PDVVendedor",
       "hint": "000.000.000-00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1534:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1548:18"
     },
     {
       "short_code": "1FRHSQ6",
@@ -3033,7 +3033,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1543:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1557:20"
     },
     {
       "short_code": "2OZ4AGN",
@@ -3042,7 +3042,7 @@
       "scope": "PDVVendedor",
       "hint": "Rua, número, bairro, cidade...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1544:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1558:20"
     },
     {
       "short_code": "1DIASTA",
@@ -3051,7 +3051,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1555:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1569:22"
     },
     {
       "short_code": "2FBB6JF",
@@ -3060,7 +3060,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1556:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1570:22"
     },
     {
       "short_code": "12OY6QY",
@@ -3069,7 +3069,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1560:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1574:24"
     },
     {
       "short_code": "1VP1DVQ",
@@ -3078,7 +3078,7 @@
       "scope": "PDVVendedor",
       "hint": "Selecione...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1561:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1575:26"
     },
     {
       "short_code": "2888NZ8",
@@ -3087,7 +3087,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1563:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1577:24"
     },
     {
       "short_code": "GIAYBQO",
@@ -3096,7 +3096,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1564:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1578:26"
     },
     {
       "short_code": "1MPNES4",
@@ -3105,7 +3105,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1565:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1579:26"
     },
     {
       "short_code": "J41499L",
@@ -3114,7 +3114,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1566:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1580:26"
     },
     {
       "short_code": "K87G3IJ",
@@ -3123,7 +3123,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1567:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1581:26"
     },
     {
       "short_code": "23NVCL6",
@@ -3132,7 +3132,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1573:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1587:22"
     },
     {
       "short_code": "UZX1IQ2",
@@ -3141,7 +3141,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1574:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1588:22"
     },
     {
       "short_code": "2AC9F38",
@@ -3150,7 +3150,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1584:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1598:20"
     },
     {
       "short_code": "27PJ8KL",
@@ -3159,7 +3159,7 @@
       "scope": "PDVVendedor",
       "hint": "Informações adicionais sobre o cliente...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1585:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1599:20"
     },
     {
       "short_code": "1MLTQFL",
@@ -3168,7 +3168,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1595:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1609:18"
     },
     {
       "short_code": "1UTM496",
@@ -3177,7 +3177,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1603:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1617:18"
     },
     {
       "short_code": "R67NT5Z",
@@ -3186,7 +3186,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1616:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1630:10"
     },
     {
       "short_code": "1UFCA4R",
@@ -3195,7 +3195,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1617:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1631:14"
     },
     {
       "short_code": "L8AOQEA",
@@ -3204,7 +3204,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1624:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1638:14"
     },
     {
       "short_code": "MOCZ60K",
@@ -3213,7 +3213,7 @@
       "scope": "PDVVendedor",
       "hint": "0",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1733:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1747:18"
     },
     {
       "short_code": "159VF3U",
@@ -3222,7 +3222,7 @@
       "scope": "PDVVendedor",
       "hint": "0,00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1742:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1756:18"
     },
     {
       "short_code": "28OSK37",
@@ -3231,7 +3231,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1756:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1770:12"
     },
     {
       "short_code": "19F0P37",
@@ -3240,7 +3240,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1820:6"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1834:6"
     },
     {
       "short_code": "1Q1K0BN",
@@ -3249,7 +3249,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1821:8"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1835:8"
     },
     {
       "short_code": "57QAT3F",
@@ -3258,7 +3258,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1822:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1836:10"
     },
     {
       "short_code": "2N0LSV3",
@@ -3267,7 +3267,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1823:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1837:12"
     },
     {
       "short_code": "ZDIVFWE",
@@ -3276,7 +3276,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1828:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1842:14"
     },
     {
       "short_code": "Y2QG2JA",
@@ -3285,7 +3285,7 @@
       "scope": "PDVVendedor",
       "hint": "0000",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1831:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1845:14"
     },
     {
       "short_code": "24RN1EQ",
@@ -3294,7 +3294,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1857:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1871:10"
     },
     {
       "short_code": "W385KXX",
@@ -3303,7 +3303,7 @@
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1858:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1872:12"
     },
     {
       "short_code": "2GSWMQK",
@@ -3312,7 +3312,7 @@
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1868:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1882:12"
     },
     {
       "short_code": "1WV0Q7J",
@@ -7893,7 +7893,7 @@
       "scope": "CotacoesManager",
       "hint": "variant=outline",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:258:12"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:371:12"
     },
     {
       "short_code": "AZSGME3",
@@ -7902,7 +7902,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:265:12"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:378:12"
     },
     {
       "short_code": "2QBU0GL",
@@ -7911,7 +7911,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:267:20"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:380:20"
     },
     {
       "short_code": "1J1WCMU",
@@ -7920,7 +7920,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:271:16"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:384:16"
     },
     {
       "short_code": "YLPFKJ7",
@@ -7929,7 +7929,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:272:20"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:385:20"
     },
     {
       "short_code": "1YUN28O",
@@ -7938,7 +7938,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:273:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:386:24"
     },
     {
       "short_code": "C87RGQ2",
@@ -7947,7 +7947,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:277:28"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:390:28"
     },
     {
       "short_code": "CI8A4PG",
@@ -7956,7 +7956,7 @@
       "scope": "CotacoesManager",
       "hint": "Ex: Compra de Cimento Mensal",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:278:28"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:391:28"
     },
     {
       "short_code": "2PN6I24",
@@ -7965,7 +7965,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:284:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:397:24"
     },
     {
       "short_code": "2AK5ACF",
@@ -7974,7 +7974,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:339:18"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:452:18"
     },
     {
       "short_code": "Y6D2UNK",
@@ -7983,7 +7983,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:364:18"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:477:18"
     },
     {
       "short_code": "QCZ3DAW",
@@ -7992,7 +7992,7 @@
       "scope": "CotacoesManager",
       "hint": "variant=outline",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:366:26"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:479:26"
     },
     {
       "short_code": "21N5PXW",
@@ -8001,7 +8001,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:378:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:484:24"
     },
     {
       "short_code": "91B5Z27",
@@ -8010,7 +8010,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:379:28"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:485:28"
     },
     {
       "short_code": "1GY4P1Y",
@@ -8019,7 +8019,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:380:32"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:486:32"
     },
     {
       "short_code": "1602SAU",
@@ -8028,16 +8028,16 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:386:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:492:36"
     },
     {
       "short_code": "25Y6QUL",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.2",
       "kind": "Input",
       "scope": "CotacoesManager",
-      "hint": "Nome do produto...",
+      "hint": "Buscar por nome, código, barras ou marca...",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:387:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:495:38"
     },
     {
       "short_code": "1W8JLGS",
@@ -8046,43 +8046,43 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:390:36"
-    },
-    {
-      "short_code": "1591CHZ",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.3",
-      "kind": "Input",
-      "scope": "CotacoesManager",
-      "hint": "1",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:391:36"
-    },
-    {
-      "short_code": "H9DQ44I",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Label.4",
-      "kind": "Label",
-      "scope": "CotacoesManager",
-      "hint": null,
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:394:36"
-    },
-    {
-      "short_code": "19ZSX3R",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.4",
-      "kind": "Input",
-      "scope": "CotacoesManager",
-      "hint": "UN",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:395:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:524:36"
     },
     {
       "short_code": "FX71VZ3",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.5",
       "kind": "Button",
       "scope": "CotacoesManager",
+      "hint": "variant=outline · size=icon",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:540:44"
+    },
+    {
+      "short_code": "1591CHZ",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.3",
+      "kind": "Input",
+      "scope": "CotacoesManager",
+      "hint": null,
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:543:44"
+    },
+    {
+      "short_code": "TSHAOQ4",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.6",
+      "kind": "Button",
+      "scope": "CotacoesManager",
+      "hint": "variant=outline · size=icon",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:550:44"
+    },
+    {
+      "short_code": "QMLDHD8",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.7",
+      "kind": "Button",
+      "scope": "CotacoesManager",
       "hint": "size=sm",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:397:32"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:558:34"
     },
     {
       "short_code": "24M60SM",
@@ -8091,7 +8091,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:432:30"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:565:30"
     },
     {
       "short_code": "7KG9BYO",
@@ -8100,7 +8100,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:433:34"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:566:34"
     },
     {
       "short_code": "1CHURYT",
@@ -8109,7 +8109,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:434:38"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:567:38"
     },
     {
       "short_code": "1WCLGRG",
@@ -8118,7 +8118,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:435:42"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:568:42"
     },
     {
       "short_code": "ED9HK5F",
@@ -8127,7 +8127,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:437:46"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:570:46"
     },
     {
       "short_code": "1E86IXC",
@@ -8136,7 +8136,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:443:34"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:576:34"
     },
     {
       "short_code": "1J8KVTV",
@@ -8145,7 +8145,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:445:42"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:578:42"
     },
     {
       "short_code": "LORV9UA",
@@ -8154,7 +8154,7 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:446:46"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:579:46"
     },
     {
       "short_code": "1TETZ7O",
@@ -8163,52 +8163,61 @@
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:460:54"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:593:54"
     },
     {
-      "short_code": "1K60GDU",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.5",
+      "short_code": "19ZSX3R",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.4",
       "kind": "Input",
       "scope": "CotacoesManager",
       "hint": "R$ 0,00",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:462:62"
-    },
-    {
-      "short_code": "TSHAOQ4",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.6",
-      "kind": "Button",
-      "scope": "CotacoesManager",
-      "hint": "variant=ghost · size=sm",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:476:66"
-    },
-    {
-      "short_code": "QMLDHD8",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.7",
-      "kind": "Button",
-      "scope": "CotacoesManager",
-      "hint": "variant=ghost",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:496:32"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:595:62"
     },
     {
       "short_code": "LZKQKFZ",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.8",
       "kind": "Button",
       "scope": "CotacoesManager",
-      "hint": "variant=outline",
+      "hint": "variant=ghost · size=sm",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:505:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:609:66"
     },
     {
       "short_code": "24R2ZRT",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.9",
       "kind": "Button",
       "scope": "CotacoesManager",
+      "hint": "variant=ghost",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:629:32"
+    },
+    {
+      "short_code": "25BKXFT",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.10",
+      "kind": "Button",
+      "scope": "CotacoesManager",
+      "hint": "variant=outline",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:638:36"
+    },
+    {
+      "short_code": "VKN0RH4",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.11",
+      "kind": "Button",
+      "scope": "CotacoesManager",
+      "hint": "size=sm · variant=outline",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:647:22"
+    },
+    {
+      "short_code": "1DF7MZ7",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.12",
+      "kind": "Button",
+      "scope": "CotacoesManager",
       "hint": "size=sm",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:514:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:657:26"
     },
     {
       "short_code": "23IW0SO",
@@ -17256,337 +17265,157 @@
       "source_location_raw": "src/pages/ExtratoConta.jsx:741:12"
     },
     {
-      "short_code": "1D8ZU9D",
-      "code": "CAT-PG-Agefin.Agefin.Button.1",
-      "kind": "Button",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:133:12"
-    },
-    {
-      "short_code": "2QX02CT",
-      "code": "CAT-PG-Agefin.Agefin.Calendar.1",
-      "kind": "Calendar",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:163:20"
-    },
-    {
-      "short_code": "9VTT8MM",
-      "code": "CAT-PG-Agefin.Agefin.Calendar.2",
-      "kind": "Calendar",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:168:16"
-    },
-    {
-      "short_code": "5L8SQ3Z",
-      "code": "CAT-PG-Agefin.Agefin.Tabs.1",
-      "kind": "Tabs",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:182:8"
-    },
-    {
-      "short_code": "10XLT0H",
-      "code": "CAT-PG-Agefin.Agefin.TabsList.1",
-      "kind": "TabsList",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:183:10"
-    },
-    {
-      "short_code": "2GW9RJ2",
-      "code": "CAT-PG-Agefin.Agefin.TabsTrigger.1",
-      "kind": "TabsTrigger",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:184:12"
-    },
-    {
-      "short_code": "YMR2O2L",
-      "code": "CAT-PG-Agefin.Agefin.TabsTrigger.2",
-      "kind": "TabsTrigger",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:190:12"
-    },
-    {
-      "short_code": "271LQ1P",
-      "code": "CAT-PG-Agefin.Agefin.Button.2",
-      "kind": "Button",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:216:14"
-    },
-    {
-      "short_code": "1WWXBWF",
-      "code": "CAT-PG-Agefin.Agefin.Button.3",
-      "kind": "Button",
-      "scope": "Agefin",
-      "hint": "variant=outline",
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:223:14"
-    },
-    {
-      "short_code": "2Q6N9VC",
-      "code": "CAT-PG-Agefin.Agefin.TabsContent.1",
-      "kind": "TabsContent",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:235:12"
-    },
-    {
-      "short_code": "15RMWAZ",
-      "code": "CAT-PG-Agefin.Agefin.TabsContent.2",
-      "kind": "TabsContent",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:238:12"
-    },
-    {
-      "short_code": "2KDXX3G",
-      "code": "CAT-PG-Agefin.Agefin.Dialog.1",
-      "kind": "Dialog",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:246:6"
-    },
-    {
-      "short_code": "1X3VTG1",
-      "code": "CAT-PG-Agefin.Agefin.DialogContent.1",
-      "kind": "DialogContent",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:247:8"
-    },
-    {
-      "short_code": "1EWQK1I",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Button.1",
-      "kind": "Button",
-      "scope": "AgefinImportador",
-      "hint": "variant=outline",
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:456:12"
-    },
-    {
-      "short_code": "2LU1YXW",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Button.2",
-      "kind": "Button",
-      "scope": "AgefinImportador",
-      "hint": "variant=outline",
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:466:12"
-    },
-    {
-      "short_code": "10MFHAU",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Button.3",
-      "kind": "Button",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:473:12"
-    },
-    {
-      "short_code": "19HAA1T",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Select.1",
-      "kind": "Select",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:604:16"
-    },
-    {
-      "short_code": "MW1MTV4",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectTrigger.1",
-      "kind": "SelectTrigger",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:605:18"
-    },
-    {
-      "short_code": "1NL8PIP",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectValue.1",
-      "kind": "SelectValue",
-      "scope": "AgefinImportador",
-      "hint": "Escolher conta",
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:606:20"
-    },
-    {
-      "short_code": "14SNMB9",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectContent.1",
-      "kind": "SelectContent",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:608:18"
-    },
-    {
-      "short_code": "11588BE",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.1",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:610:22"
-    },
-    {
-      "short_code": "JWIW9QX",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Select.2",
-      "kind": "Select",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:706:18"
-    },
-    {
-      "short_code": "2LC7DZS",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectTrigger.2",
-      "kind": "SelectTrigger",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:707:20"
-    },
-    {
-      "short_code": "13DGVQY",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectValue.2",
-      "kind": "SelectValue",
-      "scope": "AgefinImportador",
-      "hint": "Escolher frequência",
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:708:22"
-    },
-    {
-      "short_code": "10LKXWA",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectContent.2",
-      "kind": "SelectContent",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:710:20"
-    },
-    {
-      "short_code": "81N465U",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.2",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:711:22"
-    },
-    {
-      "short_code": "ZWZ0GMG",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.3",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:712:22"
-    },
-    {
-      "short_code": "VFL9D7L",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.4",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:713:22"
-    },
-    {
-      "short_code": "J36247U",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.5",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:714:22"
-    },
-    {
-      "short_code": "2JBSFUA",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.6",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:715:22"
-    },
-    {
-      "short_code": "PU7NA6K",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.SelectItem.7",
-      "kind": "SelectItem",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:716:22"
-    },
-    {
-      "short_code": "2BY56BV",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Button.4",
-      "kind": "Button",
-      "scope": "AgefinImportador",
-      "hint": "variant=outline",
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:777:10"
-    },
-    {
-      "short_code": "D4TF01A",
-      "code": "CAT-PG-Agefin.AgefinImportador.AgefinImportador.Button.5",
-      "kind": "Button",
-      "scope": "AgefinImportador",
-      "hint": null,
-      "file": "src/components/agefin/AgefinImportador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinImportador.jsx:784:10"
-    },
-    {
-      "short_code": "O5V56NN",
-      "code": "CAT-PG-Agefin.AgefinLista.ContaCard.Calendar.1",
+      "short_code": "29KSGXM",
+      "code": "CAT-PG-Agefin.ContaCard.Calendar.1",
       "kind": "Calendar",
       "scope": "ContaCard",
       "hint": null,
-      "file": "src/components/agefin/AgefinLista.jsx",
-      "source_location_raw": "src/components/agefin/AgefinLista.jsx:128:16"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:185:16"
     },
     {
-      "short_code": "22QK41V",
-      "code": "CAT-PG-Agefin.AgefinAtualizador.AgefinAtualizador.Drawer.1",
+      "short_code": "4Q6WPZ0",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.1",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:584:14"
+    },
+    {
+      "short_code": "2700Q4Q",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Drawer.1",
       "kind": "Drawer",
-      "scope": "AgefinAtualizador",
+      "scope": "AgefinConsulta",
       "hint": null,
-      "file": "src/components/agefin/AgefinAtualizador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinAtualizador.jsx:244:6"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:594:14"
     },
     {
-      "short_code": "183ZQHJ",
-      "code": "CAT-PG-Agefin.AgefinAtualizador.AgefinAtualizador.DrawerContent.1",
+      "short_code": "2C61S64",
+      "code": "CAT-PG-Agefin.AgefinConsulta.DrawerTrigger.1",
+      "kind": "DrawerTrigger",
+      "scope": "AgefinConsulta",
+      "hint": null,
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:595:16"
+    },
+    {
+      "short_code": "2F0PNZD",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.2",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=icon",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:596:18"
+    },
+    {
+      "short_code": "1CQYGYW",
+      "code": "CAT-PG-Agefin.AgefinConsulta.DrawerContent.1",
       "kind": "DrawerContent",
-      "scope": "AgefinAtualizador",
+      "scope": "AgefinConsulta",
       "hint": null,
-      "file": "src/components/agefin/AgefinAtualizador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinAtualizador.jsx:245:8"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:603:16"
     },
     {
-      "short_code": "13MGUF2",
-      "code": "CAT-PG-Agefin.AgefinAtualizador.AgefinAtualizador.Calendar.1",
-      "kind": "Calendar",
-      "scope": "AgefinAtualizador",
+      "short_code": "1JH5MNO",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Input.1",
+      "kind": "Input",
+      "scope": "AgefinConsulta",
       "hint": null,
-      "file": "src/components/agefin/AgefinAtualizador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinAtualizador.jsx:337:26"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:649:24"
+    },
+    {
+      "short_code": "14K8N5J",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Input.2",
+      "kind": "Input",
+      "scope": "AgefinConsulta",
+      "hint": null,
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:653:24"
+    },
+    {
+      "short_code": "1C65MVR",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.3",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:658:20"
+    },
+    {
+      "short_code": "19H1GNG",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.4",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=icon",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:664:14"
+    },
+    {
+      "short_code": "533GATY",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.5",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:671:12"
+    },
+    {
+      "short_code": "GAFSP9D",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.6",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:678:12"
+    },
+    {
+      "short_code": "2K7U39V",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.7",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=outline · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:753:14"
+    },
+    {
+      "short_code": "13AXVDP",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.8",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:756:14"
+    },
+    {
+      "short_code": "1GC33SJ",
+      "code": "CAT-PG-Agefin.AgefinConsultaDrawer.AgefinConsultaDrawer.Drawer.1",
+      "kind": "Drawer",
+      "scope": "AgefinConsultaDrawer",
+      "hint": null,
+      "file": "src/components/agefin/AgefinConsultaDrawer.jsx",
+      "source_location_raw": "src/components/agefin/AgefinConsultaDrawer.jsx:74:4"
+    },
+    {
+      "short_code": "2M2TOOO",
+      "code": "CAT-PG-Agefin.AgefinConsultaDrawer.AgefinConsultaDrawer.DrawerContent.1",
+      "kind": "DrawerContent",
+      "scope": "AgefinConsultaDrawer",
+      "hint": null,
+      "file": "src/components/agefin/AgefinConsultaDrawer.jsx",
+      "source_location_raw": "src/components/agefin/AgefinConsultaDrawer.jsx:75:6"
+    },
+    {
+      "short_code": "BEPEV57",
+      "code": "CAT-PG-Agefin.AgefinConsultaDrawer.AgefinConsultaDrawer.Calendar.1",
+      "kind": "Calendar",
+      "scope": "AgefinConsultaDrawer",
+      "hint": null,
+      "file": "src/components/agefin/AgefinConsultaDrawer.jsx",
+      "source_location_raw": "src/components/agefin/AgefinConsultaDrawer.jsx:131:18"
     },
     {
       "short_code": "1JG0WVN",
@@ -26203,216 +26032,198 @@
       "file": "src/pages/PainelGerente.jsx",
       "source_location_raw": "src/pages/PainelGerente.jsx:303:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1017:14": {
+    "src/components/vendas/PDVVendedor.jsx:1028:14": {
       "short_code": "LLP8V0I",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.1",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon · Orçamentos recentes",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1017:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1028:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1021:14": {
+    "src/components/vendas/PDVVendedor.jsx:1032:14": {
       "short_code": "1I2CPNN",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.2",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon · Reeditar rascunho",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1021:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1032:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1025:14": {
+    "src/components/vendas/PDVVendedor.jsx:1036:14": {
       "short_code": "EZBBZBS",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.3",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1025:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1036:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1042:18": {
+    "src/components/vendas/PDVVendedor.jsx:1053:18": {
       "short_code": "PP8NAHL",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.1",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "Buscar por nome, código ou código de barras...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1042:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1053:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1050:18": {
+    "src/components/vendas/PDVVendedor.jsx:1061:18": {
       "short_code": "1QHJ2AL",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.4",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1050:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1061:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1056:18": {
+    "src/components/vendas/PDVVendedor.jsx:1067:18": {
       "short_code": "2BGA2AQ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.2",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "Qtd",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1056:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1067:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1155:18": {
+    "src/components/vendas/PDVVendedor.jsx:1169:18": {
       "short_code": "23TFYFJ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.5",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=sm",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1155:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1169:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1159:18": {
+    "src/components/vendas/PDVVendedor.jsx:1173:18": {
       "short_code": "2Q52BFM",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.6",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1159:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1173:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1276:20": {
+    "src/components/vendas/PDVVendedor.jsx:1290:20": {
       "short_code": "Z4HM3K8",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.3",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "0",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1276:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1290:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1285:20": {
+    "src/components/vendas/PDVVendedor.jsx:1299:20": {
       "short_code": "GT3WVO0",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.4",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "0,00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1285:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1299:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1300:12": {
+    "src/components/vendas/PDVVendedor.jsx:1314:12": {
       "short_code": "1TY8CXO",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.7",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1300:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1314:12"
     },
-    "src/components/vendas/PDVVendedor.jsx:1349:6": {
+    "src/components/vendas/PDVVendedor.jsx:1363:6": {
       "short_code": "PBO2J7E",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Dialog.1",
       "kind": "Dialog",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1349:6"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1363:6"
     },
-    "src/components/vendas/PDVVendedor.jsx:1350:8": {
+    "src/components/vendas/PDVVendedor.jsx:1364:8": {
       "short_code": "9SYHH44",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogContent.1",
       "kind": "DialogContent",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1350:8"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1364:8"
     },
-    "src/components/vendas/PDVVendedor.jsx:1351:10": {
+    "src/components/vendas/PDVVendedor.jsx:1365:10": {
       "short_code": "2I349WJ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogHeader.1",
       "kind": "DialogHeader",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1351:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1365:10"
     },
-    "src/components/vendas/PDVVendedor.jsx:1352:12": {
+    "src/components/vendas/PDVVendedor.jsx:1366:12": {
       "short_code": "29CQ8Y6",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogTitle.1",
       "kind": "DialogTitle",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1352:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1366:12"
     },
-    "src/components/vendas/PDVVendedor.jsx:1359:18": {
+    "src/components/vendas/PDVVendedor.jsx:1373:18": {
       "short_code": "203NZZH",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.1",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1359:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1373:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1362:20": {
+    "src/components/vendas/PDVVendedor.jsx:1376:20": {
       "short_code": "UHPC56V",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.5",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "Digite nome, documento ou telefone...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1362:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1376:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1411:20": {
+    "src/components/vendas/PDVVendedor.jsx:1425:20": {
       "short_code": "1DTLA3V",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.8",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=ghost · size=icon",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1411:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1425:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1439:16": {
+    "src/components/vendas/PDVVendedor.jsx:1453:16": {
       "short_code": "MD2IU1Q",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.9",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1439:16"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1453:16"
     },
-    "src/components/vendas/PDVVendedor.jsx:1452:18": {
+    "src/components/vendas/PDVVendedor.jsx:1466:18": {
       "short_code": "14ZRFIF",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.2",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1452:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1466:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1453:18": {
+    "src/components/vendas/PDVVendedor.jsx:1467:18": {
       "short_code": "2M15QDX",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.RadioGroup.1",
       "kind": "RadioGroup",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1453:18"
-    },
-    "src/components/vendas/PDVVendedor.jsx:1459:22": {
-      "short_code": "2IQS0QI",
-      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.RadioGroupItem.1",
-      "kind": "RadioGroupItem",
-      "scope": "PDVVendedor",
-      "hint": null,
-      "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1459:22"
-    },
-    "src/components/vendas/PDVVendedor.jsx:1460:22": {
-      "short_code": "1LS2592",
-      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.3",
-      "kind": "Label",
-      "scope": "PDVVendedor",
-      "hint": null,
-      "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1460:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1467:18"
     },
     "src/components/vendas/PDVVendedor.jsx:1473:22": {
-      "short_code": "TL4U0CP",
-      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.RadioGroupItem.2",
+      "short_code": "2IQS0QI",
+      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.RadioGroupItem.1",
       "kind": "RadioGroupItem",
       "scope": "PDVVendedor",
       "hint": null,
@@ -26420,454 +26231,472 @@
       "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1473:22"
     },
     "src/components/vendas/PDVVendedor.jsx:1474:22": {
-      "short_code": "NV4JEG2",
-      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.4",
+      "short_code": "1LS2592",
+      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.3",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
       "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1474:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1487:18": {
+    "src/components/vendas/PDVVendedor.jsx:1487:22": {
+      "short_code": "TL4U0CP",
+      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.RadioGroupItem.2",
+      "kind": "RadioGroupItem",
+      "scope": "PDVVendedor",
+      "hint": null,
+      "file": "src/components/vendas/PDVVendedor.jsx",
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1487:22"
+    },
+    "src/components/vendas/PDVVendedor.jsx:1488:22": {
+      "short_code": "NV4JEG2",
+      "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.4",
+      "kind": "Label",
+      "scope": "PDVVendedor",
+      "hint": null,
+      "file": "src/components/vendas/PDVVendedor.jsx",
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1488:22"
+    },
+    "src/components/vendas/PDVVendedor.jsx:1501:18": {
       "short_code": "T7KDORD",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.5",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1487:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1501:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1488:18": {
+    "src/components/vendas/PDVVendedor.jsx:1502:18": {
       "short_code": "158CDB5",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.6",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "Nome do cliente...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1488:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1502:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1500:20": {
+    "src/components/vendas/PDVVendedor.jsx:1514:20": {
       "short_code": "1J8BPDN",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.6",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1500:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1514:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1501:20": {
+    "src/components/vendas/PDVVendedor.jsx:1515:20": {
       "short_code": "1L63KKS",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.7",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "(00) 00000-0000",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1501:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1515:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1512:20": {
+    "src/components/vendas/PDVVendedor.jsx:1526:20": {
       "short_code": "9WNGTC8",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.7",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1512:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1526:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1513:20": {
+    "src/components/vendas/PDVVendedor.jsx:1527:20": {
       "short_code": "UISH65S",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Select.1",
       "kind": "Select",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1513:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1527:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1517:22": {
+    "src/components/vendas/PDVVendedor.jsx:1531:22": {
       "short_code": "28ZKXGI",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectTrigger.1",
       "kind": "SelectTrigger",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1517:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1531:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1518:24": {
+    "src/components/vendas/PDVVendedor.jsx:1532:24": {
       "short_code": "A91SNK8",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectValue.1",
       "kind": "SelectValue",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1518:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1532:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1520:22": {
+    "src/components/vendas/PDVVendedor.jsx:1534:22": {
       "short_code": "2OSHSFT",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectContent.1",
       "kind": "SelectContent",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1520:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1534:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1521:24": {
+    "src/components/vendas/PDVVendedor.jsx:1535:24": {
       "short_code": "29IKPB2",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.1",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1521:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1535:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1522:24": {
+    "src/components/vendas/PDVVendedor.jsx:1536:24": {
       "short_code": "29YCDUJ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.2",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1522:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1536:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1523:24": {
+    "src/components/vendas/PDVVendedor.jsx:1537:24": {
       "short_code": "1YFKAGH",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.3",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1523:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1537:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1524:24": {
+    "src/components/vendas/PDVVendedor.jsx:1538:24": {
       "short_code": "2AEO29Y",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.4",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1524:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1538:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1525:24": {
+    "src/components/vendas/PDVVendedor.jsx:1539:24": {
       "short_code": "MJ3B8CP",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.5",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1525:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1539:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1526:24": {
+    "src/components/vendas/PDVVendedor.jsx:1540:24": {
       "short_code": "NV2XK9C",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.6",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1526:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1540:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1533:18": {
+    "src/components/vendas/PDVVendedor.jsx:1547:18": {
       "short_code": "10CE0AU",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.8",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1533:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1547:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1534:18": {
+    "src/components/vendas/PDVVendedor.jsx:1548:18": {
       "short_code": "2BCTMAY",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.8",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "000.000.000-00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1534:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1548:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1543:20": {
+    "src/components/vendas/PDVVendedor.jsx:1557:20": {
       "short_code": "1FRHSQ6",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.9",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1543:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1557:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1544:20": {
+    "src/components/vendas/PDVVendedor.jsx:1558:20": {
       "short_code": "2OZ4AGN",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Textarea.1",
       "kind": "Textarea",
       "scope": "PDVVendedor",
       "hint": "Rua, número, bairro, cidade...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1544:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1558:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1555:22": {
+    "src/components/vendas/PDVVendedor.jsx:1569:22": {
       "short_code": "1DIASTA",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.10",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1555:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1569:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1556:22": {
+    "src/components/vendas/PDVVendedor.jsx:1570:22": {
       "short_code": "2FBB6JF",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Select.2",
       "kind": "Select",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1556:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1570:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1560:24": {
+    "src/components/vendas/PDVVendedor.jsx:1574:24": {
       "short_code": "12OY6QY",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectTrigger.2",
       "kind": "SelectTrigger",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1560:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1574:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1561:26": {
+    "src/components/vendas/PDVVendedor.jsx:1575:26": {
       "short_code": "1VP1DVQ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectValue.2",
       "kind": "SelectValue",
       "scope": "PDVVendedor",
       "hint": "Selecione...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1561:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1575:26"
     },
-    "src/components/vendas/PDVVendedor.jsx:1563:24": {
+    "src/components/vendas/PDVVendedor.jsx:1577:24": {
       "short_code": "2888NZ8",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectContent.2",
       "kind": "SelectContent",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1563:24"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1577:24"
     },
-    "src/components/vendas/PDVVendedor.jsx:1564:26": {
+    "src/components/vendas/PDVVendedor.jsx:1578:26": {
       "short_code": "GIAYBQO",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.7",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1564:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1578:26"
     },
-    "src/components/vendas/PDVVendedor.jsx:1565:26": {
+    "src/components/vendas/PDVVendedor.jsx:1579:26": {
       "short_code": "1MPNES4",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.8",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1565:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1579:26"
     },
-    "src/components/vendas/PDVVendedor.jsx:1566:26": {
+    "src/components/vendas/PDVVendedor.jsx:1580:26": {
       "short_code": "J41499L",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.9",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1566:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1580:26"
     },
-    "src/components/vendas/PDVVendedor.jsx:1567:26": {
+    "src/components/vendas/PDVVendedor.jsx:1581:26": {
       "short_code": "K87G3IJ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.SelectItem.10",
       "kind": "SelectItem",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1567:26"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1581:26"
     },
-    "src/components/vendas/PDVVendedor.jsx:1573:22": {
+    "src/components/vendas/PDVVendedor.jsx:1587:22": {
       "short_code": "23NVCL6",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.11",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1573:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1587:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1574:22": {
+    "src/components/vendas/PDVVendedor.jsx:1588:22": {
       "short_code": "UZX1IQ2",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.9",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1574:22"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1588:22"
     },
-    "src/components/vendas/PDVVendedor.jsx:1584:20": {
+    "src/components/vendas/PDVVendedor.jsx:1598:20": {
       "short_code": "2AC9F38",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.12",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1584:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1598:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1585:20": {
+    "src/components/vendas/PDVVendedor.jsx:1599:20": {
       "short_code": "27PJ8KL",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Textarea.2",
       "kind": "Textarea",
       "scope": "PDVVendedor",
       "hint": "Informações adicionais sobre o cliente...",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1585:20"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1599:20"
     },
-    "src/components/vendas/PDVVendedor.jsx:1595:18": {
+    "src/components/vendas/PDVVendedor.jsx:1609:18": {
       "short_code": "1MLTQFL",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.10",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1595:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1609:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1603:18": {
+    "src/components/vendas/PDVVendedor.jsx:1617:18": {
       "short_code": "1UTM496",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.11",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1603:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1617:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1616:10": {
+    "src/components/vendas/PDVVendedor.jsx:1630:10": {
       "short_code": "R67NT5Z",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogFooter.1",
       "kind": "DialogFooter",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1616:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1630:10"
     },
-    "src/components/vendas/PDVVendedor.jsx:1617:14": {
+    "src/components/vendas/PDVVendedor.jsx:1631:14": {
       "short_code": "1UFCA4R",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.12",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1617:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1631:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1624:14": {
+    "src/components/vendas/PDVVendedor.jsx:1638:14": {
       "short_code": "L8AOQEA",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.13",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1624:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1638:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1733:18": {
+    "src/components/vendas/PDVVendedor.jsx:1747:18": {
       "short_code": "MOCZ60K",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.10",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "0",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1733:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1747:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1742:18": {
+    "src/components/vendas/PDVVendedor.jsx:1756:18": {
       "short_code": "159VF3U",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.11",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "0,00",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1742:18"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1756:18"
     },
-    "src/components/vendas/PDVVendedor.jsx:1756:12": {
+    "src/components/vendas/PDVVendedor.jsx:1770:12": {
       "short_code": "28OSK37",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.14",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1756:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1770:12"
     },
-    "src/components/vendas/PDVVendedor.jsx:1820:6": {
+    "src/components/vendas/PDVVendedor.jsx:1834:6": {
       "short_code": "19F0P37",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Dialog.2",
       "kind": "Dialog",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1820:6"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1834:6"
     },
-    "src/components/vendas/PDVVendedor.jsx:1821:8": {
+    "src/components/vendas/PDVVendedor.jsx:1835:8": {
       "short_code": "1Q1K0BN",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogContent.2",
       "kind": "DialogContent",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1821:8"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1835:8"
     },
-    "src/components/vendas/PDVVendedor.jsx:1822:10": {
+    "src/components/vendas/PDVVendedor.jsx:1836:10": {
       "short_code": "57QAT3F",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogHeader.2",
       "kind": "DialogHeader",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1822:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1836:10"
     },
-    "src/components/vendas/PDVVendedor.jsx:1823:12": {
+    "src/components/vendas/PDVVendedor.jsx:1837:12": {
       "short_code": "2N0LSV3",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogTitle.2",
       "kind": "DialogTitle",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1823:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1837:12"
     },
-    "src/components/vendas/PDVVendedor.jsx:1828:14": {
+    "src/components/vendas/PDVVendedor.jsx:1842:14": {
       "short_code": "ZDIVFWE",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Label.13",
       "kind": "Label",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1828:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1842:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1831:14": {
+    "src/components/vendas/PDVVendedor.jsx:1845:14": {
       "short_code": "Y2QG2JA",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Input.12",
       "kind": "Input",
       "scope": "PDVVendedor",
       "hint": "0000",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1831:14"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1845:14"
     },
-    "src/components/vendas/PDVVendedor.jsx:1857:10": {
+    "src/components/vendas/PDVVendedor.jsx:1871:10": {
       "short_code": "24RN1EQ",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.DialogFooter.2",
       "kind": "DialogFooter",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1857:10"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1871:10"
     },
-    "src/components/vendas/PDVVendedor.jsx:1858:12": {
+    "src/components/vendas/PDVVendedor.jsx:1872:12": {
       "short_code": "W385KXX",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.15",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": "variant=outline",
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1858:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1872:12"
     },
-    "src/components/vendas/PDVVendedor.jsx:1868:12": {
+    "src/components/vendas/PDVVendedor.jsx:1882:12": {
       "short_code": "2GSWMQK",
       "code": "CAT-PG-Vendas.PDVVendedor.PDVVendedor.Button.16",
       "kind": "Button",
       "scope": "PDVVendedor",
       "hint": null,
       "file": "src/components/vendas/PDVVendedor.jsx",
-      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1868:12"
+      "source_location_raw": "src/components/vendas/PDVVendedor.jsx:1882:12"
     },
     "src/components/vendas/PDVCaixa.jsx:1227:14": {
       "short_code": "1WV0Q7J",
@@ -32062,329 +31891,338 @@
       "file": "src/components/compras/SugestaoCompra.jsx",
       "source_location_raw": "src/components/compras/SugestaoCompra.jsx:451:14"
     },
-    "src/components/compras/CotacoesManager.jsx:258:12": {
+    "src/components/compras/CotacoesManager.jsx:371:12": {
       "short_code": "BMXKGAD",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.1",
       "kind": "Button",
       "scope": "CotacoesManager",
       "hint": "variant=outline",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:258:12"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:371:12"
     },
-    "src/components/compras/CotacoesManager.jsx:265:12": {
+    "src/components/compras/CotacoesManager.jsx:378:12": {
       "short_code": "AZSGME3",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Dialog.1",
       "kind": "Dialog",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:265:12"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:378:12"
     },
-    "src/components/compras/CotacoesManager.jsx:267:20": {
+    "src/components/compras/CotacoesManager.jsx:380:20": {
       "short_code": "2QBU0GL",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.2",
       "kind": "Button",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:267:20"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:380:20"
     },
-    "src/components/compras/CotacoesManager.jsx:271:16": {
+    "src/components/compras/CotacoesManager.jsx:384:16": {
       "short_code": "1J1WCMU",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.DialogContent.1",
       "kind": "DialogContent",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:271:16"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:384:16"
     },
-    "src/components/compras/CotacoesManager.jsx:272:20": {
+    "src/components/compras/CotacoesManager.jsx:385:20": {
       "short_code": "YLPFKJ7",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.DialogHeader.1",
       "kind": "DialogHeader",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:272:20"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:385:20"
     },
-    "src/components/compras/CotacoesManager.jsx:273:24": {
+    "src/components/compras/CotacoesManager.jsx:386:24": {
       "short_code": "1YUN28O",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.DialogTitle.1",
       "kind": "DialogTitle",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:273:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:386:24"
     },
-    "src/components/compras/CotacoesManager.jsx:277:28": {
+    "src/components/compras/CotacoesManager.jsx:390:28": {
       "short_code": "C87RGQ2",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Label.1",
       "kind": "Label",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:277:28"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:390:28"
     },
-    "src/components/compras/CotacoesManager.jsx:278:28": {
+    "src/components/compras/CotacoesManager.jsx:391:28": {
       "short_code": "CI8A4PG",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.1",
       "kind": "Input",
       "scope": "CotacoesManager",
       "hint": "Ex: Compra de Cimento Mensal",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:278:28"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:391:28"
     },
-    "src/components/compras/CotacoesManager.jsx:284:24": {
+    "src/components/compras/CotacoesManager.jsx:397:24": {
       "short_code": "2PN6I24",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.3",
       "kind": "Button",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:284:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:397:24"
     },
-    "src/components/compras/CotacoesManager.jsx:339:18": {
+    "src/components/compras/CotacoesManager.jsx:452:18": {
       "short_code": "2AK5ACF",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Badge.1",
       "kind": "Badge",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:339:18"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:452:18"
     },
-    "src/components/compras/CotacoesManager.jsx:364:18": {
+    "src/components/compras/CotacoesManager.jsx:477:18": {
       "short_code": "Y6D2UNK",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Dialog.2",
       "kind": "Dialog",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:364:18"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:477:18"
     },
-    "src/components/compras/CotacoesManager.jsx:366:26": {
+    "src/components/compras/CotacoesManager.jsx:479:26": {
       "short_code": "QCZ3DAW",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.4",
       "kind": "Button",
       "scope": "CotacoesManager",
       "hint": "variant=outline",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:366:26"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:479:26"
     },
-    "src/components/compras/CotacoesManager.jsx:378:24": {
+    "src/components/compras/CotacoesManager.jsx:484:24": {
       "short_code": "21N5PXW",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.DialogContent.2",
       "kind": "DialogContent",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:378:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:484:24"
     },
-    "src/components/compras/CotacoesManager.jsx:379:28": {
+    "src/components/compras/CotacoesManager.jsx:485:28": {
       "short_code": "91B5Z27",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.DialogHeader.2",
       "kind": "DialogHeader",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:379:28"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:485:28"
     },
-    "src/components/compras/CotacoesManager.jsx:380:32": {
+    "src/components/compras/CotacoesManager.jsx:486:32": {
       "short_code": "1GY4P1Y",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.DialogTitle.2",
       "kind": "DialogTitle",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:380:32"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:486:32"
     },
-    "src/components/compras/CotacoesManager.jsx:386:36": {
+    "src/components/compras/CotacoesManager.jsx:492:36": {
       "short_code": "1602SAU",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Label.2",
       "kind": "Label",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:386:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:492:36"
     },
-    "src/components/compras/CotacoesManager.jsx:387:36": {
+    "src/components/compras/CotacoesManager.jsx:495:38": {
       "short_code": "25Y6QUL",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.2",
       "kind": "Input",
       "scope": "CotacoesManager",
-      "hint": "Nome do produto...",
+      "hint": "Buscar por nome, código, barras ou marca...",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:387:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:495:38"
     },
-    "src/components/compras/CotacoesManager.jsx:390:36": {
+    "src/components/compras/CotacoesManager.jsx:524:36": {
       "short_code": "1W8JLGS",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Label.3",
       "kind": "Label",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:390:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:524:36"
     },
-    "src/components/compras/CotacoesManager.jsx:391:36": {
-      "short_code": "1591CHZ",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.3",
-      "kind": "Input",
-      "scope": "CotacoesManager",
-      "hint": "1",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:391:36"
-    },
-    "src/components/compras/CotacoesManager.jsx:394:36": {
-      "short_code": "H9DQ44I",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Label.4",
-      "kind": "Label",
-      "scope": "CotacoesManager",
-      "hint": null,
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:394:36"
-    },
-    "src/components/compras/CotacoesManager.jsx:395:36": {
-      "short_code": "19ZSX3R",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.4",
-      "kind": "Input",
-      "scope": "CotacoesManager",
-      "hint": "UN",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:395:36"
-    },
-    "src/components/compras/CotacoesManager.jsx:397:32": {
+    "src/components/compras/CotacoesManager.jsx:540:44": {
       "short_code": "FX71VZ3",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.5",
       "kind": "Button",
       "scope": "CotacoesManager",
+      "hint": "variant=outline · size=icon",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:540:44"
+    },
+    "src/components/compras/CotacoesManager.jsx:543:44": {
+      "short_code": "1591CHZ",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.3",
+      "kind": "Input",
+      "scope": "CotacoesManager",
+      "hint": null,
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:543:44"
+    },
+    "src/components/compras/CotacoesManager.jsx:550:44": {
+      "short_code": "TSHAOQ4",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.6",
+      "kind": "Button",
+      "scope": "CotacoesManager",
+      "hint": "variant=outline · size=icon",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:550:44"
+    },
+    "src/components/compras/CotacoesManager.jsx:558:34": {
+      "short_code": "QMLDHD8",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.7",
+      "kind": "Button",
+      "scope": "CotacoesManager",
       "hint": "size=sm",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:397:32"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:558:34"
     },
-    "src/components/compras/CotacoesManager.jsx:432:30": {
+    "src/components/compras/CotacoesManager.jsx:565:30": {
       "short_code": "24M60SM",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Table.1",
       "kind": "Table",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:432:30"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:565:30"
     },
-    "src/components/compras/CotacoesManager.jsx:433:34": {
+    "src/components/compras/CotacoesManager.jsx:566:34": {
       "short_code": "7KG9BYO",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableHeader.1",
       "kind": "TableHeader",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:433:34"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:566:34"
     },
-    "src/components/compras/CotacoesManager.jsx:434:38": {
+    "src/components/compras/CotacoesManager.jsx:567:38": {
       "short_code": "1CHURYT",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableRow.1",
       "kind": "TableRow",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:434:38"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:567:38"
     },
-    "src/components/compras/CotacoesManager.jsx:435:42": {
+    "src/components/compras/CotacoesManager.jsx:568:42": {
       "short_code": "1WCLGRG",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableHead.1",
       "kind": "TableHead",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:435:42"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:568:42"
     },
-    "src/components/compras/CotacoesManager.jsx:437:46": {
+    "src/components/compras/CotacoesManager.jsx:570:46": {
       "short_code": "ED9HK5F",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableHead.2",
       "kind": "TableHead",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:437:46"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:570:46"
     },
-    "src/components/compras/CotacoesManager.jsx:443:34": {
+    "src/components/compras/CotacoesManager.jsx:576:34": {
       "short_code": "1E86IXC",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableBody.1",
       "kind": "TableBody",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:443:34"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:576:34"
     },
-    "src/components/compras/CotacoesManager.jsx:445:42": {
+    "src/components/compras/CotacoesManager.jsx:578:42": {
       "short_code": "1J8KVTV",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableRow.2",
       "kind": "TableRow",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:445:42"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:578:42"
     },
-    "src/components/compras/CotacoesManager.jsx:446:46": {
+    "src/components/compras/CotacoesManager.jsx:579:46": {
       "short_code": "LORV9UA",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableCell.1",
       "kind": "TableCell",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:446:46"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:579:46"
     },
-    "src/components/compras/CotacoesManager.jsx:460:54": {
+    "src/components/compras/CotacoesManager.jsx:593:54": {
       "short_code": "1TETZ7O",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.TableCell.2",
       "kind": "TableCell",
       "scope": "CotacoesManager",
       "hint": null,
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:460:54"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:593:54"
     },
-    "src/components/compras/CotacoesManager.jsx:462:62": {
-      "short_code": "1K60GDU",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.5",
+    "src/components/compras/CotacoesManager.jsx:595:62": {
+      "short_code": "19ZSX3R",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Input.4",
       "kind": "Input",
       "scope": "CotacoesManager",
       "hint": "R$ 0,00",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:462:62"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:595:62"
     },
-    "src/components/compras/CotacoesManager.jsx:476:66": {
-      "short_code": "TSHAOQ4",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.6",
-      "kind": "Button",
-      "scope": "CotacoesManager",
-      "hint": "variant=ghost · size=sm",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:476:66"
-    },
-    "src/components/compras/CotacoesManager.jsx:496:32": {
-      "short_code": "QMLDHD8",
-      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.7",
-      "kind": "Button",
-      "scope": "CotacoesManager",
-      "hint": "variant=ghost",
-      "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:496:32"
-    },
-    "src/components/compras/CotacoesManager.jsx:505:36": {
+    "src/components/compras/CotacoesManager.jsx:609:66": {
       "short_code": "LZKQKFZ",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.8",
       "kind": "Button",
       "scope": "CotacoesManager",
-      "hint": "variant=outline",
+      "hint": "variant=ghost · size=sm",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:505:36"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:609:66"
     },
-    "src/components/compras/CotacoesManager.jsx:514:24": {
+    "src/components/compras/CotacoesManager.jsx:629:32": {
       "short_code": "24R2ZRT",
       "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.9",
       "kind": "Button",
       "scope": "CotacoesManager",
+      "hint": "variant=ghost",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:629:32"
+    },
+    "src/components/compras/CotacoesManager.jsx:638:36": {
+      "short_code": "25BKXFT",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.10",
+      "kind": "Button",
+      "scope": "CotacoesManager",
+      "hint": "variant=outline",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:638:36"
+    },
+    "src/components/compras/CotacoesManager.jsx:647:22": {
+      "short_code": "VKN0RH4",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.11",
+      "kind": "Button",
+      "scope": "CotacoesManager",
+      "hint": "size=sm · variant=outline",
+      "file": "src/components/compras/CotacoesManager.jsx",
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:647:22"
+    },
+    "src/components/compras/CotacoesManager.jsx:657:26": {
+      "short_code": "1DF7MZ7",
+      "code": "CAT-PG-Compras.CotacoesManager.CotacoesManager.Button.12",
+      "kind": "Button",
+      "scope": "CotacoesManager",
       "hint": "size=sm",
       "file": "src/components/compras/CotacoesManager.jsx",
-      "source_location_raw": "src/components/compras/CotacoesManager.jsx:514:24"
+      "source_location_raw": "src/components/compras/CotacoesManager.jsx:657:26"
     },
     "src/components/compras/ImportadorNotaFiscal.jsx:205:4": {
       "short_code": "23IW0SO",
@@ -39811,158 +39649,158 @@
       "file": "src/pages/ExtratoConta.jsx",
       "source_location_raw": "src/pages/ExtratoConta.jsx:741:12"
     },
-    "src/pages/Agefin.jsx:133:12": {
-      "short_code": "1D8ZU9D",
-      "code": "CAT-PG-Agefin.Agefin.Button.1",
-      "kind": "Button",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:133:12"
-    },
-    "src/pages/Agefin.jsx:163:20": {
-      "short_code": "2QX02CT",
-      "code": "CAT-PG-Agefin.Agefin.Calendar.1",
-      "kind": "Calendar",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:163:20"
-    },
-    "src/pages/Agefin.jsx:168:16": {
-      "short_code": "9VTT8MM",
-      "code": "CAT-PG-Agefin.Agefin.Calendar.2",
-      "kind": "Calendar",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:168:16"
-    },
-    "src/pages/Agefin.jsx:182:8": {
-      "short_code": "5L8SQ3Z",
-      "code": "CAT-PG-Agefin.Agefin.Tabs.1",
-      "kind": "Tabs",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:182:8"
-    },
-    "src/pages/Agefin.jsx:183:10": {
-      "short_code": "10XLT0H",
-      "code": "CAT-PG-Agefin.Agefin.TabsList.1",
-      "kind": "TabsList",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:183:10"
-    },
-    "src/pages/Agefin.jsx:184:12": {
-      "short_code": "2GW9RJ2",
-      "code": "CAT-PG-Agefin.Agefin.TabsTrigger.1",
-      "kind": "TabsTrigger",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:184:12"
-    },
-    "src/pages/Agefin.jsx:190:12": {
-      "short_code": "YMR2O2L",
-      "code": "CAT-PG-Agefin.Agefin.TabsTrigger.2",
-      "kind": "TabsTrigger",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:190:12"
-    },
-    "src/pages/Agefin.jsx:216:14": {
-      "short_code": "271LQ1P",
-      "code": "CAT-PG-Agefin.Agefin.Button.2",
-      "kind": "Button",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:216:14"
-    },
-    "src/pages/Agefin.jsx:223:14": {
-      "short_code": "1WWXBWF",
-      "code": "CAT-PG-Agefin.Agefin.Button.3",
-      "kind": "Button",
-      "scope": "Agefin",
-      "hint": "variant=outline",
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:223:14"
-    },
-    "src/pages/Agefin.jsx:235:12": {
-      "short_code": "2Q6N9VC",
-      "code": "CAT-PG-Agefin.Agefin.TabsContent.1",
-      "kind": "TabsContent",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:235:12"
-    },
-    "src/pages/Agefin.jsx:238:12": {
-      "short_code": "15RMWAZ",
-      "code": "CAT-PG-Agefin.Agefin.TabsContent.2",
-      "kind": "TabsContent",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:238:12"
-    },
-    "src/pages/Agefin.jsx:246:6": {
-      "short_code": "2KDXX3G",
-      "code": "CAT-PG-Agefin.Agefin.Dialog.1",
-      "kind": "Dialog",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:246:6"
-    },
-    "src/pages/Agefin.jsx:247:8": {
-      "short_code": "1X3VTG1",
-      "code": "CAT-PG-Agefin.Agefin.DialogContent.1",
-      "kind": "DialogContent",
-      "scope": "Agefin",
-      "hint": null,
-      "file": "src/pages/Agefin.jsx",
-      "source_location_raw": "src/pages/Agefin.jsx:247:8"
-    },
-    "src/components/agefin/AgefinLista.jsx:128:16": {
-      "short_code": "O5V56NN",
-      "code": "CAT-PG-Agefin.AgefinLista.ContaCard.Calendar.1",
+    "src/pages/AgefinConsulta.jsx:185:16": {
+      "short_code": "29KSGXM",
+      "code": "CAT-PG-Agefin.ContaCard.Calendar.1",
       "kind": "Calendar",
       "scope": "ContaCard",
       "hint": null,
-      "file": "src/components/agefin/AgefinLista.jsx",
-      "source_location_raw": "src/components/agefin/AgefinLista.jsx:128:16"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:185:16"
     },
-    "src/components/agefin/AgefinAtualizador.jsx:244:6": {
-      "short_code": "22QK41V",
-      "code": "CAT-PG-Agefin.AgefinAtualizador.AgefinAtualizador.Drawer.1",
+    "src/pages/AgefinConsulta.jsx:584:14": {
+      "short_code": "4Q6WPZ0",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.1",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:584:14"
+    },
+    "src/pages/AgefinConsulta.jsx:594:14": {
+      "short_code": "2700Q4Q",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Drawer.1",
       "kind": "Drawer",
-      "scope": "AgefinAtualizador",
+      "scope": "AgefinConsulta",
       "hint": null,
-      "file": "src/components/agefin/AgefinAtualizador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinAtualizador.jsx:244:6"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:594:14"
     },
-    "src/components/agefin/AgefinAtualizador.jsx:245:8": {
-      "short_code": "183ZQHJ",
-      "code": "CAT-PG-Agefin.AgefinAtualizador.AgefinAtualizador.DrawerContent.1",
+    "src/pages/AgefinConsulta.jsx:595:16": {
+      "short_code": "2C61S64",
+      "code": "CAT-PG-Agefin.AgefinConsulta.DrawerTrigger.1",
+      "kind": "DrawerTrigger",
+      "scope": "AgefinConsulta",
+      "hint": null,
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:595:16"
+    },
+    "src/pages/AgefinConsulta.jsx:596:18": {
+      "short_code": "2F0PNZD",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.2",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=icon",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:596:18"
+    },
+    "src/pages/AgefinConsulta.jsx:603:16": {
+      "short_code": "1CQYGYW",
+      "code": "CAT-PG-Agefin.AgefinConsulta.DrawerContent.1",
       "kind": "DrawerContent",
-      "scope": "AgefinAtualizador",
+      "scope": "AgefinConsulta",
       "hint": null,
-      "file": "src/components/agefin/AgefinAtualizador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinAtualizador.jsx:245:8"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:603:16"
     },
-    "src/components/agefin/AgefinAtualizador.jsx:337:26": {
-      "short_code": "13MGUF2",
-      "code": "CAT-PG-Agefin.AgefinAtualizador.AgefinAtualizador.Calendar.1",
-      "kind": "Calendar",
-      "scope": "AgefinAtualizador",
+    "src/pages/AgefinConsulta.jsx:649:24": {
+      "short_code": "1JH5MNO",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Input.1",
+      "kind": "Input",
+      "scope": "AgefinConsulta",
       "hint": null,
-      "file": "src/components/agefin/AgefinAtualizador.jsx",
-      "source_location_raw": "src/components/agefin/AgefinAtualizador.jsx:337:26"
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:649:24"
+    },
+    "src/pages/AgefinConsulta.jsx:653:24": {
+      "short_code": "14K8N5J",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Input.2",
+      "kind": "Input",
+      "scope": "AgefinConsulta",
+      "hint": null,
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:653:24"
+    },
+    "src/pages/AgefinConsulta.jsx:658:20": {
+      "short_code": "1C65MVR",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.3",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:658:20"
+    },
+    "src/pages/AgefinConsulta.jsx:664:14": {
+      "short_code": "19H1GNG",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.4",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=icon",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:664:14"
+    },
+    "src/pages/AgefinConsulta.jsx:671:12": {
+      "short_code": "533GATY",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.5",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:671:12"
+    },
+    "src/pages/AgefinConsulta.jsx:678:12": {
+      "short_code": "GAFSP9D",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.6",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=ghost · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:678:12"
+    },
+    "src/pages/AgefinConsulta.jsx:753:14": {
+      "short_code": "2K7U39V",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.7",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "variant=outline · size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:753:14"
+    },
+    "src/pages/AgefinConsulta.jsx:756:14": {
+      "short_code": "13AXVDP",
+      "code": "CAT-PG-Agefin.AgefinConsulta.Button.8",
+      "kind": "Button",
+      "scope": "AgefinConsulta",
+      "hint": "size=sm",
+      "file": "src/pages/AgefinConsulta.jsx",
+      "source_location_raw": "src/pages/AgefinConsulta.jsx:756:14"
+    },
+    "src/components/agefin/AgefinConsultaDrawer.jsx:74:4": {
+      "short_code": "1GC33SJ",
+      "code": "CAT-PG-Agefin.AgefinConsultaDrawer.AgefinConsultaDrawer.Drawer.1",
+      "kind": "Drawer",
+      "scope": "AgefinConsultaDrawer",
+      "hint": null,
+      "file": "src/components/agefin/AgefinConsultaDrawer.jsx",
+      "source_location_raw": "src/components/agefin/AgefinConsultaDrawer.jsx:74:4"
+    },
+    "src/components/agefin/AgefinConsultaDrawer.jsx:75:6": {
+      "short_code": "2M2TOOO",
+      "code": "CAT-PG-Agefin.AgefinConsultaDrawer.AgefinConsultaDrawer.DrawerContent.1",
+      "kind": "DrawerContent",
+      "scope": "AgefinConsultaDrawer",
+      "hint": null,
+      "file": "src/components/agefin/AgefinConsultaDrawer.jsx",
+      "source_location_raw": "src/components/agefin/AgefinConsultaDrawer.jsx:75:6"
+    },
+    "src/components/agefin/AgefinConsultaDrawer.jsx:131:18": {
+      "short_code": "BEPEV57",
+      "code": "CAT-PG-Agefin.AgefinConsultaDrawer.AgefinConsultaDrawer.Calendar.1",
+      "kind": "Calendar",
+      "scope": "AgefinConsultaDrawer",
+      "hint": null,
+      "file": "src/components/agefin/AgefinConsultaDrawer.jsx",
+      "source_location_raw": "src/components/agefin/AgefinConsultaDrawer.jsx:131:18"
     },
     "src/pages/TurnosFechados.jsx:450:10": {
       "short_code": "153LSUV",
