@@ -25,6 +25,12 @@ Três camadas, por ordem de automação:
 - Tabela `public.catalogo_interface` espelha a entidade; ver migração `004_catalogo_interface.sql`.
 - Em produção, apertar políticas RLS (hoje homologação permite leitura/escrita a `authenticated` — ajustar para escrita só admin ou `service_role` quando o modelo de auth estiver fechado).
 
+## Pré-visualização HTML (módulos → páginas → componentes)
+
+- Comando: `npm run catalogo:build-preview`
+- Saída: `docs/migration/catalogo_interface_preview.html` (dados embutidos, funciona offline).
+- O script analisa cada `src/pages/*.jsx`: imports de `@/components` (exceto `ui/`) e `../components/`, e em cada ficheiro filho procura `CardTitle`, `TabsTrigger` e `DialogTitle` por regex. Não usa Base44 — é só documentação visual do código.
+
 ## Bootstrap do catálogo (módulos → páginas)
 
 1. **Gerar ficheiros** (a partir da lista em `scripts/generate-catalogo-interface-seed.mjs`):
