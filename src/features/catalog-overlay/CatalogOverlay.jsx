@@ -87,6 +87,8 @@ function collectBadges(index) {
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
+    // Viewport coords only — matches getBoundingClientRect for both scrolled
+    // document flow and position:fixed portals (dialogs, sheets).
     rawBadges.push({
       source_location_raw: item.source_location_raw,
       file: item.file,
@@ -95,10 +97,10 @@ function collectBadges(index) {
       kind: item.kind,
       scope: item.scope,
       hint: item.hint,
-      top: Math.max(4, rect.top + window.scrollY),
-      left: Math.max(4, rect.left + window.scrollX),
-      targetTop: rect.top + window.scrollY,
-      targetLeft: rect.left + window.scrollX,
+      top: Math.max(4, rect.top),
+      left: Math.max(4, rect.left),
+      targetTop: rect.top,
+      targetLeft: rect.left,
       targetWidth: rect.width,
       targetHeight: rect.height,
     });
@@ -369,13 +371,20 @@ export default function CatalogOverlay() {
           onClick={(e) => e.preventDefault()}
         />
       ) : null}
-      <div style={{ position: 'absolute', inset: 0, zIndex: OVERLAY_Z, pointerEvents: 'none' }}>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: OVERLAY_Z,
+          pointerEvents: 'none',
+          overflow: 'visible',
+        }}
+      >
         {badges.map((badge) => {
           const anchorX = badge.badgeLeft + 18;
           const anchorY = badge.badgeTop - 2;
           const targetX = badge.targetLeft + Math.min(24, badge.targetWidth / 2);
           const targetY = badge.targetTop + Math.min(16, badge.targetHeight / 2);
-          const lineHeight = Math.max(12, targetY - anchorY);
           const angle = Math.atan2(targetY - anchorY, targetX - anchorX) * (180 / Math.PI);
           const lineWidth = Math.max(10, Math.hypot(targetX - anchorX, targetY - anchorY));
 
