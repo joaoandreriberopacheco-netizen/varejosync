@@ -141,6 +141,8 @@ export default function PDVVendedor() {
   const inputProdutoRef = useRef(null);
   const quantidadeInputRef = useRef(null);
   const suggestionsRef = useRef(null);
+  const suggestionsListRef = useRef(null);
+  const suggestionItemRefs = useRef([]);
   const clienteNomeRef = useRef(null);
   const precoLivreInputRef = useRef(null);
   const { toast } = useToast();
@@ -445,6 +447,15 @@ export default function PDVVendedor() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!showSuggestions || produtosSugeridos.length === 0) return;
+    suggestionItemRefs.current = suggestionItemRefs.current.slice(0, produtosSugeridos.length);
+    const suggestionsContainer = suggestionsListRef.current;
+    const activeItem = suggestionItemRefs.current[produtoSelecionadoIndex];
+    if (!suggestionsContainer || !activeItem) return;
+    activeItem.scrollIntoView({ block: 'nearest' });
+  }, [showSuggestions, produtosSugeridos, produtoSelecionadoIndex]);
 
   const loadDependencies = async () => {
     try {
@@ -1068,7 +1079,9 @@ export default function PDVVendedor() {
                 </div>
             </div>
             {showSuggestions && produtosSugeridos.length > 0 &&
-            <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
+            <div
+              ref={suggestionsListRef}
+              className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
                   <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
                       {produtosSugeridos.length} resultado{produtosSugeridos.length > 1 ? 's' : ''}
@@ -1081,6 +1094,7 @@ export default function PDVVendedor() {
                 const estoqueColor = estoqueStatus === 'sem' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : estoqueStatus === 'baixo' ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
                 return (
                   <div key={produto.id}
+                    ref={(el) => { suggestionItemRefs.current[index] = el; }}
                     className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
                     index === produtoSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}`}
                     onClick={() => handleSelecionarProduto(produto)}>

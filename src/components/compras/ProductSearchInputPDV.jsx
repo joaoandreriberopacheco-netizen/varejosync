@@ -1,32 +1,10 @@
-import React, { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Search, Plus, Wand2, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NovoProdutoRapidoDialog from '@/components/compras/NovoProdutoRapidoDialog';
+import { getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
 
-function matchesQuery(produto, query) {
-  if (!query) return true;
-  const searchable = [
-    produto.nome,
-    produto.campo_hierarquico_1,
-    produto.campo_hierarquico_2,
-    produto.campo_hierarquico_3,
-    produto.campo_hierarquico_4,
-    produto.campo_hierarquico_5,
-    produto.codigo_interno,
-    produto.codigo_barras,
-    produto.marca,
-  ].filter(Boolean).join(' ').toLowerCase();
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  return words.every(w => searchable.includes(w));
-}
-
-function getProductLabel(produto) {
-  if (produto.nome) return produto.nome;
-  return [produto.campo_hierarquico_1, produto.campo_hierarquico_2, produto.campo_hierarquico_3, produto.campo_hierarquico_4, produto.campo_hierarquico_5]
-    .filter(Boolean).join(' ');
-}
-
-export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch }) {
+export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch, onProductCreated }) {
   const [isFocused, setIsFocused] = useState(false);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const inputRef = useRef(null);
@@ -68,7 +46,8 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
 
   const handleNovoProdutoSuccess = (novoProduto) => {
     if (novoProduto) {
-      const label = getProductLabel(novoProduto);
+      const label = getProdutoLabel(novoProduto);
+      onProductCreated?.(novoProduto);
       setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: novoProduto.id, ignored: false } : c));
       setProductSearch(prev => ({ ...prev, [index]: label }));
     }
@@ -77,9 +56,9 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
 
   const visibleProducts = useMemo(() => {
     if (!isFocused) return [];
-    const sorted = [...produtos].sort((a, b) => getProductLabel(a).localeCompare(getProductLabel(b)));
+    const sorted = [...produtos].sort((a, b) => getProdutoLabel(a).localeCompare(getProdutoLabel(b)));
     if (!currentQuery.trim()) return sorted.slice(0, 8);
-    return sorted.filter(p => matchesQuery(p, currentQuery)).slice(0, 8);
+    return sorted.filter(p => matchesProductQuery(p, currentQuery)).slice(0, 8);
   }, [isFocused, currentQuery, produtos]);
 
   return (
@@ -89,7 +68,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
           <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 flex-none" />
             <span className="flex-1 text-sm font-medium text-emerald-800 dark:text-emerald-300 truncate">
-              {getProductLabel(selectedProduct)}
+              {getProdutoLabel(selectedProduct)}
             </span>
             <button
               type="button"
@@ -138,8 +117,8 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                 'text-red-400 dark:text-red-500'
               )}>
                 {item.selected_product_id === 'create_new' ? 'Criando...' :
-                 selectedProduct ? getProductLabel(selectedProduct) :
-                 suggestedProduct ? `IA: ${getProductLabel(suggestedProduct)}` :
+                 selectedProduct ? getProdutoLabel(selectedProduct) :
+                 suggestedProduct ? `IA: ${getProdutoLabel(suggestedProduct)}` :
                  'Não encontrado'}
               </span>
 
@@ -160,7 +139,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                 <button
                   type="button"
                   tabIndex={-1}
-                  onClick={() => handleSelect(suggestedProduct.id, getProductLabel(suggestedProduct))}
+                  onClick={() => handleSelect(suggestedProduct.id, getProdutoLabel(suggestedProduct))}
                   className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-none"
                   title="Aceitar sugestão IA"
                 >
@@ -198,10 +177,10 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                       key={produto.id}
                       type="button"
                       tabIndex={0}
-                      onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProductLabel(produto)); }}
+                      onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProdutoLabel(produto)); }}
                       className="w-full px-4 py-2.5 text-left text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
                     >
-                      {getProductLabel(produto)}
+                      {getProdutoLabel(produto)}
                     </button>
                   ))
                 ) : currentQuery ? (

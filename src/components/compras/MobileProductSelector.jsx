@@ -44,6 +44,8 @@ export default function MobileProductSelector({
   const custoInputRef = React.useRef(null);
   const descontoPctInputRef = React.useRef(null);
   const descontoValorInputRef = React.useRef(null);
+  const catalogScrollRef = useRef(null);
+  const catalogItemRefs = useRef([]);
 
   // Auto-focus ao entrar na tela de edição
   useEffect(() => {
@@ -185,6 +187,15 @@ export default function MobileProductSelector({
       setTimeout(() => discountInputRef.current?.focus(), 150);
     }
   }, [view]);
+
+  useEffect(() => {
+    if (view !== 'catalog' || selectedIndex < 0 || filteredProducts.length === 0) return;
+    catalogItemRefs.current = catalogItemRefs.current.slice(0, filteredProducts.length);
+    const scrollContainer = catalogScrollRef.current;
+    const activeItem = catalogItemRefs.current[selectedIndex];
+    if (!scrollContainer || !activeItem) return;
+    activeItem.scrollIntoView({ block: 'nearest' });
+  }, [view, selectedIndex, filteredProducts]);
 
   if (view === 'discount-entry') {
     const numVal = parseFloat(discountInputVal.replace(',', '.')) || 0;
@@ -704,7 +715,7 @@ export default function MobileProductSelector({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div ref={catalogScrollRef} className="flex-1 overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
               {/* Badge de desconto global ativo */}
               {descontoGlobalPct !== 0 && (
@@ -752,6 +763,7 @@ export default function MobileProductSelector({
                   return (
                     <div
                       key={product.id}
+                      ref={(el) => { catalogItemRefs.current[idx] = el; }}
                       onClick={() => { if (!isLocked) handleSelectProduct(product); }}
                       className={`p-4 rounded-xl shadow-sm cursor-pointer transition-all active:scale-[0.98] ${
                         isSelected

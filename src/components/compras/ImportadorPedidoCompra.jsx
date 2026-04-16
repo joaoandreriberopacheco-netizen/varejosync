@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles, AlertCircle } from 'lucide-react';
+import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
+import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
 
 export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComplete }) {
   const [mode, setMode] = useState('pdf');
@@ -42,19 +43,6 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   }, [isOpen]);
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  const getProdutoLabel = (p) => {
-    const partes = [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3, p.campo_hierarquico_4, p.campo_hierarquico_5].filter(Boolean);
-    if (partes.length > 0) return partes.join(' ');
-    return p.nome || '';
-  };
-
-  const getProdutoCatalogEntry = (p) => ({
-    id: p.id,
-    nome: getProdutoLabel(p),
-    marca: p.marca || '',
-    codigo: p.codigo_interno || '',
-  });
 
   const getSuggestedProduct = (item) => {
     if (!item.produto_id_match) return null;
@@ -109,28 +97,7 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
 
-      const catalogoStr = JSON.stringify(produtos.map(getProdutoCatalogEntry));
-      const fornecedoresStr = JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })));
-
-      const promptBase = `Você é um especialista em materiais de construção e loja de materiais.
-
-Tarefa: analisar o documento e para CADA item identificado, encontrar o produto correspondente no catálogo abaixo.
-
-REGRAS OBRIGATÓRIAS DE MATCHING:
-1. Use correspondência SEMÂNTICA — ignore abreviações, acentos, maiúsculas/minúsculas e variações ortográficas.
-2. Exemplos de correspondência esperada:
-   - "CIM CPIV 50KG VOTO" → produto com "Cimento Portland CP IV 50kg Votorantim"
-   - "ARGAM AC III 20KG" → produto com "Argamassa Colante AC-III 20kg"
-   - "PLACA DRYWALL ST 12,5" → produto com "Placa Dry Wall Standard 12.5mm"
-3. Se houver dúvida entre dois produtos, escolha o que tiver MAIS campos coincidentes (tipo, gramatura, dimensão, marca).
-4. Prefira confiança "baixa" a deixar produto_id_match vazio — só deixe vazio se não existir NENHUM produto similar.
-5. O campo produto_id_match deve conter EXATAMENTE o id do produto do catálogo, sem alterações.
-
-Fornecedores cadastrados:
-${fornecedoresStr}
-
-CATÁLOGO DE PRODUTOS (id | nome completo | marca | código):
-${catalogoStr}
+      const promptBase = `${buildProdutoMatchingPromptBase({ produtos, fornecedores })}
 
 Retorne JSON:
 {

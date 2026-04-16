@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
+import { buildProdutoMatchingPromptBase, getProdutoLabel } from '@/components/compras/productMatchingUtils';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -16,11 +18,22 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
     const [fornecedorInfo, setFornecedorInfo] = useState({ nome: '', cnpj: '', id: 'new' });
     const [produtosSistema, setProdutosSistema] = useState([]);
     const [fornecedoresSistema, setFornecedoresSistema] = useState([]);
+    const [productSearch, setProductSearch] = useState({});
     const { toast } = useToast();
 
     const formatCurrency = (value) => {
         const num = parseFloat(value) || 0;
         return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const getSuggestedProduct = (item) => {
+        const suggestedId = item.produto_sistema_match_id || item.produto_id_match;
+        if (!suggestedId) return null;
+        return produtosSistema.find((produto) => produto.id === suggestedId) || null;
+    };
+
+    const updateMappings = (updater) => {
+        setMappings((prev) => (typeof updater === 'function' ? updater(prev) : updater));
     };
 
     const handleFileUpload = async (e) => {
@@ -41,46 +54,46 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             setProdutosSistema(produtos);
             setFornecedoresSistema(fornecedores);
 
-            const prompt = `
-                Analise este PDF de cotação/orçamento de fornecedor.
-                Extraia os dados do fornecedor e a lista de itens.
-                
-                IMPORTANTE: Para cada item, identifique a MARCA do produto (ex: Tramontina, Vonder, Stanley, etc).
-                A marca é um critério qualitativo fundamental para comparação de cotações.
-                
-                Tente identificar se o fornecedor já existe nesta lista (por nome ou CNPJ aproximado):
-                ${JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })))}
+            const prompt = `Analise este PDF de cotação/orçamento de fornecedor.
+Extraia os dados do fornecedor e a lista de itens.
 
-                Tente identificar a correspondência dos itens com estes produtos da cotação atual:
-                ${JSON.stringify(cotacao.itens.map(i => ({ id: i.produto_id, nome: i.produto_nome, qtd: i.quantidade })))}
-                
-                Se não encontrar na cotação, tente buscar na lista geral de produtos se possível, ou deixe sem correspondência.
+IMPORTANTE: Para cada item, identifique a MARCA do produto quando estiver visível. A marca é um critério qualitativo fundamental para comparação de cotações.
 
-                Retorne um JSON com:
-                {
-                    "fornecedor": { 
-                        "nome_identificado": "string", 
-                        "cnpj_identificado": "string",
-                        "id_match": "string (id do sistema ou null se novo)"
-                    },
-                    "financeiro": {
-                        "subtotal": number,
-                        "desconto_global": number,
-                        "total_final": number
-                    },
-                    "itens": [
-                        {
-                            "descricao_pdf": "string",
-                            "codigo_pdf": "string",
-                            "marca_pdf": "string (marca do produto identificada no PDF)",
-                            "quantidade_pdf": number,
-                            "preco_unitario_pdf": number,
-                            "produto_sistema_match_id": "string (id do produto ou null)",
-                            "confianca_match": "alta|media|baixa"
-                        }
-                    ]
-                }
-            `;
+${buildProdutoMatchingPromptBase({
+    produtos,
+    fornecedores,
+    contextLabel: 'CATALOGO GERAL DE PRODUTOS'
+})}
+
+PRIORIDADE DE MATCH:
+1. Tente primeiro identificar correspondência com os itens já existentes desta cotação:
+${JSON.stringify(cotacao.itens.map((item) => ({ id: item.produto_id, nome: item.produto_nome, qtd: item.quantidade })))}
+2. Se não encontrar na cotação atual, use o catálogo geral acima.
+
+Retorne um JSON com:
+{
+    "fornecedor": { 
+        "nome_identificado": "string", 
+        "cnpj_identificado": "string",
+        "id_match": "string (id do sistema ou null se novo)"
+    },
+    "financeiro": {
+        "subtotal": number,
+        "desconto_global": number,
+        "total_final": number
+    },
+    "itens": [
+        {
+            "descricao_pdf": "string",
+            "codigo_pdf": "string",
+            "marca_pdf": "string (marca do produto identificada no PDF)",
+            "quantidade_pdf": number,
+            "preco_unitario_pdf": number,
+            "produto_sistema_match_id": "string (id do produto ou null)",
+            "confianca_match": "alta|media|baixa"
+        }
+    ]
+}`;
 
             const aiRes = await base44.integrations.Core.InvokeLLM({
                 prompt: prompt,
@@ -133,6 +146,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                 selected_product_id: item.produto_sistema_match_id || '',
                 ignored: !item.produto_sistema_match_id
             })));
+            setProductSearch({});
 
             setFornecedorInfo({
                 id: result.fornecedor.id_match || 'new',
@@ -243,23 +257,23 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             {/* Header */}
             <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
                 <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-start gap-3 md:items-center md:gap-4">
                             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg">
                                 <X className="w-5 h-5" />
                             </Button>
                             <div>
-                                <h2 className="text-xl font-medium text-gray-900 dark:text-white">Importar Cotação via PDF</h2>
-                                <p className="text-sm text-gray-500">A IA irá extrair itens, preços e marcas automaticamente</p>
+                                <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">Importar Cotação via PDF</h2>
+                                <p className="text-xs md:text-sm text-gray-500">A IA irá extrair itens, preços e marcas automaticamente</p>
                             </div>
                         </div>
                         {step === 'review' && (
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={() => setStep('upload')} className="gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-auto">
+                                <Button variant="outline" onClick={() => setStep('upload')} className="gap-2 w-full">
                                     <ArrowLeft className="w-4 h-4" />
                                     Reenviar
                                 </Button>
-                                <Button onClick={handleConfirmImport} className="bg-teal-600 hover:bg-teal-700 gap-2">
+                                <Button onClick={handleConfirmImport} className="bg-teal-600 hover:bg-teal-700 gap-2 w-full">
                                     <Check className="w-4 h-4" />
                                     Confirmar Importação
                                 </Button>
@@ -392,7 +406,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                                     <h4 className="font-medium text-gray-900 dark:text-white">Itens para Importação</h4>
                                 </div>
                             </div>
-                            <div className="overflow-x-auto">
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead className="bg-gray-50 dark:bg-gray-900/50">
                                         <tr>
@@ -437,39 +451,21 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <Select 
-                                                        value={m.selected_product_id} 
-                                                        onValueChange={(v) => {
-                                                            const newMappings = [...mappings];
-                                                            newMappings[idx].selected_product_id = v;
-                                                            newMappings[idx].ignored = false;
-                                                            setMappings(newMappings);
-                                                        }}
-                                                        disabled={m.ignored}
-                                                    >
-                                                        <SelectTrigger className="w-full">
-                                                            <SelectValue placeholder="Selecione o produto..." />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="create_new" className="text-teal-600 font-semibold">
-                                                                + Cadastrar: {m.descricao_pdf}
-                                                            </SelectItem>
-                                                            <div className="px-2 py-1.5 text-xs text-gray-500 font-medium">Da Cotação</div>
-                                                            {cotacao.itens.map(i => (
-                                                                <SelectItem key={i.produto_id} value={i.produto_id}>
-                                                                    {i.produto_nome}
-                                                                </SelectItem>
-                                                            ))}
-                                                            <div className="px-2 py-1.5 text-xs text-gray-500 font-medium">Outros Produtos</div>
-                                                            {produtosSistema
-                                                                .filter(p => !cotacao.itens.find(ci => ci.produto_id === p.id))
-                                                                .slice(0, 20)
-                                                                .map(p => (
-                                                                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                                                                ))
-                                                            }
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <ProductSearchInputPDV
+                                                        item={m}
+                                                        index={idx}
+                                                        produtos={produtosSistema}
+                                                        getSuggestedProduct={getSuggestedProduct}
+                                                        setItems={updateMappings}
+                                                        setProductSearch={setProductSearch}
+                                                        productSearch={productSearch}
+                                                        onProductCreated={(novoProduto) => setProdutosSistema((prev) => [...prev, novoProduto])}
+                                                    />
+                                                    {!m.ignored && m.selected_product_id && (
+                                                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            {getProdutoLabel(produtosSistema.find((produto) => produto.id === m.selected_product_id))}
+                                                        </div>
+                                                    )}
                                                     {m.confianca_match && !m.ignored && (
                                                         <div className={`flex items-center gap-1.5 mt-2 text-xs ${
                                                             m.confianca_match === 'alta' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
@@ -483,6 +479,62 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                                {mappings.map((m, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`p-4 space-y-3 ${m.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : ''}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="font-medium text-sm text-gray-900 dark:text-white">{m.descricao_pdf}</p>
+                                                <div className="flex flex-wrap items-center gap-2 mt-1 text-xs">
+                                                    {m.codigo_pdf && (
+                                                        <span className="text-gray-500 dark:text-gray-400">Cód: {m.codigo_pdf}</span>
+                                                    )}
+                                                    {m.marca_pdf && (
+                                                        <span className="px-2 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 rounded-md font-medium">
+                                                            {m.marca_pdf}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <Checkbox
+                                                checked={!m.ignored}
+                                                onCheckedChange={(checked) => {
+                                                    const newMappings = [...mappings];
+                                                    newMappings[idx].ignored = !checked;
+                                                    setMappings(newMappings);
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="text-xs text-gray-600 dark:text-gray-300">
+                                            {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
+                                            <span className="ml-2 font-semibold text-gray-900 dark:text-white">
+                                                Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
+                                            </span>
+                                        </div>
+                                        <ProductSearchInputPDV
+                                            item={m}
+                                            index={idx}
+                                            produtos={produtosSistema}
+                                            getSuggestedProduct={getSuggestedProduct}
+                                            setItems={updateMappings}
+                                            setProductSearch={setProductSearch}
+                                            productSearch={productSearch}
+                                            onProductCreated={(novoProduto) => setProdutosSistema((prev) => [...prev, novoProduto])}
+                                        />
+                                        {m.confianca_match && !m.ignored && (
+                                            <div className={`flex items-center gap-1.5 text-xs ${
+                                                m.confianca_match === 'alta' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+                                            }`}>
+                                                {m.confianca_match === 'alta' ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                                                Confiança IA: {m.confianca_match}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
