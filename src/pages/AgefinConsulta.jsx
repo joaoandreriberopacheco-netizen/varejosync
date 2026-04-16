@@ -507,32 +507,44 @@ export default function AgefinConsulta() {
       ? `<div style="margin:14px 0 14px"><p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b">Filtros ativos</p><div style="display:flex;flex-wrap:wrap;gap:6px">${filtrosAtivosResumo.map((filtro) => `<span style="display:inline-block;padding:4px 9px;border-radius:999px;background:#f8fafc;color:#475569;font-size:12px;line-height:1.3;border:1px solid #e2e8f0">${escapeHtml(filtro)}</span>`).join('')}</div></div>`
       : '';
 
-    const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:108px" /><col style="width:110px" /><col style="width:auto" /><col style="width:124px" /></colgroup><thead><tr><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Vencimento</th><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
+    const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:108px" /><col style="width:118px" /><col style="width:auto" /><col style="width:124px" /></colgroup><thead><tr><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Vencimento</th><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:12px;line-height:1.25;font-weight:700;color:#334155;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
 
     const gruposHtml = gruposParaImpressao.map((grupo) => {
       const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
       const linhas = grupo.contas.map((conta) => {
         const pago = lancamentoPago(conta);
         const vencido = lancamentoVencidoOuAtrasado(conta);
-        const statusLabel = pago ? 'Pago' : vencido ? 'Vencido' : 'Em aberto';
-        const statusIcon = pago ? '•' : vencido ? '•' : '•';
-        const statusBg = '#eef2f7';
-        const statusColor = pago ? '#556b2f' : vencido ? '#8b2f2f' : '#334155';
+        const statusLabel = pago ? 'Pago' : vencido ? 'Vencido' : '';
+        const statusColor = pago ? '#556b2f' : '#8b2f2f';
+        const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
+        const isAutomatica = conta.is_recorrente === true || conta.natureza === 'Recorrente';
+
+        const statusIconSvg = pago
+          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`
+          : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
+
+        const metaIconSvg = isAutomatica
+          ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+          : hasBoleto
+            ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>`
+            : '';
 
         return `<tr>
-          <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef;font-size:12px;line-height:1.3;color:#334155">${escapeHtml(formatarSoData(conta.data_vencimento))}</td>
+          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;font-size:12px;line-height:1.3;color:#334155"> </td>
           <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef">
-            <span style="display:inline-flex;align-items:center;gap:4px;padding:1px 6px;border-radius:999px;background:${statusBg};border:1px solid #d8e1ec;color:${statusColor};font-size:11px;line-height:1.15;font-weight:700;white-space:nowrap"><span style="font-size:11px;line-height:1">${statusIcon}</span>${statusLabel}</span>
+            ${statusLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;border:1px solid #d8e1ec;background:#f8fafc;color:${statusColor};font-size:11px;line-height:1.15;font-weight:700;white-space:nowrap">${statusIconSvg}<span>${statusLabel}</span></span>` : ''}
           </td>
-          <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef">
-            <div style="font-size:13.2px;line-height:1.3;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</div>
-            <div style="font-size:11.8px;line-height:1.25;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.terceiro_nome || 'Sem favorecido')}${conta.categoria ? ` · ${escapeHtml(conta.categoria)}` : ''}</div>
+          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2">
+            <div style="display:flex;align-items:center;gap:6px;min-width:0">
+              ${metaIconSvg ? `<span style="display:inline-flex;align-items:center;justify-content:center;flex:none">${metaIconSvg}</span>` : ''}
+              <span style="font-size:12px;line-height:1.25;font-weight:400;color:#0f172a;letter-spacing:0.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(conta.descricao || '-')}</span>
+            </div>
           </td>
-          <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef;text-align:right;font-size:13.2px;line-height:1.3;font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(conta.valor))}</td>
+          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;text-align:right;font-size:12px;line-height:1.25;font-weight:400;color:#0f172a">${escapeHtml(formatCurrency(conta.valor))}</td>
         </tr>`;
       }).join('');
 
-      return `<section style="margin-top:10px;border:1px solid #d8e0ea;border-radius:6px;overflow:hidden;background:#ffffff"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 8px;background:#f3f5f8;border-bottom:1px solid #d8e0ea"><div style="font-size:12px;line-height:1.2;font-weight:700;color:#334155">Vencimento ${escapeHtml(grupo.label)}</div><div style="text-align:right"><span style="font-size:11.2px;line-height:1.2;color:#64748b">${grupo.contas.length} · </span><span style="font-size:12px;line-height:1.2;font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(subtotal))}</span></div></div><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:108px" /><col style="width:110px" /><col style="width:auto" /><col style="width:124px" /></colgroup><tbody>${linhas}</tbody></table></section>`;
+      return `<section style="margin-top:10px;border-radius:6px;overflow:hidden;background:#f3f5f8"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 10px;background:#edf1f5"><div style="font-size:12px;line-height:1.2;font-weight:700;color:#334155">${escapeHtml(grupo.label)}</div><div style="text-align:right"><span style="font-size:11.2px;line-height:1.2;color:#64748b">${grupo.contas.length} · </span><span style="font-size:12px;line-height:1.2;font-weight:400;color:#0f172a">${escapeHtml(formatCurrency(subtotal))}</span></div></div><div style="padding:6px 0"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:108px" /><col style="width:118px" /><col style="width:auto" /><col style="width:124px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
     }).join('');
 
     const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:18px;color:#111827;font-size:12px;line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:18px;line-height:1.1;color:#0f172a">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#64748b;font-size:12px;line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#64748b;font-size:12px;line-height:1.2">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0;color:#64748b;font-size:12px;line-height:1.2">Total impresso: <span style="font-weight:700;color:#0f172a">${escapeHtml(formatCurrency(totalParaImpressao))}</span></p>${modoSelecao ? `<p style="margin:2px 0 0;color:#64748b;font-size:12px;line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}</div></body></html>`;
