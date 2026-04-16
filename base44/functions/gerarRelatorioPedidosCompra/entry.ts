@@ -114,13 +114,13 @@ const EXPANDED_ITEMS_TABLE_TEXT_Y = 3.9;
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
   qtd: 2,
   descricao: 14,
-  vlrUnit: 70,
-  frete: 88,
-  outros: 106,
-  custo: 124,
-  total: 143,
-  venda: 161,
-  markup: 171,
+  vlrUnit: 74,
+  frete: 91,
+  outros: 108,
+  custo: 125,
+  total: 142,
+  venda: 159,
+  markup: 173,
 };
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
