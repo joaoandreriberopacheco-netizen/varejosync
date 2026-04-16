@@ -29,7 +29,9 @@ Três camadas, por ordem de automação:
 
 - Comando: `npm run catalogo:build-preview`
 - Saída: `docs/migration/catalogo_interface_preview.html` (dados embutidos, funciona offline).
-- O script analisa cada `src/pages/*.jsx`: imports de `@/components` (exceto `ui/`) e `../components/`, e em cada ficheiro filho procura `CardTitle`, `TabsTrigger` e `DialogTitle` por regex. Não usa Base44 — é só documentação visual do código.
+- O script analisa cada `src/pages/*.jsx`: imports de `@/components` (exceto `ui/`) e `../components/`, e **por baixo** de cada bloco lista subcomponentes (imports relativos `./` e outros `@/components` no mesmo ficheiro). Cada nó mostra um **código hierárquico**, ex.: `CAT-PG-PDV.PDVVendedor.ComprovantePreVenda`.
+- **Zonas sem ficheiro próprio** (barra de pesquisa, lista): podes marcar no JSX `data-catalog-code="CAT-PG-PDV.PDVVendedor.zona_busca"` no elemento raiz da zona, ou `{/* @catalog CAT-PG-PDV.PDVVendedor.lista_sugestoes */}` — o gerador recolhe esses códigos na secção «Marcadores explícitos».
+- Também procura `CardTitle`, `TabsTrigger` e `DialogTitle` por regex. Não depende de Base44 — é documentação visual do código.
 
 ## Bootstrap do catálogo (módulos → páginas)
 
