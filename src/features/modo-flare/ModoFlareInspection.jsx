@@ -361,6 +361,17 @@ export default function ModoFlareInspection({ onClose }) {
     []
   );
 
+  const stopRecognition = useCallback(() => {
+    voiceSessionActiveRef.current = false;
+    try {
+      recognitionRef.current?.stop?.();
+    } catch {
+      // noop
+    }
+    recognitionRef.current = null;
+    setIsListening(false);
+  }, []);
+
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') {
@@ -446,17 +457,6 @@ export default function ModoFlareInspection({ onClose }) {
     },
     [openBriefingForElement]
   );
-
-  const stopRecognition = useCallback(() => {
-    voiceSessionActiveRef.current = false;
-    try {
-      recognitionRef.current?.stop?.();
-    } catch {
-      // noop
-    }
-    recognitionRef.current = null;
-    setIsListening(false);
-  }, []);
 
   useEffect(() => () => stopRecognition(), [stopRecognition]);
 
