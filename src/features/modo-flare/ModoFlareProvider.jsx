@@ -45,6 +45,10 @@ export default function ModoFlareProvider({ children }) {
     setPinOpen(true);
   }, []);
 
+  const openCatalog = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('p38:open-catalog-overlay'));
+  }, []);
+
   React.useEffect(() => {
     const onKey = (e) => {
       if (!e.ctrlKey || !e.altKey) return;
@@ -54,11 +58,11 @@ export default function ModoFlareProvider({ children }) {
         return;
       }
       e.preventDefault();
-      openFlare();
+      openCatalog();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [openFlare]);
+  }, [openCatalog]);
 
   const submitPin = useCallback(() => {
     if (String(pinValue).trim() === FLARE_PIN) {
@@ -72,7 +76,7 @@ export default function ModoFlareProvider({ children }) {
     }
   }, [pinValue]);
 
-  const ctx = useMemo(() => ({ openFlare }), [openFlare]);
+  const ctx = useMemo(() => ({ openFlare, openCatalog }), [openCatalog, openFlare]);
 
   return (
     <ModoFlareContext.Provider value={ctx}>

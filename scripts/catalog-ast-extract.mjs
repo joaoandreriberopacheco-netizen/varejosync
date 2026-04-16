@@ -10,6 +10,14 @@ import _traverse from '@babel/traverse';
 
 const traverse = _traverse.default || _traverse;
 
+function normalizeToSrcPath(fileLabel) {
+  const normalized = String(fileLabel || '').replace(/\\/g, '/');
+  const idx = normalized.lastIndexOf('/src/');
+  if (idx >= 0) return `src/${normalized.slice(idx + 5)}`;
+  if (normalized.startsWith('src/')) return normalized;
+  return normalized;
+}
+
 const RELEVANT_BASE = new Set([
   'Button',
   'Input',
@@ -140,6 +148,7 @@ export function extractWidgetsFromSource(code, fileLabel, pageStable, counters) 
     return { widgets: [], parseError: String(e.message) };
   }
 
+  const normalizedFileLabel = normalizeToSrcPath(fileLabel);
   const widgets = [];
 
   traverse(ast, {
@@ -155,6 +164,7 @@ export function extractWidgetsFromSource(code, fileLabel, pageStable, counters) 
 
       const code = `${pageStable}.${scope}.${kind}.${n}`;
       const line = path.node.loc?.start?.line ?? 0;
+      const column = path.node.loc?.start?.column ?? 0;
       const hint = hintFromOpeningElement(path.node);
 
       widgets.push({
@@ -162,10 +172,10 @@ export function extractWidgetsFromSource(code, fileLabel, pageStable, counters) 
         kind,
         scope,
         line,
-        column: path.node.loc?.start?.column ?? 0,
+        column,
         hint,
-        file: fileLabel,
-        source_location_raw: `${fileLabel}:${line}:${path.node.loc?.start?.column ?? 0}`,
+        file: normalizedFileLabel,
+        source_location_raw: `${normalizedFileLabel}:${line}:${column}`,
       });
     },
   });

@@ -6,7 +6,7 @@ const DOWN_MIN = 44;
 const LEFT_MIN = 44;
 
 export default function FlareMobileEdge() {
-  const { openFlare } = useModoFlare();
+  const { openCatalog } = useModoFlare();
   const longPressTimer = useRef(null);
   const startRef = useRef(null);
   const phaseRef = useRef('idle');
@@ -26,10 +26,10 @@ export default function FlareMobileEdge() {
       clearLongPress();
       longPressTimer.current = window.setTimeout(() => {
         longPressTimer.current = null;
-        openFlare();
+        openCatalog();
       }, 650);
     },
-    [clearLongPress, openFlare]
+    [clearLongPress, openCatalog]
   );
 
   const onTouchMove = useCallback(
@@ -45,12 +45,12 @@ export default function FlareMobileEdge() {
       } else if (phaseRef.current === 'down' && dx < -LEFT_MIN && dy > 12) {
         phaseRef.current = 'done';
         clearLongPress();
-        openFlare();
+        openCatalog();
         startRef.current = null;
         phaseRef.current = 'idle';
       }
     },
-    [clearLongPress, openFlare]
+    [clearLongPress, openCatalog]
   );
 
   const onTouchEnd = useCallback(() => {

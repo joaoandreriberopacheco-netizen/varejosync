@@ -64,6 +64,7 @@ export default function CatalogOverlay() {
   const [selected, setSelected] = useState(null);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState('catalog');
   const longPressTimer = useRef(null);
 
   const index = useMemo(() => overlayManifest?.index || {}, []);
@@ -82,12 +83,14 @@ export default function CatalogOverlay() {
 
   const openPanelForBadge = useCallback((badge) => {
     setSelected(badge);
-    setDraft('');
+    setMode('catalog');
   }, []);
 
   useEffect(() => {
     const handler = () => setOpen((prev) => !prev);
+    const openHandler = () => setOpen(true);
     window.toggleCatalogOverlay = handler;
+    window.openCatalogOverlay = openHandler;
 
     const onKey = (e) => {
       if (!e.ctrlKey || !e.altKey) return;
@@ -101,9 +104,12 @@ export default function CatalogOverlay() {
     };
 
     window.addEventListener('keydown', onKey, true);
+    window.addEventListener('p38:open-catalog-overlay', openHandler);
     return () => {
       window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('p38:open-catalog-overlay', openHandler);
       delete window.toggleCatalogOverlay;
+      delete window.openCatalogOverlay;
     };
   }, []);
 
@@ -116,7 +122,11 @@ export default function CatalogOverlay() {
   }, [open]);
 
   useEffect(() => {
-    if (!open) setSelected(null);
+    if (!open) {
+      setSelected(null);
+      setMode('catalog');
+      setDraft('');
+    }
   }, [open]);
 
   useLayoutEffect(() => {
@@ -147,6 +157,21 @@ export default function CatalogOverlay() {
       window.removeEventListener('resize', refresh);
     };
   }, [open, index]);
+
+  useEffect(() => {
+    if (mode !== 'flare') return undefined;
+    const onPopState = (e) => {
+      e.preventDefault?.();
+      toast({
+        title: 'Feche o modo Flare para navegar',
+        description: 'No Catalog você pode navegar; no Flare a navegação fica bloqueada até sair do registro.',
+      });
+      window.history.pushState({ p38_catalog_flare: 1 }, '');
+    };
+    window.history.pushState({ p38_catalog_flare: 1 }, '');
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [mode, toast]);
 
   if (!open) return null;
 
@@ -189,6 +214,7 @@ export default function CatalogOverlay() {
         description: `Item ${selected.short_code} · origem: ${created.origin === 'remote' ? 'nuvem' : 'local'}`,
       });
       setDraft('');
+      setMode('catalog');
     } catch {
       toast({ title: 'Falha ao registrar', variant: 'destructive' });
     } finally {
@@ -241,7 +267,9 @@ export default function CatalogOverlay() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontWeight: 600, color: '#7dffb3' }}>Catalog Overlay</div>
+          <div style={{ fontWeight: 600, color: '#7dffb3' }}>
+            {mode === 'flare' ? 'Catalog + Flare' : 'Catalog Parts'}
+          </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -253,8 +281,26 @@ export default function CatalogOverlay() {
         </div>
         <div style={{ opacity: 0.8 }}>{badges.length} componentes visíveis</div>
         <div style={{ opacity: 0.7 }}>Atalho: Ctrl+Alt+K</div>
-        <div style={{ opacity: 0.7 }}>{isMobile ? 'Toque no badge para detalhe' : 'Clique no badge para detalhe'}</div>
+        <div style={{ opacity: 0.7 }}>
+          {mode === 'flare'
+            ? 'Flare ativo: feche o registro para navegar'
+            : isMobile
+              ? 'Toque no badge para detalhe'
+              : 'Clique no badge para detalhe'}
+        </div>
       </div>
+      {mode === 'flare' ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: OVERLAY_Z - 1,
+            background: 'rgba(0,0,0,0.10)',
+            pointerEvents: 'auto',
+          }}
+          onClick={(e) => e.preventDefault()}
+        />
+      ) : null}
       <div style={{ position: 'absolute', inset: 0, zIndex: OVERLAY_Z, pointerEvents: 'none' }}>
         {badges.map((badge) => (
           <button
@@ -323,22 +369,37 @@ export default function CatalogOverlay() {
             <div style={{ color: '#e8c96b', fontFamily: 'ui-monospace, monospace' }}>{selected.code}</div>
             {selected.hint ? <div style={{ marginTop: 6, opacity: 0.82 }}>{selected.hint}</div> : null}
           </div>
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Descreva a malfuncionamento deste item do catálogo..."
-            className="mt-3 min-h-24 bg-black/20"
-          />
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={handleCopy}>
               <Copy className="mr-2 h-4 w-4" />
               Copiar código
             </Button>
-            <Button type="button" onClick={handleCreateFlare} disabled={saving}>
-              <Flag className="mr-2 h-4 w-4" />
-              {saving ? 'Registrando...' : 'Registrar malfuncionamento'}
-            </Button>
+            {mode === 'catalog' ? (
+              <Button type="button" onClick={() => setMode('flare')}>
+                <Flag className="mr-2 h-4 w-4" />
+                Marcar melhoria
+              </Button>
+            ) : null}
           </div>
+          {mode === 'flare' ? (
+            <>
+              <Textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Descreva a malfuncionamento deste item do catálogo..."
+                className="mt-3 min-h-24 bg-black/20"
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => setMode('catalog')} disabled={saving}>
+                  Voltar ao catalog
+                </Button>
+                <Button type="button" onClick={handleCreateFlare} disabled={saving}>
+                  <Flag className="mr-2 h-4 w-4" />
+                  {saving ? 'Registrando...' : 'Registrar malfuncionamento'}
+                </Button>
+              </div>
+            </>
+          ) : null}
         </div>
       ) : null}
     </>,
