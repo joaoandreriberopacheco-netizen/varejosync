@@ -3,6 +3,15 @@
  * Usado pelo Modo Flare para localizar posições no código fonte.
  */
 function sourceLocationBabelPlugin({ types: t }) {
+  const normalizeToSrcPath = (value) => {
+    const normalized = String(value || '').replace(/\\/g, '/');
+    const marker = '/src/';
+    const idx = normalized.lastIndexOf(marker);
+    if (idx !== -1) return `src/${normalized.slice(idx + marker.length)}`;
+    if (normalized.startsWith('src/')) return normalized;
+    return normalized;
+  };
+
   return {
     name: 'source-location-babel-plugin',
     visitor: {
@@ -10,7 +19,9 @@ function sourceLocationBabelPlugin({ types: t }) {
         const filename = state.filename || '';
         const loc = nodePath.node.loc;
         if (!loc) return;
-        if (!filename.includes('/src/')) return;
+
+        const relPath = normalizeToSrcPath(filename);
+        if (!relPath.startsWith('src/')) return;
 
         const hasAttr = nodePath.node.attributes.some(
           (attr) =>
@@ -19,7 +30,6 @@ function sourceLocationBabelPlugin({ types: t }) {
         );
         if (hasAttr) return;
 
-        const relPath = filename.replace(/.*\/src\//, 'src/');
         const value = `${relPath}:${loc.start.line}:${loc.start.column}`;
 
         nodePath.node.attributes.push(

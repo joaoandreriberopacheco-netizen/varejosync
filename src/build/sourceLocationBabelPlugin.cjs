@@ -3,6 +3,15 @@
  * Used by Flare Mode to map UI elements back to source file locations.
  */
 module.exports = function sourceLocationBabelPlugin({ types: t }) {
+  const normalizeToSrcPath = (value) => {
+    const normalized = String(value || '').replace(/\\/g, '/');
+    const marker = '/src/';
+    const idx = normalized.lastIndexOf(marker);
+    if (idx !== -1) return `src/${normalized.slice(idx + marker.length)}`;
+    if (normalized.startsWith('src/')) return normalized;
+    return normalized;
+  };
+
   return {
     name: 'source-location-babel-plugin',
     visitor: {
@@ -19,9 +28,8 @@ module.exports = function sourceLocationBabelPlugin({ types: t }) {
         );
         if (existingAttr) return;
 
-        // Normalise path to be relative to src/
-        const srcIndex = filename.indexOf('/src/');
-        const relPath = srcIndex !== -1 ? filename.slice(srcIndex + 1) : filename;
+        const relPath = normalizeToSrcPath(filename);
+        if (!relPath.startsWith('src/')) return;
 
         const value = `${relPath}:${loc.start.line}:${loc.start.column}`;
 
