@@ -98,24 +98,65 @@ const isNecessidadeRelatorio = (pedido) => !!pedido._is_necessidade || pedido._e
 const getQuantidadeEfetivaItem = (item = {}) =>
   Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0;
 
-const getValorUnitarioEfetivoItem = (item = {}, produto = {}) => {
+const getPercentualAjustePedido = (pedido = {}) => {
+  const percentualDireto = Number(pedido.percentual_desconto);
+  if (Number.isFinite(percentualDireto) && percentualDireto !== 0) return percentualDireto;
+
+  const valorDesconto = Number(pedido.valor_desconto);
+  const valorItens = Number(pedido.valor_itens);
+  if (Number.isFinite(valorDesconto) && Number.isFinite(valorItens) && valorItens > 0) {
+    return (valorDesconto / valorItens) * 100;
+  }
+
+  return 0;
+};
+
+const hasAjusteManualNoItem = (item = {}, baseUnit = 0) => {
+  const descontoOuAcrescimo = Number(item.valor_desconto_item);
+  if (Number.isFinite(descontoOuAcrescimo) && descontoOuAcrescimo !== 0) return true;
+
   const custoFinalUnitario = Number(item.custo_final_unitario);
-  if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) return custoFinalUnitario;
+  if (Number.isFinite(custoFinalUnitario) && Math.abs(custoFinalUnitario - baseUnit) > 0.01) return true;
+
+  const qtd = getQuantidadeEfetivaItem(item);
+  const totalItem = Number(item.total);
+  if (Number.isFinite(totalItem) && qtd > 0) {
+    const unitFromTotal = totalItem / qtd;
+    if (Math.abs(unitFromTotal - baseUnit) > 0.01) return true;
+  }
+
+  return false;
+};
+
+const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
+  const custoUnitario = Number(item.custo_unitario);
+  const baseUnit = Number.isFinite(custoUnitario) ? custoUnitario : (Number(produto.valor_compra) || 0);
+  const percentualAjustePedido = getPercentualAjustePedido(pedido);
+  const multiplicadorPedido = 1 - (percentualAjustePedido / 100);
+  const temAjusteManualItem = hasAjusteManualNoItem(item, baseUnit);
+
+  const custoFinalUnitario = Number(item.custo_final_unitario);
+  if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) {
+    return temAjusteManualItem ? custoFinalUnitario : (custoFinalUnitario * multiplicadorPedido);
+  }
 
   // Regra principal: o cálculo final do item sempre prevalece.
   // Assim, qualquer desconto/acréscimo aplicado no formulário (inclusive via %) é refletido no relatório.
   const totalItem = Number(item.total);
   const qtd = getQuantidadeEfetivaItem(item);
-  if (Number.isFinite(totalItem) && qtd > 0) return totalItem / qtd;
-
-  const custoUnitario = Number(item.custo_unitario);
-  const descontoOuAcrescimo = Number(item.valor_desconto_item);
-  if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
-    return custoUnitario - descontoOuAcrescimo;
+  if (Number.isFinite(totalItem) && qtd > 0) {
+    const unitFromTotal = totalItem / qtd;
+    return temAjusteManualItem ? unitFromTotal : (unitFromTotal * multiplicadorPedido);
   }
 
-  if (Number.isFinite(custoUnitario)) return custoUnitario;
-  return Number(produto.valor_compra) || 0;
+  const descontoOuAcrescimo = Number(item.valor_desconto_item);
+  if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
+    const unitComAjusteItem = custoUnitario - descontoOuAcrescimo;
+    return temAjusteManualItem ? unitComAjusteItem : (unitComAjusteItem * multiplicadorPedido);
+  }
+
+  if (Number.isFinite(custoUnitario)) return custoUnitario * multiplicadorPedido;
+  return (Number(produto.valor_compra) || 0) * multiplicadorPedido;
 };
 
 const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
@@ -123,7 +164,7 @@ const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
   return itens.reduce((acc, item) => {
     const produto = produtosMap[item.produto_id] || {};
     const qtd = getQuantidadeEfetivaItem(item);
-    const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto);
+    const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto, pedido);
     return acc + (qtd * valorUnitarioEfetivo);
   }, 0);
 };
@@ -500,7 +541,7 @@ Deno.serve(async (req) => {
       // Custo permanece apenas como informação para análise de margem/markup.
       const valorExp = itens.reduce((a, i) => {
         const prod = produtosMap[i.produto_id] || {};
-        const valorUnitario = getValorUnitarioEfetivoItem(i, prod);
+        const valorUnitario = getValorUnitarioEfetivoItem(i, prod, pedido);
         return a + (i._qtdEfetiva * valorUnitario);
       }, 0);
       doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
@@ -533,7 +574,7 @@ Deno.serve(async (req) => {
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdEfetiva;
-        const liq = getValorUnitarioEfetivoItem(item, prod);
+        const liq = getValorUnitarioEfetivoItem(item, prod, pedido);
         const frete = Number(prod.custo_frete_padrao) || 0;
         const outros = (Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0);
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
@@ -679,7 +720,7 @@ Deno.serve(async (req) => {
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
             const prod = produtosMap[i.produto_id] || {};
-            const cu = getValorUnitarioEfetivoItem(i, prod);
+            const cu = getValorUnitarioEfetivoItem(i, prod, pedido);
             return a + (i._qtdMostrada * cu);
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
@@ -707,7 +748,7 @@ Deno.serve(async (req) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdMostrada;
         const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
-        const precoCompra = getValorUnitarioEfetivoItem(item, prod);
+        const precoCompra = getValorUnitarioEfetivoItem(item, prod, pedido);
         const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
         const venda = Number(prod.preco_venda_padrao) || 0;
         const tCusto = qtd * custo;
