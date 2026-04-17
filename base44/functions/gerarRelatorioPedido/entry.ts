@@ -35,6 +35,27 @@ const fmtCur = (v) => {
   return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
+const getQuantidadeEfetivaItem = (item = {}) =>
+  Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0;
+
+const getValorUnitarioEfetivoItem = (item = {}, produto = {}) => {
+  const custoFinalUnitario = Number(item.custo_final_unitario);
+  if (Number.isFinite(custoFinalUnitario)) return custoFinalUnitario;
+
+  const custoUnitario = Number(item.custo_unitario);
+  const descontoOuAcrescimo = Number(item.valor_desconto_item);
+  if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
+    return custoUnitario - descontoOuAcrescimo;
+  }
+
+  const totalItem = Number(item.total);
+  const qtd = getQuantidadeEfetivaItem(item);
+  if (Number.isFinite(totalItem) && qtd > 0) return totalItem / qtd;
+
+  if (Number.isFinite(custoUnitario)) return custoUnitario;
+  return Number(produto.valor_compra) || 0;
+};
+
 const calcTextHeight = (doc, value, width, baseHeight = 10, lineHeight = 4.4) => {
   const lines = doc.splitTextToSize(safe(value || '-'), width);
   return Math.max(baseHeight, 6 + (lines.length * lineHeight));
@@ -252,8 +273,9 @@ Deno.serve(async (req) => {
       drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.8);
 
       setText(10, 'bold', [17, 24, 39]);
+      const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto || {});
       drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6.8);
-      drawText(fmtCur(item.custo_unitario || 0), tableColumns.unit, y + 6.8);
+      drawText(fmtCur(valorUnitarioEfetivo), tableColumns.unit, y + 6.8);
       drawText(fmtCur(item.total || 0), tableColumns.total - 3, y + 6.8, { align: 'right' });
       y += rowHeight + 3;
     });

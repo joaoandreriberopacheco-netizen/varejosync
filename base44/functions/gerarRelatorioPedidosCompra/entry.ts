@@ -85,7 +85,6 @@ const normalizarStatusRelatorio = (status) => {
 
 const getPedidoNumeroRelatorio = (pedido) => safe(pedido._display_code || pedido.numero || 'Sem numero');
 const getFornecedorRelatorio = (pedido) => safe(pedido._display_fornecedor || pedido.fornecedor_nome || 'Sem fornecedor');
-const getValorRelatorio = (pedido) => Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total ?? 0);
 const getDataRelatorio = (pedido) => pedido._display_date || pedido.data_prevista_entrega || pedido.data_emissao || pedido.created_date;
 const getQuantidadeRelatorio = (pedido) => {
   const itens = pedido._display_itens || pedido.itens || [];
@@ -96,6 +95,42 @@ const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_
 const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
 const isNecessidadeRelatorio = (pedido) => !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
+const getQuantidadeEfetivaItem = (item = {}) =>
+  Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0;
+
+const getValorUnitarioEfetivoItem = (item = {}, produto = {}) => {
+  const custoFinalUnitario = Number(item.custo_final_unitario);
+  if (Number.isFinite(custoFinalUnitario)) return custoFinalUnitario;
+
+  const custoUnitario = Number(item.custo_unitario);
+  const descontoOuAcrescimo = Number(item.valor_desconto_item);
+  if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
+    return custoUnitario - descontoOuAcrescimo;
+  }
+
+  const totalItem = Number(item.total);
+  const qtd = getQuantidadeEfetivaItem(item);
+  if (Number.isFinite(totalItem) && qtd > 0) return totalItem / qtd;
+
+  if (Number.isFinite(custoUnitario)) return custoUnitario;
+  return Number(produto.valor_compra) || 0;
+};
+
+const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
+  const itens = getItensRelatorio(pedido);
+  return itens.reduce((acc, item) => {
+    const produto = produtosMap[item.produto_id] || {};
+    const qtd = getQuantidadeEfetivaItem(item);
+    const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto);
+    return acc + (qtd * valorUnitarioEfetivo);
+  }, 0);
+};
+
+const getValorRelatorio = (pedido, produtosMap = {}) => {
+  const totalItensAjustado = getTotalItensAjustadoPedido(pedido, produtosMap);
+  if (totalItensAjustado > 0) return totalItensAjustado;
+  return Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total ?? 0);
+};
 
 const custoCalculadoProduto = (produto = {}) =>
   (Number(produto.valor_compra) || 0)
@@ -463,7 +498,7 @@ Deno.serve(async (req) => {
       // Custo permanece apenas como informação para análise de margem/markup.
       const valorExp = itens.reduce((a, i) => {
         const prod = produtosMap[i.produto_id] || {};
-        const valorUnitario = Number(i.custo_unitario) || Number(prod.valor_compra) || 0;
+        const valorUnitario = getValorUnitarioEfetivoItem(i, prod);
         return a + (i._qtdEfetiva * valorUnitario);
       }, 0);
       doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
@@ -496,7 +531,7 @@ Deno.serve(async (req) => {
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdEfetiva;
-        const liq = Number(item.custo_unitario) || Number(prod.valor_compra) || 0;
+        const liq = getValorUnitarioEfetivoItem(item, prod);
         const frete = Number(prod.custo_frete_padrao) || 0;
         const outros = (Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0);
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
@@ -642,10 +677,10 @@ Deno.serve(async (req) => {
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
             const prod = produtosMap[i.produto_id] || {};
-            const cu = Number(i.custo_unitario) || Number(prod.valor_compra) || 0;
+            const cu = getValorUnitarioEfetivoItem(i, prod);
             return a + (i._qtdMostrada * cu);
           }, 0))
-        : moeda(getValorRelatorio(pedido));
+        : moeda(getValorRelatorio(pedido, produtosMap));
       doc.text(valorHeader, M + CW - 2, y + 15, { align: 'right' });
 
       // Datas + contagem
@@ -670,7 +705,7 @@ Deno.serve(async (req) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdMostrada;
         const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
-        const precoCompra = Number(item.custo_unitario) || Number(prod.valor_compra) || 0;
+        const precoCompra = getValorUnitarioEfetivoItem(item, prod);
         const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
         const venda = Number(prod.preco_venda_padrao) || 0;
         const tCusto = qtd * custo;
