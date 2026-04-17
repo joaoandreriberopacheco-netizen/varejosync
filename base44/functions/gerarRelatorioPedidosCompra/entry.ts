@@ -108,21 +108,6 @@ const getPercentualAjustePedido = (pedido = {}) => {
     return (valorDesconto / valorItens) * 100;
   }
 
-  // Fallback: infere o percentual usando o total já conhecido do pedido (card/tela)
-  // para manter o relatório alinhado mesmo quando o payload não traz percentual explícito.
-  const targetTotal = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
-  if (Number.isFinite(targetTotal) && targetTotal > 0) {
-    const itens = getItensRelatorio(pedido);
-    const subtotalBase = itens.reduce((acc, item) => {
-      const qtd = getQuantidadeEfetivaItem(item);
-      const unit = Number(item.custo_unitario) || 0;
-      return acc + (qtd * unit);
-    }, 0);
-    if (subtotalBase > 0) {
-      return ((subtotalBase - targetTotal) / subtotalBase) * 100;
-    }
-  }
-
   return 0;
 };
 
@@ -152,7 +137,7 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
 
   const custoFinalUnitario = Number(item.custo_final_unitario);
   if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) {
-    return temAjusteManualItem ? custoFinalUnitario : (custoFinalUnitario * multiplicadorPedido);
+    return temAjusteManualItem ? custoFinalUnitario : (baseUnit * multiplicadorPedido);
   }
 
   // Regra principal: o cálculo final do item sempre prevalece.
@@ -161,7 +146,7 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
   const qtd = getQuantidadeEfetivaItem(item);
   if (Number.isFinite(totalItem) && qtd > 0) {
     const unitFromTotal = totalItem / qtd;
-    return temAjusteManualItem ? unitFromTotal : (unitFromTotal * multiplicadorPedido);
+    return temAjusteManualItem ? unitFromTotal : (baseUnit * multiplicadorPedido);
   }
 
   const descontoOuAcrescimo = Number(item.valor_desconto_item);
@@ -454,7 +439,7 @@ Deno.serve(async (req) => {
       doc.text(`Data: ${dataFmt(getDataRelatorio(pedido))}`, M + 5, y + 13);
       doc.text(`ETA: ${dataFmt(getEtaRelatorio(pedido))}`, M + 58, y + 13);
       doc.text(`Status: ${normalizarStatusRelatorio(pedido._display_status || pedido.status)}`, M + 105, y + 13);
-      doc.text(`Total: ${moeda(getValorRelatorio(pedido))}`, M + 155, y + 13);
+      doc.text(`Total: ${moeda(getValorRelatorio(pedido, produtosMap))}`, M + 155, y + 13);
       y += 26;
     };
 
@@ -487,7 +472,7 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(10);
       doc.setTextColor(...C.text);
-      doc.text(moeda(getValorRelatorio(pedido)), M + CW - 4, y + 10, { align: 'right' });
+      doc.text(moeda(getValorRelatorio(pedido, produtosMap)), M + CW - 4, y + 10, { align: 'right' });
       const totalLinhas = (pedido._display_itens || pedido.itens || []).length;
       const totalQtd = getQuantidadeRelatorio(pedido);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
@@ -505,7 +490,7 @@ Deno.serve(async (req) => {
       const itensTela = getItensRelatorio(pedido);
       const pedidoParaHeader = {
         ...pedido,
-        valor_total: getValorRelatorio(pedido)
+        valor_total: getValorRelatorio(pedido, produtosMap)
       };
       drawPedidoHeaderCompacto(pedidoParaHeader);
       const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0] || null;
@@ -557,11 +542,7 @@ Deno.serve(async (req) => {
       doc.setTextColor(...C.text);
       // Total do pedido no relatório expandido: valor unitário x quantidade.
       // Custo permanece apenas como informação para análise de margem/markup.
-      const valorExp = itens.reduce((a, i) => {
-        const prod = produtosMap[i.produto_id] || {};
-        const valorUnitario = getValorUnitarioEfetivoItem(i, prod, pedido);
-        return a + (i._qtdEfetiva * valorUnitario);
-      }, 0);
+      const valorExp = getValorRelatorio(pedido, produtosMap);
       doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
       const totalQtdExp = itens.reduce((a, i) => a + i._qtdEfetiva, 0);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
@@ -769,7 +750,7 @@ Deno.serve(async (req) => {
         const precoCompra = getValorUnitarioEfetivoItem(item, prod, pedido);
         const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
         const venda = Number(prod.preco_venda_padrao) || 0;
-        const tCusto = qtd * custo;
+        const tCompra = qtd * precoCompra;
         const tVenda = qtd * venda;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
 
@@ -819,11 +800,11 @@ Deno.serve(async (req) => {
         }
         const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * extraLineStep);
 
-        // Total do item (custo) — right aligned, bold
+        // Total do item (compra efetiva) — right aligned, bold
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(7.5 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE900);
-        doc.text(moeda(tCusto), M + CW - 2, primaryLineY, { align: 'right' });
+        doc.text(moeda(tCompra), M + CW - 2, primaryLineY, { align: 'right' });
 
         // Linha 2: Compra | Custo | Venda | Mk
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);

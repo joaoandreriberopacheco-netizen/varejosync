@@ -48,20 +48,6 @@ const getPercentualAjustePedido = (pedido = {}) => {
     return (valorDesconto / valorItens) * 100;
   }
 
-  // Fallback: infere o ajuste a partir do total consolidado já salvo no pedido.
-  const targetTotal = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
-  if (Number.isFinite(targetTotal) && targetTotal > 0) {
-    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-    const subtotalBase = itens.reduce((acc, item) => {
-      const qtd = getQuantidadeEfetivaItem(item);
-      const unit = Number(item.custo_unitario) || 0;
-      return acc + (qtd * unit);
-    }, 0);
-    if (subtotalBase > 0) {
-      return ((subtotalBase - targetTotal) / subtotalBase) * 100;
-    }
-  }
-
   return 0;
 };
 
@@ -91,7 +77,7 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
 
   const custoFinalUnitario = Number(item.custo_final_unitario);
   if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) {
-    return temAjusteManualItem ? custoFinalUnitario : (custoFinalUnitario * multiplicadorPedido);
+    return temAjusteManualItem ? custoFinalUnitario : (baseUnit * multiplicadorPedido);
   }
 
   // Regra principal: prioriza o cálculo efetivo já salvo no item.
@@ -99,7 +85,7 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
   const qtd = getQuantidadeEfetivaItem(item);
   if (Number.isFinite(totalItem) && qtd > 0) {
     const unitFromTotal = totalItem / qtd;
-    return temAjusteManualItem ? unitFromTotal : (unitFromTotal * multiplicadorPedido);
+    return temAjusteManualItem ? unitFromTotal : (baseUnit * multiplicadorPedido);
   }
 
   const descontoOuAcrescimo = Number(item.valor_desconto_item);
@@ -111,6 +97,14 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
   if (Number.isFinite(custoUnitario)) return custoUnitario * multiplicadorPedido;
   return (Number(produto.valor_compra) || 0) * multiplicadorPedido;
 };
+
+const getTotalItensEfetivoPedido = (pedido = {}, produtosMap = {}) =>
+  (Array.isArray(pedido.itens) ? pedido.itens : []).reduce((sum, item) => {
+    const produto = item.produto_id ? (produtosMap[item.produto_id] || {}) : {};
+    const qtd = getQuantidadeEfetivaItem(item);
+    const unit = getValorUnitarioEfetivoItem(item, produto, pedido);
+    return sum + (qtd * unit);
+  }, 0);
 
 const calcTextHeight = (doc, value, width, baseHeight = 10, lineHeight = 4.4) => {
   const lines = doc.splitTextToSize(safe(value || '-'), width);
@@ -231,10 +225,10 @@ Deno.serve(async (req) => {
       y += blockHeight + 5;
     };
 
-    const subtotalItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+    const subtotalItens = getTotalItensEfetivoPedido(pedido, produtosMap);
     const frete = 0;
     const desconto = Number(pedido.valor_desconto) || 0;
-    const totalPedido = Number(pedido.valor_total) || subtotalItens - desconto;
+    const totalPedido = Number(pedido.valor_total) || subtotalItens;
     const quantidadeItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0);
     const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
     const criador = pedido.created_by_nome || pedido.created_by_nickname || pedido.created_by || user.email || '-';
@@ -332,7 +326,7 @@ Deno.serve(async (req) => {
       const valorUnitarioEfetivo = getValorUnitarioEfetivoItem(item, produto || {}, pedido);
       drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6.8);
       drawText(fmtCur(valorUnitarioEfetivo), tableColumns.unit, y + 6.8);
-      drawText(fmtCur(item.total || 0), tableColumns.total - 3, y + 6.8, { align: 'right' });
+      drawText(fmtCur(valorUnitarioEfetivo * (Number(item.quantidade) || 0)), tableColumns.total - 3, y + 6.8, { align: 'right' });
       y += rowHeight + 3;
     });
 

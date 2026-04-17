@@ -108,6 +108,64 @@ const getBorrowedStatus = (pedido, embarque) => {
 
 const getEmbarqueDisplayDate = (pedido) => pedido?.data_aprovacao_financeira || pedido?.data_emissao || pedido?.created_date;
 
+const getPercentualAjustePedido = (pedido = {}) => {
+  const percentualDireto = Number(pedido.percentual_desconto);
+  if (Number.isFinite(percentualDireto) && percentualDireto !== 0) return percentualDireto;
+
+  const valorDesconto = Number(pedido.valor_desconto);
+  const valorItens = Number(pedido.valor_itens);
+  if (Number.isFinite(valorDesconto) && Number.isFinite(valorItens) && valorItens > 0) {
+    return (valorDesconto / valorItens) * 100;
+  }
+
+  return 0;
+};
+
+const hasAjusteManualNoItem = (item = {}, baseUnit = 0) => {
+  const descontoOuAcrescimo = Number(item.valor_desconto_item);
+  if (Number.isFinite(descontoOuAcrescimo) && descontoOuAcrescimo !== 0) return true;
+
+  const custoFinalUnitario = Number(item.custo_final_unitario);
+  if (Number.isFinite(custoFinalUnitario) && Math.abs(custoFinalUnitario - baseUnit) > 0.01) return true;
+
+  const qtd = Number(item.quantidade_base || item.quantidade) || 0;
+  const totalItem = Number(item.total);
+  if (Number.isFinite(totalItem) && qtd > 0) {
+    const unitFromTotal = totalItem / qtd;
+    if (Math.abs(unitFromTotal - baseUnit) > 0.01) return true;
+  }
+
+  return false;
+};
+
+const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
+  const custoUnitario = Number(item.custo_unitario);
+  const baseUnit = Number.isFinite(custoUnitario) ? custoUnitario : 0;
+  const percentualAjustePedido = getPercentualAjustePedido(pedido);
+  const multiplicadorPedido = 1 - (percentualAjustePedido / 100);
+  const temAjusteManualItem = hasAjusteManualNoItem(item, baseUnit);
+
+  const custoFinalUnitario = Number(item.custo_final_unitario);
+  if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) {
+    return temAjusteManualItem ? custoFinalUnitario : (baseUnit * multiplicadorPedido);
+  }
+
+  const qtd = Number(item.quantidade_base || item.quantidade) || 0;
+  const totalItem = Number(item.total);
+  if (Number.isFinite(totalItem) && qtd > 0) {
+    const unitFromTotal = totalItem / qtd;
+    return temAjusteManualItem ? unitFromTotal : (baseUnit * multiplicadorPedido);
+  }
+
+  const descontoOuAcrescimo = Number(item.valor_desconto_item);
+  if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
+    const unitComAjuste = custoUnitario - descontoOuAcrescimo;
+    return temAjusteManualItem ? unitComAjuste : (unitComAjuste * multiplicadorPedido);
+  }
+
+  return baseUnit * multiplicadorPedido;
+};
+
 const buildDisplayItensFromEmbarque = (pedido, embarque) => {
   return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
@@ -119,21 +177,29 @@ const buildDisplayItensFromEmbarque = (pedido, embarque) => {
       quantidade: quantidadeEmbarcada || quantidadePedida,
       quantidade_embarcada: quantidadeEmbarcada,
       quantidade_pedida: quantidadePedida,
-      custo_unitario: Number(pedidoItem?.custo_unitario) || 0,
+      custo_unitario: getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido),
       unidade_medida: item.unidade_medida || pedidoItem?.unidade_medida || '',
     };
   });
 };
 
 const getValorTotalPedidoCalculado = (pedido) => {
-  return Number(pedido?.valor_total) || (pedido?.itens || []).reduce((acc, item) => acc + ((Number(item?.quantidade) || 0) * (Number(item?.custo_unitario) || 0)), 0);
+  const valorPedidoConhecido = Number(pedido?.valor_total);
+  if (Number.isFinite(valorPedidoConhecido) && valorPedidoConhecido > 0) return valorPedidoConhecido;
+  return (pedido?.itens || []).reduce((acc, item) => {
+    const qtd = Number(item?.quantidade_base || item?.quantidade) || 0;
+    return acc + (qtd * getValorUnitarioEfetivoItemPedido(item, pedido));
+  }, 0);
 };
 
 const getDisplayValorEmbarque = (pedido, embarque) => {
   const itensDisplay = buildDisplayItensFromEmbarque(pedido, embarque);
   const valorItens = itensDisplay.reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
   const valorTotalPedido = getValorTotalPedidoCalculado(pedido);
-  const valorBaseItens = (pedido?.itens || []).reduce((acc, item) => acc + ((Number(item?.quantidade) || 0) * (Number(item?.custo_unitario) || 0)), 0);
+  const valorBaseItens = (pedido?.itens || []).reduce((acc, item) => {
+    const qtd = Number(item?.quantidade_base || item?.quantidade) || 0;
+    return acc + (qtd * getValorUnitarioEfetivoItemPedido(item, pedido));
+  }, 0);
 
   if (!valorItens || !valorBaseItens || !valorTotalPedido) return valorItens;
 
@@ -234,9 +300,10 @@ export default function PedidosCompraPage() {
         const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
         const totalPedido = getValorTotalPedidoCalculado(pedido);
         const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
-          const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
-            const custoUnitario = Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0;
-            return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitario);
+            const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
+            const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
+            const custoUnitarioEfetivo = getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido);
+            return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitarioEfetivo);
           }, 0);
           return acc + valorEmbarque;
         }, 0);
@@ -305,7 +372,7 @@ export default function PedidosCompraPage() {
                     quantidade: Number(item.quantidade) || 0,
                     quantidade_embarcada: 0,
                     quantidade_pedida: Number(item.quantidade) || 0,
-                    custo_unitario: Number(item.custo_unitario) || 0,
+                    custo_unitario: getValorUnitarioEfetivoItemPedido(item, pedido),
                     unidade_medida: item.unidade_medida || '',
                   })));
 
@@ -494,7 +561,7 @@ export default function PedidosCompraPage() {
       const quantidade = Number(item.quantidade) || 0;
       const recebida = recebidosPorProduto[item.produto_id] || 0;
       const pendente = Math.max(0, quantidade - recebida);
-      const custoUnitario = Number(item.custo_unitario) || 0;
+      const custoUnitario = getValorUnitarioEfetivoItemPedido(item, pedido);
       return acc + (pendente * custoUnitario);
     }, 0);
   };
@@ -672,7 +739,7 @@ export default function PedidosCompraPage() {
         kpis={{
           totalPedidos: pedidosVisiveisPendentes.length,
           totalGeral: valorTotal,
-          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0),
+          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
           totalPagoNaoEntregue: valorPagoNaoEntregue
         }}
         grupos={grupos}
