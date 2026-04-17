@@ -1,6 +1,29 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
+/** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
+const PDF_GLYPH_STRETCH_Y = 1.1;
+
+/**
+ * Aplica alongamento vertical no texto do PDF via matriz interna do jsPDF (não aumenta fontSize).
+ * Preserva options.angle se já for uma Matrix (ex.: rotação customizada).
+ */
+const patchPdfTextVerticalStretch = (doc) => {
+  const PdfMatrix = jsPDF.API?.Matrix;
+  if (!PdfMatrix) return;
+  const origText = doc.text.bind(doc);
+  doc.text = function (text, x, y, options, transform) {
+    if (options != null && typeof options === 'object' && options.angle instanceof PdfMatrix) {
+      return origText(text, x, y, options, transform);
+    }
+    const stretch = new PdfMatrix(1, 0, 0, PDF_GLYPH_STRETCH_Y, 0, 0);
+    if (options != null && typeof options === 'object' && !Array.isArray(options)) {
+      return origText(text, x, y, { ...options, angle: stretch }, transform);
+    }
+    return origText(text, x, y, { angle: stretch }, transform);
+  };
+};
+
 const PDF_FONT_FAMILY = 'NotoSans';
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
@@ -270,6 +293,7 @@ Deno.serve(async (req) => {
       format: isMobile ? [MOBILE_W, 297] : 'a4',
     });
     await registerPdfFonts(doc);
+    patchPdfTextVerticalStretch(doc);
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -364,10 +388,10 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     const drawKpis = () => {
       const cards = [
-        { label: 'Embarques',       value: String(kpis.totalPedidos || pedidos.length || 0) },
-        { label: 'Total pendente',  value: moeda(kpis.totalGeral || 0) },
-        { label: 'Em aberto',       value: moeda(kpis.totalEmAberto || 0) },
-        { label: 'Pago/nao entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
+        { label: 'Pedidos na lista', value: String(kpis.totalPedidos || pedidos.length || 0) },
+        { label: 'Total pendente',   value: moeda(kpis.totalGeral || 0) },
+        { label: 'Em aberto',        value: moeda(kpis.totalEmAberto || 0) },
+        { label: 'Pago / nao entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
       ];
 
       if (isMobile) {
@@ -673,8 +697,8 @@ Deno.serve(async (req) => {
     const SLATE900 = [15, 23, 42];
     const SLATE700 = [51, 65, 85];
     const SLATE500 = [100, 116, 139];
-    const MOBILE_ITEMS_FONT_SCALE = 1.15;
-    const MOBILE_ITEMS_VERTICAL_SCALE = 1.6;
+    const MOBILE_ITEMS_FONT_SCALE = 1.05;
+    const MOBILE_ITEMS_VERTICAL_SCALE = 1.35;
 
     // Barra de progresso multi-segmento
     const drawProgressBar = (status, barY) => {
@@ -689,10 +713,11 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Colunas fixas para alinhar quantidade verticalmente
-    const QTD_RIGHT_X = ITEM_ML + 13; // right-align da quantidade
-    const UN_X = ITEM_ML + 14;         // início da unidade
-    const NOME_X = ITEM_ML + 23;       // início do nome (após UN max)
+    // Colunas: linha 1 = qtd + un (esquerda) e total (direita); nome e detalhes usam largura útil inteira
+    const QTD_RIGHT_X = ITEM_ML + 13;
+    const UN_X = ITEM_ML + 14.5;
+    const NOME_X = ITEM_ML + 1;
+    const NOME_MAX_W = CW - (NOME_X - M) - 4;
 
     const fmtQtd = (n) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -803,66 +828,64 @@ Deno.serve(async (req) => {
         const tVenda = qtd * venda;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
 
-        const rowH = 15 * MOBILE_ITEMS_VERTICAL_SCALE;
-        const branchY = y + (5 * MOBILE_ITEMS_VERTICAL_SCALE);
-        const lineWidth = 3.5;
-        const primaryLineY = y + (6 * MOBILE_ITEMS_VERTICAL_SCALE);
-        const secondaryLineY = y + (12 * MOBILE_ITEMS_VERTICAL_SCALE);
-        const extraLineStep = 4.5 * MOBILE_ITEMS_VERTICAL_SCALE;
-        const detailLineStep = 3.7 * MOBILE_ITEMS_VERTICAL_SCALE;
+        const vs = MOBILE_ITEMS_VERTICAL_SCALE;
+        const lineWidth = 2.8;
+        const nomeLineStep = 3.85 * vs;
+        const detailLineStep = 3.5 * vs;
+        const gapNomeDetalhe = 2.2 * vs;
+        const headerLineY = y + 5.2 * vs;
 
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
         const nomeLinhas = doc.splitTextToSize(
           toTitleCase(safe(item.produto_nome || prod.nome || '-')),
-          M + CW - NOME_X - 24
+          NOME_MAX_W
         );
-        const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * extraLineStep);
-        const detailBlockH = detailLineStep * 2;
-        const rowBlockH = rowH + nomeExtraH + detailBlockH;
-
-        ensureSpace(rowBlockH + 6);
-
-        // Linha vertical hierárquica (altura = bloco inteiro: nome + 2 linhas de detalhe)
-        doc.setFillColor(...SLATE900);
-        doc.rect(LINE_X, y, 0.15, rowBlockH, 'F');
-        doc.rect(LINE_X, branchY, lineWidth, 0.15, 'F');
-
-        // LINHA Única: QTD (right-align coluna fixa) | UN | Nome | Total
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7.5 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE900);
-
-        doc.text(fmtQtd(qtd), QTD_RIGHT_X, primaryLineY, { align: 'right' });
-
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE700);
-        doc.text(un, UN_X, primaryLineY);
-
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE700);
-        doc.text(nomeLinhas[0], NOME_X, primaryLineY);
-        if (nomeLinhas.length > 1) {
-          for (let nl = 1; nl < nomeLinhas.length; nl++) {
-            doc.text(nomeLinhas[nl], NOME_X, primaryLineY + nl * extraLineStep);
-          }
-        }
-
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7.5 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE900);
-        doc.text(moeda(tCompra), M + CW - 2, primaryLineY, { align: 'right' });
-
-        // Duas linhas de detalhe: Comp./Custo e Venda/Mk (legível no celular)
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(6 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE500);
-        const detY1 = secondaryLineY + nomeExtraH;
+        const nomeTop = y + 7.2 * vs;
+        const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+        const detY1 = lastNomeBaseline + gapNomeDetalhe;
         const detY2 = detY1 + detailLineStep;
+        const rowBlockH = detY2 + 2.2 * vs - y;
+        const branchY = y + 4 * vs;
+
+        ensureSpace(rowBlockH + 8);
+
+        doc.setFillColor(203, 213, 225);
+        doc.rect(LINE_X, y, 0.12, rowBlockH, 'F');
+        doc.rect(LINE_X, branchY, lineWidth, 0.12, 'F');
+
+        // Linha 1: qtd + UN (esquerda) | total do item (direita) — sem competir com o nome
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setTextColor(...SLATE900);
+        doc.text(fmtQtd(qtd), QTD_RIGHT_X, headerLineY, { align: 'right' });
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(6.8 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setTextColor(...SLATE700);
+        doc.text(un, UN_X, headerLineY);
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(7.2 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setTextColor(...SLATE900);
+        doc.text(moeda(tCompra), M + CW - 2, headerLineY, { align: 'right' });
+
+        // Nome do produto: largura total, abaixo da linha financeira
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setTextColor(...SLATE700);
+        nomeLinhas.forEach((line, li) => {
+          doc.text(line, NOME_X, nomeTop + li * nomeLineStep);
+        });
+
+        const detY1 = nomeTop + nomeBlockH + gapNomeDetalhe;
+        const detY2 = detY1 + detailLineStep;
+        doc.setFontSize(5.6 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setTextColor(...SLATE500);
         doc.text(`Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}`, NOME_X, detY1);
         doc.text(`Venda ${moeda(venda)} · Mk ${percentual(mk)}`, NOME_X, detY2);
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.15);
+        doc.line(ITEM_ML, y + rowBlockH, M + CW, y + rowBlockH);
 
         y += rowBlockH;
       });

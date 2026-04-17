@@ -3,6 +3,25 @@ import { jsPDF } from 'npm:jspdf@4.0.0';
 import { format } from 'npm:date-fns';
 import { ptBR } from 'npm:date-fns/locale';
 
+/** Escala só no eixo Y (glifos mais altos, largura inalterada). */
+const PDF_GLYPH_STRETCH_Y = 1.1;
+
+const patchPdfTextVerticalStretch = (doc) => {
+  const PdfMatrix = jsPDF.API?.Matrix;
+  if (!PdfMatrix) return;
+  const origText = doc.text.bind(doc);
+  doc.text = function (text, x, y, options, transform) {
+    if (options != null && typeof options === 'object' && options.angle instanceof PdfMatrix) {
+      return origText(text, x, y, options, transform);
+    }
+    const stretch = new PdfMatrix(1, 0, 0, PDF_GLYPH_STRETCH_Y, 0, 0);
+    if (options != null && typeof options === 'object' && !Array.isArray(options)) {
+      return origText(text, x, y, { ...options, angle: stretch }, transform);
+    }
+    return origText(text, x, y, { angle: stretch }, transform);
+  };
+};
+
 const safe = (t) => {
   if (!t) return '';
   return String(t)
@@ -143,6 +162,7 @@ Deno.serve(async (req) => {
     const produtosMap = Object.fromEntries(produtos.filter(Boolean).map((produto) => [produto.id, produto]));
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    patchPdfTextVerticalStretch(doc);
     const usableWidth = page.width - (page.marginX * 2);
     let y = page.marginTop;
 
