@@ -22,7 +22,7 @@ export default function KpiFluxo({ kpis }) {
           <p className="text-[15px] font-semibold leading-none text-gray-900 dark:text-foreground">{R(kpis.entrou)}</p>
           {kpis.pEntrou > 0 && <p className="mt-1 text-[9px] text-gray-500 dark:text-muted-foreground">+{R(kpis.pEntrou)} previsto</p>}
         </div>
-        <div className={kpiBlock}>
+        <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
           <div className="mb-1.5 flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
               <TrendingDown className="h-3 w-3 text-red-500 dark:text-red-400" />
@@ -34,8 +34,8 @@ export default function KpiFluxo({ kpis }) {
         </div>
       </div>
 
-      <div className={kpiBlock}>
-        <div className="mb-2.5 flex items-start justify-between gap-3">
+      <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
+        <div className="bg-transparent mb-2.5 flex items-start justify-between gap-3">
           <div>
             <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">Saldo de Execução</p>
             <p className="text-[19px] font-semibold leading-none text-gray-900 dark:text-foreground">
@@ -54,7 +54,7 @@ export default function KpiFluxo({ kpis }) {
       </div>
 
       {kpis.vencidos > 0 &&
-      <div className={`${kpiBlock} flex items-center gap-3`}>
+      <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card flex items-center gap-3">
           <AlertTriangle className="h-4 w-4 flex-none text-red-500 dark:text-red-400" />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidos</p>
