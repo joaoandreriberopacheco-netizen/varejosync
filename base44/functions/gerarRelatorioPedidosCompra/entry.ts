@@ -418,7 +418,7 @@ Deno.serve(async (req) => {
       doc.text('Agrupamento aplicado na tela', M, y);
       y += 5;
       grupos.forEach((grupo, idx) => {
-        const total = (grupo.pedidos || []).reduce((a, p) => a + (Number(p.valor_pendente_entrega ?? p.valor_total) || 0), 0);
+        const total = (grupo.pedidos || []).reduce((a, p) => a + getValorRelatorio(p, produtosMap), 0);
         ensureSpace(8);
         if (idx % 2 === 0) {
           doc.setFillColor(250, 250, 250);
