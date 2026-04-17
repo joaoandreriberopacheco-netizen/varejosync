@@ -31,10 +31,9 @@ Deno.serve(async (req) => {
     }, { status: 400 });
   }
 
-  // Buscar lançamentos do tipo Despesa antes da dataCorte
   const statusFiltros = incluirPagos
-    ? ['Em Aberto', 'Pago']
-    : ['Em Aberto'];
+    ? ['Em Aberto', 'Vencido', 'Pago']
+    : ['Em Aberto', 'Vencido'];
 
   let candidatos = [];
 
@@ -46,16 +45,23 @@ Deno.serve(async (req) => {
     candidatos.push(...lotes);
   }
 
-  // Filtrar por dataCorte (estritamente anterior) e critério de "gerado automaticamente"
-  const elegíveis = candidatos.filter((lf) => {
+  // Critérios de "gerado automaticamente":
+  // 1. tag 'lf_gerado_auto' (critério original)
+  // 2. is_recorrente=true + grupo_lancamento_id preenchido (lançamentos gerados por gerarContasPrevistasRecorrentes)
+  // 3. tag 'recorrente' + grupo_lancamento_id preenchido
+  const elegiveis = candidatos.filter((lf) => {
     if (!lf.data_vencimento) return false;
     if (lf.data_vencimento >= dataCorte) return false;
 
-    const temTag = Array.isArray(lf.tags) && lf.tags.includes('lf_gerado_auto');
-    const temObs = typeof lf.observacoes === 'string' &&
-      lf.observacoes.toLowerCase().includes('gerado automaticamente (janela recorrente)');
+    const tags = Array.isArray(lf.tags) ? lf.tags : [];
+    const obs = typeof lf.observacoes === 'string' ? lf.observacoes.toLowerCase() : '';
 
-    return temTag || temObs;
+    const criterio1 = tags.includes('lf_gerado_auto');
+    const criterio2 = obs.includes('gerado automaticamente (janela recorrente)');
+    const criterio3 = lf.is_recorrente === true && !!lf.grupo_lancamento_id;
+    const criterio4 = tags.includes('recorrente') && !!lf.grupo_lancamento_id;
+
+    return criterio1 || criterio2 || criterio3 || criterio4;
   });
 
   if (dryRun) {
@@ -63,8 +69,15 @@ Deno.serve(async (req) => {
       dryRun: true,
       dataCorte,
       incluirPagos,
-      total: elegíveis.length,
-      ids: elegíveis.slice(0, 500).map((lf) => lf.id),
+      total: elegiveis.length,
+      amostra: elegiveis.slice(0, 20).map((lf) => ({
+        id: lf.id,
+        descricao: lf.descricao,
+        data_vencimento: lf.data_vencimento,
+        status: lf.status,
+        tags: lf.tags,
+        grupo_lancamento_id: lf.grupo_lancamento_id,
+      })),
       executadoPor: user.email,
     });
   }
@@ -73,7 +86,7 @@ Deno.serve(async (req) => {
   const erros = [];
   const deletados = [];
 
-  for (const lf of elegíveis) {
+  for (const lf of elegiveis) {
     try {
       await base44.asServiceRole.entities.LancamentoFinanceiro.delete(lf.id);
       deletados.push(lf.id);
@@ -86,7 +99,7 @@ Deno.serve(async (req) => {
     dryRun: false,
     dataCorte,
     incluirPagos,
-    totalElegivel: elegíveis.length,
+    totalElegivel: elegiveis.length,
     totalDeletado: deletados.length,
     totalErro: erros.length,
     erros,
