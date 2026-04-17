@@ -1,5 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
+/**
+ * Rotina separada: processa apenas entidades PagamentoCartaoDetalhe (pipeline legado/paralelo).
+ * Vendas feitas pelo PDV via processarVendaCaixa já geram LancamentoFinanceiro de cartão diretamente;
+ * não inserir PagamentoCartaoDetalhe a partir desse fluxo para evitar lançamentos duplicados.
+ */
+
 // Retorna próximo dia útil (pula sábado e domingo)
 function proximoDiaUtil(dataBase, dias) {
   const d = new Date(dataBase);

@@ -7,6 +7,11 @@ import { dataHoje } from '@/components/utils/dateUtils';
 export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState('');
+  const getActionVersion = (label) => {
+    if (label === 'PDF expandido') return 'expandida';
+    if (label === 'PDF mobile') return 'expandida_mobile';
+    return '';
+  };
 
   const handleGerarRelatorio = async (version) => {
     setGerando(version);
@@ -71,13 +76,6 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
     {
-      icon: <FileBarChart2 className="w-5 h-5" />,
-      label: 'PDF compacto',
-      onClick: () => handleGerarRelatorio('compacta'),
-      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
-      disabled: !!gerando,
-    },
-    {
       icon: <FileSpreadsheet className="w-5 h-5" />,
       label: 'PDF expandido',
       onClick: () => handleGerarRelatorio('expandida'),
@@ -89,13 +87,6 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       label: 'PDF mobile',
       onClick: () => handleGerarRelatorio('expandida_mobile'),
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
-      disabled: !!gerando,
-    },
-    {
-      icon: <Smartphone className="w-5 h-5" />,
-      label: 'Mobile com alma',
-      onClick: () => handleGerarRelatorio('mobile_com_alma'),
-      color: 'bg-gray-900 dark:bg-gray-600 text-white',
       disabled: !!gerando,
     },
   ];
@@ -136,7 +127,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
               animationDelay: `${idx * 30}ms`,
             }}
           >
-            {gerando === (action.label === 'PDF compacto' ? 'compacta' : action.label === 'PDF expandido' ? 'expandida' : action.label === 'PDF mobile' ? 'expandida_mobile' : action.label === 'Mobile com alma' ? 'mobile_com_alma' : '')
+            {gerando === getActionVersion(action.label)
               ? <Loader2 className="w-5 h-5 animate-spin" />
               : action.icon}
             {action.label}

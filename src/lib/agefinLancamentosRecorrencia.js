@@ -49,6 +49,17 @@ function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
+function firstDayOfCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-01`;
+}
+
+function maxDateYmd(a, b) {
+  if (!a) return b || null;
+  if (!b) return a || null;
+  return a >= b ? a : b;
+}
+
 /** YYYY-MM a partir de data_vencimento ISO */
 export function mesReferenciaLancamento(l) {
   const d = l?.data_vencimento;
@@ -133,8 +144,10 @@ export async function criarParcelasIniciaisRecorrenteAposPrimeiro(base44, modelo
   if (!modelo?.grupo_lancamento_id || !isLancamentoParcelasMensaisRecorrente(modelo)) return { criados: 0 };
   const grupoId = modelo.grupo_lancamento_id;
   const cap = await maxDataVencimentoMensaisOutrosGrupos(base44, grupoId);
-  const primeiro = (modelo.data_vencimento || '').slice(0, 10);
-  if (!primeiro) return { criados: 0 };
+  const primeiroOriginal = (modelo.data_vencimento || '').slice(0, 10);
+  if (!primeiroOriginal) return { criados: 0 };
+  // Evita preencher meses passados quando o primeiro lançamento foi criado retroativamente.
+  const primeiro = maxDateYmd(primeiroOriginal, firstDayOfCurrentMonth());
 
   let criados = 0;
   for (let i = 1; i <= 3; i += 1) {
@@ -317,7 +330,16 @@ export async function aplicarRegrasRecorrenciaEmLegado(base44) {
  */
 export async function marcarLancamentosComoImportadosPorBoletoPdf(
   base44,
-  { contaPrevistaId, lancamentoFinanceiroId, grupoLancamentoId, dataVencimento, valor }
+  {
+    contaPrevistaId,
+    lancamentoFinanceiroId,
+    grupoLancamentoId,
+    dataVencimento,
+    valor,
+    permitirFallbackGrupo = false,
+    contextoMatch = null,
+    boletoFingerprint = null,
+  }
 ) {
   const mes = dataVencimento && dataVencimento.length >= 7 ? dataVencimento.slice(0, 7) : null;
   const atualizarUm = async (l) => {
@@ -330,6 +352,17 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
       tags: [...tags],
       ...(valor != null ? { valor, valor_liquido: valor } : {}),
       ...(dataVencimento ? { data_vencimento: dataVencimento } : {}),
+      ...((contextoMatch || boletoFingerprint)
+        ? {
+            observacoes: [
+              l.observacoes || '',
+              contextoMatch ? `[agefin_pdf_match:${contextoMatch}]` : null,
+              boletoFingerprint ? `[boleto_fp:${boletoFingerprint}]` : null,
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          }
+        : {}),
       forma_pagamento_tipo: 'Boleto',
       forma_pagamento: 'Boleto',
     });
@@ -353,7 +386,7 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
     if (porRef?.length) return;
   }
 
-  if (grupoLancamentoId && mes) {
+  if (permitirFallbackGrupo && grupoLancamentoId && mes) {
     const grupo = await base44.entities.LancamentoFinanceiro.filter({ grupo_lancamento_id: grupoLancamentoId });
     const match = (grupo || []).filter((l) => mesReferenciaLancamento(l) === mes);
     for (const l of match) await atualizarUm(l);

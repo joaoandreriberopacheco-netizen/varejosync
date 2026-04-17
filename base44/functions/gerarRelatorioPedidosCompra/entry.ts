@@ -229,6 +229,14 @@ const getStatusColors = (status) => {
   return STATUS_PDF_COLORS[key] || STATUS_PDF_COLORS['Rascunho'];
 };
 
+const normalizeReportVersion = (version) => {
+  if (version === 'mobile_com_alma') return 'expandida_mobile';
+  if (version === 'compacta') return 'expandida';
+  if (version === 'expandida_mobile') return 'expandida_mobile';
+  if (version === 'expandida') return 'expandida';
+  return 'expandida';
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -243,8 +251,9 @@ Deno.serve(async (req) => {
       kpis = {},
       grupos = [],
     } = payload;
+    const normalizedVersion = normalizeReportVersion(version);
 
-    const isMobile = version === 'expandida_mobile';
+    const isMobile = normalizedVersion === 'expandida_mobile';
 
     // Carregar apenas produtos realmente usados no relatório
     const produtoIds = [...new Set(
@@ -327,7 +336,9 @@ Deno.serve(async (req) => {
       doc.setTextColor(...C.text);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(16);
-      const titulo = version === 'expandida' ? 'Relatorio expandido de embarques' : 'Relatorio compacto de embarques';
+      const titulo = normalizedVersion === 'expandida_mobile'
+        ? 'Relatorio mobile de embarques'
+        : 'Relatorio expandido de embarques';
       doc.text(safe(titulo), M + 11, y + 9);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(9);
@@ -830,8 +841,7 @@ Deno.serve(async (req) => {
 
     const renderPedido = (pedido) => {
       if (isMobile)              return drawMobileCard(pedido);
-      if (version === 'expandida') return drawExpandido(pedido);
-      return drawCompacto(pedido);
+      return drawExpandido(pedido);
     };
 
     const renderGrupo = (grupo) => {
@@ -872,7 +882,7 @@ Deno.serve(async (req) => {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="relatorio-pedidos-${version}.pdf"`,
+        'Content-Disposition': `attachment; filename="relatorio-pedidos-${normalizedVersion}.pdf"`,
       },
     });
   } catch (error) {

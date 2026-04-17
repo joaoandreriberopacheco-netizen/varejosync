@@ -333,6 +333,22 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                   </div>
                 </div>
               )}
+
+              {pedido.historico && String(pedido.historico).trim() !== '' && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                      Histórico do pedido
+                    </h3>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 p-4 rounded-xl max-h-48 overflow-y-auto">
+                    <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-sans">
+                      {pedido.historico}
+                    </pre>
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             {/* ABA: FINANCEIRO */}
@@ -363,6 +379,11 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               {pag.parcelas > 1 ? `${pag.parcelas}x` : 'À vista'}
                               {pag.taxa_pagamento ? ` • Taxa: ${pag.taxa_pagamento}%` : ''}
+                              {pag.taxa_maquininha != null && pag.taxa_maquininha > 0
+                                ? ` • Taxa maq.: ${pag.taxa_maquininha}%`
+                                : ''}
+                              {pag.maquininha_nome ? ` • ${pag.maquininha_nome}` : ''}
+                              {pag.bandeira ? ` · ${pag.bandeira}` : ''}
                             </div>
                           </div>
                         </div>

@@ -13,6 +13,98 @@ import {
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 
+const MIN_RECORRENTE_MATCH_SCORE = 45;
+const MATCH_SCORE_MARGIN = 8;
+
+function normalizarTexto(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokensTexto(value) {
+  return new Set(normalizarTexto(value).split(' ').filter((t) => t.length >= 3));
+}
+
+function hashDjb2(value) {
+  let hash = 5381;
+  for (const char of String(value || '')) {
+    hash = ((hash << 5) + hash) + char.charCodeAt(0);
+    hash &= 0xffffffff;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function gerarBoletoFingerprint(dados) {
+  const linha = String(dados?.linha_digitavel || '').replace(/\D/g, '');
+  const pix = normalizarTexto(dados?.codigo_pix_copia_cola || '');
+  const fonte = linha || pix;
+  if (!fonte) return null;
+  const valorCentavos = Math.round((Number(dados?.valor) || 0) * 100);
+  const vencimento = String(dados?.data_vencimento || '').slice(0, 10) || 'sem-data';
+  return `${hashDjb2(fonte)}:${valorCentavos}:${vencimento}`;
+}
+
+function scoreRecorrente(recorrente, extractedData) {
+  const diaRecorrente = Number(recorrente?.dia_vencimento);
+  const diaBoleto = Number((extractedData?.data_vencimento || '').slice(8, 10));
+  if (!diaRecorrente || !diaBoleto || diaRecorrente !== diaBoleto) {
+    return { score: Number.NEGATIVE_INFINITY, motivos: ['dia_vencimento_diferente'] };
+  }
+
+  const nomeDespesa = normalizarTexto(recorrente?.nome_despesa);
+  const terceiro = normalizarTexto(recorrente?.terceiro_nome);
+  const descricao = normalizarTexto(extractedData?.descricao);
+  const beneficiario = normalizarTexto(extractedData?.terceiro_nome);
+  let score = 20;
+  const motivos = ['dia_vencimento_ok'];
+
+  if (nomeDespesa && descricao && nomeDespesa === descricao) {
+    score += 35;
+    motivos.push('nome_despesa_exato');
+  } else if (nomeDespesa && descricao && (descricao.includes(nomeDespesa) || nomeDespesa.includes(descricao))) {
+    score += 15;
+    motivos.push('nome_despesa_parcial');
+  }
+
+  if (terceiro && beneficiario && terceiro === beneficiario) {
+    score += 40;
+    motivos.push('beneficiario_exato');
+  } else if (terceiro && beneficiario && (beneficiario.includes(terceiro) || terceiro.includes(beneficiario))) {
+    score += 18;
+    motivos.push('beneficiario_parcial');
+  } else if (terceiro && descricao && descricao.includes(terceiro)) {
+    score += 10;
+    motivos.push('terceiro_na_descricao');
+  }
+
+  const tRec = tokensTexto(`${recorrente?.nome_despesa || ''} ${recorrente?.terceiro_nome || ''}`);
+  const tBol = tokensTexto(`${extractedData?.descricao || ''} ${extractedData?.terceiro_nome || ''}`);
+  const inter = [...tRec].filter((token) => tBol.has(token)).length;
+  if (inter > 0) {
+    score += Math.min(20, inter * 4);
+    motivos.push(`token_overlap_${inter}`);
+  }
+
+  const valorRec = Number(recorrente?.valor_previsto || 0);
+  const valorBol = Number(extractedData?.valor || 0);
+  if (valorRec > 0 && valorBol > 0) {
+    const diff = Math.abs(valorRec - valorBol);
+    if (diff <= 0.01) {
+      score += 8;
+      motivos.push('valor_exato');
+    } else if (diff <= Math.max(5, valorRec * 0.03)) {
+      score += 3;
+      motivos.push('valor_proximo');
+    }
+  }
+  return { score, motivos };
+}
+
 export default function AgefinImportador({
   onSuccess,
   contaPrevistaId = null,
@@ -230,18 +322,29 @@ Campos a interpretar do documento:
 
       const recorrentes = await base44.entities.ContaRecorrente.filter({ ativa: true }, '-created_date', 200);
       const mesReferencia = (extractedData.periodo_referencia || extractedData.data_vencimento || '').slice(0, 7);
-      const recorrenteVinculado = recorrentes.find((recorrente) => {
-        const nomeDespesa = (recorrente.nome_despesa || '').toLowerCase();
-        const terceiroNome = (recorrente.terceiro_nome || '').toLowerCase();
-        const descricao = (extractedData.descricao || '').toLowerCase();
-        const beneficiario = (extractedData.terceiro_nome || '').toLowerCase();
-        const vencimentoConfere = Number(recorrente.dia_vencimento) === Number((extractedData.data_vencimento || '').slice(8, 10));
-        return vencimentoConfere && (
-          (nomeDespesa && descricao.includes(nomeDespesa)) ||
-          (terceiroNome && beneficiario.includes(terceiroNome)) ||
-          (terceiroNome && descricao.includes(terceiroNome))
-        );
-      }) || null;
+      const boletoFingerprint = gerarBoletoFingerprint(extractedData);
+      const candidatosRecorrencia = (recorrentes || [])
+        .map((recorrente) => {
+          const { score, motivos } = scoreRecorrente(recorrente, extractedData);
+          return { recorrente, score, motivos };
+        })
+        .filter((item) => Number.isFinite(item.score))
+        .sort((a, b) => b.score - a.score);
+      const principal = candidatosRecorrencia[0] || null;
+      const segundo = candidatosRecorrencia[1] || null;
+      const matchAmbiguo = Boolean(
+        principal &&
+        segundo &&
+        principal.score >= MIN_RECORRENTE_MATCH_SCORE &&
+        (principal.score - segundo.score) <= MATCH_SCORE_MARGIN
+      );
+      if (matchAmbiguo) {
+        setError('Há duas recorrências muito parecidas para este boleto. Ajuste descrição/beneficiário para evitar vínculo errado.');
+        return;
+      }
+      const recorrenteVinculado = principal && principal.score >= MIN_RECORRENTE_MATCH_SCORE
+        ? principal.recorrente
+        : null;
 
       const contaExistenteDoMes = recorrenteVinculado
         ? (await base44.entities.ContaPrevista.filter({ conta_recorrente_id: recorrenteVinculado.id }, '-data_vencimento', 50))
@@ -320,12 +423,18 @@ Campos a interpretar do documento:
       let lancamentoCriado = null;
 
       if (modoAtualizacao) {
+        const contextoMatch = recorrenteVinculado
+          ? `score=${principal?.score || 0};recorrente=${recorrenteVinculado.id};motivos=${(principal?.motivos || []).join(',')}`
+          : 'sem_vinculo_automatico';
         await marcarLancamentosComoImportadosPorBoletoPdf(base44, {
           contaPrevistaId: contaCriada?.id,
           lancamentoFinanceiroId,
           grupoLancamentoId: recorrenteFinal?.id,
           dataVencimento: extractedData.data_vencimento,
           valor: extractedData.valor,
+          permitirFallbackGrupo: false,
+          contextoMatch,
+          boletoFingerprint,
         });
         if (lancamentoFinanceiroId && file?.original) {
           try {
@@ -342,6 +451,13 @@ Campos a interpretar do documento:
       }
 
       if (!modoAtualizacao) {
+        const observacoesComAuditoria = [
+          extractedData.observacoes || '',
+          recorrenteVinculado
+            ? `[agefin_match:score=${principal?.score || 0};recorrente=${recorrenteVinculado.id};motivos=${(principal?.motivos || []).join(',')}]`
+            : '[agefin_match:sem_vinculo_automatico]',
+          boletoFingerprint ? `[boleto_fp:${boletoFingerprint}]` : null,
+        ].filter(Boolean).join('\n');
         const lancamentoPayload = {
           tipo: 'Despesa',
           descricao: descricaoFinal,
@@ -357,7 +473,7 @@ Campos a interpretar do documento:
           conta_financeira_nome: contaFinanceira?.nome || '',
           referencia_tipo: 'Manual',
           referencia_id: contaCriada.id,
-          observacoes: extractedData.observacoes || '',
+          observacoes: observacoesComAuditoria,
           tags: [
             'conta_pagar',
             ...(payload.natureza === 'Recorrente' ? ['recorrente'] : []),
