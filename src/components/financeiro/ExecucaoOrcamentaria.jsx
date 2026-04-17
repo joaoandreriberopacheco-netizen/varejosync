@@ -404,7 +404,7 @@ export default function ExecucaoOrcamentaria() {
 
       {aba === 'fluxo' && (
         <>
-          <div className="space-y-3 rounded-[26px] bg-[#f3f4f6] p-3 dark:bg-card">
+          <div className="space-y-4 rounded-[32px] bg-[#f3f4f6] px-5 py-5 dark:bg-card">
             {/* KPIs */}
             <KpiFluxo kpis={kpis} />
 
