@@ -12,7 +12,7 @@ export default function KpiFluxo({ kpis }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-[hsl(var(--card))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
+        <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
           <div className="mb-1.5 flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
               <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
