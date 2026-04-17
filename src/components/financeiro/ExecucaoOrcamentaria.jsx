@@ -404,35 +404,37 @@ export default function ExecucaoOrcamentaria() {
 
       {aba === 'fluxo' && (
         <>
-          {/* KPIs */}
-          <KpiFluxo kpis={kpis} />
+          <div className="space-y-3 rounded-[26px] bg-[#f3f4f6] p-3 dark:bg-card">
+            {/* KPIs */}
+            <KpiFluxo kpis={kpis} />
 
-          {/* Alerta conciliação pendente */}
-          {totalPend > 0 && !pendentes && (
-            <button onClick={() => setPendentes(true)}
-              className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-[#F7F7F5] dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs text-left">
-              <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
-              <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
-              <span className="font-semibold flex-none text-gray-500">Ver →</span>
-            </button>
-          )}
+            {/* Alerta conciliação pendente */}
+            {totalPend > 0 && !pendentes && (
+              <button onClick={() => setPendentes(true)}
+                className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs text-left">
+                <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
+                <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
+                <span className="font-semibold flex-none text-gray-500">Ver →</span>
+              </button>
+            )}
 
-          {/* Filtros */}
-          <FiltrosFluxoCaixa
-            search={search} onSearch={setSearch}
-            periodo={periodo} onPeriodo={setPeriodo}
-            customStart={cs} customEnd={ce}
-            onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
-            contas={contas} contasSel={contasSel} onContasSel={setContasSel}
-            tiposSel={tiposSel} onTiposSel={setTiposSel}
-            statusSel={statusSel} onStatusSel={setStatusSel}
-            pendentes={pendentes} onPendentes={setPendentes}
-            cmvOnly={cmvOnly} onCmvOnly={setCmvOnly}
-            onOpenConciliacao={setConciliacaoConta}
-            totalFiltrados={filtrados.length}
-            hasActiveFilters={hasActiveFilters}
-            onLimparFiltros={() => { setPeriodo('mes'); setCs(''); setCe(''); setTiposSel([]); setContasSel(contas.map(conta => conta.id)); setStatusSel([]); setPendentes(false); setCmvOnly(false); setSearch(''); }}
-          />
+            {/* Filtros */}
+            <FiltrosFluxoCaixa
+              search={search} onSearch={setSearch}
+              periodo={periodo} onPeriodo={setPeriodo}
+              customStart={cs} customEnd={ce}
+              onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
+              contas={contas} contasSel={contasSel} onContasSel={setContasSel}
+              tiposSel={tiposSel} onTiposSel={setTiposSel}
+              statusSel={statusSel} onStatusSel={setStatusSel}
+              pendentes={pendentes} onPendentes={setPendentes}
+              cmvOnly={cmvOnly} onCmvOnly={setCmvOnly}
+              onOpenConciliacao={setConciliacaoConta}
+              totalFiltrados={filtrados.length}
+              hasActiveFilters={hasActiveFilters}
+              onLimparFiltros={() => { setPeriodo('mes'); setCs(''); setCe(''); setTiposSel([]); setContasSel(contas.map(conta => conta.id)); setStatusSel([]); setPendentes(false); setCmvOnly(false); setSearch(''); }}
+            />
+          </div>
 
           {/* Lista */}
           <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />

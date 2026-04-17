@@ -3,8 +3,8 @@ import { TrendingUp, TrendingDown, ArrowRightLeft, AlertTriangle } from 'lucide-
 
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-/** Padrão visual: área cinza clara + card interno branco + texto. */
-const kpiShell = 'rounded-[22px] border border-transparent bg-[#EEF1F4] p-2.5 dark:border-border dark:bg-card';
+/** Composição interna do container principal de fluxo. */
+const kpiShell = 'rounded-[20px] p-0';
 const kpiBlock = 'rounded-[18px] border border-transparent bg-white px-3.5 py-3 dark:border-slate-700/70 dark:bg-slate-800';
 
 export default function KpiFluxo({ kpis }) {

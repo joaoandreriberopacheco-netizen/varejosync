@@ -308,7 +308,7 @@ export default function FiltrosFluxoCaixa({
   totalFiltrados, hasActiveFilters, onLimparFiltros,
 }) {
   const [open, setOpen] = useState(false);
-  const surfaceClass = 'rounded-[22px] border border-transparent bg-[#EEF1F4] p-2.5 dark:border-border dark:bg-card';
+  const surfaceClass = 'rounded-[20px] border border-transparent bg-transparent p-0 dark:bg-transparent';
 
   return (
     <>
