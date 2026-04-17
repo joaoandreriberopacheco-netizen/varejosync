@@ -308,11 +308,11 @@ export default function FiltrosFluxoCaixa({
   totalFiltrados, hasActiveFilters, onLimparFiltros,
 }) {
   const [open, setOpen] = useState(false);
-  const surfaceClass = 'rounded-[22px] border border-transparent bg-[#EEF1F4] dark:border-border dark:bg-card';
+  const surfaceClass = 'rounded-[22px] border border-transparent bg-[#EEF1F4] p-2.5 dark:border-border dark:bg-card';
 
   return (
     <>
-      <div className={`${surfaceClass} p-3`}>
+      <div className={surfaceClass}>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-[16px] border border-transparent bg-white dark:border-slate-700/70 dark:bg-slate-800">
             <Search className="w-4 h-4 text-gray-400 flex-none" />
@@ -335,7 +335,7 @@ export default function FiltrosFluxoCaixa({
           </button>
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-white/70 px-1 pt-2.5 dark:border-slate-700/70">
+        <div className="mt-2.5 flex items-center justify-between border-t border-white/70 px-1.5 pt-2.5 dark:border-slate-700/70">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
           {hasActiveFilters && (
             <button onClick={onLimparFiltros} className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1">
