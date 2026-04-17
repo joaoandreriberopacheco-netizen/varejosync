@@ -4,6 +4,7 @@ import base44 from '@base44/vite-plugin'
 import path from 'path'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
+import fs from 'fs'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -11,10 +12,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // sourceLocationBabelPlugin — injects data-source-location for Flare Mode
 // Loaded conditionally so a missing file never breaks production builds
 let sourceLocationBabelPlugin = null
-try {
-  sourceLocationBabelPlugin = require('./build/sourceLocationBabelPlugin.cjs')
-} catch (_) {
-  // plugin not present — skip silently
+const pluginPath = path.resolve(__dirname, './build/sourceLocationBabelPlugin.cjs')
+if (fs.existsSync(pluginPath)) {
+  try {
+    sourceLocationBabelPlugin = require(pluginPath)
+  } catch (_) {
+    // plugin not loadable — skip silently
+  }
 }
 
 export default defineConfig({
