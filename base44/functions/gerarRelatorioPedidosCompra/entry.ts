@@ -108,6 +108,21 @@ const getPercentualAjustePedido = (pedido = {}) => {
     return (valorDesconto / valorItens) * 100;
   }
 
+  // Fallback: infere o percentual usando o total já conhecido do pedido (card/tela)
+  // para manter o relatório alinhado mesmo quando o payload não traz percentual explícito.
+  const targetTotal = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
+  if (Number.isFinite(targetTotal) && targetTotal > 0) {
+    const itens = getItensRelatorio(pedido);
+    const subtotalBase = itens.reduce((acc, item) => {
+      const qtd = getQuantidadeEfetivaItem(item);
+      const unit = Number(item.custo_unitario) || 0;
+      return acc + (qtd * unit);
+    }, 0);
+    if (subtotalBase > 0) {
+      return ((subtotalBase - targetTotal) / subtotalBase) * 100;
+    }
+  }
+
   return 0;
 };
 
@@ -170,9 +185,12 @@ const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
 };
 
 const getValorRelatorio = (pedido, produtosMap = {}) => {
+  const valorConhecidoPedido = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
+  if (Number.isFinite(valorConhecidoPedido) && valorConhecidoPedido > 0) return valorConhecidoPedido;
+
   const totalItensAjustado = getTotalItensAjustadoPedido(pedido, produtosMap);
   if (totalItensAjustado > 0) return totalItensAjustado;
-  return Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total ?? 0);
+  return 0;
 };
 
 const custoCalculadoProduto = (produto = {}) =>

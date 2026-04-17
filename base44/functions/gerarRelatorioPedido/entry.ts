@@ -48,6 +48,20 @@ const getPercentualAjustePedido = (pedido = {}) => {
     return (valorDesconto / valorItens) * 100;
   }
 
+  // Fallback: infere o ajuste a partir do total consolidado já salvo no pedido.
+  const targetTotal = Number(pedido._display_valor ?? pedido.valor_pendente_entrega ?? pedido.valor_total);
+  if (Number.isFinite(targetTotal) && targetTotal > 0) {
+    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+    const subtotalBase = itens.reduce((acc, item) => {
+      const qtd = getQuantidadeEfetivaItem(item);
+      const unit = Number(item.custo_unitario) || 0;
+      return acc + (qtd * unit);
+    }, 0);
+    if (subtotalBase > 0) {
+      return ((subtotalBase - targetTotal) / subtotalBase) * 100;
+    }
+  }
+
   return 0;
 };
 
