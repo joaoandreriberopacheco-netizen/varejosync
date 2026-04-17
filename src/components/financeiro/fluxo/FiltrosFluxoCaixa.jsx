@@ -308,12 +308,13 @@ export default function FiltrosFluxoCaixa({
   totalFiltrados, hasActiveFilters, onLimparFiltros,
 }) {
   const [open, setOpen] = useState(false);
+  const surfaceClass = 'rounded-[22px] border border-transparent bg-[#EEF1F4] dark:border-border dark:bg-card';
 
   return (
     <>
-      <div className="bg-[#EEF1F4] dark:bg-slate-900 rounded-[24px] p-3">
+      <div className={`${surfaceClass} p-3`}>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-white dark:bg-slate-800">
+          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-[16px] border border-transparent bg-white dark:border-slate-700/70 dark:bg-slate-800">
             <Search className="w-4 h-4 text-gray-400 flex-none" />
             <input autoComplete="off"
               value={search} onChange={e => onSearch(e.target.value)}
@@ -325,7 +326,7 @@ export default function FiltrosFluxoCaixa({
 
           <button
             onClick={() => setOpen(true)}
-            className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-gray-900 dark:text-gray-200 relative"
+            className="relative flex h-12 w-12 items-center justify-center rounded-[16px] border border-transparent bg-white text-gray-900 dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {hasActiveFilters && (
@@ -334,7 +335,7 @@ export default function FiltrosFluxoCaixa({
           </button>
         </div>
 
-        <div className="flex items-center justify-between pt-3 px-1">
+        <div className="mt-3 flex items-center justify-between border-t border-white/70 px-1 pt-2.5 dark:border-slate-700/70">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
           {hasActiveFilters && (
             <button onClick={onLimparFiltros} className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1">

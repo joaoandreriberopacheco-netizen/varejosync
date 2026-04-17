@@ -40,17 +40,18 @@ const getQuantidadeEfetivaItem = (item = {}) =>
 
 const getValorUnitarioEfetivoItem = (item = {}, produto = {}) => {
   const custoFinalUnitario = Number(item.custo_final_unitario);
-  if (Number.isFinite(custoFinalUnitario)) return custoFinalUnitario;
+  if (Number.isFinite(custoFinalUnitario) && custoFinalUnitario > 0) return custoFinalUnitario;
+
+  // Regra principal: prioriza o cálculo efetivo já salvo no item.
+  const totalItem = Number(item.total);
+  const qtd = getQuantidadeEfetivaItem(item);
+  if (Number.isFinite(totalItem) && qtd > 0) return totalItem / qtd;
 
   const custoUnitario = Number(item.custo_unitario);
   const descontoOuAcrescimo = Number(item.valor_desconto_item);
   if (Number.isFinite(custoUnitario) && Number.isFinite(descontoOuAcrescimo)) {
     return custoUnitario - descontoOuAcrescimo;
   }
-
-  const totalItem = Number(item.total);
-  const qtd = getQuantidadeEfetivaItem(item);
-  if (Number.isFinite(totalItem) && qtd > 0) return totalItem / qtd;
 
   if (Number.isFinite(custoUnitario)) return custoUnitario;
   return Number(produto.valor_compra) || 0;

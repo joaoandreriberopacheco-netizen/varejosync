@@ -3,15 +3,15 @@ import { TrendingUp, TrendingDown, ArrowRightLeft, AlertTriangle } from 'lucide-
 
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-/** Bloco KPI: modo escuro alinhado à Home (card + borda, não fundo igual ao canvas). */
-const kpiBlock = 'rounded-[20px] border border-transparent bg-[#EEF1F4] px-3 py-2.5 dark:border-border dark:bg-card';
+/** Surface compartilhada para manter consistência visual com barras de consulta. */
+const kpiBlock = 'rounded-[22px] border border-transparent bg-[#EEF1F4] px-3.5 py-3 dark:border-border dark:bg-card';
 
 export default function KpiFluxo({ kpis }) {
   const taxa = kpis.entrou > 0 ? (kpis.saiu / kpis.entrou * 100).toFixed(0) : 0;
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2.5 md:gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className={kpiBlock}>
           <div className="mb-1.5 flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
@@ -34,7 +34,7 @@ export default function KpiFluxo({ kpis }) {
         </div>
       </div>
 
-      <div className={`${kpiBlock} px-3.5 py-3`}>
+      <div className={kpiBlock}>
         <div className="mb-2.5 flex items-start justify-between gap-3">
           <div>
             <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">Saldo de Execução</p>
@@ -54,7 +54,7 @@ export default function KpiFluxo({ kpis }) {
       </div>
 
       {kpis.vencidos > 0 && (
-        <div className={`${kpiBlock} flex items-center gap-3 p-3`}>
+        <div className={`${kpiBlock} flex items-center gap-3`}>
           <AlertTriangle className="h-4 w-4 flex-none text-red-500 dark:text-red-400" />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidos</p>
@@ -67,7 +67,7 @@ export default function KpiFluxo({ kpis }) {
       )}
 
       {kpis.totalTransferencias > 0 && (
-        <div className={`${kpiBlock} flex items-center gap-3 p-3`}>
+        <div className={`${kpiBlock} flex items-center gap-3`}>
           <ArrowRightLeft className="h-4 w-4 flex-none text-slate-500 dark:text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Transferências</p>
