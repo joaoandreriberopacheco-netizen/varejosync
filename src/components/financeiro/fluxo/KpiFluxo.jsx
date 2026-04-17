@@ -12,7 +12,7 @@ export default function KpiFluxo({ kpis }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className={kpiBlock}>
+        <div className="bg-[hsl(var(--card))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
           <div className="mb-1.5 flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
               <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
@@ -53,8 +53,8 @@ export default function KpiFluxo({ kpis }) {
         </div>
       </div>
 
-      {kpis.vencidos > 0 && (
-        <div className={`${kpiBlock} flex items-center gap-3`}>
+      {kpis.vencidos > 0 &&
+      <div className={`${kpiBlock} flex items-center gap-3`}>
           <AlertTriangle className="h-4 w-4 flex-none text-red-500 dark:text-red-400" />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidos</p>
@@ -64,17 +64,17 @@ export default function KpiFluxo({ kpis }) {
             </p>
           </div>
         </div>
-      )}
+      }
 
-      {kpis.totalTransferencias > 0 && (
-        <div className={`${kpiBlock} flex items-center gap-3`}>
+      {kpis.totalTransferencias > 0 &&
+      <div className={`${kpiBlock} flex items-center gap-3`}>
           <ArrowRightLeft className="h-4 w-4 flex-none text-slate-500 dark:text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Transferências</p>
             <p className="text-sm font-semibold text-gray-800 dark:text-foreground">{R(kpis.totalTransferencias)}</p>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
