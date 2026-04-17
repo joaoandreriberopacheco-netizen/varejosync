@@ -49,7 +49,7 @@ export default function KpiFluxo({ kpis }) {
           </div>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-white dark:bg-muted">
-          <div className="h-full rounded-full bg-slate-300 transition-all dark:bg-primary/50" style={{ width: `${Math.min(Number(taxa), 100)}%` }} />
+          <div className="bg-cyan-300 rounded-full h-full transition-all dark:bg-primary/50" style={{ width: `${Math.min(Number(taxa), 100)}%` }} />
         </div>
       </div>
 
