@@ -11,11 +11,12 @@ const mesAnoLabel = (dataStr) => {
   const [y, m] = s.split('-');
   return `${meses[parseInt(m,10)-1]}/${y}`;
 };
-import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle, Trash2 } from 'lucide-react';
+import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle, Trash2, Loader2 } from 'lucide-react';
 import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
+import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrencia';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -119,13 +120,15 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       // Buscar todos do grupo
       const grupo = await base44.entities.LancamentoFinanceiro.filter({ grupo_lancamento_id: lancamento.grupo_lancamento_id });
       const hStr = lancamento.data_vencimento || '';
-      const alvos = grupo.filter(l => {
-        if (l.status === 'Pago') return false; // nunca alterar pagos
-        if (escopo === 'todas')    return true;
-        if (escopo === 'futuras')  return (l.data_vencimento || '') >= hStr;
-        if (escopo === 'passadas') return (l.data_vencimento || '') <= hStr;
-        return false;
-      });
+      const alvos = grupo
+        .filter((l) => {
+          if (l.status === 'Pago') return false;
+          if (escopo === 'todas') return true;
+          if (escopo === 'futuras') return (l.data_vencimento || '') >= hStr;
+          if (escopo === 'passadas') return (l.data_vencimento || '') <= hStr;
+          return false;
+        })
+        .filter((l) => lancamentoMesmoRamoRecorrencia(lancamento, l));
       for (const l of alvos) {
         await base44.entities.LancamentoFinanceiro.update(l.id, {
           status: 'Pago',
@@ -257,12 +260,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         grupo_lancamento_id: lancamento.grupo_lancamento_id,
       });
       const hStr = (lancamento.data_vencimento || '').slice(0, 10);
-      const alvos = (grupo || []).filter((l) => {
-        if (l.status === 'Pago') return false;
-        if (escopo === 'todas') return true;
-        if (escopo === 'futuras') return (l.data_vencimento || '').slice(0, 10) >= hStr;
-        return false;
-      });
+      const alvos = (grupo || [])
+        .filter((l) => {
+          if (l.status === 'Pago') return false;
+          if (escopo === 'todas') return true;
+          if (escopo === 'futuras') return (l.data_vencimento || '').slice(0, 10) >= hStr;
+          return false;
+        })
+        .filter((l) => lancamentoMesmoRamoRecorrencia(lancamento, l));
 
       for (const l of alvos) {
         const novaData =
@@ -422,8 +427,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 disabled={saving}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
-                Guardar alterações
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'A guardar…' : 'Guardar alterações'}
               </button>
             </div>
             <div className="h-px bg-gray-100 dark:bg-gray-800" />

@@ -392,3 +392,32 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
     for (const l of match) await atualizarUm(l);
   }
 }
+
+/**
+ * Para escopos em lote (todas/futuras): alinha ao mesmo vínculo quando existe referência explícita
+ * (ex.: duas ContaPrevista diferentes não devem ser atualizadas juntas só por compartilharem grupo).
+ * Séries geradas automaticamente costumam ter referencia_id === grupo_lancamento_id — mantém o grupo inteiro.
+ */
+export function lancamentoMesmoRamoRecorrencia(base, outro) {
+  if (!base || !outro) return false;
+  if ((base.id || '') === (outro.id || '')) return true;
+  const gBase = base.grupo_lancamento_id || '';
+  const gOut = outro.grupo_lancamento_id || '';
+  if (!gBase || gBase !== gOut) return false;
+  const refBase = base.referencia_id || '';
+  const grupoId = gBase;
+  if (refBase && grupoId && refBase === grupoId) return true;
+  if (refBase && refBase !== grupoId) {
+    return (
+      (outro.referencia_id || '') === refBase &&
+      (outro.referencia_tipo || '') === (base.referencia_tipo || '')
+    );
+  }
+  return true;
+}
+
+/** Extrai fingerprint gravado em observações pelo importador (`[boleto_fp:...]`). */
+export function extrairBoletoFingerprintDeObservacoes(text) {
+  const m = String(text || '').match(/\[boleto_fp:([^\]]+)\]/);
+  return m ? m[1].trim() : null;
+}

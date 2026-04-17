@@ -10,6 +10,7 @@ import {
   criarParcelasIniciaisRecorrenteAposPrimeiro,
   isLancamentoParcelasMensaisRecorrente,
   marcarLancamentosComoImportadosPorBoletoPdf,
+  extrairBoletoFingerprintDeObservacoes,
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 
@@ -368,10 +369,43 @@ Campos a interpretar do documento:
         });
       }
 
-      const contaDoMesFinal = recorrenteFinal
+      let contaDoMesFinal = recorrenteFinal
         ? (await base44.entities.ContaPrevista.filter({ conta_recorrente_id: recorrenteFinal.id }, '-data_vencimento', 50))
             .find((conta) => (conta.data_vencimento || '').slice(0, 7) === mesReferencia)
         : contaExistenteDoMes;
+
+      let novaSeriePorFingerprint = false;
+      if (
+        !modoAtualizacao &&
+        !contaPrevistaId &&
+        contaDoMesFinal &&
+        recorrenteFinal &&
+        boletoFingerprint &&
+        selectedNatureza === 'Recorrente'
+      ) {
+        const lfsMesmo = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: contaDoMesFinal.id });
+        const fpExistente = (lfsMesmo || [])
+          .map((l) => extrairBoletoFingerprintDeObservacoes(l.observacoes))
+          .find((x) => x != null && x !== '');
+        if (fpExistente && fpExistente !== boletoFingerprint) {
+          const r0 = recorrenteFinal;
+          const nomeBase = (extractedData.descricao || r0.nome_despesa || 'Conta').slice(0, 88);
+          recorrenteFinal = await base44.entities.ContaRecorrente.create({
+            nome_despesa: `${nomeBase} (${mesReferencia})`,
+            terceiro_id: r0.terceiro_id,
+            terceiro_nome: r0.terceiro_nome,
+            categoria_financeira_id: r0.categoria_financeira_id,
+            categoria_nome: r0.categoria_nome,
+            valor_previsto: extractedData.valor,
+            frequencia: selectedRecorrencia,
+            dia_vencimento: Number((extractedData.data_vencimento || '').slice(8, 10)) || 1,
+            observacoes: `[agefin_serie_separada:mes=${mesReferencia};motivo=boleto_distinto]`,
+            ativa: true,
+          });
+          contaDoMesFinal = null;
+          novaSeriePorFingerprint = true;
+        }
+      }
 
       const descricaoFinal =
         fluxoLoopAtualizadorRecorrente && (extractedData.descricao || '').trim()
@@ -510,7 +544,7 @@ Campos a interpretar do documento:
 
       setSuccessState({
         descricao: payload.descricao,
-        recorrenteCriada: Boolean(!recorrenteVinculado && recorrenteFinal),
+        recorrenteCriada: Boolean(novaSeriePorFingerprint || (!recorrenteVinculado && recorrenteFinal)),
       });
       if (!fluxoLoopAtualizadorRecorrente) {
         onSuccess?.({ contaPrevista: contaCriada, lancamento: lancamentoCriado });

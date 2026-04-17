@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
@@ -123,7 +123,7 @@ function grupoDomId(key) {
   return `agefin-grupo-${String(key).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
-function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao }) {
+function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, avisoMesmoGrupoDuplicado }) {
   const todayKey = dataHoje();
   const isPaid = lancamentoPago(conta);
   const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
@@ -174,6 +174,14 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao })
               {ehCmv && (
                 <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-violet-900 dark:bg-violet-950/50 dark:text-violet-200">
                   <Layers className="h-3 w-3" /> CMV
+                </span>
+              )}
+              {avisoMesmoGrupoDuplicado && (
+                <span
+                  title="Mesma série e mesma descrição neste vencimento. Se são obrigações distintas, confira o vínculo no detalhe."
+                  className="inline-flex items-center gap-0.5 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-950 dark:bg-amber-950/40 dark:text-amber-100"
+                >
+                  <Copy className="h-3 w-3" /> Duplicado?
                 </span>
               )}
             </div>
@@ -318,6 +326,23 @@ export default function AgefinConsulta() {
     });
     return list;
   }, [filteredData, sortOrder]);
+
+  const idsComAvisoDuplicadoGrupo = useMemo(() => {
+    const counts = new Map();
+    for (const c of contasOrdenadas) {
+      if (!lancamentoEhContaPagar(c) || !c.grupo_lancamento_id) continue;
+      const k = `${(c.data_vencimento || '').slice(0, 10)}|${(c.descricao || '').trim().toLowerCase()}|${c.grupo_lancamento_id}`;
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    const ids = new Set();
+    for (const c of contasOrdenadas) {
+      const k = `${(c.data_vencimento || '').slice(0, 10)}|${(c.descricao || '').trim().toLowerCase()}|${c.grupo_lancamento_id}`;
+      if (lancamentoEhContaPagar(c) && c.grupo_lancamento_id && (counts.get(k) || 0) > 1) {
+        ids.add(c.id);
+      }
+    }
+    return ids;
+  }, [contasOrdenadas]);
 
   const grupos = useMemo(() => {
     const todayKey = dataHoje();
@@ -731,6 +756,7 @@ export default function AgefinConsulta() {
                       selecionado={selecionadosIds.includes(conta.id)}
                       onToggleSelecao={toggleSelecaoConta}
                       onOpen={() => setSelectedConta(conta)}
+                      avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                     />
                   ))}
                 </div>
