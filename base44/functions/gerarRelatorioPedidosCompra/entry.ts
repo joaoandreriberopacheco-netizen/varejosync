@@ -287,10 +287,12 @@ Deno.serve(async (req) => {
 
     // ── Criação do documento ─────────────────────────────────────────────────
     const MOBILE_W = 100; // mm — largura estilo smartphone
+    // Mobile: página alta (uma coluna “infinita”) para rolar no leitor PDF com menos quebras abruptas
+    const MOBILE_PAGE_H = 1200;
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: isMobile ? [MOBILE_W, 297] : 'a4',
+      format: isMobile ? [MOBILE_W, MOBILE_PAGE_H] : 'a4',
     });
     await registerPdfFonts(doc);
     patchPdfTextVerticalStretch(doc);
@@ -318,7 +320,8 @@ Deno.serve(async (req) => {
     let y = 16;
 
     const ensureSpace = (needed = 24) => {
-      if (y + needed > pageH - 10) {
+      const bottomPad = isMobile ? 4 : 10;
+      if (y + needed > pageH - bottomPad) {
         doc.addPage();
         y = 14;
       }
@@ -691,9 +694,9 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     //  MOBILE: card limpo modo claro
     // ════════════════════════════════════════════════════════════════════════
-    const ITEM_ML = M + 6;   // indentação dos itens
-    const ITEM_CW = CW - 6;  // largura dos itens
-    const LINE_X = M + 1.5;  // x da linha hierárquica vertical
+    const ITEM_ML = M + 14.8; // texto do item (à direita da qtd + linha)
+    const LINE_X = M + 12.5;  // linha vertical — quantidade à esquerda
+    const QTD_COL_RIGHT = M + 11.5; // fim da coluna numérica (antes da linha)
     const SLATE900 = [15, 23, 42];
     const SLATE700 = [51, 65, 85];
     const SLATE500 = [100, 116, 139];
@@ -713,11 +716,8 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Colunas: linha 1 = qtd + un (esquerda) e total (direita); nome e detalhes usam largura útil inteira
-    const QTD_RIGHT_X = ITEM_ML + 13;
-    const UN_X = ITEM_ML + 14.5;
-    const NOME_X = ITEM_ML + 1;
-    const NOME_MAX_W = CW - (NOME_X - M) - 4;
+    const NOME_X = ITEM_ML;
+    const NOME_MAX_W = M + CW - NOME_X - 3;
 
     const fmtQtd = (n) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -740,14 +740,17 @@ Deno.serve(async (req) => {
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
 
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 8).slice(0, 2);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(6.5);
+      const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 34).slice(0, 2);
+      const codigoLineStep = 3.8;
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 2);
       const countLabel = isNecessidadeRelatorio(pedido)
         ? `${itens.length} item(ns) pendente(s)`
         : `${itens.length} item(ns)`;
       const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
       const metaLines = doc.splitTextToSize(metaTexto, CW - 6).slice(0, 2);
 
-      const topBand = 9;
       const fornLineStep = 4;
       const fornBlock = fornLines.length * fornLineStep;
       const totalRowH = 5.5;
@@ -755,35 +758,35 @@ Deno.serve(async (req) => {
       const metaBlock = metaLines.length * metaLineStep;
       const progH = 4;
       const cardPadBottom = 3;
-      const cardHeight = topBand + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
+      const codeY0 = 6.5;
+      const codeBlockH = codigoLinhas.length * codigoLineStep;
+      const gapCodeForn = 3;
+      const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
 
       ensureSpace(cardHeight + 8);
 
       const cardTop = y;
 
-      // ── Cabeçalho do card (fundo primeiro, conteúdo por cima) ──
       doc.setFillColor(...C.panel);
       doc.roundedRect(M, cardTop, CW, cardHeight, 2.5, 2.5, 'F');
 
-      // LED dot
       doc.setFillColor(...sc.dot);
       doc.circle(M + 4.5, cardTop + 6, 2, 'F');
 
-      // Número do pedido
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(6.5);
       doc.setTextColor(...SLATE500);
-      doc.text(getPedidoNumeroRelatorio(pedido), M + 9, cardTop + 6.8);
+      codigoLinhas.forEach((line, ci) => {
+        doc.text(line, M + 10, cardTop + codeY0 + ci * codigoLineStep);
+      });
 
-      // Status pill direita
       doc.setFillColor(...sc.pillBg);
       doc.roundedRect(M + CW - 30, cardTop + 2, 28, 7, 3.5, 3.5, 'F');
       doc.setFontSize(6);
       doc.setTextColor(...sc.pillText);
       doc.text(safe(statusRelatorio), M + CW - 16, cardTop + 6.8, { align: 'center' });
 
-      // Fornecedor (até 2 linhas)
-      let cy = cardTop + topBand;
+      let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(9);
       doc.setTextColor(...SLATE900);
@@ -816,8 +819,7 @@ Deno.serve(async (req) => {
       y = cardTop + cardHeight + 3;
 
       // ── Itens ─────────────────────────────────────────────────────
-      const totalItens = itens.length;
-      itens.forEach((item, idx) => {
+      itens.forEach((item) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdMostrada;
         const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
@@ -829,11 +831,10 @@ Deno.serve(async (req) => {
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
 
         const vs = MOBILE_ITEMS_VERTICAL_SCALE;
-        const lineWidth = 2.8;
+        const lineWidth = 2.5;
         const nomeLineStep = 3.85 * vs;
-        const detailLineStep = 3.5 * vs;
-        const gapNomeDetalhe = 2.2 * vs;
-        const headerLineY = y + 5.2 * vs;
+        const auxDetailStep = 3.15 * vs;
+        const gapNomeDetalhe = 2 * vs;
 
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
@@ -841,34 +842,34 @@ Deno.serve(async (req) => {
           toTitleCase(safe(item.produto_nome || prod.nome || '-')),
           NOME_MAX_W
         );
-        const nomeTop = y + 7.2 * vs;
+        const nomeTop = y + 3.4 * vs;
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
-        const detY1 = lastNomeBaseline + gapNomeDetalhe;
-        const detY2 = detY1 + detailLineStep;
-        const rowBlockH = detY2 + 2.2 * vs - y;
-        const branchY = y + 4 * vs;
 
-        ensureSpace(rowBlockH + 8);
+        doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
+        const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}`;
+        const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
+        const auxValores2 = `Venda ${moeda(venda)} · Mk ${percentual(mk)}`;
+
+        const detAux1 = lastNomeBaseline + gapNomeDetalhe;
+        const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+        const rowBlockH = detAux2 + 3.2 * vs - y;
+        const branchY = y + 2.8 * vs;
+
+        ensureSpace(rowBlockH + 6);
 
         doc.setFillColor(203, 213, 225);
         doc.rect(LINE_X, y, 0.12, rowBlockH, 'F');
         doc.rect(LINE_X, branchY, lineWidth, 0.12, 'F');
 
-        // Linha 1: qtd + UN (esquerda) | total do item (direita) — sem competir com o nome
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE900);
-        doc.text(fmtQtd(qtd), QTD_RIGHT_X, headerLineY, { align: 'right' });
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(6.8 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE700);
-        doc.text(un, UN_X, headerLineY);
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7.2 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE900);
-        doc.text(moeda(tCompra), M + CW - 2, headerLineY, { align: 'right' });
+        doc.text(fmtQtd(qtd), QTD_COL_RIGHT, nomeTop + 1.2, { align: 'right' });
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5.9 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setTextColor(...SLATE700);
+        doc.text(un, QTD_COL_RIGHT, nomeTop + 4.6, { align: 'right' });
 
-        // Nome do produto: largura total, abaixo da linha financeira
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE700);
@@ -876,12 +877,13 @@ Deno.serve(async (req) => {
           doc.text(line, NOME_X, nomeTop + li * nomeLineStep);
         });
 
-        const detY1 = nomeTop + nomeBlockH + gapNomeDetalhe;
-        const detY2 = detY1 + detailLineStep;
-        doc.setFontSize(5.6 * MOBILE_ITEMS_FONT_SCALE);
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE500);
-        doc.text(`Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}`, NOME_X, detY1);
-        doc.text(`Venda ${moeda(venda)} · Mk ${percentual(mk)}`, NOME_X, detY2);
+        auxValoresLinhas.forEach((line, ai) => {
+          doc.text(line, NOME_X, detAux1 + ai * auxDetailStep);
+        });
+        doc.text(auxValores2, NOME_X, detAux2);
 
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.15);
