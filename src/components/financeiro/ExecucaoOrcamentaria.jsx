@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer, Upload } from 'lucide-react';
@@ -205,6 +205,7 @@ export default function ExecucaoOrcamentaria() {
       (map[k] = map[k] || []).push(l);
     });
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {
+      const itemsOrdenados = sortLancamentosPorDescricao(items);
       let label = 'Sem data';
       if (k !== 'sem-data') {
         const d = parseDateKey(k);
@@ -212,13 +213,13 @@ export default function ExecucaoOrcamentaria() {
         if (k > hStr) label += ' (previsto)';
       }
       const totais = { r: 0, d: 0 };
-      items.forEach(l => {
+      itemsOrdenados.forEach(l => {
         const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
         const isPago = l.status === 'Pago' || !!l.data_pagamento;
         if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) totais.r += l.valor || 0;
         if (l.tipo === 'Despesa' && isPago) totais.d += l.valor || 0;
       });
-      return { k, label, items, totais: { r: roundToTwoDecimals(totais.r), d: roundToTwoDecimals(totais.d) } };
+      return { k, label, items: itemsOrdenados, totais: { r: roundToTwoDecimals(totais.r), d: roundToTwoDecimals(totais.d) } };
     });
   }, [filtrados]);
 

@@ -42,3 +42,13 @@ export const parseFinancialValue = (value) => {
   }
   return 0;
 };
+
+/**
+ * Ordena lançamentos alfabeticamente por descrição dentro do mesmo dia/data (pt-BR).
+ */
+export function sortLancamentosPorDescricao(items) {
+  if (!items?.length) return [];
+  return [...items].sort((a, b) =>
+    (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' })
+  );
+}

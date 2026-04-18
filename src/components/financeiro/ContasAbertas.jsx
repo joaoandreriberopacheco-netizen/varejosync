@@ -13,6 +13,7 @@ import {
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataHoje, formatarDataCurta } from '@/components/utils/dateUtils';
+import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
@@ -410,6 +411,7 @@ function useContasAbertasModel(onOpenImportador) {
     return Object.entries(map)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, items]) => {
+        const itemsOrdenados = sortLancamentosPorDescricao(items);
         const isVencido = k !== 'sem-data' && k < hStr;
         let label = 'Sem vencimento';
         if (k !== 'sem-data') {
@@ -418,9 +420,9 @@ function useContasAbertasModel(onOpenImportador) {
             isVencido ? `Venceu ${format(d, "dd 'de' MMMM", { locale: ptBR })}` :
             format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
         }
-        const aReceberDia = items.filter(l => l.tipo === 'Receita').reduce((s, l) => s + (l.valor || 0), 0);
-        const aPagarDia   = items.filter(l => l.tipo === 'Despesa').reduce((s, l) => s + (l.valor || 0), 0);
-        return { k, label, items, aReceberDia, aPagarDia, isVencido };
+        const aReceberDia = itemsOrdenados.filter(l => l.tipo === 'Receita').reduce((s, l) => s + (l.valor || 0), 0);
+        const aPagarDia   = itemsOrdenados.filter(l => l.tipo === 'Despesa').reduce((s, l) => s + (l.valor || 0), 0);
+        return { k, label, items: itemsOrdenados, aReceberDia, aPagarDia, isVencido };
       });
   }, [filtrados]);
 
