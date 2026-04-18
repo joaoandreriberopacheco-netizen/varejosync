@@ -403,6 +403,11 @@ export default function AnexoCompartilhado() {
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <AgefinImportador
+                key={
+                  arquivo?.file
+                    ? `agefin-${arquivo.nome || 'doc'}-${arquivo.file.size}-${arquivo.file.lastModified ?? 0}`
+                    : 'agefin'
+                }
                 initialFile={arquivo.file}
                 onSuccess={(_data, meta) => {
                   if (meta?.close) setEtapa('sucesso_conta');

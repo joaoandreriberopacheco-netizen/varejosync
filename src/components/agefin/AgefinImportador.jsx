@@ -13,7 +13,7 @@ import {
   extrairBoletoFingerprintDeObservacoes,
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
-import { extrairTextoPdfBrowser } from '@/lib/extrairTextoPdfBrowser';
+import { extrairTextoPdfBrowser, normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
 const MIN_RECORRENTE_MATCH_SCORE = 45;
 const MATCH_SCORE_MARGIN = 8;
@@ -205,18 +205,13 @@ export default function AgefinImportador({
   const sacredDescricaoFetchDone = useRef(false);
 
   const processSelectedFile = useCallback(async (selectedFile) => {
-    if (!selectedFile) return;
+    if (!selectedFile) return false;
     setLoading(true);
     setError(null);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFile });
-      setFile({
-        original: selectedFile,
-        url: file_url,
-        name: selectedFile.name,
-      });
+      const f = await normalizarArquivoParaImportBoleto(selectedFile);
 
-      const textoPdfLocal = await extrairTextoPdfBrowser(selectedFile);
+      const textoPdfLocal = await extrairTextoPdfBrowser(f);
       const blocoTextoLocal =
         textoPdfLocal.length >= 40
           ? `
@@ -224,6 +219,13 @@ export default function AgefinImportador({
 --- Texto extraído localmente do ficheiro (PDF com camada de texto; use como apoio se a página for digital) ---
 ${textoPdfLocal.slice(0, 14000)}`
           : '';
+
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
+      setFile({
+        original: f,
+        url: file_url,
+        name: f.name,
+      });
 
       const extractedRaw = await base44.integrations.Core.InvokeLLM({
         file_urls: [file_url],
@@ -313,6 +315,7 @@ Campos a interpretar do documento:
         if (dadosContaExistente.terceiro_nome) baseExtracted.terceiro_nome = dadosContaExistente.terceiro_nome;
       }
       setExtractedData(baseExtracted);
+      return true;
     } catch (err) {
       const primeiro = String(err?.message || err || '')
         .split('\n')[0]
@@ -323,6 +326,7 @@ Campos a interpretar do documento:
           : 'Não consegui ler este documento. Verifique a ligação e tente de novo; PDFs digitais também são lidos por texto local no navegador.'
       );
       console.error('AgefinImportador leitura PDF/OCR:', err);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -356,8 +360,14 @@ Campos a interpretar do documento:
 
   useEffect(() => {
     if (!initialFile || initialFileHandled.current) return;
-    initialFileHandled.current = true;
-    processSelectedFile(initialFile);
+    let cancelled = false;
+    (async () => {
+      const ok = await processSelectedFile(initialFile);
+      if (!cancelled && ok) initialFileHandled.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [initialFile, processSelectedFile]);
 
   useEffect(() => {
@@ -839,7 +849,22 @@ Campos a interpretar do documento:
           <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
             <div className="flex items-start gap-3 text-left">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+              <div className="min-w-0 flex-1 space-y-3">
+                <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+                {initialFile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null);
+                      processSelectedFile(initialFile);
+                    }}
+                    disabled={loading}
+                    className="text-sm font-medium text-red-800 underline underline-offset-2 hover:text-red-900 disabled:opacity-50 dark:text-red-100 dark:hover:text-white"
+                  >
+                    Tentar ler de novo
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
