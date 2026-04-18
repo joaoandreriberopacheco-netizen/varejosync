@@ -5,7 +5,7 @@ const OFFICIAL_PNG = {
   horizontal: '/brand/p38-logo-full.png',
   mobile: '/brand/p38-logo-mobile.png',
   vertical: '/brand/p38-logo-mobile.png',
-  icon: '/brand/p38-icon-192.png',
+  icon: '/brand/p38-icon.svg',
 };
 
 /** Sincroniza com a classe `dark` em <html> (Tailwind). */
