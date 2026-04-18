@@ -12,7 +12,7 @@ import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
-import ContasAbertas from './ContasAbertas';
+import { ContasAbertasProvider, ContasAbertasChrome, ContasAbertasListaPane } from './ContasAbertas';
 import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
@@ -272,9 +272,12 @@ export default function ExecucaoOrcamentaria() {
     setShowPrintDialog(false);
   };
 
+  const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
+
   return (
+    <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
-      {/* Header + tabs */}
+      {/* Header + tabs (card cinza: só até KPIs/controles — igual Fluxo) */}
       <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-transparent bg-[#F3F4F6] px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-border dark:bg-card">
         <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
@@ -379,7 +382,7 @@ export default function ExecucaoOrcamentaria() {
             </div>
 
             {abaContas === 'contas' ? (
-              <ContasAbertas onOpenImportador={() => setShowImportadorAgefin(true)} />
+              <ContasAbertasChrome />
             ) : (
               <div className="min-w-0">
                 <AgefinRecorrentes />
@@ -388,6 +391,8 @@ export default function ExecucaoOrcamentaria() {
           </div>
         )}
       </div>
+
+      {contasPagarAtiva && <ContasAbertasListaPane />}
 
       {aba === 'contas' && (
         <>
@@ -480,5 +485,6 @@ export default function ExecucaoOrcamentaria() {
         </>
       )}
     </div>
+    </ContasAbertasProvider>
   );
 }

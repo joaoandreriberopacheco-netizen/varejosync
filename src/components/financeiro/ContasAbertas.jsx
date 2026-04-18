@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
   format, isWithinInterval, startOfDay, endOfDay, addDays,
@@ -299,15 +299,17 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-export default function ContasAbertas({ onOpenImportador }) {
+// ─── Context (layout espelha Fluxo: KPIs+filtros no card; lista fora) ───────────
+const ContasAbertasCtx = createContext(null);
+
+function useContasAbertasModel(onOpenImportador) {
   const [lancs, setLancs]         = useState([]);
   const [contas, setContas]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [periodo, setPeriodo]     = useState('mes');
-  const [cs, setCs]               = useState(''); // custom start
-  const [ce, setCe]               = useState(''); // custom end
-  const [tipoFiltro, setTipoFiltro] = useState('todos'); // 'todos' | 'Receita' | 'Despesa' | 'compras'
+  const [cs, setCs]               = useState('');
+  const [ce, setCe]               = useState('');
+  const [tipoFiltro, setTipoFiltro] = useState('todos');
   const [contasSel] = useState([]);
   const [search, setSearch]       = useState('');
   const [showNovo, setShowNovo]       = useState(false);
@@ -324,8 +326,6 @@ export default function ContasAbertas({ onOpenImportador }) {
   const [dataPagamentoLote, setDataPagamentoLote] = useState(dataHoje());
   const [processingLote, setProcessingLote] = useState(false);
 
-  useEffect(() => { load(); }, []);
-
   const load = async () => {
     setLoading(true);
     const [ls, cts] = await Promise.all([
@@ -334,6 +334,8 @@ export default function ContasAbertas({ onOpenImportador }) {
     ]);
     setLancs(ls); setContas(cts); setLoading(false);
   };
+
+  useEffect(() => { load(); }, []);
 
   // Lançamentos não cancelados (inclui pagas se mostrarPagas ativo)
   const emAberto = useMemo(() =>
@@ -518,12 +520,105 @@ export default function ContasAbertas({ onOpenImportador }) {
     { tipo: 'Relatorio', icon: FileText,    label: gerandoRelatorio ? 'Gerando...' : 'Relatório', action: () => { setFabOpen(false); handleGerarRelatorio(); } },
   ];
 
-  return (
-    <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden pb-28 sm:space-y-6">
+  return {
+    kpis,
+    filtrados,
+    search,
+    setSearch,
+    showFilters,
+    setShowFilters,
+    periodo,
+    setPeriodo,
+    cs,
+    ce,
+    setCs,
+    setCe,
+    tipoFiltro,
+    setTipoFiltro,
+    mostrarPagas,
+    setMostrarPagas,
+    modoSelecaoLote,
+    setModoSelecaoLote,
+    selectedIds,
+    setSelectedIds,
+    lancamentosSelecionados,
+    loading,
+    grupos,
+    handlePagarRapido,
+    setDetalhe,
+    handleToggleSelecionado,
+    fabOpen,
+    setFabOpen,
+    FAB_ITEMS,
+    showNovo,
+    setShowNovo,
+    novoTipo,
+    detalhe,
+    contas,
+    showPagamentoLote,
+    setShowPagamentoLote,
+    contaLoteId,
+    setContaLoteId,
+    dataPagamentoLote,
+    setDataPagamentoLote,
+    processingLote,
+    handleConfirmarPagamentoLote,
+    load,
+  };
+}
 
+function ContasAbertasInnerProvider({ onOpenImportador, children }) {
+  const value = useContasAbertasModel(onOpenImportador);
+  return (
+    <ContasAbertasCtx.Provider value={value}>
+      {children}
+    </ContasAbertasCtx.Provider>
+  );
+}
+
+/** Ativa dados só na aba Contas a pagar (evita fetch duplicado no Fluxo). */
+export function ContasAbertasProvider({ active, onOpenImportador, children }) {
+  if (!active) return <>{children}</>;
+  return (
+    <ContasAbertasInnerProvider onOpenImportador={onOpenImportador}>
+      {children}
+    </ContasAbertasInnerProvider>
+  );
+}
+
+/** KPIs + busca + filtros + drawer + barra de lote — fica dentro do card Financeiro (como Fluxo). */
+export function ContasAbertasChrome() {
+  const m = useContext(ContasAbertasCtx);
+  if (!m) return null;
+
+  const {
+    kpis,
+    filtrados,
+    search,
+    setSearch,
+    showFilters,
+    setShowFilters,
+    periodo,
+    setPeriodo,
+    cs,
+    ce,
+    setCs,
+    setCe,
+    tipoFiltro,
+    setTipoFiltro,
+    mostrarPagas,
+    setMostrarPagas,
+    modoSelecaoLote,
+    setModoSelecaoLote,
+    setSelectedIds,
+    lancamentosSelecionados,
+    setShowPagamentoLote,
+  } = m;
+
+  return (
+    <div className="min-w-0 w-full max-w-full space-y-4 overflow-x-hidden sm:space-y-6">
       <KpiAbertas kpis={kpis} />
 
-      {/* Filtros (superfície alinhada a FiltrosFluxoCaixa) */}
       <div className="min-w-0 rounded-[20px] border border-transparent p-0 dark:border-transparent">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 sm:h-12 sm:rounded-[16px] sm:px-3 dark:border-slate-700/70 dark:bg-slate-800">
@@ -657,37 +752,73 @@ export default function ContasAbertas({ onOpenImportador }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Lista (mesmo padrão de contenção que ListaLancamentos / fluxo) */}
+/** Lista + FAB + diálogos — fora do card cinza, como ListaLancamentos no Fluxo. */
+export function ContasAbertasListaPane() {
+  const m = useContext(ContasAbertasCtx);
+  if (!m) return null;
+
+  const {
+    loading,
+    grupos,
+    handlePagarRapido,
+    setDetalhe,
+    modoSelecaoLote,
+    selectedIds,
+    handleToggleSelecionado,
+    fabOpen,
+    setFabOpen,
+    FAB_ITEMS,
+    showNovo,
+    setShowNovo,
+    novoTipo,
+    detalhe,
+    contas,
+    showPagamentoLote,
+    setShowPagamentoLote,
+    contaLoteId,
+    setContaLoteId,
+    dataPagamentoLote,
+    setDataPagamentoLote,
+    lancamentosSelecionados,
+    handleConfirmarPagamentoLote,
+    processingLote,
+    load,
+  } = m;
+
+  return (
+    <>
       <div className="min-w-0 w-full max-w-full overflow-x-hidden">
-      {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
-          ))}
-        </div>
-      ) : grupos.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl bg-white py-16 shadow-sm dark:bg-gray-800">
-          <Scale className="h-9 w-9 text-gray-200 dark:text-gray-700" />
-          <p className="text-sm text-gray-400">Nenhuma conta em aberto</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {grupos.map(({ k, label, items, aReceberDia, aPagarDia, isVencido }) => (
-            <GrupoContas key={k} label={label} items={items}
-              onPagar={handlePagarRapido} onRow={setDetalhe}
-              aReceberDia={aReceberDia} aPagarDia={aPagarDia}
-              isVencido={isVencido}
-              emSelecao={modoSelecaoLote}
-              selecionados={selectedIds}
-              onToggleSelecionado={handleToggleSelecionado}
-            />
-          ))}
-        </div>
-      )}
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-16 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
+            ))}
+          </div>
+        ) : grupos.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-2xl bg-white py-16 shadow-sm dark:bg-gray-800">
+            <Scale className="h-9 w-9 text-gray-200 dark:text-gray-700" />
+            <p className="text-sm text-gray-400">Nenhuma conta em aberto</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {grupos.map(({ k, label, items, aReceberDia, aPagarDia, isVencido }) => (
+              <GrupoContas key={k} label={label} items={items}
+                onPagar={handlePagarRapido} onRow={setDetalhe}
+                aReceberDia={aReceberDia} aPagarDia={aPagarDia}
+                isVencido={isVencido}
+                emSelecao={modoSelecaoLote}
+                selecionados={selectedIds}
+                onToggleSelecionado={handleToggleSelecionado}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* FAB (mesmo tratamento visual do Fluxo de Caixa) */}
       {fabOpen && <div className="fixed inset-0 z-[54] bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
         {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label, action }) => (
@@ -709,7 +840,6 @@ export default function ContasAbertas({ onOpenImportador }) {
         </button>
       </div>
 
-      {/* Dialogs */}
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => setShowNovo(false)} onSaved={load} />
       {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
       <PagamentoLoteDialog
@@ -724,6 +854,6 @@ export default function ContasAbertas({ onOpenImportador }) {
         onConfirm={handleConfirmarPagamentoLote}
         loading={processingLote}
       />
-    </div>
+    </>
   );
 }
