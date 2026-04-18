@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase, matchesProductQuery } from '@/components/compras/productMatchingUtils';
 
-export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete }) {
+export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete, mode = 'create' }) {
     const [step, setStep] = useState('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [analyzedItems, setAnalyzedItems] = useState([]);
@@ -222,7 +222,7 @@ Retorne JSON:
             };
         });
 
-        onImportComplete(novosItens);
+        onImportComplete(novosItens, { mode });
         onClose();
     };
 
@@ -244,8 +244,12 @@ Retorne JSON:
                                         <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">Importação Inteligente</h2>
-                                        <p className="text-xs md:text-sm text-gray-500">IA identifica produtos e sugere quantidades</p>
+                                        <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">
+                                          {mode === 'merge' ? 'Importar Lista na Cotação' : 'Importação Inteligente'}
+                                        </h2>
+                                        <p className="text-xs md:text-sm text-gray-500">
+                                          {mode === 'merge' ? 'A IA identifica itens e mescla na cotação em montagem' : 'IA identifica produtos e sugere quantidades'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -256,7 +260,7 @@ Retorne JSON:
                                         <span>Sugestão Automática Ativa</span>
                                     </div>
                                     <Button onClick={handleCreateQuotation} className="bg-gray-900 hover:bg-black text-white rounded-lg shadow-lg w-full md:w-auto">
-                                        Gerar Cotação
+                                        {mode === 'merge' ? 'Aplicar Itens na Cotação' : 'Gerar Cotação'}
                                     </Button>
                                 </div>
                             )}
@@ -272,7 +276,9 @@ Retorne JSON:
                                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800 flex items-center justify-center mb-8">
                                     <Camera className="w-12 h-12 text-purple-500 dark:text-purple-400" />
                                 </div>
-                                <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Nova Cotação via Foto</h3>
+                                <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">
+                                  {mode === 'merge' ? 'Importar Itens para Cotação' : 'Nova Cotação via Foto'}
+                                </h3>
                                 <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-md">
                                     Tire uma foto da sua lista de compras manual ou envie um arquivo. 
                                     Nossa IA identificará os produtos e sugerirá as quantidades.

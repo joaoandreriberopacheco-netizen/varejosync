@@ -20,6 +20,7 @@ export default function CotacoesManager() {
   const [fornecedores, setFornecedores] = useState([]);
   const [isImportadorOpen, setIsImportadorOpen] = useState(false);
   const [isImportadorFotoOpen, setIsImportadorFotoOpen] = useState(false);
+  const [targetCotacaoImportacaoLista, setTargetCotacaoImportacaoLista] = useState(null);
   const [isNovaCotacaoOpen, setIsNovaCotacaoOpen] = useState(false);
   const [novaCotacaoTitulo, setNovaCotacaoTitulo] = useState('');
   const [produtosCatalogo, setProdutosCatalogo] = useState([]);
@@ -28,6 +29,33 @@ export default function CotacoesManager() {
   const { toast } = useToast();
 
   const [precosInput, setPrecosInput] = useState({});
+
+  const mapCotacaoItemsToManualCart = (cotacao) => (
+    (cotacao?.itens || []).map((item) => ({
+      produto_id: item.produto_id,
+      produto_nome: item.produto_nome,
+      quantidade: item.quantidade || 1,
+      unidade: item.unidade || 'UN'
+    }))
+  );
+
+  const mergeCotacaoItemsByProduct = (currentItems = [], incomingItems = []) => {
+    const merged = new Map();
+    [...currentItems, ...incomingItems].forEach((item) => {
+      const key = item.produto_id;
+      const previous = merged.get(key);
+      const qty = parseFloat(item.quantidade) || 0;
+      if (!previous) {
+        merged.set(key, { ...item, quantidade: qty });
+        return;
+      }
+      merged.set(key, {
+        ...previous,
+        quantidade: (parseFloat(previous.quantidade) || 0) + qty
+      });
+    });
+    return Array.from(merged.values()).filter((item) => (parseFloat(item.quantidade) || 0) > 0);
+  };
 
   useEffect(() => {
     loadData();
@@ -135,14 +163,18 @@ export default function CotacoesManager() {
     });
     setPrecosInput(inputs);
     setManualSearch('');
-    setManualCart(
-      (cotacao.itens || []).map((item) => ({
-        produto_id: item.produto_id,
-        produto_nome: item.produto_nome,
-        quantidade: item.quantidade || 1,
-        unidade: item.unidade || 'UN'
-      }))
-    );
+    setManualCart(mapCotacaoItemsToManualCart(cotacao));
+  };
+
+  const handleOpenImportadorListaGlobal = () => {
+    setTargetCotacaoImportacaoLista(null);
+    setIsImportadorFotoOpen(true);
+  };
+
+  const handleOpenImportadorListaEmCotacao = () => {
+    if (!selectedCotacao) return;
+    setTargetCotacaoImportacaoLista(selectedCotacao);
+    setIsImportadorFotoOpen(true);
   };
 
   const handleAddManualProduct = (produto) => {
@@ -196,12 +228,26 @@ export default function CotacoesManager() {
     await loadData();
     const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
     setSelectedCotacao(updated);
-    setManualCart((updated.itens || []).map((item) => ({
-      produto_id: item.produto_id,
-      produto_nome: item.produto_nome,
-      quantidade: item.quantidade || 1,
-      unidade: item.unidade || 'UN'
-    })));
+    setManualCart(mapCotacaoItemsToManualCart(updated));
+  };
+
+  const handleAbrirCompeticao = async () => {
+    if (!selectedCotacao) return;
+    if ((selectedCotacao.itens?.length || 0) === 0) {
+      toast({ title: "Sem itens", description: "Adicione itens antes de abrir a competição.", variant: "destructive" });
+      return;
+    }
+    if (selectedCotacao.status !== 'Rascunho') return;
+
+    try {
+      await base44.entities.Cotacao.update(selectedCotacao.id, { status: 'Em Análise' });
+      toast({ title: "Competição aberta", description: "Agora você pode coletar respostas e comparar preços.", className: "bg-blue-100 text-blue-800" });
+      await loadData();
+      const updated = await base44.entities.Cotacao.get(selectedCotacao.id);
+      handleOpenAnaliseCotacao(updated);
+    } catch (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    }
   };
 
   const handleDeleteCotacao = async (cotacao) => {
@@ -327,6 +373,20 @@ export default function CotacoesManager() {
 
   const handleImportFotoComplete = async (novosItens) => {
     try {
+        if (targetCotacaoImportacaoLista?.id) {
+            const itensMesclados = mergeCotacaoItemsByProduct(targetCotacaoImportacaoLista.itens || [], novosItens || []);
+            await base44.entities.Cotacao.update(targetCotacaoImportacaoLista.id, { itens: itensMesclados });
+            toast({
+                title: "Itens importados",
+                description: `${novosItens.length} itens processados e mesclados na cotação.`,
+                className: "bg-green-100 text-green-800"
+            });
+            await loadData();
+            const updated = await base44.entities.Cotacao.get(targetCotacaoImportacaoLista.id);
+            handleOpenAnaliseCotacao(updated);
+            return;
+        }
+
         const allCots = await base44.entities.Cotacao.list();
         let nextNumber = (allCots.length > 0 ? Math.max(...allCots.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
 
@@ -352,6 +412,8 @@ export default function CotacoesManager() {
     } catch (error) {
         console.error(error);
         toast({ title: "Erro ao criar cotação", description: error.message, variant: "destructive" });
+    } finally {
+        setTargetCotacaoImportacaoLista(null);
     }
   };
 
@@ -367,11 +429,11 @@ export default function CotacoesManager() {
             Análise de preços e concorrência
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
             <Button 
                 variant="outline"
                 className="border-dashed border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100"
-                onClick={() => setIsImportadorFotoOpen(true)}
+                onClick={handleOpenImportadorListaGlobal}
             >
                 <Camera className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Importar Foto</span>
             </Button>
@@ -417,8 +479,7 @@ export default function CotacoesManager() {
                                 
                                 // Abrir para edição imediatamente
                                 setTimeout(() => {
-                                    setSelectedCotacao(nova);
-                                    setPrecosInput({});
+                                    handleOpenAnaliseCotacao(nova);
                                 }, 500);
                             } catch (e) {
                                 toast({ title: "Erro", description: e.message, variant: "destructive" });
@@ -478,15 +539,17 @@ export default function CotacoesManager() {
                         <DialogTrigger asChild>
                           <Button variant="outline" className="w-full border-gray-200 text-gray-600 hover:text-teal-600 hover:bg-teal-50 h-9 text-sm font-normal" onClick={() => handleOpenAnaliseCotacao(cotacao)}>
                                 <Trophy className="w-4 h-4 mr-2" />
-                                Analisar & Preços
+                                {cotacao.status === 'Rascunho' ? 'Montar Lista' : 'Analisar & Preços'}
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="!max-w-[95vw] !w-[95vw] max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="w-[96vw] max-w-[96vw] sm:!max-w-[95vw] sm:!w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                             <DialogHeader>
-                                <DialogTitle className="text-xl font-light">Análise de Cotação: {cotacao.titulo}</DialogTitle>
+                                <DialogTitle className="text-lg sm:text-xl font-light">
+                                  {selectedCotacao?.status === 'Rascunho' ? `Montagem da Cotação: ${cotacao.titulo}` : `Análise de Cotação: ${cotacao.titulo}`}
+                                </DialogTitle>
                             </DialogHeader>
                             
-                            {/* Lançamento Manual: seletor + carrinho */}
+                            {selectedCotacao?.status === 'Rascunho' && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
                                 <div className="space-y-2">
                                     <Label className="text-xs">Selecionar Produto</Label>
@@ -560,7 +623,9 @@ export default function CotacoesManager() {
                                   </Button>
                                 </div>
                             </div>
+                            )}
 
+                            {selectedCotacao?.status !== 'Rascunho' ? (
                             <div className="border rounded-lg overflow-x-auto mt-4 min-w-0">
                               <Table>
                                   <TableHeader className="bg-gray-50">
@@ -624,19 +689,42 @@ export default function CotacoesManager() {
                                   </TableBody>
                               </Table>
                             </div>
+                            ) : (
+                              <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3 text-sm text-blue-800">
+                                A cotação está em montagem. Salve os itens e abra a competição para coletar respostas de fornecedores.
+                              </div>
+                            )}
 
-                            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
-                                <Button 
-                                    variant="ghost" 
-                                    className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                                    onClick={() => setIsImportadorOpen(true)}
-                                >
-                                    <UploadCloud className="w-4 h-4 mr-2" />
-                                    Importar Resposta (PDF)
-                                </Button>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={() => handleSaveRespostas()}>Salvar Preços</Button>
-                                </div>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mt-6 pt-4 border-t border-gray-100">
+                                {selectedCotacao?.status === 'Rascunho' ? (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      className="text-purple-700 hover:text-purple-800 hover:bg-purple-50"
+                                      onClick={handleOpenImportadorListaEmCotacao}
+                                    >
+                                      <Camera className="w-4 h-4 mr-2" />
+                                      Importar Lista (Foto/PDF)
+                                    </Button>
+                                    <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={handleAbrirCompeticao}>
+                                      Abrir Competição
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Button 
+                                        variant="ghost" 
+                                        className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                                        onClick={() => setIsImportadorOpen(true)}
+                                    >
+                                        <UploadCloud className="w-4 h-4 mr-2" />
+                                        Importar Resposta (PDF)
+                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" onClick={() => handleSaveRespostas()}>Salvar Preços</Button>
+                                    </div>
+                                  </>
+                                )}
                             </div>
                         </DialogContent>
                     </Dialog>
@@ -682,7 +770,11 @@ export default function CotacoesManager() {
 
       <ImportadorListaFoto 
         isOpen={isImportadorFotoOpen}
-        onClose={() => setIsImportadorFotoOpen(false)}
+        mode={targetCotacaoImportacaoLista ? 'merge' : 'create'}
+        onClose={() => {
+          setIsImportadorFotoOpen(false);
+          setTargetCotacaoImportacaoLista(null);
+        }}
         onImportComplete={handleImportFotoComplete}
       />
     </div>
