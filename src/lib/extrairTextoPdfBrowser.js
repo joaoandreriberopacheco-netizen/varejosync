@@ -1,20 +1,12 @@
 /**
- * Import só pela raiz do pacote (`package.json` → `main`) — evita falha de resolve
- * em bundlers que não mapeiam `pdfjs-dist/build/pdf.mjs` (ex.: alguns ambientes Base44).
+ * Utilitários para PDF no importador AGEFIN (Torre / Contas a pagar).
+ *
+ * Nota: o bundle **Base44/sin** não resolve o pacote `pdfjs-dist`, por isso não há
+ * extração local de texto no browser. A leitura do boleto depende de
+ * `UploadFile` + `InvokeLLM` com `file_urls`. Mantemos `extrairTextoPdfBrowser`
+ * (devolve vazio) para não quebrar o fluxo e permitir reintroduzir texto local
+ * noutro ambiente se no futuro o pacote for suportado.
  */
-import * as pdfjsLib from 'pdfjs-dist';
-
-/** Manter igual à versão instalada em package.json (pdfjs-dist). */
-const PDFJS_DIST_VERSION = '4.8.69';
-
-let workerSrcConfigurado = false;
-
-function ensurePdfjsWorker() {
-  if (typeof window === 'undefined') return;
-  if (workerSrcConfigurado) return;
-  workerSrcConfigurado = true;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_DIST_VERSION}/build/pdf.worker.min.mjs`;
-}
 
 /**
  * Detecta assinatura %PDF- no início do blob (partilha Web manda às vezes sem extensão / octet-stream).
@@ -57,35 +49,9 @@ export async function normalizarArquivoParaImportBoleto(file) {
 }
 
 /**
- * Extrai texto de PDFs com camada de texto (boletos digitais, DARF, etc.).
- * PDF só com imagem ou protegido devolve string vazia — não substitui o fluxo com LLM/visão.
+ * Reservado: extração de texto no cliente (ex. pdf.js). No Base44/sin devolve sempre
+ * string vazia — o prompt de texto local não é anexado; o LLM usa só o PDF enviado.
  */
-export async function extrairTextoPdfBrowser(file) {
-  if (!file || typeof file.arrayBuffer !== 'function') return '';
-  const name = String(file.name || '').toLowerCase();
-  const type = String(file.type || '').toLowerCase();
-  const parecePdf = name.endsWith('.pdf') || type === 'application/pdf' || (await blobParecePdf(file));
-  if (!parecePdf) return '';
-
-  try {
-    ensurePdfjsWorker();
-
-    const buf = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: buf, useSystemFonts: true });
-    const pdf = await loadingTask.promise;
-    const maxPages = Math.min(pdf.numPages, 10);
-    const parts = [];
-    for (let i = 1; i <= maxPages; i += 1) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const line = (content.items || [])
-        .map((it) => (it && typeof it.str === 'string' ? it.str : ''))
-        .join(' ');
-      if (line.trim()) parts.push(line);
-    }
-    return parts.join('\n').replace(/\s+/g, ' ').trim();
-  } catch (e) {
-    console.warn('[extrairTextoPdfBrowser]', e);
-    return '';
-  }
+export async function extrairTextoPdfBrowser(_file) {
+  return '';
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { CreditCard, ChevronRight, AlertCircle } from 'lucide-react';
 
@@ -63,8 +64,9 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
 
   if (!visible) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40" onClick={onCancel}>
+  // Portal + z-index acima do Dialog do Radix (z-50) para cobrir o modal de pagamento no foco
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40" onClick={onCancel}>
       <div
         className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-2xl md:rounded-2xl shadow-2xl p-5 space-y-4"
         onClick={e => e.stopPropagation()}
@@ -200,6 +202,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
