@@ -78,13 +78,33 @@ const toTitleCase = (str) => {
   return String(str).toLowerCase().replace(/(?:^|\s)\S/g, (c) => c.toUpperCase());
 };
 
+/** Segmentos preenchidos (1–5) alinhados ao fluxo da tela (getBorrowedStatus / status exibido). */
 const STATUS_PROGRESS = {
-  'Rascunho': 1, 'Aguardando Liberacao': 2, 'Aprovado': 3,
-  'Despachado': 4, 'Em Recepcao': 4, 'Em Conferencia': 4,
-  'Pendencia': 3, 'Devolvido': 2, 'Concluido': 5, 'Cancelado': 0,
+  'Rascunho': 1,
+  'Aguardando': 2,
+  'Aguardando Liberacao': 2,
+  'Aguardando Liberacao Financeira': 2,
+  'Aguardando Aprovacao Financeira': 2,
+  'Aguardando Pagamento': 2,
+  'Aprovado': 3,
+  'Pendencia': 3,
+  'Despachado': 4,
+  'Em Recepcao': 4,
+  'Em Conferencia': 4,
+  'Em Transito': 4,
+  'Concluido': 5,
+  'Devolvido': 2,
+  'Cancelado': 0,
 };
+const normalizeStatusProgressKey = (status) =>
+  String(status || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const getStatusProgress = (status) => {
-  const key = (status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  const key = normalizeStatusProgressKey(status);
   return STATUS_PROGRESS[key] ?? 1;
 };
 
@@ -237,9 +257,14 @@ const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
 
 const STATUS_PDF_COLORS = {
   'Rascunho':              { dot: [209,213,219], pillBg: [243,244,246], pillText: [107,114,128] },
+  'Aguardando':            { dot: [203,213,225], pillBg: [241,245,249], pillText: [71,85,105]   },
   'Aguardando Liberacao':  { dot: [203,213,225], pillBg: [241,245,249], pillText: [71,85,105]   },
+  'Aguardando Liberacao Financeira': { dot: [203,213,225], pillBg: [241,245,249], pillText: [71,85,105] },
+  'Aguardando Pagamento':  { dot: [203,213,225], pillBg: [241,245,249], pillText: [71,85,105]   },
   'Aprovado':              { dot: [52,211,153],  pillBg: [236,253,245], pillText: [4,120,87]    },
   'Despachado':            { dot: [34,211,238],  pillBg: [236,254,255], pillText: [14,116,144]  },
+  'Em Recepcao':           { dot: [34,211,238],  pillBg: [236,254,255], pillText: [14,116,144]  },
+  'Em Conferencia':        { dot: [34,211,238],  pillBg: [236,254,255], pillText: [14,116,144]  },
   'Em Transito':           { dot: [56,189,248],  pillBg: [240,249,255], pillText: [3,105,161]   },
   'Pendencia':             { dot: [251,146,60],  pillBg: [255,247,237], pillText: [194,65,12]   },
   'Devolvido':             { dot: [251,113,133], pillBg: [255,241,242], pillText: [190,24,93]   },
@@ -248,7 +273,7 @@ const STATUS_PDF_COLORS = {
 };
 
 const getStatusColors = (status) => {
-  const key = (status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  const key = normalizeStatusProgressKey(status);
   return STATUS_PDF_COLORS[key] || STATUS_PDF_COLORS['Rascunho'];
 };
 
@@ -744,7 +769,9 @@ Deno.serve(async (req) => {
       doc.setFontSize(6.5);
       const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 34).slice(0, 2);
       const codigoLineStep = 3.8;
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 2);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 3);
       const countLabel = isNecessidadeRelatorio(pedido)
         ? `${itens.length} item(ns) pendente(s)`
         : `${itens.length} item(ns)`;
@@ -815,7 +842,7 @@ Deno.serve(async (req) => {
       });
       cy += metaBlock + 1;
 
-      drawProgressBar(pedido.status, cy);
+      drawProgressBar(pedido._display_status || pedido.status, cy);
       y = cardTop + cardHeight + 3;
 
       // ── Itens ─────────────────────────────────────────────────────
@@ -834,7 +861,8 @@ Deno.serve(async (req) => {
         const lineWidth = 2.5;
         const nomeLineStep = 3.85 * vs;
         const auxDetailStep = 3.15 * vs;
-        const gapNomeDetalhe = 2 * vs;
+        const gapNomeDetalhe = 3 * vs;
+        const margemLinhaInferiorItem = 2.2 * vs;
 
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
@@ -852,7 +880,7 @@ Deno.serve(async (req) => {
 
         const detAux1 = lastNomeBaseline + gapNomeDetalhe;
         const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-        const rowBlockH = detAux2 + 3.2 * vs - y;
+        const rowBlockH = detAux2 + auxDetailStep + margemLinhaInferiorItem - y;
         const branchY = y + 2.8 * vs;
 
         ensureSpace(rowBlockH + 6);
