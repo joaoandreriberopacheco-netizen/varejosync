@@ -33,13 +33,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     preco_venda_tipo: produto.preco_venda_tipo || 'percentual',
     preco_venda_percentual: produto.preco_venda_percentual || 0,
     unidade_principal: produto.unidade_principal || 'UN',
+    unidade_apresentacao_default: produto.unidade_apresentacao_default || '',
     ativo: produto.ativo !== false
   } : {
     campo_hierarquico_1: '', campo_hierarquico_2: '', campo_hierarquico_3: '', campo_hierarquico_4: '', campo_hierarquico_5: '',
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
     categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
-    unidade_principal: 'UN', unidades_por_pacote: 1, unidades_alternativas: [],
+    unidade_principal: 'UN', unidade_apresentacao_default: '', unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
     tempo_reposicao_dias: 0, fornecedor_padrao_id: '', fornecedor_padrao_codigo: '',
     controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
@@ -854,6 +855,30 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 unidadePrincipal={formData.unidade_principal || 'UN'}
                 onChange={(value) => handleChange('unidades_alternativas', value)}
               />
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade de apresentação (PDV)</Label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Modo que abre primeiro ao vender. No PDV use &quot;Outra unidade&quot; para mudar.</p>
+              <Select
+                value={(formData.unidade_apresentacao_default && String(formData.unidade_apresentacao_default).trim()) ? String(formData.unidade_apresentacao_default).trim().toUpperCase() : '__principal__'}
+                onValueChange={(v) => handleChange('unidade_apresentacao_default', v === '__principal__' ? '' : v)}
+              >
+                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md">
+                  <SelectValue placeholder="Principal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__principal__">Principal ({formData.unidade_principal || 'UN'})</SelectItem>
+                  {(formData.unidades_alternativas || []).filter((u) => u && String(u.unidade || '').trim()).map((u) => {
+                    const sigla = String(u.unidade).trim().toUpperCase();
+                    return (
+                      <SelectItem key={sigla} value={sigla}>
+                        {sigla}{u.rotulo ? (' — ' + u.rotulo) : ''}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="border-t pt-6 dark:border-gray-700">
