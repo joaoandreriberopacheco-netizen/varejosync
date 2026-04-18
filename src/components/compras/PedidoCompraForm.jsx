@@ -41,6 +41,7 @@ import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
+import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -351,11 +352,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         if (field === 'produto_id') {
             const produto = produtos.find(p => p.id === value);
             if (produto) {
+                const opt = pickDefaultPurchaseUnit(produto);
                 item.produto_nome = produto.nome;
                 item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
-                item.unidade_medida = produto.unidade_principal || 'UN';
-                item.fator_conversao = 1;
-                item.custo_unitario = produto.valor_compra || 0;
+                item.unidade_medida = opt?.unidade || produto.unidade_principal || 'UN';
+                item.fator_conversao = opt?.fator_conversao ?? 1;
+                item.custo_unitario = (opt?.valor_unitario ?? produto.valor_compra) || 0;
                 item.valor_desconto_item = produto.desconto_compra_padrao || 0; 
             }
         }
@@ -403,13 +405,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     if (product && product.produto_id && product.quantidade) {
         newItem = calculateItemTotals(product);
     } else {
+        const pu = product?.id ? pickDefaultPurchaseUnit(product) : null;
         newItem = { 
             produto_id: product?.id || '', 
             produto_nome: product?.nome || '', 
             codigo_produto: product?.codigo_interno || product?.codigo_barras || '',
             quantidade: 1, 
-            unidade_medida: product?.unidade_compra || 'UN',
-            custo_unitario: product?.valor_compra || 0,
+            unidade_medida: pu?.unidade || product?.unidade_compra || 'UN',
+            fator_conversao: pu?.fator_conversao ?? 1,
+            custo_unitario: (pu?.valor_unitario ?? product?.valor_compra) || 0,
             valor_desconto_item: product?.desconto_compra_padrao || 0,
             observacao_item: ''
         };
@@ -506,13 +510,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     const finalCost = roundToTwoDecimals(newCost > 0 ? newCost : (currentCost > 0 ? currentCost : product.valor_compra));
                     const descontoImportado = roundToTwoDecimals(discount);
                     const custoFinalUnitario = roundToTwoDecimals(finalCost - descontoImportado);
+                    const optImp = pickDefaultPurchaseUnit(product);
+                    const fatorImp = optImp?.fator_conversao ?? 1;
 
                     newItems.push({
                         produto_id: product.id,
                         produto_nome: product.nome,
                         codigo_produto: product.codigo_interno || product.codigo_barras,
                         quantidade: qty,
-                        unidade_medida: product.unidade_principal || 'UN',
+                        unidade_medida: optImp?.unidade || product.unidade_principal || 'UN',
+                        fator_conversao: fatorImp,
+                        quantidade_base: roundToTwoDecimals(qty * fatorImp),
                         custo_unitario: finalCost,
                         valor_desconto_item: descontoImportado,
                         custo_final_unitario: custoFinalUnitario,

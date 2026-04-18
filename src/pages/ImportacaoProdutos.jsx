@@ -2,12 +2,14 @@ import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Download, RotateCcw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, Download, RotateCcw, AlertCircle, CheckCircle2, Package } from 'lucide-react';
 import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha';
+import ImportarEmbalagensPlanilha from '@/components/produtos/massa/ImportarEmbalagensPlanilha';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque';
 import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao';
 import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao';
 import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
+import ExportarEmbalagensPlanilha from '@/components/produtos/massa/ExportarEmbalagensPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
 import { toast } from 'sonner';
 
@@ -15,14 +17,21 @@ const TAMANHO_LOTE = 25;
 
 export default function ImportacaoProdutosPage() {
   const [parsedData, setParsedData] = useState(null);
+  const [parsedEmbalagens, setParsedEmbalagens] = useState(null);
   const [parsedEstoque, setParsedEstoque] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [salvouOk, setSalvouOk] = useState(false);
+  const [salvouEmbalagensOk, setSalvouEmbalagensOk] = useState(false);
   const [progresso, setProgresso] = useState({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
 
   const handleParsed = useCallback((data) => {
     setParsedData(data);
     setSalvouOk(false);
+  }, []);
+
+  const handleParsedEmbalagens = useCallback((data) => {
+    setParsedEmbalagens(data);
+    setSalvouEmbalagensOk(false);
   }, []);
 
   const handleParsedEstoque = useCallback((data) => {
@@ -66,6 +75,48 @@ export default function ImportacaoProdutosPage() {
       window.dispatchEvent(new Event('produtos:refresh'));
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
+      toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setSalvando(false);
+      setProgresso({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
+    }
+  };
+
+  const handleConfirmarEmbalagens = async () => {
+    if (!parsedEmbalagens?.alterados?.length) {
+      toast.error('Sem dados para sincronizar');
+      return;
+    }
+
+    const total = parsedEmbalagens.alterados.length;
+    const totalLotes = Math.ceil(total / TAMANHO_LOTE);
+    const grupoId = `GRP-${Date.now()}`;
+    setSalvando(true);
+    setProgresso({ atual: 0, total, lote: 0, totalLotes });
+
+    try {
+      for (let i = 0; i < totalLotes; i++) {
+        const inicio = i * TAMANHO_LOTE;
+        const lote = parsedEmbalagens.alterados.slice(inicio, inicio + TAMANHO_LOTE);
+
+        await base44.functions.invoke('importarProdutos', {
+          alterados: lote,
+          tipo_importacao: 'Embalagens / Unidades',
+          is_ultimo_lote: i === totalLotes - 1,
+          lote_numero: i + 1,
+          total_lotes: totalLotes,
+          grupo_importacao_id: grupoId,
+        });
+
+        setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
+      }
+
+      toast.success(`Embalagens atualizadas: ${total} produto(s) em ${totalLotes} lote(s).`);
+      setSalvouEmbalagensOk(true);
+      setParsedEmbalagens(null);
+      window.dispatchEvent(new Event('produtos:refresh'));
+    } catch (error) {
+      console.error('Erro na sincronização de embalagens:', error);
       toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
@@ -125,6 +176,8 @@ export default function ImportacaoProdutosPage() {
   };
 
   const podeConfirmar = parsedData && parsedData.alterados?.length > 0 && parsedData.erros?.length === 0;
+  const podeConfirmarEmbalagens =
+    parsedEmbalagens && parsedEmbalagens.alterados?.length > 0 && parsedEmbalagens.erros?.length === 0;
   const podeConfirmarEstoque = parsedEstoque && parsedEstoque.alterados?.length > 0 && parsedEstoque.erros?.length === 0;
 
   return (
@@ -136,16 +189,20 @@ export default function ImportacaoProdutosPage() {
             Importação de Produtos
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Gerencie produtos, estoque e importações em um único lugar.
+            Produtos, embalagens/unidades, estoque e histórico de importações.
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
             <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Produtos</span>
+            </TabsTrigger>
+            <TabsTrigger value="embalagens" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+              <Package className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Embalagens</span>
             </TabsTrigger>
             <TabsTrigger value="estoque" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
               <Download className="w-4 h-4 mr-2" />
@@ -170,7 +227,7 @@ export default function ImportacaoProdutosPage() {
                 </h2>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Gera um <strong>.xlsx</strong> com todos os produtos. Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
+                Gera um <strong>.xlsx</strong> com todos os produtos (sem Emb.1–5 — use a aba Embalagens). Colunas editáveis desbloqueadas; IDs e calculados somente leitura.
               </p>
               <ExportarPlanilha />
             </div>
@@ -240,6 +297,92 @@ export default function ImportacaoProdutosPage() {
                   <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
                     Sincronização concluída com sucesso!
+                  </p>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* TAB: Embalagens */}
+          <TabsContent value="embalagens" className="space-y-6 mt-8">
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  1
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  Baixar planilha de embalagens
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Slots Emb.1–5 e unidade de apresentação PDV em planilha separada da importação geral de produtos.
+              </p>
+              <ExportarEmbalagensPlanilha />
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  2
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  Subir planilha editada
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Identificação por <strong>ID</strong> ou <strong>Cód. Interno</strong>. Cabeçalhos devem coincidir com o export desta aba.
+              </p>
+              <ImportarEmbalagensPlanilha onParsed={handleParsedEmbalagens} />
+            </div>
+
+            {parsedEmbalagens && (
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                    3
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                    Validar e confirmar
+                  </h2>
+                </div>
+                <ResumoPrevisualizacao data={parsedEmbalagens} />
+
+                {salvando && progresso.total > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>Lote {progresso.lote} de {progresso.totalLotes}</span>
+                      <span>{progresso.atual} / {progresso.total} produtos</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                      {Math.round((progresso.atual / progresso.total) * 100)}% concluído — não feche esta página
+                    </p>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleConfirmarEmbalagens}
+                  disabled={!podeConfirmarEmbalagens || salvando}
+                  className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                >
+                  {salvando
+                    ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
+                    : `Confirmar embalagens (${parsedEmbalagens.alterados?.length ?? 0} produtos)`}
+                </Button>
+              </div>
+            )}
+
+            {salvouEmbalagensOk && (
+              <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Embalagens e unidades atualizadas com sucesso!
                   </p>
                 </div>
               </div>

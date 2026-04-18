@@ -2,12 +2,12 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp, Boxes } from 'lucide-react';
 import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import { buildPurchaseUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
+import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
 
 export default function MobileProductSelector({ 
   items, 
@@ -107,12 +107,9 @@ export default function MobileProductSelector({
   };
 
   const handleSelectProduct = (product) => {
-    const options = buildPurchaseUnitOptions(product);
-    if (options.length > 1) {
-      setUnitSelector({ open: true, product });
-      return;
-    }
-    startEditingProductWithUnit(product, options[0]);
+    const defaultOpt = pickDefaultPurchaseUnit(product);
+    if (!defaultOpt) return;
+    startEditingProductWithUnit(product, defaultOpt);
   };
 
   const handleEditItem = (index) => {
@@ -760,6 +757,9 @@ export default function MobileProductSelector({
                 filteredProducts.map((product, idx) => {
                   const inCart = items.find(i => i.produto_id === product.id);
                   const isSelected = idx === selectedIndex;
+                  const purchaseOpts = buildPurchaseUnitOptions(product);
+                  const variasUnidades = purchaseOpts.length > 1;
+                  const custoApresentacao = pickDefaultPurchaseUnit(product)?.valor_unitario ?? product.valor_compra;
                   return (
                     <div
                       key={product.id}
@@ -778,8 +778,23 @@ export default function MobileProductSelector({
                           <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
                             {product.nome}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
-                            {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <span className="truncate block">{product.codigo_interno || 'S/ Cód'} • {formatCurrency(custoApresentacao)}</span>
+                            {variasUnidades && (
+                              <span className="mt-1 flex items-center gap-2 flex-wrap">
+                                <Boxes className="w-3.5 h-3.5 text-gray-400 shrink-0" aria-hidden />
+                                <button
+                                  type="button"
+                                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setUnitSelector({ open: true, product });
+                                  }}
+                                >
+                                  Outra unidade
+                                </button>
+                              </span>
+                            )}
                           </div>
                         </div>
                         {inCart && (

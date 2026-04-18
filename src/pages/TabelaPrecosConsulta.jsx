@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, Package, Loader2, ChevronRight, Calculator, ArrowDownAZ, ArrowUpDown } from 'lucide-react';
+import { Search, Package, Boxes, Loader2, ChevronRight, Calculator, ArrowDownAZ, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
 import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
+import { formatEstoqueApresentacao, hasAlternativeUnits } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -23,6 +24,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
   const precoFinal = calcularPreco(p);
   const precoOriginal = p.preco_venda_padrao || 0;
   const temAjuste = tabelaSelecionada && tabelaSelecionada.fator_ajuste !== 1;
+  const apresentEstoque = formatEstoqueApresentacao(p);
 
   return (
     <div
@@ -38,8 +40,13 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-snug break-words">
-          {p.nome}
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-snug break-words flex items-center gap-1.5 flex-wrap">
+          {hasAlternativeUnits(p) && (
+            <span title="Várias unidades de venda" className="inline-flex flex-shrink-0">
+              <Boxes className="w-3.5 h-3.5 text-gray-400" aria-hidden />
+            </span>
+          )}
+          <span>{p.nome}</span>
         </p>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {/* Status estoque */}
@@ -47,6 +54,11 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
             <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
               {fmtN(e)} {p.unidade_principal || 'UN'}
+              {apresentEstoque ? (
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">
+                  (~{fmtN(apresentEstoque.quantidade)} {apresentEstoque.sigla})
+                </span>
+              ) : null}
             </span>
           </div>
           {/* Código */}

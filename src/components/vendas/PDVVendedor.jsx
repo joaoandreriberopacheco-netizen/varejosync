@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Camera, Undo2, X, Edit, FileText, CreditCard } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Boxes, Camera, Undo2, X, Edit, FileText, CreditCard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 
@@ -29,7 +29,7 @@ import { createPageUrl } from '@/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
+import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 
 export default function PDVVendedor() {
   const navigate = useNavigate();
@@ -527,9 +527,12 @@ export default function PDVVendedor() {
       inputProdutoRef.current?.blur();
     }
 
-    const opcoes = buildSaleUnitOptions(produto, tabelaPreco?.fator_ajuste || 1);
+    const mult = tabelaPreco?.fator_ajuste || 1;
+    const opcoes = buildSaleUnitOptions(produto, mult);
+    const defaultOpt = pickDefaultSaleUnit(produto, mult);
+
     if (opcoes.length > 1) {
-      setUnitSelector({ open: true, product: produto });
+      aplicarUnidadeAoProdutoSelecionado(produto, defaultOpt || opcoes[0]);
       return;
     }
 
@@ -1089,7 +1092,12 @@ export default function PDVVendedor() {
                     <span className="text-xs text-gray-400 hidden md:block">Tab para quantidade · Enter para adicionar</span>
                   </div>
                   {produtosSugeridos.map((produto, index) => {
-                const precoTabela = produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
+                const mult = tabelaPreco?.fator_ajuste || 1;
+                const opcoesVenda = buildSaleUnitOptions(produto, mult);
+                const pref = String(produto?.unidade_apresentacao_default || '').trim().toUpperCase();
+                const saleOpt = pref ? (opcoesVenda.find((o) => o.unidade === pref) || opcoesVenda[0]) : opcoesVenda[0];
+                const precoTabela = saleOpt?.valor_unitario ?? produto.preco_venda_padrao * mult;
+                const variasUnidades = opcoesVenda.length > 1;
                 const estoqueStatus = produto.estoque_atual <= 0 ? 'sem' : produto.estoque_atual <= 5 ? 'baixo' : 'ok';
                 const estoqueColor = estoqueStatus === 'sem' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : estoqueStatus === 'baixo' ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
                 return (
@@ -1108,9 +1116,26 @@ export default function PDVVendedor() {
                       <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug break-words whitespace-normal">{produto.nome}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
+                        {variasUnidades && (
+                          <span title="Várias unidades de venda" className="inline-flex items-center text-gray-400">
+                            <Boxes className="w-3.5 h-3.5" aria-hidden />
+                          </span>
+                        )}
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${estoqueColor}`}>
                           {produto.estoque_atual} un
                         </span>
+                        {variasUnidades && (
+                          <button
+                            type="button"
+                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline ml-auto sm:ml-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUnitSelector({ open: true, product: produto });
+                            }}
+                          >
+                            Outra unidade
+                          </button>
+                        )}
                         <span className="text-base font-bold text-gray-900 dark:text-gray-100 ml-auto tabular-nums">
                           R$ {precoTabela.toFixed(2).replace('.', ',')}
                         </span>

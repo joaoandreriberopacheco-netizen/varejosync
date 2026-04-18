@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha.jsx';
 import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha.jsx';
+import ExportarEmbalagensPlanilha from '@/components/produtos/massa/ExportarEmbalagensPlanilha.jsx';
+import ImportarEmbalagensPlanilha from '@/components/produtos/massa/ImportarEmbalagensPlanilha.jsx';
 import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao.jsx';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque.jsx';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque.jsx';
@@ -11,13 +13,20 @@ import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao.j
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
+  const [parsedEmbalagens, setParsedEmbalagens] = useState(null);
   const [parsedEstoque, setParsedEstoque] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [salvouOk, setSalvouOk] = useState(false);
+  const [salvouOkEmbalagens, setSalvouOkEmbalagens] = useState(false);
 
   const handleParsed = useCallback((data) => {
     setParsedData(data);
     setSalvouOk(false);
+  }, []);
+
+  const handleParsedEmbalagens = useCallback((data) => {
+    setParsedEmbalagens(data);
+    setSalvouOkEmbalagens(false);
   }, []);
 
   const handleParsedEstoque = useCallback((data) => {
@@ -63,7 +72,7 @@ export default function EditarProdutosEmMassa() {
            };
 
            // Adicionar apenas campos válidos do schema (excluir 'numero' e outros inválidos)
-           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
+           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
            validFields.forEach(field => {
              const valor = dados[field];
              if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
@@ -76,7 +85,7 @@ export default function EditarProdutosEmMassa() {
         } else {
           // Produto existente: atualizar apenas campos alterados
           const dadosAtualizacao = {};
-          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
+          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
           validFields.forEach(field => {
             const valor = dados[field];
             if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
@@ -93,13 +102,56 @@ export default function EditarProdutosEmMassa() {
       console.log('✅ Sincronização concluída com sucesso');
       setSalvouOk(true);
       setParsedData(null);
-      } catch (error) {
+    } catch (error) {
       console.error('❌ Erro na sincronização:', error);
       alert(`Erro ao sincronizar: ${error?.message || 'Erro desconhecido'}`);
-      } finally {
+    } finally {
       setSalvando(false);
+    }
+  };
+
+  const handleConfirmarEmbalagens = async () => {
+    if (!parsedEmbalagens?.alterados?.length) return;
+    setSalvando(true);
+    try {
+      const user = await base44.auth.me();
+      const idsAfetados = parsedEmbalagens.alterados.map((a) => a.id).filter(Boolean);
+      const snapshotDados = [];
+      if (idsAfetados.length > 0) {
+        const produtosAntigos = await base44.entities.Produto.filter({ id: idsAfetados });
+        snapshotDados.push(...produtosAntigos);
       }
-      };
+      await base44.entities.ImportacaoLog.create({
+        usuario_responsavel: user?.full_name || user?.email,
+        quantidade_itens: parsedEmbalagens.alterados.length,
+        snapshot_dados: snapshotDados,
+        tipo_importacao: 'Embalagens / Unidades',
+      });
+      const camposEmb = ['unidade_apresentacao_default', 'unidades_alternativas'];
+      for (const { id, dados } of parsedEmbalagens.alterados) {
+        const dadosAtualizacao = {};
+        camposEmb.forEach((field) => {
+          const valor = dados[field];
+          if (valor === null || valor === undefined) return;
+          if (field === 'unidades_alternativas' && Array.isArray(valor)) {
+            dadosAtualizacao[field] = valor;
+          } else if (field !== 'unidades_alternativas' && String(valor).trim() !== '') {
+            dadosAtualizacao[field] = valor;
+          }
+        });
+        if (Object.keys(dadosAtualizacao).length > 0) {
+          await base44.entities.Produto.update(id, dadosAtualizacao);
+        }
+      }
+      setSalvouOkEmbalagens(true);
+      setParsedEmbalagens(null);
+    } catch (error) {
+      console.error('❌ Erro na sincronização de embalagens:', error);
+      alert(`Erro ao sincronizar embalagens: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   const handleConfirmarEstoque = async () => {
     if (!parsedEstoque?.alterados?.length) return;
@@ -133,6 +185,8 @@ export default function EditarProdutosEmMassa() {
   };
 
   const podeConfirmar = parsedData && parsedData.alterados?.length > 0 && parsedData.erros?.length === 0;
+  const podeConfirmarEmbalagens =
+    parsedEmbalagens && parsedEmbalagens.alterados?.length > 0 && parsedEmbalagens.erros?.length === 0;
   const podeConfirmarEstoque = parsedEstoque && parsedEstoque.alterados?.length > 0 && parsedEstoque.erros?.length === 0;
 
   return (
@@ -142,14 +196,17 @@ export default function EditarProdutosEmMassa() {
           Edição em Massa
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Atualize produtos ou estoque em lote via planilha.
+          Atualize detalhes, embalagens/unidades ou estoque em lote via planilha.
         </p>
       </div>
 
       <Tabs defaultValue="produtos" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg gap-1">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg gap-1">
           <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
             Detalhes do Produto
+          </TabsTrigger>
+          <TabsTrigger value="embalagens" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+            Embalagens
           </TabsTrigger>
           <TabsTrigger value="estoque" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
             Estoque em Massa
@@ -163,7 +220,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Gera um <strong>.xlsx</strong> com todos os produtos. Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
+              Gera um <strong>.xlsx</strong> com todos os produtos (sem colunas Emb.1–5 — use a aba Embalagens). Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
             </p>
             <ExportarPlanilha />
           </div>
@@ -194,6 +251,48 @@ export default function EditarProdutosEmMassa() {
             <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
                 ✓ Sincronização concluída com sucesso!
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="embalagens" className="space-y-8 mt-6">
+          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+            <StepLabel number={1} label="Baixar planilha de embalagens" />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Planilha dedicada: slots Emb.1–5 (rótulo, sigla, fator, ajuste %) e unidade de apresentação PDV.
+            </p>
+            <ExportarEmbalagensPlanilha />
+          </div>
+
+          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+            <StepLabel number={2} label="Subir planilha editada" />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Use o arquivo exportado nesta aba. O produto é identificado por <strong>ID</strong> ou <strong>Cód. Interno</strong>.
+            </p>
+            <ImportarEmbalagensPlanilha onParsed={handleParsedEmbalagens} />
+          </div>
+
+          {parsedEmbalagens && (
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm space-y-4">
+              <StepLabel number={3} label="Validar e confirmar" />
+              <ResumoPrevisualizacao data={parsedEmbalagens} />
+              <Button
+                onClick={handleConfirmarEmbalagens}
+                disabled={!podeConfirmarEmbalagens || salvando}
+                className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+              >
+                {salvando
+                  ? 'Sincronizando...'
+                  : `Confirmar embalagens (${parsedEmbalagens.alterados?.length ?? 0} produtos)`}
+              </Button>
+            </div>
+          )}
+
+          {salvouOkEmbalagens && (
+            <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
+              <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                ✓ Embalagens e unidades atualizadas com sucesso!
               </p>
             </div>
           )}

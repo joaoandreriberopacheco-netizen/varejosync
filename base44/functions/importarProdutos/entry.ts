@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       'codigo_barras', 'marca', 'categoria_nome', 'area_codigo',
       'valor_compra', 'desconto_perc', 'custo_frete_padrao', 'custo_imposto1_padrao',
       'custo_imposto2_padrao', 'custo_outros_padrao', 'preco_venda_percentual',
-      'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote',
+      'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_alternativas', 'unidades_por_pacote',
       'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias',
       'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome',
     ];

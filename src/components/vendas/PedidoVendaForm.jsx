@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck, Save } from 'lucide-react';
+import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck, Save, Boxes } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import { buildSaleUnitOptions } from '@/lib/productUnits';
+import { buildSaleUnitOptions, pickDefaultSaleUnit, hasAlternativeUnits } from '@/lib/productUnits';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -41,6 +41,12 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [isSaving, setIsSaving] = useState(false);
   const [unitSelector, setUnitSelector] = useState({ open: false, product: null, index: -1 });
   const { toast } = useToast();
+
+  const tabelaPrecoAtual = useMemo(
+    () => dependencies.tabelasPreco.find((t) => t.id === formData.tabela_preco_id),
+    [dependencies.tabelasPreco, formData.tabela_preco_id]
+  );
+  const precoMult = tabelaPrecoAtual?.fator_ajuste ?? 1;
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -108,14 +114,21 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const handleProductChange = (index, produtoId) => {
     const produto = dependencies.produtos.find(p => p.id === produtoId);
     if (!produto) return;
-    const opcoes = buildSaleUnitOptions(produto);
+    const opcoes = buildSaleUnitOptions(produto, precoMult);
+    const defaultOpt = pickDefaultSaleUnit(produto, precoMult);
 
     if (opcoes.length > 1) {
-      setUnitSelector({ open: true, product: produto, index });
+      applyProductUnitToItem(index, produto, defaultOpt || opcoes[0]);
       return;
     }
 
     applyProductUnitToItem(index, produto, opcoes[0]);
+  };
+
+  const handleAbrirSeletorUnidade = (index) => {
+    const produto = dependencies.produtos.find((p) => p.id === formData.itens[index]?.produto_id);
+    if (!produto) return;
+    setUnitSelector({ open: true, product: produto, index });
   };
 
   const handleItemChange = (index, field, value) => {
@@ -320,8 +333,23 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                                 ))}
                               </SelectContent>
                             </Select>
-                            <div className="text-[11px] mt-1 text-gray-400 dark:text-gray-500">
-                              Unidade: {item.unidade_medida || 'UN'}
+                            <div className="text-[11px] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gray-400 dark:text-gray-500">
+                              {item.produto_id && hasAlternativeUnits(dependencies.produtos.find((p) => p.id === item.produto_id) || {}) && (
+                                <span title="Várias unidades de venda" className="inline-flex">
+                                  <Boxes className="w-3.5 h-3.5" aria-hidden />
+                                </span>
+                              )}
+                              <span>Unidade: {item.unidade_medida || 'UN'}</span>
+                              {item.produto_id &&
+                                buildSaleUnitOptions(dependencies.produtos.find((p) => p.id === item.produto_id) || {}, precoMult).length > 1 && (
+                                  <button
+                                    type="button"
+                                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                    onClick={() => handleAbrirSeletorUnidade(index)}
+                                  >
+                                    Outra unidade
+                                  </button>
+                                )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -511,6 +539,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
         open={unitSelector.open}
         product={unitSelector.product}
         mode="sale"
+        priceMultiplier={precoMult}
         onClose={() => setUnitSelector({ open: false, product: null, index: -1 })}
         onConfirm={(unitOption) => {
           applyProductUnitToItem(unitSelector.index, unitSelector.product, unitOption);

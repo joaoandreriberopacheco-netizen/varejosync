@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
+import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity } from '@/lib/productUnits';
 
 export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComplete }) {
   const [mode, setMode] = useState('pdf');
@@ -43,6 +44,34 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   }, [isOpen]);
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const normalizarSiglaUnidade = (s) => {
+    if (s == null || s === '') return '';
+    return String(s)
+      .trim()
+      .toUpperCase()
+      .replace(/\s/g, '')
+      .replace('M²', 'M2')
+      .replace('²', '2');
+  };
+
+  const resolverUnidadeCompra = (produto, unidadeDocRaw) => {
+    const opcoes = buildPurchaseUnitOptions(produto);
+    const padrao = pickDefaultPurchaseUnit(produto);
+    const u = normalizarSiglaUnidade(unidadeDocRaw);
+    if (!u) return padrao || opcoes[0];
+    const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === u);
+    return match || padrao || opcoes[0];
+  };
+
+  const textoEquivEstoque = (produto, quantidade, opt) => {
+    if (!produto || !opt) return null;
+    const up = (produto.unidade_principal || 'UN').toUpperCase();
+    const fator = opt.fator_conversao || 1;
+    if (fator === 1 && (opt.unidade || '').toUpperCase() === up) return null;
+    const qb = calculateBaseQuantity(quantidade, fator);
+    return `Equiv. ${qb.toLocaleString('pt-BR', { maximumFractionDigits: 4 })} ${up} (estoque)`;
+  };
 
   const getSuggestedProduct = (item) => {
     if (!item.produto_id_match) return null;
@@ -108,6 +137,7 @@ Retorne JSON:
     "marca": "marca se visível",
     "quantidade": number,
     "preco_unitario": number,
+    "unidade_medida_documento": "sigla opcional ex.: M2, M², CX, PAC, UN — como no documento",
     "produto_id_match": "id exato do catálogo ou vazio",
     "confianca": "alta|media|baixa"
   }]
@@ -144,6 +174,7 @@ Retorne JSON:
                   marca: { type: 'string' },
                   quantidade: { type: 'number' },
                   preco_unitario: { type: 'number' },
+                  unidade_medida_documento: { type: 'string' },
                   produto_id_match: { type: 'string' },
                   confianca: { type: 'string' }
                 }
@@ -222,11 +253,16 @@ Retorne JSON:
         }
 
         const produto = produtos.find(p => p.id === produtoId) || { id: produtoId, nome: item.descricao, unidade_principal: 'UN' };
+        const optCompra = resolverUnidadeCompra(produto, item.unidade_medida_documento);
+        const qtd = item.quantidade || 1;
+        const fator = optCompra?.fator_conversao ?? 1;
         importedItems.push({
           produto_id: produtoId,
           produto_nome: produto.nome,
-          quantidade: item.quantidade || 1,
-          unidade_medida: produto.unidade_principal || 'UN',
+          quantidade: qtd,
+          unidade_medida: optCompra?.unidade || produto.unidade_principal || 'UN',
+          fator_conversao: fator,
+          quantidade_base: calculateBaseQuantity(qtd, fator),
           custo_unitario: getDiscountedUnitPrice(item),
           valor_desconto_item: getDiscountPerItem(item),
           observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
@@ -469,7 +505,7 @@ Retorne JSON:
                       </div>
                     </div>
                     {/* Linha inferior: busca no catálogo (desktop: alinhada; mobile: full width) */}
-                    <div className="pl-7">
+                    <div className="pl-7 space-y-1">
                       <ProductSearchInputPDV
                         item={item}
                         index={index}
@@ -479,6 +515,18 @@ Retorne JSON:
                         setProductSearch={setProductSearch}
                         productSearch={productSearch}
                       />
+                      {item.selected_product_id && item.selected_product_id !== 'create_new' && (() => {
+                        const p = produtos.find((x) => x.id === item.selected_product_id);
+                        if (!p) return null;
+                        const opt = resolverUnidadeCompra(p, item.unidade_medida_documento);
+                        const eq = textoEquivEstoque(p, item.quantidade || 1, opt);
+                        return (
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                            Comprar em: <span className="font-medium text-gray-700 dark:text-gray-300">{opt?.unidade || p.unidade_principal || 'UN'}</span>
+                            {eq ? <span className="block mt-0.5">{eq}</span> : null}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

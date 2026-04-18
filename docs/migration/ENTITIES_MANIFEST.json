@@ -604,6 +604,12 @@
           "pg_type": "JSONB DEFAULT '[]'"
         },
         {
+          "name": "unidade_apresentacao_default",
+          "type": "string",
+          "default": "",
+          "pg_type": "TEXT DEFAULT ''"
+        },
+        {
           "name": "controla_serial",
           "type": "boolean",
           "default": false,

@@ -148,6 +148,7 @@ function getFileContent(localPath) {
         { "name": "unidade_principal", "type": "string", "default": "UN", "pg_type": "TEXT DEFAULT 'UN'" },
         { "name": "unidades_por_pacote", "type": "number", "default": 1, "pg_type": "NUMERIC(10,4) DEFAULT 1" },
         { "name": "unidades_alternativas", "type": "array<object>", "pg_type": "JSONB DEFAULT '[]'" },
+        { "name": "unidade_apresentacao_default", "type": "string", "default": "", "pg_type": "TEXT DEFAULT ''" },
         { "name": "controla_serial", "type": "boolean", "default": false, "pg_type": "BOOLEAN DEFAULT FALSE" },
         { "name": "controla_lote", "type": "boolean", "default": false, "pg_type": "BOOLEAN DEFAULT FALSE" },
         { "name": "controla_validade", "type": "boolean", "default": false, "pg_type": "BOOLEAN DEFAULT FALSE" },

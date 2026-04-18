@@ -248,6 +248,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       nome: produtoBase.nome || '',
       tags: Array.isArray(produtoBase.tags) ? produtoBase.tags : [],
       unidades_alternativas: Array.isArray(produtoBase.unidades_alternativas) ? produtoBase.unidades_alternativas : [],
+      unidade_apresentacao_default: produtoBase.unidade_apresentacao_default || '',
       ativo: produtoBase.ativo !== false,
     };
 

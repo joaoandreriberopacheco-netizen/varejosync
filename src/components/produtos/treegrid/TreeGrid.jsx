@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from './useTreeGrid';
+import { formatEstoqueApresentacao } from '@/lib/productUnits';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -79,7 +80,19 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     case 'valor_compra':         return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.valor_compra ? `R$ ${fmtR(produto.valor_compra)}` : '—'}</span>;
     case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : '—'}</span>;
     case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
-    case 'estoque_atual':        return <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(produto.estoque_atual)} {produto.unidade_principal || ''}</span>;
+    case 'estoque_atual': {
+      const apresent = formatEstoqueApresentacao(produto);
+      return (
+        <span className="flex flex-col text-xs text-gray-600 dark:text-gray-300 tabular-nums leading-tight">
+          <span>{fmtN(produto.estoque_atual)} {produto.unidade_principal || ''}</span>
+          {apresent && (
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+              ~{fmtN(apresent.quantidade)} {apresent.sigla}{apresent.rotulo ? ` (${apresent.rotulo})` : ''}
+            </span>
+          )}
+        </span>
+      );
+    }
     case 'estoque_minimo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
     case 'estoque_ideal':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_ideal)}</span>;
     case 'estoque_maximo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_maximo)}</span>;

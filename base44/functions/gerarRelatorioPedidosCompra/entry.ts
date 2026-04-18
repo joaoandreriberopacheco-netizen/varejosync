@@ -874,7 +874,20 @@ Deno.serve(async (req) => {
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
         doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
-        const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}`;
+        const fatorItem = Number(item.fator_conversao) || 1;
+        const qBase =
+          item.quantidade_base != null && item.quantidade_base !== ''
+            ? Number(item.quantidade_base)
+            : (Number(qtd) || 0) * fatorItem;
+        const upPrincipal = prod.unidade_principal || '';
+        let equivSuf = '';
+        if (
+          upPrincipal &&
+          (fatorItem !== 1 || String(un).toUpperCase() !== String(upPrincipal).toUpperCase())
+        ) {
+          equivSuf = ` · Equiv. ${fmtQtd(qBase)} ${upPrincipal} (base)`;
+        }
+        const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}${equivSuf}`;
         const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
         const auxValores2 = `Venda ${moeda(venda)} · Mk ${percentual(mk)}`;
 
