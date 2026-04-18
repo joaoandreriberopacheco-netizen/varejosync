@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
  *
  * @param {boolean} [hideListUntilFocused] — só mostra lista / “adicionar tipo” após foco na busca (ou com texto na busca)
  * @param {boolean} [generousPadding] — linhas mais altas para toque em mobile
+ * @param {boolean} [deferKeyboardUntilTap] — barra de busca visível, mas o teclado só abre após toque (evita salto na UI no mobile)
  */
 export default function TipoDocumentoSearch({
   tipos = [],
@@ -16,9 +17,12 @@ export default function TipoDocumentoSearch({
   onAdicionarTipoNovo,
   hideListUntilFocused = false,
   generousPadding = false,
+  deferKeyboardUntilTap = false,
 }) {
   const [query, setQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [keyboardUnlocked, setKeyboardUnlocked] = useState(!deferKeyboardUntilTap);
+  const inputRef = useRef(null);
   const blurTimer = useRef(null);
 
   const normalized = query.trim().toLowerCase();
@@ -59,25 +63,47 @@ export default function TipoDocumentoSearch({
 
   useEffect(() => () => clearBlurTimer(), []);
 
+  useEffect(() => {
+    if (keyboardUnlocked && deferKeyboardUntilTap && inputRef.current) {
+      const id = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
+    }
+  }, [keyboardUnlocked, deferKeyboardUntilTap]);
+
+  const unlockAndFocus = () => {
+    setKeyboardUnlocked(true);
+  };
+
   return (
     <div className="space-y-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => {
-            clearBlurTimer();
-            setSearchFocused(true);
-          }}
-          onBlur={() => {
-            clearBlurTimer();
-            blurTimer.current = setTimeout(() => setSearchFocused(false), 220);
-          }}
-          placeholder="Buscar tipo de documento (A-Z)"
-          className="h-12 rounded-2xl border-0 bg-gray-100 pl-11 shadow-sm dark:bg-muted/60 dark:border dark:border-border"
-          autoComplete="off"
-        />
+        {deferKeyboardUntilTap && !keyboardUnlocked ? (
+          <button
+            type="button"
+            onClick={unlockAndFocus}
+            className="flex h-12 w-full items-center rounded-2xl border-0 bg-gray-100 pl-11 pr-4 text-left text-sm shadow-sm dark:bg-muted/60 dark:border dark:border-border"
+          >
+            <span className="text-gray-500 dark:text-muted-foreground">Buscar tipo de documento (A-Z)</span>
+          </button>
+        ) : (
+          <Input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => {
+              clearBlurTimer();
+              setSearchFocused(true);
+            }}
+            onBlur={() => {
+              clearBlurTimer();
+              blurTimer.current = setTimeout(() => setSearchFocused(false), 220);
+            }}
+            placeholder="Buscar tipo de documento (A-Z)"
+            className="h-12 rounded-2xl border-0 bg-gray-100 pl-11 shadow-sm dark:bg-muted/60 dark:border dark:border-border"
+            autoComplete="off"
+          />
+        )}
       </div>
 
       {hideListUntilFocused && !listVisible && value && (

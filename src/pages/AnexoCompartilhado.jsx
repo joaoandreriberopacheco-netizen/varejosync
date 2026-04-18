@@ -1,14 +1,27 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, File, Link2, Plus, Loader2, CheckCircle2, ArrowLeft, ShoppingCart, Anchor, ChevronRight, Receipt, RefreshCw, LayoutDashboard } from 'lucide-react';
+import {
+  FileText,
+  File,
+  Link2,
+  Plus,
+  Loader2,
+  CheckCircle2,
+  ArrowLeft,
+  ShoppingCart,
+  Anchor,
+  ChevronRight,
+  RefreshCw,
+  RadioTower,
+  CircleHelp,
+} from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import BuscarLancamentoSheet from '@/components/anexos/BuscarLancamentoSheet';
 import BuscarPedidoCompraParaAnexo from '@/components/anexos/BuscarPedidoCompraParaAnexo';
 import BuscarEventoLogisticoParaAnexo from '@/components/anexos/BuscarEventoLogisticoParaAnexo';
-import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
 import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
-import { TIPOS_DOCUMENTO_ANEXO } from '@/lib/tiposDocumentoAnexo';
+import { TIPOS_DOCUMENTO_ANEXO, loadTiposCustomAnexo, saveTiposCustomAnexo } from '@/lib/tiposDocumentoAnexo';
 import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarget';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
@@ -21,11 +34,11 @@ export default function AnexoCompartilhado() {
   const [etapa, setEtapa] = useState('torre_controle');
   const [uploadando, setUploadando] = useState(false);
   const [lancamentoVinculado, setLancamentoVinculado] = useState(null);
-  const [abrirNovo, setAbrirNovo] = useState(false);
   const pollingRef = useRef(null);
   const destinoDeepLinkHandled = useRef(false);
   const [tipoDocumento, setTipoDocumento] = useState('Comprovante');
-  const [tiposDocumentoCustom, setTiposDocumentoCustom] = useState([]);
+  const [tiposDocumentoCustom, setTiposDocumentoCustom] = useState(() => loadTiposCustomAnexo());
+  const [ajudaTorreAberta, setAjudaTorreAberta] = useState(false);
   /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
   const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
 
@@ -188,6 +201,10 @@ export default function AnexoCompartilhado() {
   }, [carregando]);
 
   useEffect(() => {
+    if (etapa !== 'torre_controle') setAjudaTorreAberta(false);
+  }, [etapa]);
+
+  useEffect(() => {
     if (carregando) return;
     const precisaArquivo =
       etapa === 'importar_pdf_conta' || etapa === 'atualizar_boleto' || etapa === 'atualizar_boleto_import';
@@ -274,37 +291,6 @@ export default function AnexoCompartilhado() {
       alert('Falha ao enviar: ' + (error.message || JSON.stringify(error)));
     } finally {
       setUploadando(false);
-    }
-  };
-
-  const handleNovoCriado = async (lancamento) => {
-    if (lancamento) setLancamentoVinculado(lancamento);
-    if (!arquivo?.file || !lancamento) {
-      setEtapa('sucesso');
-      return;
-    }
-    setUploadando(true);
-    try {
-      const base64 = await converterParaBase64(arquivo.file);
-
-      await base44.functions.invoke('uploadAnexoDrive', {
-        file_base64: base64,
-        file_name: arquivo.nome,
-        file_type: arquivo.tipo || 'application/pdf',
-        file_size: arquivo.file.size,
-        referencia_tipo: 'LancamentoFinanceiro',
-        referencia_id: lancamento.id,
-        referencia_numero: lancamento.descricao || '',
-        tipo_documento: tipoDocumento,
-        origem: 'compartilhamento_web',
-      });
-    } catch (error) {
-      console.error("Erro no Upload:", error);
-      alert("Falha ao enviar! O servidor disse: " + (error.message || JSON.stringify(error)));
-    } finally {
-      setUploadando(false);
-      setAbrirNovo(false);
-      setEtapa('sucesso');
     }
   };
 
@@ -486,11 +472,6 @@ export default function AnexoCompartilhado() {
           </div>
         )}
 
-        {abrirNovo && (
-          <div className="fixed inset-0 z-[50010] flex min-h-[100dvh] items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-sm dark:bg-black/40">
-            <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />
-          </div>
-        )}
       </>,
       portalAlvo
     );
@@ -500,43 +481,53 @@ export default function AnexoCompartilhado() {
     <div className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}>
       {/* Scroll só aqui: overlays fullscreen vão para document.body (portal). */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      <div className="flex items-center gap-3 px-4 pb-3 pt-5 md:px-5 md:pb-4">
+      <div className="flex items-center gap-3 px-4 pb-2 pt-5 md:px-5">
         <button
           type="button"
           onClick={() => {
             if (etapa === 'opcoes') setEtapa('torre_controle');
             else window.history.back();
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <div>
+        {etapa === 'torre_controle' && (
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${brandSurface.iconCapsule}`}>
+            <RadioTower className="h-5 w-5 text-gray-700 dark:text-foreground" aria-hidden />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
             {etapa === 'torre_controle' ? 'Torre de controle' : 'Comprovante recebido'}
           </h1>
-          <p className={`text-xs ${brandSurface.textLabel}`}>
-            {etapa === 'torre_controle'
-              ? 'Identifique o tipo de documento antes de encaminhar.'
-              : 'O que deseja fazer com este arquivo?'}
+          {etapa === 'opcoes' && (
+            <p className={`text-xs ${brandSurface.textLabel}`}>O que deseja fazer com este arquivo?</p>
+          )}
+        </div>
+        {etapa === 'torre_controle' && (
+          <button
+            type="button"
+            onClick={() => setAjudaTorreAberta((v) => !v)}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
+            aria-expanded={ajudaTorreAberta}
+            aria-label="Ajuda sobre o tipo de documento"
+          >
+            <CircleHelp className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {etapa === 'torre_controle' && ajudaTorreAberta && (
+        <div className={`mx-4 mb-3 rounded-2xl px-4 py-3 text-sm leading-snug md:mx-5 ${brandSurface.card}`}>
+          <p className={brandSurface.textMuted}>
+            Escolha o tipo que melhor descreve o arquivo. Use a busca para filtrar ou crie um tipo novo; ele fica salvo neste aparelho para as próximas vezes. Depois avance para escolher o destino no P38.
           </p>
         </div>
-      </div>
-
-      <div className="mx-4 mb-4 md:mx-5 md:mb-5">
-        <ArquivoPreview arquivo={arquivo} />
-      </div>
+      )}
 
       {etapa === 'torre_controle' && (
-        <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pb-6 md:px-5">
-          <div className={`flex items-start gap-3 rounded-2xl p-3 md:p-4 ${brandSurface.card}`}>
-            <div className={`h-10 w-10 shrink-0 ${brandSurface.iconCapsule}`}>
-              <LayoutDashboard className="h-5 w-5 text-gray-600 dark:text-foreground" />
-            </div>
-            <p className={`text-sm leading-snug ${brandSurface.textMuted}`}>
-              Use a lista abaixo (com busca e opção de criar tipo novo). Depois avance para escolher o destino no P38.
-            </p>
-          </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 md:px-5">
           <div>
             <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-muted-foreground">
               Tipo de documento
@@ -545,18 +536,26 @@ export default function AnexoCompartilhado() {
               tipos={tiposDocumentoDisponiveis}
               value={tipoDocumento}
               onChange={setTipoDocumento}
-              hideListUntilFocused
               generousPadding
+              deferKeyboardUntilTap
               onAdicionarTipoNovo={(t) =>
-                setTiposDocumentoCustom((prev) => (prev.includes(t) ? prev : [...prev, t]))
+                setTiposDocumentoCustom((prev) => {
+                  if (prev.includes(t)) return prev;
+                  const next = [...prev, t];
+                  saveTiposCustomAnexo(next);
+                  return next;
+                })
               }
             />
+          </div>
+          <div className="mx-0 mb-1 md:mx-0">
+            <ArquivoPreview arquivo={arquivo} />
           </div>
           <button
             type="button"
             onClick={() => setEtapa('opcoes')}
             disabled={!String(tipoDocumento || '').trim()}
-            className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-4"
+            className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-2"
           >
             Continuar para destinos
             <ChevronRight className="h-4 w-4" />
@@ -566,6 +565,9 @@ export default function AnexoCompartilhado() {
 
       {etapa === 'opcoes' && (
         <div className="grid grid-cols-1 gap-2.5 px-4 md:grid-cols-2 md:gap-3 md:px-5">
+          <div className="md:col-span-2">
+            <ArquivoPreview arquivo={arquivo} />
+          </div>
           <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-muted-foreground md:col-span-2 px-0.5">
             Destino no P38
           </p>
@@ -573,9 +575,9 @@ export default function AnexoCompartilhado() {
           <OpcaoCard icon={ShoppingCart} titulo="Pedido de compra" descricao="Anexar ao processo de compras" onClick={() => setEtapa('vincular_pedido')} />
           <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
           <OpcaoCard
-            icon={Receipt}
-            titulo="Importar conta a pagar (PDF)"
-            descricao="Ler boleto e criar conta no AGEFIN"
+            icon={Plus}
+            titulo="Criar novo lançamento"
+            descricao="Ler PDF com OCR (AGEFIN) e registrar a conta — mesmo fluxo do importar em Contas a pagar"
             disabled={!arquivo?.file}
             onClick={() => arquivo?.file && setEtapa('importar_pdf_conta')}
           />
@@ -585,12 +587,6 @@ export default function AnexoCompartilhado() {
             descricao="Escolher o mês e o card, depois aplicar este PDF"
             disabled={!arquivo?.file}
             onClick={() => arquivo?.file && setEtapa('atualizar_boleto')}
-          />
-          <OpcaoCard
-            icon={Plus}
-            titulo="Criar novo lançamento"
-            descricao="Registrar despesa e anexar o arquivo"
-            onClick={() => setAbrirNovo(true)}
           />
           
           {!arquivo?.file && (
