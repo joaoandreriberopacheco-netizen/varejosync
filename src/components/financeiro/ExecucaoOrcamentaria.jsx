@@ -275,7 +275,7 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-transparent bg-[#F3F4F6] px-3 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-border dark:bg-card">
+      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-transparent bg-[#F3F4F6] px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-border dark:bg-card">
         <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
             <p className="text-[24px] leading-none font-semibold text-gray-900 sm:text-[32px] dark:text-gray-100 font-glacial">Financeiro</p>

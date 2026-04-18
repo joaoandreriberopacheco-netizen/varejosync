@@ -59,18 +59,18 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-// ─── KPI Cards (compacto no mobile; alinhado a KpiFluxo) ─────────────────────
-const kpiGap = 'gap-2 sm:gap-3';
+// ─── KPI Cards (alinhado a KpiFluxo — gap e padding uniformes no mobile) ─────
+const kpiGap = 'gap-3';
 const kpiCardTop =
-  'min-w-0 rounded-[16px] border border-transparent bg-[hsl(var(--background))] px-2.5 py-2 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
+  'min-w-0 rounded-[16px] border border-transparent bg-[hsl(var(--background))] px-3 py-2.5 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
 const kpiCardSaldo =
   'rounded-[16px] border border-transparent bg-[hsl(var(--background))] sm:rounded-[22px] dark:border-border dark:bg-card';
-const kpiSaldoPad = 'px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-5';
+const kpiSaldoPad = 'px-4 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-5';
 
 function KpiAbertas({ kpis }) {
   const saldoBody = (
     <div className="min-w-0">
-      <p className="mb-0.5 text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:mb-1 sm:text-[8px] dark:text-muted-foreground">Saldo projetado</p>
+      <p className="mb-0.5 pl-0.5 text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Saldo projetado</p>
       <p className="break-words text-[15px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[17px] md:text-[19px] dark:text-foreground">
         <span className={kpis.saldoProjetado >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>
         {R(Math.abs(kpis.saldoProjetado))}
@@ -79,14 +79,14 @@ function KpiAbertas({ kpis }) {
   );
 
   return (
-    <div className={`flex min-w-0 w-full max-w-full flex-col overflow-x-clip ${kpiGap}`}>
+    <div className={`flex min-w-0 w-full max-w-full flex-col ${kpiGap}`}>
       <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
         <div className={kpiCardTop}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <ArrowDownLeft className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
             </div>
-            <p className="min-w-0 truncate text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:text-[8px] dark:text-muted-foreground">A receber</p>
+            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:tracking-[0.16em] dark:text-muted-foreground">A receber</p>
           </div>
           <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.aReceber)}</p>
           {kpis.qtdReceber > 0 && (
@@ -101,7 +101,7 @@ function KpiAbertas({ kpis }) {
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <ArrowUpRight className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
             </div>
-            <p className="min-w-0 truncate text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:text-[8px] dark:text-muted-foreground">A pagar</p>
+            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:tracking-[0.16em] dark:text-muted-foreground">A pagar</p>
           </div>
           <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.aPagar)}</p>
           {kpis.qtdPagar > 0 && (

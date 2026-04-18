@@ -5,16 +5,15 @@ const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits:
 
 /** Surface compartilhada para manter consistência visual com barras de consulta. */
 const kpiBlock =
-  'rounded-[16px] border border-transparent bg-[#EEF1F4] px-2.5 py-2 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
+  'rounded-[16px] border border-transparent bg-[#EEF1F4] px-3 py-2 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
 
 const kpiCardBase =
   'rounded-[16px] border border-transparent bg-[hsl(var(--background))] sm:rounded-[22px] dark:border-border dark:bg-card';
-/** Mobile compacto; desktop mantém respiro */
-const kpiSaldoPad = 'px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-5';
-/** Menos espaço vertical no mobile */
-const kpiGap = 'gap-2 sm:gap-3';
+/** Respiro horizontal no mobile evita corte de labels (tracking) */
+const kpiSaldoPad = 'px-4 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-5';
+const kpiGap = 'gap-3';
 const kpiTopPad =
-  'min-w-0 rounded-[16px] border border-transparent bg-[hsl(var(--background))] px-2.5 py-2 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
+  'min-w-0 rounded-[16px] border border-transparent bg-[hsl(var(--background))] px-3 py-2.5 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
 
 export default function KpiFluxo({ kpis }) {
   const taxa = kpis.entrou > 0 ? (kpis.saiu / kpis.entrou * 100).toFixed(0) : 0;
@@ -23,14 +22,14 @@ export default function KpiFluxo({ kpis }) {
     <>
       <div className="mb-2 flex items-start justify-between gap-2 sm:mb-2.5 sm:gap-4">
         <div className="min-w-0">
-          <p className="mb-0.5 text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:mb-1 sm:text-[8px] dark:text-muted-foreground">Saldo de Execução</p>
+          <p className="mb-0.5 pl-0.5 text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Saldo de Execução</p>
           <p className="break-words text-[15px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[17px] md:text-[19px] dark:text-foreground">
             <span className={kpis.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldo >= 0 ? '+' : '−'}</span>
             {R(Math.abs(kpis.saldo))}
           </p>
         </div>
         <div className="shrink-0 pt-0.5 text-right">
-          <p className="mb-0.5 text-[7px] uppercase tracking-[0.16em] text-gray-400 sm:mb-1 sm:text-[8px] dark:text-muted-foreground">Taxa</p>
+          <p className="mb-0.5 text-[8px] uppercase leading-tight tracking-normal text-gray-400 sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Taxa</p>
           <p className="text-[12px] font-semibold text-gray-700 sm:text-[13px] dark:text-foreground">{taxa}%</p>
         </div>
       </div>
@@ -41,14 +40,14 @@ export default function KpiFluxo({ kpis }) {
   );
 
   return (
-    <div className={`flex min-w-0 w-full max-w-full flex-col overflow-x-clip ${kpiGap}`}>
+    <div className={`flex min-w-0 w-full max-w-full flex-col ${kpiGap}`}>
       <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
         <div className={kpiTopPad}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <TrendingUp className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
             </div>
-            <p className="min-w-0 truncate text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:text-[8px] dark:text-muted-foreground">Receitas</p>
+            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:tracking-[0.16em] dark:text-muted-foreground">Receitas</p>
           </div>
           <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.entrou)}</p>
           {kpis.pEntrou > 0 && <p className="mt-0.5 break-words text-[8px] text-gray-500 sm:mt-1 sm:text-[9px] dark:text-muted-foreground">+{R(kpis.pEntrou)} previsto</p>}
@@ -58,7 +57,7 @@ export default function KpiFluxo({ kpis }) {
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <TrendingDown className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
             </div>
-            <p className="min-w-0 truncate text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:text-[8px] dark:text-muted-foreground">Despesas</p>
+            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:tracking-[0.16em] dark:text-muted-foreground">Despesas</p>
           </div>
           <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.saiu)}</p>
           {kpis.pSaiu > 0 && <p className="mt-0.5 break-words text-[8px] text-gray-500 sm:mt-1 sm:text-[9px] dark:text-muted-foreground">+{R(kpis.pSaiu)} previsto</p>}
