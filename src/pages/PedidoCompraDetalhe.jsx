@@ -12,6 +12,7 @@ export default function PedidoCompraDetalhe() {
   const navigate = useNavigate();
   const [pedido, setPedido] = useState(undefined); // undefined = carregando
   const [loading, setLoading] = useState(true);
+  const [autoOpenImporter, setAutoOpenImporter] = useState(false);
 
   const loadPedidoComVerdade = useCallback(async (id, keepLoading = false) => {
     if (!id || id === 'novo') {
@@ -56,6 +57,7 @@ export default function PedidoCompraDetalhe() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    setAutoOpenImporter(params.get('autoImportador') === '1');
     loadPedidoComVerdade(id, false);
   }, [loadPedidoComVerdade]);
 
@@ -119,6 +121,7 @@ export default function PedidoCompraDetalhe() {
         pedido={pedido}
         onSave={handleSave}
         onClose={handleClose}
+        autoOpenImporter={autoOpenImporter}
       />
     </div>
   );

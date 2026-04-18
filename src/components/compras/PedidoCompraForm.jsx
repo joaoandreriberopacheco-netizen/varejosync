@@ -43,7 +43,7 @@ import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
 import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
 
-export default function PedidoCompraForm({ pedido, onSave, onClose }) {
+export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImporter = false }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
   const isRestoringDraftRef = useRef(false);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -120,6 +120,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [isNovoFornecedorOpen, setIsNovoFornecedorOpen] = useState(false);
   const [novoFornecedor, setNovoFornecedor] = useState({ nome: '', email: '', telefone: '', endereco: '' });
   const [isImportadorPedidoOpen, setIsImportadorPedidoOpen] = useState(false);
+  const autoImporterHandledRef = useRef(false);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState('dados-gerais');
   const { toast } = useToast();
@@ -208,6 +209,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   useEffect(() => {
     setPedidoLogistica(pedido || null);
   }, [pedido]);
+
+  useEffect(() => {
+    if (!autoOpenImporter || autoImporterHandledRef.current) return;
+    if (pedido?.id) return; // abertura automática é apenas no "novo pedido"
+    autoImporterHandledRef.current = true;
+    setAbaPedidoDesktop('itens');
+    setIsImportadorPedidoOpen(true);
+  }, [autoOpenImporter, pedido?.id]);
 
   useEffect(() => {
     const loadDependencies = async () => {

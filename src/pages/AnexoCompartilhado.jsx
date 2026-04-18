@@ -14,6 +14,7 @@ import {
   RefreshCw,
   RadioTower,
   HelpCircle,
+  FileUp,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
@@ -588,6 +589,14 @@ export default function AnexoCompartilhado() {
           </p>
           <OpcaoCard icon={Link2} titulo="Lançamento financeiro" descricao="Conta a pagar / despesa existente" onClick={() => setEtapa('vincular')} />
           <OpcaoCard icon={ShoppingCart} titulo="Pedido de compra" descricao="Anexar ao processo de compras" onClick={() => setEtapa('vincular_pedido')} />
+          <OpcaoCard
+            icon={FileUp}
+            titulo="Novo pedido (importar itens)"
+            descricao="Criar pedido novo e abrir direto o importador de itens"
+            onClick={() => {
+              window.location.href = `${createPageUrl('PedidoCompraDetalhe')}?id=novo&autoImportador=1`;
+            }}
+          />
           <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
           <OpcaoCard
             icon={Plus}
