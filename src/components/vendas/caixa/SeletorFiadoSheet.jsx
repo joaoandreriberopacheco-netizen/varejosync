@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { ChevronRight, User, AlertCircle, Calendar, FileText, Dice5 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 
@@ -61,8 +60,11 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
     }
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40" onClick={onCancel}>
+  return (
+    <div
+      className="absolute inset-0 z-[100] flex items-end justify-center bg-black/40 md:items-center"
+      onClick={onCancel}
+    >
       <div
         className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-2xl md:rounded-2xl shadow-2xl p-5 space-y-4"
         onClick={e => e.stopPropagation()}
@@ -201,7 +203,6 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

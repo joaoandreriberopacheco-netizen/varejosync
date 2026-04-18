@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { CreditCard, ChevronRight, AlertCircle } from 'lucide-react';
 
@@ -13,6 +12,9 @@ const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
  *   parcelas: number (só para crédito)
  *   onSelect: ({ maquininha, bandeira, taxa, prazo_dias }) => void
  *   onCancel: () => void
+ *
+ * Deve ficar dentro de um ancestral com position:relative (ex.: DialogContent do Radix).
+ * Não usar portal para document.body — o Dialog modal deixa irmãos inert/bloqueados.
  */
 export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: parcelasIniciais = 1, onSelect, onCancel }) {
   const [maquininhas, setMaquininhas] = useState([]);
@@ -64,9 +66,11 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
 
   if (!visible) return null;
 
-  // Portal + z-index acima do Dialog do Radix (z-50) para cobrir o modal de pagamento no foco
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40" onClick={onCancel}>
+  return (
+    <div
+      className="absolute inset-0 z-[100] flex items-end justify-center bg-black/40 md:items-center"
+      onClick={onCancel}
+    >
       <div
         className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-2xl md:rounded-2xl shadow-2xl p-5 space-y-4"
         onClick={e => e.stopPropagation()}
@@ -202,7 +206,6 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
           </>
         )}
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
