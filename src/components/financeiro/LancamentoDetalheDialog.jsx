@@ -110,6 +110,25 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     valor_liquido: parseFloat((valorNumerico * proporcaoLiquida).toFixed(2)),
   } : {};
   const data = lancamento.data_pagamento || lancamento.data_vencimento;
+  const competenciaAtual = (lancamento.data_vencimento || '').slice(0, 7);
+
+  const loteRecorrenciaAmbiguo = (grupo) => {
+    const refAtual = lancamento.referencia_id || '';
+    const grupoId = lancamento.grupo_lancamento_id || '';
+    const mesmaCompetencia = (grupo || []).filter(
+      (l) =>
+        (l.data_vencimento || '').slice(0, 7) === competenciaAtual &&
+        l.id !== lancamento.id &&
+        l.status !== 'Cancelado'
+    );
+    if (!mesmaCompetencia.length) return false;
+    // Se não há referência forte (ou está no modo série automática por grupo),
+    // não dá para distinguir com segurança duas obrigações parecidas no mesmo mês.
+    if (!refAtual || refAtual === grupoId) return true;
+    return mesmaCompetencia.some(
+      (l) => (l.referencia_id || '') !== refAtual || (l.referencia_tipo || '') !== (lancamento.referencia_tipo || '')
+    );
+  };
 
   // Aplica pagamento com escopo de recorrência
   const aplicarPagamento = async (escopo = 'apenas_esta') => {
@@ -119,6 +138,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     if (lancamento.is_recorrente && lancamento.grupo_lancamento_id && escopo !== 'apenas_esta') {
       // Buscar todos do grupo
       const grupo = await base44.entities.LancamentoFinanceiro.filter({ grupo_lancamento_id: lancamento.grupo_lancamento_id });
+      if (loteRecorrenciaAmbiguo(grupo)) {
+        toast({
+          title: 'Conta parecida na mesma competência. Use "apenas esta" para evitar atualização indevida.',
+          variant: 'destructive',
+        });
+        setSaving(false);
+        return;
+      }
       const hStr = lancamento.data_vencimento || '';
       const alvos = grupo
         .filter((l) => {
@@ -259,6 +286,13 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       const grupo = await base44.entities.LancamentoFinanceiro.filter({
         grupo_lancamento_id: lancamento.grupo_lancamento_id,
       });
+      if (loteRecorrenciaAmbiguo(grupo)) {
+        toast({
+          title: 'Há contas parecidas nesta competência. Para segurança, guarde só esta conta.',
+          variant: 'destructive',
+        });
+        return;
+      }
       const hStr = (lancamento.data_vencimento || '').slice(0, 10);
       const alvos = (grupo || [])
         .filter((l) => {
