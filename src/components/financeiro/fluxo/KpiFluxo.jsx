@@ -6,37 +6,11 @@ const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits:
 /** Surface compartilhada para manter consistência visual com barras de consulta. */
 const kpiBlock = 'rounded-[22px] border border-transparent bg-[#EEF1F4] px-3.5 py-3 dark:border-border dark:bg-card';
 
-const kpiCardBase =
-  'rounded-[22px] border border-transparent bg-[hsl(var(--background))] dark:border-border dark:bg-card';
-/** Padding maior para destacar Saldo / Vencidos e afastar da borda do container */
-const kpiSaldoPad = 'px-5 py-4 sm:px-6 sm:py-5';
-
 export default function KpiFluxo({ kpis }) {
   const taxa = kpis.entrou > 0 ? (kpis.saiu / kpis.entrou * 100).toFixed(0) : 0;
 
-  const saldoBody = (
-    <>
-      <div className="bg-transparent mb-2.5 flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">Saldo de Execução</p>
-          <p className="text-[19px] font-semibold leading-none text-gray-900 dark:text-foreground">
-            <span className={kpis.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldo >= 0 ? '+' : '−'}</span>
-            {R(Math.abs(kpis.saldo))}
-          </p>
-        </div>
-        <div className="shrink-0 pt-0.5 text-right">
-          <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-400 dark:text-muted-foreground">Taxa</p>
-          <p className="text-[13px] font-semibold text-gray-700 dark:text-foreground">{taxa}%</p>
-        </div>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white dark:bg-muted">
-        <div className="bg-teal-400 rounded-full h-full transition-all dark:bg-primary/50" style={{ width: `${Math.min(Number(taxa), 100)}%` }} />
-      </div>
-    </>
-  );
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
           <div className="mb-1.5 flex items-center gap-2.5">
@@ -60,23 +34,37 @@ export default function KpiFluxo({ kpis }) {
         </div>
       </div>
 
-      {kpis.vencidos > 0 ? (
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-stretch sm:gap-6 lg:gap-8">
-          <div className={`${kpiCardBase} ${kpiSaldoPad} min-w-0 flex-1`}>{saldoBody}</div>
-          <div className={`${kpiCardBase} ${kpiSaldoPad} flex min-h-0 min-w-0 flex-1 items-center gap-4`}>
-            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidos</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-foreground">
-                <span className="text-red-600 dark:text-red-400">−</span>
-                {R(kpis.vencidos)} · {kpis.qtdVencidos} lançamento{kpis.qtdVencidos !== 1 ? 's' : ''}
-              </p>
-            </div>
+      <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card">
+        <div className="bg-transparent mb-2.5 flex items-start justify-between gap-3">
+          <div>
+            <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">Saldo de Execução</p>
+            <p className="text-[19px] font-semibold leading-none text-gray-900 dark:text-foreground">
+              <span className={kpis.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldo >= 0 ? '+' : '−'}</span>
+              {R(Math.abs(kpis.saldo))}
+            </p>
+          </div>
+          <div className="pt-0.5 text-right">
+            <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-400 dark:text-muted-foreground">Taxa</p>
+            <p className="text-[13px] font-semibold text-gray-700 dark:text-foreground">{taxa}%</p>
           </div>
         </div>
-      ) : (
-        <div className={`${kpiCardBase} ${kpiSaldoPad}`}>{saldoBody}</div>
-      )}
+        <div className="h-1.5 overflow-hidden rounded-full bg-white dark:bg-muted">
+          <div className="bg-teal-400 rounded-full h-full transition-all dark:bg-primary/50" style={{ width: `${Math.min(Number(taxa), 100)}%` }} />
+        </div>
+      </div>
+
+      {kpis.vencidos > 0 &&
+      <div className="bg-[hsl(var(--background))] px-3.5 py-3 rounded-[22px] border border-transparent dark:border-border dark:bg-card flex items-center gap-3">
+          <AlertTriangle className="h-4 w-4 flex-none text-red-500 dark:text-red-400" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidos</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-foreground">
+              <span className="text-red-600 dark:text-red-400">−</span>
+              {R(kpis.vencidos)} · {kpis.qtdVencidos} lançamento{kpis.qtdVencidos !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+      }
 
       {kpis.totalTransferencias > 0 &&
       <div className={`${kpiBlock} flex items-center gap-3`}>
