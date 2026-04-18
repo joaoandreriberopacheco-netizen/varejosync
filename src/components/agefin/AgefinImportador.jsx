@@ -15,9 +15,6 @@ import {
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { extrairTextoPdfBrowser, normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
-const MIN_RECORRENTE_MATCH_SCORE = 45;
-const MATCH_SCORE_MARGIN = 8;
-
 function normalizarTexto(value) {
   return String(value || '')
     .normalize('NFD')
@@ -26,10 +23,6 @@ function normalizarTexto(value) {
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function tokensTexto(value) {
-  return new Set(normalizarTexto(value).split(' ').filter((t) => t.length >= 3));
 }
 
 function hashDjb2(value) {
@@ -103,66 +96,10 @@ function gerarBoletoFingerprint(dados) {
   return `${hashDjb2(fonte)}:${valorCentavos}:${vencimento}`;
 }
 
-function scoreRecorrente(recorrente, extractedData) {
-  const diaRecorrente = Number(recorrente?.dia_vencimento);
-  const diaBoleto = Number((extractedData?.data_vencimento || '').slice(8, 10));
-  if (!diaRecorrente || !diaBoleto || diaRecorrente !== diaBoleto) {
-    return { score: Number.NEGATIVE_INFINITY, motivos: ['dia_vencimento_diferente'] };
-  }
-
-  const nomeDespesa = normalizarTexto(recorrente?.nome_despesa);
-  const terceiro = normalizarTexto(recorrente?.terceiro_nome);
-  const descricao = normalizarTexto(extractedData?.descricao);
-  const beneficiario = normalizarTexto(extractedData?.terceiro_nome);
-  let score = 20;
-  const motivos = ['dia_vencimento_ok'];
-
-  if (nomeDespesa && descricao && nomeDespesa === descricao) {
-    score += 35;
-    motivos.push('nome_despesa_exato');
-  } else if (nomeDespesa && descricao && (descricao.includes(nomeDespesa) || nomeDespesa.includes(descricao))) {
-    score += 15;
-    motivos.push('nome_despesa_parcial');
-  }
-
-  if (terceiro && beneficiario && terceiro === beneficiario) {
-    score += 40;
-    motivos.push('beneficiario_exato');
-  } else if (terceiro && beneficiario && (beneficiario.includes(terceiro) || terceiro.includes(beneficiario))) {
-    score += 18;
-    motivos.push('beneficiario_parcial');
-  } else if (terceiro && descricao && descricao.includes(terceiro)) {
-    score += 10;
-    motivos.push('terceiro_na_descricao');
-  }
-
-  const tRec = tokensTexto(`${recorrente?.nome_despesa || ''} ${recorrente?.terceiro_nome || ''}`);
-  const tBol = tokensTexto(`${extractedData?.descricao || ''} ${extractedData?.terceiro_nome || ''}`);
-  const inter = [...tRec].filter((token) => tBol.has(token)).length;
-  if (inter > 0) {
-    score += Math.min(20, inter * 4);
-    motivos.push(`token_overlap_${inter}`);
-  }
-
-  const valorRec = Number(recorrente?.valor_previsto || 0);
-  const valorBol = Number(extractedData?.valor || 0);
-  if (valorRec > 0 && valorBol > 0) {
-    const diff = Math.abs(valorRec - valorBol);
-    if (diff <= 0.01) {
-      score += 8;
-      motivos.push('valor_exato');
-    } else if (diff <= Math.max(5, valorRec * 0.03)) {
-      score += 3;
-      motivos.push('valor_proximo');
-    }
-  }
-  return { score, motivos };
-}
-
 /**
- * Contas avulsas (Único/Parcelado sem ContaRecorrente): evita criar outra ContaPrevista
- * ao reimportar o mesmo bolete/mês — alinha ao dedup de LF já feito para recorrente.
- * Parcelado: só consolida por fingerprint (evita misturar parcelas diferentes).
+ * Contas avulsas (??nico/Parcelado sem ContaRecorrente): evita criar outra ContaPrevista
+ * ao reimportar o mesmo bolete/m?s ??? alinha ao dedup de LF j? feito para recorrente.
+ * Parcelado: s? consolida por fingerprint (evita misturar parcelas diferentes).
  */
 async function encontrarContaPrevistaAvulsaMesmaImportacao(base44, {
   mesReferencia,
@@ -172,7 +109,7 @@ async function encontrarContaPrevistaAvulsaMesmaImportacao(base44, {
   selectedNatureza,
 }) {
   if (!mesReferencia || !selectedNatureza) return null;
-  if (selectedNatureza !== 'Único' && selectedNatureza !== 'Parcelado') return null;
+  if (selectedNatureza !== '??nico' && selectedNatureza !== 'Parcelado') return null;
   try {
     const lista = await base44.entities.ContaPrevista.list('-data_vencimento', 500);
     const candidatas = (lista || []).filter((c) => {
@@ -217,17 +154,17 @@ export default function AgefinImportador({
   contaPrevistaId = null,
   lancamentoFinanceiroId = null,
   modoAtualizacao = false,
-  /** Ficheiro já escolhido (ex.: partilha Web) — inicia leitura automática */
+  /** Ficheiro j? escolhido (ex.: partilha Web) ??? inicia leitura autom?tica */
   initialFile = null,
-  /** Lista recorrentes: descrição/terceiro da conta já criada; sucesso volta ao painel */
+  /** Lista recorrentes: descri??o/terceiro da conta j? criada; sucesso volta ao painel */
   fluxoLoopAtualizadorRecorrente = false,
-  /** { descricao, terceiro_nome?, conta_financeira_id? } — após ler o PDF */
+  /** { descricao, terceiro_nome?, conta_financeira_id? } ??? ap?s ler o PDF */
   dadosContaExistente = null,
 }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
-  const [selectedNatureza, setSelectedNatureza] = useState('Único');
+  const [selectedNatureza, setSelectedNatureza] = useState('??nico');
   const [selectedRecorrencia, setSelectedRecorrencia] = useState('Mensal');
   const [error, setError] = useState(null);
   const [successState, setSuccessState] = useState(null);
@@ -250,7 +187,7 @@ export default function AgefinImportador({
         textoPdfLocal.length >= 40
           ? `
 
---- Texto extraído localmente do ficheiro (PDF com camada de texto; use como apoio se a página for digital) ---
+--- Texto extra?do localmente do ficheiro (PDF com camada de texto; use como apoio se a p?gina for digital) ---
 ${textoPdfLocal.slice(0, 14000)}`
           : '';
 
@@ -264,21 +201,21 @@ ${textoPdfLocal.slice(0, 14000)}`
 
       const extractedRaw = await base44.integrations.Core.InvokeLLM({
         file_urls: [file_url],
-        prompt: `Leia visualmente este documento brasileiro de cobrança e extraia dados REAIS do conteúdo do documento, nunca do nome do arquivo.
+        prompt: `Leia visualmente este documento brasileiro de cobran?a e extraia dados REAIS do conte?do do documento, nunca do nome do arquivo.
 
-Regras obrigatórias:
+Regras obrigat?rias:
 - Ignore completamente o nome do arquivo.
 - Leia o PDF/imagem como OCR visual completo.
-- Extraia apenas o que estiver claramente visível no documento.
-- Se um campo não existir, retorne null.
-- Não invente valores.
-- Se houver vários valores, use o valor final a pagar, valor total do documento ou valor do boleto.
-- Se houver várias datas, use a data explicitamente associada a vencimento.
-- A descrição deve ser útil para um lançamento financeiro humano.
-- A descrição deve preferir o conceito do pagamento + beneficiário, por exemplo: "Energia elétrica - Amazonas Energia", "FGTS Digital - Ministério do Trabalho", "DAR IPVA - SEFAZ AM", "Taxa ambiental - IBAMA".
-- Identifique também a natureza sugerida: use "Único" por padrão; use "Parcelado" apenas quando houver parcela explícita; use "Recorrente" apenas quando o documento indicar cobrança mensal/competência recorrente e isso estiver claro.
+- Extraia apenas o que estiver claramente vis?vel no documento.
+- Se um campo n?o existir, retorne null.
+- N?o invente valores.
+- Se houver v?rios valores, use o valor final a pagar, valor total do documento ou valor do boleto.
+- Se houver v?rias datas, use a data explicitamente associada a vencimento.
+- A descri??o deve ser ?til para um lan?amento financeiro humano.
+- A descri??o deve preferir o conceito do pagamento + benefici?rio, por exemplo: "Energia el?trica - Amazonas Energia", "FGTS Digital - Minist?rio do Trabalho", "DAR IPVA - SEFAZ AM", "Taxa ambiental - IBAMA".
+- Identifique tamb?m a natureza sugerida: use "??nico" por padr?o; use "Parcelado" apenas quando houver parcela expl?cita; use "Recorrente" apenas quando o documento indicar cobran?a mensal/compet?ncia recorrente e isso estiver claro.
 - Retorne data em YYYY-MM-DD.
-- Retorne valor como número decimal sem símbolo monetário.
+- Retorne valor como n?mero decimal sem s?mbolo monet?rio.
 
 Campos a interpretar do documento:
 - beneficiario
@@ -310,7 +247,7 @@ Campos a interpretar do documento:
 
       let extracted = normalizeInvokeLlmJsonResponse(extractedRaw);
       if (!possuiLeituraMinima(extracted)) {
-        // Segunda tentativa com prompt enxuto para documentos difíceis.
+        // Segunda tentativa com prompt enxuto para documentos dif?ceis.
         const retryRaw = await base44.integrations.Core.InvokeLLM({
           file_urls: [file_url],
           prompt: `Extraia APENAS os campos listados (sem texto extra):
@@ -320,7 +257,7 @@ Campos a interpretar do documento:
 - beneficiario
 - linha_digitavel
 - codigo_pix_copia_cola
-Se não encontrar, use null.
+Se n?o encontrar, use null.
 ${blocoTextoLocal}`,
           response_json_schema: {
             type: 'object',
@@ -339,18 +276,18 @@ ${blocoTextoLocal}`,
       }
 
       if (!possuiLeituraMinima(extracted)) {
-        // Não bloqueia o utilizador: abre formulário para preenchimento manual.
-        setSelectedNatureza('Único');
+        // N?o bloqueia o utilizador: abre formul?rio para preenchimento manual.
+        setSelectedNatureza('??nico');
         setSelectedRecorrencia('Mensal');
         setExtractedData(criarPreenchimentoManualMinimo(f.name));
-        setError('Leitura automática indisponível neste ficheiro. Preencha os campos manualmente e guarde.');
+        setError('Leitura autom?tica indispon?vel neste ficheiro. Preencha os campos manualmente e guarde.');
         return true;
       }
 
       const descricaoFallback = [extracted.descricao, extracted.beneficiario].filter(Boolean).join(' - ');
-      const naturezaValida = ['Parcelado', 'Único', 'Recorrente'].includes(extracted.natureza_sugerida)
+      const naturezaValida = ['Parcelado', '??nico', 'Recorrente'].includes(extracted.natureza_sugerida)
         ? extracted.natureza_sugerida
-        : 'Único';
+        : '??nico';
       const frequenciaValida = ['Semanal', 'Mensal', 'Bimestral', 'Trimestral', 'Semestral', 'Anual'].includes(extracted.frequencia_sugerida)
         ? extracted.frequencia_sugerida
         : 'Mensal';
@@ -394,11 +331,11 @@ ${blocoTextoLocal}`,
           url: arquivoEnviado.file_url,
           name: arquivoEnviado.file_name || f?.name || 'documento',
         });
-        setSelectedNatureza('Único');
+        setSelectedNatureza('??nico');
         setSelectedRecorrencia('Mensal');
         setExtractedData(criarPreenchimentoManualMinimo(arquivoEnviado.file_name || f?.name));
-        setError('Não consegui ler automaticamente este documento. Confira/preencha os campos e guarde.');
-        console.error('AgefinImportador fallback manual após falha OCR/LLM:', err);
+        setError('N?o consegui ler automaticamente este documento. Confira/preencha os campos e guarde.');
+        console.error('AgefinImportador fallback manual ap?s falha OCR/LLM:', err);
         return true;
       }
       const primeiro = String(err?.message || err || '')
@@ -406,8 +343,8 @@ ${blocoTextoLocal}`,
         .slice(0, 140);
       setError(
         primeiro
-          ? `Não consegui concluir a leitura: ${primeiro}`
-          : 'Não consegui ler este documento. Verifique a ligação e tente de novo; PDFs digitais também são lidos por texto local no navegador.'
+          ? `N?o consegui concluir a leitura: ${primeiro}`
+          : 'N?o consegui ler este documento. Verifique a liga??o e tente de novo; PDFs digitais tamb?m s?o lidos por texto local no navegador.'
       );
       console.error('AgefinImportador leitura PDF/OCR:', err);
       return false;
@@ -480,7 +417,7 @@ ${blocoTextoLocal}`,
   const resetState = () => {
     setFile(null);
     setExtractedData(null);
-    setSelectedNatureza('Único');
+    setSelectedNatureza('??nico');
     setSelectedRecorrencia('Mensal');
     setError(null);
     setSuccessState(null);
@@ -508,31 +445,22 @@ ${blocoTextoLocal}`,
         }
       }
 
-      const recorrentes = await base44.entities.ContaRecorrente.filter({ ativa: true }, '-created_date', 200);
       const mesReferencia = (extractedData.periodo_referencia || extractedData.data_vencimento || '').slice(0, 7);
       const boletoFingerprint = gerarBoletoFingerprint(extractedData);
-      const candidatosRecorrencia = (recorrentes || [])
-        .map((recorrente) => {
-          const { score, motivos } = scoreRecorrente(recorrente, extractedData);
-          return { recorrente, score, motivos };
-        })
-        .filter((item) => Number.isFinite(item.score))
-        .sort((a, b) => b.score - a.score);
-      const principal = candidatosRecorrencia[0] || null;
-      const segundo = candidatosRecorrencia[1] || null;
-      const matchAmbiguo = Boolean(
-        principal &&
-        segundo &&
-        principal.score >= MIN_RECORRENTE_MATCH_SCORE &&
-        (principal.score - segundo.score) <= MATCH_SCORE_MARGIN
-      );
-      if (matchAmbiguo) {
-        setError('Há duas recorrências muito parecidas para este boleto. Ajuste descrição/beneficiário para evitar vínculo errado.');
-        return;
+      let recorrenteVinculado = null;
+      // V?nculo somente por IDs expl?citos do contexto; nunca por nome parecido.
+      if (contaPrevistaId) {
+        const cpAtual = await base44.entities.ContaPrevista.get(contaPrevistaId).catch(() => null);
+        if (cpAtual?.conta_recorrente_id) {
+          recorrenteVinculado = await base44.entities.ContaRecorrente.get(cpAtual.conta_recorrente_id).catch(() => null);
+        }
+      } else if (lancamentoFinanceiroId) {
+        const lfAtual = await base44.entities.LancamentoFinanceiro.get(lancamentoFinanceiroId).catch(() => null);
+        const grupoId = lfAtual?.grupo_lancamento_id || null;
+        if (grupoId) {
+          recorrenteVinculado = await base44.entities.ContaRecorrente.get(grupoId).catch(() => null);
+        }
       }
-      const recorrenteVinculado = principal && principal.score >= MIN_RECORRENTE_MATCH_SCORE
-        ? principal.recorrente
-        : null;
 
       const contaExistenteDoMes = recorrenteVinculado
         ? (await base44.entities.ContaPrevista.filter({ conta_recorrente_id: recorrenteVinculado.id }, '-data_vencimento', 50))
@@ -545,9 +473,9 @@ ${blocoTextoLocal}`,
         recorrenteFinal = await base44.entities.ContaRecorrente.create({
           nome_despesa: extractedData.descricao,
           terceiro_id: 'importado-manualmente',
-          terceiro_nome: extractedData.terceiro_nome || 'Beneficiário não identificado',
+          terceiro_nome: extractedData.terceiro_nome || 'Benefici?rio n?o identificado',
           categoria_financeira_id: 'importacao-pendente',
-          categoria_nome: 'Importação pendente',
+          categoria_nome: 'Importa??o pendente',
           valor_previsto: extractedData.valor,
           frequencia: selectedRecorrencia,
           dia_vencimento: Number((extractedData.data_vencimento || '').slice(8, 10)) || 1,
@@ -567,7 +495,7 @@ ${blocoTextoLocal}`,
         !recorrenteFinal &&
         !contaDoMesFinal &&
         mesReferencia &&
-        (selectedNatureza === 'Único' || selectedNatureza === 'Parcelado')
+        (selectedNatureza === '??nico' || selectedNatureza === 'Parcelado')
       ) {
         const dedupAvulsa = await encontrarContaPrevistaAvulsaMesmaImportacao(base44, {
           mesReferencia,
@@ -623,9 +551,9 @@ ${blocoTextoLocal}`,
         descricao: descricaoFinal,
         descricao_definida_pelo_usuario: true,
         terceiro_id: recorrenteFinal?.terceiro_id || 'importado-manualmente',
-        terceiro_nome: recorrenteFinal?.terceiro_nome || extractedData.terceiro_nome || 'Beneficiário não identificado',
+        terceiro_nome: recorrenteFinal?.terceiro_nome || extractedData.terceiro_nome || 'Benefici?rio n?o identificado',
         categoria_financeira_id: recorrenteFinal?.categoria_financeira_id || 'importacao-pendente',
-        categoria_nome: recorrenteFinal?.categoria_nome || 'Importação pendente',
+        categoria_nome: recorrenteFinal?.categoria_nome || 'Importa??o pendente',
         valor: extractedData.valor,
         data_vencimento: extractedData.data_vencimento,
         natureza: recorrenteFinal ? 'Recorrente' : selectedNatureza,
@@ -663,8 +591,8 @@ ${blocoTextoLocal}`,
 
       if (modoAtualizacao) {
         const contextoMatch = recorrenteVinculado
-          ? `score=${principal?.score || 0};recorrente=${recorrenteVinculado.id};motivos=${(principal?.motivos || []).join(',')}`
-          : 'sem_vinculo_automatico';
+          ? `id_explicito;recorrente=${recorrenteVinculado.id}`
+          : 'sem_vinculo_por_id';
         await marcarLancamentosComoImportadosPorBoletoPdf(base44, {
           contaPrevistaId: contaCriada?.id,
           lancamentoFinanceiroId,
@@ -684,7 +612,7 @@ ${blocoTextoLocal}`,
               origem: 'importador_agefin_pdf',
             });
           } catch (anexoErr) {
-            console.error('Anexo PDF (atualização boleto):', anexoErr);
+            console.error('Anexo PDF (atualiza??o boleto):', anexoErr);
           }
         }
       }
@@ -693,8 +621,8 @@ ${blocoTextoLocal}`,
         const observacoesComAuditoria = [
           extractedData.observacoes || '',
           recorrenteVinculado
-            ? `[agefin_match:score=${principal?.score || 0};recorrente=${recorrenteVinculado.id};motivos=${(principal?.motivos || []).join(',')}]`
-            : '[agefin_match:sem_vinculo_automatico]',
+            ? `[agefin_match:id_explicito;recorrente=${recorrenteVinculado.id}]`
+            : '[agefin_match:sem_vinculo_por_id]',
           boletoFingerprint ? `[boleto_fp:${boletoFingerprint}]` : null,
         ].filter(Boolean).join('\n');
         const lancamentoPayload = {
@@ -725,7 +653,7 @@ ${blocoTextoLocal}`,
           grupo_lancamento_id: recorrenteFinal?.id || undefined,
         };
 
-        /** Evita duas contas a pagar “siamesas” (mesmo ContaPrevista + mesmo mês): reimportação OCR atualiza o LF existente. */
+        /** Evita duas contas a pagar ???siamesas??? (mesmo ContaPrevista + mesmo m?s): reimporta??o OCR atualiza o LF existente. */
         let lfMesmoMes = null;
         if (contaCriada?.id && mesReferencia) {
           const existentesRef = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: contaCriada.id });
@@ -788,7 +716,7 @@ ${blocoTextoLocal}`,
           : raw.includes('fetch') || raw.includes('network') || raw.includes('failed');
       setError(
         rede
-          ? 'Sem ligação ou falha de rede. Verifique a internet e tente novamente.'
+          ? 'Sem liga??o ou falha de rede. Verifique a internet e tente novamente.'
           : 'Erro ao salvar conta. Tente novamente.'
       );
       console.error(err);
@@ -797,7 +725,7 @@ ${blocoTextoLocal}`,
     }
   };
 
-  /** Atualizador de boletos (lista): formulário sem natureza/recorrência nova */
+  /** Atualizador de boletos (lista): formul?rio sem natureza/recorr?ncia nova */
   const fluxoListaRecorrentes = Boolean(modoAtualizacao && fluxoLoopAtualizadorRecorrente);
 
   if (successState) {
@@ -820,14 +748,14 @@ ${blocoTextoLocal}`,
           <div className="rounded-[24px] bg-gray-50 p-4 dark:bg-gray-900">
             <div className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'O novo boleto substituiu o anterior nesta conta.' : 'A conta já foi enviada para o Contas a Pagar.'}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'O novo boleto substituiu o anterior nesta conta.' : 'A conta j? foi enviada para o Contas a Pagar.'}</p>
             </div>
             <div className="mt-3 flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela também já pode aparecer no AGEFIN quando for recorrente.'}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela tamb?m j? pode aparecer no AGEFIN quando for recorrente.'}</p>
             </div>
             {fluxoLoopAtualizadorRecorrente && (
-              <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">A regressar ao atualizador para escolher outra conta…</p>
+              <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">A regressar ao atualizador para escolher outra conta???</p>
             )}
           </div>
         </div>
@@ -839,7 +767,7 @@ ${blocoTextoLocal}`,
               onClick={() => onSuccess?.(null, { close: true, voltarAtualizador: true })}
               className="h-12 w-full rounded-2xl border-0 bg-[#2e2629] text-sm font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
             >
-              Voltar já
+              Voltar j?
             </Button>
           </div>
         ) : (
@@ -870,8 +798,8 @@ ${blocoTextoLocal}`,
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-gray-400">Importar conta</p>
-              <h2 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">Leitura automática</h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Envie boleto, guia, DAR, PDF ou imagem para pré-preencher a conta.</p>
+              <h2 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">Leitura autom?tica</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Envie boleto, guia, DAR, PDF ou imagem para pr?-preencher a conta.</p>
             </div>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
               <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-300" />
@@ -884,7 +812,7 @@ ${blocoTextoLocal}`,
                 <Upload className="h-6 w-6 text-gray-600 dark:text-gray-300" />
               </div>
               <p className="font-medium text-gray-900 dark:text-white">{file ? file.name : 'Selecionar documento'}</p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">PDF, boleto escaneado ou imagem nítida</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">PDF, boleto escaneado ou imagem n?tida</p>
             </div>
             <input
               type="file"
@@ -912,7 +840,7 @@ ${blocoTextoLocal}`,
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
                 <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-300" />
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Pré-cadastro</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Pr?-cadastro</p>
             </div>
           </div>
         </div>
@@ -981,13 +909,13 @@ ${blocoTextoLocal}`,
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pré-preenchimento</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pr?-preenchimento</p>
                 <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">
                   {fluxoListaRecorrentes ? 'Rever boleto desta conta' : 'Revisar dados'}
                 </h3>
                 {fluxoListaRecorrentes && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    A recorrência já está definida no cadastro. Confirme valor, vencimento e dados do PDF.
+                    A recorr?ncia j? est? definida no cadastro. Confirme valor, vencimento e dados do PDF.
                   </p>
                 )}
               </div>
@@ -1011,7 +939,7 @@ ${blocoTextoLocal}`,
 
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Descrição
+                  Descri??o
                   {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
                       <Lock className="h-3 w-3" /> Fixa
@@ -1023,29 +951,29 @@ ${blocoTextoLocal}`,
                   value={extractedData.descricao}
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
                   readOnly={!fluxoListaRecorrentes && descricaoSacralizadaLock}
-                  title={!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'Esta conta já tem descrição confirmada; novos PDFs não a alteram.' : undefined}
+                  title={!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'Esta conta j? tem descri??o confirmada; novos PDFs n?o a alteram.' : undefined}
                   className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950 ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
                 />
                 {fluxoListaRecorrentes && (
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                    Nome da conta no cadastro (pode editar). O leitor do PDF não substitui este título — só ajuda em valor, vencimento e anexo.
+                    Nome da conta no cadastro (pode editar). O leitor do PDF n?o substitui este t?tulo ??? s? ajuda em valor, vencimento e anexo.
                   </p>
                 )}
                 {!fluxoListaRecorrentes && !descricaoSacralizadaLock && (
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                    Sugestão do leitor automático — pode editar antes de salvar. Depois de salva, a descrição fica fixa para manter o mesmo nome mental nesta conta e nos meses seguintes.
+                    Sugest?o do leitor autom?tico ??? pode editar antes de salvar. Depois de salva, a descri??o fica fixa para manter o mesmo nome mental nesta conta e nos meses seguintes.
                   </p>
                 )}
                 {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
                   <p className="mt-1.5 text-xs text-amber-800/90 dark:text-amber-200/90">
-                    Descrição já confirmada nesta conta; o PDF só atualiza valores, vencimento e boleto.
+                    Descri??o j? confirmada nesta conta; o PDF s? atualiza valores, vencimento e boleto.
                   </p>
                 )}
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Beneficiário</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Benefici?rio</label>
                   <input autoComplete="off"
                     type="text"
                     value={extractedData.terceiro_nome}
@@ -1054,7 +982,7 @@ ${blocoTextoLocal}`,
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Competência</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Compet?ncia</label>
                   <input autoComplete="off"
                     type="date"
                     value={extractedData.periodo_referencia}
@@ -1089,7 +1017,7 @@ ${blocoTextoLocal}`,
               {!fluxoListaRecorrentes && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nº da parcela</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">N? da parcela</label>
                   <input autoComplete="off"
                     type="number"
                     value={extractedData.parcela_numero}
@@ -1098,10 +1026,10 @@ ${blocoTextoLocal}`,
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Frequência</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Frequ?ncia</label>
                   <Select value={selectedRecorrencia} onValueChange={setSelectedRecorrencia}>
                     <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
-                      <SelectValue placeholder="Escolher frequência" />
+                      <SelectValue placeholder="Escolher frequ?ncia" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Semanal">Semanal</SelectItem>
@@ -1117,7 +1045,7 @@ ${blocoTextoLocal}`,
               )}
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digitável</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digit?vel</label>
                 <textarea
                   value={extractedData.linha_digitavel}
                   onChange={(e) => setExtractedData({ ...extractedData, linha_digitavel: e.target.value })}
@@ -1135,7 +1063,7 @@ ${blocoTextoLocal}`,
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Instruções / observações</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Instru??es / observa??es</label>
                 <textarea
                   value={extractedData.observacoes}
                   onChange={(e) => setExtractedData({ ...extractedData, observacoes: e.target.value })}
@@ -1147,11 +1075,11 @@ ${blocoTextoLocal}`,
 
           {!fluxoListaRecorrentes && (
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
-            <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
-            <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
+            <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual ? a natureza desta conta?</label>
+            <AgefinNaturezaSelector value={selectedNatureza || '??nico'} onChange={setSelectedNatureza} />
             {selectedNatureza === 'Recorrente' && (
               <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                Sugestão de recorrência: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span>
+                Sugest?o de recorr?ncia: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span>
               </p>
             )}
           </div>
