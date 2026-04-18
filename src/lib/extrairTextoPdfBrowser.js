@@ -1,4 +1,22 @@
 /**
+ * Import só pela raiz do pacote (`package.json` → `main`) — evita falha de resolve
+ * em bundlers que não mapeiam `pdfjs-dist/build/pdf.mjs` (ex.: alguns ambientes Base44).
+ */
+import * as pdfjsLib from 'pdfjs-dist';
+
+/** Manter igual à versão instalada em package.json (pdfjs-dist). */
+const PDFJS_DIST_VERSION = '4.8.69';
+
+let workerSrcConfigurado = false;
+
+function ensurePdfjsWorker() {
+  if (typeof window === 'undefined') return;
+  if (workerSrcConfigurado) return;
+  workerSrcConfigurado = true;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_DIST_VERSION}/build/pdf.worker.min.mjs`;
+}
+
+/**
  * Detecta assinatura %PDF- no início do blob (partilha Web manda às vezes sem extensão / octet-stream).
  */
 export async function blobParecePdf(blob) {
@@ -50,13 +68,7 @@ export async function extrairTextoPdfBrowser(file) {
   if (!parecePdf) return '';
 
   try {
-    const [pdfjsMod, workerMod] = await Promise.all([
-      import('pdfjs-dist/build/pdf.mjs'),
-      import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
-    ]);
-    const pdfjsLib = pdfjsMod;
-    const workerUrl = workerMod.default;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+    ensurePdfjsWorker();
 
     const buf = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: buf, useSystemFonts: true });
