@@ -57,12 +57,6 @@ const FAB_ITEMS = [
   { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transf.' },
 ];
 
-const FAB_CONTAS_ITEMS = [
-  { tipo: 'Despesa', icon: ArrowUpRight, label: 'Conta a Pagar', dialogTipo: 'Despesa' },
-  { tipo: 'Receita', icon: ArrowDownLeft, label: 'Conta a Receber', dialogTipo: 'Receita' },
-  { tipo: 'Importar', icon: Upload, label: 'Importar PDF' },
-];
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
   const [lancs, setLancs] = useState([]);
@@ -79,7 +73,6 @@ export default function ExecucaoOrcamentaria() {
   const [cmvOnly, setCmvOnly] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const [novoTipo, setNovoTipo] = useState('Despesa');
-  const [showNovo, setShowNovo] = useState(false);
   const [detalhe, setDetalhe] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
@@ -354,68 +347,48 @@ export default function ExecucaoOrcamentaria() {
             />
           </div>
         )}
+
+        {aba === 'contas' && (
+          <div className="min-w-0 space-y-6">
+            {/* Sub-abas no mesmo padrão visual de Fluxo / Contas Abertas */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setAbaContas('contas')}
+                className={`rounded-[22px] px-3 py-3 text-center transition-all ${abaContas === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+              >
+                <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${abaContas === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
+                  <ArrowUpRight className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                </div>
+                <p className="text-[13px] font-medium text-gray-900 dark:text-white">Contas a pagar</p>
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Pendências e pagamentos</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAbaContas('agefin')}
+                className={`rounded-[22px] px-3 py-3 text-center transition-all ${abaContas === 'agefin' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+              >
+                <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${abaContas === 'agefin' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
+                  <Upload className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                </div>
+                <p className="text-[13px] font-medium text-gray-900 dark:text-white">Atualizar boletos</p>
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">PDF e recorrências</p>
+              </button>
+            </div>
+
+            {abaContas === 'contas' ? (
+              <ContasAbertas onOpenImportador={() => setShowImportadorAgefin(true)} />
+            ) : (
+              <div className="min-w-0">
+                <AgefinRecorrentes />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {aba === 'contas' && (
         <>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setAbaContas('contas')}
-              className={`rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 transition-all ${abaContas === 'contas' ? 'ring-1 ring-gray-200 dark:ring-slate-700' : 'opacity-80'}`}
-            >
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-700">
-                <ArrowUpRight className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-              </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white text-center">Contas a Pagar</p>
-            </button>
-            <button
-              onClick={() => setAbaContas('agefin')}
-              className={`rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 transition-all ${abaContas === 'agefin' ? 'ring-1 ring-gray-200 dark:ring-slate-700' : 'opacity-80'}`}
-            >
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-700">
-                <Upload className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-              </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white text-center">Atualizar boletos</p>
-            </button>
-          </div>
-
-          {abaContas === 'contas' ? <ContasAbertas /> : <AgefinRecorrentes />}
-
-          {abaContas === 'contas' && (
-            <>
-              {fabOpen && <div className="fixed inset-0 z-[54] bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
-              <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
-                {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label, dialogTipo }) => (
-                  <button
-                    key={tipo}
-                    onClick={() => {
-                      if (tipo === 'Importar') {
-                        setShowImportadorAgefin(true);
-                        setFabOpen(false);
-                        return;
-                      }
-                      setFabOpen(false);
-                      setNovoTipo(dialogTipo || tipo);
-                      setShowNovo(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform"
-                  >
-                    <Icon className="w-4 h-4" />{label}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setFabOpen(o => !o)}
-                  className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-slate-700 rotate-45' : 'bg-slate-900 dark:bg-slate-200'}`}
-                >
-                  <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-slate-900'}`} />
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => { setShowNovo(false); setFabOpen(false); }} onSaved={load} />
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
           <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">

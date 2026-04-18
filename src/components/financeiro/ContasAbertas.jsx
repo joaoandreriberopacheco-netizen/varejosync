@@ -8,7 +8,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  AlertTriangle, Calendar, CheckCircle2, FileText, SlidersHorizontal
+  AlertTriangle, Calendar, CheckCircle2, FileText, SlidersHorizontal, Upload
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -59,41 +59,75 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-// ─── KPI Cards ────────────────────────────────────────────────────────────────
+// ─── KPI Cards (alinhado ao bloco Fluxo de Caixa / KpiFluxo) ─────────────────
+const kpiGap = 'gap-3';
+const kpiCardTop =
+  'min-w-0 bg-[hsl(var(--background))] rounded-[22px] border border-transparent px-3.5 py-3 dark:border-border dark:bg-card';
+const kpiCardSaldo =
+  'rounded-[22px] border border-transparent bg-[hsl(var(--background))] dark:border-border dark:bg-card';
+const kpiSaldoPad = 'px-5 py-4 sm:px-6 sm:py-5';
+
 function KpiAbertas({ kpis }) {
+  const saldoBody = (
+    <>
+      <div className="mb-2.5 min-w-0">
+        <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">Saldo projetado</p>
+        <p className="break-words text-[17px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[19px] dark:text-foreground">
+          <span className={kpis.saldoProjetado >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>
+          {R(Math.abs(kpis.saldoProjetado))}
+        </p>
+      </div>
+    </>
+  );
+
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3">
-          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">A Receber</p>
-          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{R(kpis.aReceber)}</p>
-          {kpis.qtdReceber > 0 && <p className="text-[9px] text-gray-400 dark:text-gray-500">{kpis.qtdReceber} lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</p>}
+    <div className={`flex min-w-0 w-full max-w-full flex-col overflow-x-clip ${kpiGap}`}>
+      <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
+        <div className={kpiCardTop}>
+          <div className="mb-1.5 flex min-w-0 items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
+              <ArrowDownLeft className="h-3 w-3 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="min-w-0 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">A receber</p>
+          </div>
+          <p className="break-words text-[14px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[15px] dark:text-foreground">{R(kpis.aReceber)}</p>
+          {kpis.qtdReceber > 0 && <p className="mt-1 text-[9px] text-gray-500 dark:text-muted-foreground">{kpis.qtdReceber} lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</p>}
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3">
-          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">A Pagar</p>
-          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{R(kpis.aPagar)}</p>
-          {kpis.qtdPagar > 0 && <p className="text-[9px] text-gray-400 dark:text-gray-500">{kpis.qtdPagar} lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</p>}
+        <div className={kpiCardTop}>
+          <div className="mb-1.5 flex min-w-0 items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
+              <ArrowUpRight className="h-3 w-3 text-red-500 dark:text-red-400" />
+            </div>
+            <p className="min-w-0 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">A pagar</p>
+          </div>
+          <p className="break-words text-[14px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[15px] dark:text-foreground">{R(kpis.aPagar)}</p>
+          {kpis.qtdPagar > 0 && <p className="mt-1 text-[9px] text-gray-500 dark:text-muted-foreground">{kpis.qtdPagar} lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</p>}
         </div>
       </div>
 
-      {/* Saldo projetado */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex items-center justify-between">
-        <div>
-          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Saldo Projetado</p>
-          <p className="text-base font-bold text-white dark:text-white">
-            <span className={kpis.saldoProjetado >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>{R(Math.abs(kpis.saldoProjetado))}
-          </p>
-        </div>
-        {kpis.vencidas > 0 && (
-          <div className="flex items-center gap-1.5 text-right">
-            <AlertTriangle className="w-3.5 h-3.5 text-gray-400 flex-none" />
-            <div>
-              <p className="text-[9px] text-gray-400 dark:text-gray-500">Vencidas</p>
-              <p className="text-xs font-semibold text-white dark:text-white"><span className="text-red-500 dark:text-red-400">−</span>{R(kpis.vencidas)}</p>
+      {kpis.vencidas > 0 ? (
+        <div className={`flex min-w-0 flex-col sm:flex-row sm:items-stretch ${kpiGap}`}>
+          <div className={`${kpiCardSaldo} ${kpiSaldoPad} min-w-0 flex-1`}>{saldoBody}</div>
+          <div className={`${kpiCardSaldo} ${kpiSaldoPad} flex min-h-0 min-w-0 flex-1 items-center gap-3`}>
+            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidas</p>
+              <p className="break-words text-sm font-semibold leading-snug text-gray-900 dark:text-foreground">
+                <span className="text-red-600 dark:text-red-400">−</span>
+                {R(kpis.vencidas)}
+                {kpis.qtdVencidas > 0 && (
+                  <span className="text-gray-500 dark:text-muted-foreground">
+                    {' '}
+                    · {kpis.qtdVencidas} lançamento{kpis.qtdVencidas !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className={`${kpiCardSaldo} ${kpiSaldoPad}`}>{saldoBody}</div>
+      )}
     </div>
   );
 }
@@ -201,7 +235,7 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export default function ContasAbertas() {
+export default function ContasAbertas({ onOpenImportador }) {
   const [lancs, setLancs]         = useState([]);
   const [contas, setContas]       = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -283,16 +317,19 @@ export default function ContasAbertas() {
   }), [emAberto, periodo, ds, de, tipoFiltro, contasSel, search, cs, ce]);
 
   const kpis = useMemo(() => {
-    let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0;
+    let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0, qtdVencidas = 0;
     const hStr = hojeStr();
     // KPIs consideram apenas Em Aberto/Vencido (não as pagas)
     filtrados.filter(l => l.status !== 'Pago').forEach(l => {
       const vStr = getVencimento(l);
       if (l.tipo === 'Receita') { aReceber += l.valor || 0; qtdReceber++; }
       else { aPagar += l.valor || 0; qtdPagar++; }
-      if (vStr && vStr < hStr) vencidas += l.valor || 0;
+      if (vStr && vStr < hStr) {
+        vencidas += l.valor || 0;
+        qtdVencidas++;
+      }
     });
-    return { aReceber, aPagar, saldoProjetado: aReceber - aPagar, qtdReceber, qtdPagar, vencidas };
+    return { aReceber, aPagar, saldoProjetado: aReceber - aPagar, qtdReceber, qtdPagar, vencidas, qtdVencidas };
   }, [filtrados]);
 
   const grupos = useMemo(() => {
@@ -412,42 +449,43 @@ export default function ContasAbertas() {
   const FAB_ITEMS = [
     { tipo: 'Receita', icon: ArrowDownLeft, label: 'A Receber', action: () => { setNovoTipo('Receita'); setShowNovo(true); setFabOpen(false); } },
     { tipo: 'Despesa', icon: ArrowUpRight,  label: 'A Pagar',   action: () => { setNovoTipo('Despesa'); setShowNovo(true); setFabOpen(false); } },
+    { tipo: 'Importar', icon: Upload, label: 'Importar PDF', action: () => { setFabOpen(false); onOpenImportador?.(); } },
     { tipo: 'Relatorio', icon: FileText,    label: gerandoRelatorio ? 'Gerando...' : 'Relatório', action: () => { setFabOpen(false); handleGerarRelatorio(); } },
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-hidden space-y-3 pb-28">
+    <div className="w-full min-w-0 max-w-full space-y-6 overflow-x-clip pb-28">
 
-      {/* KPIs */}
       <KpiAbertas kpis={kpis} />
 
-      {/* Filtros */}
-      <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm p-3">
+      {/* Filtros (superfície alinhada a FiltrosFluxoCaixa) */}
+      <div className="rounded-[20px] border border-transparent p-0 dark:border-transparent">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-gray-100 dark:bg-slate-800">
-            <Search className="w-4 h-4 text-gray-400 flex-none" />
+          <div className="flex h-12 flex-1 items-center gap-2 rounded-[16px] border border-transparent bg-white px-3 dark:border-slate-700/70 dark:bg-slate-800">
+            <Search className="h-4 w-4 flex-none text-gray-400" />
             <input autoComplete="off"
               value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar..."
-              className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-100 placeholder:text-gray-400 outline-none"
+              placeholder="Buscar descrição, categoria, fornecedor..."
+              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-gray-100"
             />
-            {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
+            {search && <button type="button" onClick={() => setSearch('')} aria-label="Limpar busca"><X className="h-3.5 w-3.5 text-gray-400" /></button>}
           </div>
 
           <button
+            type="button"
             onClick={() => setShowFilters(true)}
-            className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-sm relative"
+            className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-transparent bg-white text-gray-900 dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="h-4 w-4" />
             {(periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || cs || ce) && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 dark:bg-white text-[10px] text-white dark:text-slate-900 flex items-center justify-center">•</span>
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-[10px] text-white dark:bg-white dark:text-slate-900">•</span>
             )}
           </button>
         </div>
 
-        <div className="pt-2 px-1 flex items-center justify-between gap-2">
-          <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
-          <div className="flex flex-wrap justify-end gap-1.5">
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-white/70 px-1.5 pt-2.5 dark:border-slate-700/70">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
+          <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
             <button
               onClick={() => {
                 setModoSelecaoLote((prev) => !prev);
@@ -576,20 +614,25 @@ export default function ContasAbertas() {
         </div>
       )}
 
-      {/* FAB */}
-      {fabOpen && <div className="fixed inset-0 z-[54] bg-black/20" onClick={() => setFabOpen(false)} />}
+      {/* FAB (mesmo tratamento visual do Fluxo de Caixa) */}
+      {fabOpen && <div className="fixed inset-0 z-[54] bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
         {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label, action }) => (
-          <button key={tipo}
+          <button
+            key={tipo}
+            type="button"
             onClick={action}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
-            <Icon className="w-4 h-4" />{label}
+            className="flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg whitespace-nowrap transition-transform active:scale-95 dark:bg-slate-200 dark:text-slate-900"
+          >
+            <Icon className="h-4 w-4" />{label}
           </button>
         ))}
         <button
+          type="button"
           onClick={() => setFabOpen(o => !o)}
-          className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-gray-400 rotate-45' : 'bg-gray-900 dark:bg-gray-200'}`}>
-          <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-gray-900'}`} />
+          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-slate-700' : 'bg-slate-900 dark:bg-slate-200'}`}
+        >
+          <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-slate-900'}`} />
         </button>
       </div>
 
