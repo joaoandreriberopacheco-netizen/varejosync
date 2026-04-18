@@ -15,6 +15,8 @@ import {
   RadioTower,
   HelpCircle,
   FileUp,
+  Clipboard,
+  FolderOpen,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
@@ -36,10 +38,13 @@ export default function AnexoCompartilhado() {
   const [uploadando, setUploadando] = useState(false);
   const [lancamentoVinculado, setLancamentoVinculado] = useState(null);
   const pollingRef = useRef(null);
+  const inputArquivoManualRef = useRef(null);
   const destinoDeepLinkHandled = useRef(false);
   const [tipoDocumento, setTipoDocumento] = useState('Comprovante');
   const [tiposDocumentoCustom, setTiposDocumentoCustom] = useState(() => loadTiposCustomAnexo());
   const [ajudaTorreAberta, setAjudaTorreAberta] = useState(false);
+  const [feedbackClipboard, setFeedbackClipboard] = useState('');
+  const [modoAtalhoClipboard, setModoAtalhoClipboard] = useState(false);
   /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
   const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
 
@@ -68,6 +73,96 @@ export default function AnexoCompartilhado() {
     }
     const previewUrl = URL.createObjectURL(blob);
     setArquivo({ file: fileObj, previewUrl, nome: fileName, tipo: blob.type });
+  };
+
+  const definirTextoColado = (texto) => {
+    const valor = String(texto || '').trim();
+    if (!valor) return false;
+    const isUrl = /^https?:\/\//i.test(valor);
+    setArquivo({
+      file: null,
+      previewUrl: null,
+      nome: isUrl ? 'Link colado' : 'Texto colado',
+      tipo: isUrl ? 'text/uri-list' : 'text/plain',
+      texto: valor,
+    });
+    return true;
+  };
+
+  const extensaoPorMime = (mime = '') => {
+    const m = String(mime).toLowerCase();
+    if (m === 'application/pdf') return '.pdf';
+    if (m === 'image/jpeg') return '.jpg';
+    if (m === 'image/png') return '.png';
+    if (m === 'image/webp') return '.webp';
+    if (m === 'image/gif') return '.gif';
+    if (m.startsWith('image/')) return `.${m.split('/')[1] || 'img'}`;
+    return '';
+  };
+
+  const handleSelecionarArquivoManual = (event) => {
+    const f = event?.target?.files?.[0];
+    if (!f) return;
+    prepararArquivo(f, f.name || `arquivo${extensaoPorMime(f.type)}`);
+    setFeedbackClipboard('Arquivo selecionado com sucesso.');
+    setModoAtalhoClipboard(false);
+    event.target.value = '';
+  };
+
+  const handleColarDaAreaTransferencia = async () => {
+    const podeLerBinario = typeof navigator !== 'undefined' && typeof navigator.clipboard?.read === 'function';
+    const podeLerTexto = typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function';
+    setFeedbackClipboard('');
+
+    const tentarTexto = async () => {
+      if (!podeLerTexto) return false;
+      const texto = await navigator.clipboard.readText();
+      if (!String(texto || '').trim()) return false;
+      const ok = definirTextoColado(texto);
+      if (ok) {
+        setFeedbackClipboard('Conteúdo colado com sucesso.');
+        setModoAtalhoClipboard(false);
+      }
+      return ok;
+    };
+
+    try {
+      if (podeLerBinario) {
+        const items = await navigator.clipboard.read();
+        for (const item of items || []) {
+          const tipoArquivo = (item.types || []).find((t) => t === 'application/pdf' || t.startsWith('image/'));
+          if (tipoArquivo) {
+            const blob = await item.getType(tipoArquivo);
+            const nome = `clipboard-${Date.now()}${extensaoPorMime(tipoArquivo)}`;
+            prepararArquivo(blob, nome);
+            setFeedbackClipboard('Arquivo colado com sucesso.');
+            setModoAtalhoClipboard(false);
+            return;
+          }
+          const tipoTexto = (item.types || []).find((t) => t === 'text/plain' || t === 'text/uri-list');
+          if (tipoTexto) {
+            const blobTxt = await item.getType(tipoTexto);
+            const txt = await blobTxt.text();
+            if (definirTextoColado(txt)) {
+              setFeedbackClipboard('Conteúdo colado com sucesso.');
+              setModoAtalhoClipboard(false);
+              return;
+            }
+          }
+        }
+      }
+
+      if (await tentarTexto()) return;
+      setFeedbackClipboard('Área de transferência vazia ou tipo não suportado. Tente selecionar um arquivo.');
+    } catch (err) {
+      try {
+        if (await tentarTexto()) return;
+      } catch (_) {
+        // ignora; cai para mensagem final
+      }
+      setFeedbackClipboard('Não foi possível aceder à área de transferência neste navegador.');
+      console.error('Colar da área de transferência:', err);
+    }
   };
 
   const carregarArquivoDoCache = async (fileUrl) => {
@@ -195,6 +290,11 @@ export default function AnexoCompartilhado() {
     const params = new URLSearchParams(window.location.search);
     const destino = params.get(SHARE_DESTINO_QUERY);
     const etapaAlvo = mapDestinoQueryToEtapa(destino);
+    const focoColar = params.get('clipboard') === '1';
+    if (focoColar) {
+      setModoAtalhoClipboard(true);
+      setFeedbackClipboard('Atalho aberto. Toque em "Colar da área de transferência".');
+    }
     if (etapaAlvo) {
       destinoDeepLinkHandled.current = true;
       setEtapa(etapaAlvo);
@@ -533,6 +633,39 @@ export default function AnexoCompartilhado() {
                 })
               }
             />
+          </div>
+
+          <div className="px-4 md:px-5">
+            <input
+              ref={inputArquivoManualRef}
+              type="file"
+              accept="application/pdf,image/*,text/plain,text/*"
+              onChange={handleSelecionarArquivoManual}
+              className="hidden"
+            />
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => inputArquivoManualRef.current?.click()}
+                className={`flex h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium ${brandSurface.card}`}
+              >
+                <FolderOpen className="h-4 w-4" />
+                Selecionar arquivo
+              </button>
+              <button
+                type="button"
+                onClick={handleColarDaAreaTransferencia}
+                className={`flex h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium ${brandSurface.card}`}
+              >
+                <Clipboard className="h-4 w-4" />
+                Colar da área de transferência
+              </button>
+            </div>
+            {(feedbackClipboard || modoAtalhoClipboard) && (
+              <p className={`mt-2 text-xs ${brandSurface.textLabel}`}>
+                {feedbackClipboard || 'Toque em "Colar da área de transferência" para continuar com o conteúdo copiado.'}
+              </p>
+            )}
           </div>
 
           {ajudaTorreAberta && (

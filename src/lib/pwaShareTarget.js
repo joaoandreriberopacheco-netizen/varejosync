@@ -11,6 +11,9 @@
 export const SHARE_DESTINO_QUERY = 'destino';
 
 export const SHARE_SUBTARGET_KEYS = {
+  /** Atalho para abrir na etapa de classificação */
+  torre: 'torre_controle',
+  classificar: 'torre_controle',
   lancamento: 'vincular',
   pedido: 'vincular_pedido',
   pedido_compra: 'vincular_pedido',
