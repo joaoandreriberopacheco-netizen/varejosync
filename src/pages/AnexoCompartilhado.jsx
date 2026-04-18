@@ -13,7 +13,7 @@ import {
   ChevronRight,
   RefreshCw,
   RadioTower,
-  CircleHelp,
+  HelpCircle,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
@@ -481,57 +481,37 @@ export default function AnexoCompartilhado() {
     <div className={`relative flex min-h-[100dvh] flex-col ${brandSurface.pageScreen}`}>
       {/* Scroll só aqui: overlays fullscreen vão para document.body (portal). */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      <div className="flex items-center gap-3 px-4 pb-2 pt-5 md:px-5">
-        <button
-          type="button"
-          onClick={() => {
-            if (etapa === 'opcoes') setEtapa('torre_controle');
-            else window.history.back();
-          }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        {etapa === 'torre_controle' && (
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${brandSurface.iconCapsule}`}>
-            <RadioTower className="h-5 w-5 text-gray-700 dark:text-foreground" aria-hidden />
+      {etapa === 'torre_controle' ? (
+        <>
+          <div className="flex items-center gap-3 px-4 pt-5 md:px-5">
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              <RadioTower
+                className="h-6 w-6 shrink-0 text-gray-700 dark:text-primary"
+                aria-hidden
+              />
+              <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+                Torre de controle
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAjudaTorreAberta((v) => !v)}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
+              aria-expanded={ajudaTorreAberta}
+              aria-label="Ajuda: tipo de documento"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
           </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {etapa === 'torre_controle' ? 'Torre de controle' : 'Comprovante recebido'}
-          </h1>
-          {etapa === 'opcoes' && (
-            <p className={`text-xs ${brandSurface.textLabel}`}>O que deseja fazer com este arquivo?</p>
-          )}
-        </div>
-        {etapa === 'torre_controle' && (
-          <button
-            type="button"
-            onClick={() => setAjudaTorreAberta((v) => !v)}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
-            aria-expanded={ajudaTorreAberta}
-            aria-label="Ajuda sobre o tipo de documento"
-          >
-            <CircleHelp className="h-5 w-5" />
-          </button>
-        )}
-      </div>
 
-      {etapa === 'torre_controle' && ajudaTorreAberta && (
-        <div className={`mx-4 mb-3 rounded-2xl px-4 py-3 text-sm leading-snug md:mx-5 ${brandSurface.card}`}>
-          <p className={brandSurface.textMuted}>
-            Escolha o tipo que melhor descreve o arquivo. Use a busca para filtrar ou crie um tipo novo; ele fica salvo neste aparelho para as próximas vezes. Depois avance para escolher o destino no P38.
-          </p>
-        </div>
-      )}
-
-      {etapa === 'torre_controle' && (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 md:px-5">
-          <div>
-            <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-muted-foreground">
-              Tipo de documento
-            </p>
+          <div className="mt-3 px-4 md:px-5">
             <TipoDocumentoSearch
               tipos={tiposDocumentoDisponiveis}
               value={tipoDocumento}
@@ -548,19 +528,49 @@ export default function AnexoCompartilhado() {
               }
             />
           </div>
-          <div className="mx-0 mb-1 md:mx-0">
+
+          {ajudaTorreAberta && (
+            <div className={`mx-4 mt-3 rounded-2xl px-4 py-3 text-sm leading-snug md:mx-5 ${brandSurface.card}`}>
+              <p className={brandSurface.textMuted}>
+                Escolha o tipo que melhor descreve o arquivo. Use a busca para filtrar ou crie um tipo novo; ele fica salvo neste aparelho para as próximas vezes. Depois avance para escolher o destino no P38.
+              </p>
+            </div>
+          )}
+
+          <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-3 md:px-5">
             <ArquivoPreview arquivo={arquivo} />
+            <button
+              type="button"
+              onClick={() => setEtapa('opcoes')}
+              disabled={!String(tipoDocumento || '').trim()}
+              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-2"
+            >
+              Continuar para destinos
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setEtapa('opcoes')}
-            disabled={!String(tipoDocumento || '').trim()}
-            className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-2"
-          >
-            Continuar para destinos
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-3 px-4 pb-2 pt-5 md:px-5">
+            <button
+              type="button"
+              onClick={() => {
+                if (etapa === 'opcoes') setEtapa('torre_controle');
+                else window.history.back();
+              }}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Comprovante recebido</h1>
+              {etapa === 'opcoes' && (
+                <p className={`text-xs ${brandSurface.textLabel}`}>O que deseja fazer com este arquivo?</p>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {etapa === 'opcoes' && (
