@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ChevronRight, User, AlertCircle, Calendar, FileText, Dice5 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 /**
- * Sheet para configurar Fiado (Conta a Pagar)
- * Props:
- *   visible: boolean
- *   clienteId: string | null  (pré-seleciona o cliente do pedido)
- *   clienteNome: string | null
- *   valorTotal: number
- *   onConfirm: ({ prazo_dias, data_vencimento, observacao }) => void
- *   onCancel: () => void
+ * Modal Radix aninhado — fiado sobre o dialog de pagamento (clique/toque confiáveis).
  */
 const PRAZOS = [
   { label: '7 dias',  dias: 7 },
@@ -34,9 +29,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
       setObservacao('');
       setValor('');
     }
-  }, [visible === true]);
-
-  if (!visible) return null;
+  }, [visible]);
 
   const gerarDataAleatoria = () => {
     const diasMin = 7;
@@ -61,13 +54,12 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
   };
 
   return (
-    <div
-      className="absolute inset-0 z-[100] flex items-end justify-center bg-black/40 md:items-center"
-      onClick={onCancel}
-    >
-      <div
-        className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-2xl md:rounded-2xl shadow-2xl p-5 space-y-4"
-        onClick={e => e.stopPropagation()}
+    <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent
+        className={cn(
+          'z-[100] flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-gray-900 sm:w-full',
+          '[&>button]:hidden'
+        )}
       >
         {/* Header */}
         <div className="flex items-center gap-3 mb-1">
@@ -202,7 +194,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             Confirmar <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

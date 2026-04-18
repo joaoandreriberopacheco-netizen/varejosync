@@ -191,7 +191,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
   };
 
   return (
-    <div className="relative min-h-full w-full">
+    <>
       <div className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto p-4">
         <div className="rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
           <div className="flex items-center justify-between">
@@ -355,7 +355,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
         }}
         onCancel={() => setSeletorMaq(null)}
       />
-    </div>
+    </>
   );
 }
 

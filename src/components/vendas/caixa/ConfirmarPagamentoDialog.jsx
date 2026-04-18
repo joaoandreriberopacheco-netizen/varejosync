@@ -54,6 +54,19 @@ export default function ConfirmarPagamentoDialog({
     handleInputMascara(e, setInput, setValor);
   };
 
+  const handleInputMascaraFiado = (e, setInput, setValor) => {
+    if (!fiadoConfig && /^\d$/.test(e.key)) {
+      e.preventDefault();
+      toast({
+        title: 'Configure o fiado primeiro',
+        description: 'Use o botão à direita para prazo e condições.',
+        duration: 2200,
+      });
+      return;
+    }
+    handleInputMascara(e, setInput, setValor);
+  };
+
   if (!pedidoSelecionado) return null;
 
   const handleBuscarVale = async () => {
@@ -89,7 +102,7 @@ export default function ConfirmarPagamentoDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="relative flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
+        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-gray-100 px-5 pb-4 pt-5 dark:border-gray-800">
             <DialogTitle className="flex items-center justify-between">
@@ -224,10 +237,13 @@ export default function ConfirmarPagamentoDialog({
               icon={Receipt}
               index={5}
               active={formaPagamentoAtiva === 5}
-              onFocus={() => { setFormaPagamentoAtiva(5); if (!fiadoConfig) setShowSeletorFiado(true); }}
+              onFocus={() => setFormaPagamentoAtiva(5)}
+              onContainerClick={() => setFormaPagamentoAtiva(5)}
+              fiadoPendente={!fiadoConfig}
+              onFiadoButtonClick={() => setShowSeletorFiado(true)}
               inputRef={inputRefs.contaPagar}
               value={inputContaPagar}
-              onKeyDown={(e) => handleInputMascara(e, setInputContaPagar, setPagamentosContaPagar)}
+              onKeyDown={(e) => handleInputMascaraFiado(e, setInputContaPagar, setPagamentosContaPagar)}
               badge={fiadoConfig ? `Vence em ${fiadoConfig.prazo_dias} dias` : null}
               onBadgeClick={() => setShowSeletorFiado(true)}
               valoresVisiveis={valoresVisiveis}
@@ -271,40 +287,40 @@ export default function ConfirmarPagamentoDialog({
               }
             </button>
           </div>
-
-          <SeletorMaquininhaSheet
-            visible={!!seletorMaquininha}
-            modalidade={seletorMaquininha || 'debito'}
-            parcelas={seletorMaquininha === 'credito' ? parcelasCredito : 1}
-            onSelect={(dados) => {
-              if (seletorMaquininha === 'debito') {
-                setMaquininhaDebito(dados);
-              } else {
-                setMaquininhaCredito(dados);
-                if (dados.parcelas) setParcelasCredito(dados.parcelas);
-              }
-              setSeletorMaquininha(null);
-            }}
-            onCancel={() => setSeletorMaquininha(null)}
-          />
-
-          <SeletorFiadoSheet
-            visible={showSeletorFiado}
-            clienteNome={pedidoSelecionado?.cliente_nome}
-            valorTotal={pedidoSelecionado?.valor_total}
-            formatValor={formatValor}
-            onConfirm={(config) => {
-              setFiadoConfig(config);
-              if (config.valor) {
-                setPagamentosContaPagar(config.valor);
-                setInputContaPagar(formatarValorExibicao(config.valor));
-              }
-              setShowSeletorFiado(false);
-            }}
-            onCancel={() => setShowSeletorFiado(false)}
-          />
         </DialogContent>
       </Dialog>
+
+      <SeletorMaquininhaSheet
+        visible={!!seletorMaquininha}
+        modalidade={seletorMaquininha || 'debito'}
+        parcelas={seletorMaquininha === 'credito' ? parcelasCredito : 1}
+        onSelect={(dados) => {
+          if (seletorMaquininha === 'debito') {
+            setMaquininhaDebito(dados);
+          } else {
+            setMaquininhaCredito(dados);
+            if (dados.parcelas) setParcelasCredito(dados.parcelas);
+          }
+          setSeletorMaquininha(null);
+        }}
+        onCancel={() => setSeletorMaquininha(null)}
+      />
+
+      <SeletorFiadoSheet
+        visible={showSeletorFiado}
+        clienteNome={pedidoSelecionado?.cliente_nome}
+        valorTotal={pedidoSelecionado?.valor_total}
+        formatValor={formatValor}
+        onConfirm={(config) => {
+          setFiadoConfig(config);
+          if (config.valor) {
+            setPagamentosContaPagar(config.valor);
+            setInputContaPagar(formatarValorExibicao(config.valor));
+          }
+          setShowSeletorFiado(false);
+        }}
+        onCancel={() => setShowSeletorFiado(false)}
+      />
     </>
   );
 }
@@ -313,6 +329,7 @@ export default function ConfirmarPagamentoDialog({
 function InputPagamento({
   label, icon: Icon, active, onFocus, onContainerClick, inputRef, value, onKeyDown, badge, onBadgeClick, valoresVisiveis,
   maquininhaPendente, onMaquininhaButtonClick,
+  fiadoPendente, onFiadoButtonClick,
 }) {
   return (
     <div className="space-y-0.5">
@@ -329,7 +346,20 @@ function InputPagamento({
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
         <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none min-w-0">{label}</span>
-        {maquininhaPendente && onMaquininhaButtonClick ? (
+        {fiadoPendente && onFiadoButtonClick ? (
+          <button
+            type="button"
+            ref={inputRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              onFiadoButtonClick();
+            }}
+            onFocus={() => onFocus?.()}
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:focus:ring-gray-500"
+          >
+            Prazo · fiado
+          </button>
+        ) : maquininhaPendente && onMaquininhaButtonClick ? (
           <button
             type="button"
             ref={inputRef}
@@ -338,7 +368,7 @@ function InputPagamento({
               onMaquininhaButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:focus:ring-gray-500"
           >
             Maquininha / bandeira
           </button>

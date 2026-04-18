@@ -1,20 +1,13 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CreditCard, ChevronRight, AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
 
 /**
- * Sheet inline para selecionar maquininha + bandeira ao usar Débito ou Crédito
- * Props:
- *   visible: boolean
- *   modalidade: 'debito' | 'credito'
- *   parcelas: number (só para crédito)
- *   onSelect: ({ maquininha, bandeira, taxa, prazo_dias }) => void
- *   onCancel: () => void
- *
- * Deve ficar dentro de um ancestral com position:relative (ex.: DialogContent do Radix).
- * Não usar portal para document.body — o Dialog modal deixa irmãos inert/bloqueados.
+ * Modal Radix aninhado — recebe clique/toque corretamente sobre o dialog de pagamento.
  */
 export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: parcelasIniciais = 1, onSelect, onCancel }) {
   const [maquininhas, setMaquininhas] = useState([]);
@@ -30,7 +23,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
       setParcelas(parcelasIniciais);
       loadMaquininhas();
     }
-  }, [visible]);
+  }, [visible, modalidade, parcelasIniciais]);
 
   const loadMaquininhas = async () => {
     setLoading(true);
@@ -64,16 +57,13 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
     ? (selecionada.bandeiras || []).map(b => b.bandeira).filter(Boolean)
     : BANDEIRAS;
 
-  if (!visible) return null;
-
   return (
-    <div
-      className="absolute inset-0 z-[100] flex items-end justify-center bg-black/40 md:items-center"
-      onClick={onCancel}
-    >
-      <div
-        className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-2xl md:rounded-2xl shadow-2xl p-5 space-y-4"
-        onClick={e => e.stopPropagation()}
+    <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent
+        className={cn(
+          'z-[100] flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-gray-900 sm:w-full',
+          '[&>button]:hidden'
+        )}
       >
         <div className="flex items-center gap-3 mb-1">
           <CreditCard className="w-5 h-5 text-gray-500" />
@@ -205,7 +195,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
