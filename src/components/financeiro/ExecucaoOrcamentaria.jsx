@@ -282,10 +282,10 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="space-y-6 rounded-[32px] border border-transparent bg-[#F3F4F6] px-5 py-5 dark:border-border dark:bg-card">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2 min-w-0">
-            <p className="text-[32px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
+      <div className="min-w-0 max-w-full space-y-6 rounded-[32px] border border-transparent bg-[#F3F4F6] px-4 py-5 sm:px-5 dark:border-border dark:bg-card">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-2 pr-1">
+            <p className="text-[28px] leading-none font-semibold text-gray-900 sm:text-[32px] dark:text-gray-100 font-glacial">Financeiro</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
           </div>
           {aba === 'fluxo' && (
@@ -322,7 +322,7 @@ export default function ExecucaoOrcamentaria() {
         </div>
 
         {aba === 'fluxo' && (
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             {/* KPIs */}
             <KpiFluxo kpis={kpis} />
 
