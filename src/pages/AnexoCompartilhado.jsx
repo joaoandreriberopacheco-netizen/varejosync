@@ -165,44 +165,76 @@ export default function AnexoCompartilhado() {
     }
   };
 
+  const SHARED_FILES_CACHE = 'VarejoSync-shared-files';
+
+  const limparTodoCacheCompartilhados = async () => {
+    try {
+      const cache = await caches.open(SHARED_FILES_CACHE);
+      const keys = await cache.keys();
+      await Promise.all(keys.map((k) => cache.delete(k)));
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
   const carregarArquivoDoCache = async (fileUrl) => {
     try {
-      const cache = await caches.open('VarejoSync-shared-files');
+      const cache = await caches.open(SHARED_FILES_CACHE);
       const req = typeof fileUrl === 'string' ? new Request(fileUrl) : fileUrl;
       const resp = await cache.match(req);
       if (!resp) return false;
       const blob = await resp.blob();
       if (blob.size === 0) return false;
       await cache.delete(req);
-      const fileName = fileUrl.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+      const fileName = String(fileUrl).split('/').pop().replace(/^\d+-/, '') || 'arquivo';
       prepararArquivo(blob, fileName);
+      await limparTodoCacheCompartilhados();
       return true;
     } catch (e) {
       return false;
     }
   };
 
-  const varrerCache = async () => {
+  /** SW grava `/shared/${Date.now()}-nome`; sem isso o primeiro da lista pode ser PDF antigo ainda na cache. */
+  const extrairTimestampCachePath = (req) => {
+    const url = typeof req === 'string' ? req : req.url;
+    const m = String(url).match(/\/shared\/(\d+)-/);
+    return m ? parseInt(m[1], 10) : 0;
+  };
+
+  const consumirArquivoMaisRecenteDoCache = async () => {
     try {
-      const cache = await caches.open('VarejoSync-shared-files');
+      const cache = await caches.open(SHARED_FILES_CACHE);
       const keys = await cache.keys();
       if (keys.length === 0) return false;
-      
+
+      let melhorReq = null;
+      let melhorTs = -1;
       for (const req of keys) {
-        const resp = await cache.match(req);
-        if (!resp) continue;
-        const blob = await resp.blob();
-        if (blob.size > 0) {
-          await cache.delete(req);
-          const url = typeof req === 'string' ? req : req.url;
-          const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
-          prepararArquivo(blob, fileName);
-          return true;
-        } else {
-            await cache.delete(req);
+        const ts = extrairTimestampCachePath(req);
+        if (ts >= melhorTs) {
+          melhorTs = ts;
+          melhorReq = req;
         }
       }
-      return false; 
+
+      if (!melhorReq) return false;
+
+      const resp = await cache.match(melhorReq);
+      if (!resp) {
+        await limparTodoCacheCompartilhados();
+        return false;
+      }
+      const blob = await resp.blob();
+      if (blob.size === 0) {
+        await limparTodoCacheCompartilhados();
+        return false;
+      }
+      const url = typeof melhorReq === 'string' ? melhorReq : melhorReq.url;
+      const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+      prepararArquivo(blob, fileName);
+      await limparTodoCacheCompartilhados();
+      return true;
     } catch (e) {
       return false;
     }
@@ -211,6 +243,7 @@ export default function AnexoCompartilhado() {
   useEffect(() => {
     let tentativas = 0;
     const MAX_TENTATIVAS = 30;
+    let primeiraExecucaoTentar = true;
 
     const processSharedData = async (fileEntries) => {
         if (!fileEntries || fileEntries.length === 0) {
@@ -222,7 +255,7 @@ export default function AnexoCompartilhado() {
 
         if (firstFileEntry) {
             const achou = await carregarArquivoDoCache(firstFileEntry.url);
-            if (!achou) await varrerCache(); 
+            if (!achou) await consumirArquivoMaisRecenteDoCache(); 
         } else if (textEntry) {
             setArquivo({ file: null, previewUrl: null, nome: textEntry.name, tipo: textEntry.type, texto: textEntry.textContent });
         }
@@ -242,19 +275,30 @@ export default function AnexoCompartilhado() {
 
     const tentar = async () => {
       const params = new URLSearchParams(window.location.search);
+      const shareTarget = params.get('share-target') === '1';
       const focoClipboard = params.get('clipboard') === '1';
       const destino = params.get(SHARE_DESTINO_QUERY);
+
+      if (primeiraExecucaoTentar) {
+        primeiraExecucaoTentar = false;
+        if (!shareTarget) {
+          await limparTodoCacheCompartilhados();
+        }
+      }
+
       if (focoClipboard || String(destino || '').toLowerCase() === 'torre') {
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;
       }
 
-      const achouNoCache = await varrerCache();
-      if (achouNoCache) {
-        setCarregando(false);
-        clearTimeout(pollingRef.current);
-        return;
+      if (shareTarget) {
+        const achouNoCache = await consumirArquivoMaisRecenteDoCache();
+        if (achouNoCache) {
+          setCarregando(false);
+          clearTimeout(pollingRef.current);
+          return;
+        }
       }
 
       if (params.get('text') || params.get('url')) {
