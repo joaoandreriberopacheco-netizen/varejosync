@@ -8,11 +8,11 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  AlertTriangle, Calendar, CheckCircle2, FileText, SlidersHorizontal, Upload
+  AlertTriangle, CheckCircle2, FileText, SlidersHorizontal, Upload, ChevronRight, Scale
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Checkbox } from '@/components/ui/checkbox';
-import { dataHoje } from '@/components/utils/dateUtils';
+import { dataHoje, formatarDataCurta } from '@/components/utils/dateUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
@@ -144,17 +144,47 @@ function KpiAbertas({ kpis }) {
 
 // (ContasFiltro removido — seleção de conta apenas na efetivação)
 
-// ─── Linha de lançamento em aberto ────────────────────────────────────────────
+/** Mesmas classes de badge que ListaLancamentos (StatusBadge) */
+function ContaStatusBadge({ status }) {
+  const map = {
+    Vencido: 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400',
+    'Em Aberto': 'bg-gray-100 dark:bg-gray-700 text-gray-400',
+    Pago: 'bg-gray-100 dark:bg-gray-700 text-gray-500',
+  };
+  if (!status || status === 'Pago') return null;
+  if (status !== 'Vencido' && status !== 'Em Aberto') return null;
+  return (
+    <span className={`rounded-md px-1.5 py-0.5 text-[0.6rem] font-medium ${map[status] || ''}`}>
+      {status}
+    </span>
+  );
+}
+
+/** Igual RecorrenciaBadge em ListaLancamentos */
+function ContaRecorrenciaBadge({ l }) {
+  if (!l.frequencia_recorrencia) return null;
+  const label = l.frequencia_recorrencia === 'Parcelado' && l.parcela_atual != null
+    ? `${l.parcela_atual}/${l.numero_parcelas_total ?? '—'}`
+    : l.frequencia_recorrencia;
+  return (
+    <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-400 dark:bg-gray-700">
+      {label}
+    </span>
+  );
+}
+
+// ─── Linha (mesmo layout que LancRow em ListaLancamentos) ───────────────────
 function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecionado }) {
   const isR = l.tipo === 'Receita';
-  const hStr = hojeStr();
   const vStr = getVencimento(l);
-  const isVencida = vStr && vStr < hStr;
-  const isHoje = vStr === hStr;
   const val = Math.abs(l.valor || 0);
-  const frequencia = l.frequencia_recorrencia;
-
   const isPago = l.status === 'Pago';
+
+  const icon = isR
+    ? <ArrowDownLeft className="h-3.5 w-3.5 text-green-500 dark:text-green-400" />
+    : <ArrowUpRight className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />;
+
+  const dataKey = vStr;
 
   return (
     <button
@@ -167,79 +197,91 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
           <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado(l.id)} />
         </span>
       )}
-      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700">
-        {isR
-          ? <ArrowDownLeft className="h-3.5 w-3.5 text-green-500 dark:text-green-400" />
-          : <ArrowUpRight className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
-        }
-      </span>
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700">{icon}</span>
 
       <span className="min-w-0 flex-1">
         <span className="block text-[0.82rem] font-medium leading-snug break-words whitespace-normal text-gray-800 dark:text-gray-100">
           {l.descricao}
-          {frequencia && (
-            <span className="ml-1.5 inline-block max-w-full rounded bg-gray-100 px-1.5 py-0.5 align-middle text-[0.6rem] font-normal text-gray-400 break-words dark:bg-gray-700 dark:text-gray-500">
-              {frequencia}
+        </span>
+        <span className="mt-0.5 flex flex-wrap items-center gap-1">
+          <span className="text-[0.68rem] text-gray-400 dark:text-gray-500">
+            {dataKey ? formatarDataCurta(dataKey) : '—'}
+            {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
+          </span>
+          {l.categoria && (
+            <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+              {l.categoria}
             </span>
           )}
-        </span>
-        <span className="mt-0.5 block min-w-0 break-words text-[0.68rem] leading-snug text-gray-400 dark:text-gray-500">
-          {vStr
-            ? isVencida ? <span className="text-red-400 dark:text-red-500">Venceu {format(parseVencimento(vStr), 'dd MMM', { locale: ptBR })}</span>
-            : isHoje    ? <span className="text-gray-500 dark:text-gray-400">Vence hoje</span>
-            : format(parseVencimento(vStr), 'dd MMM yyyy', { locale: ptBR })
-            : '—'}
-          {l.categoria ? ` · ${l.categoria}` : ''}
+          <ContaStatusBadge status={isPago ? null : l.status} />
+          {isPago && (
+            <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-green-600 dark:bg-green-900/20 dark:text-green-400">
+              Pago
+            </span>
+          )}
+          <ContaRecorrenciaBadge l={l} />
+          {!isPago && !emSelecao && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onPagar(l); }}
+              className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            >
+              Pagar
+            </button>
+          )}
         </span>
       </span>
 
       <span className="flex shrink-0 flex-col items-end gap-0.5 pl-1">
-        <span className="text-[0.82rem] font-bold tabular-nums whitespace-nowrap text-gray-700 dark:text-gray-200">
+        <span className={`text-[0.82rem] font-bold tabular-nums whitespace-nowrap ${isPago ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
           <span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(val)}
         </span>
-        {isPago ? (
-          <span className="flex items-center gap-0.5 text-[0.6rem] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-2 py-0.5 font-medium">
-            <CheckCircle2 className="w-2.5 h-2.5" /> Pago
-          </span>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPagar(l); }}
-            className="flex items-center gap-0.5 text-[0.6rem] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-md bg-gray-100 dark:bg-gray-700 px-2 py-0.5 font-medium"
-          >
-            <CheckCircle2 className="w-2.5 h-2.5" /> Pagar
-          </button>
-        )}
       </span>
     </button>
   );
 }
 
-// ─── Grupo por data de vencimento ─────────────────────────────────────────────
+// ─── Grupo (mesmo padrão que Grupo em ListaLancamentos: colapsável + saldo dia) ─
 function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isVencido, emSelecao, selecionados, onToggleSelecionado }) {
+  const [open, setOpen] = useState(true);
+  const r = aReceberDia || 0;
+  const d = aPagarDia || 0;
+  const liquido = r - d;
+
   return (
     <div className="w-full min-w-0">
-      <div className="flex min-w-0 items-center justify-between gap-2 px-1 py-1.5">
-        <p className={`min-w-0 flex-1 truncate text-[0.62rem] font-semibold uppercase tracking-wide sm:tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="group flex w-full min-w-0 items-center justify-between gap-2 px-1 py-1.5"
+      >
+        <p className={`min-w-0 flex-1 truncate text-left text-[0.62rem] font-semibold uppercase tracking-wide sm:tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
           {label}
         </p>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {aReceberDia > 0 && <span className="whitespace-nowrap text-[0.62rem] font-medium text-gray-500 dark:text-gray-400">+{R(aReceberDia)}</span>}
-          {aPagarDia   > 0 && <span className="whitespace-nowrap text-[0.62rem] font-medium text-gray-400 dark:text-gray-500">−{R(aPagarDia)}</span>}
+          {r > 0 && <span className="text-[0.62rem] font-medium text-gray-500 dark:text-gray-400">+{R(r)}</span>}
+          {d > 0 && <span className="text-[0.62rem] font-medium text-gray-400 dark:text-gray-500">−{R(d)}</span>}
+          <span className={`text-[0.62rem] font-bold ${liquido >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+            {liquido >= 0 ? '+' : '−'}{R(Math.abs(liquido))}
+          </span>
+          <ChevronRight className={`h-3 w-3 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
         </div>
-      </div>
-      <div className="divide-y divide-gray-50 overflow-hidden rounded-2xl bg-white shadow-sm dark:divide-white/5 dark:bg-gray-800">
-        {items.map(l => (
-          <ContaRow
-            key={l.id}
-            l={l}
-            onPagar={onPagar}
-            onClick={onRow}
-            emSelecao={emSelecao}
-            selecionado={selecionados.includes(l.id)}
-            onToggleSelecionado={onToggleSelecionado}
-          />
-        ))}
-      </div>
+      </button>
+      {open && (
+        <div className="divide-y divide-gray-50 overflow-hidden rounded-2xl bg-white shadow-sm dark:divide-white/5 dark:bg-gray-800">
+          {items.map((l) => (
+            <ContaRow
+              key={l.id}
+              l={l}
+              onPagar={onPagar}
+              onClick={onRow}
+              emSelecao={emSelecao}
+              selecionado={selecionados.includes(l.id)}
+              onToggleSelecionado={onToggleSelecionado}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -607,11 +649,13 @@ export default function ContasAbertas({ onOpenImportador }) {
       <div className="min-w-0 w-full max-w-full overflow-x-hidden">
       {loading ? (
         <div className="space-y-2">
-          {[1,2,3,4].map(i => <div key={i} className="h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
+          ))}
         </div>
       ) : grupos.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl bg-white py-16 shadow-sm dark:bg-gray-800">
-          <Calendar className="w-9 h-9 text-gray-200 dark:text-gray-700" />
+          <Scale className="h-9 w-9 text-gray-200 dark:text-gray-700" />
           <p className="text-sm text-gray-400">Nenhuma conta em aberto</p>
         </div>
       ) : (
