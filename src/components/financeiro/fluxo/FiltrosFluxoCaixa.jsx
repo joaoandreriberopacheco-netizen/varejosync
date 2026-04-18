@@ -312,21 +312,22 @@ export default function FiltrosFluxoCaixa({
 
   return (
     <>
-      <div className={surfaceClass}>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-[16px] border border-transparent bg-white dark:border-slate-700/70 dark:bg-slate-800">
-            <Search className="w-4 h-4 text-gray-400 flex-none" />
+      <div className={`${surfaceClass} min-w-0`}>
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 dark:border-slate-700/70 dark:bg-slate-800 sm:h-12 sm:rounded-[16px] sm:px-3">
+            <Search className="h-3.5 w-3.5 shrink-0 text-gray-400 sm:h-4 sm:w-4" />
             <input autoComplete="off"
               value={search} onChange={e => onSearch(e.target.value)}
               placeholder="Buscar lançamento, categoria, tag..."
-              className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 outline-none"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-gray-900 outline-none placeholder:text-gray-500 dark:text-gray-100 sm:text-sm"
             />
-            {search && <button onClick={() => onSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
+            {search && <button type="button" onClick={() => onSearch('')}><X className="h-3.5 w-3.5 text-gray-400" /></button>}
           </div>
 
           <button
+            type="button"
             onClick={() => setOpen(true)}
-            className="relative flex h-12 w-12 items-center justify-center rounded-[16px] border border-transparent bg-white text-gray-900 dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-white text-gray-900 dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200 sm:h-12 sm:w-12 sm:rounded-[16px]"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {hasActiveFilters && (

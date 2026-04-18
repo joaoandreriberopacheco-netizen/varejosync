@@ -59,66 +59,76 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-// ─── KPI Cards (alinhado ao bloco Fluxo de Caixa / KpiFluxo) ─────────────────
-const kpiGap = 'gap-3';
+// ─── KPI Cards (compacto no mobile; alinhado a KpiFluxo) ─────────────────────
+const kpiGap = 'gap-2 sm:gap-3';
 const kpiCardTop =
-  'min-w-0 bg-[hsl(var(--background))] rounded-[22px] border border-transparent px-3.5 py-3 dark:border-border dark:bg-card';
+  'min-w-0 rounded-[16px] border border-transparent bg-[hsl(var(--background))] px-2.5 py-2 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
 const kpiCardSaldo =
-  'rounded-[22px] border border-transparent bg-[hsl(var(--background))] dark:border-border dark:bg-card';
-const kpiSaldoPad = 'px-5 py-4 sm:px-6 sm:py-5';
+  'rounded-[16px] border border-transparent bg-[hsl(var(--background))] sm:rounded-[22px] dark:border-border dark:bg-card';
+const kpiSaldoPad = 'px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-5';
 
 function KpiAbertas({ kpis }) {
   const saldoBody = (
-    <>
-      <div className="mb-2.5 min-w-0">
-        <p className="mb-1 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">Saldo projetado</p>
-        <p className="break-words text-[17px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[19px] dark:text-foreground">
-          <span className={kpis.saldoProjetado >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>
-          {R(Math.abs(kpis.saldoProjetado))}
-        </p>
-      </div>
-    </>
+    <div className="min-w-0">
+      <p className="mb-0.5 text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:mb-1 sm:text-[8px] dark:text-muted-foreground">Saldo projetado</p>
+      <p className="break-words text-[15px] font-semibold leading-tight tabular-nums text-gray-900 sm:text-[17px] md:text-[19px] dark:text-foreground">
+        <span className={kpis.saldoProjetado >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>
+        {R(Math.abs(kpis.saldoProjetado))}
+      </p>
+    </div>
   );
 
   return (
     <div className={`flex min-w-0 w-full max-w-full flex-col overflow-x-clip ${kpiGap}`}>
       <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
         <div className={kpiCardTop}>
-          <div className="mb-1.5 flex min-w-0 items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
-              <ArrowDownLeft className="h-3 w-3 text-green-600 dark:text-green-400" />
+          <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
+              <ArrowDownLeft className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
             </div>
-            <p className="min-w-0 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">A receber</p>
+            <p className="min-w-0 truncate text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:text-[8px] dark:text-muted-foreground">A receber</p>
           </div>
-          <p className="break-words text-[14px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[15px] dark:text-foreground">{R(kpis.aReceber)}</p>
-          {kpis.qtdReceber > 0 && <p className="mt-1 text-[9px] text-gray-500 dark:text-muted-foreground">{kpis.qtdReceber} lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</p>}
+          <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.aReceber)}</p>
+          {kpis.qtdReceber > 0 && (
+            <p className="mt-0.5 text-[8px] text-gray-500 sm:mt-1 sm:text-[9px] dark:text-muted-foreground">
+              {kpis.qtdReceber} <span className="sm:hidden">lç.</span>
+              <span className="hidden sm:inline">lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</span>
+            </p>
+          )}
         </div>
         <div className={kpiCardTop}>
-          <div className="mb-1.5 flex min-w-0 items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-white dark:bg-muted">
-              <ArrowUpRight className="h-3 w-3 text-red-500 dark:text-red-400" />
+          <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
+              <ArrowUpRight className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
             </div>
-            <p className="min-w-0 text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-muted-foreground">A pagar</p>
+            <p className="min-w-0 truncate text-[7px] uppercase tracking-[0.16em] text-gray-500 sm:text-[8px] dark:text-muted-foreground">A pagar</p>
           </div>
-          <p className="break-words text-[14px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[15px] dark:text-foreground">{R(kpis.aPagar)}</p>
-          {kpis.qtdPagar > 0 && <p className="mt-1 text-[9px] text-gray-500 dark:text-muted-foreground">{kpis.qtdPagar} lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</p>}
+          <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.aPagar)}</p>
+          {kpis.qtdPagar > 0 && (
+            <p className="mt-0.5 text-[8px] text-gray-500 sm:mt-1 sm:text-[9px] dark:text-muted-foreground">
+              {kpis.qtdPagar} <span className="sm:hidden">lç.</span>
+              <span className="hidden sm:inline">lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</span>
+            </p>
+          )}
         </div>
       </div>
 
       {kpis.vencidas > 0 ? (
         <div className={`flex min-w-0 flex-col sm:flex-row sm:items-stretch ${kpiGap}`}>
           <div className={`${kpiCardSaldo} ${kpiSaldoPad} min-w-0 flex-1`}>{saldoBody}</div>
-          <div className={`${kpiCardSaldo} ${kpiSaldoPad} flex min-h-0 min-w-0 flex-1 items-center gap-3`}>
-            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
+          <div className={`${kpiCardSaldo} ${kpiSaldoPad} flex min-h-0 min-w-0 flex-1 items-center gap-2 sm:gap-3`}>
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500 sm:h-4 sm:w-4 dark:text-red-400" />
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground">Vencidas</p>
-              <p className="break-words text-sm font-semibold leading-snug text-gray-900 dark:text-foreground">
+              <p className="text-[8px] uppercase tracking-wider text-gray-500 sm:text-[9px] dark:text-muted-foreground">Vencidas</p>
+              <p className="break-words text-[11px] font-semibold leading-snug text-gray-900 sm:text-sm dark:text-foreground">
                 <span className="text-red-600 dark:text-red-400">−</span>
                 {R(kpis.vencidas)}
                 {kpis.qtdVencidas > 0 && (
                   <span className="text-gray-500 dark:text-muted-foreground">
                     {' '}
-                    · {kpis.qtdVencidas} lançamento{kpis.qtdVencidas !== 1 ? 's' : ''}
+                    · {kpis.qtdVencidas}{' '}
+                    <span className="sm:hidden">lç.</span>
+                    <span className="hidden sm:inline">lançamento{kpis.qtdVencidas !== 1 ? 's' : ''}</span>
                   </span>
                 )}
               </p>
@@ -454,19 +464,19 @@ export default function ContasAbertas({ onOpenImportador }) {
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-6 overflow-x-clip pb-28">
+    <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-clip pb-28 sm:space-y-6">
 
       <KpiAbertas kpis={kpis} />
 
       {/* Filtros (superfície alinhada a FiltrosFluxoCaixa) */}
-      <div className="rounded-[20px] border border-transparent p-0 dark:border-transparent">
-        <div className="flex items-center gap-2">
-          <div className="flex h-12 flex-1 items-center gap-2 rounded-[16px] border border-transparent bg-white px-3 dark:border-slate-700/70 dark:bg-slate-800">
-            <Search className="h-4 w-4 flex-none text-gray-400" />
+      <div className="min-w-0 rounded-[20px] border border-transparent p-0 dark:border-transparent">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 sm:h-12 sm:rounded-[16px] sm:px-3 dark:border-slate-700/70 dark:bg-slate-800">
+            <Search className="h-3.5 w-3.5 flex-none shrink-0 text-gray-400 sm:h-4 sm:w-4" />
             <input autoComplete="off"
               value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar descrição, categoria, fornecedor..."
-              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-gray-100"
+              placeholder="Buscar..."
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-gray-900 outline-none placeholder:text-gray-500 sm:text-sm dark:text-gray-100"
             />
             {search && <button type="button" onClick={() => setSearch('')} aria-label="Limpar busca"><X className="h-3.5 w-3.5 text-gray-400" /></button>}
           </div>
@@ -474,7 +484,7 @@ export default function ContasAbertas({ onOpenImportador }) {
           <button
             type="button"
             onClick={() => setShowFilters(true)}
-            className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-transparent bg-white text-gray-900 dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-white text-gray-900 sm:h-12 sm:w-12 sm:rounded-[16px] dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200"
           >
             <SlidersHorizontal className="h-4 w-4" />
             {(periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || cs || ce) && (
@@ -483,9 +493,12 @@ export default function ContasAbertas({ onOpenImportador }) {
           </button>
         </div>
 
-        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-white/70 px-1.5 pt-2.5 dark:border-slate-700/70">
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
-          <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
+        <div className="mt-2 flex flex-col gap-2 border-t border-white/70 pt-2 sm:mt-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-1.5 sm:pt-2.5 dark:border-slate-700/70">
+          <p className="shrink-0 text-[10px] text-gray-500 sm:text-[11px] dark:text-gray-400">
+            <span className="sm:hidden">{filtrados.length} lç.</span>
+            <span className="hidden sm:inline">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</span>
+          </p>
+          <div className="flex min-w-0 flex-wrap gap-1 sm:justify-end sm:gap-1.5">
             <button
               onClick={() => {
                 setModoSelecaoLote((prev) => !prev);

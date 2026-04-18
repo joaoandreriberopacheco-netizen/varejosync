@@ -275,11 +275,11 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="min-w-0 max-w-full space-y-6 rounded-[32px] border border-transparent bg-[#F3F4F6] px-4 py-5 sm:px-5 dark:border-border dark:bg-card">
-        <div className="flex min-w-0 items-start justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-2 pr-1">
-            <p className="text-[28px] leading-none font-semibold text-gray-900 sm:text-[32px] dark:text-gray-100 font-glacial">Financeiro</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
+      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-transparent bg-[#F3F4F6] px-3 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-border dark:bg-card">
+        <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
+            <p className="text-[24px] leading-none font-semibold text-gray-900 sm:text-[32px] dark:text-gray-100 font-glacial">Financeiro</p>
+            <p className="text-xs text-gray-500 sm:text-sm dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
           </div>
           {aba === 'fluxo' && (
             <button
@@ -291,31 +291,33 @@ export default function ExecucaoOrcamentaria() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-2.5">
           <button
+            type="button"
             onClick={() => setAba('fluxo')}
-            className={`rounded-[22px] px-3 py-3 text-center transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${aba === 'fluxo' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-              <Scale className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'fluxo' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
+              <Scale className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
             </div>
-            <p className="text-[13px] font-medium text-gray-900 dark:text-white">Fluxo de Caixa</p>
-            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Movimento do período</p>
+            <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Fluxo de Caixa</p>
+            <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">Movimento do período</p>
           </button>
           <button
+            type="button"
             onClick={() => setAba('contas')}
-            className={`rounded-[22px] px-3 py-3 text-center transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${aba === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-              <Clock className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
+              <Clock className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
             </div>
-            <p className="text-[13px] font-medium text-gray-900 dark:text-white">Contas Abertas</p>
-            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Pendências e cobranças</p>
+            <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Contas Abertas</p>
+            <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">Pendências e cobranças</p>
           </button>
         </div>
 
         {aba === 'fluxo' && (
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-4 sm:space-y-6">
             {/* KPIs */}
             <KpiFluxo kpis={kpis} />
 
@@ -349,30 +351,30 @@ export default function ExecucaoOrcamentaria() {
         )}
 
         {aba === 'contas' && (
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-4 sm:space-y-6">
             {/* Sub-abas no mesmo padrão visual de Fluxo / Contas Abertas */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-2.5">
               <button
                 type="button"
                 onClick={() => setAbaContas('contas')}
-                className={`rounded-[22px] px-3 py-3 text-center transition-all ${abaContas === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
               >
-                <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${abaContas === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-                  <ArrowUpRight className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
                 </div>
-                <p className="text-[13px] font-medium text-gray-900 dark:text-white">Contas a pagar</p>
-                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Pendências e pagamentos</p>
+                <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Contas a pagar</p>
+                <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">Pendências e pagamentos</p>
               </button>
               <button
                 type="button"
                 onClick={() => setAbaContas('agefin')}
-                className={`rounded-[22px] px-3 py-3 text-center transition-all ${abaContas === 'agefin' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'agefin' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
               >
-                <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${abaContas === 'agefin' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-                  <Upload className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'agefin' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
+                  <Upload className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
                 </div>
-                <p className="text-[13px] font-medium text-gray-900 dark:text-white">Atualizar boletos</p>
-                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">PDF e recorrências</p>
+                <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Atualizar boletos</p>
+                <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">PDF e recorrências</p>
               </button>
             </div>
 
