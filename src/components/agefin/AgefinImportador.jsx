@@ -13,6 +13,7 @@ import {
   extrairBoletoFingerprintDeObservacoes,
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
+import { extrairTextoPdfBrowser } from '@/lib/extrairTextoPdfBrowser';
 
 const MIN_RECORRENTE_MATCH_SCORE = 45;
 const MATCH_SCORE_MARGIN = 8;
@@ -38,6 +39,25 @@ function hashDjb2(value) {
     hash &= 0xffffffff;
   }
   return Math.abs(hash).toString(36);
+}
+
+/** Resposta do InvokeLLM pode vir como objeto, string JSON ou aninhada em .data/.response. */
+function normalizeInvokeLlmJsonResponse(aiRes) {
+  if (aiRes == null) return null;
+  if (typeof aiRes === 'string') {
+    try {
+      return JSON.parse(aiRes);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof aiRes !== 'object') return null;
+  const o = aiRes;
+  if (o.response_json && typeof o.response_json === 'object') return o.response_json;
+  if (o.response && typeof o.response === 'object') return o.response;
+  if (o.data && typeof o.data === 'object') return o.data;
+  if (o.result && typeof o.result === 'object') return o.result;
+  return o;
 }
 
 function gerarBoletoFingerprint(dados) {
@@ -196,7 +216,16 @@ export default function AgefinImportador({
         name: selectedFile.name,
       });
 
-      const extracted = await base44.integrations.Core.InvokeLLM({
+      const textoPdfLocal = await extrairTextoPdfBrowser(selectedFile);
+      const blocoTextoLocal =
+        textoPdfLocal.length >= 40
+          ? `
+
+--- Texto extraído localmente do ficheiro (PDF com camada de texto; use como apoio se a página for digital) ---
+${textoPdfLocal.slice(0, 14000)}`
+          : '';
+
+      const extractedRaw = await base44.integrations.Core.InvokeLLM({
         file_urls: [file_url],
         prompt: `Leia visualmente este documento brasileiro de cobrança e extraia dados REAIS do conteúdo do documento, nunca do nome do arquivo.
 
@@ -222,7 +251,7 @@ Campos a interpretar do documento:
 - numero_parcela
 - descricao
 - natureza_sugerida
-- confianca_leitura: alta, media ou baixa`,
+- confianca_leitura: alta, media ou baixa${blocoTextoLocal}`,
         response_json_schema: {
           type: 'object',
           properties: {
@@ -237,11 +266,15 @@ Campos a interpretar do documento:
             instrucoes: { type: ['string', 'null'] },
             frequencia_sugerida: { type: ['string', 'null'] },
             natureza_sugerida: { type: ['string', 'null'] },
-            confianca_leitura: { type: ['string', 'null'] }
+            confianca_leitura: { type: ['string', 'null'] },
           },
-          required: ['descricao', 'valor_pagamento', 'data_vencimento', 'beneficiario', 'competencia', 'numero_parcela', 'linha_digitavel', 'codigo_pix_copia_cola', 'instrucoes', 'frequencia_sugerida', 'natureza_sugerida', 'confianca_leitura']
-        }
+        },
       });
+
+      const extracted = normalizeInvokeLlmJsonResponse(extractedRaw);
+      if (!extracted || typeof extracted !== 'object') {
+        throw new Error('Resposta do leitor vazia ou inválida');
+      }
 
       const descricaoFallback = [extracted.descricao, extracted.beneficiario].filter(Boolean).join(' - ');
       const naturezaValida = ['Parcelado', 'Único', 'Recorrente'].includes(extracted.natureza_sugerida)
@@ -269,7 +302,7 @@ Campos a interpretar do documento:
         valor: extracted.valor_pagamento ?? 0,
         data_vencimento: extracted.data_vencimento || dataHoje(),
         terceiro_nome: extracted.beneficiario || '',
-        periodo_referencia: periodoReferencia || dataHoje().slice(0, 8) + '01',
+        periodo_referencia: periodoReferencia || `${dataHoje().slice(0, 7)}-01`,
         parcela_numero: Number.isFinite(numeroParcela) ? numeroParcela : '',
         linha_digitavel: extracted.linha_digitavel || '',
         codigo_pix_copia_cola: extracted.codigo_pix_copia_cola || '',
@@ -281,8 +314,15 @@ Campos a interpretar do documento:
       }
       setExtractedData(baseExtracted);
     } catch (err) {
-      setError('Não consegui ler este documento com precisão. Tente outra imagem ou PDF mais nítido.');
-      console.error(err);
+      const primeiro = String(err?.message || err || '')
+        .split('\n')[0]
+        .slice(0, 140);
+      setError(
+        primeiro
+          ? `Não consegui concluir a leitura: ${primeiro}`
+          : 'Não consegui ler este documento. Verifique a ligação e tente de novo; PDFs digitais também são lidos por texto local no navegador.'
+      );
+      console.error('AgefinImportador leitura PDF/OCR:', err);
     } finally {
       setLoading(false);
     }
