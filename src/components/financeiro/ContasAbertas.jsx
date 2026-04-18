@@ -158,31 +158,32 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
 
   return (
     <button
+      type="button"
       onClick={() => !emSelecao && onClick(l)}
-      className={`w-full flex items-center gap-2.5 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left ${isPago ? 'opacity-60' : ''}`}
+      className={`flex w-full min-w-0 max-w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 ${isPago ? 'opacity-60' : ''}`}
     >
       {emSelecao && !isPago && (
-        <span className="flex-none pt-1">
+        <span className="flex-none pt-0.5">
           <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado(l.id)} />
         </span>
       )}
-      {/* Ícone tipo */}
-      <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-8 h-8 flex items-center justify-center">
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700">
         {isR
-          ? <ArrowDownLeft className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
-          : <ArrowUpRight className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
+          ? <ArrowDownLeft className="h-3.5 w-3.5 text-green-500 dark:text-green-400" />
+          : <ArrowUpRight className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
         }
       </span>
 
-      {/* Descrição */}
-      <span className="flex-1 min-w-0">
-        <span className="block text-[0.82rem] font-medium leading-snug text-gray-800 dark:text-gray-100 break-words">
+      <span className="min-w-0 flex-1">
+        <span className="block text-[0.82rem] font-medium leading-snug break-words whitespace-normal text-gray-800 dark:text-gray-100">
           {l.descricao}
           {frequencia && (
-            <span className="ml-1.5 text-[0.6rem] bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded px-1.5 py-0.5 font-normal">{frequencia}</span>
+            <span className="ml-1.5 inline-block max-w-full rounded bg-gray-100 px-1.5 py-0.5 align-middle text-[0.6rem] font-normal text-gray-400 break-words dark:bg-gray-700 dark:text-gray-500">
+              {frequencia}
+            </span>
           )}
         </span>
-        <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+        <span className="mt-0.5 block min-w-0 break-words text-[0.68rem] leading-snug text-gray-400 dark:text-gray-500">
           {vStr
             ? isVencida ? <span className="text-red-400 dark:text-red-500">Venceu {format(parseVencimento(vStr), 'dd MMM', { locale: ptBR })}</span>
             : isHoje    ? <span className="text-gray-500 dark:text-gray-400">Vence hoje</span>
@@ -192,9 +193,8 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
         </span>
       </span>
 
-      {/* Valor + badge status */}
-      <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
-        <span className="text-[0.82rem] font-bold whitespace-nowrap text-gray-700 dark:text-gray-200">
+      <span className="flex shrink-0 flex-col items-end gap-0.5 pl-1">
+        <span className="text-[0.82rem] font-bold tabular-nums whitespace-nowrap text-gray-700 dark:text-gray-200">
           <span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(val)}
         </span>
         {isPago ? (
@@ -217,17 +217,17 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
 // ─── Grupo por data de vencimento ─────────────────────────────────────────────
 function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isVencido, emSelecao, selecionados, onToggleSelecionado }) {
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between px-1 py-1.5">
-        <p className={`text-[0.62rem] font-semibold uppercase tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+    <div className="w-full min-w-0">
+      <div className="flex min-w-0 items-center justify-between gap-2 px-1 py-1.5">
+        <p className={`min-w-0 flex-1 truncate text-[0.62rem] font-semibold uppercase tracking-wide sm:tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
           {label}
         </p>
-        <div className="flex items-center gap-2">
-          {aReceberDia > 0 && <span className="text-[0.62rem] text-gray-500 dark:text-gray-400 font-medium">+{R(aReceberDia)}</span>}
-          {aPagarDia   > 0 && <span className="text-[0.62rem] text-gray-400 dark:text-gray-500 font-medium">−{R(aPagarDia)}</span>}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {aReceberDia > 0 && <span className="whitespace-nowrap text-[0.62rem] font-medium text-gray-500 dark:text-gray-400">+{R(aReceberDia)}</span>}
+          {aPagarDia   > 0 && <span className="whitespace-nowrap text-[0.62rem] font-medium text-gray-400 dark:text-gray-500">−{R(aPagarDia)}</span>}
         </div>
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
+      <div className="divide-y divide-gray-50 overflow-hidden rounded-2xl bg-white shadow-sm dark:divide-white/5 dark:bg-gray-800">
         {items.map(l => (
           <ContaRow
             key={l.id}
@@ -464,7 +464,7 @@ export default function ContasAbertas({ onOpenImportador }) {
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-clip pb-28 sm:space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden pb-28 sm:space-y-6">
 
       <KpiAbertas kpis={kpis} />
 
@@ -585,16 +585,17 @@ export default function ContasAbertas({ onOpenImportador }) {
       </Drawer>
 
       {modoSelecaoLote && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-800">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Pagamento em lote</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{lancamentosSelecionados.length} item(ns) selecionado(s)</p>
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{lancamentosSelecionados.length} item(ns) selecionado(s)</p>
             </div>
             <button
+              type="button"
               onClick={() => setShowPagamentoLote(true)}
               disabled={lancamentosSelecionados.length === 0}
-              className="px-4 h-10 rounded-2xl bg-emerald-600 text-white text-sm font-medium disabled:opacity-40"
+              className="h-10 shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-medium text-white disabled:opacity-40"
             >
               Continuar
             </button>
@@ -602,13 +603,14 @@ export default function ContasAbertas({ onOpenImportador }) {
         </div>
       )}
 
-      {/* Lista */}
+      {/* Lista (mesmo padrão de contenção que ListaLancamentos / fluxo) */}
+      <div className="min-w-0 w-full max-w-full overflow-x-hidden">
       {loading ? (
         <div className="space-y-2">
           {[1,2,3,4].map(i => <div key={i} className="h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
         </div>
       ) : grupos.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 rounded-2xl bg-white py-16 shadow-sm dark:bg-gray-800">
           <Calendar className="w-9 h-9 text-gray-200 dark:text-gray-700" />
           <p className="text-sm text-gray-400">Nenhuma conta em aberto</p>
         </div>
@@ -626,6 +628,7 @@ export default function ContasAbertas({ onOpenImportador }) {
           ))}
         </div>
       )}
+      </div>
 
       {/* FAB (mesmo tratamento visual do Fluxo de Caixa) */}
       {fabOpen && <div className="fixed inset-0 z-[54] bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}

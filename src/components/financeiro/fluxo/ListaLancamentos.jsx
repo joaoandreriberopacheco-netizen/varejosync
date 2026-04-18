@@ -63,8 +63,9 @@ function LancRow({ l, onClick }) {
 
   return (
     <button
+      type="button"
       onClick={() => onClick(l)}
-      className={`w-full flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left ${cancelado ? 'opacity-60' : ''}`}>
+      className={`flex w-full min-w-0 max-w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 ${cancelado ? 'opacity-60' : ''}`}>
       <span className={`rounded-xl flex-none w-8 h-8 flex items-center justify-center ${cancelado ? 'bg-gray-100 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-700'}`}>{icon}</span>
       <span className="flex-1 min-w-0">
         <span className={`block text-[0.82rem] font-medium whitespace-normal break-words leading-snug ${cancelado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-100'}`}>
@@ -88,8 +89,8 @@ function LancRow({ l, onClick }) {
           ))}
         </span>
       </span>
-      <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
-        <span className={`text-[0.82rem] font-bold whitespace-nowrap ${valColor}`}>
+      <span className="flex shrink-0 flex-col items-end gap-0.5 pl-1">
+        <span className={`text-[0.82rem] font-bold tabular-nums whitespace-nowrap ${valColor}`}>
           {cancelado ? '—' : isT ? R(Math.abs(l.valor || 0)) : <><span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(Math.abs(l.valor || 0))}</>}
         </span>
         {conc === 'Pendente' && <Clock className="w-2.5 h-2.5 text-gray-400" />}
@@ -103,10 +104,10 @@ function LancRow({ l, onClick }) {
 function Grupo({ label, items, totais, onRow }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="w-full">
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-1.5 group">
-        <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{label}</p>
-        <div className="flex items-center gap-2">
+    <div className="w-full min-w-0">
+      <button type="button" onClick={() => setOpen(o => !o)} className="group flex w-full min-w-0 items-center justify-between gap-2 px-1 py-1.5">
+        <p className="min-w-0 flex-1 truncate text-left text-[0.62rem] font-semibold uppercase tracking-wide text-gray-400 sm:tracking-widest dark:text-gray-500">{label}</p>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {totais.r > 0 && <span className="text-[0.62rem] text-gray-500 dark:text-gray-400 font-medium">+{R(totais.r)}</span>}
           {totais.d > 0 && <span className="text-[0.62rem] text-gray-400 dark:text-gray-500 font-medium">−{R(totais.d)}</span>}
           <span className={`text-[0.62rem] font-bold ${(totais.r || 0) - (totais.d || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
@@ -144,7 +145,7 @@ export default function ListaLancamentos({ grupos, loading, onRow }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 w-full max-w-full space-y-3 overflow-x-hidden">
       {grupos.map(({ k, label, items, totais }) => (
         <Grupo key={k} label={label} items={items} totais={totais} onRow={onRow} />
       ))}
