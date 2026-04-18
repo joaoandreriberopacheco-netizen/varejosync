@@ -13,9 +13,30 @@
   "icons": [
     {
       "src": "/brand/p38-icon.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/p38-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Torre de controle",
+      "short_name": "Torre",
+      "description": "Classificar e distribuir anexos",
+      "url": "/AnexoCompartilhado?destino=torre&clipboard=1",
+      "icons": [
+        {
+          "src": "/brand/p38-icon.svg",
+          "sizes": "512x512",
+          "type": "image/svg+xml"
+        }
+      ]
     }
   ],
   "share_target": {

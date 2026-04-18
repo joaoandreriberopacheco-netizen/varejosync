@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const [discountType, setDiscountType] = useState('percentual');
   const [discountValue, setDiscountValue] = useState('0');
   const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -144,8 +145,8 @@ Retorne JSON:
 }`;
 
       const prompt = mode === 'pdf'
-        ? `Analise este PDF de orçamento/pedido de fornecedor.\n${promptBase}`
-        : `Analise esta imagem de lista de compra.\n${promptBase}`;
+        ? `Analise este PDF de orçamento/pedido de fornecedor.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`
+        : `Analise esta imagem de lista de compra.\nPreserve acentos e caracteres do português nos campos textuais.\n${promptBase}`;
 
       setProcessingStep(3);
       setProcessingStatus('Identificando itens');
@@ -211,13 +212,31 @@ Retorne JSON:
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const aplicarArquivoSelecionado = (file) => {
     if (!file) return;
-
     setSelectedFile(file);
     setStep('discount');
   };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    aplicarArquivoSelecionado(file);
+    if (e?.target) e.target.value = '';
+  };
+
+  useEffect(() => {
+    if (!isOpen || step !== 'upload') return;
+    const onPaste = (event) => {
+      const file = event.clipboardData?.files?.[0];
+      if (!file) return;
+      event.preventDefault();
+      aplicarArquivoSelecionado(file);
+      toast({ title: 'Arquivo colado com sucesso' });
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [isOpen, step, toast]);
 
   const handleConfirm = async () => {
     try {
@@ -316,7 +335,18 @@ Retorne JSON:
                   <Camera className="w-4 h-4 mr-2" />Imagem
               </Button>
             </div>
-            <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/60 p-8 md:p-14 text-center shadow-sm">
+            <div
+              className="rounded-3xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:bg-gray-800 md:p-14"
+              onClick={() => fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+            >
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm">
                 {mode === 'pdf' ? <FileText className="w-8 h-8 text-gray-600" /> : <Sparkles className="w-8 h-8 text-gray-600" />}
               </div>
@@ -325,11 +355,19 @@ Retorne JSON:
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">A importação vai preencher os itens do pedido.</p>
               <div className="relative inline-block">
-                <input type="file" accept={mode === 'pdf' ? '.pdf' : 'image/*,.pdf'} onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={isUploading} />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={mode === 'pdf' ? '.pdf' : 'image/*,.pdf'}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={isUploading}
+                />
                 <Button size="lg" className="rounded-full px-8 shadow-sm">
                   <Upload className="w-4 h-4 mr-2" />Selecionar arquivo
                 </Button>
               </div>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Dica: também pode usar Ctrl+V para colar um PDF/imagem.</p>
             </div>
           </div>
         )}

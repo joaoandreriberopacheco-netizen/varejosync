@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
     const [produtosSistema, setProdutosSistema] = useState([]);
     const [fornecedoresSistema, setFornecedoresSistema] = useState([]);
     const [productSearch, setProductSearch] = useState({});
+    const fileInputRef = useRef(null);
     const { toast } = useToast();
 
     const formatCurrency = (value) => {
@@ -64,8 +65,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
         return bestScore >= Math.max(2, Math.ceil(words.length / 2)) ? best : null;
     };
 
-    const handleFileUpload = async (e) => {
-        const file = e.target.files[0];
+    const handleArquivoSelecionado = async (file) => {
         if (!file) return;
 
         setIsUploading(true);
@@ -84,6 +84,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
             const prompt = `Analise este PDF de cotação/orçamento de fornecedor.
 Extraia os dados do fornecedor e a lista de itens.
+Preserve acentos e caracteres do português nos campos textuais.
 
 IMPORTANTE: Para cada item, identifique a MARCA do produto quando estiver visível. A marca é um critério qualitativo fundamental para comparação de cotações.
 
@@ -198,6 +199,25 @@ Retorne um JSON com:
             setIsUploading(false);
         }
     };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (e?.target) e.target.value = '';
+        await handleArquivoSelecionado(file);
+    };
+
+    useEffect(() => {
+        if (!isOpen || step !== 'upload') return;
+        const onPaste = (event) => {
+            const file = event.clipboardData?.files?.[0];
+            if (!file) return;
+            event.preventDefault();
+            handleArquivoSelecionado(file);
+            toast({ title: "Arquivo colado com sucesso" });
+        };
+        window.addEventListener('paste', onPaste);
+        return () => window.removeEventListener('paste', onPaste);
+    }, [isOpen, step, toast]);
 
     const handleConfirmImport = async () => {
         try {
@@ -321,18 +341,30 @@ Retorne um JSON com:
             <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
                 {step === 'upload' && (
                     <div className="max-w-2xl mx-auto">
-                        <div className="py-20 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+                        <div
+                            className="py-20 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => fileInputRef.current?.click()}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    fileInputRef.current?.click();
+                                }
+                            }}
+                        >
                             <Upload className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-6" />
                             <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Upload do PDF da Cotação</h3>
                             <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-md">
                                 A IA irá ler os itens, identificar marcas, preços e fornecedor
                             </p>
                             <div className="relative">
-                                <input 
+                                <input
+                                    ref={fileInputRef}
                                     type="file" 
                                     accept=".pdf"
                                     onChange={handleFileUpload}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    className="hidden"
                                     disabled={isUploading}
                                 />
                                 <Button disabled={isUploading} size="lg" className="bg-teal-600 hover:bg-teal-700">
@@ -344,6 +376,7 @@ Retorne um JSON com:
                                 </Button>
                             </div>
                             {isUploading && <p className="text-sm text-gray-400 mt-6">Isso pode levar alguns segundos...</p>}
+                            {!isUploading && <p className="text-xs text-gray-400 mt-6">Dica: também pode colar o PDF com Ctrl+V.</p>}
                         </div>
                     </div>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -14,9 +14,10 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
   const [extractedData, setExtractedData] = useState(null);
   const [items, setItems] = useState([]);
   const [produtosSistema, setProdutosSistema] = useState([]);
+  const fileInputRef = useRef(null);
   const { toast } = useToast();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       loadProdutos();
       setStep('upload');
@@ -31,8 +32,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
     setProdutosSistema(prods);
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+  const processarArquivo = async (file) => {
     if (!file) return;
 
     setIsProcessing(true);
@@ -85,6 +85,25 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
       setIsProcessing(false);
     }
   };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (e?.target) e.target.value = '';
+    await processarArquivo(file);
+  };
+
+  useEffect(() => {
+    if (!isOpen || step !== 'upload') return;
+    const onPaste = (event) => {
+      const file = event.clipboardData?.files?.[0];
+      if (!file) return;
+      event.preventDefault();
+      processarArquivo(file);
+      toast({ title: "Arquivo colado com sucesso" });
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [isOpen, step, toast]);
 
   const processExtractedData = (data) => {
     setExtractedData(data);
@@ -209,7 +228,18 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
         </DialogHeader>
 
         {step === 'upload' && (
-          <div className="py-10 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+          <div
+            className="py-10 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+          >
             {isProcessing ? (
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
@@ -220,15 +250,17 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
                 <Upload className="w-12 h-12 text-gray-400" />
                 <p className="text-gray-600">Arraste seu arquivo PDF ou Imagem aqui</p>
                 <Input 
+                  ref={fileInputRef}
                   type="file" 
                   accept=".pdf,.jpg,.png,.jpeg"
                   onChange={handleFileUpload}
                   className="hidden" 
                   id="file-upload"
                 />
-                <Button onClick={() => document.getElementById('file-upload').click()}>
+                <Button onClick={() => fileInputRef.current?.click()}>
                   Selecionar Arquivo
                 </Button>
+                <p className="text-xs text-gray-400">Dica: também pode colar arquivo com Ctrl+V.</p>
               </div>
             )}
           </div>

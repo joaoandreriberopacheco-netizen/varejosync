@@ -534,7 +534,7 @@ export default function AgefinConsulta() {
 
     const cabecalhoColunasHtml = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:8px 0 10px"><colgroup><col style="width:108px" /><col style="width:118px" /><col style="width:auto" /><col style="width:124px" /></colgroup><thead><tr><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Vencimento</th><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Status</th><th style="text-align:left;font-size:12px;line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Conta</th><th style="text-align:right;font-size:12px;line-height:1.25;font-weight:700;color:#000;padding:0 8px 6px 8px;border-bottom:1px solid #cbd5e1">Valor</th></tr></thead></table>`;
 
-    const gruposHtml = gruposParaImpressao.map((grupo) => {
+    const gruposHtml = gruposParaImpressao.map((grupo, index) => {
       const subtotal = grupo.contas.reduce((acc, conta) => acc + (Number(conta.valor) || 0), 0);
       const linhas = grupo.contas.map((conta) => {
         const pago = lancamentoPago(conta);
@@ -555,7 +555,7 @@ export default function AgefinConsulta() {
             : '';
 
         return `<tr>
-          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;font-size:13px;line-height:1.3;color:#000"> </td>
+          <td style="vertical-align:middle;padding:9px 8px;border-bottom:1px solid #e6ebf2;font-size:11px;line-height:1.3;color:#000">${escapeHtml(formatarSoData(conta.data_vencimento))}</td>
           <td style="vertical-align:top;padding:7px 8px;border-bottom:1px solid #dde5ef">
             ${statusLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;border:1px solid #d8e1ec;background:#f8fafc;color:${statusColor};font-size:11px;line-height:1.15;font-weight:700;white-space:nowrap">${statusIconSvg}<span>${statusLabel}</span></span>` : ''}
           </td>
@@ -569,10 +569,19 @@ export default function AgefinConsulta() {
         </tr>`;
       }).join('');
 
-      return `<section style="margin-top:12px;border-radius:10px;overflow:hidden;background:#f2f4f7"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:#edf0f4"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;line-height:1.2;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:11px;line-height:1.2;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:11px;line-height:1.2;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:8px 8px"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:108px" /><col style="width:118px" /><col style="width:auto" /><col style="width:124px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
+      const quebraPaginaAntes = index > 0 ? 'break-before:page;page-break-before:always;' : '';
+      return `<section style="${quebraPaginaAntes}margin-top:12px;border-radius:10px;overflow:hidden;background:#f2f4f7"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:#edf0f4"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;line-height:1.2;font-weight:700;color:#000">${escapeHtml(grupo.label)}</span><span style="font-size:11px;line-height:1.2;font-weight:400;color:#000">${escapeHtml(formatCurrency(subtotal))}</span></div><div style="text-align:right"><span style="font-size:11px;line-height:1.2;color:#000">${grupo.contas.length} conta${grupo.contas.length !== 1 ? 's' : ''}</span></div></div><div style="padding:8px 8px"><table style="width:100%;border-collapse:collapse;table-layout:fixed;background:#ffffff"><colgroup><col style="width:108px" /><col style="width:118px" /><col style="width:auto" /><col style="width:124px" /></colgroup><tbody>${linhas}</tbody></table></div></section>`;
     }).join('');
 
-    const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:18px;color:#000;font-size:12px;line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:18px;line-height:1.1;color:#000">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:12px;line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:12px;line-height:1.2">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:12px;line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalParaImpressao))}</span></p>${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:12px;line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}</div></body></html>`;
+    const rodapeAnotacoesHtml = `<section style="margin-top:14px;padding:10px 12px;border:1px solid #d5dde8;border-radius:10px;background:#f8fafc">
+      <div style="display:inline-flex;align-items:center;gap:6px;color:#000">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+        <span style="font-size:13px;line-height:1.2;font-weight:700">Anotações &gt;</span>
+      </div>
+      <p style="margin:4px 0 0;font-size:12px;line-height:1.25;color:#334155">escreva abaixo</p>
+    </section>`;
+
+    const html = `<html><head><meta charset="UTF-8" /><title>Agefin ${escapeHtml(formatMonth(currentMonth))}</title></head><body style="font-family:'Noto Sans','NotoSans',Arial,sans-serif;padding:18px;color:#000;font-size:12px;line-height:1.3"><div style="width:1000px;min-width:1000px;max-width:1000px"><div style="background:#f8fafc;border:1px solid #d5dde8;border-radius:8px;padding:8px 10px;margin-bottom:8px"><h2 style="margin:0 0 2px;font-size:18px;line-height:1.1;color:#000">Agefin - ${escapeHtml(formatMonth(currentMonth))}</h2><p style="margin:0 0 2px;color:#000;font-size:12px;line-height:1.2">Contas filtradas da consulta financeira</p><p style="margin:0 0 2px;color:#000;font-size:12px;line-height:1.2">Quantidade: ${contasParaImpressao.length} conta${contasParaImpressao.length !== 1 ? 's' : ''}</p><p style="margin:0;color:#000;font-size:12px;line-height:1.2">Total impresso: <span style="font-weight:400;color:#000">${escapeHtml(formatCurrency(totalParaImpressao))}</span></p>${modoSelecao ? `<p style="margin:2px 0 0;color:#000;font-size:12px;line-height:1.2">Modo Somar: apenas contas selecionadas</p>` : ''}</div>${filtrosHtml}${cabecalhoColunasHtml}${gruposHtml}${rodapeAnotacoesHtml}</div></body></html>`;
     try {
       await openPrintWindowOrShareHtml(html, `agefin-${currentMonth.getTime()}.html`, `Agefin ${formatMonth(currentMonth)}`);
     } catch {

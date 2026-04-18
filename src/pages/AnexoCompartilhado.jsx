@@ -314,6 +314,14 @@ export default function AnexoCompartilhado() {
   }, [etapa]);
 
   useEffect(() => {
+    const tituloAnterior = document.title;
+    document.title = etapa === 'torre_controle' ? 'Torre de Controle | P38 ERP' : 'Anexo Compartilhado | P38 ERP';
+    return () => {
+      document.title = tituloAnterior;
+    };
+  }, [etapa]);
+
+  useEffect(() => {
     const handlePaste = async (ev) => {
       if (etapa !== 'torre_controle') return;
       const cd = ev.clipboardData;

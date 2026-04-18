@@ -212,6 +212,7 @@ Regras obrigat?rias:
 - Se houver v?rios valores, use o valor final a pagar, valor total do documento ou valor do boleto.
 - Se houver v?rias datas, use a data explicitamente associada a vencimento.
 - A descri??o deve ser ?til para um lan?amento financeiro humano.
+- Preserve acentos e caracteres do portugu?s (ex.: ?, ?, ?, ?, ?, ?, ?) quando estiverem no documento.
 - A descri??o deve preferir o conceito do pagamento + benefici?rio, por exemplo: "Energia el?trica - Amazonas Energia", "FGTS Digital - Minist?rio do Trabalho", "DAR IPVA - SEFAZ AM", "Taxa ambiental - IBAMA".
 - Identifique tamb?m a natureza sugerida: use "??nico" por padr?o; use "Parcelado" apenas quando houver parcela expl?cita; use "Recorrente" apenas quando o documento indicar cobran?a mensal/compet?ncia recorrente e isso estiver claro.
 - Retorne data em YYYY-MM-DD.
