@@ -596,6 +596,24 @@ export default function PDVCaixa() {
       toast({ title: "Pagamento insuficiente", description: `Falta R$ ${formatarValorExibicao(valorRestante)}`, variant: "destructive", duration: 2000 });
       return;
     }
+    if (pagamentosDebito > 0 && !maquininhaDebito?.maquininha?.id) {
+      toast({
+        title: "Selecione a maquininha do débito",
+        description: "Defina maquininha e bandeira antes de confirmar o pagamento.",
+        variant: "destructive",
+        duration: 2500,
+      });
+      return;
+    }
+    if (pagamentosCredito > 0 && !maquininhaCredito?.maquininha?.id) {
+      toast({
+        title: "Selecione a maquininha do crédito",
+        description: "Defina maquininha e bandeira antes de confirmar o pagamento.",
+        variant: "destructive",
+        duration: 2500,
+      });
+      return;
+    }
     if (!contaCaixaPDV) {
       toast({ title: "Conta de Caixa PDV não encontrada", variant: "destructive" });
       return;
