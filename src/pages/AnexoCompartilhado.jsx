@@ -68,8 +68,8 @@ export default function AnexoCompartilhado() {
     try {
       fileObj = new File([blob], fileName, { type: blob.type });
     } catch (error) {
+      // Em alguns browsers não é seguro mutar `name` num Blob/File; usa o nome no estado.
       fileObj = blob;
-      fileObj.name = fileName;
     }
     const previewUrl = URL.createObjectURL(blob);
     setArquivo({ file: fileObj, previewUrl, nome: fileName, tipo: blob.type });
@@ -153,14 +153,14 @@ export default function AnexoCompartilhado() {
       }
 
       if (await tentarTexto()) return;
-      setFeedbackClipboard('Área de transferência vazia ou tipo não suportado. Tente selecionar um arquivo.');
+      setFeedbackClipboard('Área de transferência vazia ou tipo não suportado. Tente selecionar arquivo ou usar Ctrl+V.');
     } catch (err) {
       try {
         if (await tentarTexto()) return;
       } catch (_) {
         // ignora; cai para mensagem final
       }
-      setFeedbackClipboard('Não foi possível aceder à área de transferência neste navegador.');
+      setFeedbackClipboard('Não foi possível aceder diretamente ao clipboard. Tente Ctrl+V ou selecione arquivo.');
       console.error('Colar da área de transferência:', err);
     }
   };
@@ -241,6 +241,15 @@ export default function AnexoCompartilhado() {
     }
 
     const tentar = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const focoClipboard = params.get('clipboard') === '1';
+      const destino = params.get(SHARE_DESTINO_QUERY);
+      if (focoClipboard || String(destino || '').toLowerCase() === 'torre') {
+        setCarregando(false);
+        clearTimeout(pollingRef.current);
+        return;
+      }
+
       const achouNoCache = await varrerCache();
       if (achouNoCache) {
         setCarregando(false);
@@ -248,7 +257,6 @@ export default function AnexoCompartilhado() {
         return;
       }
 
-      const params = new URLSearchParams(window.location.search);
       if (params.get('text') || params.get('url')) {
         setArquivo({
           file: null,
@@ -303,6 +311,33 @@ export default function AnexoCompartilhado() {
 
   useEffect(() => {
     if (etapa !== 'torre_controle') setAjudaTorreAberta(false);
+  }, [etapa]);
+
+  useEffect(() => {
+    const handlePaste = async (ev) => {
+      if (etapa !== 'torre_controle') return;
+      const cd = ev.clipboardData;
+      if (!cd) return;
+
+      const fileColado = (cd.files && cd.files.length > 0) ? cd.files[0] : null;
+      if (fileColado) {
+        ev.preventDefault();
+        prepararArquivo(fileColado, fileColado.name || `clipboard-${Date.now()}${extensaoPorMime(fileColado.type)}`);
+        setFeedbackClipboard('Arquivo colado com sucesso (Ctrl+V).');
+        setModoAtalhoClipboard(false);
+        return;
+      }
+
+      const texto = cd.getData('text/plain');
+      if (texto && definirTextoColado(texto)) {
+        ev.preventDefault();
+        setFeedbackClipboard('Conteúdo colado com sucesso (Ctrl+V).');
+        setModoAtalhoClipboard(false);
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
   }, [etapa]);
 
   useEffect(() => {
@@ -639,7 +674,7 @@ export default function AnexoCompartilhado() {
             <input
               ref={inputArquivoManualRef}
               type="file"
-              accept="application/pdf,image/*,text/plain,text/*"
+              accept="*/*"
               onChange={handleSelecionarArquivoManual}
               className="hidden"
             />
