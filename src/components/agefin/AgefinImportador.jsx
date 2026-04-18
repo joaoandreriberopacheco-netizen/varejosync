@@ -106,6 +106,59 @@ function scoreRecorrente(recorrente, extractedData) {
   return { score, motivos };
 }
 
+/**
+ * Contas avulsas (Único/Parcelado sem ContaRecorrente): evita criar outra ContaPrevista
+ * ao reimportar o mesmo bolete/mês — alinha ao dedup de LF já feito para recorrente.
+ * Parcelado: só consolida por fingerprint (evita misturar parcelas diferentes).
+ */
+async function encontrarContaPrevistaAvulsaMesmaImportacao(base44, {
+  mesReferencia,
+  boletoFingerprint,
+  terceiroNome,
+  valor,
+  selectedNatureza,
+}) {
+  if (!mesReferencia || !selectedNatureza) return null;
+  if (selectedNatureza !== 'Único' && selectedNatureza !== 'Parcelado') return null;
+  try {
+    const lista = await base44.entities.ContaPrevista.list('-data_vencimento', 500);
+    const candidatas = (lista || []).filter((c) => {
+      if (c.conta_recorrente_id) return false;
+      if ((c.data_vencimento || '').slice(0, 7) !== mesReferencia) return false;
+      if (c.natureza && selectedNatureza && c.natureza !== selectedNatureza) return false;
+      return true;
+    });
+    if (!candidatas.length) return null;
+
+    if (boletoFingerprint) {
+      for (const c of candidatas) {
+        const lfs = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: c.id });
+        const matchFp = (lfs || []).some((l) => {
+          const fp = extrairBoletoFingerprintDeObservacoes(l.observacoes);
+          return fp && fp === boletoFingerprint;
+        });
+        if (matchFp) return c;
+      }
+    }
+
+    if (selectedNatureza === 'Parcelado') return null;
+
+    const tAlvo = normalizarTexto(terceiroNome);
+    const vAlvo = Number(valor) || 0;
+    if (!tAlvo || vAlvo <= 0) return null;
+
+    for (const c of candidatas) {
+      const t = normalizarTexto(c.terceiro_nome);
+      const vc = Number(c.valor) || 0;
+      if (t !== tAlvo) continue;
+      if (Math.abs(vc - vAlvo) <= Math.max(0.02, vAlvo * 0.02)) return c;
+    }
+  } catch (e) {
+    console.error('dedup ContaPrevista avulsa AGEFIN:', e);
+  }
+  return null;
+}
+
 export default function AgefinImportador({
   onSuccess,
   contaPrevistaId = null,
@@ -374,6 +427,24 @@ Campos a interpretar do documento:
             .find((conta) => (conta.data_vencimento || '').slice(0, 7) === mesReferencia)
         : contaExistenteDoMes;
 
+      if (
+        !modoAtualizacao &&
+        !contaPrevistaId &&
+        !recorrenteFinal &&
+        !contaDoMesFinal &&
+        mesReferencia &&
+        (selectedNatureza === 'Único' || selectedNatureza === 'Parcelado')
+      ) {
+        const dedupAvulsa = await encontrarContaPrevistaAvulsaMesmaImportacao(base44, {
+          mesReferencia,
+          boletoFingerprint,
+          terceiroNome: extractedData.terceiro_nome,
+          valor: extractedData.valor,
+          selectedNatureza,
+        });
+        if (dedupAvulsa?.id) contaDoMesFinal = dedupAvulsa;
+      }
+
       let novaSeriePorFingerprint = false;
       if (
         !modoAtualizacao &&
@@ -520,12 +591,38 @@ Campos a interpretar do documento:
           grupo_lancamento_id: recorrenteFinal?.id || undefined,
         };
 
-        lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);
-        if (lancamentoCriado?.id && file?.original) {
+        /** Evita duas contas a pagar “siamesas” (mesmo ContaPrevista + mesmo mês): reimportação OCR atualiza o LF existente. */
+        let lfMesmoMes = null;
+        if (contaCriada?.id && mesReferencia) {
+          const existentesRef = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: contaCriada.id });
+          lfMesmoMes = (existentesRef || []).find(
+            (l) => (l.data_vencimento || '').slice(0, 7) === mesReferencia
+          );
+        }
+
+        if (lfMesmoMes?.id) {
+          const manterPago = lfMesmoMes.status === 'Pago';
+          lancamentoCriado = await base44.entities.LancamentoFinanceiro.update(lfMesmoMes.id, {
+            ...lancamentoPayload,
+            ...(manterPago
+              ? {
+                  status: lfMesmoMes.status,
+                  data_pagamento: lfMesmoMes.data_pagamento,
+                  status_conciliacao: lfMesmoMes.status_conciliacao,
+                }
+              : {}),
+          });
+        } else {
+          lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);
+        }
+        if (!lancamentoCriado?.id && lfMesmoMes?.id) {
+          lancamentoCriado = { ...lfMesmoMes, ...lancamentoPayload, id: lfMesmoMes.id };
+        }
+        if ((lancamentoCriado?.id || lfMesmoMes?.id) && file?.original) {
           try {
             await uploadAnexoParaLancamentoFinanceiro(base44, {
               file: file.original,
-              lancamentoId: lancamentoCriado.id,
+              lancamentoId: lancamentoCriado?.id || lfMesmoMes.id,
               descricao: descricaoFinal,
               origem: 'importador_agefin_pdf',
             });
