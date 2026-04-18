@@ -43,6 +43,7 @@ function LancRow({ l, onClick }) {
   const prev = !pago && !cancelado;
   const conc = l.status_conciliacao || 'N/A';
   const data = l.data_pagamento || l.data_vencimento;
+  const showMeta = !!(l.categoria || (l.status && l.status !== 'Pago') || cancelado || l.is_recorrente || ((l.tags || []).length > 0));
 
   let icon, valColor;
   if (isT) {
@@ -71,23 +72,25 @@ function LancRow({ l, onClick }) {
         <span className={`block text-[0.82rem] font-medium whitespace-normal break-words leading-snug ${cancelado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-100'}`}>
           {l.descricao}
         </span>
-        <span className="flex items-center flex-wrap gap-1 mt-0.5">
-          <span className="text-[0.68rem] text-gray-400 dark:text-gray-500">
-            {data ? formatarDataCurta(data) : '—'}
-            {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
-          </span>
-          {l.categoria && (
-            <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-              {l.categoria}
-            </span>
-          )}
-          <StatusBadge status={l.status} />
-          {cancelado && <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-400">Cancelado</span>}
-          <RecorrenciaBadge l={l} />
-          {(l.tags || []).slice(0, 2).map(t => (
-            <span key={t} className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-400">{t}</span>
-          ))}
+        <span className="mt-0.5 block text-[0.68rem] text-gray-400 dark:text-gray-500">
+          {data ? formatarDataCurta(data) : '—'}
+          {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
         </span>
+        {showMeta && (
+          <span className="mt-1 flex flex-wrap items-center gap-1">
+            {l.categoria && (
+              <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                {l.categoria}
+              </span>
+            )}
+            <StatusBadge status={l.status} />
+            {cancelado && <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-400">Cancelado</span>}
+            <RecorrenciaBadge l={l} />
+            {(l.tags || []).slice(0, 2).map(t => (
+              <span key={t} className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-400">{t}</span>
+            ))}
+          </span>
+        )}
       </span>
       <span className="flex shrink-0 flex-col items-end gap-0.5 pl-1">
         <span className={`text-[0.82rem] font-bold tabular-nums whitespace-nowrap ${valColor}`}>

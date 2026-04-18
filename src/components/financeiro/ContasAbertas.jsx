@@ -8,7 +8,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  AlertTriangle, CheckCircle2, FileText, SlidersHorizontal, Upload, ChevronRight, Scale
+  AlertTriangle, AlertCircle, CheckCircle2, FileText, SlidersHorizontal, Upload, ChevronRight, Scale, Clock
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -179,6 +179,15 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
   const vStr = getVencimento(l);
   const val = Math.abs(l.valor || 0);
   const isPago = l.status === 'Pago';
+  const conc = l.status_conciliacao || 'N/A';
+  const showMeta = !!(
+    l.categoria ||
+    isPago ||
+    l.status === 'Vencido' ||
+    l.status === 'Em Aberto' ||
+    !!l.frequencia_recorrencia ||
+    (!isPago && !emSelecao)
+  );
 
   const icon = isR
     ? <ArrowDownLeft className="h-3.5 w-3.5 text-green-500 dark:text-green-400" />
@@ -203,39 +212,43 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
         <span className="block text-[0.82rem] font-medium leading-snug break-words whitespace-normal text-gray-800 dark:text-gray-100">
           {l.descricao}
         </span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-1">
-          <span className="text-[0.68rem] text-gray-400 dark:text-gray-500">
-            {dataKey ? formatarDataCurta(dataKey) : '—'}
-            {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
-          </span>
-          {l.categoria && (
-            <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-              {l.categoria}
-            </span>
-          )}
-          <ContaStatusBadge status={isPago ? null : l.status} />
-          {isPago && (
-            <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-green-600 dark:bg-green-900/20 dark:text-green-400">
-              Pago
-            </span>
-          )}
-          <ContaRecorrenciaBadge l={l} />
-          {!isPago && !emSelecao && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onPagar(l); }}
-              className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-            >
-              Pagar
-            </button>
-          )}
+        <span className="mt-0.5 block text-[0.68rem] text-gray-400 dark:text-gray-500">
+          {dataKey ? formatarDataCurta(dataKey) : '—'}
+          {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
         </span>
+        {showMeta && (
+          <span className="mt-1 flex flex-wrap items-center gap-1">
+            {l.categoria && (
+              <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                {l.categoria}
+              </span>
+            )}
+            <ContaStatusBadge status={isPago ? null : l.status} />
+            {isPago && (
+              <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-green-600 dark:bg-green-900/20 dark:text-green-400">
+                Pago
+              </span>
+            )}
+            <ContaRecorrenciaBadge l={l} />
+            {!isPago && !emSelecao && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onPagar(l); }}
+                className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              >
+                Pagar
+              </button>
+            )}
+          </span>
+        )}
       </span>
 
       <span className="flex shrink-0 flex-col items-end gap-0.5 pl-1">
         <span className={`text-[0.82rem] font-bold tabular-nums whitespace-nowrap ${isPago ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
           <span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(val)}
         </span>
+        {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-gray-400" />}
+        {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-gray-500" />}
       </span>
     </button>
   );
