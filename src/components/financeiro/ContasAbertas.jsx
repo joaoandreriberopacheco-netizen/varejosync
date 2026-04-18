@@ -199,7 +199,7 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
     <button
       type="button"
       onClick={() => !emSelecao && onClick(l)}
-      className={`flex w-full min-w-0 max-w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 ${isPago ? 'opacity-60' : ''}`}
+      className={`flex w-full min-w-0 max-w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 ${isPago ? 'opacity-60' : ''}`}
     >
       {emSelecao && !isPago && (
         <span className="flex-none pt-0.5">
@@ -266,7 +266,7 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="group flex w-full min-w-0 items-center justify-between gap-2 px-1 py-1.5"
+        className="group flex w-full min-w-0 items-center justify-between gap-2 px-0.5 py-1"
       >
         <p className={`min-w-0 flex-1 truncate text-left text-[0.62rem] font-semibold uppercase tracking-wide sm:tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
           {label}
@@ -804,7 +804,7 @@ export function ContasAbertasListaPane() {
             <p className="text-sm text-gray-400">Nenhuma conta em aberto</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {grupos.map(({ k, label, items, aReceberDia, aPagarDia, isVencido }) => (
               <GrupoContas key={k} label={label} items={items}
                 onPagar={handlePagarRapido} onRow={setDetalhe}
