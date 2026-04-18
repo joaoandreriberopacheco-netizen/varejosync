@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { base44 } from '@/api/base44Client';
 import { ChevronRight, User, AlertCircle, Calendar, FileText, Dice5 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 

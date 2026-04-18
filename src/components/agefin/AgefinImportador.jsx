@@ -60,6 +60,39 @@ function normalizeInvokeLlmJsonResponse(aiRes) {
   return o;
 }
 
+function possuiLeituraMinima(extracted) {
+  if (!extracted || typeof extracted !== 'object') return false;
+  const descricao = String(extracted.descricao || '').trim();
+  const beneficiario = String(extracted.beneficiario || '').trim();
+  const valor = Number(extracted.valor_pagamento);
+  const vencimento = String(extracted.data_vencimento || '').trim();
+  const linha = String(extracted.linha_digitavel || '').replace(/\D/g, '');
+  const pix = String(extracted.codigo_pix_copia_cola || '').trim();
+  return Boolean(
+    descricao ||
+    beneficiario ||
+    (Number.isFinite(valor) && valor > 0) ||
+    /^\d{4}-\d{2}-\d{2}$/.test(vencimento) ||
+    linha.length >= 44 ||
+    pix.length >= 20
+  );
+}
+
+function criarPreenchimentoManualMinimo(fileName = '') {
+  const baseNome = String(fileName || '').replace(/\.[^.]+$/, '').trim();
+  return {
+    descricao: baseNome || 'Conta importada',
+    valor: 0,
+    data_vencimento: dataHoje(),
+    terceiro_nome: '',
+    periodo_referencia: `${dataHoje().slice(0, 7)}-01`,
+    parcela_numero: '',
+    linha_digitavel: '',
+    codigo_pix_copia_cola: '',
+    observacoes: '',
+  };
+}
+
 function gerarBoletoFingerprint(dados) {
   const linha = String(dados?.linha_digitavel || '').replace(/\D/g, '');
   const pix = normalizarTexto(dados?.codigo_pix_copia_cola || '');
@@ -208,6 +241,7 @@ export default function AgefinImportador({
     if (!selectedFile) return false;
     setLoading(true);
     setError(null);
+    let arquivoEnviado = null;
     try {
       const f = await normalizarArquivoParaImportBoleto(selectedFile);
 
@@ -221,6 +255,7 @@ ${textoPdfLocal.slice(0, 14000)}`
           : '';
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
+      arquivoEnviado = { file_url, file_name: f.name, file_obj: f };
       setFile({
         original: f,
         url: file_url,
@@ -273,9 +308,43 @@ Campos a interpretar do documento:
         },
       });
 
-      const extracted = normalizeInvokeLlmJsonResponse(extractedRaw);
-      if (!extracted || typeof extracted !== 'object') {
-        throw new Error('Resposta do leitor vazia ou inválida');
+      let extracted = normalizeInvokeLlmJsonResponse(extractedRaw);
+      if (!possuiLeituraMinima(extracted)) {
+        // Segunda tentativa com prompt enxuto para documentos difíceis.
+        const retryRaw = await base44.integrations.Core.InvokeLLM({
+          file_urls: [file_url],
+          prompt: `Extraia APENAS os campos listados (sem texto extra):
+- descricao
+- valor_pagamento (number)
+- data_vencimento (YYYY-MM-DD)
+- beneficiario
+- linha_digitavel
+- codigo_pix_copia_cola
+Se não encontrar, use null.
+${blocoTextoLocal}`,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              descricao: { type: ['string', 'null'] },
+              valor_pagamento: { type: ['number', 'null'] },
+              data_vencimento: { type: ['string', 'null'] },
+              beneficiario: { type: ['string', 'null'] },
+              linha_digitavel: { type: ['string', 'null'] },
+              codigo_pix_copia_cola: { type: ['string', 'null'] },
+            },
+          },
+        });
+        const extractedRetry = normalizeInvokeLlmJsonResponse(retryRaw);
+        if (possuiLeituraMinima(extractedRetry)) extracted = extractedRetry;
+      }
+
+      if (!possuiLeituraMinima(extracted)) {
+        // Não bloqueia o utilizador: abre formulário para preenchimento manual.
+        setSelectedNatureza('Único');
+        setSelectedRecorrencia('Mensal');
+        setExtractedData(criarPreenchimentoManualMinimo(f.name));
+        setError('Leitura automática indisponível neste ficheiro. Preencha os campos manualmente e guarde.');
+        return true;
       }
 
       const descricaoFallback = [extracted.descricao, extracted.beneficiario].filter(Boolean).join(' - ');
@@ -317,6 +386,21 @@ Campos a interpretar do documento:
       setExtractedData(baseExtracted);
       return true;
     } catch (err) {
+      if (arquivoEnviado?.file_url) {
+        // Upload funcionou, mas OCR/LLM falhou: permite fluxo manual sem perder o anexo.
+        const f = arquivoEnviado.file_obj;
+        setFile({
+          original: f,
+          url: arquivoEnviado.file_url,
+          name: arquivoEnviado.file_name || f?.name || 'documento',
+        });
+        setSelectedNatureza('Único');
+        setSelectedRecorrencia('Mensal');
+        setExtractedData(criarPreenchimentoManualMinimo(arquivoEnviado.file_name || f?.name));
+        setError('Não consegui ler automaticamente este documento. Confira/preencha os campos e guarde.');
+        console.error('AgefinImportador fallback manual após falha OCR/LLM:', err);
+        return true;
+      }
       const primeiro = String(err?.message || err || '')
         .split('\n')[0]
         .slice(0, 140);
