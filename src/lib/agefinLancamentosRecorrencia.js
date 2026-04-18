@@ -393,10 +393,28 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
   }
 }
 
+/** Extrai fingerprint gravado em observações pelo importador (`[boleto_fp:...]`). */
+export function extrairBoletoFingerprintDeObservacoes(text) {
+  const m = String(text || '').match(/\[boleto_fp:([^\]]+)\]/);
+  return m ? m[1].trim() : null;
+}
+
+function normalizarDescricaoRamo(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
- * Para escopos em lote (todas/futuras): alinha ao mesmo vínculo quando existe referência explícita
- * (ex.: duas ContaPrevista diferentes não devem ser atualizadas juntas só por compartilharem grupo).
- * Séries geradas automaticamente costumam ter referencia_id === grupo_lancamento_id — mantém o grupo inteiro.
+ * Para escopos em lote (todas/futuras): só agrupa o que é o mesmo “ramo” da recorrência.
+ * — Séries automáticas: referencia_id === grupo_lancamento_id.
+ * — Mesma ContaPrevista / mesma referência explícita.
+ * — Várias competências (referências distintas): exige conta + tipo alinhados; separa séries paralelas
+ *   por fingerprint de boleto; evita o antigo `return true` que “siamesava” dois fluxos (ex. dois INSS)
+ *   só por compartilharem grupo_lancamento_id.
  */
 export function lancamentoMesmoRamoRecorrencia(base, outro) {
   if (!base || !outro) return false;
@@ -406,18 +424,44 @@ export function lancamentoMesmoRamoRecorrencia(base, outro) {
   if (!gBase || gBase !== gOut) return false;
   const refBase = base.referencia_id || '';
   const grupoId = gBase;
-  if (refBase && grupoId && refBase === grupoId) return true;
+
+  if (refBase && refBase === grupoId) return true;
+
+  const fpB = extrairBoletoFingerprintDeObservacoes(base.observacoes || '');
+  const fpO = extrairBoletoFingerprintDeObservacoes(outro.observacoes || '');
+  if (fpB && fpO && fpB !== fpO) return false;
+
   if (refBase && refBase !== grupoId) {
-    return (
+    if (
       (outro.referencia_id || '') === refBase &&
       (outro.referencia_tipo || '') === (base.referencia_tipo || '')
-    );
-  }
-  return true;
-}
+    ) {
+      return true;
+    }
+    const c0 = base.conta_financeira_id || '';
+    const c1 = outro.conta_financeira_id || '';
+    if (!c0 || !c1 || c0 !== c1) return false;
+    if ((base.referencia_tipo || '') !== (outro.referencia_tipo || '')) return false;
 
-/** Extrai fingerprint gravado em observações pelo importador (`[boleto_fp:...]`). */
-export function extrairBoletoFingerprintDeObservacoes(text) {
-  const m = String(text || '').match(/\[boleto_fp:([^\]]+)\]/);
-  return m ? m[1].trim() : null;
+    const d0 = normalizarDescricaoRamo(base.descricao);
+    const d1 = normalizarDescricaoRamo(outro.descricao);
+    if (d0.length > 0 && d0 === d1) return true;
+    if (fpB && fpO && fpB === fpO) return true;
+
+    const tagsB = Array.isArray(base.tags) ? base.tags : [];
+    const tagsO = Array.isArray(outro.tags) ? outro.tags : [];
+    const autoB = tagsB.includes(TAG_LF_GERADO_AUTO);
+    const autoO = tagsO.includes(TAG_LF_GERADO_AUTO);
+    return autoB && autoO;
+  }
+
+  const c0 = base.conta_financeira_id || '';
+  const c1 = outro.conta_financeira_id || '';
+  if (!c0 || !c1 || c0 !== c1) return false;
+
+  if (fpB && fpO) return fpB === fpO;
+
+  const d0 = normalizarDescricaoRamo(base.descricao);
+  const d1 = normalizarDescricaoRamo(outro.descricao);
+  return d0.length > 0 && d0 === d1;
 }
