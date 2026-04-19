@@ -33,20 +33,30 @@ export default function ImportadorPedidoCompra({
   const [discountType, setDiscountType] = useState('percentual');
   const [discountValue, setDiscountValue] = useState('0');
   const [selectedFile, setSelectedFile] = useState(null);
+  /** Espelho estável — evita perder o PDF se o estado for limpo entre passos (Strict Mode / re-execução de efeitos). */
+  const selectedFileRef = useRef(null);
   const fileInputRef = useRef(null);
   const pdfAutoPickConsumedRef = useRef(false);
+  /** Só repor estado ao passar de fechado → aberto; enquanto o modal fica aberto não limpar (senão some o PDF a meio do fluxo). */
+  const modalEstavaAbertoRef = useRef(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isOpen) pdfAutoPickConsumedRef.current = false;
-  }, [isOpen]);
+    if (!isOpen) {
+      modalEstavaAbertoRef.current = false;
+      pdfAutoPickConsumedRef.current = false;
+      return;
+    }
+    if (modalEstavaAbertoRef.current) {
+      return;
+    }
+    modalEstavaAbertoRef.current = true;
 
-  useEffect(() => {
-    if (!isOpen) return;
     setMode('pdf');
     setStep('upload');
     setItems([]);
     setSelectedFile(null);
+    selectedFileRef.current = null;
     setAdjustMode('desconto');
     setDiscountValue('0');
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
@@ -148,7 +158,18 @@ export default function ImportadorPedidoCompra({
   };
 
   const processSelectedFile = async () => {
-    if (!selectedFile) return;
+    const arquivo =
+      selectedFileRef.current ??
+      selectedFile;
+    if (!arquivo) {
+      toast({
+        title: 'Arquivo em falta',
+        description: 'Volte e selecione o PDF ou imagem novamente.',
+        variant: 'destructive',
+      });
+      setStep('upload');
+      return;
+    }
 
     setIsUploading(true);
     setStep('processing');
@@ -157,7 +178,7 @@ export default function ImportadorPedidoCompra({
 
     try {
       const fileUpload =
-        mode === 'pdf' ? await normalizarArquivoParaImportBoleto(selectedFile) : selectedFile;
+        mode === 'pdf' ? await normalizarArquivoParaImportBoleto(arquivo) : arquivo;
       const uploadRes = await base44.integrations.Core.UploadFile({ file: fileUpload });
       const fileUrl = uploadRes.file_url;
 
@@ -243,7 +264,7 @@ Retorne JSON:
       setStep('review');
     } catch (error) {
       toast({ title: 'Erro na análise', description: error.message, variant: 'destructive' });
-      setStep('upload');
+      setStep(selectedFileRef.current || selectedFile ? 'discount' : 'upload');
     } finally {
       setIsUploading(false);
     }
@@ -254,6 +275,7 @@ Retorne JSON:
     try {
       const file =
         mode === 'pdf' ? await normalizarArquivoParaImportBoleto(rawFile) : rawFile;
+      selectedFileRef.current = file;
       setSelectedFile(file);
       setStep('discount');
     } catch (err) {
@@ -360,7 +382,15 @@ Retorne JSON:
           </div>
           {step === 'review' && (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep('upload')} className="border-0 shadow-sm">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  selectedFileRef.current = null;
+                  setSelectedFile(null);
+                  setStep('upload');
+                }}
+                className="border-0 shadow-sm"
+              >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <Button onClick={handleConfirm} className="shadow-sm">
@@ -504,7 +534,7 @@ Retorne JSON:
                   : `-${discountNumber}% nos preços`}
               </p>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => { setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
+                <Button variant="outline" onClick={() => { selectedFileRef.current = null; setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-gray-900 dark:bg-white dark:text-gray-900 text-white gap-2">
