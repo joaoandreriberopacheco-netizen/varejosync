@@ -7,6 +7,7 @@ import { Camera, Image as ImageIcon, Sparkles, Calculator, X } from 'lucide-reac
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase, matchesProductQuery } from '@/components/compras/productMatchingUtils';
+import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
 export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete, mode = 'create' }) {
     const [step, setStep] = useState('upload');
@@ -124,7 +125,8 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
         setStep('processing');
 
         try {
-            const uploadRes = await base44.integrations.Core.UploadFile({ file });
+            const normalized = await normalizarArquivoParaImportBoleto(file);
+            const uploadRes = await base44.integrations.Core.UploadFile({ file: normalized });
             const fileUrl = uploadRes.file_url;
 
             const prompt = `ATENÇÃO: Analise esta imagem de lista manuscrita detalhadamente.
@@ -291,7 +293,7 @@ Retorne JSON:
                                     </Button>
                                     <input 
                                         type="file" 
-                                        accept="image/*,.pdf"
+                                        accept="image/*,.pdf,application/pdf,application/octet-stream,*/*"
                                         onChange={handleFileUpload}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                         disabled={isUploading}

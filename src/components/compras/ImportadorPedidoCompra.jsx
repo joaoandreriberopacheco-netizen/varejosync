@@ -10,6 +10,7 @@ import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkl
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
 import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity } from '@/lib/productUnits';
+import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
 export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComplete }) {
   const [mode, setMode] = useState('pdf');
@@ -121,7 +122,9 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
     setProcessingStatus('Carregando arquivo');
 
     try {
-      const uploadRes = await base44.integrations.Core.UploadFile({ file: selectedFile });
+      const fileUpload =
+        mode === 'pdf' ? await normalizarArquivoParaImportBoleto(selectedFile) : selectedFile;
+      const uploadRes = await base44.integrations.Core.UploadFile({ file: fileUpload });
       const fileUrl = uploadRes.file_url;
 
       setProcessingStep(2);
@@ -212,31 +215,41 @@ Retorne JSON:
     }
   };
 
-  const aplicarArquivoSelecionado = (file) => {
-    if (!file) return;
-    setSelectedFile(file);
-    setStep('discount');
+  const aplicarArquivoSelecionado = async (rawFile) => {
+    if (!rawFile) return;
+    try {
+      const file =
+        mode === 'pdf' ? await normalizarArquivoParaImportBoleto(rawFile) : rawFile;
+      setSelectedFile(file);
+      setStep('discount');
+    } catch (err) {
+      toast({
+        title: 'Não foi possível usar o arquivo',
+        description: err?.message || 'Tente outra origem ou renomeie para .pdf',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    aplicarArquivoSelecionado(file);
+    await aplicarArquivoSelecionado(file);
     if (e?.target) e.target.value = '';
   };
 
   useEffect(() => {
     if (!isOpen || step !== 'upload') return;
-    const onPaste = (event) => {
+    const onPaste = async (event) => {
       const file = event.clipboardData?.files?.[0];
       if (!file) return;
       event.preventDefault();
-      aplicarArquivoSelecionado(file);
+      await aplicarArquivoSelecionado(file);
       toast({ title: 'Arquivo colado com sucesso' });
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
-  }, [isOpen, step, toast]);
+  }, [isOpen, step, toast, mode]);
 
   const handleConfirm = async () => {
     try {
@@ -358,7 +371,11 @@ Retorne JSON:
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={mode === 'pdf' ? '.pdf' : 'image/*,.pdf'}
+                  accept={
+                    mode === 'pdf'
+                      ? '.pdf,application/pdf,application/octet-stream,*/*'
+                      : 'image/*,.pdf,application/pdf,*/*'
+                  }
                   onChange={handleFileUpload}
                   className="hidden"
                   disabled={isUploading}

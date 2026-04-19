@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Upload, FileText, Check, AlertTriangle, Loader2, Plus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
+import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
 export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState('upload'); // upload, review
@@ -37,8 +38,9 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
 
     setIsProcessing(true);
     try {
+      const normalized = await normalizarArquivoParaImportBoleto(file);
       // 1. Upload
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const uploadRes = await base44.integrations.Core.UploadFile({ file: normalized });
       setFileUrl(uploadRes.file_url);
 
       // 2. Extract
@@ -252,7 +254,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
                 <Input 
                   ref={fileInputRef}
                   type="file" 
-                  accept=".pdf,.jpg,.png,.jpeg"
+                  accept=".pdf,.jpg,.png,.jpeg,application/pdf,image/*,application/octet-stream,*/*"
                   onChange={handleFileUpload}
                   className="hidden" 
                   id="file-upload"

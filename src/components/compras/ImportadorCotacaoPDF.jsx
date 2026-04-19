@@ -9,6 +9,7 @@ import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } 
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
+import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -72,7 +73,8 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
         setStep('processing');
 
         try {
-            const uploadRes = await base44.integrations.Core.UploadFile({ file });
+            const normalized = await normalizarArquivoParaImportBoleto(file);
+            const uploadRes = await base44.integrations.Core.UploadFile({ file: normalized });
             const fileUrl = uploadRes.file_url;
 
             const [produtos, fornecedores] = await Promise.all([
@@ -362,7 +364,7 @@ Retorne um JSON com:
                                 <input
                                     ref={fileInputRef}
                                     type="file" 
-                                    accept=".pdf"
+                                    accept=".pdf,application/pdf,application/octet-stream,*/*"
                                     onChange={handleFileUpload}
                                     className="hidden"
                                     disabled={isUploading}

@@ -24,7 +24,7 @@ export async function blobParecePdf(blob) {
 
 /**
  * Garante `File` com nome `.pdf` e MIME `application/pdf` quando o conteúdo é PDF
- * (ex.: Android share → `content` sem extensão, `application/octet-stream`).
+ * (ex.: Android → URI sem extensão, `application/octet-stream`, importadores de compras).
  */
 export async function normalizarArquivoParaImportBoleto(file) {
   if (!file) return file;
