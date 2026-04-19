@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
+import { computeProdutoLinhaChecksum } from './produtoMassaChecksum';
 import { toast } from 'sonner';
 
 function getCellValue(cell) {
@@ -61,6 +62,7 @@ export default function ImportarPlanilha({ onParsed }) {
 
       const alterados = [];
       const erros = [];
+      let linhasIgnoradasSemMudanca = 0;
 
       // 4. Processar cada linha (ignorar linhas completamente vazias)
       for (let i = 2; i <= ws.rowCount; i++) {
@@ -166,9 +168,23 @@ export default function ImportarPlanilha({ onParsed }) {
         );
         dadosExtraidos.nome = nome;
 
-        // 9. Classificar como novo ou existente
+        // 9. Classificar como novo ou existente (produtos existentes: ignorar linha se hash = dados mesclados)
           if (id && mapaAtual[id]) {
-            // Update existente
+            const hashCol = colIndexMap['_hash_orig'];
+            const hashBruto = hashCol ? getCellValue(row.getCell(hashCol)) : null;
+            const hashArquivo =
+              hashBruto !== null && hashBruto !== undefined
+                ? String(hashBruto).trim().toUpperCase()
+                : '';
+
+            if (/^[0-9A-F]{4}$/.test(hashArquivo)) {
+              const merged = { ...mapaAtual[id], ...dadosExtraidos };
+              if (computeProdutoLinhaChecksum(merged) === hashArquivo) {
+                linhasIgnoradasSemMudanca += 1;
+                continue;
+              }
+            }
+
             alterados.push({ id, dados: dadosExtraidos, nome, isNew: false });
           } else if (!id && h1) {
             // Novo produto (sem ID)
@@ -185,17 +201,22 @@ export default function ImportarPlanilha({ onParsed }) {
         toast.error(`Encontrados ${erros.length} erro(s) de validação. Verifique a lista abaixo.`);
       }
 
-      if (alterados.length > 0) {
-        toast.success(`Processados ${alterados.length} produto(s) com sucesso!`);
+      if (alterados.length > 0 || linhasIgnoradasSemMudanca > 0) {
+        const partes = [];
+        if (alterados.length > 0) partes.push(`${alterados.length} produto(s) com alterações`);
+        if (linhasIgnoradasSemMudanca > 0) {
+          partes.push(`${linhasIgnoradasSemMudanca} linha(s) inalteradas ignoradas`);
+        }
+        toast.success(partes.join(' · '));
       }
 
       // Callback com dados processados
-      onParsed({ alterados, erros });
+      onParsed({ alterados, erros, linhasIgnoradasSemMudanca });
 
     } catch (error) {
       console.error('Erro ao processar arquivo:', error);
       toast.error(`Erro ao processar arquivo: ${error.message}`);
-      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: error.message }] });
+      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: error.message }], linhasIgnoradasSemMudanca: 0 });
     } finally {
       setParsing(false);
     }
