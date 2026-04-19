@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ResumoPrevisualizacao({ data }) {
-  const { alterados = [], erros = [] } = data;
+  const { alterados = [], erros = [], linhasIgnoradasSemMudanca = 0 } = data;
   const [mostrarDetalhes, setMostrarDetalhes] = useState(false);
 
   return (
@@ -12,7 +12,7 @@ export default function ResumoPrevisualizacao({ data }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{alterados.length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Linhas alteradas</p>
+          <p className="text-xs text-gray-500 mt-0.5">A importar (com mudança)</p>
         </div>
         <div className={`rounded-xl p-4 shadow-sm text-center ${erros.length > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-white dark:bg-gray-900'}`}>
           <p className={`text-2xl font-bold ${erros.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
@@ -38,7 +38,11 @@ export default function ResumoPrevisualizacao({ data }) {
       )}
 
       {alterados.length === 0 && erros.length === 0 && (
-        <p className="text-sm text-gray-400 text-center">Nenhuma alteração detectada na planilha.</p>
+        <p className="text-sm text-gray-400 text-center">
+          {linhasIgnoradasSemMudanca > 0
+            ? `Nada a sincronizar: ${linhasIgnoradasSemMudanca} linha(s) de produto existente coincidem com o hash (sem mudanças).`
+            : 'Nenhuma alteração detectada na planilha.'}
+        </p>
       )}
 
       {/* Erros listados com detalhes */}
