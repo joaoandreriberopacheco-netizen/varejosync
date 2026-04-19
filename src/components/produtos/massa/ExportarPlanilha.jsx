@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
+import { computeProdutoLinhaChecksum } from './produtoMassaChecksum';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 // Índice (1-based) de colunas especiais
@@ -21,58 +22,6 @@ function colLetter(index) {
   return result;
 }
 
-function normNum(value) {
-  if (value === null || value === undefined || value === '') return '0';
-  const normalized = String(value).trim().replace(',', '.');
-  const parsed = parseFloat(normalized);
-  return Number.isNaN(parsed) ? '0' : Math.round(parsed * 100).toString();
-}
-
-function normStr(value) {
-  if (value === null || value === undefined) return '';
-  return String(value).trim();
-}
-
-function computeChecksum(produto) {
-  // Checksum simples — só quer saber se algo mudou
-  const concat = [
-    normStr(produto.campo_hierarquico_1),
-    normStr(produto.campo_hierarquico_2),
-    normStr(produto.campo_hierarquico_3),
-    normStr(produto.campo_hierarquico_4),
-    normStr(produto.campo_hierarquico_5),
-    normStr(produto.codigo_barras),
-    normStr(produto.marca),
-    normStr(produto.tipo),
-    normStr(produto.abcd),
-    normStr(produto.categoria_nome),
-    normStr(produto.area_codigo),
-    normNum(produto.valor_compra),
-    normNum(produto.casas_decimais),
-    normNum(produto.desconto_perc ?? 0),
-    normNum(produto.custo_frete_padrao),
-    normNum(produto.custo_imposto1_padrao),
-    normNum(produto.custo_imposto2_padrao),
-    normNum(produto.desconto_compra_padrao ?? 0),
-    normNum(produto.preco_venda_padrao),
-    normStr(produto.unidade_principal),
-    normNum(produto.unidades_por_pacote),
-    normNum(produto.estoque_minimo),
-    normNum(produto.estoque_ideal),
-    normNum(produto.estoque_maximo),
-    normNum(produto.tempo_reposicao_dias),
-    normNum(produto.peso_kg),
-    normStr(produto.dimensoes_cm),
-    produto.ativo !== false ? 'sim' : 'não',
-  ].join('|');
-  // CRC16 simples
-  let crc = 0;
-  for (let i = 0; i < concat.length; i++) {
-    crc = ((crc << 8) ^ (concat.charCodeAt(i))) & 0xffff;
-  }
-  return crc.toString(16).padStart(4, '0').toUpperCase();
-}
-
 function normalizeBooleanCell(value) {
   if (value === true) return 'true';
   if (value === false) return 'false';
@@ -80,11 +29,6 @@ function normalizeBooleanCell(value) {
   if (['sim', 'true', 'verdadeiro', '1'].includes(normalized)) return 'true';
   if (['não', 'nao', 'false', 'falso', '0'].includes(normalized)) return 'false';
   return 'false';
-}
-
-function hashFormula(rowNumber) {
-   // Fórmula quebrada em partes em colunas auxiliares (hidden)
-   return `AI${rowNumber}`; // Referência à coluna auxiliar que já faz o cálculo
 }
 
 export default function ExportarPlanilha() {
@@ -140,9 +84,6 @@ export default function ExportarPlanilha() {
       const idxCustoCalc         = getColIndex('custo_total_calculado');
       const idxPrecoVenda        = getColIndex('preco_venda_padrao');
       const idxId                = getColIndex('id');
-      const idxHashOrig          = getColIndex('_hash_orig');
-      const idxAlterado          = getColIndex('alterado');
-
 
       const letCustoCalc   = colLetter(idxCustoCalc);
       const letPrecoVenda  = colLetter(idxPrecoVenda);
@@ -153,8 +94,6 @@ export default function ExportarPlanilha() {
       const letImposto1    = colLetter(idxImposto1);
       const letImposto2    = colLetter(idxImposto2);
       const letH1          = colLetter(idxH1);
-      const letHashOrig    = colLetter(idxHashOrig);
-      const letAlterado    = colLetter(idxAlterado);
       const lastCol        = colLetter(COLUNAS_CONFIG.length);
 
       // ── Data validation por coluna (schema-driven) ─────────────────────────
@@ -206,8 +145,6 @@ export default function ExportarPlanilha() {
           + (p.custo_frete_padrao || 0)
           + (p.custo_imposto1_padrao || 0)
           + (p.custo_imposto2_padrao || 0);
-        const checksumOrig = computeChecksum(p);
-
         const rowData = {};
         COLUNAS_CONFIG.forEach(col => {
           if (col.key === 'custo_total_calculado') {
@@ -216,9 +153,9 @@ export default function ExportarPlanilha() {
               result: custoCalc,
             };
           } else if (col.key === '_hash_orig') {
-            rowData[col.key] = computeChecksum(p);
+            rowData[col.key] = computeProdutoLinhaChecksum(p);
           } else if (col.key === 'alterado') {
-            rowData[col.key] = '';
+            rowData[col.key] = 'NÃO';
           } else if (col.tipo === 'boolean') {
             rowData[col.key] = normalizeBooleanCell(p[col.key]);
           } else {
@@ -229,48 +166,6 @@ export default function ExportarPlanilha() {
         // Remove redundante: custoCalc, valorCompraLiquido e descontoPerc já calculados acima
 
         const row = ws.addRow(rowData);
-
-        // Fórmula de hash — usa índices REAIS das colunas em COLUNAS_CONFIG
-        // Helpers para normalizar valores (sem usar ARRUMAR/TRIM que pode variar por locale)
-        const idxH1 = 2, idxH2 = 3, idxH3 = 4, idxH4 = 5, idxH5 = 6;  // Nível 1-5
-        const idxCB = 7, idxMA = 8, idxTP = 9;                          // Cód.Barras, Marca, Tipo
-        const idxCA = 10, idxAR = 11;                                    // Categoria, Área
-        const idxVC = 12, idxDP = 13, idxFR = 14, idxI1 = 15, idxI2 = 16; // Preços e custos
-        const idxPV = 19;                                                // Preço Venda
-        const idxUN = 20, idxCD = 21, idxUP = 22, idxEM = 23, idxEI = 24, idxEX = 25, idxRP = 26;
-        const idxPS = 27, idxDM = 28, idxABCD = 29;                     // Físico e classificação
-        const idxPL = 30, idxCS = 31, idxCL = 32, idxCV = 33;           // PDV e rastreabilidade
-        const idxAT = 34;                                                // Ativo
-
-        const letH1 = colLetter(idxH1), letH2 = colLetter(idxH2), letH3 = colLetter(idxH3), letH4 = colLetter(idxH4), letH5 = colLetter(idxH5);
-         const letCB = colLetter(idxCB), letMA = colLetter(idxMA), letTP = colLetter(idxTP);
-         const letCA = colLetter(idxCA), letAR = colLetter(idxAR);
-         const letVC = colLetter(idxVC), letDP = colLetter(idxDP), letFR = colLetter(idxFR), letI1 = colLetter(idxI1), letI2 = colLetter(idxI2);
-         const letPV = colLetter(idxPV);
-         const letUN = colLetter(idxUN), letCD = colLetter(idxCD), letUP = colLetter(idxUP);
-         const letEM = colLetter(idxEM), letEI = colLetter(idxEI), letEX = colLetter(idxEX), letRP = colLetter(idxRP);
-         const letPS = colLetter(idxPS), letDM = colLetter(idxDM), letABCD = colLetter(idxABCD);
-         const letPL = colLetter(idxPL), letCS = colLetter(idxCS), letCL = colLetter(idxCL), letCV = colLetter(idxCV);
-         const letAT = colLetter(idxAT);
-
-         // Fórmula de checksum simplificada: soma os códigos ASCII de cada célula
-         // Usa CÓDIGO(EXT.TEXTO()) para extrair e somar valores numéricos
-         const buildChecksumFormula = (cells) => {
-           return cells.map(cell => `SOMARPRODUTO(CÓDIGO(EXT.TEXTO(${cell};SEQUÊNCIA(1;100);1)))`).join("+");
-         };
-
-         const checksumCells = [
-           `${letH1}${rowNumber}`, `${letH2}${rowNumber}`, `${letH3}${rowNumber}`, `${letH4}${rowNumber}`, `${letH5}${rowNumber}`,
-           `${letCB}${rowNumber}`, `${letMA}${rowNumber}`, `${letTP}${rowNumber}`, `${letABCD}${rowNumber}`, `${letCA}${rowNumber}`, `${letAR}${rowNumber}`,
-           `${letCD}${rowNumber}`, `${letDP}${rowNumber}`, `${letFR}${rowNumber}`, `${letI1}${rowNumber}`, `${letI2}${rowNumber}`,
-           `${letUN}${rowNumber}`, `${letDM}${rowNumber}`, `${letAT}${rowNumber}`
-         ];
-         const checksumFormula = buildChecksumFormula(checksumCells);
-
-         row.getCell(idxAlterado).value = {
-           formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
-           result: 'NÃO',
-         };
 
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const colConfig = COLUNAS_CONFIG[colNumber - 1];
@@ -294,7 +189,6 @@ export default function ExportarPlanilha() {
       // ── Formatação Condicional ─────────────────────────────────────────────
       const dataRange = `A2:${lastCol}${maxRows}`;
       const precoRange = `${letPrecoVenda}2:${letPrecoVenda}${maxRows}`;
-      const alteradoRange = `${letAlterado}2:${letAlterado}${maxRows}`;
 
       // 1. Preço de Venda com fundo vermelho se < Custo Calculado
       ws.addConditionalFormatting({
@@ -323,21 +217,6 @@ export default function ExportarPlanilha() {
             style: {
               font: { color: { argb: 'FF166534' } },
               fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFF0FDF4' } },
-            },
-          },
-        ],
-      });
-
-      ws.addConditionalFormatting({
-        ref: alteradoRange,
-        rules: [
-          {
-            type: 'expression',
-            priority: 3,
-            formulae: [`${letAlterado}2="SIM"`],
-            style: {
-              fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFEF9C3' } },
-              font: { color: { argb: 'FF92400E' }, bold: true },
             },
           },
         ],
