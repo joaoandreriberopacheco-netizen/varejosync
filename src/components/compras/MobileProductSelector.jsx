@@ -361,7 +361,7 @@ export default function MobileProductSelector({
             </div>
             <div className="flex-1 text-left">
               <div className="font-medium text-gray-900 dark:text-white">Importar Itens</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">PDF ou foto direto no pedido</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Abre já em PDF — ou escolha foto</div>
             </div>
             <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
           </button>

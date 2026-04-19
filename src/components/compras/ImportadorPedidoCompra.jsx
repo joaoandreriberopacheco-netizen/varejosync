@@ -32,9 +32,12 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
 
   useEffect(() => {
     if (!isOpen) return;
+    setMode('pdf');
     setStep('upload');
     setItems([]);
     setSelectedFile(null);
+    setAdjustMode('desconto');
+    setDiscountValue('0');
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
     Promise.all([
       base44.entities.Produto.list(),
