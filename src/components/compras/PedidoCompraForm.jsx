@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { roundToTwoDecimals, formatCurrency as formatCurrencyValue } from '@/lib/financialUtils';
 import { Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -120,6 +120,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
   const [isNovoFornecedorOpen, setIsNovoFornecedorOpen] = useState(false);
   const [novoFornecedor, setNovoFornecedor] = useState({ nome: '', email: '', telefone: '', endereco: '' });
   const [isImportadorPedidoOpen, setIsImportadorPedidoOpen] = useState(false);
+  /** Quando true, o importador dispara o input file (PDF) uma vez — fluxo ?autoImportador=1 */
+  const [importerLaunchPdfPicker, setImporterLaunchPdfPicker] = useState(false);
   const autoImporterHandledRef = useRef(false);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState('dados-gerais');
@@ -210,10 +212,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     setPedidoLogistica(pedido || null);
   }, [pedido]);
 
+  const handleImporterLaunchPdfPickerConsumed = useCallback(() => {
+    setImporterLaunchPdfPicker(false);
+  }, []);
+
   useEffect(() => {
     if (!autoOpenImporter || autoImporterHandledRef.current) return;
     if (pedido?.id) return; // abertura automática é apenas no "novo pedido"
     autoImporterHandledRef.current = true;
+    setImporterLaunchPdfPicker(true);
     setAbaPedidoDesktop('itens');
     setIsImportadorPedidoOpen(true);
   }, [autoOpenImporter, pedido?.id]);
@@ -1392,7 +1399,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
       <ImportadorPedidoCompra
         isOpen={isImportadorPedidoOpen}
-        onClose={() => setIsImportadorPedidoOpen(false)}
+        onClose={() => {
+          setImporterLaunchPdfPicker(false);
+          setIsImportadorPedidoOpen(false);
+        }}
+        launchPdfFilePickerOnce={importerLaunchPdfPicker}
+        onLaunchPdfFilePickerConsumed={handleImporterLaunchPdfPickerConsumed}
         onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems }) => {
           setFormData(prev => {
             const novosItens = importedItems.map(item => {

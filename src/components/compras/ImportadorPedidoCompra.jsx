@@ -12,7 +12,13 @@ import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatc
 import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 
-export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComplete }) {
+export default function ImportadorPedidoCompra({
+  isOpen,
+  onClose,
+  onImportComplete,
+  launchPdfFilePickerOnce = false,
+  onLaunchPdfFilePickerConsumed,
+}) {
   const [mode, setMode] = useState('pdf');
   const [step, setStep] = useState('upload');
   const [isUploading, setIsUploading] = useState(false);
@@ -28,7 +34,12 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const [discountValue, setDiscountValue] = useState('0');
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
+  const pdfAutoPickConsumedRef = useRef(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isOpen) pdfAutoPickConsumedRef.current = false;
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,6 +58,26 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
       setFornecedores(fns);
     });
   }, [isOpen]);
+
+  /** Novo pedido via ?autoImportador=1: abre já o seletor de ficheiros (PDF); após escolher, o motor continua sozinho */
+  useEffect(() => {
+    if (!isOpen || !launchPdfFilePickerOnce) return;
+    if (step !== 'upload' || mode !== 'pdf') return;
+    if (pdfAutoPickConsumedRef.current) return;
+    pdfAutoPickConsumedRef.current = true;
+
+    const id = window.setTimeout(() => {
+      try {
+        fileInputRef.current?.click();
+      } finally {
+        onLaunchPdfFilePickerConsumed?.();
+      }
+    }, 120);
+
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, [isOpen, launchPdfFilePickerOnce, step, mode, onLaunchPdfFilePickerConsumed]);
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
