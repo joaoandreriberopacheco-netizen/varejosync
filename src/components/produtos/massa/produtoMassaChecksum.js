@@ -15,7 +15,7 @@ function normStr(value) {
   return String(value).trim();
 }
 
-/** Metadados de cada segmento (mesma ordem do concat). kind: str | num | ativo */
+/** Metadados de cada segmento (mesma ordem do concat). kind: str | num | ativo (= booleans como sim/não, igual à coluna na planilha) */
 export const PRODUTO_CANON_SEGMENTS = [
   { key: 'campo_hierarquico_1', kind: 'str' },
   { key: 'campo_hierarquico_2', kind: 'str' },
@@ -44,13 +44,19 @@ export const PRODUTO_CANON_SEGMENTS = [
   { key: 'tempo_reposicao_dias', kind: 'num' },
   { key: 'peso_kg', kind: 'num' },
   { key: 'dimensoes_cm', kind: 'str' },
+  // Colunas ~AE em diante na planilha (antes só entravam no Excel, não no canónico)
+  { key: 'preco_livre', kind: 'ativo' },
+  { key: 'controla_serial', kind: 'ativo' },
+  { key: 'controla_lote', kind: 'ativo' },
+  { key: 'controla_validade', kind: 'ativo' },
+  { key: 'unidade_apresentacao_default', kind: 'str' },
   { key: 'ativo', kind: 'ativo' },
 ];
 
 function segmentValue(produto, seg) {
   if (seg.kind === 'str') return normStr(produto[seg.key]);
   if (seg.kind === 'num') return normNum(produto[seg.key] ?? 0);
-  if (seg.kind === 'ativo') return produto.ativo !== false ? 'sim' : 'não';
+  if (seg.kind === 'ativo') return produto[seg.key] !== false ? 'sim' : 'não';
   return '';
 }
 
@@ -82,14 +88,35 @@ export function buildExcelCanonConcatExpr(rowNumber, colLetter) {
 }
 
 /**
- * @param {Record<string, unknown>} produto Objeto produto (API ou mesclado na importação)
- * @returns {string} Quatro caracteres hexadecimais maiúsculos
+ * CRC16 legado (4 hex) — só para comparar planilhas exportadas antes da mudança para FNV.
  */
-export function computeProdutoLinhaChecksum(produto) {
+export function computeLegacyCRC16Checksum(produto) {
   const concat = produtoLinhaCanonico(produto);
   let crc = 0;
   for (let i = 0; i < concat.length; i++) {
     crc = ((crc << 8) ^ concat.charCodeAt(i)) & 0xffff;
   }
   return crc.toString(16).padStart(4, '0').toUpperCase();
+}
+
+/**
+ * Hash de linha (FNV-1a 32 bits → 8 hex) — bem menos colisões que CRC16 de 4 hex.
+ */
+export function computeProdutoLinhaChecksum(produto) {
+  const concat = produtoLinhaCanonico(produto);
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < concat.length; i++) {
+    h ^= concat.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return (h >>> 0).toString(16).padStart(8, '0').toUpperCase();
+}
+
+/** Verifica se o produto corresponde ao valor guardado na planilha (FNV novo ou CRC antigo). */
+export function produtoCombinaHashArmazenado(produto, hashArquivoNormalizado) {
+  const h = hashArquivoNormalizado.trim().toUpperCase();
+  if (!h) return false;
+  if (h === computeProdutoLinhaChecksum(produto)) return true;
+  if (/^[0-9A-F]{4}$/.test(h) && computeLegacyCRC16Checksum(produto) === h) return true;
+  return false;
 }

@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
-import { computeProdutoLinhaChecksum } from './produtoMassaChecksum';
+import { produtoCombinaHashArmazenado } from './produtoMassaChecksum';
 import { toast } from 'sonner';
 
 function getCellValue(cell) {
@@ -179,9 +179,9 @@ export default function ImportarPlanilha({ onParsed }) {
                 ? String(hashBruto).trim().toUpperCase()
                 : '';
 
-            if (/^[0-9A-F]{4}$/.test(hashArquivo)) {
+            if (/^[0-9A-F]{4}$/.test(hashArquivo) || /^[0-9A-F]{8}$/.test(hashArquivo)) {
               const merged = { ...mapaAtual[id], ...dadosExtraidos };
-              if (computeProdutoLinhaChecksum(merged) === hashArquivo) {
+              if (produtoCombinaHashArmazenado(merged, hashArquivo)) {
                 linhasIgnoradasSemMudanca += 1;
                 continue;
               }
