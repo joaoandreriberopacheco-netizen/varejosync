@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
-import { computeProdutoLinhaChecksum } from './produtoMassaChecksum';
+import { buildExcelCanonConcatExpr, computeProdutoLinhaChecksum, produtoLinhaCanonico } from './produtoMassaChecksum';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 // Índice (1-based) de colunas especiais
@@ -137,6 +137,9 @@ export default function ExportarPlanilha() {
       produtos.forEach((p, dataRowIdx) => {
         const rowNumber = dataRowIdx + 2; // linha 2 em diante
 
+        const snapLetter = colLetter(getColIndex('_canon_snapshot'));
+        const canonExpr = buildExcelCanonConcatExpr(rowNumber, (key) => colLetter(getColIndex(key)));
+
         // Calcula custoCalc para usar nas fórmulas
         const descontoPerc = p.desconto_perc ?? 0;
         const valorCompraLiquido = (p.valor_compra || 0) * (1 - (descontoPerc / 100));
@@ -152,10 +155,15 @@ export default function ExportarPlanilha() {
               formula: `=${letValorCompra}${rowNumber}*(1-IF(${letDescontoPerc}${rowNumber}="",0,${letDescontoPerc}${rowNumber})/100)+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}`,
               result: custoCalc,
             };
+          } else if (col.key === '_canon_snapshot') {
+            rowData[col.key] = produtoLinhaCanonico(p);
           } else if (col.key === '_hash_orig') {
             rowData[col.key] = computeProdutoLinhaChecksum(p);
           } else if (col.key === 'alterado') {
-            rowData[col.key] = 'NÃO';
+            rowData[col.key] = {
+              formula: `=IF(${snapLetter}${rowNumber}="","SIM",IF(${canonExpr}=${snapLetter}${rowNumber},"NÃO","SIM"))`,
+              result: 'NÃO',
+            };
           } else if (col.tipo === 'boolean') {
             rowData[col.key] = normalizeBooleanCell(p[col.key]);
           } else {
@@ -186,9 +194,13 @@ export default function ExportarPlanilha() {
         });
       });
 
+      ws.getColumn(getColIndex('_canon_snapshot')).hidden = true;
+
       // ── Formatação Condicional ─────────────────────────────────────────────
       const dataRange = `A2:${lastCol}${maxRows}`;
       const precoRange = `${letPrecoVenda}2:${letPrecoVenda}${maxRows}`;
+      const letAlterado = colLetter(getColIndex('alterado'));
+      const alteradoRange = `${letAlterado}2:${letAlterado}${maxRows}`;
 
       // 1. Preço de Venda com fundo vermelho se < Custo Calculado
       ws.addConditionalFormatting({
@@ -217,6 +229,21 @@ export default function ExportarPlanilha() {
             style: {
               font: { color: { argb: 'FF166534' } },
               fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFF0FDF4' } },
+            },
+          },
+        ],
+      });
+
+      ws.addConditionalFormatting({
+        ref: alteradoRange,
+        rules: [
+          {
+            type: 'expression',
+            priority: 3,
+            formulae: [`${letAlterado}2="SIM"`],
+            style: {
+              fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFEF9C3' } },
+              font: { color: { argb: 'FF92400E' }, bold: true },
             },
           },
         ],

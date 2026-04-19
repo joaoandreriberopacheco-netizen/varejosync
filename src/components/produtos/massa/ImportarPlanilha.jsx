@@ -70,7 +70,9 @@ export default function ImportarPlanilha({ onParsed }) {
 
         // Verificar se a linha inteira está vazia (nenhuma célula preenchida)
         let linhaVazia = true;
-        const totalColunasImportaveis = COLUNAS_CONFIG.filter(col => col.key !== '_hash_orig' && col.key !== 'alterado').length;
+        const totalColunasImportaveis = COLUNAS_CONFIG.filter(
+          col => !['_hash_orig', 'alterado', '_canon_snapshot'].includes(col.key),
+        ).length;
         for (let j = 1; j <= totalColunasImportaveis; j++) {
           const cellValue = getCellValue(row.getCell(j));
           if (cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
@@ -151,7 +153,7 @@ export default function ImportarPlanilha({ onParsed }) {
         if (erroNaLinha) continue;
 
         // 7. Remover campos não mapeados (que não existem na entidade Produto)
-        const camposValidos = ['campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'tipo', 'preco_venda_padrao', 'valor_compra', 'desconto_perc', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_por_pacote', 'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome', 'marca', 'categoria_nome', 'area_codigo'];
+        const camposValidos = ['campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'tipo', 'preco_venda_padrao', 'valor_compra', 'desconto_perc', 'desconto_compra_padrao', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_por_pacote', 'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome', 'marca', 'categoria_nome', 'area_codigo'];
         Object.keys(dadosExtraidos).forEach(key => {
           if (!camposValidos.includes(key)) {
             delete dadosExtraidos[key];

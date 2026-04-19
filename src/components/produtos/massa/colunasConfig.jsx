@@ -50,6 +50,7 @@ export const COLUNAS_CONFIG = [
   { key: 'custo_frete_padrao',      label: 'Frete Padrão (R$)',      editavel: true,  width: 18, tipo: 'numero' },
   { key: 'custo_imposto1_padrao',   label: 'Imposto 1',              editavel: true,  width: 14, tipo: 'numero' },
   { key: 'custo_imposto2_padrao',   label: 'Imposto 2',              editavel: true,  width: 14, tipo: 'numero' },
+  { key: 'desconto_compra_padrao',  label: 'Desc. Comercial (R$)',  editavel: true,  width: 16, tipo: 'numero' },
   // coluna calculada (bloqueada) — injetada após os custos na exportação
   { key: 'custo_total_calculado',   label: 'Custo Total Calculado',  editavel: false, width: 22, tipo: 'numero', calculado: true },
   { key: 'preco_venda_padrao',      label: 'Preço Venda (*)',        editavel: true,  width: 18, tipo: 'numero' },
@@ -84,6 +85,7 @@ export const COLUNAS_CONFIG = [
   { key: 'unidade_apresentacao_default', label: 'Apresentação PDV (sigla)', editavel: true, width: 22, tipo: 'string' },
 
   // --- Verificação (somente leitura) ---
+  { key: '_canon_snapshot',         label: '_base_hash',             editavel: false, width: 4, tipo: 'string', calculado: true },
   { key: '_hash_orig',              label: 'Hash Verificação',       editavel: false, width: 24, tipo: 'string', calculado: true },
   { key: 'alterado',                label: 'Alterado?',              editavel: false, width: 14, tipo: 'string', calculado: true },
 ];
