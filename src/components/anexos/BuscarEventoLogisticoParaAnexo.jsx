@@ -9,9 +9,22 @@ import {
   Ship,
   Banknote,
   MapPin,
+  RefreshCw,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
+
+/** Junta produção + sandbox (o itinerário na app usa EventoLogisticoSandbox; anexos podiam só ler EventosLogisticos e ficar vazio). */
+function unificarEventosLogisticos(fromProd = [], fromSandbox = []) {
+  const mapa = new Map();
+  for (const ev of fromProd) {
+    if (ev?.id) mapa.set(ev.id, ev);
+  }
+  for (const ev of fromSandbox) {
+    if (ev?.id && !mapa.has(ev.id)) mapa.set(ev.id, ev);
+  }
+  return Array.from(mapa.values());
+}
 
 function montarTextoBusca(ev) {
   const emb = ev.embarques_relacionados || [];
@@ -162,8 +175,15 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
     setCarregando(true);
     setErro(null);
     try {
-      const [todos, embs, lancs] = await Promise.all([
-        base44.entities.EventosLogisticos.list('-created_date', 200),
+      const [fromProd, fromSandbox, embs, lancs] = await Promise.all([
+        base44.entities.EventosLogisticos.list('-created_date', 300).catch((err) => {
+          console.warn('[BuscarEventoLogistico] EventosLogisticos:', err);
+          return [];
+        }),
+        base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 500).catch((err) => {
+          console.warn('[BuscarEventoLogistico] EventoLogisticoSandbox:', err);
+          return [];
+        }),
         base44.entities.Embarque.list('-created_date', 1000).catch(() => []),
         base44.entities.LancamentoFinanceiro.filter(
           { referencia_tipo: 'EventosLogisticos' },
@@ -171,8 +191,9 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           800
         ).catch(() => []),
       ]);
+      const todos = unificarEventosLogisticos(fromProd || [], fromSandbox || []);
       const built = buildFluvialEvents({
-        eventosLogisticos: todos || [],
+        eventosLogisticos: todos,
         embarques: embs || [],
         lancamentosFinanceiros: lancs || [],
       });
@@ -225,6 +246,15 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
             Linha do tempo com ETA em Tabatinga e vínculos (embarques / frete)
           </p>
         </div>
+        <button
+          type="button"
+          title="Recarregar lista de viagens"
+          onClick={() => carregarDados()}
+          disabled={carregando}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       <div className="relative">
@@ -253,9 +283,28 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
           </div>
         ) : eventosFiltrados.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">
-            {query.trim() ? 'Nenhuma viagem corresponde à busca' : 'Nenhuma viagem encontrada'}
-          </p>
+          <div className="space-y-4 py-10 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {query.trim()
+                ? 'Nenhuma viagem corresponde à busca.'
+                : 'Nenhuma viagem encontrada neste momento.'}
+            </p>
+            {!query.trim() ? (
+              <p className="mx-auto max-w-sm text-xs leading-relaxed text-gray-400 dark:text-gray-500">
+                A lista junta viagens da base principal e da área de itinerário. Se usa o mapa em Logística e não via
+                nada aqui, toque em atualizar ou verifique em Compras / Gestão de eventos logísticos.
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => carregarDados()}
+              disabled={carregando}
+              className="inline-flex items-center gap-2 rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            >
+              <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
+              Atualizar lista
+            </button>
+          </div>
         ) : (
           eventosFiltrados.map((ev) => (
             <button
