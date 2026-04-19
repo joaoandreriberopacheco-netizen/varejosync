@@ -29,6 +29,10 @@ import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarge
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
 import { brandSurface } from '@/lib/brandSurfaces';
+import {
+  guardarArquivoParaPedidoImport,
+  copiarArquivoParaClipboardOpcional,
+} from '@/lib/torrePedidoImportBridge';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -47,6 +51,7 @@ export default function AnexoCompartilhado() {
   const [modoAtalhoClipboard, setModoAtalhoClipboard] = useState(false);
   /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
   const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
+  const colagemAutomaticaClipboardTentada = useRef(false);
 
   const tiposDocumentoDisponiveis = useMemo(
     () => Array.from(new Set([...TIPOS_DOCUMENTO_ANEXO, ...tiposDocumentoCustom])),
@@ -345,13 +350,27 @@ export default function AnexoCompartilhado() {
     const focoColar = params.get('clipboard') === '1';
     if (focoColar) {
       setModoAtalhoClipboard(true);
-      setFeedbackClipboard('Atalho aberto. Toque em "Colar da área de transferência".');
+      setFeedbackClipboard('A tentar colar automaticamente… Se não aparecer arquivo, use o botão Colar.');
     }
     if (etapaAlvo) {
       destinoDeepLinkHandled.current = true;
       setEtapa(etapaAlvo);
     }
   }, [carregando]);
+
+  /** Atalho ?clipboard=1: tenta ler a área de transferência ao chegar (complementa cópia feita noutra app / passo anterior). */
+  useEffect(() => {
+    if (carregando) return;
+    if (etapa !== 'torre_controle') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('clipboard') !== '1') return;
+    if (colagemAutomaticaClipboardTentada.current) return;
+    colagemAutomaticaClipboardTentada.current = true;
+    const id = window.setTimeout(() => {
+      void handleColarDaAreaTransferencia();
+    }, 250);
+    return () => window.clearTimeout(id);
+  }, [carregando, etapa]);
 
   useEffect(() => {
     if (etapa !== 'torre_controle') setAjudaTorreAberta(false);
@@ -813,7 +832,15 @@ export default function AnexoCompartilhado() {
             icon={FileUp}
             titulo="Novo pedido (importar itens)"
             descricao="Criar pedido novo e abrir direto o importador de itens"
-            onClick={() => {
+            onClick={async () => {
+              try {
+                if (arquivo?.file) {
+                  await guardarArquivoParaPedidoImport(arquivo.file, arquivo.nome, arquivo.tipo);
+                  void copiarArquivoParaClipboardOpcional(arquivo.file);
+                }
+              } catch (e) {
+                console.warn('[Torre→Pedido] não foi possível guardar cópia do arquivo:', e);
+              }
               window.location.href = `${createPageUrl('PedidoCompraDetalhe')}?id=novo&autoImportador=1`;
             }}
           />

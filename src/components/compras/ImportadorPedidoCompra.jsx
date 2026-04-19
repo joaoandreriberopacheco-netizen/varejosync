@@ -11,6 +11,7 @@ import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
 import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity } from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { consumirArquivoPedidoImportDoBridge } from '@/lib/torrePedidoImportBridge';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -37,6 +38,8 @@ export default function ImportadorPedidoCompra({
   const selectedFileRef = useRef(null);
   const fileInputRef = useRef(null);
   const pdfAutoPickConsumedRef = useRef(false);
+  /** PDF trazido pela Torre via sessionStorage — não abrir o seletor de ficheiros em duplicado. */
+  const arquivoDaTorreRef = useRef(false);
   /** Só repor estado ao passar de fechado → aberto; enquanto o modal fica aberto não limpar (senão some o PDF a meio do fluxo). */
   const modalEstavaAbertoRef = useRef(false);
   const { toast } = useToast();
@@ -45,6 +48,7 @@ export default function ImportadorPedidoCompra({
     if (!isOpen) {
       modalEstavaAbertoRef.current = false;
       pdfAutoPickConsumedRef.current = false;
+      arquivoDaTorreRef.current = false;
       return;
     }
     if (modalEstavaAbertoRef.current) {
@@ -68,26 +72,6 @@ export default function ImportadorPedidoCompra({
       setFornecedores(fns);
     });
   }, [isOpen]);
-
-  /** Novo pedido via ?autoImportador=1: abre já o seletor de ficheiros (PDF); após escolher, o motor continua sozinho */
-  useEffect(() => {
-    if (!isOpen || !launchPdfFilePickerOnce) return;
-    if (step !== 'upload' || mode !== 'pdf') return;
-    if (pdfAutoPickConsumedRef.current) return;
-    pdfAutoPickConsumedRef.current = true;
-
-    const id = window.setTimeout(() => {
-      try {
-        fileInputRef.current?.click();
-      } finally {
-        onLaunchPdfFilePickerConsumed?.();
-      }
-    }, 120);
-
-    return () => {
-      window.clearTimeout(id);
-    };
-  }, [isOpen, launchPdfFilePickerOnce, step, mode, onLaunchPdfFilePickerConsumed]);
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -270,13 +254,16 @@ Retorne JSON:
     }
   };
 
-  const aplicarArquivoSelecionado = async (rawFile) => {
+  const aplicarArquivoSelecionado = async (rawFile, opts = {}) => {
     if (!rawFile) return;
+    const usarPdf =
+      opts.assumePdf === true || mode === 'pdf';
     try {
       const file =
-        mode === 'pdf' ? await normalizarArquivoParaImportBoleto(rawFile) : rawFile;
+        usarPdf ? await normalizarArquivoParaImportBoleto(rawFile) : rawFile;
       selectedFileRef.current = file;
       setSelectedFile(file);
+      if (opts.assumePdf) setMode('pdf');
       setStep('discount');
     } catch (err) {
       toast({
@@ -293,6 +280,38 @@ Retorne JSON:
     await aplicarArquivoSelecionado(file);
     if (e?.target) e.target.value = '';
   };
+
+  /** PDF guardado na Torre (sessionStorage) + cópia opcional para clipboard ao navegar */
+  useEffect(() => {
+    if (!isOpen) return;
+    const fromTorre = consumirArquivoPedidoImportDoBridge();
+    if (!fromTorre) return;
+    arquivoDaTorreRef.current = true;
+    void aplicarArquivoSelecionado(fromTorre, { assumePdf: true }).finally(() => {
+      onLaunchPdfFilePickerConsumed?.();
+    });
+  }, [isOpen]);
+
+  /** Novo pedido via ?autoImportador=1 sem ficheiro da Torre: abre o seletor de PDF */
+  useEffect(() => {
+    if (!isOpen || !launchPdfFilePickerOnce) return;
+    if (arquivoDaTorreRef.current) return;
+    if (step !== 'upload' || mode !== 'pdf') return;
+    if (pdfAutoPickConsumedRef.current) return;
+    pdfAutoPickConsumedRef.current = true;
+
+    const id = window.setTimeout(() => {
+      try {
+        fileInputRef.current?.click();
+      } finally {
+        onLaunchPdfFilePickerConsumed?.();
+      }
+    }, 120);
+
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, [isOpen, launchPdfFilePickerOnce, step, mode, onLaunchPdfFilePickerConsumed]);
 
   useEffect(() => {
     if (!isOpen || step !== 'upload') return;
