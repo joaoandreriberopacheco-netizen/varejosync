@@ -65,6 +65,7 @@ export default function ModoFlareInspection({ onClose }) {
   const [reportExporting, setReportExporting] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
   const recognitionRef = useRef(null);
   const voiceSessionActiveRef = useRef(false);
   const voiceBaseTextRef = useRef('');
@@ -169,6 +170,11 @@ export default function ModoFlareInspection({ onClose }) {
     return () => {
       document.documentElement.removeAttribute('data-flare-inspection');
     };
+  }, []);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SpeechRecognition));
   }, []);
 
   useEffect(() => {
@@ -489,7 +495,7 @@ export default function ModoFlareInspection({ onClose }) {
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
     recognition.interimResults = true;
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.maxAlternatives = 1;
     voiceSessionActiveRef.current = true;
     recognition.onstart = () => setIsListening(true);
@@ -946,16 +952,16 @@ export default function ModoFlareInspection({ onClose }) {
           p.rect && (
             <div
               key={p.flare.id}
-              className="pointer-events-none absolute text-lg leading-none drop-shadow"
+              className="pointer-events-none absolute rounded border border-amber-400/80 bg-amber-200/5"
               style={{
-                top: p.rect.top + 4,
-                left: p.rect.left + p.rect.width - 24,
-                zIndex: HUD_Z + 3,
+                top: p.rect.top,
+                left: p.rect.left,
+                width: p.rect.width,
+                height: p.rect.height,
+                zIndex: HUD_Z + 2,
               }}
               title={p.flare.briefing}
-            >
-              🚩
-            </div>
+            />
           )
       )}
 
@@ -1019,6 +1025,13 @@ export default function ModoFlareInspection({ onClose }) {
             >
               {saving ? 'A guardar…' : 'Guardar'}
             </Button>
+            <span className="text-xs text-muted-foreground">
+              {voiceSupported
+                ? isListening
+                  ? 'A ouvir... fale naturalmente para preencher as observações.'
+                  : 'Dica: use fala para texto para descrever rápido o contexto.'
+                : 'Fala para texto indisponível neste navegador.'}
+            </span>
           </div>
         </div>
       </div>
