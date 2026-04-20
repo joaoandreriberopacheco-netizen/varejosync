@@ -214,14 +214,16 @@ export default function CaixasAtivosPage() {
   }, [liquidezPorCaixa]);
 
 
-  // Se já selecionou um caixa, mostra a view completa
+  // Se já selecionou um caixa, mostra a view completa (fullscreen — escapa do padding do layout)
   if (turnoSelecionado && caixaSelecionado) {
     return (
-      <VisualizadorCaixa
-        turnoAtivo={turnoSelecionado}
-        caixaSelecionado={caixaSelecionado}
-        onVoltar={() => { setTurnoSelecionado(null); setCaixaSelecionado(null); loadTurnos(); }}
-      />
+      <div className="fixed inset-0 z-40 bg-gray-50 dark:bg-gray-900">
+        <VisualizadorCaixa
+          turnoAtivo={turnoSelecionado}
+          caixaSelecionado={caixaSelecionado}
+          onVoltar={() => { setTurnoSelecionado(null); setCaixaSelecionado(null); loadTurnos(); }}
+        />
+      </div>
     );
   }
 
