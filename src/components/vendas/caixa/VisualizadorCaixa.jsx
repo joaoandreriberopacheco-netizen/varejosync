@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock } from 'lucide-react';
@@ -25,15 +25,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
   const [loading, setLoading] = useState(true);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
+  const debounceRef = useRef(null);
 
-  useEffect(() => {
-    if (turnoAtivo && caixaSelecionado) {
-      loadData();
-    }
-  }, [turnoAtivo, caixaSelecionado]);
-
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = useCallback(async ({ showSpinner = true } = {}) => {
+    if (showSpinner) setLoading(true);
     try {
       const caixaId = caixaSelecionado?.id;
       const [todosPedidos, todasMovimentacoes, todasDespesasRaw, fiados] = await Promise.all([
