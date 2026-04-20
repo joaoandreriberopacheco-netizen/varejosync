@@ -66,6 +66,7 @@ export default function ModoFlareInspection({ onClose }) {
   const [queueOpen, setQueueOpen] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const recognitionRef = useRef(null);
   const voiceSessionActiveRef = useRef(false);
   const voiceBaseTextRef = useRef('');
@@ -175,6 +176,15 @@ export default function ModoFlareInspection({ onClose }) {
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     setVoiceSupported(Boolean(SpeechRecognition));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const media = window.matchMedia('(max-width: 768px)');
+    const apply = () => setIsMobileViewport(media.matches);
+    apply();
+    media.addEventListener?.('change', apply);
+    return () => media.removeEventListener?.('change', apply);
   }, []);
 
   useEffect(() => {
@@ -706,20 +716,30 @@ export default function ModoFlareInspection({ onClose }) {
         </div>
       </div>
       {!queueOpen ? (
-        <div className="absolute right-4 top-14" style={{ zIndex: HUD_Z + 2 }} data-flare-control="1">
+        <div
+          className={`${isMobileViewport ? 'left-3 right-3 top-14' : 'right-4 top-14'} absolute`}
+          style={{ zIndex: HUD_Z + 2 }}
+          data-flare-control="1"
+        >
           <button
             type="button"
             data-flare-control="1"
-            className="pointer-events-auto flex items-center gap-1.5 rounded-lg border border-slate-600/50 bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-100 shadow-md backdrop-blur-sm hover:bg-slate-800/95"
+            className={`pointer-events-auto flex items-center rounded-lg border border-slate-600/50 bg-slate-900/90 text-xs font-medium text-slate-100 shadow-md backdrop-blur-sm hover:bg-slate-800/95 ${
+              isMobileViewport ? 'w-full justify-between px-3 py-2' : 'gap-1.5 px-3 py-2'
+            }`}
             onClick={() => setQueueOpen(true)}
           >
-            Pendentes ({localPins.length})
+            <span>{isMobileViewport ? `Pendentes: ${localPins.length}` : `Pendentes (${localPins.length})`}</span>
             <ChevronDown className="h-4 w-4 opacity-80" aria-hidden />
           </button>
         </div>
       ) : (
         <div
-          className="absolute right-4 top-14 w-[360px] rounded-lg border border-slate-600/40 bg-slate-950/90 p-3 text-xs text-slate-100 shadow-xl backdrop-blur-sm"
+          className={`absolute rounded-lg border border-slate-600/40 bg-slate-950/90 p-3 text-xs text-slate-100 shadow-xl backdrop-blur-sm ${
+            isMobileViewport
+              ? 'inset-x-2 bottom-2 top-16 w-auto'
+              : 'right-4 top-14 w-[360px]'
+          }`}
           style={{ zIndex: HUD_Z + 2 }}
           data-flare-control="1"
         >
@@ -838,7 +858,7 @@ export default function ModoFlareInspection({ onClose }) {
               ) : null}
             </CollapsibleContent>
           </Collapsible>
-          <div className="max-h-56 space-y-3 overflow-auto pr-1">
+          <div className={`${isMobileViewport ? 'max-h-[55vh]' : 'max-h-56'} space-y-3 overflow-auto pr-1`}>
             {purchasePins.length > 0 ? (
               <div>
                 <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Compras</p>
@@ -947,30 +967,33 @@ export default function ModoFlareInspection({ onClose }) {
         </div>
       )}
 
-      {pinPositions.map(
-        (p) =>
-          p.rect && (
-            <div
-              key={p.flare.id}
-              className="pointer-events-none absolute rounded border border-cyan-400/80 bg-cyan-300/5 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
-              style={{
-                top: p.rect.top,
-                left: p.rect.left,
-                width: p.rect.width,
-                height: p.rect.height,
-                zIndex: HUD_Z + 2,
-              }}
-              title={p.flare.briefing}
-            />
-          )
-      )}
+      {!isMobileViewport &&
+        pinPositions.map(
+          (p) =>
+            p.rect && (
+              <div
+                key={p.flare.id}
+                className="pointer-events-none absolute rounded border border-cyan-400/80 bg-cyan-300/5 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+                style={{
+                  top: p.rect.top,
+                  left: p.rect.left,
+                  width: p.rect.width,
+                  height: p.rect.height,
+                  zIndex: HUD_Z + 2,
+                }}
+                title={p.flare.briefing}
+              />
+            )
+        )}
 
-      <div
-        className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md border border-slate-700/40 bg-slate-900/90 px-3 py-2 text-xs text-slate-200 backdrop-blur-sm"
-        style={{ zIndex: HUD_Z + 2 }}
-      >
-        {listStatusFooter}
-      </div>
+      {!isMobileViewport ? (
+        <div
+          className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md border border-slate-700/40 bg-slate-900/90 px-3 py-2 text-xs text-slate-200 backdrop-blur-sm"
+          style={{ zIndex: HUD_Z + 2 }}
+        >
+          {listStatusFooter}
+        </div>
+      ) : null}
     </div>
   );
 
