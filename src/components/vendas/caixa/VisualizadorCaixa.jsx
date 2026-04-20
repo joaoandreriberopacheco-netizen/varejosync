@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock } from 'lucide-react';
+import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
@@ -27,6 +27,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const [loading, setLoading] = useState(true);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
   const debounceRef = useRef(null);
+
+  const formatarValorExibicaoLocal = (valor) => {
+    const n = roundToTwoDecimals(valor ?? 0);
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   const loadData = useCallback(async ({ showSpinner = true } = {}) => {
     if (showSpinner) setLoading(true);
@@ -116,22 +121,56 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       const dinheiroNaGaveta = roundToTwoDecimals(
         liquidez - roundToTwoDecimals(totalPix) - roundToTwoDecimals(totalCredito) - roundToTwoDecimals(totalDebito) - roundToTwoDecimals(totalVale)
       );
-      setRecebimentosDinheiro(formatarValorExibicao(dinheiroNaGaveta));
+      setRecebimentosDinheiro(formatarValorExibicaoLocal(dinheiroNaGaveta));
+      setUltimaAtualizacao(new Date());
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
-  };
+  }, [turnoAtivo, caixaSelecionado]);
+
+  useEffect(() => {
+    if (turnoAtivo && caixaSelecionado) {
+      loadData({ showSpinner: true });
+    }
+  }, [turnoAtivo, caixaSelecionado, loadData]);
+
+  useEffect(() => {
+    if (!turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
+
+    const schedule = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        loadData({ showSpinner: false });
+      }, 400);
+    };
+
+    const unsubs = [];
+    try {
+      unsubs.push(base44.entities.PedidoVenda.subscribe(schedule));
+      unsubs.push(base44.entities.MovimentosCaixa.subscribe(schedule));
+      unsubs.push(base44.entities.LancamentoFinanceiro.subscribe(schedule));
+      unsubs.push(base44.entities.RascunhoPedidoVenda.subscribe(schedule));
+    } catch (e) {
+      console.warn('Subscribe espelho caixa:', e);
+    }
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      unsubs.forEach((u) => {
+        try {
+          if (typeof u === 'function') u();
+        } catch {
+          /* noop */
+        }
+      });
+    };
+  }, [turnoAtivo?.id, caixaSelecionado?.id, loadData]);
 
   const formatValor = (valor) => {
     const num = valor || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const formatarValorExibicao = (valor) => {
-    const n = roundToTwoDecimals(valor ?? 0);
-    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   // Espelha PDVCaixa: liquidez já exclui fiado do núcleo monetário.
@@ -238,16 +277,30 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
           <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
         </button>
         
-        <div className="flex-1 text-center">
+        <div className="flex-1 text-center min-w-0 px-2">
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Somente visualização</p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+            Espelho · só leitura
+            {ultimaAtualizacao ? ` · ${format(ultimaAtualizacao, 'HH:mm:ss')}` : ''}
+          </p>
         </div>
         
-        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-          <Clock className="w-4 h-4" />
-          {format(new Date(), 'HH:mm')}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => loadData({ showSpinner: false })}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+            title="Atualizar"
+          >
+            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {format(new Date(), 'HH:mm')}
+          </div>
         </div>
       </div>
 
@@ -501,9 +554,9 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       {/* Dialogs */}
       <VendasTurnoDialog open={showVendasDialog} onOpenChange={setShowVendasDialog} vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo} caixaData={caixaData} formatValor={formatValor} onVerDetalhes={setVendaDetalhada} />
       <VendaDetalheDialog venda={vendaDetalhada} onClose={() => setVendaDetalhada(null)} formatValor={formatValor} />
-      <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
-      <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
-      <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
+      <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
+      <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
+      <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
       <SaldoConsolidadoDialog open={showSaldoConsolidadoDialog} onOpenChange={setShowSaldoConsolidadoDialog} caixaData={caixaData} formatValor={formatValor} />
     </div>
   );
