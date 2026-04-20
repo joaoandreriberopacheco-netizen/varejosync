@@ -13,7 +13,18 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
-  const [caixaData, setCaixaData] = useState({ saldoInicial: 0, liquidez: 0, totalVendas: 0, recebimentos: { dinheiro: 0, pix: 0, credito: 0, debito: 0, vale: 0 }, reforcos: 0, sangrias: 0, despesas: 0, despesasLista: [], fiado: 0, fiadoLista: [] });
+  const [caixaData, setCaixaData] = useState({
+    saldoInicial: 0,
+    liquidez: 0,
+    totalVendas: 0,
+    recebimentos: { dinheiro: 0, pix: 0, credito: 0, debito: 0, vale: 0, fiado: 0 },
+    reforcos: 0,
+    sangrias: 0,
+    despesas: 0,
+    despesasLista: [],
+    fiado: 0,
+    fiadoLista: [],
+  });
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
   const [activeTab, setActiveTab] = useState('balanco');
@@ -32,92 +43,84 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  /** Igual ao PDVCaixa: list() + filtro em memória (filter() por turno pode voltar vazio sem erro). */
+  const parsePagamentosVenda = (venda) => {
+    let p = venda.pagamentos;
+    if (p == null) return [];
+    if (typeof p === 'string') {
+      try {
+        p = JSON.parse(p);
+      } catch {
+        return [];
+      }
+    }
+    return Array.isArray(p) ? p : [];
+  };
+
   const loadData = useCallback(async ({ showSpinner = true } = {}) => {
     const turnoId = turnoAtivo?.id;
     const caixaId = caixaSelecionado?.id;
     if (!turnoId || !caixaId) return;
 
+    const sameTurno = (v) => String(v?.turno_caixa_id ?? '') === String(turnoId ?? '');
+    const sameConta = (m) => String(m?.conta_id ?? '') === String(caixaId ?? '');
+
     if (showSpinner) setLoading(true);
     try {
-      // Ligação explícita ao registro do turno e da conta (não só ao objeto da lista).
-      const [turnoFresh, caixaFresh, todasDespesasRaw, fiados] = await Promise.all([
+      const [turnoFresh, caixaFresh, todosPedidos, todasMovimentacoes, todasDespesasRaw, fiados] = await Promise.all([
         base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
         base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
+        base44.entities.PedidoVenda.list(),
+        base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
       ]);
 
       const turnoBase = turnoFresh || turnoAtivo;
-      if (turnoBase.conta_caixa_pdv_id && turnoBase.conta_caixa_pdv_id !== caixaId) {
+      if (turnoBase.conta_caixa_pdv_id && String(turnoBase.conta_caixa_pdv_id) !== String(caixaId)) {
         console.warn('[espelho] Turno não corresponde ao caixa selecionado.');
       }
-      if (caixaFresh?.id && caixaFresh.id !== caixaId) {
+      if (caixaFresh?.id && String(caixaFresh.id) !== String(caixaId)) {
         console.warn('[espelho] Conta retornada difere do id selecionado.');
-      }
-
-      let todosPedidos;
-      let todasMovimentacoes;
-      try {
-        todosPedidos = await base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoId });
-      } catch {
-        const all = await base44.entities.PedidoVenda.list();
-        todosPedidos = all.filter((p) => p.turno_caixa_id === turnoId);
-      }
-      try {
-        todasMovimentacoes = await base44.entities.MovimentosCaixa.filter({
-          turno_caixa_id: turnoId,
-          conta_id: caixaId,
-        });
-      } catch {
-        const all = await base44.entities.MovimentosCaixa.list();
-        todasMovimentacoes = all.filter(
-          (m) => m.turno_caixa_id === turnoId && m.conta_id === caixaId
-        );
       }
 
       const todasDespesas = todasDespesasRaw.filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
 
       const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-      const vendas = todosPedidos.filter((p) => statusOk.includes(p.status));
+      const vendas = todosPedidos.filter((p) => statusOk.includes(p.status) && sameTurno(p));
 
-      const movsTurnoConta = todasMovimentacoes;
-      const movimentosAtivos = movsTurnoConta.filter((m) => m.status_registro !== 'Cancelado');
+      const movimentosTurno = todasMovimentacoes.filter((m) => sameTurno(m) && sameConta(m));
 
-      const totalVendas = roundToTwoDecimals(vendas.reduce((s, v) => s + (v.valor_total || 0), 0));
+      const totalVendas = roundToTwoDecimals(vendas.reduce((s, v) => s + (v.valor_total ?? v.total ?? 0), 0));
 
       let totalDinheiro = 0;
       let totalPix = 0;
       let totalCredito = 0;
       let totalDebito = 0;
       let totalVale = 0;
-      let totalFiadoPagamentos = 0;
+      let totalFiado = 0;
 
       vendas.forEach((venda) => {
-        (venda.pagamentos || []).forEach((pag) => {
+        parsePagamentosVenda(venda).forEach((pag) => {
           const fp = (pag.forma_pagamento || '').toLowerCase();
           if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
           else if (fp === 'pix') totalPix += pag.valor || 0;
           else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
           else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
           else if (fp.includes('vale')) totalVale += pag.valor || 0;
-          else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiadoPagamentos += pag.valor || 0;
+          else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiado += pag.valor || 0;
         });
       });
 
       const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
 
-      const totalReforcos = movimentosAtivos
-        .filter((m) => m.tipo === 'Reforço')
-        .reduce((s, m) => s + (m.valor || 0), 0);
-      const totalSangrias = movimentosAtivos
+      const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
+      const totalSangrias = movimentosTurno
         .filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')
         .reduce((s, m) => s + (m.valor || 0), 0);
 
-      const despesasAtivas = todasDespesas.filter((d) => d.status !== 'Cancelado');
-      const totalDespesas = despesasAtivas.reduce((s, d) => s + (d.valor || 0), 0);
-
-      const totalFiadoLancamentos = fiados.filter((f) => f.status !== 'Cancelado').reduce((s, f) => s + (f.valor || 0), 0);
-      const totalFiado = totalFiadoPagamentos > 0 ? totalFiadoPagamentos : totalFiadoLancamentos;
+      // Igual PDVCaixa: total de despesas do turno (sem filtrar cancelado no somatório)
+      const totalDespesas = todasDespesas.reduce((s, d) => s + (d.valor || 0), 0);
 
       const saldoInicial = roundToTwoDecimals(turnoBase.saldo_inicial || 0);
       const liquidez = roundToTwoDecimals(
@@ -134,16 +137,17 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
           credito: roundToTwoDecimals(totalCredito),
           debito: roundToTwoDecimals(totalDebito),
           vale: roundToTwoDecimals(totalVale),
+          fiado: roundToTwoDecimals(totalFiado),
         },
         reforcos: roundToTwoDecimals(totalReforcos),
         sangrias: roundToTwoDecimals(totalSangrias),
         despesas: roundToTwoDecimals(totalDespesas),
-        despesasLista: despesasAtivas,
+        despesasLista: todasDespesas,
         fiado: roundToTwoDecimals(totalFiado),
         fiadoLista: fiados,
       });
       setVendasFinalizadas(vendas);
-      setMovimentos(movimentosAtivos);
+      setMovimentos(movimentosTurno);
 
       const dinheiroNaGaveta = roundToTwoDecimals(
         liquidez - roundToTwoDecimals(totalPix) - roundToTwoDecimals(totalCredito) - roundToTwoDecimals(totalDebito) - roundToTwoDecimals(totalVale)
