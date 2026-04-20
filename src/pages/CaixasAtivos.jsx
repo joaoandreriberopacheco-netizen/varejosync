@@ -66,7 +66,8 @@ export default function CaixasAtivosPage() {
       caixasPDV.forEach(caixa => {
         const turno = turnosUnicos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turno) {
-          const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
+          const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
+          const vendasTurno = vendas.filter(v => statusOk.includes(v.status) && v.turno_caixa_id === turno.id);
           const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
           let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
           vendasTurno.forEach(v => {
@@ -79,13 +80,19 @@ export default function CaixasAtivosPage() {
               else if (fp.includes('vale')) totalVale += p.valor || 0;
             });
           });
-          const reforcos = movs.filter(m => m.turno_caixa_id === turno.id && m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
-          const sangrias = movs.filter(m => m.turno_caixa_id === turno.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')).reduce((s, m) => s + (m.valor || 0), 0);
+          const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
+          const reforcos = movs
+            .filter(m => m.turno_caixa_id === turno.id && m.conta_id === caixa.id && m.tipo === 'Reforço')
+            .reduce((s, m) => s + (m.valor || 0), 0);
+          const sangrias = movs
+            .filter(m => m.turno_caixa_id === turno.id && m.conta_id === caixa.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
+            .reduce((s, m) => s + (m.valor || 0), 0);
           const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa').reduce((s, d) => s + (d.valor || 0), 0);
-          const liquidezTurno = (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno;
+          const liquidezTurno = (turno.saldo_inicial || 0) + totalVendasMonetarias + reforcos - sangrias - despesasTurno;
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
-          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
+          // Espelha o PDVCaixa: fiado não entra na liquidez nem na gaveta.
+          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale;
           const senhasAguardando = rascunhosPendentesCaixa;
 
           rascunhosPorCaixa[caixa.id] = senhasAguardando;

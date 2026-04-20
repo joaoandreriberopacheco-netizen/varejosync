@@ -56,29 +56,50 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
         (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
       );
 
-      // Recalcular liquidez dinamicamente com dados reais
+      // Recalcular liquidez dinamicamente espelhando a regra do PDVCaixa
       const liquidez = {};
       caixasPDV.forEach(caixa => {
         const turnoAberto = todosTurnos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turnoAberto) {
-          // Somar vendas do turno
-          const vendasTurno = todasVendas.filter(v => v.turno_caixa_id === turnoAberto.id);
+          const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
+          const vendasTurno = todasVendas.filter(v => statusOk.includes(v.status) && v.turno_caixa_id === turnoAberto.id);
+
+          let totalDinheiro = 0;
+          let totalPix = 0;
+          let totalCredito = 0;
+          let totalDebito = 0;
+          let totalVale = 0;
+
+          vendasTurno.forEach((venda) => {
+            (venda.pagamentos || []).forEach((pag) => {
+              const fp = (pag.forma_pagamento || '').toLowerCase();
+              if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
+              else if (fp === 'pix') totalPix += pag.valor || 0;
+              else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
+              else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
+              else if (fp.includes('vale')) totalVale += pag.valor || 0;
+            });
+          });
+
+          const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
           const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-          
-          // Somar reforços
-          const reforcos = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço');
-          const totalReforcos = reforcos.reduce((sum, m) => sum + (m.valor || 0), 0);
-          
-          // Somar recolhimentos/sangrias
-          const sangrias = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'));
-          const totalSangrias = sangrias.reduce((sum, m) => sum + (m.valor || 0), 0);
-          
-          // Somar despesas
-          const despesas = todasDespesas.filter(d => d.turno_caixa_id === turnoAberto.id);
-          const totalDespesas = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
-          
-          const saldoInicial = turnoAberto.saldo_inicial || 0;
-          const liquidezCalculada = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
+
+          const totalReforcos = todosMovimentos
+            .filter(m => m.turno_caixa_id === turnoAberto.id && m.conta_id === caixa.id && m.tipo === 'Reforço')
+            .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+          const totalSangrias = todosMovimentos
+            .filter(m => m.turno_caixa_id === turnoAberto.id && m.conta_id === caixa.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
+            .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+          const totalDespesas = todasDespesas
+            .filter(d => d.turno_caixa_id === turnoAberto.id && d.referencia_tipo !== 'MovimentosCaixa')
+            .reduce((sum, d) => sum + (d.valor || 0), 0);
+
+          const saldoInicial = roundToTwoDecimals(turnoAberto.saldo_inicial || 0);
+          const liquidezCalculada = roundToTwoDecimals(
+            saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
+          );
           
           liquidez[caixa.id] = {
             turnoAberto: true,
