@@ -9,8 +9,9 @@ import VendaDetalheDialog from './VendaDetalheDialog';
 import ListaMovimentosDialog from './ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
-
+/** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
   const [caixaData, setCaixaData] = useState({ saldoInicial: 0, liquidez: 0, totalVendas: 0, recebimentos: { dinheiro: 0, pix: 0, credito: 0, debito: 0, vale: 0 }, reforcos: 0, sangrias: 0, despesas: 0, despesasLista: [], fiado: 0, fiadoLista: [] });
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
@@ -34,69 +35,92 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const loadData = async () => {
     setLoading(true);
     try {
-      const [vendas, movs, despesasRaw, fiados] = await Promise.all([
-        base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
-        base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
+      const caixaId = caixaSelecionado?.id;
+      const [todosPedidos, todasMovimentacoes, todasDespesasRaw, fiados] = await Promise.all([
+        base44.entities.PedidoVenda.list(),
+        base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' })
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
       ]);
 
-      // Filtrar apenas despesas que NÃO são recolhimentos/sangrias
-      const despesas = despesasRaw.filter(d => {
-        // Se está vinculada a um movimento, verificar se é Sangria ou Recolhimento
-        if (d.referencia_tipo === 'MovimentosCaixa' && d.referencia_id) {
-          const movimento = movs.find(m => m.id === d.referencia_id);
-          if (movimento && (movimento.tipo === 'Sangria' || movimento.tipo === 'Recolhimento de Caixa')) {
-            return false; // Excluir essa despesa
-          }
-        }
-        return true; // Manter as outras despesas
+      const todasDespesas = todasDespesasRaw.filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
+
+      const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
+      const vendas = todosPedidos.filter(
+        (p) => statusOk.includes(p.status) && p.turno_caixa_id === turnoAtivo.id
+      );
+
+      const movsTurnoConta = todasMovimentacoes.filter(
+        (m) => m.turno_caixa_id === turnoAtivo.id && (!caixaId || m.conta_id === caixaId)
+      );
+      const movimentosAtivos = movsTurnoConta.filter((m) => m.status_registro !== 'Cancelado');
+
+      const totalVendas = roundToTwoDecimals(vendas.reduce((s, v) => s + (v.valor_total || 0), 0));
+
+      let totalDinheiro = 0;
+      let totalPix = 0;
+      let totalCredito = 0;
+      let totalDebito = 0;
+      let totalVale = 0;
+      let totalFiadoPagamentos = 0;
+
+      vendas.forEach((venda) => {
+        (venda.pagamentos || []).forEach((pag) => {
+          const fp = (pag.forma_pagamento || '').toLowerCase();
+          if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
+          else if (fp === 'pix') totalPix += pag.valor || 0;
+          else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
+          else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
+          else if (fp.includes('vale')) totalVale += pag.valor || 0;
+          else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiadoPagamentos += pag.valor || 0;
+        });
       });
 
-      const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
-      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
-      vendas.forEach(v => {
-        if (v.pagamentos) {
-          v.pagamentos.forEach(p => {
-            const fp = (p.forma_pagamento || '').toLowerCase();
-            if (fp === 'dinheiro') totalDinheiro += p.valor || 0;
-            else if (fp === 'pix') totalPix += p.valor || 0;
-            else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += p.valor || 0;
-            else if (fp.includes('débito') || fp.includes('debito')) totalDebito += p.valor || 0;
-            else if (fp.includes('vale')) totalVale += p.valor || 0;
-          });
-        }
-      });
+      const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
 
-      const movimentosAtivos = movs.filter(m => m.status_registro !== 'Cancelado');
-      const totalReforcos = movimentosAtivos.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
-      const totalSangrias = movimentosAtivos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((s, m) => s + (m.valor || 0), 0);
-      const despesasAtivas = despesas.filter(d => d.status !== 'Cancelado');
+      const totalReforcos = movimentosAtivos
+        .filter((m) => m.tipo === 'Reforço')
+        .reduce((s, m) => s + (m.valor || 0), 0);
+      const totalSangrias = movimentosAtivos
+        .filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')
+        .reduce((s, m) => s + (m.valor || 0), 0);
+
+      const despesasAtivas = todasDespesas.filter((d) => d.status !== 'Cancelado');
       const totalDespesas = despesasAtivas.reduce((s, d) => s + (d.valor || 0), 0);
 
-      const saldoInicial = turnoAtivo.saldo_inicial || 0;
-      const totalFiado = fiados.filter(f => f.status !== 'Cancelado').reduce((s, f) => s + (f.valor || 0), 0);
-      const totalLiquidoVendas = totalVendas - totalFiado;
-      const liquidez = saldoInicial + totalLiquidoVendas + totalReforcos - totalSangrias - totalDespesas;
+      const totalFiadoLancamentos = fiados.filter((f) => f.status !== 'Cancelado').reduce((s, f) => s + (f.valor || 0), 0);
+      const totalFiado = totalFiadoPagamentos > 0 ? totalFiadoPagamentos : totalFiadoLancamentos;
+
+      const saldoInicial = roundToTwoDecimals(turnoAtivo.saldo_inicial || 0);
+      const liquidez = roundToTwoDecimals(
+        saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
+      );
 
       setCaixaData({
         saldoInicial,
         liquidez,
         totalVendas,
-        recebimentos: { dinheiro: totalDinheiro, pix: totalPix, credito: totalCredito, debito: totalDebito, vale: totalVale },
-        reforcos: totalReforcos,
-        sangrias: totalSangrias,
-        despesas: totalDespesas,
+        recebimentos: {
+          dinheiro: roundToTwoDecimals(totalDinheiro),
+          pix: roundToTwoDecimals(totalPix),
+          credito: roundToTwoDecimals(totalCredito),
+          debito: roundToTwoDecimals(totalDebito),
+          vale: roundToTwoDecimals(totalVale),
+        },
+        reforcos: roundToTwoDecimals(totalReforcos),
+        sangrias: roundToTwoDecimals(totalSangrias),
+        despesas: roundToTwoDecimals(totalDespesas),
         despesasLista: despesasAtivas,
-        fiado: totalFiado,
+        fiado: roundToTwoDecimals(totalFiado),
         fiadoLista: fiados,
       });
       setVendasFinalizadas(vendas);
       setMovimentos(movimentosAtivos);
-      
-      // Auto-preencher dinheiro esperado
-      const dinheiroEsperado = liquidez - totalPix - totalCredito - totalDebito - totalVale;
-      setRecebimentosDinheiro(formatarValorExibicao(dinheiroEsperado));
+
+      const dinheiroNaGaveta = roundToTwoDecimals(
+        liquidez - roundToTwoDecimals(totalPix) - roundToTwoDecimals(totalCredito) - roundToTwoDecimals(totalDebito) - roundToTwoDecimals(totalVale)
+      );
+      setRecebimentosDinheiro(formatarValorExibicao(dinheiroNaGaveta));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -110,10 +134,18 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   };
 
   const formatarValorExibicao = (valor) => {
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const n = roundToTwoDecimals(valor ?? 0);
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const dinheiroNaGaveta = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0) - (caixaData.fiado || 0);
+  // Espelha PDVCaixa: liquidez já exclui fiado do núcleo monetário.
+  const dinheiroNaGaveta = roundToTwoDecimals(
+    (caixaData.liquidez || 0) -
+      (caixaData.recebimentos?.pix || 0) -
+      (caixaData.recebimentos?.credito || 0) -
+      (caixaData.recebimentos?.debito || 0) -
+      (caixaData.recebimentos?.vale || 0)
+  );
 
   const imprimirRelatorio = async () => {
     const linhasVendas = (vendasFinalizadas || []).map(v => {
@@ -239,7 +271,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                 <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
                   {formatValor(dinheiroNaGaveta)}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale + Fiado)</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
               </div>
             </div>
           </div>
