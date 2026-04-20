@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw } from 'lucide-react';
@@ -26,7 +26,6 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
   const [loading, setLoading] = useState(true);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
-  const debounceRef = useRef(null);
 
   const formatarValorExibicaoLocal = (valor) => {
     const n = roundToTwoDecimals(valor ?? 0);
@@ -34,26 +33,54 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   };
 
   const loadData = useCallback(async ({ showSpinner = true } = {}) => {
+    const turnoId = turnoAtivo?.id;
+    const caixaId = caixaSelecionado?.id;
+    if (!turnoId || !caixaId) return;
+
     if (showSpinner) setLoading(true);
     try {
-      const caixaId = caixaSelecionado?.id;
-      const [todosPedidos, todasMovimentacoes, todasDespesasRaw, fiados] = await Promise.all([
-        base44.entities.PedidoVenda.list(),
-        base44.entities.MovimentosCaixa.list(),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
+      // Ligação explícita ao registro do turno e da conta (não só ao objeto da lista).
+      const [turnoFresh, caixaFresh, todasDespesasRaw, fiados] = await Promise.all([
+        base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
+        base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
       ]);
+
+      const turnoBase = turnoFresh || turnoAtivo;
+      if (turnoBase.conta_caixa_pdv_id && turnoBase.conta_caixa_pdv_id !== caixaId) {
+        console.warn('[espelho] Turno não corresponde ao caixa selecionado.');
+      }
+      if (caixaFresh?.id && caixaFresh.id !== caixaId) {
+        console.warn('[espelho] Conta retornada difere do id selecionado.');
+      }
+
+      let todosPedidos;
+      let todasMovimentacoes;
+      try {
+        todosPedidos = await base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoId });
+      } catch {
+        const all = await base44.entities.PedidoVenda.list();
+        todosPedidos = all.filter((p) => p.turno_caixa_id === turnoId);
+      }
+      try {
+        todasMovimentacoes = await base44.entities.MovimentosCaixa.filter({
+          turno_caixa_id: turnoId,
+          conta_id: caixaId,
+        });
+      } catch {
+        const all = await base44.entities.MovimentosCaixa.list();
+        todasMovimentacoes = all.filter(
+          (m) => m.turno_caixa_id === turnoId && m.conta_id === caixaId
+        );
+      }
 
       const todasDespesas = todasDespesasRaw.filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
 
       const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-      const vendas = todosPedidos.filter(
-        (p) => statusOk.includes(p.status) && p.turno_caixa_id === turnoAtivo.id
-      );
+      const vendas = todosPedidos.filter((p) => statusOk.includes(p.status));
 
-      const movsTurnoConta = todasMovimentacoes.filter(
-        (m) => m.turno_caixa_id === turnoAtivo.id && (!caixaId || m.conta_id === caixaId)
-      );
+      const movsTurnoConta = todasMovimentacoes;
       const movimentosAtivos = movsTurnoConta.filter((m) => m.status_registro !== 'Cancelado');
 
       const totalVendas = roundToTwoDecimals(vendas.reduce((s, v) => s + (v.valor_total || 0), 0));
@@ -92,7 +119,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       const totalFiadoLancamentos = fiados.filter((f) => f.status !== 'Cancelado').reduce((s, f) => s + (f.valor || 0), 0);
       const totalFiado = totalFiadoPagamentos > 0 ? totalFiadoPagamentos : totalFiadoLancamentos;
 
-      const saldoInicial = roundToTwoDecimals(turnoAtivo.saldo_inicial || 0);
+      const saldoInicial = roundToTwoDecimals(turnoBase.saldo_inicial || 0);
       const liquidez = roundToTwoDecimals(
         saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
       );
@@ -136,35 +163,26 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     }
   }, [turnoAtivo, caixaSelecionado, loadData]);
 
+  // Realtime: no cliente P38, subscribe() é no-op — mantemos vínculo com polling + foco na aba.
+  const POLL_MS = 12000;
+
   useEffect(() => {
     if (!turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
 
-    const schedule = () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        loadData({ showSpinner: false });
-      }, 400);
+    const poll = () => {
+      loadData({ showSpinner: false });
     };
 
-    const unsubs = [];
-    try {
-      unsubs.push(base44.entities.PedidoVenda.subscribe(schedule));
-      unsubs.push(base44.entities.MovimentosCaixa.subscribe(schedule));
-      unsubs.push(base44.entities.LancamentoFinanceiro.subscribe(schedule));
-      unsubs.push(base44.entities.RascunhoPedidoVenda.subscribe(schedule));
-    } catch (e) {
-      console.warn('Subscribe espelho caixa:', e);
-    }
+    const id = window.setInterval(poll, POLL_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      unsubs.forEach((u) => {
-        try {
-          if (typeof u === 'function') u();
-        } catch {
-          /* noop */
-        }
-      });
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [turnoAtivo?.id, caixaSelecionado?.id, loadData]);
 

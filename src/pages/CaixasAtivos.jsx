@@ -120,9 +120,12 @@ export default function CaixasAtivosPage() {
   };
 
   const handleSelecionarCaixa = async (turno) => {
-    const caixa = await base44.entities.ContasFinanceiras.get(turno.conta_caixa_pdv_id);
+    const [caixa, turnoFresh] = await Promise.all([
+      base44.entities.ContasFinanceiras.get(turno.conta_caixa_pdv_id),
+      base44.entities.TurnoCaixa.get(turno.id).catch(() => null),
+    ]);
     setCaixaSelecionado(caixa);
-    setTurnoSelecionado(turno);
+    setTurnoSelecionado(turnoFresh || turno);
   };
 
   const consumosPorDestinacao = useMemo(() => {
