@@ -17,6 +17,11 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
   const [showSaldoDialog, setShowSaldoDialog] = useState(false);
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
   const [descricaoSaldo, setDescricaoSaldo] = useState('');
+  const formatValor = (valor) =>
+    `R$ ${roundToTwoDecimals(valor || 0).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
 
   const handleSaldoChange = (e) => {
     let numbers = e.target.value.replace(/\D/g, '');
@@ -100,12 +105,19 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
           const liquidezCalculada = roundToTwoDecimals(
             saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
           );
+          const dinheiroNaGaveta = roundToTwoDecimals(
+            liquidezCalculada - totalPix - totalCredito - totalDebito - totalVale
+          );
           
           liquidez[caixa.id] = {
             turnoAberto: true,
             saldoInicial: saldoInicial,
             totalVendas: totalVendas,
             liquidez: liquidezCalculada,
+            reforcos: roundToTwoDecimals(totalReforcos),
+            recolhimentos: roundToTwoDecimals(totalSangrias),
+            despesas: roundToTwoDecimals(totalDespesas),
+            dinheiroNaGaveta,
           };
         } else {
           liquidez[caixa.id] = { turnoAberto: false };
@@ -250,10 +262,16 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
                           <div className="space-y-0.5">
                             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                              Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              Turno aberto · Liquidez: {formatValor(liquidezPorCaixa[caixa.id].liquidez)}
+                            </p>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                              Dinheiro na gaveta: {formatValor(liquidezPorCaixa[caixa.id].dinheiroNaGaveta)}
                             </p>
                             <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Saldo Inicial: R$ {(liquidezPorCaixa[caixa.id].saldoInicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              Saldo Inicial: {formatValor(liquidezPorCaixa[caixa.id].saldoInicial)} · Vendas: {formatValor(liquidezPorCaixa[caixa.id].totalVendas)}
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Reforços: {formatValor(liquidezPorCaixa[caixa.id].reforcos)} · Recolhimentos: {formatValor(liquidezPorCaixa[caixa.id].recolhimentos)} · Despesas: {formatValor(liquidezPorCaixa[caixa.id].despesas)}
                             </p>
                           </div>
                         ) : (
