@@ -39,41 +39,23 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
     if (showSpinner) setLoading(true);
     try {
-      // Ligação explícita ao registro do turno e da conta (não só ao objeto da lista).
-      const [turnoFresh, caixaFresh, todasDespesasRaw, fiados] = await Promise.all([
+      const [turnoFresh, caixaFresh, todosLancamentos] = await Promise.all([
         base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
         base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId }),
       ]);
 
-      const turnoBase = turnoFresh || turnoAtivo;
-      if (turnoBase.conta_caixa_pdv_id && turnoBase.conta_caixa_pdv_id !== caixaId) {
-        console.warn('[espelho] Turno não corresponde ao caixa selecionado.');
-      }
-      if (caixaFresh?.id && caixaFresh.id !== caixaId) {
-        console.warn('[espelho] Conta retornada difere do id selecionado.');
-      }
+      const todasDespesasRaw = todosLancamentos.filter(l => l.tipo === 'Despesa');
+      const fiados = todosLancamentos.filter(l => l.tipo === 'Receita' && l.forma_pagamento === 'Conta a Pagar');
 
-      let todosPedidos;
-      let todasMovimentacoes;
-      try {
-        todosPedidos = await base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoId });
-      } catch {
-        const all = await base44.entities.PedidoVenda.list();
-        todosPedidos = all.filter((p) => p.turno_caixa_id === turnoId);
-      }
-      try {
-        todasMovimentacoes = await base44.entities.MovimentosCaixa.filter({
-          turno_caixa_id: turnoId,
-          conta_id: caixaId,
-        });
-      } catch {
-        const all = await base44.entities.MovimentosCaixa.list();
-        todasMovimentacoes = all.filter(
-          (m) => m.turno_caixa_id === turnoId && m.conta_id === caixaId
-        );
-      }
+      const turnoBase = turnoFresh || turnoAtivo;
+
+      const [todosPedidos, movsRaw] = await Promise.all([
+        base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoId }),
+        base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoId }),
+      ]);
+
+      const todasMovimentacoes = movsRaw.filter((m) => m.conta_id === caixaId || !m.conta_id);
 
       const todasDespesas = todasDespesasRaw.filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
 
