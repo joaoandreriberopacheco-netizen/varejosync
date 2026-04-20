@@ -1,11 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RefreshCw, CheckCircle, AlertCircle, KeyRound, Shield, ChevronRight } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Camera, RefreshCw, CheckCircle, AlertCircle, KeyRound, Shield, ChevronRight, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { gerenciarPin } from '@/functions/gerenciarPin';
 import PinSetupDialog from './PinSetupDialog';
+import GooglePinResetButton from '@/components/auth/GooglePinResetButton';
+import { isGooglePinResetConfigured } from '@/components/auth/googlePinReset';
 
 export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, operationName = "Nova Operação" }) {
     const [step, setStep] = useState('camera'); // camera | pin | need_setup
