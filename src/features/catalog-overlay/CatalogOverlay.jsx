@@ -176,6 +176,7 @@ export default function CatalogOverlay() {
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState('catalog');
+  const [inspectionActive, setInspectionActive] = useState(false);
   const longPressTimer = useRef(null);
 
   const index = useMemo(() => overlayManifest?.index || {}, []);
@@ -198,8 +199,26 @@ export default function CatalogOverlay() {
   }, []);
 
   useEffect(() => {
+    const syncInspection = () => {
+      const active = document.documentElement.getAttribute('data-flare-inspection') === '1';
+      setInspectionActive(active);
+      if (active) setOpen(false);
+    };
+    syncInspection();
+    const observer = new MutationObserver(syncInspection);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-flare-inspection'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const handler = () => setOpen((prev) => !prev);
-    const openHandler = () => setOpen(true);
+    const openHandler = () => {
+      if (document.documentElement.getAttribute('data-flare-inspection') === '1') return;
+      setOpen(true);
+    };
     window.toggleCatalogOverlay = handler;
     window.openCatalogOverlay = openHandler;
 
@@ -211,14 +230,18 @@ export default function CatalogOverlay() {
         return;
       }
       e.preventDefault();
+      if (document.documentElement.getAttribute('data-flare-inspection') === '1') return;
       handler();
     };
 
     window.addEventListener('keydown', onKey, true);
+    const closeHandler = () => setOpen(false);
     window.addEventListener('p38:open-catalog-overlay', openHandler);
+    window.addEventListener('p38:close-catalog-overlay', closeHandler);
     return () => {
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('p38:open-catalog-overlay', openHandler);
+      window.removeEventListener('p38:close-catalog-overlay', closeHandler);
       delete window.toggleCatalogOverlay;
       delete window.openCatalogOverlay;
     };
@@ -284,7 +307,7 @@ export default function CatalogOverlay() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [mode, toast]);
 
-  if (!open) return null;
+  if (inspectionActive || !open) return null;
 
   const handleCopy = async () => {
     if (!selected) return;
