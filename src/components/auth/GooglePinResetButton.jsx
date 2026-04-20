@@ -11,11 +11,16 @@ import {
 export default function GooglePinResetButton({ onCredential, onScriptError, disabled }) {
   const containerRef = useRef(null);
   const handlerRef = useRef(onCredential);
+  const scriptErrRef = useRef(onScriptError);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     handlerRef.current = onCredential;
   }, [onCredential]);
+
+  useEffect(() => {
+    scriptErrRef.current = onScriptError;
+  }, [onScriptError]);
 
   useEffect(() => {
     googlePinCredentialBridge.set((credential) => {
@@ -45,13 +50,13 @@ export default function GooglePinResetButton({ onCredential, onScriptError, disa
         });
       })
       .catch(() => {
-        onScriptError?.('Não foi possível carregar o Google Sign-In.');
+        scriptErrRef.current?.('Não foi possível carregar o Google Sign-In.');
       });
 
     return () => {
       cancelled = true;
     };
-  }, [clientId, disabled, onScriptError]);
+  }, [clientId, disabled]);
 
   if (!isGooglePinResetConfigured()) return null;
 

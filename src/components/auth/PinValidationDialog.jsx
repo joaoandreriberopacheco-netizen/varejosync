@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Shield, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { gerenciarPin } from '@/functions/gerenciarPin';
+import GooglePinResetButton from '@/components/auth/GooglePinResetButton';
+import { isGooglePinResetConfigured } from '@/components/auth/googlePinReset';
 
 /**
  * PinValidationDialog — Solicita o PIN do usuário logado para autorizar ações críticas.
@@ -27,11 +29,14 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
   const [loading, setLoading] = useState(false);
   const [enviandoEmail, setEnviandoEmail] = useState(false);
   const [emailEnviado, setEmailEnviado] = useState(false);
+  /** 'email' | 'google' — origem do último reset para mensagem ao usuário */
+  const [pinResetOrigem, setPinResetOrigem] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       setPin(''); setErro(''); setEmailEnviado(false);
+      setPinResetOrigem(null);
       setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [isOpen]);
@@ -61,12 +66,33 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
     try {
       await gerenciarPin({ operacao: 'reset_pin_email' });
       setEmailEnviado(true);
+      setPinResetOrigem('email');
     } catch (e) {
       setErro('Não foi possível enviar o e-mail.');
     } finally {
       setEnviandoEmail(false);
     }
   };
+
+  const handleGoogleCredential = useCallback(async (idToken) => {
+    setEnviandoEmail(true);
+    setErro('');
+    try {
+      const res = await gerenciarPin({ operacao: 'reset_pin_google', id_token: idToken });
+      if (res.data?.sucesso && res.data.pin_temporario) {
+        setPin(String(res.data.pin_temporario));
+        setEmailEnviado(true);
+        setPinResetOrigem('google');
+        setTimeout(() => inputRef.current?.focus(), 100);
+      } else {
+        setErro(res.data?.error || 'Não foi possível redefinir o PIN.');
+      }
+    } catch (e) {
+      setErro(e?.response?.data?.error || 'Não foi possível redefinir o PIN com o Google.');
+    } finally {
+      setEnviandoEmail(false);
+    }
+  }, []);
 
   // PIN numérico estilo teclado virtual — 4 dots
   const dots = Array.from({ length: 6 }, (_, i) => i < pin.length);
@@ -153,9 +179,11 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
           )}
 
           {emailEnviado && (
-            <div className="flex items-center justify-center gap-1.5 text-green-600 text-xs">
-              <CheckCircle className="w-3.5 h-3.5" />
-              PIN temporário enviado ao seu e-mail.
+            <div className="flex items-center justify-center gap-1.5 text-green-600 text-xs text-center px-1">
+              <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+              {pinResetOrigem === 'google'
+                ? 'PIN temporário preenchido — confirme para continuar.'
+                : 'PIN temporário enviado ao seu e-mail.'}
             </div>
           )}
 
@@ -173,8 +201,22 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
             className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center gap-1 w-full"
           >
             <Mail className="w-3 h-3" />
-            {enviandoEmail ? 'Enviando...' : 'Esqueci meu PIN'}
+            {enviandoEmail ? 'Enviando...' : 'Esqueci meu PIN — enviar por e-mail'}
           </button>
+
+          {isGooglePinResetConfigured() && (
+            <div className="space-y-2 pt-1">
+              <p className="text-[10px] text-gray-400 text-center">ou</p>
+              <GooglePinResetButton
+                onCredential={handleGoogleCredential}
+                onScriptError={(msg) => setErro(msg)}
+                disabled={enviandoEmail || emailEnviado}
+              />
+              <p className="text-[10px] text-gray-400 text-center leading-snug">
+                O e-mail da conta Google deve ser o mesmo cadastrado no seu usuário.
+              </p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

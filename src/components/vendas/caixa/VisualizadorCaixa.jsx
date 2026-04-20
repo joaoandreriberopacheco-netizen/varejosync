@@ -282,8 +282,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-            Espelho · só leitura
-            {ultimaAtualizacao ? ` · ${format(ultimaAtualizacao, 'HH:mm:ss')}` : ''}
+            {ultimaAtualizacao ? `Atualizado · ${format(ultimaAtualizacao, 'HH:mm:ss')}` : '…'}
           </p>
         </div>
         

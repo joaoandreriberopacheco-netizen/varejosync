@@ -229,7 +229,7 @@ export default function CaixasAtivosPage() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-2">Caixas Ativos</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Visualize o balanço de caixas em operação</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Espelho do PDV · só leitura</p>
           </div>
           <button onClick={loadTurnos} className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
             <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
