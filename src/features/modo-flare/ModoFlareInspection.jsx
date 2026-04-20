@@ -952,7 +952,7 @@ export default function ModoFlareInspection({ onClose }) {
           p.rect && (
             <div
               key={p.flare.id}
-              className="pointer-events-none absolute rounded border border-amber-400/80 bg-amber-200/5"
+              className="pointer-events-none absolute rounded border border-cyan-400/80 bg-cyan-300/5 shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
               style={{
                 top: p.rect.top,
                 left: p.rect.left,
