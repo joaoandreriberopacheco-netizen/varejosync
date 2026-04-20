@@ -505,7 +505,9 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
                 const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
                 const itensFiado = (caixaData?.fiadoLista || []).map(f => ({ id: f.id, tipo: 'Fiado', valor: f.valor, descricao: f.descricao || 'Lançamento fiado', hora: f.created_date, cor: 'gray' }));
-                const todos = [...itensMovimentos, ...itensDespesas, ...itensFiado].sort((a, b) => new Date(a.hora) - new Date(b.hora));
+                const todos = [...itensMovimentos, ...itensDespesas, ...itensFiado].sort(
+                  (a, b) => new Date(a.hora).getTime() - new Date(b.hora).getTime()
+                );
                 
                 if (todos.length === 0) return (
                   <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
@@ -556,7 +558,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
       <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
       <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
-      <SaldoConsolidadoDialog open={showSaldoConsolidadoDialog} onOpenChange={setShowSaldoConsolidadoDialog} caixaData={caixaData} formatValor={formatValor} />
+      <SaldoConsolidadoDialog
+        open={showSaldoConsolidadoDialog}
+        onOpenChange={setShowSaldoConsolidadoDialog}
+        caixaData={caixaData}
+        turnoAtivo={turnoAtivo}
+        vendasFinalizadas={vendasFinalizadas}
+        movimentos={movimentos}
+        formatValor={formatValor}
+      />
     </div>
   );
 }

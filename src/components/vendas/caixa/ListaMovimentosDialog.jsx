@@ -3,7 +3,19 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Plus, Minus, DollarSign, Receipt, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
-export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor, onSelectMovimento, onRefresh }) {
+export default function ListaMovimentosDialog({
+  open,
+  onOpenChange,
+  tipo,
+  movimentos,
+  despesasLista,
+  totalReforcos,
+  totalSangrias,
+  totalDespesas,
+  formatValor,
+  onSelectMovimento = undefined,
+  onRefresh = undefined,
+}) {
 
   const isReforcos = tipo === 'reforcos';
   const isSangrias = tipo === 'sangrias';
@@ -34,9 +46,13 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
             <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </button>
           <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">{titulo}</h2>
-          <button onClick={onRefresh} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
-            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          </button>
+          {onRefresh ? (
+            <button type="button" onClick={() => onRefresh()} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
+              <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </button>
+          ) : (
+            <div className="w-11 flex-shrink-0" aria-hidden />
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
