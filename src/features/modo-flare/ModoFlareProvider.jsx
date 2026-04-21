@@ -36,7 +36,6 @@ export default function ModoFlareProvider({ children }) {
   const [inspectionOpen, setInspectionOpen] = useState(false);
 
   const openFlare = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('p38:close-catalog-overlay'));
     if (isUnlockStillValid()) {
       setInspectionOpen(true);
       return;
@@ -67,7 +66,6 @@ export default function ModoFlareProvider({ children }) {
 
   const submitPin = useCallback(() => {
     if (String(pinValue).trim() === FLARE_PIN) {
-      window.dispatchEvent(new CustomEvent('p38:close-catalog-overlay'));
       markUnlock();
       setPinOpen(false);
       setPinError(false);

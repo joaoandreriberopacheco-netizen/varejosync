@@ -66,8 +66,7 @@ export default function CaixasAtivosPage() {
       caixasPDV.forEach(caixa => {
         const turno = turnosUnicos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turno) {
-          const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-          const vendasTurno = vendas.filter(v => statusOk.includes(v.status) && v.turno_caixa_id === turno.id);
+          const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
           const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
           let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
           vendasTurno.forEach(v => {
@@ -80,19 +79,13 @@ export default function CaixasAtivosPage() {
               else if (fp.includes('vale')) totalVale += p.valor || 0;
             });
           });
-          const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
-          const reforcos = movs
-            .filter(m => m.turno_caixa_id === turno.id && m.conta_id === caixa.id && m.tipo === 'Reforço')
-            .reduce((s, m) => s + (m.valor || 0), 0);
-          const sangrias = movs
-            .filter(m => m.turno_caixa_id === turno.id && m.conta_id === caixa.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
-            .reduce((s, m) => s + (m.valor || 0), 0);
+          const reforcos = movs.filter(m => m.turno_caixa_id === turno.id && m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
+          const sangrias = movs.filter(m => m.turno_caixa_id === turno.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')).reduce((s, m) => s + (m.valor || 0), 0);
           const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa').reduce((s, d) => s + (d.valor || 0), 0);
-          const liquidezTurno = (turno.saldo_inicial || 0) + totalVendasMonetarias + reforcos - sangrias - despesasTurno;
+          const liquidezTurno = (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno;
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
-          // Espelha o PDVCaixa: fiado não entra na liquidez nem na gaveta.
-          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale;
+          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
           const senhasAguardando = rascunhosPendentesCaixa;
 
           rascunhosPorCaixa[caixa.id] = senhasAguardando;
@@ -120,12 +113,9 @@ export default function CaixasAtivosPage() {
   };
 
   const handleSelecionarCaixa = async (turno) => {
-    const [caixa, turnoFresh] = await Promise.all([
-      base44.entities.ContasFinanceiras.get(turno.conta_caixa_pdv_id),
-      base44.entities.TurnoCaixa.get(turno.id).catch(() => null),
-    ]);
+    const caixa = await base44.entities.ContasFinanceiras.get(turno.conta_caixa_pdv_id);
     setCaixaSelecionado(caixa);
-    setTurnoSelecionado(turnoFresh || turno);
+    setTurnoSelecionado(turno);
   };
 
   const consumosPorDestinacao = useMemo(() => {
@@ -232,7 +222,7 @@ export default function CaixasAtivosPage() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-2">Caixas Ativos</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Espelho do PDV · só leitura</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Visualize o balanço de caixas em operação</p>
           </div>
           <button onClick={loadTurnos} className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
             <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />

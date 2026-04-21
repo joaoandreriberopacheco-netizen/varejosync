@@ -17,11 +17,6 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
   const [showSaldoDialog, setShowSaldoDialog] = useState(false);
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
   const [descricaoSaldo, setDescricaoSaldo] = useState('');
-  const formatValor = (valor) =>
-    `R$ ${roundToTwoDecimals(valor || 0).toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`;
 
   const handleSaldoChange = (e) => {
     let numbers = e.target.value.replace(/\D/g, '');
@@ -61,63 +56,35 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
         (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
       );
 
-      // Recalcular liquidez dinamicamente espelhando a regra do PDVCaixa
+      // Recalcular liquidez dinamicamente com dados reais
       const liquidez = {};
       caixasPDV.forEach(caixa => {
         const turnoAberto = todosTurnos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turnoAberto) {
-          const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-          const vendasTurno = todasVendas.filter(v => statusOk.includes(v.status) && v.turno_caixa_id === turnoAberto.id);
-
-          let totalDinheiro = 0;
-          let totalPix = 0;
-          let totalCredito = 0;
-          let totalDebito = 0;
-          let totalVale = 0;
-
-          vendasTurno.forEach((venda) => {
-            (venda.pagamentos || []).forEach((pag) => {
-              const fp = (pag.forma_pagamento || '').toLowerCase();
-              if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
-              else if (fp === 'pix') totalPix += pag.valor || 0;
-              else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
-              else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
-              else if (fp.includes('vale')) totalVale += pag.valor || 0;
-            });
-          });
-
-          const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
+          // Somar vendas do turno
+          const vendasTurno = todasVendas.filter(v => v.turno_caixa_id === turnoAberto.id);
           const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-
-          const totalReforcos = todosMovimentos
-            .filter(m => m.turno_caixa_id === turnoAberto.id && m.conta_id === caixa.id && m.tipo === 'Reforço')
-            .reduce((sum, m) => sum + (m.valor || 0), 0);
-
-          const totalSangrias = todosMovimentos
-            .filter(m => m.turno_caixa_id === turnoAberto.id && m.conta_id === caixa.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
-            .reduce((sum, m) => sum + (m.valor || 0), 0);
-
-          const totalDespesas = todasDespesas
-            .filter(d => d.turno_caixa_id === turnoAberto.id && d.referencia_tipo !== 'MovimentosCaixa')
-            .reduce((sum, d) => sum + (d.valor || 0), 0);
-
-          const saldoInicial = roundToTwoDecimals(turnoAberto.saldo_inicial || 0);
-          const liquidezCalculada = roundToTwoDecimals(
-            saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
-          );
-          const dinheiroNaGaveta = roundToTwoDecimals(
-            liquidezCalculada - totalPix - totalCredito - totalDebito - totalVale
-          );
+          
+          // Somar reforços
+          const reforcos = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço');
+          const totalReforcos = reforcos.reduce((sum, m) => sum + (m.valor || 0), 0);
+          
+          // Somar recolhimentos/sangrias
+          const sangrias = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'));
+          const totalSangrias = sangrias.reduce((sum, m) => sum + (m.valor || 0), 0);
+          
+          // Somar despesas
+          const despesas = todasDespesas.filter(d => d.turno_caixa_id === turnoAberto.id);
+          const totalDespesas = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
+          
+          const saldoInicial = turnoAberto.saldo_inicial || 0;
+          const liquidezCalculada = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
           
           liquidez[caixa.id] = {
             turnoAberto: true,
             saldoInicial: saldoInicial,
             totalVendas: totalVendas,
             liquidez: liquidezCalculada,
-            reforcos: roundToTwoDecimals(totalReforcos),
-            recolhimentos: roundToTwoDecimals(totalSangrias),
-            despesas: roundToTwoDecimals(totalDespesas),
-            dinheiroNaGaveta,
           };
         } else {
           liquidez[caixa.id] = { turnoAberto: false };
@@ -262,16 +229,10 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
                           <div className="space-y-0.5">
                             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                              Turno aberto · Liquidez: {formatValor(liquidezPorCaixa[caixa.id].liquidez)}
-                            </p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                              Dinheiro na gaveta: {formatValor(liquidezPorCaixa[caixa.id].dinheiroNaGaveta)}
+                              Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Saldo Inicial: {formatValor(liquidezPorCaixa[caixa.id].saldoInicial)} · Vendas: {formatValor(liquidezPorCaixa[caixa.id].totalVendas)}
-                            </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Reforços: {formatValor(liquidezPorCaixa[caixa.id].reforcos)} · Recolhimentos: {formatValor(liquidezPorCaixa[caixa.id].recolhimentos)} · Despesas: {formatValor(liquidezPorCaixa[caixa.id].despesas)}
+                              Saldo Inicial: R$ {(liquidezPorCaixa[caixa.id].saldoInicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                           </div>
                         ) : (

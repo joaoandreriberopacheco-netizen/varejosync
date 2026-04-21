@@ -148,7 +148,24 @@ function collectBadges(index) {
   }
 
   rawBadges.sort((a, b) => (a.top - b.top) || (a.left - b.left));
-  return rawBadges;
+
+  const placed = [];
+  return rawBadges.map((badge) => {
+    let lane = 0;
+    for (const prev of placed) {
+      const nearX = Math.abs(prev.left - badge.left) < 56;
+      const nearY = Math.abs(prev.top - badge.top) < 28;
+      if (nearX && nearY) lane = Math.max(lane, (prev.lane || 0) + 1);
+    }
+    const next = {
+      ...badge,
+      lane,
+      badgeTop: Math.max(4, badge.top - lane * 20),
+      badgeLeft: badge.left + lane * 8,
+    };
+    placed.push(next);
+    return next;
+  });
 }
 
 export default function CatalogOverlay() {
@@ -159,7 +176,6 @@ export default function CatalogOverlay() {
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState('catalog');
-  const [inspectionActive, setInspectionActive] = useState(false);
   const longPressTimer = useRef(null);
 
   const index = useMemo(() => overlayManifest?.index || {}, []);
@@ -182,26 +198,8 @@ export default function CatalogOverlay() {
   }, []);
 
   useEffect(() => {
-    const syncInspection = () => {
-      const active = document.documentElement.getAttribute('data-flare-inspection') === '1';
-      setInspectionActive(active);
-      if (active) setOpen(false);
-    };
-    syncInspection();
-    const observer = new MutationObserver(syncInspection);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-flare-inspection'],
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
     const handler = () => setOpen((prev) => !prev);
-    const openHandler = () => {
-      if (document.documentElement.getAttribute('data-flare-inspection') === '1') return;
-      setOpen(true);
-    };
+    const openHandler = () => setOpen(true);
     window.toggleCatalogOverlay = handler;
     window.openCatalogOverlay = openHandler;
 
@@ -213,18 +211,14 @@ export default function CatalogOverlay() {
         return;
       }
       e.preventDefault();
-      if (document.documentElement.getAttribute('data-flare-inspection') === '1') return;
       handler();
     };
 
     window.addEventListener('keydown', onKey, true);
-    const closeHandler = () => setOpen(false);
     window.addEventListener('p38:open-catalog-overlay', openHandler);
-    window.addEventListener('p38:close-catalog-overlay', closeHandler);
     return () => {
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('p38:open-catalog-overlay', openHandler);
-      window.removeEventListener('p38:close-catalog-overlay', closeHandler);
       delete window.toggleCatalogOverlay;
       delete window.openCatalogOverlay;
     };
@@ -290,7 +284,7 @@ export default function CatalogOverlay() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [mode, toast]);
 
-  if (inspectionActive || !open) return null;
+  if (!open) return null;
 
   const handleCopy = async () => {
     if (!selected) return;
@@ -428,29 +422,62 @@ export default function CatalogOverlay() {
         }}
       >
         {badges.map((badge) => {
+          const anchorX = badge.badgeLeft + 18;
+          const anchorY = badge.badgeTop - 2;
+          const targetX = badge.targetLeft + Math.min(24, badge.targetWidth / 2);
+          const targetY = badge.targetTop + Math.min(16, badge.targetHeight / 2);
+          const angle = Math.atan2(targetY - anchorY, targetX - anchorX) * (180 / Math.PI);
+          const lineWidth = Math.max(10, Math.hypot(targetX - anchorX, targetY - anchorY));
           const um = Boolean(badge.unmapped);
+          const lineGrad = um
+            ? 'linear-gradient(90deg, rgba(255,196,107,0.95), rgba(255,196,107,0.12))'
+            : 'linear-gradient(90deg, rgba(125,255,179,0.95), rgba(125,255,179,0.15))';
+          const lineShadow = um ? '0 0 0 1px rgba(139,90,43,0.2)' : '0 0 0 1px rgba(47,92,69,0.12)';
+
           return (
-            <button
-              key={badge.source_location_raw || `${badge.short_code}:${badge.targetTop}:${badge.targetLeft}`}
-              type="button"
-              onClick={() => openPanelForBadge(badge)}
-              title={`${badge.short_code} · ${badge.code}${badge.hint ? ` · ${badge.hint}` : ''}`}
-              style={{
-                position: 'absolute',
-                top: badge.targetTop,
-                left: badge.targetLeft,
-                width: badge.targetWidth,
-                height: badge.targetHeight,
-                borderRadius: 8,
-                border: um ? '1.5px solid rgba(255,196,107,0.9)' : '1.5px solid rgba(34,211,238,0.9)',
-                background: um ? 'rgba(255,196,107,0.04)' : 'rgba(34,211,238,0.04)',
-                boxShadow: um
-                  ? '0 0 0 1px rgba(255,196,107,0.24) inset'
-                  : '0 0 0 1px rgba(34,211,238,0.24) inset',
-                pointerEvents: 'auto',
-                cursor: 'pointer',
-              }}
-            />
+            <React.Fragment key={badge.source_location_raw || `${badge.short_code}:${badge.badgeTop}:${badge.badgeLeft}`}>
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: anchorY,
+                  left: anchorX,
+                  width: lineWidth,
+                  height: 1,
+                  transformOrigin: '0 0',
+                  transform: `rotate(${angle}deg)`,
+                  background: lineGrad,
+                  boxShadow: lineShadow,
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => openPanelForBadge(badge)}
+                title={`${badge.short_code} · ${badge.code}${badge.hint ? ` · ${badge.hint}` : ''}`}
+                style={{
+                  position: 'absolute',
+                  top: badge.badgeTop,
+                  left: badge.badgeLeft,
+                  transform: 'translateY(-100%)',
+                  background: um ? 'rgba(40,28,10,0.96)' : 'rgba(14,24,19,0.95)',
+                  color: um ? '#ffc46b' : '#7dffb3',
+                  border: um ? '1px solid #8b5a2b' : '1px solid #2f5c45',
+                  borderRadius: 6,
+                  padding: '2px 6px',
+                  fontSize: 11,
+                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                  maxWidth: 180,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                  pointerEvents: 'auto',
+                  cursor: 'pointer',
+                }}
+              >
+                {badge.short_code}
+              </button>
+            </React.Fragment>
           );
         })}
       </div>

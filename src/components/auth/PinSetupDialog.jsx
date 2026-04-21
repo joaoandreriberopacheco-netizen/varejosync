@@ -1,11 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Shield, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { gerenciarPin } from '@/functions/gerenciarPin';
-import GooglePinResetButton from '@/components/auth/GooglePinResetButton';
-import { isGooglePinResetConfigured } from '@/components/auth/googlePinReset';
 
 export default function PinSetupDialog({ isOpen, onClose, user }) {
   const [modo, setModo] = useState('form'); // form | sucesso | reset_ok
@@ -15,15 +13,12 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
   const [mostrar, setMostrar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
-  /** Quando redefinido via Google, exibimos o PIN na tela (não só por e-mail). */
-  const [pinTemporarioMostrado, setPinTemporarioMostrado] = useState(null);
 
   const temPin = user?.pin_definido;
 
   const resetForm = () => {
     setPinAtual(''); setPinNovo(''); setPinConfirm('');
     setErro(''); setModo('form');
-    setPinTemporarioMostrado(null);
   };
 
   const handleClose = () => { resetForm(); onClose(); };
@@ -54,34 +49,14 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
     setErro('');
     try {
       const res = await gerenciarPin({ operacao: 'reset_pin_email' });
-      if (res.data?.sucesso) {
-        setPinTemporarioMostrado(null);
-        setModo('reset_ok');
-      } else setErro(res.data?.error || 'Erro ao enviar e-mail.');
+      if (res.data?.sucesso) setModo('reset_ok');
+      else setErro(res.data?.error || 'Erro ao enviar e-mail.');
     } catch (e) {
       setErro(e?.response?.data?.error || 'Erro ao enviar e-mail.');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleGoogleCredential = useCallback(async (idToken) => {
-    setLoading(true);
-    setErro('');
-    try {
-      const res = await gerenciarPin({ operacao: 'reset_pin_google', id_token: idToken });
-      if (res.data?.sucesso && res.data.pin_temporario) {
-        setPinTemporarioMostrado(String(res.data.pin_temporario));
-        setModo('reset_ok');
-      } else {
-        setErro(res.data?.error || 'Erro ao redefinir com o Google.');
-      }
-    } catch (e) {
-      setErro(e?.response?.data?.error || 'Erro ao redefinir com o Google.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -107,26 +82,8 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
         {modo === 'reset_ok' && (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <Mail className="w-12 h-12 text-blue-500" />
-            <p className="font-medium text-gray-800 dark:text-white">
-              {pinTemporarioMostrado ? 'PIN temporário gerado' : 'PIN temporário enviado!'}
-            </p>
-            {pinTemporarioMostrado ? (
-              <>
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  Anote agora — ele não será mostrado de novo.
-                </p>
-                <p className="text-2xl font-mono font-semibold tracking-[0.35em] text-gray-900 dark:text-white">
-                  {pinTemporarioMostrado}
-                </p>
-                <p className="text-xs text-gray-400">
-                  Use este PIN nas confirmações e depois altere em &quot;Alterar PIN&quot; com ele como PIN atual.
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-gray-400">
-                Verifique seu e-mail e use o PIN enviado. Depois redefina-o aqui.
-              </p>
-            )}
+            <p className="font-medium text-gray-800 dark:text-white">PIN temporário enviado!</p>
+            <p className="text-xs text-gray-400">Verifique seu e-mail e use o PIN enviado para fazer login. Depois redefina-o aqui.</p>
             <Button onClick={handleClose} className="mt-2 w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white">Fechar</Button>
           </div>
         )}
@@ -194,28 +151,13 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
             </Button>
 
             {temPin && (
-              <div className="space-y-3 pt-1">
-                <button
-                  onClick={handleResetEmail}
-                  disabled={loading}
-                  className="w-full text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-center"
-                >
-                  Esqueci meu PIN — enviar novo por e-mail
-                </button>
-                {isGooglePinResetConfigured() && (
-                  <>
-                    <p className="text-[10px] text-gray-400 text-center">ou</p>
-                    <GooglePinResetButton
-                      onCredential={handleGoogleCredential}
-                      onScriptError={(msg) => setErro(msg)}
-                      disabled={loading}
-                    />
-                    <p className="text-[10px] text-gray-400 text-center leading-snug">
-                      O e-mail da conta Google deve ser o mesmo do seu usuário.
-                    </p>
-                  </>
-                )}
-              </div>
+              <button
+                onClick={handleResetEmail}
+                disabled={loading}
+                className="w-full text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-center pt-1"
+              >
+                Esqueci meu PIN — enviar novo por e-mail
+              </button>
             )}
           </div>
         )}

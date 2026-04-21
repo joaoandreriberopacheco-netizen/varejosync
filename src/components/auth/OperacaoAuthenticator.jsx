@@ -1,13 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, RefreshCw, CheckCircle, AlertCircle, KeyRound, Shield, ChevronRight, Mail } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Camera, RefreshCw, CheckCircle, AlertCircle, KeyRound, Shield, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { gerenciarPin } from '@/functions/gerenciarPin';
 import PinSetupDialog from './PinSetupDialog';
-import GooglePinResetButton from '@/components/auth/GooglePinResetButton';
-import { isGooglePinResetConfigured } from '@/components/auth/googlePinReset';
 
 export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, operationName = "Nova Operação" }) {
     const [step, setStep] = useState('camera'); // camera | pin | need_setup
@@ -19,9 +17,6 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
     const [loading, setLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [showPinSetup, setShowPinSetup] = useState(false);
-    const [resetPinBusy, setResetPinBusy] = useState(false);
-    /** 'email' | 'google' — após redefinição bem-sucedida */
-    const [pinHelpOk, setPinHelpOk] = useState(null);
     
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -35,7 +30,6 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
             setPhotoData(null);
             setPin('');
             setError('');
-            setPinHelpOk(null);
             startCamera();
             // Carregar usuário atual
             base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
@@ -158,38 +152,6 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
         }
     };
 
-    const handleResetEmailPin = async () => {
-        setResetPinBusy(true);
-        setError('');
-        try {
-            await gerenciarPin({ operacao: 'reset_pin_email' });
-            setPinHelpOk('email');
-        } catch {
-            setError('Não foi possível enviar o e-mail.');
-        } finally {
-            setResetPinBusy(false);
-        }
-    };
-
-    const handleGoogleCredentialPin = useCallback(async (idToken) => {
-        setResetPinBusy(true);
-        setError('');
-        try {
-            const res = await gerenciarPin({ operacao: 'reset_pin_google', id_token: idToken });
-            if (res.data?.sucesso && res.data.pin_temporario) {
-                setPin(String(res.data.pin_temporario));
-                setPinHelpOk('google');
-                setTimeout(() => inputRef.current?.focus(), 100);
-            } else {
-                setError(res.data?.error || 'Não foi possível redefinir o PIN.');
-            }
-        } catch (e) {
-            setError(e?.response?.data?.error || 'Não foi possível redefinir o PIN com o Google.');
-        } finally {
-            setResetPinBusy(false);
-        }
-    }, []);
-
     const reset = () => {
         setStep('camera');
         setPhotoData(null);
@@ -297,39 +259,6 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                     {error}
                                 </div>
                             )}
-
-                            {pinHelpOk && (
-                                <p className="text-green-600 dark:text-green-500 text-xs text-center px-2">
-                                    {pinHelpOk === 'google'
-                                        ? 'PIN temporário preenchido — confirme para autorizar.'
-                                        : 'PIN temporário enviado ao seu e-mail.'}
-                                </p>
-                            )}
-
-                            <div className="flex flex-col gap-2 items-stretch pt-1 max-w-sm mx-auto w-full">
-                                <button
-                                    type="button"
-                                    onClick={handleResetEmailPin}
-                                    disabled={resetPinBusy || pinHelpOk}
-                                    className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center gap-1"
-                                >
-                                    <Mail className="w-3 h-3" />
-                                    {resetPinBusy ? 'Enviando...' : 'Esqueci meu PIN — enviar por e-mail'}
-                                </button>
-                                {isGooglePinResetConfigured() && (
-                                    <>
-                                        <p className="text-[10px] text-gray-400 text-center">ou</p>
-                                        <GooglePinResetButton
-                                            onCredential={handleGoogleCredentialPin}
-                                            onScriptError={(msg) => setError(msg)}
-                                            disabled={resetPinBusy || pinHelpOk}
-                                        />
-                                        <p className="text-[10px] text-gray-400 text-center leading-snug">
-                                            O e-mail da conta Google deve ser o mesmo do seu usuário.
-                                        </p>
-                                    </>
-                                )}
-                            </div>
                         </div>
                     )}
                 </div>
