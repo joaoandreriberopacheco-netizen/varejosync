@@ -224,7 +224,7 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
             <div className="w-8 h-8 rounded-2xl bg-[#253042] flex items-center justify-center shadow-sm flex-shrink-0">
               <Layers3 className="w-4 h-4 text-slate-200" />
             </div>
-            <span>Compras vinculadas</span>
+            <span className="text-slate-900">Compras vinculadas</span>
           </div>
           <span className="font-semibold whitespace-nowrap">{resumoGeral.quantidade} Compra{resumoGeral.quantidade > 1 ? 's' : ''}</span>
         </div>
