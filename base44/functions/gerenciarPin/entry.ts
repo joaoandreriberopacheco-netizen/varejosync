@@ -59,6 +59,16 @@ Deno.serve(async (req) => {
 
       const hash = await hashPin(pin);
       if (hash !== user.pin_hash) {
+        // Compatibilidade com formato legado (PIN salvo sem hash).
+        // Quando detectado, migra automaticamente para hash seguro.
+        if (user.pin_hash === pin) {
+          await base44.asServiceRole.entities.User.update(user.id, {
+            pin_hash: hash,
+            pin_definido: true,
+          });
+          return Response.json({ sucesso: true, mensagem: 'PIN validado.' });
+        }
+
         return Response.json({ error: 'PIN incorreto.' }, { status: 400 });
       }
 
