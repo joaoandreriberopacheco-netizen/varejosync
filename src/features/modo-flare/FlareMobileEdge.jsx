@@ -6,7 +6,7 @@ const DOWN_MIN = 44;
 const LEFT_MIN = 44;
 
 export default function FlareMobileEdge() {
-  const { openCatalog } = useModoFlare();
+  const { openFlare } = useModoFlare();
   const longPressTimer = useRef(null);
   const startRef = useRef(null);
   const phaseRef = useRef('idle');
@@ -26,10 +26,10 @@ export default function FlareMobileEdge() {
       clearLongPress();
       longPressTimer.current = window.setTimeout(() => {
         longPressTimer.current = null;
-        openCatalog();
+        openFlare();
       }, 650);
     },
-    [clearLongPress, openCatalog]
+    [clearLongPress, openFlare]
   );
 
   const onTouchMove = useCallback(
@@ -45,12 +45,12 @@ export default function FlareMobileEdge() {
       } else if (phaseRef.current === 'down' && dx < -LEFT_MIN && dy > 12) {
         phaseRef.current = 'done';
         clearLongPress();
-        openCatalog();
+        openFlare();
         startRef.current = null;
         phaseRef.current = 'idle';
       }
     },
-    [clearLongPress, openCatalog]
+    [clearLongPress, openFlare]
   );
 
   const onTouchEnd = useCallback(() => {
@@ -67,6 +67,12 @@ export default function FlareMobileEdge() {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       onTouchCancel={onTouchEnd}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openFlare();
+      }}
+      title="Marcar melhorias"
       aria-hidden
     >
       <Flag className="h-4 w-4" strokeWidth={1.75} />
