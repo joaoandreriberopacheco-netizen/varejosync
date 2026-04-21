@@ -18,7 +18,7 @@ function registrarItemNoMapa(mapa, item = {}) {
     item.custo_unitario_momento ??
     item.valor_unitario ??
     item.total_unitario ??
-    ((Number(item.total) || 0) / quantidadeBase)
+    (Number(item.total) || 0) / quantidadeBase
   ) || 0;
 
   const registro = {
@@ -27,7 +27,7 @@ function registrarItemNoMapa(mapa, item = {}) {
     quantidade_pedida: Number(item.quantidade ?? item.quantidade_base ?? 0) || 0,
     unidade_medida: item?.unidade_medida || 'UN',
     custo_unitario: custoUnitario,
-    total: Number(item.total ?? ((Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario)) || 0,
+    total: Number(item.total ?? (Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario) || 0
   };
 
   if (chaveId) {
@@ -99,7 +99,7 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
       item.total_item ??
       itemPedido.total ??
       itemPedido.valor_total ??
-      (quantidade * custo)
+      quantidade * custo
     ) || 0;
 
     return {
@@ -109,7 +109,7 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
       quantidade_pedida: Number(item.quantidade_pedida ?? itemPedido.quantidade_pedida ?? quantidade) || 0,
       quantidade_embarcada: quantidade,
       custo_unitario: custo,
-      total,
+      total
     };
   });
 }
@@ -122,7 +122,7 @@ function resumoEmbarque(embarque, itensPedidoMap = {}) {
     totalCompra,
     quantidadeItens: itens.length,
     quantidadeSomada: itens.reduce((sum, item) => sum + (Number(item.quantidade_embarcada) || 0), 0),
-    itens,
+    itens
   };
 }
 
@@ -136,15 +136,15 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full px-3 py-3 text-left"
-      >
+        className="w-full px-3 py-3 text-left">
+        
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1 flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-[#253042] flex items-center justify-center shadow-sm flex-shrink-0">
               <ShoppingCart className="w-4 h-4 text-slate-200" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
+              <p className="text-[hsl(var(--foreground))] text-sm font-semibold truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
               <p className="text-[11px] text-slate-300 truncate">{embarque.pedido_compra_numero || embarque.numero || embarque.codigo || 'Compra vinculada'}</p>
             </div>
             <div className="text-right flex-shrink-0 pr-1">
@@ -155,8 +155,8 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
         </div>
       </button>
 
-      {open && (
-        <div className="px-3 pb-3">
+      {open &&
+      <div className="px-3 pb-3">
           <div className="rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
             <div className="grid grid-cols-[32px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
               <span>Qtd</span>
@@ -166,24 +166,24 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
             </div>
             <div className="space-y-1">
               {itensOrdenados.map((item, index) => {
-                const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
-                const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
-                const total = Number(item.total ?? item.valor_total ?? item.total_item ?? (quantidade * custo)) || 0;
-                return (
-                  <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
+              const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
+              const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
+              const total = Number(item.total ?? item.valor_total ?? item.total_item ?? quantidade * custo) || 0;
+              return (
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
                     <span className="pt-0.5 text-white font-medium">{quantidade}</span>
                     <p className="min-w-0 text-[9px] leading-snug break-words font-normal text-white/90 text-left line-clamp-2">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[9px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     <span className="pt-0.5 text-[9px] text-right font-medium whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                  </div>
-                );
-              })}
+                  </div>);
+
+            })}
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export default function EventoEmbarquesPanel({ embarques = [] }) {
@@ -212,8 +212,8 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
     return (
       <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm text-xs text-gray-500 dark:text-gray-400">
         Nenhuma compra vinculada a este evento.
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -234,10 +234,10 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
         </div>
       </div>
       <div className="space-y-2">
-        {embarques.map((embarque, index) => (
-          <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} itensPedidoMap={itensPedidoMap} />
-        ))}
+        {embarques.map((embarque, index) =>
+        <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} itensPedidoMap={itensPedidoMap} />
+        )}
       </div>
-    </div>
-  );
+    </div>);
+
 }
