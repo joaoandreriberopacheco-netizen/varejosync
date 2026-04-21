@@ -145,7 +145,7 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-slate-700 text-sm font-semibold truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
-              <p className="text-[11px] text-slate-300 truncate">{embarque.pedido_compra_numero || embarque.numero || embarque.codigo || 'Compra vinculada'}</p>
+              <p className="text-slate-400 text-xs truncate">{embarque.pedido_compra_numero || embarque.numero || embarque.codigo || 'Compra vinculada'}</p>
             </div>
             <div className="text-right flex-shrink-0 pr-1">
               <p className="text-sm font-semibold text-white whitespace-nowrap">{resumo.totalCompra.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
