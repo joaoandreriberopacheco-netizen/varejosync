@@ -277,8 +277,6 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
         open={!!selectedEvento}
         onOpenChange={(open) => !open && setSelectedEvento(null)}
         evento={selectedEvento}
-        transportadora={draft}
-        timeline={timelineItems}
       />
       <TransportadoraProgressDialog open={showProgress} currentStep={progressStep} steps={progressSteps} success={progressSuccess} stepStatuses={stepStatuses} />
     </>

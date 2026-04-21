@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, ShoppingCart, Layers3 } from 'lucide-react';
+import { ChevronDown, ShoppingCart, Layers3, PackageSearch } from 'lucide-react';
+import { resolveBoatLogisticsUnit } from '@/lib/productUnits';
 
 function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
@@ -83,6 +84,7 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
   const itens = embarque.itens || [];
   return itens.map((item) => {
     const itemPedido = obterItemPedido(embarque, item, itensPedidoMap);
+    const productSource = item?._produto || item?.produto || itemPedido?._produto || itemPedido?.produto || itemPedido;
     const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
     const custo = Number(
       item.custo_unitario ??
@@ -105,13 +107,25 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
     return {
       ...item,
       produto_nome: item.produto_nome || itemPedido.produto_nome || 'Item sem descrição',
-      unidade_medida: item.unidade_medida || itemPedido.unidade_medida || 'UN',
+      unidade_medida: resolveBoatLogisticsUnit(productSource, item.unidade_medida || itemPedido.unidade_medida || 'UN'),
       quantidade_pedida: Number(item.quantidade_pedida ?? itemPedido.quantidade_pedida ?? quantidade) || 0,
       quantidade_embarcada: quantidade,
       custo_unitario: custo,
       total
     };
   });
+}
+
+function resumirPorUnidadeResolvida(itens = []) {
+  const mapa = {};
+  itens.forEach((item) => {
+    const unidade = String(item.unidade_medida || 'UN').trim().toUpperCase();
+    const quantidade = Number(item.quantidade_embarcada || item.quantidade_pedida || 0) || 0;
+    mapa[unidade] = (mapa[unidade] || 0) + quantidade;
+  });
+  return Object.entries(mapa)
+    .map(([unidade, quantidade]) => ({ unidade, quantidade }))
+    .sort((a, b) => a.unidade.localeCompare(b.unidade, 'pt-BR'));
 }
 
 function resumoEmbarque(embarque, itensPedidoMap = {}) {
@@ -158,7 +172,7 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       {open &&
       <div className="px-3 pb-3">
           <div className="rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
-            <div className="grid grid-cols-[32px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
+            <div className="grid grid-cols-[56px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
               <span>Qtd</span>
               <span className="text-left">Descrição</span>
               <span className="text-right">V. Unt</span>
@@ -170,8 +184,8 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
               const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
               const total = Number(item.total ?? item.valor_total ?? item.total_item ?? quantidade * custo) || 0;
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
-                    <span className="pt-0.5 text-white font-medium">{quantidade}</span>
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[56px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
+                    <span className="pt-0.5 text-white font-medium whitespace-nowrap">{`${quantidade} ${item.unidade_medida || 'UN'}`}</span>
                     <p className="min-w-0 text-[9px] leading-snug break-words font-normal text-white/90 text-left line-clamp-2">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[9px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     <span className="pt-0.5 text-[9px] text-right font-medium whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
@@ -199,6 +213,33 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
   }, [embarques]);
 
   const itensPedidoMap = useMemo(() => criarMapaItensPedido(embarques, pedidosCompraRelacionados), [embarques, pedidosCompraRelacionados]);
+  const pedidosAgrupados = useMemo(() => {
+    const grupos = {};
+    embarques.forEach((embarque, index) => {
+      const pedidoId = embarque.pedido_compra_id || `sem-pedido-${index}`;
+      const pedidoNumero = embarque.pedido_compra_numero || embarque.numero || `#${index + 1}`;
+      if (!grupos[pedidoId]) {
+        grupos[pedidoId] = {
+          pedidoId,
+          pedidoNumero,
+          fornecedor: embarque.fornecedor_nome || 'Fornecedor não informado',
+          embarques: [],
+          itens: [],
+          valorTotal: 0,
+        };
+      }
+      const itens = enriquecerItensEmbarque(embarque, itensPedidoMap);
+      grupos[pedidoId].embarques.push(embarque);
+      grupos[pedidoId].itens.push(...itens);
+      grupos[pedidoId].valorTotal += Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+    });
+    return Object.values(grupos).sort((a, b) => String(a.pedidoNumero).localeCompare(String(b.pedidoNumero), 'pt-BR'));
+  }, [embarques, itensPedidoMap]);
+
+  const resumoUnidades = useMemo(() => {
+    const itens = pedidosAgrupados.flatMap((pedido) => pedido.itens);
+    return resumirPorUnidadeResolvida(itens);
+  }, [pedidosAgrupados]);
   const resumoGeral = useMemo(() => {
     return embarques.reduce((acc, embarque) => {
       const resumo = resumoEmbarque(embarque, itensPedidoMap);
@@ -211,7 +252,7 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
   if (!embarques.length) {
     return (
       <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm text-xs text-gray-500 dark:text-gray-400">
-        Nenhuma compra vinculada a este evento.
+        Nenhum pedido vinculado a esta viagem.
       </div>);
 
   }
@@ -224,19 +265,52 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
             <div className="w-8 h-8 rounded-2xl bg-[#253042] flex items-center justify-center shadow-sm flex-shrink-0">
               <Layers3 className="w-4 h-4 text-slate-200" />
             </div>
-            <span>Compras vinculadas</span>
+            <span>Pedidos vinculados</span>
           </div>
-          <span className="font-semibold whitespace-nowrap">{resumoGeral.quantidade} Compra{resumoGeral.quantidade > 1 ? 's' : ''}</span>
+          <span className="font-semibold whitespace-nowrap">{resumoGeral.quantidade} Pedido{resumoGeral.quantidade > 1 ? 's' : ''}</span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-3 pl-10 text-sm text-white">
-          <span className="text-slate-300">Valor total</span>
+          <span className="text-slate-300">Valor total de compra</span>
           <span className="font-semibold whitespace-nowrap">{resumoGeral.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
         </div>
       </div>
       <div className="space-y-2">
-        {embarques.map((embarque, index) =>
-        <EmbarqueCard key={embarque.id || index} embarque={embarque} defaultOpen={index === 0} itensPedidoMap={itensPedidoMap} />
-        )}
+        {pedidosAgrupados.map((pedido, idxPedido) => (
+          <div key={pedido.pedidoId} className="rounded-2xl bg-[#334155]/82 dark:bg-[#334155]/82 p-3 shadow-sm space-y-2">
+            <div className="flex items-start justify-between gap-3 text-white">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">Pedido {pedido.pedidoNumero}</p>
+                <p className="text-xs text-slate-300 truncate">{pedido.fornecedor}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-300">{pedido.itens.length} item(ns)</p>
+                <p className="text-sm font-semibold">{pedido.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+              </div>
+            </div>
+            {pedido.embarques.map((embarque, idxEmb) => (
+              <EmbarqueCard
+                key={embarque.id || `${pedido.pedidoId}-${idxEmb}`}
+                embarque={embarque}
+                defaultOpen={idxPedido === 0 && idxEmb === 0}
+                itensPedidoMap={itensPedidoMap}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl bg-[#334155]/82 dark:bg-[#334155]/82 p-3 shadow-sm">
+        <div className="flex items-center gap-2 text-sm text-white">
+          <PackageSearch className="w-4 h-4 text-slate-200" />
+          <span className="font-semibold">Resumo por unidade resolvida</span>
+        </div>
+        <div className="mt-2 space-y-1">
+          {resumoUnidades.map((row) => (
+            <div key={row.unidade} className="flex items-center justify-between text-xs text-slate-200">
+              <span>{row.unidade}</span>
+              <span className="font-semibold">{(Number(row.quantidade) || 0).toLocaleString('pt-BR')}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>);
 
