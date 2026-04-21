@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ShoppingCart, Layers3 } from 'lucide-react';
+import { resolveBoatLogisticsUnit } from '@/lib/productUnits';
 
 function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
@@ -83,6 +84,7 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
   const itens = embarque.itens || [];
   return itens.map((item) => {
     const itemPedido = obterItemPedido(embarque, item, itensPedidoMap);
+    const productSource = item?._produto || item?.produto || itemPedido?._produto || itemPedido?.produto || itemPedido;
     const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
     const custo = Number(
       item.custo_unitario ??
@@ -105,7 +107,7 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
     return {
       ...item,
       produto_nome: item.produto_nome || itemPedido.produto_nome || 'Item sem descrição',
-      unidade_medida: item.unidade_medida || itemPedido.unidade_medida || 'UN',
+      unidade_medida: resolveBoatLogisticsUnit(productSource, item.unidade_medida || itemPedido.unidade_medida || 'UN'),
       quantidade_pedida: Number(item.quantidade_pedida ?? itemPedido.quantidade_pedida ?? quantidade) || 0,
       quantidade_embarcada: quantidade,
       custo_unitario: custo,
@@ -158,7 +160,7 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       {open && (
         <div className="px-3 pb-3">
           <div className="rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
-            <div className="grid grid-cols-[32px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
+            <div className="grid grid-cols-[56px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
               <span>Qtd</span>
               <span className="text-left">Descrição</span>
               <span className="text-right">V. Unt</span>
@@ -170,8 +172,8 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
                 const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
                 const total = Number(item.total ?? item.valor_total ?? item.total_item ?? (quantidade * custo)) || 0;
                 return (
-                  <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
-                    <span className="pt-0.5 text-white font-medium">{quantidade}</span>
+                  <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[56px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
+                    <span className="pt-0.5 text-white font-medium whitespace-nowrap">{`${quantidade} ${item.unidade_medida || 'UN'}`}</span>
                     <p className="min-w-0 text-[9px] leading-snug break-words font-normal text-white/90 text-left line-clamp-2">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[9px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     <span className="pt-0.5 text-[9px] text-right font-medium whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>

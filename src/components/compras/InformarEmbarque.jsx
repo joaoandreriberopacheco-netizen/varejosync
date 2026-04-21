@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Boxes, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel, Loader2 } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Plus, Check, X, Search, Anchor, Route, ClipboardList, ShipWheel, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import VolumesDialog from '@/components/compras/VolumesDialog';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -215,7 +214,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('transporte');
-  const [showVolumesDialog, setShowVolumesDialog] = useState(false);
   const [showTripSelector, setShowTripSelector] = useState(false);
   const [qtdEmbarque, setQtdEmbarque] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
@@ -237,7 +235,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   useEffect(() => {
     if (!isOpen) {
       setShowTripSelector(false);
-      setShowVolumesDialog(false);
       return;
     }
     if (!pedido) return;
@@ -350,17 +347,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     [pedido, jaEmbarcado, qtdEmbarque, selectedItems]
   );
 
-  const totalVolumesQtd = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.quantidade || 0), 0));
   const totalPesoKg = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0));
 
-  const bloquearFecharPorPortalAberto = showTripSelector || showVolumesDialog || authFornecedorOpen;
+  const bloquearFecharPorPortalAberto = showTripSelector || authFornecedorOpen;
 
   useEffect(() => {
     if (!isOpen || !pedido) return;
     logDespachoAudit({
       action: 'state_snapshot',
       showTripSelector,
-      showVolumesDialog,
       authFornecedorOpen,
       podeEscolherFornecedor,
       activeTab,
@@ -371,7 +366,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     isOpen,
     pedido?.id,
     showTripSelector,
-    showVolumesDialog,
     authFornecedorOpen,
     podeEscolherFornecedor,
     activeTab,
@@ -493,11 +487,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       {/* modal=false enquanto há portal por cima: Radix bloqueia pointer-events no resto da página em modal=true */}
       <Dialog open={isOpen} onOpenChange={onClose} modal={!bloquearFecharPorPortalAberto}>
         <DialogContent
-          className="max-w-lg max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0 rounded-2xl bg-[#111827] border-0 text-white shadow-2xl"
+          className="max-w-2xl max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0 rounded-2xl bg-[#0f172a] border border-white/10 text-white shadow-2xl"
           onInteractOutside={(e) => {
             if (bloquearFecharPorPortalAberto) {
               e.preventDefault();
-              logDespachoAudit({ action: 'radix_interact_outside_prevented', motivo: 'portal_viagem_volumes_ou_auth' });
+              logDespachoAudit({ action: 'radix_interact_outside_prevented', motivo: 'portal_viagem_ou_auth' });
             }
           }}
           onPointerDownOutside={(e) => {
@@ -510,14 +504,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
             if (!bloquearFecharPorPortalAberto) return;
             e.preventDefault();
             if (showTripSelector) setShowTripSelector(false);
-            else if (showVolumesDialog) setShowVolumesDialog(false);
             else if (authFornecedorOpen) setAuthFornecedorOpen(false);
             logDespachoAudit({ action: 'escape_fechou_portal' });
           }}
         >
 
-        <div className="flex flex-shrink-0 items-center gap-3 px-6 pt-6 pb-4 border-b border-white/5">
-          <div className="w-10 h-10 rounded-3xl bg-[#1f2937] flex items-center justify-center shadow-sm">
+        <div className="flex flex-shrink-0 items-center gap-3 px-6 pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#0f172a] to-[#111827]">
+          <div className="w-10 h-10 rounded-3xl bg-[#1e293b] flex items-center justify-center shadow-sm">
             <Truck className="w-4 h-4 text-slate-200 flex-shrink-0" />
           </div>
           <h2 className="text-base font-semibold text-white font-quicksand flex-1">
@@ -526,15 +519,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           </h2>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 pb-10 scroll-smooth">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 pb-10 scroll-smooth bg-[#111827]">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 pb-2">
-            <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-[#1f2937] p-1 w-full">
+            <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-[#0b1220] p-1 w-full border border-white/10">
               <TabsTrigger value="transporte" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><Route className="w-4 h-4" />Transporte</TabsTrigger>
               <TabsTrigger value="itens" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4" />Itens relacionados</TabsTrigger>
             </TabsList>
 
               <TabsContent value="transporte" className="space-y-5 mt-0">
-                <div className="space-y-2 rounded-xl border border-white/10 bg-[#1a2230] p-4">
+                <div className="space-y-2 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs text-slate-400">Fornecedor do pedido</p>
@@ -594,7 +587,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <div className="space-y-1.5">
                     <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
@@ -621,7 +614,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <label className="text-sm text-gray-500 dark:text-gray-400">
                     Transportadora <span className="text-xs text-gray-400 font-normal">(opcional)</span>
                   </label>
@@ -633,7 +626,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <label className="text-sm text-gray-500 dark:text-gray-400">
                     Viagem vinculada <span className="text-xs text-gray-400 font-normal">(opcional)</span>
                   </label>
@@ -663,29 +656,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   ) : null}
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm text-gray-500 dark:text-gray-400">
-                    Volumes <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowVolumesDialog(true)}
-                    className="w-full h-12 rounded-xl bg-[#1f2937] shadow-sm px-4 flex items-center gap-3 hover:bg-[#253042] transition-colors"
-                  >
-                    <Boxes className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    {volumes.length > 0 ? (
-                      <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 text-left">
-                        {totalVolumesQtd.toLocaleString('pt-BR')} vol · {totalPesoKg > 0 ? `${totalPesoKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg` : '—'}
-                        <span className="text-xs text-gray-400 ml-2">({volumes.length} tipo{volumes.length > 1 ? 's' : ''})</span>
-                      </span>
-                    ) : (
-                      <span className="text-sm text-gray-400 flex-1 text-left">Clicar para gerenciar volumes...</span>
-                    )}
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  </button>
-                </div>
-
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <label className="text-sm text-gray-500 dark:text-gray-400">Observações</label>
                   <Input
                     placeholder="Observações sobre este embarque..."
@@ -724,7 +695,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     return (
                       <div
                         key={item.produto_id}
-                        className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors ${selecionado ? 'bg-gray-50 dark:bg-gray-800' : 'bg-gray-50/40 dark:bg-gray-900/40 opacity-60'}`}
+                        className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors border ${selecionado ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50/40 dark:bg-gray-900/40 border-gray-100 dark:border-gray-800 opacity-60'}`}
                       >
                         <div className="flex items-start gap-3">
                           <button
@@ -767,7 +738,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           </div>
 
           {/* Footer — fixo na base do modal; corpo acima rola com respiro (evita “fim seco”) */}
-          <div className="flex flex-shrink-0 justify-end gap-3 px-6 pt-4 pb-6 border-t border-white/10 bg-[#111827]">
+          <div className="flex flex-shrink-0 justify-end gap-3 px-6 pt-4 pb-6 border-t border-white/10 bg-gradient-to-r from-[#0f172a] to-[#111827]">
             <Button variant="outline" onClick={onClose} disabled={loading}
               className="h-12 px-6 rounded-xl border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50">
               Cancelar
@@ -789,14 +760,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
         </DialogContent>
       </Dialog>
-
-      {/* Dialog de volumes (portal próprio) */}
-      <VolumesDialog
-        isOpen={showVolumesDialog}
-        onClose={() => setShowVolumesDialog(false)}
-        volumes={volumes}
-        onChange={setVolumes}
-      />
 
       {showTripSelector ? (
         <FluvialTripSelectorFullscreen

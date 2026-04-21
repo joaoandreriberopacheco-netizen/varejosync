@@ -93,7 +93,9 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
                 <button onClick={() => setEditandoEta(false)} className="text-gray-400 text-xs">✕</button>
               </div>
             )}
-            {embarque.volumes && <span>{embarque.volumes}</span>}
+            {Array.isArray(embarque.volumes_detalhados) && embarque.volumes_detalhados.length > 0 && (
+              <span>{embarque.volumes_detalhados.length} tipo(s) de volume</span>
+            )}
             {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
             <span>{statusRecebimento}</span>
             <span className="text-gray-500">{formatQuantity(totalItens)} un. embarcadas</span>

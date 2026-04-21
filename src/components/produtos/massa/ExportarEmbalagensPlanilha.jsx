@@ -23,6 +23,7 @@ function produtoParaLinhaEmbalagens(p) {
     row[`emb${n}_ajuste`] = a?.ajuste_percentual ?? '';
   }
   row.unidade_apresentacao_default = p.unidade_apresentacao_default || '';
+  row.unidade_show_logistica = p.unidade_show_logistica || '';
   return row;
 }
 

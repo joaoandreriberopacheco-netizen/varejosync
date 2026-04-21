@@ -1,7 +1,9 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Package2, Paperclip, Receipt, CircleDollarSign } from 'lucide-react';
+import { Package2, Paperclip, Receipt, CircleDollarSign, Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import BoatTravelDossierDialog from '@/components/logistica-sandbox/BoatTravelDossierDialog';
 
 function InfoBlock({ icon: Icon, label, value }) {
   return (
@@ -15,7 +17,15 @@ function InfoBlock({ icon: Icon, label, value }) {
   );
 }
 
-export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento }) {
+export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento, transportadora, timeline }) {
+  const [showDossier, setShowDossier] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) {
+      setShowDossier(false);
+    }
+  }, [open]);
+
   if (!evento) return null;
 
   return (
@@ -23,8 +33,16 @@ export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento })
       <DialogContent className="w-[calc(100vw-1rem)] max-w-2xl rounded-[28px] border-0 bg-white dark:bg-gray-900 p-0 overflow-hidden shadow-2xl">
         <div className="p-5 space-y-4">
           <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-semibold font-glacial text-gray-900 dark:text-gray-100">{evento.titulo}</DialogTitle>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{evento.codigo} · {evento.data}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DialogTitle className="text-xl font-semibold font-glacial text-gray-900 dark:text-gray-100">{evento.titulo}</DialogTitle>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{evento.codigo} · {evento.data}</p>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setShowDossier(true)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-sm">
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir dossiê
+              </Button>
+            </div>
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -71,6 +89,13 @@ export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento })
           </div>
         </div>
       </DialogContent>
+      <BoatTravelDossierDialog
+        open={showDossier}
+        onOpenChange={setShowDossier}
+        evento={evento}
+        transportadora={transportadora}
+        timeline={timeline}
+      />
     </Dialog>
   );
 }

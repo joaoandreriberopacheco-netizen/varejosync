@@ -130,3 +130,32 @@ export function formatEstoqueApresentacao(produto) {
   const qtd = estoque / fator;
   return { sigla: pref, quantidade: qtd, rotulo: alt.rotulo };
 }
+
+function normalizeUnitCode(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
+  const options = buildSaleUnitOptions(product);
+  if (!options.length) {
+    return normalizeUnitCode(fallbackUnit) || "UN";
+  }
+
+  const validUnits = new Set(options.map((option) => option.unidade));
+  const priorities = [
+    product?.unidade_show_logistica,
+    product?.unidade_show_comercial,
+    product?.unidade_apresentacao_default,
+    product?.unidade_principal,
+    fallbackUnit,
+  ];
+
+  for (const priority of priorities) {
+    const normalized = normalizeUnitCode(priority);
+    if (normalized && validUnits.has(normalized)) {
+      return normalized;
+    }
+  }
+
+  return options[0]?.unidade || "UN";
+}

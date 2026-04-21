@@ -127,7 +127,7 @@ export default function EditarProdutosEmMassa() {
         snapshot_dados: snapshotDados,
         tipo_importacao: 'Embalagens / Unidades',
       });
-      const camposEmb = ['unidade_apresentacao_default', 'unidades_alternativas'];
+      const camposEmb = ['unidade_apresentacao_default', 'unidade_show_logistica', 'unidades_alternativas'];
       for (const { id, dados } of parsedEmbalagens.alterados) {
         const dadosAtualizacao = {};
         camposEmb.forEach((field) => {

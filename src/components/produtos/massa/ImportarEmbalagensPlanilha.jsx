@@ -104,13 +104,15 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
         const altFromSlots = extrairUnidadesAlternativasDosSlots(dadosExtraidos);
         const apresentacao = dadosExtraidos.unidade_apresentacao_default;
+        const showLogistico = dadosExtraidos.unidade_show_logistica;
         const temApresentacao = apresentacao != null && String(apresentacao).trim() !== '';
+        const temShowLogistico = showLogistico != null && String(showLogistico).trim() !== '';
         const temEmb = altFromSlots.length > 0;
 
-        if (!temEmb && !temApresentacao) {
+        if (!temEmb && !temApresentacao && !temShowLogistico) {
           erros.push({
             linha: i,
-            mensagem: `Linha ${i}: informe ao menos um slot de embalagem (sigla + fator) ou a apresentação PDV.`,
+            mensagem: `Linha ${i}: informe ao menos um slot de embalagem (sigla + fator), a apresentação PDV ou o show logístico.`,
           });
           erroNaLinha = true;
         }
@@ -133,6 +135,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const dados = {};
         if (altFromSlots.length > 0) dados.unidades_alternativas = altFromSlots;
         if (temApresentacao) dados.unidade_apresentacao_default = String(apresentacao).trim().toUpperCase();
+        if (temShowLogistico) dados.unidade_show_logistica = String(showLogistico).trim().toUpperCase();
 
         alterados.push({
           id: produto.id,
