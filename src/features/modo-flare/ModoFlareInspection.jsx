@@ -16,8 +16,8 @@ import {
   writeLocalPins,
 } from '@/features/modo-flare/flareQueue';
 
-const HUD_Z = 10060;
-const BRIEF_Z = 10070;
+const HUD_Z = 110000;
+const BRIEF_Z = 120000;
 function pickElementBehindPortal(portalEl, clientX, clientY) {
   if (!portalEl) return null;
   const prev = portalEl.style.visibility;
@@ -49,14 +49,11 @@ export default function ModoFlareInspection({ onClose }) {
   const portalRef = useRef(null);
   const briefingTextareaRef = useRef(null);
 
-  const [highlight, setHighlight] = useState(null);
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [briefingDraft, setBriefingDraft] = useState('');
   const [pendingMeta, setPendingMeta] = useState(null);
-  const [pendingRect, setPendingRect] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [successMarker, setSuccessMarker] = useState(null);
   const [localPins, setLocalPins] = useState([]);
   const [syncMode, setSyncMode] = useState('loading');
   const [adminBusy, setAdminBusy] = useState(false);
@@ -70,7 +67,6 @@ export default function ModoFlareInspection({ onClose }) {
   const voiceSessionActiveRef = useRef(false);
   const voiceBaseTextRef = useRef('');
   const voiceFinalTextRef = useRef('');
-  const successMarkerTimerRef = useRef(null);
   const remoteListFailureNotifiedRef = useRef(false);
   const purchasePins = useMemo(() => {
     return localPins
@@ -358,15 +354,6 @@ export default function ModoFlareInspection({ onClose }) {
     }
   }, [toast]);
 
-  useEffect(
-    () => () => {
-      if (successMarkerTimerRef.current) {
-        clearTimeout(successMarkerTimerRef.current);
-      }
-    },
-    []
-  );
-
   const stopRecognition = useCallback(() => {
     voiceSessionActiveRef.current = false;
     try {
@@ -385,7 +372,6 @@ export default function ModoFlareInspection({ onClose }) {
         if (briefingOpen) {
           setBriefingOpen(false);
           setPendingMeta(null);
-          setPendingRect(null);
           setBriefingDraft('');
           stopRecognition();
           return;
@@ -396,21 +382,6 @@ export default function ModoFlareInspection({ onClose }) {
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   }, [briefingOpen, onClose, stopRecognition]);
-
-  const updateHighlight = useCallback((clientX, clientY) => {
-    const el = pickElementBehindPortal(portalRef.current, clientX, clientY);
-    if (!el) {
-      setHighlight(null);
-      return;
-    }
-    const r = el.getBoundingClientRect();
-    setHighlight({
-      top: r.top,
-      left: r.left,
-      width: r.width,
-      height: r.height,
-    });
-  }, []);
 
   const openBriefingForElement = useCallback(
     (el) => {
@@ -425,13 +396,6 @@ export default function ModoFlareInspection({ onClose }) {
         component_name: componentNameFromFilePath(parsed?.file_path || ''),
         confidence,
       });
-      const rect = el.getBoundingClientRect();
-      setPendingRect({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-      });
       setBriefingDraft('');
       setBriefingOpen(true);
       requestAnimationFrame(() => briefingTextareaRef.current?.focus?.());
@@ -443,17 +407,6 @@ export default function ModoFlareInspection({ onClose }) {
       }
     },
     [toast]
-  );
-
-  const handlePointer = useCallback(
-    (e) => {
-      if (briefingOpen) return;
-      const x = e.clientX ?? e.touches?.[0]?.clientX;
-      const y = e.clientY ?? e.touches?.[0]?.clientY;
-      if (x == null || y == null) return;
-      updateHighlight(x, y);
-    },
-    [briefingOpen, updateHighlight]
   );
 
   const selectElementAtPoint = useCallback(
@@ -583,7 +536,6 @@ export default function ModoFlareInspection({ onClose }) {
     }
 
     const meta = pendingMeta;
-    const rectSnapshot = pendingRect;
     setSaving(true);
     const imageUrl = '';
 
@@ -608,25 +560,8 @@ export default function ModoFlareInspection({ onClose }) {
 
       setBriefingOpen(false);
       setPendingMeta(null);
-      setPendingRect(null);
       setBriefingDraft('');
       stopRecognition();
-
-      if (rectSnapshot) {
-        setSuccessMarker({
-          top: rectSnapshot.top,
-          left: rectSnapshot.left,
-          width: rectSnapshot.width,
-          height: rectSnapshot.height,
-        });
-        if (successMarkerTimerRef.current) {
-          clearTimeout(successMarkerTimerRef.current);
-        }
-        successMarkerTimerRef.current = window.setTimeout(() => {
-          setSuccessMarker(null);
-          successMarkerTimerRef.current = null;
-        }, 1200);
-      }
       toast({
         title: 'Bandeirinha registada',
         description: `Podes continuar a marcar outros elementos. Origem: ${
@@ -639,48 +574,40 @@ export default function ModoFlareInspection({ onClose }) {
   }, [
     briefingDraft,
     pendingMeta,
-    pendingRect,
     stopRecognition,
     toast,
   ]);
-
-  const pinPositions = (localPins || [])
-    .map((flare) => {
-      const raw = flare.source_location_raw;
-      let el = null;
-      if (!raw) return null;
-      try {
-        const q = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(raw) : raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        el = document.querySelector(`[data-source-location="${q}"]`);
-      } catch {
-        el = null;
-      }
-      if (!el) return { flare, rect: null };
-      const r = el.getBoundingClientRect();
-      return {
-        flare,
-        rect: { top: r.top, left: r.left, width: r.width, height: r.height },
-      };
-    })
-    .filter(Boolean);
 
   const hud = (
     <div
       ref={portalRef}
       className="fixed inset-0 touch-none"
-      style={{ zIndex: HUD_Z, cursor: 'crosshair' }}
-      onWheel={(e) => e.preventDefault()}
-      onMouseMove={handlePointer}
-      onMouseLeave={() => setHighlight(null)}
-      onPointerMove={(e) => {
-        if (briefingOpen) return;
-        updateHighlight(e.clientX, e.clientY);
+      style={{ zIndex: HUD_Z }}
+      onPointerDownCapture={(e) => {
+        const target = e.target;
+        if (target?.closest?.('[data-flare-control]')) return;
+        e.preventDefault();
+        e.stopPropagation();
       }}
+      onClickCapture={(e) => {
+        const target = e.target;
+        if (target?.closest?.('[data-flare-control]')) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onPointerUpCapture={(e) => {
+        const target = e.target;
+        if (target?.closest?.('[data-flare-control]')) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onWheel={(e) => e.preventDefault()}
       onPointerUp={(e) => {
         if (briefingOpen) return;
         const target = e.target;
         if (target?.closest?.('[data-flare-control]')) return;
         e.preventDefault();
+        e.stopPropagation();
         selectElementAtPoint(e.clientX, e.clientY);
       }}
       role="presentation"
@@ -693,7 +620,7 @@ export default function ModoFlareInspection({ onClose }) {
         <span className="hidden opacity-90 sm:inline">Toca num elemento · Esc para sair</span>
         <div className="flex items-center gap-2" data-flare-control="1">
           <span className="rounded-md border border-slate-600/50 bg-slate-800/80 px-2 py-1 text-[11px] text-slate-200">
-            {pinPositions.length} marcas
+            {localPins.length} marcas
           </span>
           <button
             type="button"
@@ -918,51 +845,6 @@ export default function ModoFlareInspection({ onClose }) {
             ) : null}
           </div>
         </div>
-      )}
-
-      {highlight && (
-        <div
-          className="pointer-events-none absolute rounded border-2 border-sky-400 bg-sky-400/10 shadow-[0_0_0_1px_rgba(56,189,248,0.4)]"
-          style={{
-            top: highlight.top,
-            left: highlight.left,
-            width: highlight.width,
-            height: highlight.height,
-            zIndex: HUD_Z + 2,
-          }}
-        />
-      )}
-
-      {successMarker && (
-        <div
-          className="pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500/90 text-base text-white shadow-lg"
-          style={{
-            top: successMarker.top + 4,
-            left: successMarker.left + successMarker.width - 16,
-            zIndex: HUD_Z + 4,
-          }}
-          title="Bandeirinha fincada com sucesso"
-        >
-          ✓
-        </div>
-      )}
-
-      {pinPositions.map(
-        (p) =>
-          p.rect && (
-            <div
-              key={p.flare.id}
-              className="pointer-events-none absolute rounded border border-amber-400/80 bg-amber-200/5"
-              style={{
-                top: p.rect.top,
-                left: p.rect.left,
-                width: p.rect.width,
-                height: p.rect.height,
-                zIndex: HUD_Z + 2,
-              }}
-              title={p.flare.briefing}
-            />
-          )
       )}
 
       <div
