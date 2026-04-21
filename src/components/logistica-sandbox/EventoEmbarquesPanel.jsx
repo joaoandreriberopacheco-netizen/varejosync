@@ -226,7 +226,7 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
             </div>
             <span className="text-slate-900">Compras vinculadas</span>
           </div>
-          <span className="font-semibold whitespace-nowrap">{resumoGeral.quantidade} Compra{resumoGeral.quantidade > 1 ? 's' : ''}</span>
+          <span className="text-slate-700 font-semibold whitespace-nowrap">{resumoGeral.quantidade} Compra{resumoGeral.quantidade > 1 ? 's' : ''}</span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-3 pl-10 text-sm text-white">
           <span className="text-slate-300">Valor total</span>
