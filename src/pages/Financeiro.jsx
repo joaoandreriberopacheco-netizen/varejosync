@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import GestaoCaixa from '../components/financeiro/GestaoCaixa';
+import ExecucaoOrcamentaria from '../components/financeiro/ExecucaoOrcamentaria';
 import AgefinConsulta from './AgefinConsulta';
 import AgefinImportador from '../components/agefin/AgefinImportador';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,7 @@ export default function FinanceiroPage() {
           </TabsList>
 
           <TabsContent value="caixa">
-            <GestaoCaixa />
+            <ExecucaoOrcamentaria />
           </TabsContent>
 
           <TabsContent value="contas">

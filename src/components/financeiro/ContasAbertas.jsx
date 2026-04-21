@@ -35,6 +35,10 @@ function getVencimento(l) {
   return parsed ? format(parsed, 'yyyy-MM-dd') : null;
 }
 
+function isLancamentoPago(l) {
+  return l?.status === 'Pago' || !!l?.data_pagamento;
+}
+
 // ─── Chips de período ─────────────────────────────────────────────────────────
 const PERIODOS = [
   { v: 'vencidas',    l: 'Vencidas' },
@@ -179,7 +183,7 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
   const isR = l.tipo === 'Receita';
   const vStr = getVencimento(l);
   const val = Math.abs(l.valor || 0);
-  const isPago = l.status === 'Pago';
+  const isPago = isLancamentoPago(l);
   const conc = l.status_conciliacao || 'N/A';
   const showMeta = !!(
     l.categoria ||
@@ -346,7 +350,7 @@ function useContasAbertasModel(onOpenImportador) {
       const temTag = Array.isArray(l.tags) && l.tags.length > 0;
       const ehContaPagar = Array.isArray(l.tags) && l.tags.includes('conta_pagar');
       if (temTag && !ehContaPagar) return false;
-      if (!mostrarPagas && l.status === 'Pago') return false;
+      if (!mostrarPagas && isLancamentoPago(l)) return false;
       return true;
     }),
   [lancs, mostrarPagas]);
@@ -388,7 +392,7 @@ function useContasAbertasModel(onOpenImportador) {
     let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0, qtdVencidas = 0;
     const hStr = hojeStr();
     // KPIs consideram apenas Em Aberto/Vencido (não as pagas)
-    filtrados.filter(l => l.status !== 'Pago').forEach(l => {
+    filtrados.filter(l => !isLancamentoPago(l)).forEach(l => {
       const vStr = getVencimento(l);
       if (l.tipo === 'Receita') { aReceber += l.valor || 0; qtdReceber++; }
       else { aPagar += l.valor || 0; qtdPagar++; }
@@ -433,7 +437,7 @@ function useContasAbertasModel(onOpenImportador) {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
   };
 
-  const lancamentosSelecionados = filtrados.filter((l) => selectedIds.includes(l.id) && l.status !== 'Pago');
+  const lancamentosSelecionados = filtrados.filter((l) => selectedIds.includes(l.id) && !isLancamentoPago(l));
 
   const handleConfirmarPagamentoLote = async () => {
     const conta = contas.find((c) => c.id === contaLoteId);

@@ -20,6 +20,10 @@ import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrenc
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+function isLancamentoPago(lancamento) {
+  return lancamento?.status === 'Pago' || !!lancamento?.data_pagamento;
+}
+
 function Toggle({ checked, onChange }) {
   return (
     <button
@@ -41,7 +45,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [dataLiquidacao, setDataLiquidacao] = useState(
     lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje()
   );
-  const [isPagoLocal, setIsPagoLocal] = useState(lancamento.status === 'Pago');
+  const [isPagoLocal, setIsPagoLocal] = useState(isLancamentoPago(lancamento));
   const [saving, setSaving] = useState(false);
   const [showEscopo, setShowEscopo] = useState(false);
   const [showEscopoCadastro, setShowEscopoCadastro] = useState(false);
@@ -98,7 +102,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     lancamento.observacoes,
   ]);
 
-  const isPagoOriginal = lancamento.status === 'Pago';
+  const isPagoOriginal = isLancamentoPago(lancamento);
   const isPendente = lancamento.status_conciliacao === 'Pendente';
   const isCartaoReceber = isReceita && ['Cartão Débito', 'Cartão Crédito'].includes(lancamento.forma_pagamento_tipo);
   const valorNumerico = parseFloat(valorEditavel) || 0;
