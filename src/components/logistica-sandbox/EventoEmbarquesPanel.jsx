@@ -144,7 +144,7 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
               <ShoppingCart className="w-4 h-4 text-slate-200" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[hsl(var(--foreground))] text-sm font-semibold truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
+              <p className="text-slate-700 text-sm font-semibold truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
               <p className="text-[11px] text-slate-300 truncate">{embarque.pedido_compra_numero || embarque.numero || embarque.codigo || 'Compra vinculada'}</p>
             </div>
             <div className="text-right flex-shrink-0 pr-1">
