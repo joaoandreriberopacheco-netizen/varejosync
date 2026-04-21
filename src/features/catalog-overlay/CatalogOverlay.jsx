@@ -200,6 +200,7 @@ export default function CatalogOverlay() {
   useEffect(() => {
     const handler = () => setOpen((prev) => !prev);
     const openHandler = () => setOpen(true);
+    const closeHandler = () => setOpen(false);
     window.toggleCatalogOverlay = handler;
     window.openCatalogOverlay = openHandler;
 
@@ -216,13 +217,30 @@ export default function CatalogOverlay() {
 
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('p38:open-catalog-overlay', openHandler);
+    window.addEventListener('p38:close-catalog-overlay', closeHandler);
     return () => {
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('p38:open-catalog-overlay', openHandler);
+      window.removeEventListener('p38:close-catalog-overlay', closeHandler);
       delete window.toggleCatalogOverlay;
       delete window.openCatalogOverlay;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    if (document.documentElement.hasAttribute('data-flare-inspection')) {
+      setOpen(false);
+      return undefined;
+    }
+    const observer = new MutationObserver(() => {
+      if (document.documentElement.hasAttribute('data-flare-inspection')) {
+        setOpen(false);
+      }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-flare-inspection'] });
+    return () => observer.disconnect();
+  }, [open]);
 
   useEffect(() => {
     try {
