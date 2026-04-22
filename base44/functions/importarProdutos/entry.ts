@@ -55,11 +55,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Gerar número sequencial do log
+    // Gerar número sequencial do log (numero pode vir string ou number da API — sempre normalizar)
     const logsExistentes = await base44.asServiceRole.entities.ImportacaoLog.list('-created_date', 1);
-    const ultimoNumero = logsExistentes.length > 0
-      ? parseInt((logsExistentes[0].numero || 'IMP-00000').replace('IMP-', '')) + 1
-      : 1;
+    let ultimoNumero = 1;
+    if (logsExistentes.length > 0) {
+      const bruto = logsExistentes[0]?.numero;
+      const semPrefixo = String(bruto ?? 'IMP-00000').replace(/^IMP-/i, '').trim();
+      const parsed = parseInt(semPrefixo, 10);
+      ultimoNumero = Number.isFinite(parsed) && parsed >= 0 ? parsed + 1 : 1;
+    }
     const numeroLog = `IMP-${String(ultimoNumero).padStart(5, '0')}`;
 
     // Salvar log ANTES de processar (garante rollback mesmo com timeout)

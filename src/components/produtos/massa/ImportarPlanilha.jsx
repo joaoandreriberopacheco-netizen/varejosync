@@ -60,6 +60,15 @@ export default function ImportarPlanilha({ onParsed }) {
         if (colConfig) colIndexMap[colConfig.key] = colNumber;
       });
 
+      if (!colIndexMap.id || !colIndexMap.campo_hierarquico_1) {
+        const faltando = [];
+        if (!colIndexMap.id) faltando.push('ID (não editar)');
+        if (!colIndexMap.campo_hierarquico_1) faltando.push('Nível 1 (*)');
+        throw new Error(
+          `Cabeçalhos obrigatórios ausentes na linha 1: ${faltando.join(', ')}. Exporte de novo pelo app e não altere os títulos da primeira linha.`,
+        );
+      }
+
       const alterados = [];
       const erros = [];
       let linhasIgnoradasSemMudanca = 0;

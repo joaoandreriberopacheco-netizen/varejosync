@@ -15,6 +15,12 @@ import { toast } from 'sonner';
 
 const TAMANHO_LOTE = 25;
 
+function mensagemErroFunctionInvoke(error) {
+  const data = error?.response?.data;
+  if (data && typeof data === 'object' && typeof data.error === 'string') return data.error;
+  return error?.message || 'Erro desconhecido';
+}
+
 export default function ImportacaoProdutosPage() {
   const [parsedData, setParsedData] = useState(null);
   const [parsedEmbalagens, setParsedEmbalagens] = useState(null);
@@ -75,7 +81,7 @@ export default function ImportacaoProdutosPage() {
       window.dispatchEvent(new Event('produtos:refresh'));
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
-      toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
+      toast.error(`Erro no lote ${progresso.lote + 1}: ${mensagemErroFunctionInvoke(error)}`);
     } finally {
       setSalvando(false);
       setProgresso({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
@@ -117,7 +123,7 @@ export default function ImportacaoProdutosPage() {
       window.dispatchEvent(new Event('produtos:refresh'));
     } catch (error) {
       console.error('Erro na sincronização de embalagens:', error);
-      toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
+      toast.error(`Erro no lote ${progresso.lote + 1}: ${mensagemErroFunctionInvoke(error)}`);
     } finally {
       setSalvando(false);
       setProgresso({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
