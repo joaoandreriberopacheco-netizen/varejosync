@@ -14,6 +14,23 @@ function getCellValue(cell) {
   return cell.value ?? null;
 }
 
+function normalizarTexto(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).trim().toUpperCase();
+}
+
+function normalizarUnidadesAlternativas(unidades = []) {
+  if (!Array.isArray(unidades)) return [];
+  return unidades.map((u) => ({
+    unidade: normalizarTexto(u?.unidade),
+    fator_conversao: Number(u?.fator_conversao) || 0,
+    rotulo: u?.rotulo != null ? String(u.rotulo).trim() : '',
+    ajuste_percentual: Number(u?.ajuste_percentual) || 0,
+    preco_venda: Number(u?.preco_venda) || 0,
+    ativo: Boolean(u?.ativo),
+  }));
+}
+
 export default function ImportarEmbalagensPlanilha({ onParsed }) {
   const [arquivo, setArquivo] = useState(null);
   const [parsing, setParsing] = useState(false);
@@ -61,6 +78,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
       const alterados = [];
       const erros = [];
+      let linhasIgnoradasSemMudanca = 0;
 
       for (let i = 2; i <= ws.rowCount; i++) {
         const row = ws.getRow(i);
@@ -137,6 +155,27 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         if (temApresentacao) dados.unidade_apresentacao_default = String(apresentacao).trim().toUpperCase();
         if (temShowLogistico) dados.unidade_show_logistica = String(showLogistico).trim().toUpperCase();
 
+        const atualApresentacao = normalizarTexto(produto.unidade_apresentacao_default);
+        const atualShowLogistico = normalizarTexto(produto.unidade_show_logistica);
+        const novoApresentacao = temApresentacao
+          ? normalizarTexto(dados.unidade_apresentacao_default)
+          : atualApresentacao;
+        const novoShowLogistico = temShowLogistico
+          ? normalizarTexto(dados.unidade_show_logistica)
+          : atualShowLogistico;
+        const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
+        const novoAlt = altFromSlots.length > 0 ? normalizarUnidadesAlternativas(altFromSlots) : atualAlt;
+
+        const semMudanca =
+          atualApresentacao === novoApresentacao
+          && atualShowLogistico === novoShowLogistico
+          && JSON.stringify(atualAlt) === JSON.stringify(novoAlt);
+
+        if (semMudanca) {
+          linhasIgnoradasSemMudanca += 1;
+          continue;
+        }
+
         alterados.push({
           id: produto.id,
           dados,
@@ -148,13 +187,16 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       if (erros.length > 0) {
         toast.error(`${erros.length} linha(s) com problema. Veja a lista no resumo.`);
       }
-      if (alterados.length > 0) {
-        toast.success(`${alterados.length} produto(s) pronto(s) para atualizar embalagens.`);
+      if (alterados.length > 0 || linhasIgnoradasSemMudanca > 0) {
+        const partes = [];
+        if (alterados.length > 0) partes.push(`${alterados.length} produto(s) pronto(s) para atualizar embalagens`);
+        if (linhasIgnoradasSemMudanca > 0) partes.push(`${linhasIgnoradasSemMudanca} linha(s) inalteradas ignoradas`);
+        toast.success(partes.join(' · '));
       } else if (erros.length === 0) {
         toast.info('Nenhuma alteração detectada.');
       }
 
-      onParsed({ alterados, erros });
+      onParsed({ alterados, erros, linhasIgnoradasSemMudanca });
     } catch (error) {
       console.error(error);
       toast.error(`Erro ao ler planilha: ${error.message}`);
