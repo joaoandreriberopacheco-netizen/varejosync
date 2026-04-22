@@ -127,12 +127,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const temShowLogistico = showLogistico != null && String(showLogistico).trim() !== '';
         const temEmb = altFromSlots.length > 0;
 
+        // Linha sem alterações de embalagem/apresentação/show logístico:
+        // ignorar silenciosamente para permitir atualização parcial da planilha.
         if (!temEmb && !temApresentacao && !temShowLogistico) {
-          erros.push({
-            linha: i,
-            mensagem: `Linha ${i}: informe ao menos um slot de embalagem (sigla + fator), a apresentação PDV ou o show logístico.`,
-          });
-          erroNaLinha = true;
+          linhasIgnoradasSemMudanca += 1;
+          continue;
         }
 
         if (erroNaLinha) continue;
