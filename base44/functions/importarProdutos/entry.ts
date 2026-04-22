@@ -31,6 +31,7 @@ Deno.serve(async (req) => {
       lote_numero = 1,
       total_lotes = 1,
       grupo_importacao_id,
+      tipo_importacao,
     } = await req.json();
 
     if (!alterados || !Array.isArray(alterados) || alterados.length === 0) {
@@ -55,32 +56,43 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Gerar número sequencial do log (numero pode vir string ou number da API — sempre normalizar)
-    const logsExistentes = await base44.asServiceRole.entities.ImportacaoLog.list('-created_date', 1);
-    let ultimoNumero = 1;
-    if (logsExistentes.length > 0) {
-      const bruto = logsExistentes[0]?.numero;
-      const semPrefixo = String(bruto ?? 'IMP-00000').replace(/^IMP-/i, '').trim();
-      const parsed = parseInt(semPrefixo, 10);
-      ultimoNumero = Number.isFinite(parsed) && parsed >= 0 ? parsed + 1 : 1;
+    // Log de importação (opcional): se a entidade ImportacaoLog não existir no app, seguimos só com Produto.
+    let importacaoLogAviso: string | null = null;
+    try {
+      const logsExistentes = await base44.asServiceRole.entities.ImportacaoLog.list('-created_date', 1);
+      let ultimoNumero = 1;
+      if (logsExistentes.length > 0) {
+        const bruto = logsExistentes[0]?.numero;
+        const semPrefixo = String(bruto ?? 'IMP-00000').replace(/^IMP-/i, '').trim();
+        const parsed = parseInt(semPrefixo, 10);
+        ultimoNumero = Number.isFinite(parsed) && parsed >= 0 ? parsed + 1 : 1;
+      }
+      const numeroLog = `IMP-${String(ultimoNumero).padStart(5, '0')}`;
+
+      const rotuloTipo =
+        typeof tipo_importacao === 'string' && tipo_importacao.trim() ? tipo_importacao.trim() : 'Produtos';
+
+      await base44.asServiceRole.entities.ImportacaoLog.create({
+        numero: numeroLog,
+        tipo: rotuloTipo,
+        status: 'Concluída',
+        grupo_importacao_id: grupo_importacao_id || `GRP-${Date.now()}`,
+        lote_numero,
+        total_lotes,
+        is_ultimo_lote,
+        total_novos: novos.length,
+        total_atualizados: atualizados.length,
+        produtos_atualizados: produtosAtualizadosSnapshot,
+      });
+
+      await sleep(100);
+    } catch (logErr: unknown) {
+      const msg = logErr instanceof Error ? logErr.message : String(logErr);
+      console.warn('ImportacaoLog indisponível (importação continua sem audit trail / desfazer por lote):', msg);
+      importacaoLogAviso = msg.includes('not found') || msg.includes('ImportacaoLog')
+        ? 'Registo de importação (ImportacaoLog) não configurado no app — produtos foram atualizados, mas o separador Desfazer pode ficar vazio para esta operação.'
+        : `Log de importação omitido: ${msg}`;
     }
-    const numeroLog = `IMP-${String(ultimoNumero).padStart(5, '0')}`;
-
-    // Salvar log ANTES de processar (garante rollback mesmo com timeout)
-    await base44.asServiceRole.entities.ImportacaoLog.create({
-      numero: numeroLog,
-      tipo: 'Produtos',
-      status: 'Concluída',
-      grupo_importacao_id: grupo_importacao_id || `GRP-${Date.now()}`,
-      lote_numero,
-      total_lotes,
-      is_ultimo_lote,
-      total_novos: novos.length,
-      total_atualizados: atualizados.length,
-      produtos_atualizados: produtosAtualizadosSnapshot,
-    });
-
-    await sleep(100);
 
     const validFields = [
       'tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2',
@@ -138,6 +150,7 @@ Deno.serve(async (req) => {
       success: true,
       message: `Lote ${lote_numero}/${total_lotes} concluído. ${processados}/${alterados.length} produto(s) processado(s).`,
       count: processados,
+      ...(importacaoLogAviso ? { warning: importacaoLogAviso } : {}),
     });
   } catch (error) {
     console.error('Erro na importação:', error);

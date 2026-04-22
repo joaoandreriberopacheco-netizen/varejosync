@@ -21,6 +21,14 @@ function mensagemErroFunctionInvoke(error) {
   return error?.message || 'Erro desconhecido';
 }
 
+/** Resposta de functions.invoke pode vir como `{ data: {...} }` ou corpo direto. */
+function corpoRespostaInvoke(resp) {
+  if (resp && typeof resp === 'object' && 'data' in resp && resp.data !== undefined) {
+    return resp.data;
+  }
+  return resp;
+}
+
 export default function ImportacaoProdutosPage() {
   const [parsedData, setParsedData] = useState(null);
   const [parsedEmbalagens, setParsedEmbalagens] = useState(null);
@@ -56,13 +64,14 @@ export default function ImportacaoProdutosPage() {
     const grupoId = `GRP-${Date.now()}`;
     setSalvando(true);
     setProgresso({ atual: 0, total, lote: 0, totalLotes });
+    let avisoServidor = null;
 
     try {
       for (let i = 0; i < totalLotes; i++) {
         const inicio = i * TAMANHO_LOTE;
         const lote = parsedData.alterados.slice(inicio, inicio + TAMANHO_LOTE);
 
-        await base44.functions.invoke('importarProdutos', {
+        const resp = await base44.functions.invoke('importarProdutos', {
           alterados: lote,
           tipo_importacao: 'Detalhes do Produto',
           is_ultimo_lote: i === totalLotes - 1,
@@ -71,10 +80,16 @@ export default function ImportacaoProdutosPage() {
           grupo_importacao_id: grupoId,
         });
 
+        const body = corpoRespostaInvoke(resp);
+        if (body?.warning && !avisoServidor) avisoServidor = body.warning;
+
         setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
       }
 
       toast.success(`✓ Sincronização concluída! ${total} produto(s) em ${totalLotes} lote(s).`);
+      if (avisoServidor) {
+        toast.warning(avisoServidor);
+      }
       setSalvouOk(true);
       setParsedData(null);
       // Invalidar cache global para que Produtos recarregue ao retornar
@@ -99,13 +114,14 @@ export default function ImportacaoProdutosPage() {
     const grupoId = `GRP-${Date.now()}`;
     setSalvando(true);
     setProgresso({ atual: 0, total, lote: 0, totalLotes });
+    let avisoServidorEmb = null;
 
     try {
       for (let i = 0; i < totalLotes; i++) {
         const inicio = i * TAMANHO_LOTE;
         const lote = parsedEmbalagens.alterados.slice(inicio, inicio + TAMANHO_LOTE);
 
-        await base44.functions.invoke('importarProdutos', {
+        const resp = await base44.functions.invoke('importarProdutos', {
           alterados: lote,
           tipo_importacao: 'Embalagens / Unidades',
           is_ultimo_lote: i === totalLotes - 1,
@@ -114,10 +130,16 @@ export default function ImportacaoProdutosPage() {
           grupo_importacao_id: grupoId,
         });
 
+        const body = corpoRespostaInvoke(resp);
+        if (body?.warning && !avisoServidorEmb) avisoServidorEmb = body.warning;
+
         setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
       }
 
       toast.success(`Embalagens atualizadas: ${total} produto(s) em ${totalLotes} lote(s).`);
+      if (avisoServidorEmb) {
+        toast.warning(avisoServidorEmb);
+      }
       setSalvouEmbalagensOk(true);
       setParsedEmbalagens(null);
       window.dispatchEvent(new Event('produtos:refresh'));

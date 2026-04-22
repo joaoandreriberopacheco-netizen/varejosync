@@ -152,8 +152,8 @@
     {
       "name": "importarProdutos",
       "description": "Importa produtos em massa de planilha XLS/CSV. Cria ou atualiza Produto, gera códigos internos.",
-      "entities_written": ["Produto"],
-      "entities_read": ["Produto", "CategoriaProduto", "Area"],
+      "entities_written": ["Produto", "ImportacaoLog"],
+      "entities_read": ["Produto", "ImportacaoLog", "CategoriaProduto", "Area"],
       "admin_only": true,
       "integrations_used": ["Core.ExtractDataFromUploadedFile"],
       "critical": false

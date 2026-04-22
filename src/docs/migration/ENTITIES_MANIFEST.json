@@ -476,6 +476,12 @@
       "lifecycle": ["pending","in_progress","ready_for_verify","resolved","reopened","ignored"]
     },
     {
+      "name": "ImportacaoLog",
+      "description": "Histórico de importações em massa (produtos/embalagens) e snapshot para desfazer",
+      "required": [],
+      "relations": []
+    },
+    {
       "name": "CatalogoInterface",
       "description": "Catálogo hierárquico da UI (manual dinâmico / tree grid)",
       "required": ["stable_code", "kind", "titulo", "lifecycle_status"],
