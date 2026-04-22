@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import OrcamentoCupom from './OrcamentoCupom';
 import LostSalesForm from '@/components/vendas/LostSalesForm';
+import { formatEstoqueApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ── Bottom-sheet de quantidade ao selecionar produto ──────────────────────────
-function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
+function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, onConfirm, onClose }) {
   const [qtd, setQtd] = useState(qtdAtual > 0 ? String(qtdAtual) : '1');
   const [precoEditado, setPrecoEditado] = useState(preco);
   const inputRef = useRef(null);
@@ -57,7 +58,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
           {/* Produto info */}
           <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-0.5">{produto.nome}</p>
           <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-4">
-            R$ {fmtR(preco)} / {produto.unidade_principal || 'UN'}
+            R$ {fmtR(preco)} / {unidadeSelecionada?.unidade || produto.unidade_principal || 'UN'}
           </p>
 
           {/* Input de quantidade com teclado nativo numérico */}
@@ -156,13 +157,15 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
 }
 
 // ── Linha de produto na busca ─────────────────────────────────────────────────
-function ProdutoLinha({ produto, preco, qtdNoCarrinho, onSelect }) {
+function ProdutoLinha({ produto, preco, unidadeSelecionada, qtdNoCarrinho, onSelect }) {
   const e = produto.estoque_atual || 0;
   const m = produto.estoque_minimo || 0;
   const dotCls = !produto.ativo ? 'bg-gray-300'
     : e <= 0 ? 'bg-red-500'
     : e <= m ? 'bg-orange-400'
     : 'bg-green-500';
+
+  const apresent = formatEstoqueApresentacao(produto);
 
   return (
     <div
@@ -175,6 +178,7 @@ function ProdutoLinha({ produto, preco, qtdNoCarrinho, onSelect }) {
         <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{produto.nome}</p>
         <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
           R$ {fmtR(preco)} · {e.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
+          {apresent ? ` · ~${apresent.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${apresent.sigla}` : ''}
         </p>
       </div>
 
@@ -213,13 +217,16 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
   const totalItens = itens.reduce((s, i) => s + i.qtd, 0);
   const totalValor = itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0);
 
-  const handleSelect = (produto, preco) => {
-    setProdutoSelecionado({ produto, preco });
+  const handleSelect = (produto) => {
+    const precoBase = calcularPreco(produto);
+    const unidadeDefault = pickDefaultSaleUnit(produto, precoBase > 0 && (produto.preco_venda_padrao || 0) > 0 ? precoBase / (produto.preco_venda_padrao || 1) : 1);
+    const precoSelecionado = unidadeDefault?.valor_unitario ?? precoBase;
+    setProdutoSelecionado({ produto, preco: precoSelecionado, unidadeSelecionada: unidadeDefault });
   };
 
   const handleConfirmQtd = (qtd, novoPreco) => {
-    const { produto, preco } = produtoSelecionado;
-    onSetQtd(produto, novoPreco ?? preco, qtd);
+    const { produto, preco, unidadeSelecionada } = produtoSelecionado;
+    onSetQtd(produto, novoPreco ?? preco, qtd, unidadeSelecionada);
     setProdutoSelecionado(null);
     // Manter o search para continuar adicionando itens
     setTimeout(() => searchRef.current?.focus(), 50);
@@ -265,12 +272,18 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
         ) : (
           filtrados.map(p => {
             const preco = calcularPreco(p);
+            const unidadeSelecionada = pickDefaultSaleUnit(
+              p,
+              preco > 0 && (p.preco_venda_padrao || 0) > 0 ? preco / (p.preco_venda_padrao || 1) : 1
+            );
+            const precoExibicao = unidadeSelecionada?.valor_unitario ?? preco;
             const item = itens.find(i => i.id === p.id);
             return (
               <ProdutoLinha
                 key={p.id}
                 produto={p}
-                preco={preco}
+                preco={precoExibicao}
+                unidadeSelecionada={unidadeSelecionada}
                 qtdNoCarrinho={item?.qtd || 0}
                 onSelect={handleSelect}
               />
@@ -312,6 +325,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
           preco={produtoSelecionado.preco}
           qtdAtual={itens.find(i => i.id === produtoSelecionado.produto.id)?.qtd || 0}
           onConfirm={handleConfirmQtd}
+          unidadeSelecionada={produtoSelecionado.unidadeSelecionada}
           onClose={() => setProdutoSelecionado(null)}
         />
       )}
@@ -540,14 +554,16 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const total = subtotal - valorDesconto;
 
   // Adiciona, atualiza ou remove (qtd=0) um item
-  const handleSetQtd = useCallback((produto, preco, qtd) => {
+  const handleSetQtd = useCallback((produto, preco, qtd, unidadeSelecionada = null) => {
     setItens(prev => {
       if (qtd <= 0) return prev.filter(i => i.id !== produto.id);
       const existe = prev.find(i => i.id === produto.id);
+      const unidade = unidadeSelecionada?.unidade || produto.unidade_principal || 'UN';
+      const fator = unidadeSelecionada?.fator_conversao ?? 1;
       if (existe) {
         return prev.map(i =>
           i.id === produto.id
-            ? { ...i, qtd, preco_unit: preco ?? i.preco_unit, preco_referencia_tabela: i.preco_referencia_tabela ?? preco }
+            ? { ...i, qtd, preco_unit: preco ?? i.preco_unit, unidade, fator_conversao: fator, quantidade_base: qtd * fator, preco_referencia_tabela: i.preco_referencia_tabela ?? preco }
             : i
         );
       }
@@ -556,7 +572,9 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         nome: produto.nome,
         preco_unit: preco,
         qtd,
-        unidade: produto.unidade_principal || 'UN',
+        unidade,
+        fator_conversao: fator,
+        quantidade_base: qtd * fator,
         preco_livre: produto.preco_livre || false,
         preco_referencia_tabela: preco,
       }];

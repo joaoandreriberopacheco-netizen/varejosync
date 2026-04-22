@@ -1010,7 +1010,7 @@ function ProdutosPageContent() {
 
             <div className="flex-1 overflow-hidden w-full min-w-0">
               <div className="md:hidden w-full h-full overflow-y-auto overflow-x-hidden">
-                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} formatarNumero={formatarNumero} />
+                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} formatarNumero={formatarNumero} />
               </div>
 
               {viewMode === 'dinamica' && (

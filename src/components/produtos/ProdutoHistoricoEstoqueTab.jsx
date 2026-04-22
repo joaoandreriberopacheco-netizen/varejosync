@@ -30,6 +30,7 @@ import {
   movimentacaoPassaFiltros,
   textoReferenciaTipo,
 } from '@/components/produtos/produtoHistoricoEstoque';
+import { formatEstoqueApresentacao, normalizeAlternativeUnits } from '@/lib/productUnits';
 
 /** Larguras + posições left (px) para colunas sticky alinhadas */
 const STICKY_COL = {
@@ -48,6 +49,7 @@ function formatQtd(n) {
 export default function ProdutoHistoricoEstoqueTab({
   movimentacoes = [],
   estoqueAtual = 0,
+  produto = null,
   loading = false,
   onRefresh,
 }) {
@@ -92,6 +94,14 @@ export default function ProdutoHistoricoEstoqueTab({
   const temFiltrosExtras =
     tipoFiltro !== 'todos' || refTipo !== 'todos' || Boolean(dataIni) || Boolean(dataFim);
 
+  const estoqueAuxiliar = useMemo(() => formatEstoqueApresentacao(produto), [produto]);
+  const fatorAuxiliar = useMemo(() => {
+    if (!estoqueAuxiliar?.sigla) return null;
+    const alt = normalizeAlternativeUnits(produto).find((u) => u.unidade === estoqueAuxiliar.sigla);
+    const fator = Number(alt?.fator_conversao) || 0;
+    return fator > 0 ? fator : null;
+  }, [produto, estoqueAuxiliar]);
+
   const limparFiltros = useCallback(() => {
     setTipoFiltro('todos');
     setRefTipo('todos');
@@ -112,6 +122,11 @@ export default function ProdutoHistoricoEstoqueTab({
               <Wallet className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
               {formatQtd(estoqueAtual)}
             </p>
+            {estoqueAuxiliar && (
+              <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}{estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
+              </p>
+            )}
           </div>
           <div className="rounded-2xl bg-white px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -339,6 +354,9 @@ export default function ProdutoHistoricoEstoqueTab({
                   <TableHead className="h-10 min-w-[3.25rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
                     Qtd
                   </TableHead>
+                  <TableHead className="h-10 min-w-[7rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-[#252a38] dark:text-gray-300">
+                    Qtd (show)
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -422,6 +440,11 @@ export default function ProdutoHistoricoEstoqueTab({
                       </TableCell>
                       <TableCell className="border-b border-gray-100 px-2 py-2 text-right tabular-nums text-gray-800 dark:border-gray-800 dark:text-gray-200">
                         {formatQtd(mov.quantidade)}
+                      </TableCell>
+                      <TableCell className="border-b border-gray-100 px-2 py-2 text-right tabular-nums text-gray-700 dark:border-gray-800 dark:text-gray-300">
+                        {estoqueAuxiliar && fatorAuxiliar
+                          ? `${formatQtd((Number(mov.quantidade) || 0) / fatorAuxiliar)} ${estoqueAuxiliar.sigla}`
+                          : '—'}
                       </TableCell>
                     </TableRow>
                   );

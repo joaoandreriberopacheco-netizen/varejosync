@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
@@ -363,6 +363,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">
+              {produto?.id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleChange('ativo', !formData.ativo)}
+                  disabled={isSaving}
+                  className={`h-10 w-10 ${formData.ativo ? 'text-red-500' : 'text-green-500'}`}
+                  title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              )}
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -936,6 +948,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <ProdutoHistoricoEstoqueTab
               movimentacoes={movimentacoes}
               estoqueAtual={formData.estoque_atual}
+              produto={formData}
               loading={loadingMovimentacoes}
               onRefresh={loadMovimentacoes}
             />

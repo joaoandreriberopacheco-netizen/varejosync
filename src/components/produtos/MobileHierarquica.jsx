@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ChevronRight, Package, Trash2 } from 'lucide-react';
+import { ChevronRight, Package } from 'lucide-react';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from './treegrid/useTreeGrid';
+import { formatEstoqueApresentacao } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 // ── Card de SKU ────────────────────────────────────────────────────────────────
-const SkuCard = React.memo(function SkuCard({ row, onEdit, onDelete }) {
+const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
   const p      = row.produto;
   const markup = row.markup;
   const e = p.estoque_atual  || 0;
@@ -15,6 +16,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onDelete }) {
     : e <= 0                 ? 'bg-red-500 animate-pulse'
     : e <= m                 ? 'bg-orange-400'
     : 'bg-green-500';
+
+  const apresent = formatEstoqueApresentacao(p);
 
   return (
     <div
@@ -36,8 +39,13 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onDelete }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <div className="flex items-center gap-1">
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
-              {fmtN(e)} {p.unidade_principal || 'UN'}
+            <span className="flex flex-col text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap leading-tight">
+              <span>{fmtN(e)} {p.unidade_principal || 'UN'}</span>
+              {apresent && (
+                <span className="mt-0.5">
+                  ~{fmtN(apresent.quantidade)} {apresent.sigla}{apresent.rotulo ? ` (${apresent.rotulo})` : ''}
+                </span>
+              )}
             </span>
           </div>
           {p.codigo_interno && (
@@ -69,13 +77,6 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onDelete }) {
           })()}
         </div>
       </div>
-      {/* Botão excluir */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(p); }}
-        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 dark:text-gray-600 active:text-red-500 dark:active:text-red-400 mt-1"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
     </div>
   );
 });
@@ -123,7 +124,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
 });
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
+export default function MobileHierarquica({ produtos, onEdit }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
 
   const tree = useTreeGrid(produtos);
@@ -145,8 +146,6 @@ export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
       return next;
     });
   }, []);
-
-  const noopDelete = useCallback(() => {}, []);
 
   if (produtos.length === 0) {
     return (
@@ -176,7 +175,6 @@ export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
               key={row.key}
               row={row}
               onEdit={onEdit}
-              onDelete={onDelete || noopDelete}
             />
           )
         )}

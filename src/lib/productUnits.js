@@ -68,9 +68,15 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
 
 export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
   const options = buildSaleUnitOptions(product, priceMultiplier);
-  const pref = String(product?.unidade_apresentacao_default || "").trim().toUpperCase();
-  if (pref) {
-    const match = options.find((o) => o.unidade === pref);
+  const prioridades = [
+    product?.unidade_show_logistica,
+    product?.unidade_apresentacao_default,
+    product?.unidade_principal,
+  ];
+  for (const pref of prioridades) {
+    const normalized = String(pref || "").trim().toUpperCase();
+    if (!normalized) continue;
+    const match = options.find((o) => o.unidade === normalized);
     if (match) return match;
   }
   return options[0] || null;
@@ -99,9 +105,15 @@ export function buildPurchaseUnitOptions(product) {
 
 export function pickDefaultPurchaseUnit(product) {
   const options = buildPurchaseUnitOptions(product);
-  const pref = String(product?.unidade_apresentacao_default || "").trim().toUpperCase();
-  if (pref) {
-    const match = options.find((o) => o.unidade === pref);
+  const prioridades = [
+    product?.unidade_show_logistica,
+    product?.unidade_apresentacao_default,
+    product?.unidade_principal,
+  ];
+  for (const pref of prioridades) {
+    const normalized = String(pref || "").trim().toUpperCase();
+    if (!normalized) continue;
+    const match = options.find((o) => o.unidade === normalized);
     if (match) return match;
   }
   return options[0] || null;
@@ -121,7 +133,7 @@ export function formatUnitConversion(option, unidadePrincipal) {
 export function formatEstoqueApresentacao(produto) {
   const estoque = normalizeNumber(produto?.estoque_atual, 0);
   const up = (produto?.unidade_principal || "UN").toUpperCase();
-  const pref = String(produto?.unidade_apresentacao_default || "").trim().toUpperCase();
+  const pref = normalizeUnitCode(resolveBoatLogisticsUnit(produto, produto?.unidade_apresentacao_default || up));
   if (!pref || pref === up) return null;
   const alt = normalizeAlternativeUnits(produto).find((a) => a.unidade === pref);
   if (!alt || !alt.fator_conversao) return null;

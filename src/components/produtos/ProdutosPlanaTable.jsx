@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
+import { formatEstoqueApresentacao } from '@/lib/productUnits';
 
 const headMap = {
   status: 'Status', cadastro: 'Cadastro', codigo_interno: 'Código', codigo_barras: 'Cód. Barras', categoria: 'Categoria', tags: 'Tags', fornecedor: 'Fornecedor', preco_venda: 'Preço Venda', preco_custo: 'Custo Total', margem: 'Margem', valor_compra: 'Vl. Compra', markup: 'Markup %', estoque_atual: 'Estoque', estoque_minimo: 'Est. Mín', estoque_ideal: 'Est. Ideal', estoque_maximo: 'Est. Máx', tempo_reposicao: 'Repos.', peso: 'Peso', dimensoes: 'Dimensões', tipo: 'Tipo', unidade: 'Unid.', unidades_pacote: 'Un/Pct'
@@ -66,7 +67,22 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 {visibleColumns.includes('preco_custo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>}
                 {visibleColumns.includes('valor_compra') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.valor_compra)}</TableCell>}
                 {visibleColumns.includes('markup') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.preco_venda_percentual || 0}%</TableCell>}
-                {visibleColumns.includes('estoque_atual') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_atual)} {produto.unidade_principal}</TableCell>}
+                {visibleColumns.includes('estoque_atual') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    <div className="flex flex-col leading-tight">
+                      <span>{formatarNumero(produto.estoque_atual)} {produto.unidade_principal}</span>
+                      {(() => {
+                        const apresent = formatEstoqueApresentacao(produto);
+                        if (!apresent) return null;
+                        return (
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                            ~{formatarNumero(apresent.quantidade)} {apresent.sigla}{apresent.rotulo ? ` (${apresent.rotulo})` : ''}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </TableCell>
+                )}
                 {visibleColumns.includes('estoque_minimo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_minimo)}</TableCell>}
                 {visibleColumns.includes('estoque_ideal') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_ideal)}</TableCell>}
                 {visibleColumns.includes('estoque_maximo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_maximo)}</TableCell>}
