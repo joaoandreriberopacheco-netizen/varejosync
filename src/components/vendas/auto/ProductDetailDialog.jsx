@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, ShoppingCart, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { pickDefaultSaleUnit, resolveCommercialUnit } from '@/lib/productUnits';
 
 export default function ProductDetailDialog({ isOpen, onClose, product, onConfirm }) {
   const [quantity, setQuantity] = useState(1);
@@ -12,11 +13,12 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
   }, [isOpen]);
 
   if (!product) return null;
+  const displayUnit = pickDefaultSaleUnit(product, 1) || { unidade: resolveCommercialUnit(product), valor_unitario: product.preco_venda_padrao || 0 };
 
   const handleIncrement = () => setQuantity(q => q + 1);
   const handleDecrement = () => setQuantity(q => Math.max(1, q - 1));
 
-  const total = product.preco_venda_padrao * quantity;
+  const total = (displayUnit.valor_unitario || 0) * quantity;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -46,10 +48,10 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
             </h2>
             <div className="flex items-center gap-3">
                <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                 R$ {product.preco_venda_padrao.toFixed(2)}
+                 R$ {(displayUnit.valor_unitario || 0).toFixed(2)}
                </span>
                <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                 {product.unidade_principal || 'UN'}
+                 {displayUnit.unidade || 'UN'}
                </span>
             </div>
             {product.descricao && (

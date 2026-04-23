@@ -18,6 +18,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
     : 'bg-green-500';
 
   const apresent = formatEstoqueApresentacao(p);
+  const estoqueExibicao = apresent ? apresent.quantidade : e;
+  const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
 
   return (
     <div
@@ -40,12 +42,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
           <div className="flex items-center gap-1">
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
             <span className="flex flex-col text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap leading-tight">
-              <span>{fmtN(e)} {p.unidade_principal || 'UN'}</span>
-              {apresent && (
-                <span className="mt-0.5">
-                  ~{fmtN(apresent.quantidade)} {apresent.sigla}{apresent.rotulo ? ` (${apresent.rotulo})` : ''}
-                </span>
-              )}
+              <span>{fmtN(estoqueExibicao)} {unidadeExibicao}</span>
+              {apresent && <span className="mt-0.5">{apresent.rotulo ? `(${apresent.rotulo})` : '(show comercial)'}</span>}
             </span>
           </div>
           {p.codigo_interno && (

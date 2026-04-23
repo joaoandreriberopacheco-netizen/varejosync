@@ -16,6 +16,7 @@ import BarcodeScanner from './BarcodeScanner';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWarning';
+import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, resolveCommercialUnit } from '@/lib/productUnits';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -174,32 +175,44 @@ export default function PDVSupermercado() {
     if (!produtoSelecionado) return;
 
     const quantidade = parseInt(quantidadeAtual) || 1;
+    const defaultOpt = pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1) || {
+      unidade: resolveCommercialUnit(produtoSelecionado),
+      fator_conversao: 1,
+      valor_unitario: (produtoSelecionado.preco_venda_padrao || 0) * (tabelaPreco?.fator_ajuste || 1)
+    };
+    const unidade = defaultOpt.unidade || produtoSelecionado.unidade_principal || 'UN';
+    const fator = Number(defaultOpt.fator_conversao) || 1;
+    const preco = Number(defaultOpt.valor_unitario ?? 0) || 0;
+    const quantidadeBaseAdd = calculateBaseQuantity(quantidade, fator);
+    const itemKey = getItemUnitKey(produtoSelecionado.id, unidade);
     
     console.log('PDV Supermercado - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
     
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidade) {
-      toast({ title: `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, variant: "destructive" });
+    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBaseAdd) {
+      toast({ title: `Estoque insuficiente: ${produtoSelecionado.estoque_atual} ${produtoSelecionado.unidade_principal || 'UN'} disponível`, variant: "destructive" });
       return;
     }
-    
-    const preco = produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
-    
-    const itemExistente = carrinho.find(i => i.produto_id === produtoSelecionado.id);
+    const itemExistente = carrinho.find(i => (i.item_key || getItemUnitKey(i.produto_id, i.unidade_medida)) === itemKey);
     
     if (itemExistente) {
-      setCarrinho(carrinho.map(i => i.produto_id === produtoSelecionado.id 
+      setCarrinho(carrinho.map(i => (i.item_key || getItemUnitKey(i.produto_id, i.unidade_medida)) === itemKey
         ? { 
             ...i, 
             quantidade: i.quantidade + quantidade, 
+            quantidade_base: calculateBaseQuantity(i.quantidade + quantidade, fator),
             total: (i.quantidade + quantidade) * preco 
           } 
         : i));
     } else {
       setCarrinho([...carrinho, {
+        item_key: itemKey,
         produto_id: produtoSelecionado.id,
         produto_nome: produtoSelecionado.nome,
         codigo_interno: produtoSelecionado.codigo_interno,
         quantidade: quantidade,
+        quantidade_base: quantidadeBaseAdd,
+        unidade_medida: unidade,
+        fator_conversao: fator,
         preco_unitario: preco,
         preco_unitario_praticado: preco,
         total: quantidade * preco,
@@ -258,6 +271,9 @@ export default function PDVSupermercado() {
           produto_id: item.produto_id,
           produto_nome: item.produto_nome,
           quantidade: item.quantidade,
+          quantidade_base: item.quantidade_base || item.quantidade,
+          unidade_medida: item.unidade_medida || 'UN',
+          fator_conversao: item.fator_conversao || 1,
           preco_unitario_praticado: item.preco_unitario_praticado,
           total: item.total
         })),
@@ -276,6 +292,7 @@ export default function PDVSupermercado() {
           tipo: 'Saída',
           motivo: 'Venda',
           quantidade: item.quantidade,
+          quantidade_base: item.quantidade_base || item.quantidade,
           custo_unitario: 0,
           documento_referencia: novoPedido.numero,
           usuario_responsavel: currentUser.full_name
@@ -285,7 +302,7 @@ export default function PDVSupermercado() {
         const produto = await base44.entities.Produto.get(item.produto_id);
         if (produto) {
           await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade)
+            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - (item.quantidade_base || item.quantidade))
           });
         }
       }
@@ -398,7 +415,9 @@ export default function PDVSupermercado() {
             {showSuggestions && produtosSugeridos.length > 0 && (
                 <div className="absolute z-50 mt-2 w-full max-w-3xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto">
                   {produtosSugeridos.map((produto, index) => {
-                    const preco = (produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1));
+                    const defaultOpt = pickDefaultSaleUnit(produto, tabelaPreco?.fator_ajuste || 1);
+                    const preco = Number(defaultOpt?.valor_unitario ?? (produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0;
+                    const unidade = defaultOpt?.unidade || produto.unidade_principal || 'UN';
                     const isSelected = index === produtoSelecionadoIndex;
                     return (
                       <div
@@ -413,9 +432,9 @@ export default function PDVSupermercado() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">#{produto.codigo_interno || 'N/A'}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">R$ {preco.toFixed(2)}</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">R$ {preco.toFixed(2)} / {unidade}</p>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full ${produto.estoque_atual > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                            {produto.estoque_atual} un.
+                            {produto.estoque_atual} {produto.unidade_principal || 'UN'}
                           </span>
                         </div>
                       </div>
@@ -435,10 +454,10 @@ export default function PDVSupermercado() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span>R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} un.</span>
+                        <span>R$ {(pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1)?.valor_unitario || (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))).toFixed(2)} {pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1)?.unidade || produtoSelecionado.unidade_principal || 'UN'}</span>
                         <span>•</span>
                         <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Total: R$ {((produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}
+                          Total: R$ {((pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1)?.valor_unitario || (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -483,7 +502,7 @@ export default function PDVSupermercado() {
               </thead>
               <tbody>
                 {carrinho.map(item => (
-                  <tr key={item.produto_id} className="border-b last:border-0">
+                  <tr key={item.item_key || item.produto_id} className="border-b last:border-0">
                     <td className="p-3 font-medium">
                       <div className="flex flex-col">
                         <span>{item.produto_nome}</span>
@@ -494,24 +513,30 @@ export default function PDVSupermercado() {
                       <div className="flex items-center justify-center gap-2">
                         <button onClick={() => {
                            const newQtd = item.quantidade - 1;
-                           if(newQtd <= 0) setCarrinho(carrinho.filter(i => i.produto_id !== item.produto_id));
-                           else setCarrinho(carrinho.map(i => i.produto_id === item.produto_id ? {...i, quantidade: newQtd, total: newQtd * i.preco_unitario_praticado} : i));
+                           if(newQtd <= 0) setCarrinho(carrinho.filter(i => (i.item_key || i.produto_id) !== (item.item_key || item.produto_id)));
+                           else setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
+                             ? {...i, quantidade: newQtd, quantidade_base: calculateBaseQuantity(newQtd, i.fator_conversao || 1), total: newQtd * i.preco_unitario_praticado}
+                             : i));
                         }} className="w-6 h-6 bg-gray-100 rounded hover:bg-gray-200 font-bold">-</button>
                         <span className="w-8 font-semibold">{item.quantidade}</span>
                         <button onClick={() => {
                            const newQtd = item.quantidade + 1;
-                           if (configVenda?.vender_sem_estoque === true || newQtd <= item.estoque_disponivel) {
-                             setCarrinho(carrinho.map(i => i.produto_id === item.produto_id ? {...i, quantidade: newQtd, total: newQtd * i.preco_unitario_praticado} : i));
+                           const newBase = calculateBaseQuantity(newQtd, item.fator_conversao || 1);
+                           if (configVenda?.vender_sem_estoque === true || newBase <= item.estoque_disponivel) {
+                             setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
+                               ? {...i, quantidade: newQtd, quantidade_base: newBase, total: newQtd * i.preco_unitario_praticado}
+                               : i));
                            } else {
                              toast({ title: 'Estoque insuficiente', variant: "destructive" });
                            }
                         }} className="w-6 h-6 bg-gray-100 rounded hover:bg-gray-200 font-bold">+</button>
                       </div>
+                      <div className="text-[10px] text-gray-400 mt-1">{item.unidade_medida || 'UN'}</div>
                     </td>
                     <td className="p-3 text-right">R$ {item.preco_unitario_praticado.toFixed(2)}</td>
                     <td className="p-3 text-right font-bold">R$ {item.total.toFixed(2)}</td>
                     <td className="p-3">
-                      <Trash2 className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-600" onClick={() => setCarrinho(carrinho.filter(i => i.produto_id !== item.produto_id))} />
+                      <Trash2 className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-600" onClick={() => setCarrinho(carrinho.filter(i => (i.item_key || i.produto_id) !== (item.item_key || item.produto_id)))} />
                     </td>
                   </tr>
                 ))}

@@ -24,6 +24,8 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
   const precoOriginal = p.preco_venda_padrao || 0;
   const temAjuste = tabelaSelecionada && tabelaSelecionada.fator_ajuste !== 1;
   const apresentEstoque = formatEstoqueApresentacao(p);
+  const estoqueExibicao = apresentEstoque ? apresentEstoque.quantidade : e;
+  const unidadeExibicao = apresentEstoque ? apresentEstoque.sigla : (p.unidade_principal || 'UN');
 
   return (
     <div
@@ -52,12 +54,8 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
           <div className="flex items-center gap-1.5">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
             <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-              {fmtN(e)} {p.unidade_principal || 'UN'}
-              {apresentEstoque ? (
-                <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">
-                  (~{fmtN(apresentEstoque.quantidade)} {apresentEstoque.sigla})
-                </span>
-              ) : null}
+              {fmtN(estoqueExibicao)} {unidadeExibicao}
+              {apresentEstoque && <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">(show comercial)</span>}
             </span>
           </div>
           {/* Código */}

@@ -3,6 +3,49 @@ import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpre
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { resolveCommercialDisplay } from '@/lib/productUnits';
+
+function normalizarPedidoParaRelatorio(pedido) {
+  const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
+  const itensNormalizados = itens.map((item) => {
+    const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
+    const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
+    const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
+    const fallback = item?.unidade_medida || item?.unidade_principal || 'UN';
+    const resolvido = resolveCommercialDisplay(item?._produto || item || {}, quantidadeBase, fallback);
+    const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
+    const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;
+    const divisorShow = quantidadeShow > 0 ? quantidadeShow : 1;
+    const total = Number(item?.total ?? 0) || 0;
+    const freteTotal = Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
+    const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
+    const custoTotal = Number(item?.custo_total_item ?? ((Number(item?.custo_calculado ?? 0) || 0) * quantidadeAtual)) || 0;
+    const imposto1Total = (Number(item?.custo_imposto1 ?? 0) || 0) * divisorAtual;
+    const imposto2Total = (Number(item?.custo_imposto2 ?? 0) || 0) * divisorAtual;
+
+    return {
+      ...item,
+      unidade_medida: resolvido?.unidade || fallback,
+      quantidade: quantidadeShow,
+      quantidade_base: quantidadeBase,
+      fator_conversao: Number(resolvido?.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
+      custo_unitario: total / divisorShow,
+      valor_unitario_compra: total / divisorShow,
+      frete_unitario: freteTotal / divisorShow,
+      custo_outros: outrosTotal / divisorShow,
+      custo_calculado: custoTotal / divisorShow,
+      custo_imposto1: imposto1Total / divisorShow,
+      custo_imposto2: imposto2Total / divisorShow,
+      total,
+      valor_total_item: total,
+    };
+  });
+
+  return {
+    ...pedido,
+    itens: itensNormalizados,
+  };
+}
 
 export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -18,7 +61,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     toast.loading('Gerando relatório...', { id: 'gerando-relatorio' });
     try {
       const resposta = await gerarRelatorioPedidosCompra({
-        pedidos,
+        pedidos: (pedidos || []).map(normalizarPedidoParaRelatorio),
         version,
         filtros_desc: filtrosDesc,
         kpis,

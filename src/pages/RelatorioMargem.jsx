@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
+import { resolveCommercialDisplay } from '@/lib/productUnits';
 
 import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
@@ -76,10 +77,12 @@ export default function RelatorioMargemVendas() {
          );
 
          if (!reportMap[prodId]) {
+          const unidadeInicial = resolveCommercialDisplay(product, 0, item.unidade_medida || product?.unidade_principal || 'UN');
            reportMap[prodId] = {
              codigo_interno: product.codigo_interno,
              nome: product.nome,
              categoria: product.categoria_nome,
+            unidade_exibicao: unidadeInicial.unidade || 'UN',
              vendas_count: 0,
              quantidade_vendida: 0,
              total_recebido: 0,
@@ -89,8 +92,11 @@ export default function RelatorioMargemVendas() {
          }
 
          const entry = reportMap[prodId];
+        const quantidadeBase = Number(item.quantidade_base ?? (item.quantidade * (item.fator_conversao || 1)) ?? item.quantidade ?? 0) || 0;
+        const quantidadeResolvida = resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || 'UN');
          entry.vendas_count += 1;
-         entry.quantidade_vendida += item.quantidade;
+        entry.quantidade_vendida += quantidadeResolvida.quantidade;
+        entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
          entry.total_recebido += item.total;
          // Registrar o desconto do pedido (para cada venda, não proporcional por item neste cálculo)
          entry.total_desconto_venda += (sale.valor_desconto || 0) / (sale.itens?.length || 1);
@@ -201,9 +207,9 @@ export default function RelatorioMargemVendas() {
   const formatPercent = (val) => `${val.toFixed(2)}%`;
 
   const exportToCSV = () => {
-    const headers = "Codigo;Produto;Categoria;Qtd Vendida;Valor Medio;Total Recebido;Custo Unit;Custo Total;Lucro Total;Margem %;Markup %\n";
+    const headers = "Codigo;Produto;Categoria;Qtd Vendida;Unidade;Valor Medio;Total Recebido;Custo Unit;Custo Total;Lucro Total;Margem %;Markup %\n";
     const rows = processedData.map(row => 
-      `${row.codigo_interno};${row.nome};${row.categoria};${row.quantidade_vendida};${row.valor_unitario_medio.toFixed(2)};${row.total_recebido.toFixed(2)};${row.custo_unitario_cadastro.toFixed(2)};${row.custo_total.toFixed(2)};${row.lucro_total.toFixed(2)};${row.margem_percentual.toFixed(2)};${row.markup_percentual.toFixed(2)}`
+      `${row.codigo_interno};${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${row.valor_unitario_medio.toFixed(2)};${row.total_recebido.toFixed(2)};${row.custo_unitario_cadastro.toFixed(2)};${row.custo_total.toFixed(2)};${row.lucro_total.toFixed(2)};${row.margem_percentual.toFixed(2)};${row.markup_percentual.toFixed(2)}`
     ).join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
     const encodedUri = encodeURI(csvContent);
@@ -259,7 +265,7 @@ export default function RelatorioMargemVendas() {
     pdf.setTextColor(50, 50, 50);
     
     const colWidths = [12, 45, 12, 18, 20, 20, 18];
-    const headers = ['CÓDIGO', 'DESCRIÇÃO', 'QTD', 'RECEITA', 'CUSTO', 'LUCRO', 'MARGEM %'];
+      const headers = ['CÓDIGO', 'DESCRIÇÃO', 'QTD', 'RECEITA', 'CUSTO', 'LUCRO', 'MARGEM %'];
     let xPos = margin;
     
     headers.forEach((h, i) => {
@@ -310,7 +316,7 @@ export default function RelatorioMargemVendas() {
       xPos += colWidths[1];
       
       // Qtd (centro)
-      pdf.text((row.quantidade_vendida || 0).toString(), xPos + 3, yPos + 1, { align: 'right' });
+      pdf.text(`${(row.quantidade_vendida || 0).toFixed(2)} ${(row.unidade_exibicao || 'UN')}`.substring(0, 14), xPos + 3, yPos + 1, { align: 'right' });
       xPos += colWidths[2];
       
       // Receita (direita)
@@ -775,7 +781,7 @@ export default function RelatorioMargemVendas() {
                             <tr key={row.codigo_interno} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
                               <td className="py-3 px-4 text-sm font-mono text-gray-900 dark:text-white">{row.codigo_interno}</td>
                               <td className="py-3 px-4 text-sm text-gray-900 dark:text-white font-medium">{row.nome}</td>
-                              <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida}</td>
+                              <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</td>
                               <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
                               <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
                               <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
@@ -786,7 +792,7 @@ export default function RelatorioMargemVendas() {
                           {/* Subtotal Row */}
                           <tr className="bg-gray-50 dark:bg-gray-800/30 border-b-2 border-gray-200 dark:border-gray-700 font-semibold">
                             <td colSpan="2" className="py-3 px-4 text-sm text-gray-900 dark:text-white">SUBTOTAL</td>
-                            <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white">{group.totals.quantidade_vendida}</td>
+                            <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white">{group.totals.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</td>
                             <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(group.totals.total_recebido)}</td>
                             <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(group.totals.custo_total)}</td>
                             <td className="py-3 px-4 text-sm text-right text-green-600 dark:text-green-400">{formatMoney(group.totals.lucro_total)}</td>
@@ -800,7 +806,7 @@ export default function RelatorioMargemVendas() {
                         <tr key={row.codigo_interno || row.nome} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
                           <td className="py-3 px-4 text-sm font-mono text-gray-900 dark:text-white">{row.codigo_interno}</td>
                           <td className="py-3 px-4 text-sm text-gray-900 dark:text-white font-medium">{row.nome}</td>
-                          <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida}</td>
+                          <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</td>
                           <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
                           <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
                           <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
@@ -825,7 +831,7 @@ export default function RelatorioMargemVendas() {
                         <div key={row.codigo_interno} className="p-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                           <p className="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium truncate">{row.codigo_interno} • {row.nome}</p>
                           <div className="grid grid-cols-3 gap-1.5 text-xs">
-                            <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                            <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</p></div>
                             <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
                             <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Lucro</p><p className="font-bold text-green-600 dark:text-green-400 truncate">{formatMoney(row.lucro_total)}</p></div>
                           </div>
@@ -841,7 +847,7 @@ export default function RelatorioMargemVendas() {
                     <div key={row.codigo_interno} className="p-2 bg-gray-50 dark:bg-gray-800/50">
                       <p className="text-xs text-gray-600 dark:text-gray-300 mb-1.5 font-medium truncate">{row.codigo_interno} • {row.nome}</p>
                       <div className="grid grid-cols-3 gap-1.5 text-xs">
-                         <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                         <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</p></div>
                          <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
                          <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Lucro</p><p className="font-bold text-green-600 dark:text-green-400 truncate">{formatMoney(row.lucro_total)}</p></div>
                        </div>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ShoppingCart, Layers3 } from 'lucide-react';
+import { buildPurchaseUnitOptions, resolveBoatLogisticsUnit } from '@/lib/productUnits';
 
 function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
@@ -11,6 +12,20 @@ function normalizarTexto(valor) {
 
 function normalizarSiglaUnidade(valor) {
   return String(valor || 'UN').trim().toUpperCase() || 'UN';
+}
+
+function extrairSnapshotProduto(item = {}, itemPedido = {}) {
+  const candidatos = [item, itemPedido, item?._produto, itemPedido?._produto].filter(Boolean);
+  const snapshot = {};
+  for (const origem of candidatos) {
+    if (!snapshot.unidade_principal && origem?.unidade_principal) snapshot.unidade_principal = origem.unidade_principal;
+    if (!snapshot.unidade_show_comercial && origem?.unidade_show_comercial) snapshot.unidade_show_comercial = origem.unidade_show_comercial;
+    if (!snapshot.unidade_show_logistica && origem?.unidade_show_logistica) snapshot.unidade_show_logistica = origem.unidade_show_logistica;
+    if (!snapshot.unidade_apresentacao_default && origem?.unidade_apresentacao_default) snapshot.unidade_apresentacao_default = origem.unidade_apresentacao_default;
+    if (!snapshot.valor_compra && origem?.valor_compra) snapshot.valor_compra = origem.valor_compra;
+    if (!snapshot.unidades_alternativas && Array.isArray(origem?.unidades_alternativas)) snapshot.unidades_alternativas = origem.unidades_alternativas;
+  }
+  return snapshot;
 }
 
 function registrarItemNoMapa(mapa, item = {}) {
@@ -87,8 +102,9 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
   const itens = embarque.itens || [];
   return itens.map((item) => {
     const itemPedido = obterItemPedido(embarque, item, itensPedidoMap);
-    const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
-    const custo = Number(
+    const quantidadeOriginal = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
+    const quantidadeBase = Number(item.quantidade_base ?? itemPedido.quantidade_base ?? quantidadeOriginal) || 0;
+    const custoOriginal = Number(
       item.custo_unitario ??
       item.custo_unitario_momento ??
       item.valor_unitario ??
@@ -103,24 +119,43 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
       item.total_item ??
       itemPedido.total ??
       itemPedido.valor_total ??
-      quantidade * custo
+      quantidadeOriginal * custoOriginal
     ) || 0;
+    const snapshotProduto = extrairSnapshotProduto(item, itemPedido);
+    const unidadeOriginal = normalizarSiglaUnidade(item.unidade_medida || itemPedido.unidade_medida || snapshotProduto.unidade_principal || 'UN');
+    const unidadeResolvida = normalizarSiglaUnidade(resolveBoatLogisticsUnit(snapshotProduto, unidadeOriginal));
+    const opcoesCompra = buildPurchaseUnitOptions(snapshotProduto);
+    const opcaoResolvida = opcoesCompra.find((o) => o.unidade === unidadeResolvida);
+    const fatorResolvido = Number(opcaoResolvida?.fator_conversao) || 1;
+    const quantidadeResolvida = fatorResolvido > 0
+      ? (quantidadeBase > 0 ? quantidadeBase / fatorResolvido : quantidadeOriginal)
+      : quantidadeOriginal;
+    const custoResolvido = quantidadeResolvida > 0
+      ? total / quantidadeResolvida
+      : (Number(opcaoResolvida?.valor_unitario) || custoOriginal);
+    const totalResolvido = quantidadeResolvida * custoResolvido;
 
     return {
       ...item,
       produto_nome: item.produto_nome || itemPedido.produto_nome || 'Item sem descrição',
-      unidade_medida: item.unidade_medida || itemPedido.unidade_medida || 'UN',
-      quantidade_pedida: Number(item.quantidade_pedida ?? itemPedido.quantidade_pedida ?? quantidade) || 0,
-      quantidade_embarcada: quantidade,
-      custo_unitario: custo,
-      total
+      unidade_medida: unidadeResolvida,
+      unidade_origem: unidadeOriginal,
+      quantidade_pedida: Number(item.quantidade_pedida ?? itemPedido.quantidade_pedida ?? quantidadeResolvida) || 0,
+      quantidade_embarcada: quantidadeResolvida,
+      quantidade_base_resolvida: quantidadeBase,
+      fator_conversao_resolvido: fatorResolvido,
+      custo_unitario: custoResolvido,
+      total: totalResolvido
     };
   });
 }
 
 function resumoEmbarque(embarque, itensPedidoMap = {}) {
   const itens = enriquecerItensEmbarque(embarque, itensPedidoMap);
-  const totalCompra = Number(embarque.valor_total_embarcado) || itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const totalItensResolvidos = itens.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const totalCompra = totalItensResolvidos > 0
+    ? totalItensResolvidos
+    : (Number(embarque.valor_total_embarcado) || 0);
 
   return {
     totalCompra,

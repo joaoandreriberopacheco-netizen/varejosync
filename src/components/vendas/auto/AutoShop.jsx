@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Edit3, Image as ImageIcon } from 'lucide-react';
 import ProductDetailDialog from './ProductDetailDialog';
 import { useToast } from '@/components/ui/use-toast';
+import { pickDefaultSaleUnit, resolveCommercialUnit } from '@/lib/productUnits';
 
 export default function AutoShop({ 
   produtos, 
@@ -23,6 +24,7 @@ export default function AutoShop({
   onProceed, 
   onBack 
 }) {
+  const getDisplayUnit = (produto) => pickDefaultSaleUnit(produto, 1) || { unidade: resolveCommercialUnit(produto), valor_unitario: produto?.preco_venda_padrao || 0 };
   const [search, setSearch] = useState('');
   
   // Filtros Hierárquicos e Avançados
@@ -578,6 +580,9 @@ export default function AutoShop({
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 pb-24">
               {produtosFiltrados.map(produto => (
+                (() => {
+                  const displayUnit = getDisplayUnit(produto);
+                  return (
                 <motion.div 
                   key={produto.id}
                   layoutId={produto.id}
@@ -610,11 +615,13 @@ export default function AutoShop({
                   </h3>
                   <div className="mt-auto pt-2">
                     <span className="block text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                      R$ {produto.preco_venda_padrao.toFixed(2)}
+                      R$ {(displayUnit.valor_unitario || 0).toFixed(2)}
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">unidade</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{displayUnit.unidade || 'UN'}</span>
                   </div>
                 </motion.div>
+                );
+                })()
               ))}
             </div>
             
@@ -739,7 +746,7 @@ export default function AutoShop({
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-lg text-gray-900 dark:text-white leading-tight mb-1">{item.produto_nome}</h4>
-                    <p className="text-indigo-600 font-bold">R$ {item.preco_unitario_praticado.toFixed(2)}</p>
+                    <p className="text-indigo-600 font-bold">R$ {item.preco_unitario_praticado.toFixed(2)} / {item.unidade_medida || 'UN'}</p>
                   </div>
                   <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
                     <button 

@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import CamposEdicaoSistema from './CamposEdicaoSistema';
+import { formatEstoqueApresentacao } from '@/lib/productUnits';
 
 const PAGE_SIZE = 50; // produtos por página
 
@@ -74,6 +75,9 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
     : 0;
   
   const [editingField, setEditingField] = useState(null);
+  const estoqueApresent = formatEstoqueApresentacao(produto);
+  const estoqueExibicao = estoqueApresent ? estoqueApresent.quantidade : produto.estoque_atual;
+  const unidadeExibicao = estoqueApresent ? estoqueApresent.sigla : (produto.unidade_principal || 'UN');
 
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/30 border-b border-gray-50 dark:border-gray-800/60 group">
@@ -161,7 +165,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       {/* Estoque */}
       {visibleColumns.includes('estoque_atual') && (
         <td className="px-3 py-2 text-right text-xs text-gray-600 dark:text-gray-300 hidden md:table-cell">
-          {formatarNumero(produto.estoque_atual)} <span className="text-gray-400 text-[10px]">{produto.unidade_principal || 'UN'}</span>
+          {formatarNumero(estoqueExibicao)} <span className="text-gray-400 text-[10px]">{unidadeExibicao}</span>
         </td>
       )}
 

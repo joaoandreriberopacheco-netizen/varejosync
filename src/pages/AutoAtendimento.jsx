@@ -7,6 +7,7 @@ import AutoShop from '@/components/vendas/auto/AutoShop';
 import AutoPayment from '@/components/vendas/auto/AutoPayment';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 
 export default function AutoAtendimentoPage() {
   const [step, setStep] = useState('home'); // home, identification, register, shop, payment, success
@@ -59,19 +60,33 @@ export default function AutoAtendimentoPage() {
 
   const handleAddToCart = (produto, quantidade = 1) => {
     setCarrinho(prev => {
-      const existing = prev.find(item => item.produto_id === produto.id);
+      const defaultUnit = pickDefaultSaleUnit(produto, 1) || { unidade: produto.unidade_principal || 'UN', fator_conversao: 1, valor_unitario: produto.preco_venda_padrao || 0 };
+      const fator = Number(defaultUnit.fator_conversao) || 1;
+      const preco = Number(defaultUnit.valor_unitario ?? produto.preco_venda_padrao ?? 0) || 0;
+      const unidade = defaultUnit.unidade || produto.unidade_principal || 'UN';
+      const itemKey = getItemUnitKey(produto.id, unidade);
+      const existing = prev.find(item => (item.item_key || getItemUnitKey(item.produto_id, item.unidade_medida)) === itemKey);
       if (existing) {
+        const novaQuantidade = existing.quantidade + quantidade;
         return prev.map(item => 
-          item.produto_id === produto.id 
-            ? { ...item, quantidade: item.quantidade + quantidade, total: (item.quantidade + quantidade) * item.preco_unitario_praticado }
+          (item.item_key || getItemUnitKey(item.produto_id, item.unidade_medida)) === itemKey
+            ? {
+                ...item,
+                quantidade: novaQuantidade,
+                quantidade_base: calculateBaseQuantity(novaQuantidade, fator),
+                total: novaQuantidade * item.preco_unitario_praticado
+              }
             : item
         );
       }
-      const preco = produto.preco_venda_padrao; // Pode aplicar tabela de preço se necessário
       return [...prev, {
+        item_key: itemKey,
         produto_id: produto.id,
         produto_nome: produto.nome,
         quantidade: quantidade,
+        quantidade_base: calculateBaseQuantity(quantidade, fator),
+        unidade_medida: unidade,
+        fator_conversao: fator,
         preco_unitario_praticado: preco,
         total: quantidade * preco,
         imagem: produto.imagem_url // Se tiver

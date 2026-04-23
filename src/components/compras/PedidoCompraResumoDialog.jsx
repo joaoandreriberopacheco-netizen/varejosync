@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Receipt, Truck, FileText, User, CalendarDays, Package } from 'lucide-react';
+import { resolveCommercialDisplay } from '@/lib/productUnits';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const formatDate = (value) => {
@@ -13,6 +14,25 @@ const formatDate = (value) => {
     return '—';
   }
 };
+const formatNumber = (value) => (Number(value || 0)).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+function normalizarItemResumo(item) {
+  const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
+  const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
+  const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
+  const fallback = item?.unidade_medida || item?.unidade_principal || 'UN';
+  const resolvido = resolveCommercialDisplay(item?._produto || item || {}, quantidadeBase, fallback);
+  const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
+  const total = Number(item?.total ?? 0) || 0;
+  const unit = quantidadeShow > 0 ? total / quantidadeShow : Number(item?.custo_unitario ?? 0) || 0;
+  return {
+    ...item,
+    unidade_medida: resolvido?.unidade || fallback,
+    quantidade: quantidadeShow,
+    custo_unitario: unit,
+    total,
+  };
+}
 
 export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido }) {
   if (!pedido) return null;
@@ -84,19 +104,21 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
                 {itens.length === 0 ? (
                   <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum item informado</p>
                 ) : (
-                  itens.map((item, index) => (
+                  itens.map((rawItem, index) => {
+                    const item = normalizarItemResumo(rawItem);
+                    return (
                     <div key={`${item.produto_id || item.produto_nome || 'item'}-${index}`} className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.produto_nome || 'Item'}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {Number(item.quantidade) || 0} {item.unidade_medida || 'un'} × {formatCurrency(item.custo_unitario || 0)}
+                            {formatNumber(item.quantidade)} {item.unidade_medida || 'UN'} × {formatCurrency(item.custo_unitario || 0)}
                           </p>
                         </div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">{formatCurrency(item.total || 0)}</p>
                       </div>
                     </div>
-                  ))
+                  );})
                 )}
               </div>
             </div>

@@ -2,8 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { TrendingUp, TrendingDown, Package, Loader2 } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
+import { resolveCommercialDisplay } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+function normalizarItemCompra(item, produto = null) {
+  const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
+  const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
+  const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
+  const snapshot = produto || item?._produto || item || {};
+  const unidadeFallback = item?.unidade_medida || snapshot?.unidade_principal || 'UN';
+  const resolvido = resolveCommercialDisplay(snapshot, quantidadeBase, unidadeFallback);
+  const quantidadeShow = Number(resolvido?.quantidade ?? 0) || 0;
+  const divisor = quantidadeShow > 0 ? quantidadeShow : quantidadeAtual > 0 ? quantidadeAtual : 1;
+  const custoTotal = Number(item?.custo_calculado_total ?? ((Number(item?.custo_calculado ?? 0) || 0) * quantidadeAtual)) || 0;
+  const freteTotal = Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? item?.valor_frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
+  const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
+  const totalItem = Number(item?.valor_total_item ?? item?.total ?? ((Number(item?.valor_unitario_compra ?? 0) || 0) * quantidadeAtual)) || 0;
+
+  return {
+    ...item,
+    unidade_medida: resolvido?.unidade || unidadeFallback,
+    quantidade: quantidadeShow || quantidadeAtual,
+    valor_unitario_compra: totalItem / divisor,
+    frete_unitario: freteTotal / divisor,
+    custo_outros: outrosTotal / divisor,
+    custo_calculado: custoTotal / divisor,
+    valor_total_item: totalItem,
+    custo_total_item: custoTotal,
+  };
+}
 
 const VariacaoIndicador = ({ valor }) => {
   if (valor === 0 || valor === null || valor === undefined) return null;
@@ -20,6 +49,7 @@ const VariacaoIndicador = ({ valor }) => {
 
 export default function RelatorioConsolidadoCompra({ pedidoId }) {
   const [dados, setDados] = useState(null);
+  const [produtosMap, setProdutosMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,6 +59,15 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
       setLoading(true);
       const resultado = await base44.functions.invoke('gerarRelatorioConsolidadoCompra', { pedido_id: pedidoId });
       setDados(resultado);
+      const ids = Array.from(new Set((resultado?.itens_consolidados || []).map((i) => i?.produto_id).filter(Boolean)));
+      if (ids.length) {
+        const produtos = await Promise.all(ids.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+        const mapa = {};
+        produtos.filter(Boolean).forEach((p) => { mapa[p.id] = p; });
+        setProdutosMap(mapa);
+      } else {
+        setProdutosMap({});
+      }
       setError(null);
       setLoading(false);
     };
@@ -74,7 +113,9 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
 
       {/* Itens — cards mobile-first, sem tabela horizontal */}
       <div className="space-y-2">
-        {itens_consolidados.map((item, idx) => (
+        {itens_consolidados.map((rawItem, idx) => {
+          const item = normalizarItemCompra(rawItem, produtosMap[rawItem?.produto_id]);
+          return (
           <div key={idx} className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
             {/* Nome do produto */}
             <div className="px-4 pt-3 pb-2 border-b border-gray-50 dark:border-gray-700/50">
@@ -88,7 +129,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
             <div className="grid grid-cols-3 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 px-0">
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Qtd</p>
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">{item.quantidade}</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">{fmtN(item.quantidade)} {item.unidade_medida || 'UN'}</p>
               </div>
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">V. Unit.</p>
@@ -127,6 +168,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
               </summary>
               <div className="px-4 pb-3 space-y-1.5">
                 {[
+                  { label: 'Frete', val: item.frete_unitario },
                   { label: item.nome_custo1, val: item.custo_imposto1 },
                   { label: item.nome_custo2, val: item.custo_imposto2 },
                   { label: item.nome_custo3, val: item.custo_outros },
@@ -143,7 +185,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
               </div>
             </details>
           </div>
-        ))}
+        );})}
       </div>
     </div>
   );
