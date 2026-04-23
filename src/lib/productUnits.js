@@ -24,6 +24,20 @@ export function normalizeAlternativeUnits(product) {
     }));
 }
 
+function resolvePrimaryFromFactorOne(product, fallbackUnit = "UN") {
+  const alternativas = normalizeAlternativeUnits(product);
+  const fatorUm = alternativas.filter((item) => normalizeNumber(item.fator_conversao, 0) === 1);
+  const principalAtual = normalizeUnitCode(product?.unidade_principal);
+
+  if (fatorUm.length === 1) return fatorUm[0].unidade;
+  if (fatorUm.length > 1) {
+    const matchAtual = fatorUm.find((item) => item.unidade === principalAtual);
+    return (matchAtual?.unidade || fatorUm[0].unidade);
+  }
+
+  return principalAtual || normalizeUnitCode(fallbackUnit) || "UN";
+}
+
 function dedupeUnits(units) {
   const seen = new Set();
   return units.filter((item) => {
@@ -49,7 +63,7 @@ function saleUnitPriceFromAlternative(precoBase, item, priceMultiplier) {
 }
 
 export function buildSaleUnitOptions(product, priceMultiplier = 1) {
-  const unidadePrincipal = (product?.unidade_principal || "UN").toUpperCase();
+  const unidadePrincipal = resolvePrimaryFromFactorOne(product, "UN");
   const precoBase = normalizeNumber(product?.preco_venda_padrao, 0);
   const principal = {
     unidade: unidadePrincipal,
@@ -72,10 +86,11 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
 
 export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
   const options = buildSaleUnitOptions(product, priceMultiplier);
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
   const prioridades = [
     product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
-    product?.unidade_principal,
+    principalResolvida,
   ];
   for (const pref of prioridades) {
     const normalized = String(pref || "").trim().toUpperCase();
@@ -89,11 +104,12 @@ export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
 export function resolveCommercialUnit(product, fallbackUnit = "UN") {
   const options = buildSaleUnitOptions(product);
   if (!options.length) return normalizeUnitCode(fallbackUnit) || "UN";
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || fallbackUnit);
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
     product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
-    product?.unidade_principal,
+    principalResolvida,
     fallbackUnit,
   ];
   for (const priority of priorities) {
@@ -104,7 +120,7 @@ export function resolveCommercialUnit(product, fallbackUnit = "UN") {
 }
 
 export function buildPurchaseUnitOptions(product) {
-  const unidadePrincipal = (product?.unidade_principal || "UN").toUpperCase();
+  const unidadePrincipal = resolvePrimaryFromFactorOne(product, "UN");
   const custoBase = normalizeNumber(product?.valor_compra, 0);
   const principal = {
     unidade: unidadePrincipal,
@@ -126,10 +142,11 @@ export function buildPurchaseUnitOptions(product) {
 
 export function pickDefaultPurchaseUnit(product) {
   const options = buildPurchaseUnitOptions(product);
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
   const prioridades = [
     product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
-    product?.unidade_principal,
+    principalResolvida,
   ];
   for (const pref of prioridades) {
     const normalized = String(pref || "").trim().toUpperCase();
@@ -153,7 +170,7 @@ export function formatUnitConversion(option, unidadePrincipal) {
 
 export function formatEstoqueApresentacao(produto) {
   const estoque = normalizeNumber(produto?.estoque_atual, 0);
-  const up = normalizeUnitCode(produto?.unidade_principal || "UN");
+  const up = resolvePrimaryFromFactorOne(produto, "UN");
   const alternativas = normalizeAlternativeUnits(produto);
   const pref = resolveCommercialUnit(produto, up);
   if (!pref || pref === up) return null;
@@ -179,13 +196,14 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
   if (!options.length) {
     return normalizeUnitCode(fallbackUnit) || "UN";
   }
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || fallbackUnit);
 
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
     product?.unidade_show_logistica,
     product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
-    product?.unidade_principal,
+    principalResolvida,
     fallbackUnit,
   ];
 
@@ -196,7 +214,7 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
     }
   }
 
-  const principal = normalizeUnitCode(product?.unidade_principal);
+  const principal = normalizeUnitCode(principalResolvida);
   if (principal && validUnits.has(principal)) return principal;
   return options[0]?.unidade || normalizeUnitCode(fallbackUnit) || "UN";
 }

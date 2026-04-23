@@ -4,15 +4,17 @@ import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCo
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { base44 } from '@/api/base44Client';
 
-function normalizarPedidoParaRelatorio(pedido) {
+function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
   const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
   const itensNormalizados = itens.map((item) => {
     const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
     const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
     const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
     const fallback = item?.unidade_medida || item?.unidade_principal || 'UN';
-    const resolvido = resolveCommercialDisplay(item?._produto || item || {}, quantidadeBase, fallback);
+    const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || item || {};
+    const resolvido = resolveCommercialDisplay(produtoSnapshot, quantidadeBase, fallback);
     const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
     const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;
     const divisorShow = quantidadeShow > 0 ? quantidadeShow : 1;
@@ -47,6 +49,45 @@ function normalizarPedidoParaRelatorio(pedido) {
   };
 }
 
+function coletarProdutoIds(source) {
+  const ids = new Set();
+  const walk = (node) => {
+    if (!node) return;
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+    if (typeof node !== 'object') return;
+    if (Array.isArray(node.itens)) {
+      node.itens.forEach((item) => {
+        if (item?.produto_id) ids.add(item.produto_id);
+      });
+    }
+    if (Array.isArray(node.pedidos)) walk(node.pedidos);
+    if (Array.isArray(node.grupos)) walk(node.grupos);
+    if (Array.isArray(node.children)) walk(node.children);
+  };
+  walk(source);
+  return Array.from(ids);
+}
+
+function normalizarGruposParaRelatorio(grupos = [], produtosMap = {}) {
+  const walk = (node) => {
+    if (Array.isArray(node)) return node.map(walk);
+    if (!node || typeof node !== 'object') return node;
+    const clone = { ...node };
+    if (Array.isArray(clone.itens)) {
+      // Nó representando pedido dentro da estrutura agrupada
+      clone.itens = normalizarPedidoParaRelatorio(clone, produtosMap).itens;
+    }
+    if (Array.isArray(clone.pedidos)) clone.pedidos = clone.pedidos.map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
+    if (Array.isArray(clone.grupos)) clone.grupos = clone.grupos.map(walk);
+    if (Array.isArray(clone.children)) clone.children = clone.children.map(walk);
+    return clone;
+  };
+  return walk(grupos);
+}
+
 export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState('');
@@ -60,12 +101,19 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     setGerando(version);
     toast.loading('Gerando relatório...', { id: 'gerando-relatorio' });
     try {
+      const ids = coletarProdutoIds([pedidos, grupos]);
+      const produtos = await Promise.all(ids.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+      const produtosMap = {};
+      produtos.filter(Boolean).forEach((p) => { produtosMap[p.id] = p; });
+      const pedidosNormalizados = (pedidos || []).map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
+      const gruposNormalizados = normalizarGruposParaRelatorio(grupos || [], produtosMap);
+
       const resposta = await gerarRelatorioPedidosCompra({
-        pedidos: (pedidos || []).map(normalizarPedidoParaRelatorio),
+        pedidos: pedidosNormalizados,
         version,
         filtros_desc: filtrosDesc,
         kpis,
-        grupos,
+        grupos: gruposNormalizados,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });

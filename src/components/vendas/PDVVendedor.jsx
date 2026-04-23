@@ -578,12 +578,13 @@ export default function PDVVendedor() {
         };
       }));
     } else {
+      const unidadeSelecionada = produtoSelecionado.unidade_medida || pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1)?.unidade || 'UN';
       setCarrinho([...carrinho, {
         produto_id: produtoSelecionado.id,
         produto_nome: produtoSelecionado.nome,
         codigo_interno: produtoSelecionado.codigo_interno || '001',
         quantidade: quantidade,
-        unidade_medida: produtoSelecionado.unidade_medida || produtoSelecionado.unidade_principal || 'UN',
+        unidade_medida: unidadeSelecionada,
         fator_conversao: fatorConversao,
         quantidade_base: quantidadeBase,
         item_key: itemKey,

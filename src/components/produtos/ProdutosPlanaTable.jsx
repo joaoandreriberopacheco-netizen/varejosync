@@ -70,13 +70,19 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 {visibleColumns.includes('estoque_atual') && (
                   <TableCell className="text-xs text-gray-700 dark:text-gray-300">
                     <div className="flex flex-col leading-tight">
-                      <span>{formatarNumero(produto.estoque_atual)} {produto.unidade_principal}</span>
+                      <span>
+                        {(() => {
+                          const apresent = formatEstoqueApresentacao(produto);
+                          if (apresent) return `${formatarNumero(apresent.quantidade)} ${apresent.sigla}`;
+                          return `${formatarNumero(produto.estoque_atual)} ${(produto.unidade_principal || 'UN').toUpperCase()}`;
+                        })()}
+                      </span>
                       {(() => {
                         const apresent = formatEstoqueApresentacao(produto);
                         if (!apresent) return null;
                         return (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                            ~{formatarNumero(apresent.quantidade)} {apresent.sigla}{apresent.rotulo ? ` (${apresent.rotulo})` : ''}
+                            {apresent.rotulo ? `(${apresent.rotulo})` : 'show comercial'}
                           </span>
                         );
                       })()}

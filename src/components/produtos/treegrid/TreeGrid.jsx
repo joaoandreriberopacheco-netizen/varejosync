@@ -82,12 +82,14 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
       const apresent = formatEstoqueApresentacao(produto);
+      const qtdExibicao = apresent ? apresent.quantidade : produto.estoque_atual;
+      const unExibicao = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
       return (
         <span className="flex flex-col text-xs text-gray-600 dark:text-gray-300 tabular-nums leading-tight">
-          <span>{fmtN(produto.estoque_atual)} {produto.unidade_principal || ''}</span>
+          <span>{fmtN(qtdExibicao)} {unExibicao}</span>
           {apresent && (
             <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-              ~{fmtN(apresent.quantidade)} {apresent.sigla}{apresent.rotulo ? ` (${apresent.rotulo})` : ''}
+              {apresent.rotulo ? `(${apresent.rotulo})` : 'show comercial'}
             </span>
           )}
         </span>
