@@ -51,7 +51,7 @@ function ProdutosPageContent() {
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState([
-    'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
+    'status', 'fornecedor', 'show_comercial', 'show_logistica', 'estoque_atual', 'preco_venda', 'margem'
   ]);
   // ── Nível de expansão do TreeGrid (controlado pelo painel fixo externo) ─────
   const [treeLevel, setTreeLevel] = useState(1);

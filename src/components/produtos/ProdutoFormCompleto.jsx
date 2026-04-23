@@ -33,6 +33,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     preco_venda_tipo: produto.preco_venda_tipo || 'percentual',
     preco_venda_percentual: produto.preco_venda_percentual || 0,
     unidade_principal: produto.unidade_principal || 'UN',
+    unidade_show_comercial: produto.unidade_show_comercial || '',
+    unidade_show_logistica: produto.unidade_show_logistica || '',
     unidade_apresentacao_default: produto.unidade_apresentacao_default || '',
     ativo: produto.ativo !== false
   } : {
@@ -40,7 +42,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
     categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
-    unidade_principal: 'UN', unidade_apresentacao_default: '', unidades_por_pacote: 1, unidades_alternativas: [],
+    unidade_principal: 'UN', unidade_show_comercial: '', unidade_show_logistica: '', unidade_apresentacao_default: '', unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
     tempo_reposicao_dias: 0, fornecedor_padrao_id: '', fornecedor_padrao_codigo: '',
     controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
@@ -166,6 +168,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const handleChange = (field, value) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
+      if (field === 'unidade_show_comercial') {
+        // Apresentação PDV acompanha o show comercial por regra de negócio.
+        updated.unidade_apresentacao_default = String(value || '').trim().toUpperCase();
+      }
       // Auto-gerar nome ao mudar qualquer campo hierárquico
       if (field.startsWith('campo_hierarquico_')) {
         updated.nome = gerarNomeCompleto(updated);
@@ -175,6 +181,38 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     });
     setTemAlteracoesNaoSalvas(true);
   };
+
+  const unitOptions = useMemo(() => {
+    const principal = String(formData.unidade_principal || 'UN').trim().toUpperCase();
+    const alternativas = (formData.unidades_alternativas || [])
+      .map((u) => String(u?.unidade || '').trim().toUpperCase())
+      .filter(Boolean);
+    return [principal, ...alternativas.filter((u) => u !== principal)];
+  }, [formData.unidade_principal, formData.unidades_alternativas]);
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const principal = String(prev.unidade_principal || 'UN').trim().toUpperCase();
+      const validSet = new Set([principal, ...(prev.unidades_alternativas || [])
+        .map((u) => String(u?.unidade || '').trim().toUpperCase())
+        .filter(Boolean)]);
+      const showComercial = String(prev.unidade_show_comercial || '').trim().toUpperCase() || principal;
+      const showComercialValido = validSet.has(showComercial) ? showComercial : principal;
+      const showLogistico = String(prev.unidade_show_logistica || '').trim().toUpperCase();
+      const showLogisticoValido = showLogistico && validSet.has(showLogistico) ? showLogistico : '';
+      if (
+        prev.unidade_show_comercial === showComercialValido &&
+        prev.unidade_show_logistica === showLogisticoValido &&
+        prev.unidade_apresentacao_default === showComercialValido
+      ) return prev;
+      return {
+        ...prev,
+        unidade_show_comercial: showComercialValido,
+        unidade_show_logistica: showLogisticoValido,
+        unidade_apresentacao_default: showComercialValido,
+      };
+    });
+  }, [formData.unidade_principal, formData.unidades_alternativas]);
 
 
 
@@ -248,6 +286,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       nome: produtoBase.nome || '',
       tags: Array.isArray(produtoBase.tags) ? produtoBase.tags : [],
       unidades_alternativas: Array.isArray(produtoBase.unidades_alternativas) ? produtoBase.unidades_alternativas : [],
+        unidade_show_comercial: produtoBase.unidade_show_comercial || '',
+        unidade_show_logistica: produtoBase.unidade_show_logistica || '',
       unidade_apresentacao_default: produtoBase.unidade_apresentacao_default || '',
       ativo: produtoBase.ativo !== false,
     };
@@ -304,6 +344,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         marca: formData.marca?.toUpperCase(),
         categoria_nome: categoria?.nome?.toUpperCase() || '',
         fornecedor_padrao_codigo: formData.fornecedor_padrao_codigo?.toUpperCase(),
+        unidade_show_comercial: String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase(),
+        unidade_show_logistica: String(formData.unidade_show_logistica || '').trim().toUpperCase(),
+        unidade_apresentacao_default: String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase(),
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,
         valor_compra: custoBase,
@@ -871,25 +914,34 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
 
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade de apresentação (PDV)</Label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Modo que abre primeiro ao vender. No PDV use &quot;Outra unidade&quot; para mudar.</p>
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Show Comercial (Sistema + PDV)</Label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Predomina em todo o sistema. A apresentação PDV espelha automaticamente este valor.</p>
               <Select
-                value={(formData.unidade_apresentacao_default && String(formData.unidade_apresentacao_default).trim()) ? String(formData.unidade_apresentacao_default).trim().toUpperCase() : '__principal__'}
-                onValueChange={(v) => handleChange('unidade_apresentacao_default', v === '__principal__' ? '' : v)}
+                value={String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase()}
+                onValueChange={(v) => handleChange('unidade_show_comercial', v)}
               >
                 <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md">
-                  <SelectValue placeholder="Principal" />
+                  <SelectValue placeholder="Selecione a unidade comercial" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__principal__">Principal ({formData.unidade_principal || 'UN'})</SelectItem>
-                  {(formData.unidades_alternativas || []).filter((u) => u && String(u.unidade || '').trim()).map((u) => {
-                    const sigla = String(u.unidade).trim().toUpperCase();
-                    return (
-                      <SelectItem key={sigla} value={sigla}>
-                        {sigla}{u.rotulo ? (' — ' + u.rotulo) : ''}
-                      </SelectItem>
-                    );
-                  })}
+                  {unitOptions.map((sigla) => <SelectItem key={`com-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Show Logístico (Boats/Fluvial)</Label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Exclusivo para contexto logístico. Se vazio, Boats usa fallback para show comercial.</p>
+              <Select
+                value={String(formData.unidade_show_logistica || '').trim().toUpperCase() || '__vazio__'}
+                onValueChange={(v) => handleChange('unidade_show_logistica', v === '__vazio__' ? '' : v)}
+              >
+                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md">
+                  <SelectValue placeholder="Vazio (usar fallback)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__vazio__">Vazio (fallback para show comercial)</SelectItem>
+                  {unitOptions.map((sigla) => <SelectItem key={`log-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -27,7 +27,8 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
       columns: [
         { id: 'fornecedor', label: 'Fornecedor Padrão' },
         { id: 'preco_venda', label: 'Preço Venda' },
-        { id: 'margem', label: 'Margem Bruta' }
+        { id: 'margem', label: 'Margem Bruta' },
+        { id: 'show_comercial', label: 'Show Comercial' }
       ],
       subgroups: [
         {
@@ -46,6 +47,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
       icon: Truck,
       columns: [
         { id: 'estoque_atual', label: 'Estoque Atual' },
+        { id: 'show_logistica', label: 'Show Logístico' },
         { id: 'estoque_minimo', label: 'Estoque Mínimo' },
         { id: 'estoque_ideal', label: 'Estoque Ideal' },
         { id: 'estoque_maximo', label: 'Estoque Máximo' },

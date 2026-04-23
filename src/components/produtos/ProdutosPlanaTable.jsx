@@ -7,10 +7,10 @@ import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers
 import { formatEstoqueApresentacao } from '@/lib/productUnits';
 
 const headMap = {
-  status: 'Status', cadastro: 'Cadastro', codigo_interno: 'Código', codigo_barras: 'Cód. Barras', categoria: 'Categoria', tags: 'Tags', fornecedor: 'Fornecedor', preco_venda: 'Preço Venda', preco_custo: 'Custo Total', margem: 'Margem', valor_compra: 'Vl. Compra', markup: 'Markup %', estoque_atual: 'Estoque', estoque_minimo: 'Est. Mín', estoque_ideal: 'Est. Ideal', estoque_maximo: 'Est. Máx', tempo_reposicao: 'Repos.', peso: 'Peso', dimensoes: 'Dimensões', tipo: 'Tipo', unidade: 'Unid.', unidades_pacote: 'Un/Pct'
+  status: 'Status', cadastro: 'Cadastro', codigo_interno: 'Código', codigo_barras: 'Cód. Barras', categoria: 'Categoria', tags: 'Tags', fornecedor: 'Fornecedor', preco_venda: 'Preço Venda', preco_custo: 'Custo Total', margem: 'Margem', valor_compra: 'Vl. Compra', markup: 'Markup %', estoque_atual: 'Estoque', estoque_minimo: 'Est. Mín', estoque_ideal: 'Est. Ideal', estoque_maximo: 'Est. Máx', tempo_reposicao: 'Repos.', peso: 'Peso', dimensoes: 'Dimensões', tipo: 'Tipo', unidade: 'Unid.', unidades_pacote: 'Un/Pct', show_comercial: 'Show Comercial', show_logistica: 'Show Logístico'
 };
 const widthMap = {
-  status: 'min-w-[100px]', cadastro: 'min-w-[110px]', codigo_interno: 'min-w-[110px]', codigo_barras: 'min-w-[130px]', categoria: 'min-w-[130px]', tags: 'min-w-[130px]', fornecedor: 'min-w-[140px]', preco_venda: 'min-w-[110px]', preco_custo: 'min-w-[110px]', margem: 'min-w-[90px]', valor_compra: 'min-w-[110px]', markup: 'min-w-[90px]', estoque_atual: 'min-w-[110px]', estoque_minimo: 'min-w-[90px]', estoque_ideal: 'min-w-[90px]', estoque_maximo: 'min-w-[90px]', tempo_reposicao: 'min-w-[100px]', peso: 'min-w-[90px]', dimensoes: 'min-w-[120px]', tipo: 'min-w-[90px]', unidade: 'min-w-[70px]', unidades_pacote: 'min-w-[90px]'
+  status: 'min-w-[100px]', cadastro: 'min-w-[110px]', codigo_interno: 'min-w-[110px]', codigo_barras: 'min-w-[130px]', categoria: 'min-w-[130px]', tags: 'min-w-[130px]', fornecedor: 'min-w-[140px]', preco_venda: 'min-w-[110px]', preco_custo: 'min-w-[110px]', margem: 'min-w-[90px]', valor_compra: 'min-w-[110px]', markup: 'min-w-[90px]', estoque_atual: 'min-w-[110px]', estoque_minimo: 'min-w-[90px]', estoque_ideal: 'min-w-[90px]', estoque_maximo: 'min-w-[90px]', tempo_reposicao: 'min-w-[100px]', peso: 'min-w-[90px]', dimensoes: 'min-w-[120px]', tipo: 'min-w-[90px]', unidade: 'min-w-[70px]', unidades_pacote: 'min-w-[90px]', show_comercial: 'min-w-[120px]', show_logistica: 'min-w-[120px]'
 };
 
 export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, handleEdit, setProdutoParaExcluir, formatarNumero, fornecedorMap, handleCreateSimilar }) {
@@ -92,6 +92,8 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 {visibleColumns.includes('tipo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>}
                 {visibleColumns.includes('unidade') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidade_principal}</TableCell>}
                 {visibleColumns.includes('unidades_pacote') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>}
+                {visibleColumns.includes('show_comercial') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_show_comercial || produto.unidade_apresentacao_default || produto.unidade_principal || 'UN').toUpperCase()}</TableCell>}
+                {visibleColumns.includes('show_logistica') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_show_logistica || '-').toUpperCase()}</TableCell>}
               </TableRow>
             );
           })}

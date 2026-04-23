@@ -9,6 +9,10 @@ function normalizarTexto(valor) {
   return String(valor || '').trim().toLowerCase();
 }
 
+function normalizarSiglaUnidade(valor) {
+  return String(valor || 'UN').trim().toUpperCase() || 'UN';
+}
+
 function registrarItemNoMapa(mapa, item = {}) {
   const chaveId = item?.produto_id;
   const chaveNome = normalizarTexto(item?.produto_nome);
@@ -158,8 +162,9 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       {open &&
       <div className="px-3 pb-3">
           <div className="rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
-            <div className="grid grid-cols-[32px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
+            <div className="grid grid-cols-[32px_34px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
               <span>Qtd</span>
+              <span>Un</span>
               <span className="text-left">Descrição</span>
               <span className="text-right">V. Unt</span>
               <span className="text-right">Vlr Tot</span>
@@ -170,8 +175,9 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
               const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
               const total = Number(item.total ?? item.valor_total ?? item.total_item ?? quantidade * custo) || 0;
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_34px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
                     <span className="pt-0.5 text-white font-medium">{quantidade}</span>
+                    <span className="pt-0.5 text-slate-300 font-medium">{normalizarSiglaUnidade(item.unidade_medida)}</span>
                     <p className="min-w-0 text-[9px] leading-snug break-words font-normal text-white/90 text-left line-clamp-2">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[9px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     <span className="pt-0.5 text-[9px] text-right font-medium whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
