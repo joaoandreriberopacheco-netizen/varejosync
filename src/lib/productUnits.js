@@ -96,8 +96,8 @@ export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
     return options.find((o) => o.unidade === principalResolvida) || options[0] || null;
   }
   const prioridades = [
-    product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
+    product?.unidade_show_comercial,
     principalResolvida,
   ];
   for (const pref of prioridades) {
@@ -118,8 +118,8 @@ export function resolveCommercialUnit(product, fallbackUnit = "UN") {
   }
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
-    product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
+    product?.unidade_show_comercial,
     principalResolvida,
     fallbackUnit,
   ];
@@ -158,8 +158,8 @@ export function pickDefaultPurchaseUnit(product) {
     return options.find((o) => o.unidade === principalResolvida) || options[0] || null;
   }
   const prioridades = [
-    product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
+    product?.unidade_show_comercial,
     principalResolvida,
   ];
   for (const pref of prioridades) {
@@ -220,8 +220,8 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
     product?.unidade_show_logistica,
-    product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
+    product?.unidade_show_comercial,
     principalResolvida,
     fallbackUnit,
   ];

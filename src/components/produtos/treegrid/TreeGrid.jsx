@@ -61,6 +61,7 @@ function StatusDot({ produto }) {
 
 // ── Valor de célula SKU ───────────────────────────────────────────────────────
 function skuCellValue(colId, produto, margem, lastro, markup) {
+  const produtoForcandoShow = { ...produto, unidade_show_ativa: true };
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
     case 'codigo_interno':       return <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{produto.codigo_interno || '—'}</span>;
@@ -81,7 +82,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : '—'}</span>;
     case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
-      const apresent = formatEstoqueApresentacao(produto);
+      const apresent = formatEstoqueApresentacao(produtoForcandoShow);
       const qtdExibicao = apresent ? apresent.quantidade : produto.estoque_atual;
       const unExibicao = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
       return (

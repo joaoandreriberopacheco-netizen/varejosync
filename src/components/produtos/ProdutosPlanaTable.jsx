@@ -27,6 +27,7 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
         </TableHeader>
         <TableBody>
           {filteredProdutos.map(produto => {
+            const produtoForcandoShow = { ...produto, unidade_show_ativa: true };
             const custoReal = produto.preco_custo_calculado > 0 ? produto.preco_custo_calculado : (produto.valor_compra || 0) + (produto.custo_frete_padrao || 0) + (produto.custo_imposto1_padrao || 0) + (produto.custo_imposto2_padrao || 0) + (produto.custo_outros_padrao || 0) - (produto.desconto_compra_padrao || 0);
             const margem = produto.preco_venda_padrao > 0 && custoReal > 0 ? ((produto.preco_venda_padrao - custoReal) / produto.preco_venda_padrao) * 100 : 0;
             const cadastroStatus = isCadastroIncompleto(produto);
@@ -72,13 +73,13 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                     <div className="flex flex-col leading-tight">
                       <span>
                         {(() => {
-                          const apresent = formatEstoqueApresentacao(produto);
+                          const apresent = formatEstoqueApresentacao(produtoForcandoShow);
                           if (apresent) return `${formatarNumero(apresent.quantidade)} ${apresent.sigla}`;
                           return `${formatarNumero(produto.estoque_atual)} ${(produto.unidade_principal || 'UN').toUpperCase()}`;
                         })()}
                       </span>
                       {(() => {
-                        const apresent = formatEstoqueApresentacao(produto);
+                        const apresent = formatEstoqueApresentacao(produtoForcandoShow);
                         if (!apresent) return null;
                         return (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">

@@ -17,7 +17,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
     : e <= m                 ? 'bg-orange-400'
     : 'bg-green-500';
 
-  const apresent = formatEstoqueApresentacao(p);
+  const apresent = formatEstoqueApresentacao({ ...p, unidade_show_ativa: true });
   const estoqueExibicao = apresent ? apresent.quantidade : e;
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
 
