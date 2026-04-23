@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
-import { formatEstoqueApresentacao } from '@/lib/productUnits';
+import { formatEstoqueApresentacao, resolveCommercialUnit } from '@/lib/productUnits';
 
 const headMap = {
   status: 'Status', cadastro: 'Cadastro', codigo_interno: 'Código', codigo_barras: 'Cód. Barras', categoria: 'Categoria', tags: 'Tags', fornecedor: 'Fornecedor', preco_venda: 'Preço Venda', preco_custo: 'Custo Total', margem: 'Margem', valor_compra: 'Vl. Compra', markup: 'Markup %', estoque_atual: 'Estoque', estoque_minimo: 'Est. Mín', estoque_ideal: 'Est. Ideal', estoque_maximo: 'Est. Máx', tempo_reposicao: 'Repos.', peso: 'Peso', dimensoes: 'Dimensões', tipo: 'Tipo', unidade: 'Unid.', unidades_pacote: 'Un/Pct', show_comercial: 'Show Comercial', show_logistica: 'Show Logístico'
@@ -98,7 +98,11 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 {visibleColumns.includes('tipo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>}
                 {visibleColumns.includes('unidade') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidade_principal}</TableCell>}
                 {visibleColumns.includes('unidades_pacote') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>}
-                {visibleColumns.includes('show_comercial') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_show_comercial || produto.unidade_apresentacao_default || produto.unidade_principal || 'UN').toUpperCase()}</TableCell>}
+                {visibleColumns.includes('show_comercial') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    {resolveCommercialUnit(produto, produto.unidade_principal || 'UN')}
+                  </TableCell>
+                )}
                 {visibleColumns.includes('show_logistica') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_show_logistica || '-').toUpperCase()}</TableCell>}
               </TableRow>
             );

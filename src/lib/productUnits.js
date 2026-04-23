@@ -11,6 +11,11 @@ export function normalizeUnitCode(value) {
   return String(value || "").trim().toUpperCase();
 }
 
+export function isShowUnitEnabled(product) {
+  if (typeof product?.unidade_show_ativa === "boolean") return product.unidade_show_ativa;
+  return true;
+}
+
 export function normalizeAlternativeUnits(product) {
   return (Array.isArray(product?.unidades_alternativas) ? product.unidades_alternativas : [])
     .filter((item) => item?.unidade && item.ativo !== false)
@@ -87,6 +92,9 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
 export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
   const options = buildSaleUnitOptions(product, priceMultiplier);
   const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
+  if (!isShowUnitEnabled(product)) {
+    return options.find((o) => o.unidade === principalResolvida) || options[0] || null;
+  }
   const prioridades = [
     product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
@@ -105,6 +113,9 @@ export function resolveCommercialUnit(product, fallbackUnit = "UN") {
   const options = buildSaleUnitOptions(product);
   if (!options.length) return normalizeUnitCode(fallbackUnit) || "UN";
   const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || fallbackUnit);
+  if (!isShowUnitEnabled(product)) {
+    return principalResolvida || normalizeUnitCode(fallbackUnit) || "UN";
+  }
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
     product?.unidade_show_comercial,
@@ -143,6 +154,9 @@ export function buildPurchaseUnitOptions(product) {
 export function pickDefaultPurchaseUnit(product) {
   const options = buildPurchaseUnitOptions(product);
   const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
+  if (!isShowUnitEnabled(product)) {
+    return options.find((o) => o.unidade === principalResolvida) || options[0] || null;
+  }
   const prioridades = [
     product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
@@ -169,6 +183,7 @@ export function formatUnitConversion(option, unidadePrincipal) {
 }
 
 export function formatEstoqueApresentacao(produto) {
+  if (!isShowUnitEnabled(produto)) return null;
   const estoque = normalizeNumber(produto?.estoque_atual, 0);
   const up = resolvePrimaryFromFactorOne(produto, "UN");
   const alternativas = normalizeAlternativeUnits(produto);
@@ -183,6 +198,10 @@ export function formatEstoqueApresentacao(produto) {
 }
 
 export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit = "UN") {
+  if (!isShowUnitEnabled(product)) {
+    const unidadeLegada = resolvePrimaryFromFactorOne(product, fallbackUnit);
+    return { unidade: unidadeLegada, fator_conversao: 1, quantidade: normalizeNumber(quantityBase, 0), option: null };
+  }
   const unidade = resolveCommercialUnit(product, fallbackUnit);
   const purchaseOptions = buildPurchaseUnitOptions(product);
   const option = purchaseOptions.find((item) => item.unidade === unidade) || purchaseOptions[0] || null;

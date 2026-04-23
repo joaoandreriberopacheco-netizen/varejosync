@@ -36,13 +36,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     unidade_show_comercial: produto.unidade_show_comercial || '',
     unidade_show_logistica: produto.unidade_show_logistica || '',
     unidade_apresentacao_default: produto.unidade_apresentacao_default || '',
+    unidade_show_ativa: typeof produto.unidade_show_ativa === 'boolean' ? produto.unidade_show_ativa : true,
     ativo: produto.ativo !== false
   } : {
     campo_hierarquico_1: '', campo_hierarquico_2: '', campo_hierarquico_3: '', campo_hierarquico_4: '', campo_hierarquico_5: '',
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
     categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
-    unidade_principal: 'UN', unidade_show_comercial: '', unidade_show_logistica: '', unidade_apresentacao_default: '', unidades_por_pacote: 1, unidades_alternativas: [],
+    unidade_principal: 'UN', unidade_show_comercial: '', unidade_show_logistica: '', unidade_apresentacao_default: '', unidade_show_ativa: true, unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
     tempo_reposicao_dias: 0, fornecedor_padrao_id: '', fornecedor_padrao_codigo: '',
     controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
@@ -289,6 +290,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade_show_comercial: produtoBase.unidade_show_comercial || '',
         unidade_show_logistica: produtoBase.unidade_show_logistica || '',
       unidade_apresentacao_default: produtoBase.unidade_apresentacao_default || '',
+      unidade_show_ativa: typeof produtoBase.unidade_show_ativa === 'boolean' ? produtoBase.unidade_show_ativa : true,
       ativo: produtoBase.ativo !== false,
     };
 
@@ -347,6 +349,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade_show_comercial: String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase(),
         unidade_show_logistica: String(formData.unidade_show_logistica || '').trim().toUpperCase(),
         unidade_apresentacao_default: String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase(),
+        unidade_show_ativa: formData.unidade_show_ativa !== false,
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,
         valor_compra: custoBase,
@@ -914,13 +917,32 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
 
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="unidade_show_ativa"
+                  checked={formData.unidade_show_ativa !== false}
+                  onCheckedChange={(v) => handleChange('unidade_show_ativa', v !== false)}
+                  className="mt-0.5"
+                />
+                <div>
+                  <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
+                    Usar unidade show no sistema
+                  </Label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Quando desativado, o produto volta a exibir unidade legada (principal/fator 1) na tela de produtos e formulários.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
               <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Show Comercial (Sistema + PDV)</Label>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Predomina em todo o sistema. A apresentação PDV espelha automaticamente este valor.</p>
               <Select
                 value={String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase()}
                 onValueChange={(v) => handleChange('unidade_show_comercial', v)}
               >
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md">
+                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md" disabled={formData.unidade_show_ativa === false}>
                   <SelectValue placeholder="Selecione a unidade comercial" />
                 </SelectTrigger>
                 <SelectContent>
@@ -936,7 +958,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 value={String(formData.unidade_show_logistica || '').trim().toUpperCase() || '__vazio__'}
                 onValueChange={(v) => handleChange('unidade_show_logistica', v === '__vazio__' ? '' : v)}
               >
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md">
+                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md" disabled={formData.unidade_show_ativa === false}>
                   <SelectValue placeholder="Vazio (usar fallback)" />
                 </SelectTrigger>
                 <SelectContent>
