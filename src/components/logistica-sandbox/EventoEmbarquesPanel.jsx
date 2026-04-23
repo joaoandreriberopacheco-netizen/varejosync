@@ -28,6 +28,41 @@ function extrairSnapshotProduto(item = {}, itemPedido = {}) {
   return snapshot;
 }
 
+function resolverValorUnitarioPreferencial(item = {}, itemPedido = {}) {
+  return Number(
+    item.custo_unitario ??
+    item.custo_unitario_momento ??
+    item.valor_unitario ??
+    item.total_unitario ??
+    item.custo_final_unitario ??
+    item.custo_calculado ??
+    itemPedido.custo_unitario ??
+    itemPedido.custo_unitario_momento ??
+    itemPedido.valor_unitario ??
+    itemPedido.total_unitario ??
+    itemPedido.custo_final_unitario ??
+    itemPedido.custo_calculado ??
+    itemPedido.valor_unitario_compra ??
+    0
+  ) || 0;
+}
+
+function resolverTotalPreferencial(item = {}, itemPedido = {}, quantidadeOriginal = 0, custoOriginal = 0) {
+  return Number(
+    item.total ??
+    item.valor_total ??
+    item.total_item ??
+    item.valor_total_item ??
+    item.subtotal ??
+    itemPedido.total ??
+    itemPedido.valor_total ??
+    itemPedido.total_item ??
+    itemPedido.valor_total_item ??
+    itemPedido.subtotal ??
+    quantidadeOriginal * custoOriginal
+  ) || 0;
+}
+
 function registrarItemNoMapa(mapa, item = {}) {
   const chaveId = item?.produto_id;
   const chaveNome = normalizarTexto(item?.produto_nome);
@@ -45,8 +80,16 @@ function registrarItemNoMapa(mapa, item = {}) {
     produto_nome: item?.produto_nome || '',
     quantidade_pedida: Number(item.quantidade ?? item.quantidade_base ?? 0) || 0,
     unidade_medida: item?.unidade_medida || 'UN',
+    unidade_principal: item?.unidade_principal,
+    unidade_show_comercial: item?.unidade_show_comercial,
+    unidade_show_logistica: item?.unidade_show_logistica,
+    unidade_apresentacao_default: item?.unidade_apresentacao_default,
+    unidades_alternativas: Array.isArray(item?.unidades_alternativas) ? item.unidades_alternativas : undefined,
+    fator_conversao: Number(item?.fator_conversao ?? 1) || 1,
+    valor_compra: Number(item?.valor_compra ?? item?.custo_unitario ?? 0) || 0,
     custo_unitario: custoUnitario,
-    total: Number(item.total ?? (Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario) || 0
+    total: Number(item.total ?? item.valor_total ?? item.total_item ?? item.subtotal ?? (Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario) || 0,
+    _produto: item?._produto || null
   };
 
   if (chaveId) {
@@ -103,24 +146,10 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
   return itens.map((item) => {
     const itemPedido = obterItemPedido(embarque, item, itensPedidoMap);
     const quantidadeOriginal = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
-    const quantidadeBase = Number(item.quantidade_base ?? itemPedido.quantidade_base ?? quantidadeOriginal) || 0;
-    const custoOriginal = Number(
-      item.custo_unitario ??
-      item.custo_unitario_momento ??
-      item.valor_unitario ??
-      item.total_unitario ??
-      itemPedido.custo_unitario ??
-      itemPedido.valor_unitario ??
-      itemPedido.total_unitario
-    ) || 0;
-    const total = Number(
-      item.total ??
-      item.valor_total ??
-      item.total_item ??
-      itemPedido.total ??
-      itemPedido.valor_total ??
-      quantidadeOriginal * custoOriginal
-    ) || 0;
+    const fatorOrigem = Number(item.fator_conversao ?? itemPedido.fator_conversao ?? 1) || 1;
+    const quantidadeBase = Number(item.quantidade_base ?? itemPedido.quantidade_base ?? (quantidadeOriginal * fatorOrigem)) || 0;
+    const custoOriginal = resolverValorUnitarioPreferencial(item, itemPedido);
+    const total = resolverTotalPreferencial(item, itemPedido, quantidadeOriginal, custoOriginal);
     const snapshotProduto = extrairSnapshotProduto(item, itemPedido);
     const unidadeOriginal = normalizarSiglaUnidade(item.unidade_medida || itemPedido.unidade_medida || snapshotProduto.unidade_principal || 'UN');
     const unidadeResolvida = normalizarSiglaUnidade(resolveBoatLogisticsUnit(snapshotProduto, unidadeOriginal));
