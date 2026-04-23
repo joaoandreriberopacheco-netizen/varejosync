@@ -69,7 +69,7 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
 export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
   const options = buildSaleUnitOptions(product, priceMultiplier);
   const prioridades = [
-    product?.unidade_show_logistica,
+    product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
     product?.unidade_principal,
   ];
@@ -106,7 +106,7 @@ export function buildPurchaseUnitOptions(product) {
 export function pickDefaultPurchaseUnit(product) {
   const options = buildPurchaseUnitOptions(product);
   const prioridades = [
-    product?.unidade_show_logistica,
+    product?.unidade_show_comercial,
     product?.unidade_apresentacao_default,
     product?.unidade_principal,
   ];
@@ -133,9 +133,23 @@ export function formatUnitConversion(option, unidadePrincipal) {
 export function formatEstoqueApresentacao(produto) {
   const estoque = normalizeNumber(produto?.estoque_atual, 0);
   const up = (produto?.unidade_principal || "UN").toUpperCase();
-  const pref = normalizeUnitCode(resolveBoatLogisticsUnit(produto, produto?.unidade_apresentacao_default || up));
+  const alternativas = normalizeAlternativeUnits(produto);
+  const validUnits = new Set([up, ...alternativas.map((a) => a.unidade)]);
+  const prioridades = [
+    produto?.unidade_show_comercial,
+    produto?.unidade_apresentacao_default,
+    up,
+  ];
+  let pref = up;
+  for (const prioridade of prioridades) {
+    const normalized = normalizeUnitCode(prioridade);
+    if (normalized && validUnits.has(normalized)) {
+      pref = normalized;
+      break;
+    }
+  }
   if (!pref || pref === up) return null;
-  const alt = normalizeAlternativeUnits(produto).find((a) => a.unidade === pref);
+  const alt = alternativas.find((a) => a.unidade === pref);
   if (!alt || !alt.fator_conversao) return null;
   const fator = normalizeNumber(alt.fator_conversao, 1);
   if (fator <= 0) return null;
@@ -169,5 +183,7 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
     }
   }
 
-  return options[0]?.unidade || "UN";
+  const principal = normalizeUnitCode(product?.unidade_principal);
+  if (principal && validUnits.has(principal)) return principal;
+  return options[0]?.unidade || normalizeUnitCode(fallbackUnit) || "UN";
 }

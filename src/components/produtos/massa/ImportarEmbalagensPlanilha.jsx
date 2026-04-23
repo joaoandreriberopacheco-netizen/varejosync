@@ -31,6 +31,13 @@ function normalizarUnidadesAlternativas(unidades = []) {
   }));
 }
 
+function resolverUnidadePrincipalPorFator(unidades = [], fallback = 'UN') {
+  const fatorOne = unidades.filter((u) => Number(u?.fator_conversao) === 1);
+  if (fatorOne.length === 0) return normalizarTexto(fallback || 'UN');
+  if (fatorOne.length === 1) return normalizarTexto(fatorOne[0]?.unidade);
+  return null;
+}
+
 export default function ImportarEmbalagensPlanilha({ onParsed }) {
   const [arquivo, setArquivo] = useState(null);
   const [parsing, setParsing] = useState(false);
@@ -122,14 +129,16 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
         const altFromSlots = extrairUnidadesAlternativasDosSlots(dadosExtraidos);
         const apresentacao = dadosExtraidos.unidade_apresentacao_default;
+        const showComercial = dadosExtraidos.unidade_show_comercial;
         const showLogistico = dadosExtraidos.unidade_show_logistica;
         const temApresentacao = apresentacao != null && String(apresentacao).trim() !== '';
+        const temShowComercial = showComercial != null && String(showComercial).trim() !== '';
         const temShowLogistico = showLogistico != null && String(showLogistico).trim() !== '';
         const temEmb = altFromSlots.length > 0;
 
         // Linha sem alterações de embalagem/apresentação/show logístico:
         // ignorar silenciosamente para permitir atualização parcial da planilha.
-        if (!temEmb && !temApresentacao && !temShowLogistico) {
+        if (!temEmb && !temApresentacao && !temShowComercial && !temShowLogistico) {
           linhasIgnoradasSemMudanca += 1;
           continue;
         }
@@ -151,22 +160,90 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
         const dados = {};
         if (altFromSlots.length > 0) dados.unidades_alternativas = altFromSlots;
-        if (temApresentacao) dados.unidade_apresentacao_default = String(apresentacao).trim().toUpperCase();
-        if (temShowLogistico) dados.unidade_show_logistica = String(showLogistico).trim().toUpperCase();
 
+        const atualPrincipal = normalizarTexto(produto.unidade_principal || 'UN');
         const atualApresentacao = normalizarTexto(produto.unidade_apresentacao_default);
+        const atualShowComercial = normalizarTexto(produto.unidade_show_comercial);
         const atualShowLogistico = normalizarTexto(produto.unidade_show_logistica);
-        const novoApresentacao = temApresentacao
-          ? normalizarTexto(dados.unidade_apresentacao_default)
-          : atualApresentacao;
-        const novoShowLogistico = temShowLogistico
-          ? normalizarTexto(dados.unidade_show_logistica)
-          : atualShowLogistico;
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
         const novoAlt = altFromSlots.length > 0 ? normalizarUnidadesAlternativas(altFromSlots) : atualAlt;
+        const principalResolvida = resolverUnidadePrincipalPorFator(novoAlt, atualPrincipal);
+
+        if (!principalResolvida) {
+          erros.push({
+            linha: i,
+            mensagem: `Linha ${i}: existe mais de uma unidade com fator 1. Mantenha apenas uma para definir a unidade principal.`,
+          });
+          continue;
+        }
+
+        const unidadesValidas = new Set([
+          principalResolvida,
+          ...novoAlt.map((u) => normalizarTexto(u.unidade)),
+        ].filter(Boolean));
+
+        if (principalResolvida !== atualPrincipal) {
+          dados.unidade_principal = principalResolvida;
+        }
+
+        if (temShowComercial) {
+          const showComercialNormalizado = normalizarTexto(showComercial);
+          if (!unidadesValidas.has(showComercialNormalizado)) {
+            erros.push({
+              linha: i,
+              mensagem: `Linha ${i}: Show Comercial "${showComercialNormalizado}" não existe nas unidades válidas da linha.`,
+            });
+            continue;
+          }
+          dados.unidade_show_comercial = showComercialNormalizado;
+        } else if (!atualShowComercial || !unidadesValidas.has(atualShowComercial)) {
+          dados.unidade_show_comercial = principalResolvida;
+        }
+
+        if (temShowLogistico) {
+          const showNormalizado = normalizarTexto(showLogistico);
+          if (!unidadesValidas.has(showNormalizado)) {
+            erros.push({
+              linha: i,
+              mensagem: `Linha ${i}: Show Logístico "${showNormalizado}" não existe nas unidades válidas da linha.`,
+            });
+            continue;
+          }
+          dados.unidade_show_logistica = showNormalizado;
+        } else if (!atualShowLogistico || !unidadesValidas.has(atualShowLogistico)) {
+          dados.unidade_show_logistica = principalResolvida;
+        }
+
+        if (temApresentacao) {
+          const apresentacaoNormalizada = normalizarTexto(apresentacao);
+          if (!unidadesValidas.has(apresentacaoNormalizada)) {
+            erros.push({
+              linha: i,
+              mensagem: `Linha ${i}: Apresentação PDV "${apresentacaoNormalizada}" não existe nas unidades válidas da linha.`,
+            });
+            continue;
+          }
+          dados.unidade_apresentacao_default = apresentacaoNormalizada;
+        } else if (!atualApresentacao || !unidadesValidas.has(atualApresentacao)) {
+          const showResolvido = normalizarTexto(dados.unidade_show_logistica || atualShowLogistico);
+          dados.unidade_apresentacao_default = showResolvido || principalResolvida;
+        }
+
+        const novoApresentacao = temApresentacao
+          ? normalizarTexto(dados.unidade_apresentacao_default)
+          : normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao);
+        const novoShowComercial = temShowComercial
+          ? normalizarTexto(dados.unidade_show_comercial)
+          : normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
+        const novoShowLogistico = temShowLogistico
+          ? normalizarTexto(dados.unidade_show_logistica)
+          : normalizarTexto(dados.unidade_show_logistica || atualShowLogistico);
+        const novoPrincipal = normalizarTexto(dados.unidade_principal || atualPrincipal);
 
         const semMudanca =
-          atualApresentacao === novoApresentacao
+          atualPrincipal === novoPrincipal
+          && atualApresentacao === novoApresentacao
+          && atualShowComercial === novoShowComercial
           && atualShowLogistico === novoShowLogistico
           && JSON.stringify(atualAlt) === JSON.stringify(novoAlt);
 

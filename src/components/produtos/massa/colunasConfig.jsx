@@ -21,6 +21,7 @@ export const COLUNAS_SOMENTE_EMBALAGENS = [
   { key: 'nome', label: 'Nome (referência)', editavel: false, width: 36, tipo: 'string' },
   ...EMB_SLOT_COLS,
   { key: 'unidade_apresentacao_default', label: 'Apresentação PDV (sigla)', editavel: true, width: 22, tipo: 'string' },
+  { key: 'unidade_show_comercial', label: 'Show Comercial (sigla)', editavel: true, width: 22, tipo: 'string' },
   { key: 'unidade_show_logistica', label: 'Show Logístico (sigla)', editavel: true, width: 22, tipo: 'string' },
 ];
 
