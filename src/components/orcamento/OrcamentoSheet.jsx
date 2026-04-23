@@ -3,21 +3,29 @@ import { Search, X, ShoppingCart, Printer, ArrowLeft, AlertCircle, Trash2, Plus,
 import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import OrcamentoCupom from './OrcamentoCupom';
 import LostSalesForm from '@/components/vendas/LostSalesForm';
-import { formatEstoqueApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { buildSaleUnitOptions, formatEstoqueApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ── Bottom-sheet de quantidade ao selecionar produto ──────────────────────────
-function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, onConfirm, onClose }) {
+function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOptions = [], onConfirm, onClose }) {
   const [qtd, setQtd] = useState(qtdAtual > 0 ? String(qtdAtual) : '1');
+  const [selectedUnitCode, setSelectedUnitCode] = useState(unidadeSelecionada?.unidade || produto?.unidade_principal || 'UN');
   const [precoEditado, setPrecoEditado] = useState(preco);
   const inputRef = useRef(null);
   const precoRef = useRef(null);
   const precoLivre = produto?.preco_livre || false;
   /** `preco` já é o valor da tabela (calcularPreco) — piso de venda, não custo. */
-  const precoMinimoVenda = preco;
+  const selectedUnit =
+    unitOptions.find((opt) => opt.unidade === selectedUnitCode)
+    || unidadeSelecionada
+    || unitOptions[0]
+    || { unidade: produto?.unidade_principal || 'UN', fator_conversao: 1, valor_unitario: preco };
+  const unitPrice = selectedUnit?.valor_unitario ?? preco;
+  const precoMinimoVenda = unitPrice;
 
   useEffect(() => {
     // Pequeno delay para garantir que o bottom-sheet está visível antes do focus
@@ -28,14 +36,18 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, onConfi
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    setPrecoEditado(unitPrice);
+  }, [unitPrice, selectedUnitCode]);
+
   const qtdNum = parseFloat(qtd.replace(',', '.')) || 0;
-  const precoFinal = precoLivre ? (parseFloat(precoEditado) || preco) : preco;
+  const precoFinal = precoLivre ? (parseFloat(precoEditado) || unitPrice) : unitPrice;
   const total = qtdNum * precoFinal;
 
   const handleConfirm = () => {
     if (qtdNum <= 0) return;
     if (precoLivre && precoFinal < precoMinimoVenda) return;
-    onConfirm(qtdNum, precoLivre ? precoFinal : undefined);
+    onConfirm(qtdNum, precoLivre ? precoFinal : undefined, selectedUnit);
   };
 
   return (
@@ -57,9 +69,25 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, onConfi
         <div className="px-5 pb-2 pt-1">
           {/* Produto info */}
           <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-0.5">{produto.nome}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-4">
-            R$ {fmtR(preco)} / {unidadeSelecionada?.unidade || produto.unidade_principal || 'UN'}
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">
+            R$ {fmtR(unitPrice)} / {selectedUnit?.unidade || produto.unidade_principal || 'UN'}
           </p>
+          {unitOptions.length > 1 && (
+            <div className="mb-4">
+              <Select value={selectedUnitCode} onValueChange={setSelectedUnitCode}>
+                <SelectTrigger className="h-10 bg-gray-50 dark:bg-gray-800 border-0 rounded-xl">
+                  <SelectValue placeholder="Selecione a unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {unitOptions.map((opt) => (
+                    <SelectItem key={opt.unidade} value={opt.unidade}>
+                      {opt.unidade} · R$ {fmtR(opt.valor_unitario)} · fator {opt.fator_conversao || 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Input de quantidade com teclado nativo numérico */}
           <div className="flex items-center gap-3 mb-4">
@@ -157,7 +185,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, onConfi
 }
 
 // ── Linha de produto na busca ─────────────────────────────────────────────────
-function ProdutoLinha({ produto, preco, unidadeSelecionada, qtdNoCarrinho, onSelect }) {
+function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCarrinho, onSelect }) {
   const e = produto.estoque_atual || 0;
   const m = produto.estoque_minimo || 0;
   const dotCls = !produto.ativo ? 'bg-gray-300'
@@ -179,6 +207,7 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, qtdNoCarrinho, onSel
         <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
           R$ {fmtR(preco)} · {e.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
           {apresent ? ` · ~${apresent.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${apresent.sigla}` : ''}
+          {unitOptions?.length > 1 ? ` · ${unitOptions.length} unidades` : ''}
         </p>
       </div>
 
@@ -216,17 +245,26 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 
   const totalItens = itens.reduce((s, i) => s + i.qtd, 0);
   const totalValor = itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0);
+  const getUnitContext = useCallback((produto) => {
+    const precoBase = calcularPreco(produto);
+    const mult = precoBase > 0 && (produto.preco_venda_padrao || 0) > 0
+      ? precoBase / (produto.preco_venda_padrao || 1)
+      : 1;
+    const unitOptions = buildSaleUnitOptions(produto, mult);
+    const unidadeDefault = pickDefaultSaleUnit(produto, mult) || unitOptions[0] || null;
+    const precoSelecionado = unidadeDefault?.valor_unitario ?? precoBase;
+    return { unitOptions, unidadeDefault, precoSelecionado };
+  }, [calcularPreco]);
 
   const handleSelect = (produto) => {
-    const precoBase = calcularPreco(produto);
-    const unidadeDefault = pickDefaultSaleUnit(produto, precoBase > 0 && (produto.preco_venda_padrao || 0) > 0 ? precoBase / (produto.preco_venda_padrao || 1) : 1);
-    const precoSelecionado = unidadeDefault?.valor_unitario ?? precoBase;
-    setProdutoSelecionado({ produto, preco: precoSelecionado, unidadeSelecionada: unidadeDefault });
+    const { unitOptions, unidadeDefault, precoSelecionado } = getUnitContext(produto);
+    setProdutoSelecionado({ produto, preco: precoSelecionado, unidadeSelecionada: unidadeDefault, unitOptions });
   };
 
-  const handleConfirmQtd = (qtd, novoPreco) => {
+  const handleConfirmQtd = (qtd, novoPreco, unidadeEscolhida) => {
     const { produto, preco, unidadeSelecionada } = produtoSelecionado;
-    onSetQtd(produto, novoPreco ?? preco, qtd, unidadeSelecionada);
+    const unidadeFinal = unidadeEscolhida || unidadeSelecionada;
+    onSetQtd(produto, novoPreco ?? preco, qtd, unidadeFinal);
     setProdutoSelecionado(null);
     // Manter o search para continuar adicionando itens
     setTimeout(() => searchRef.current?.focus(), 50);
@@ -271,19 +309,15 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
           </div>
         ) : (
           filtrados.map(p => {
-            const preco = calcularPreco(p);
-            const unidadeSelecionada = pickDefaultSaleUnit(
-              p,
-              preco > 0 && (p.preco_venda_padrao || 0) > 0 ? preco / (p.preco_venda_padrao || 1) : 1
-            );
-            const precoExibicao = unidadeSelecionada?.valor_unitario ?? preco;
+            const { unitOptions, unidadeDefault, precoSelecionado } = getUnitContext(p);
             const item = itens.find(i => i.id === p.id);
             return (
               <ProdutoLinha
                 key={p.id}
                 produto={p}
-                preco={precoExibicao}
-                unidadeSelecionada={unidadeSelecionada}
+                preco={precoSelecionado}
+                unidadeSelecionada={unidadeDefault}
+                unitOptions={unitOptions}
                 qtdNoCarrinho={item?.qtd || 0}
                 onSelect={handleSelect}
               />
@@ -326,6 +360,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
           qtdAtual={itens.find(i => i.id === produtoSelecionado.produto.id)?.qtd || 0}
           onConfirm={handleConfirmQtd}
           unidadeSelecionada={produtoSelecionado.unidadeSelecionada}
+          unitOptions={produtoSelecionado.unitOptions}
           onClose={() => setProdutoSelecionado(null)}
         />
       )}
@@ -386,11 +421,18 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
 
   const handleSelectItem = (item) => {
     const produto = produtos.find(p => p.id === item.id);
-    if (produto) setEditandoItem({ produto, preco: item.preco_unit });
+    if (!produto) return;
+    const precoBase = calcularPreco(produto);
+    const mult = precoBase > 0 && (produto.preco_venda_padrao || 0) > 0
+      ? precoBase / (produto.preco_venda_padrao || 1)
+      : 1;
+    const unitOptions = buildSaleUnitOptions(produto, mult);
+    const unidadeSelecionada = unitOptions.find((opt) => opt.unidade === item.unidade) || pickDefaultSaleUnit(produto, mult);
+    setEditandoItem({ produto, preco: item.preco_unit, unitOptions, unidadeSelecionada });
   };
 
-  const handleConfirmQtd = (qtd, novoPreco) => {
-    onSetQtd(editandoItem.produto, novoPreco ?? editandoItem.preco, qtd);
+  const handleConfirmQtd = (qtd, novoPreco, unidadeEscolhida) => {
+    onSetQtd(editandoItem.produto, novoPreco ?? editandoItem.preco, qtd, unidadeEscolhida || editandoItem.unidadeSelecionada);
     setEditandoItem(null);
   };
 
@@ -524,6 +566,8 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           preco={editandoItem.preco}
           qtdAtual={itens.find(i => i.id === editandoItem.produto.id)?.qtd || 0}
           onConfirm={handleConfirmQtd}
+          unidadeSelecionada={editandoItem.unidadeSelecionada}
+          unitOptions={editandoItem.unitOptions}
           onClose={() => setEditandoItem(null)}
         />
       )}

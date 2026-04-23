@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, Package, Boxes, Loader2, ChevronRight, Calculator, ArrowDownAZ, ArrowUpDown } from 'lucide-react';
+import { Search, Package, Boxes, Loader2, Calculator } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
 import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
 import { formatEstoqueApresentacao, hasAlternativeUnits } from '@/lib/productUnits';
@@ -90,48 +89,6 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
   );
 }
 
-// ── Cabeçalho de grupo ─────────────────────────────────────────────────────────
-function GroupHeader({ row, isExpanded, onToggle }) {
-  const isRoot = row.level === 1;
-
-  return (
-    <button
-      onClick={onToggle}
-      className={`w-full flex items-center gap-3 py-3 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 ${
-        isRoot
-          ? 'px-4 bg-gray-50 dark:bg-gray-800/50'
-          : 'pl-10 pr-4 bg-white dark:bg-gray-900'
-      }`}
-      style={{ boxSizing: 'border-box' }}
-    >
-      <ChevronRight
-        className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-      />
-      <span className={`flex-1 min-w-0 truncate ${
-        isRoot
-          ? 'text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wider'
-          : 'text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wide'
-      }`}>
-        {row.label}
-      </span>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {row.criticalCount > 0 && (
-          <span className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
-            {row.criticalCount}⚠
-          </span>
-        )}
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-          isRoot
-            ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
-        }`}>
-          {row.count}
-        </span>
-      </div>
-    </button>
-  );
-}
-
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function TabelaPrecosConsulta() {
   const [produtos, setProdutos] = useState([]);
@@ -139,10 +96,8 @@ export default function TabelaPrecosConsulta() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
   const [tabelas, setTabelas] = useState([]);
-  const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [showOrcamento, setShowOrcamento] = useState(false);
   const [empresa, setEmpresa] = useState(null);
-  const [ordenarAlfabetico, setOrdenarAlfabetico] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -151,7 +106,7 @@ export default function TabelaPrecosConsulta() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [user, tabelasData, produtosData, empresaData] = await Promise.all([
+      const [, tabelasData, produtosData, empresaData] = await Promise.all([
         base44.auth.me(),
         base44.entities.TabelaPreco.filter({ ativo: true }),
         base44.entities.Produto.filter({ ativo: true }, '-created_date'),
@@ -179,38 +134,13 @@ export default function TabelaPrecosConsulta() {
         p.codigo_barras?.toLowerCase().includes(termo)
       );
     }
-    if (ordenarAlfabetico) {
-      lista = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
-    }
-    return lista;
-  }, [produtos, searchTerm, ordenarAlfabetico]);
+    return [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+  }, [produtos, searchTerm]);
 
   const calcularPreco = useCallback(
     (produto) => calcularPrecoVendaTabela(produto, tabelaSelecionada),
     [tabelaSelecionada]
   );
-
-  // ── Tree engine ──────────────────────────────────────────────────────────────
-  const tree = useTreeGrid(produtosFiltrados);
-
-  useEffect(() => {
-    if (tree && tree.length > 0) {
-      setExpandedKeys(buildExpandedForLevel(tree, 1));
-    }
-  }, [tree]);
-
-  const rows = useMemo(() => {
-    const all = flattenTree(tree, expandedKeys);
-    return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys]);
-
-  const handleToggle = useCallback((key) => {
-    setExpandedKeys(prev => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }, []);
 
   if (loading) {
     return (
@@ -235,18 +165,9 @@ export default function TabelaPrecosConsulta() {
               {searchTerm && ` · "${searchTerm}"`}
             </p>
           </div>
-          <button
-            onClick={() => setOrdenarAlfabetico(v => !v)}
-            title={ordenarAlfabetico ? 'Ordem padrão' : 'Ordenar A→Z'}
-            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-medium transition-all active:scale-95 ${
-              ordenarAlfabetico
-                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            {ordenarAlfabetico ? <ArrowDownAZ className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
-            <span>{ordenarAlfabetico ? 'A→Z' : 'Ordenar'}</span>
-          </button>
+          <span className="px-3 py-2 rounded-2xl text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            Ordem alfabética (A→Z)
+          </span>
         </div>
 
         {/* Seletor de tabela */}
@@ -305,9 +226,9 @@ export default function TabelaPrecosConsulta() {
         empresa={empresa}
       />
 
-      {/* Lista hierárquica com scroll independente */}
+      {/* Lista simples em ordem alfabética */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        {rows.length === 0 ? (
+        {produtosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400">
             <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-3">
               <Package className="w-7 h-7 text-gray-300 dark:text-gray-600" />
@@ -317,23 +238,14 @@ export default function TabelaPrecosConsulta() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {rows.map(row =>
-              row.type === 'group' ? (
-                <GroupHeader
-                  key={row.key}
-                  row={row}
-                  isExpanded={expandedKeys.has(row.key)}
-                  onToggle={() => handleToggle(row.key)}
-                />
-              ) : (
-                <SkuCard
-                  key={row.key}
-                  row={row}
-                  calcularPreco={calcularPreco}
-                  tabelaSelecionada={tabelaSelecionada}
-                />
-              )
-            )}
+            {produtosFiltrados.map(produto => (
+              <SkuCard
+                key={produto.id}
+                row={{ produto }}
+                calcularPreco={calcularPreco}
+                tabelaSelecionada={tabelaSelecionada}
+              />
+            ))}
           </div>
         )}
       </div>

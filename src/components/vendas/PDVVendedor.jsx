@@ -1094,8 +1094,7 @@ export default function PDVVendedor() {
                   {produtosSugeridos.map((produto, index) => {
                 const mult = tabelaPreco?.fator_ajuste || 1;
                 const opcoesVenda = buildSaleUnitOptions(produto, mult);
-                const pref = String(produto?.unidade_apresentacao_default || '').trim().toUpperCase();
-                const saleOpt = pref ? (opcoesVenda.find((o) => o.unidade === pref) || opcoesVenda[0]) : opcoesVenda[0];
+                const saleOpt = pickDefaultSaleUnit(produto, mult) || opcoesVenda[0];
                 const precoTabela = saleOpt?.valor_unitario ?? produto.preco_venda_padrao * mult;
                 const variasUnidades = opcoesVenda.length > 1;
                 const estoqueStatus = produto.estoque_atual <= 0 ? 'sem' : produto.estoque_atual <= 5 ? 'baixo' : 'ok';
