@@ -113,6 +113,8 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
               preco_minimo: nextItem.preco_minimo,
               quantidade: Number(item.quantidade || 0) + Number(nextItem.quantidade || 0),
               preco_unitario: nextItem.preco_unitario,
+              unidade: item.unidade || nextItem.unidade,
+              fator_conversao: item.fator_conversao ?? nextItem.fator_conversao,
             })
           : item);
       }
@@ -170,7 +172,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
       <div class="top">
         <div>
           <h1>Orçamento rápido</h1>
-          <div class="muted">${Number(summary.quantidadeItens || 0)} unidades · ${items.length} itens</div>
+          <div class="muted">${Number(summary.quantidadeItens || 0)} qtd · ${items.length} itens</div>
         </div>
         <div class="total">
           <div class="muted">Total</div>
@@ -182,7 +184,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
           <div class="item">
             <div>
               <div class="item-name">${item.produto_nome}</div>
-              <div class="item-meta">${item.quantidade} x ${Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+              <div class="item-meta">${item.quantidade} ${item.unidade || 'UN'} × ${Number(item.preco_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
             </div>
             <div class="item-total">${Number(item.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
           </div>
@@ -280,7 +282,7 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
             </button>
             <div className="text-center">
               <p className="text-sm font-semibold text-gray-900 dark:text-white font-glacial">Carrinho</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{summary.quantidadeItens} un · {items.length} itens</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">{summary.quantidadeItens} qtd · {items.length} itens</p>
             </div>
             <div className="w-9" />
           </div>

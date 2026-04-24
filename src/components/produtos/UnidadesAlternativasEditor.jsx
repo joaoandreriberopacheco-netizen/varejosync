@@ -4,9 +4,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Boxes } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function UnidadesAlternativasEditor({ unidades = [], unidadePrincipal = 'UN', onChange }) {
   const handleItemChange = (index, field, value) => {
+    if (field === 'fator_conversao') {
+      const num = typeof value === 'number' ? value : parseFloat(value);
+      if (Number.isFinite(num) && num === 1) {
+        toast.error('Alternativa não pode ter fator 1. A unidade base já é fator 1.');
+        return;
+      }
+    }
     const next = [...unidades];
     next[index] = { ...next[index], [field]: value };
     onChange(next);
@@ -15,7 +23,7 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
   const handleAdd = () => {
     onChange([
       ...unidades,
-      { unidade: '', fator_conversao: 1, preco_venda: 0, rotulo: '', ajuste_percentual: 0, ativo: true },
+      { unidade: '', fator_conversao: 2, preco_venda: 0, rotulo: '', ajuste_percentual: 0, ativo: true },
     ]);
   };
 

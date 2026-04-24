@@ -378,7 +378,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Planilha dedicada: slots Emb.1–5 (rótulo, sigla, fator, ajuste %) e unidade de apresentação PDV.
+              Planilha dedicada: <strong>Emb.1</strong> = unidade base (fator 1); <strong>Emb.2–5</strong> = alternativas com fator em relação à Emb.1; colunas de unidade comercial, espelho comercial e logística (siglas).
             </p>
             <ExportarEmbalagensPlanilha />
           </div>

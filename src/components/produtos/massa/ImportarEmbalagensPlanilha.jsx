@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
-import { extrairUnidadesAlternativasDosSlots } from './embalagensPlanilhaUtils';
+import { parseEmbalagensPlanilhaImport } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
 function getCellValue(cell) {
@@ -29,13 +29,6 @@ function normalizarUnidadesAlternativas(unidades = []) {
     preco_venda: Number(u?.preco_venda) || 0,
     ativo: Boolean(u?.ativo),
   }));
-}
-
-function resolverUnidadePrincipalPorFator(unidades = [], fallback = 'UN') {
-  const fatorOne = unidades.filter((u) => Number(u?.fator_conversao) === 1);
-  if (fatorOne.length === 0) return normalizarTexto(fallback || 'UN');
-  if (fatorOne.length === 1) return normalizarTexto(fatorOne[0]?.unidade);
-  return null;
 }
 
 export default function ImportarEmbalagensPlanilha({ onParsed }) {
@@ -79,7 +72,9 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
         const label = (getCellValue(cell) || '').toString().trim();
-        const colConfig = COLUNAS_SOMENTE_EMBALAGENS.find((c) => c.label === label);
+        const colConfig = COLUNAS_SOMENTE_EMBALAGENS.find(
+          (c) => c.label === label || (c.altLabels || []).includes(label),
+        );
         if (colConfig) colIndexMap[colConfig.key] = colNumber;
       });
 
@@ -127,21 +122,12 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
         }
 
-        const altFromSlots = extrairUnidadesAlternativasDosSlots(dadosExtraidos);
         const apresentacao = dadosExtraidos.unidade_apresentacao_default;
         const showComercial = dadosExtraidos.unidade_show_comercial;
         const showLogistico = dadosExtraidos.unidade_show_logistica;
         const temApresentacao = apresentacao != null && String(apresentacao).trim() !== '';
         const temShowComercial = showComercial != null && String(showComercial).trim() !== '';
         const temShowLogistico = showLogistico != null && String(showLogistico).trim() !== '';
-        const temEmb = altFromSlots.length > 0;
-
-        // Linha sem alterações de embalagem/apresentação/show logístico:
-        // ignorar silenciosamente para permitir atualização parcial da planilha.
-        if (!temEmb && !temApresentacao && !temShowComercial && !temShowLogistico) {
-          linhasIgnoradasSemMudanca += 1;
-          continue;
-        }
 
         if (erroNaLinha) continue;
 
@@ -158,40 +144,50 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           continue;
         }
 
-        const dados = {};
-        if (altFromSlots.length > 0) dados.unidades_alternativas = altFromSlots;
-
         const atualPrincipal = normalizarTexto(produto.unidade_principal || 'UN');
+        const parsed = parseEmbalagensPlanilhaImport(dadosExtraidos, { fallbackPrincipal: atualPrincipal });
+        if (parsed.error) {
+          erros.push({
+            linha: i,
+            mensagem: `Linha ${i}: ${parsed.error}`,
+          });
+          continue;
+        }
+
+        const temEmb = parsed.hadSlotPayload;
+
+        // Linha sem alterações de embalagem/apresentação/show logístico:
+        if (!temEmb && !temApresentacao && !temShowComercial && !temShowLogistico) {
+          linhasIgnoradasSemMudanca += 1;
+          continue;
+        }
+
+        const dados = {};
+        if (parsed.hadSlotPayload) {
+          dados.unidades_alternativas = parsed.alternativas;
+          if (parsed.emb1Explicit) {
+            dados.unidade_principal = parsed.principalSigla;
+          }
+        }
+
         const atualApresentacao = normalizarTexto(produto.unidade_apresentacao_default);
         const atualShowComercial = normalizarTexto(produto.unidade_show_comercial);
         const atualShowLogistico = normalizarTexto(produto.unidade_show_logistica);
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
-        const novoAlt = altFromSlots.length > 0 ? normalizarUnidadesAlternativas(altFromSlots) : atualAlt;
-        const principalResolvida = resolverUnidadePrincipalPorFator(novoAlt, atualPrincipal);
-
-        if (!principalResolvida) {
-          erros.push({
-            linha: i,
-            mensagem: `Linha ${i}: existe mais de uma unidade com fator 1. Mantenha apenas uma para definir a unidade principal.`,
-          });
-          continue;
-        }
+        const novoAlt = parsed.hadSlotPayload ? normalizarUnidadesAlternativas(parsed.alternativas) : atualAlt;
+        const principalResolvida = parsed.hadSlotPayload ? parsed.principalSigla : atualPrincipal;
 
         const unidadesValidas = new Set([
           principalResolvida,
           ...novoAlt.map((u) => normalizarTexto(u.unidade)),
         ].filter(Boolean));
 
-        if (principalResolvida !== atualPrincipal) {
-          dados.unidade_principal = principalResolvida;
-        }
-
         if (temShowComercial) {
           const showComercialNormalizado = normalizarTexto(showComercial);
           if (!unidadesValidas.has(showComercialNormalizado)) {
             erros.push({
               linha: i,
-              mensagem: `Linha ${i}: Show Comercial "${showComercialNormalizado}" não existe nas unidades válidas da linha.`,
+              mensagem: `Linha ${i}: Espelho comercial "${showComercialNormalizado}" não existe nas unidades válidas da linha.`,
             });
             continue;
           }
@@ -206,7 +202,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           if (!unidadesValidas.has(showNormalizado)) {
             erros.push({
               linha: i,
-              mensagem: `Linha ${i}: Show Logístico "${showNormalizado}" não existe nas unidades válidas da linha.`,
+              mensagem: `Linha ${i}: Unidade logística "${showNormalizado}" não existe nas unidades válidas da linha.`,
             });
             continue;
           }
@@ -224,11 +220,14 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           if (!unidadesValidas.has(apresentacaoNormalizada)) {
             erros.push({
               linha: i,
-              mensagem: `Linha ${i}: Apresentação PDV "${apresentacaoNormalizada}" não existe nas unidades válidas da linha.`,
+              mensagem: `Linha ${i}: Unidade comercial "${apresentacaoNormalizada}" não existe nas unidades válidas da linha.`,
             });
             continue;
           }
           dados.unidade_apresentacao_default = apresentacaoNormalizada;
+          if (!temShowComercial) {
+            dados.unidade_show_comercial = apresentacaoNormalizada;
+          }
         } else if (!atualApresentacao || !unidadesValidas.has(atualApresentacao)) {
           const showComercialResolvido = normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
           dados.unidade_apresentacao_default = showComercialResolvido || principalResolvida;

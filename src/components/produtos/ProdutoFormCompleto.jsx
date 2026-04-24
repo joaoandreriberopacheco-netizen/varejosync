@@ -169,9 +169,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const handleChange = (field, value) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
-      if (field === 'unidade_show_comercial') {
-        // Apresentação PDV acompanha o show comercial por regra de negócio.
-        updated.unidade_apresentacao_default = String(value || '').trim().toUpperCase();
+      if (field === 'unidade_show_comercial' || field === 'unidade_apresentacao_default') {
+        const u = String(value || '').trim().toUpperCase();
+        updated.unidade_apresentacao_default = u;
+        updated.unidade_show_comercial = u;
       }
       // Auto-gerar nome ao mudar qualquer campo hierárquico
       if (field.startsWith('campo_hierarquico_')) {
@@ -194,13 +195,22 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   useEffect(() => {
     setFormData((prev) => {
       const principal = String(prev.unidade_principal || 'UN').trim().toUpperCase();
-      const validSet = new Set([principal, ...(prev.unidades_alternativas || [])
-        .map((u) => String(u?.unidade || '').trim().toUpperCase())
-        .filter(Boolean)]);
-      const showComercial = String(prev.unidade_show_comercial || '').trim().toUpperCase() || principal;
-      const showComercialValido = validSet.has(showComercial) ? showComercial : principal;
+      const alternativasNormalizadas = (prev.unidades_alternativas || []).map((u) => ({
+        unidade: String(u?.unidade || '').trim().toUpperCase(),
+        rotulo: String(u?.rotulo || '').trim().toUpperCase(),
+      })).filter((u) => u.unidade);
+      const validSet = new Set([principal, ...alternativasNormalizadas.map((u) => u.unidade)]);
+      const resolverUnidadeValida = (valor) => {
+        const normalizado = String(valor || '').trim().toUpperCase();
+        if (!normalizado) return '';
+        if (validSet.has(normalizado)) return normalizado;
+        const porRotulo = alternativasNormalizadas.find((u) => u.rotulo && u.rotulo === normalizado);
+        return porRotulo?.unidade || '';
+      };
+      const showComercial = String(prev.unidade_apresentacao_default || prev.unidade_show_comercial || '').trim().toUpperCase() || principal;
+      const showComercialValido = resolverUnidadeValida(showComercial) || principal;
       const showLogistico = String(prev.unidade_show_logistica || '').trim().toUpperCase();
-      const showLogisticoValido = showLogistico && validSet.has(showLogistico) ? showLogistico : '';
+      const showLogisticoValido = resolverUnidadeValida(showLogistico);
       if (
         prev.unidade_show_comercial === showComercialValido &&
         prev.unidade_show_logistica === showLogisticoValido &&
@@ -213,7 +223,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade_apresentacao_default: showComercialValido,
       };
     });
-  }, [formData.unidade_principal, formData.unidades_alternativas]);
+  }, [formData.unidade_principal, formData.unidades_alternativas, formData.unidade_apresentacao_default]);
 
 
 
@@ -338,6 +348,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         throw new Error('Já existe um produto com a mesma descrição. Ajuste modelo, cor, tamanho ou outro campo antes de salvar.');
       }
 
+      const altsInvalidas = (formData.unidades_alternativas || []).filter(
+        (u) => u?.ativo !== false && Number(u?.fator_conversao) === 1,
+      );
+      if (altsInvalidas.length > 0) {
+        throw new Error('Unidade alternativa não pode ter fator 1. A base é sempre a unidade principal (fator 1).');
+      }
+
       // Converte campos de texto para maiúsculas antes de salvar
       const produtoData = {
         ...formData,
@@ -346,9 +363,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         marca: formData.marca?.toUpperCase(),
         categoria_nome: categoria?.nome?.toUpperCase() || '',
         fornecedor_padrao_codigo: formData.fornecedor_padrao_codigo?.toUpperCase(),
-        unidade_show_comercial: String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase(),
+        unidade_show_comercial: String(
+          formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
+        ).trim().toUpperCase(),
         unidade_show_logistica: String(formData.unidade_show_logistica || '').trim().toUpperCase(),
-        unidade_apresentacao_default: String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase(),
+        unidade_apresentacao_default: String(
+          formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
+        ).trim().toUpperCase(),
         unidade_show_ativa: formData.unidade_show_ativa !== false,
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,
@@ -898,7 +919,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               </div>
 
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade Principal</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade base (fator 1)</Label>
                 <Input 
                   value={formData.unidade_principal} 
                   onChange={e => handleChange('unidade_principal', e.target.value.toUpperCase())} 
@@ -926,21 +947,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 />
                 <div>
                   <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
-                    Usar unidade show no sistema
+                    Usar unidade comercial no sistema
                   </Label>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Quando desativado, o produto volta a exibir unidade legada (principal/fator 1) na tela de produtos e formulários.
+                    Quando desativado, listagens e fluxos usam só a unidade base (fator 1), sem conversão para a unidade comercial.
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Show Comercial (Sistema + PDV)</Label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Predomina em todo o sistema. A apresentação PDV espelha automaticamente este valor.</p>
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade comercial (sigla)</Label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Exibida em todo o sistema (PDV, compras, relatórios). Deve ser uma das siglas da base ou das alternativas.</p>
               <Select
-                value={String(formData.unidade_show_comercial || formData.unidade_principal || 'UN').trim().toUpperCase()}
-                onValueChange={(v) => handleChange('unidade_show_comercial', v)}
+                value={String(
+                  formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
+                ).trim().toUpperCase()}
+                onValueChange={(v) => handleChange('unidade_apresentacao_default', v)}
               >
                 <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md" disabled={formData.unidade_show_ativa === false}>
                   <SelectValue placeholder="Selecione a unidade comercial" />
@@ -952,8 +975,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
 
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Show Logístico (Boats/Fluvial)</Label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Exclusivo para contexto logístico. Se vazio, Boats usa fallback para show comercial.</p>
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade logística (Boats / Itinerário fluvial)</Label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Sigla usada em embarques e logística. Se vazio, o sistema usa a unidade comercial.</p>
               <Select
                 value={String(formData.unidade_show_logistica || '').trim().toUpperCase() || '__vazio__'}
                 onValueChange={(v) => handleChange('unidade_show_logistica', v === '__vazio__' ? '' : v)}
@@ -962,7 +985,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <SelectValue placeholder="Vazio (usar fallback)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__vazio__">Vazio (fallback para show comercial)</SelectItem>
+                  <SelectItem value="__vazio__">Vazio (usa unidade comercial)</SelectItem>
                   {unitOptions.map((sigla) => <SelectItem key={`log-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
                 </SelectContent>
               </Select>

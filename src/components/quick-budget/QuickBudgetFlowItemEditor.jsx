@@ -3,6 +3,7 @@ import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PrecoVendaTabelaLinhas, getMinimumPrice } from './quickBudgetUtils';
+import { pickDefaultSaleUnit } from '@/lib/productUnits';
 
 export default function QuickBudgetFlowItemEditor({
   selectedProduct,
@@ -40,6 +41,7 @@ export default function QuickBudgetFlowItemEditor({
 
   const isFreePrice = !!selectedProduct.preco_livre;
   const pisoVenda = getMinimumPrice(selectedProduct, tabelaPreco);
+  const saleUnit = pickDefaultSaleUnit(selectedProduct, 1);
 
   return (
     <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm p-4 space-y-4">
@@ -69,6 +71,9 @@ export default function QuickBudgetFlowItemEditor({
       <div className="space-y-3">
         <div className={`rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm p-3 ${stage !== 'quantity' ? 'opacity-60' : ''}`}>
           <p className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">Quantidade</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
+            Unidade comercial: <span className="font-semibold text-gray-700 dark:text-gray-200">{saleUnit?.unidade || selectedProduct.unidade_principal || 'UN'}</span>
+          </p>
           <Input
             ref={quantityInputRef}
             type="number"

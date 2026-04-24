@@ -29,6 +29,7 @@ export function normalizeAlternativeUnits(product) {
     }));
 }
 
+/** Unidade base (fator 1): preferir alternativa com fator 1 (legado); senão `unidade_principal` (contrato Emb.1 / formulário). */
 export function resolvePrimaryFromFactorOne(product, fallbackUnit = "UN") {
   const alternativas = normalizeAlternativeUnits(product);
   const fatorUm = alternativas.filter((item) => normalizeNumber(item.fator_conversao, 0) === 1);

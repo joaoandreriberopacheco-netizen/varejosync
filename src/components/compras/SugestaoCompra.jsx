@@ -10,6 +10,7 @@ import SearchableFilterSelect from '@/components/compras/SearchableFilterSelect'
 import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Truck, Search, Package, X, SlidersHorizontal } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { dataHoje } from '@/components/utils/dateUtils';
+import { resolveCommercialDisplay } from '@/lib/productUnits';
 
 export default function SugestaoCompra() {
   const [produtos, setProdutos] = useState([]);
@@ -53,6 +54,11 @@ export default function SugestaoCompra() {
     
     const q = Math.round(need / pack) * pack;
     return q === 0 ? pack : q;
+  };
+
+  const sugestaoDisplay = (produto) => {
+    const qBase = calcQuantity(produto);
+    return resolveCommercialDisplay(produto, qBase, produto.unidade_principal || 'UN');
   };
 
   const loadData = async () => {
@@ -136,12 +142,19 @@ export default function SugestaoCompra() {
       if (!bySupplier[sid]) {
         bySupplier[sid] = { fornecedor_id: sid, fornecedor_nome: supplier?.nome || 'N/A', itens: [] };
       }
+      const qBase = calcQuantity(p);
+      const disp = resolveCommercialDisplay(p, qBase, p.unidade_principal || 'UN');
+      const custoBase = p.preco_custo_calculado || p.valor_compra || 0;
+      const custoUnitCompra = custoBase * (disp.fator_conversao || 1);
       bySupplier[sid].itens.push({
         produto_id: p.id,
         produto_nome: p.nome,
-        quantidade: calcQuantity(p),
-        custo_unitario: p.preco_custo_calculado || 0,
-        total: calcQuantity(p) * (p.preco_custo_calculado || 0)
+        quantidade: disp.quantidade,
+        quantidade_base: qBase,
+        fator_conversao: disp.fator_conversao,
+        unidade: disp.unidade,
+        custo_unitario: custoUnitCompra,
+        total: qBase * custoBase,
       });
     });
 
@@ -182,12 +195,18 @@ export default function SugestaoCompra() {
         titulo: `Cotação - ${new Date().toLocaleDateString()}`,
         status: 'Rascunho',
         data_abertura: dataHoje(),
-        itens: selected.map(p => ({
-          produto_id: p.id,
-          produto_nome: p.nome,
-          quantidade: calcQuantity(p),
-          unidade: p.unidade_compra || 'UN'
-        })),
+        itens: selected.map((p) => {
+          const qBase = calcQuantity(p);
+          const disp = resolveCommercialDisplay(p, qBase, p.unidade_principal || 'UN');
+          return {
+            produto_id: p.id,
+            produto_nome: p.nome,
+            quantidade: disp.quantidade,
+            unidade: disp.unidade,
+            quantidade_base: qBase,
+            fator_conversao: disp.fator_conversao,
+          };
+        }),
         fornecedores: suppliers.map(id => {
           const f = fornecedores.find(x => x.id === id);
           return { fornecedor_id: id, fornecedor_nome: f?.nome || 'N/A', status_envio: 'Pendente' };
@@ -434,8 +453,8 @@ export default function SugestaoCompra() {
                     ) : '-'}
                   </td>
                   <td className="p-3 text-right">
-                    <span className="font-bold text-gray-700 dark:text-gray-200">{calcQuantity(p)}</span>
-                    <span className="text-gray-400 text-xs ml-2">{p.unidade_compra || 'UN'}</span>
+                    <span className="font-bold text-gray-700 dark:text-gray-200">{sugestaoDisplay(p).quantidade}</span>
+                    <span className="text-gray-400 text-xs ml-2">{sugestaoDisplay(p).unidade}</span>
                   </td>
                 </tr>
               ))}
@@ -452,9 +471,9 @@ export default function SugestaoCompra() {
               <div className="flex-1">
                 <div className="flex justify-between items-start">
                   <h4 className="font-medium text-gray-900 dark:text-gray-100">{p.nome}</h4>
-                  <div className="text-right">
-                    <div className="text-sm font-bold">{calcQuantity(p)}</div>
-                    <div className="text-xs text-gray-400">{p.unidade_compra || 'UN'}</div>
+                    <div className="text-right">
+                    <div className="text-sm font-bold">{sugestaoDisplay(p).quantidade}</div>
+                    <div className="text-xs text-gray-400">{sugestaoDisplay(p).unidade}</div>
                   </div>
                 </div>
                 {p.quantidade_pendente > 0 && (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
+import { calculateBaseQuantity, pickDefaultSaleUnit } from '@/lib/productUnits';
 
 export function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -79,6 +80,12 @@ export function buildQuickBudgetItem(produto, tabelaPreco) {
   const quantidade = 1;
   const precoLista = Number(produto.preco_venda_padrao || 0);
   const temAjusteTabela = !!(tabelaPreco && tabelaPreco.fator_ajuste !== 1);
+  const unitPick = pickDefaultSaleUnit(produto, 1) || {
+    unidade: String(produto.unidade_principal || 'UN').trim().toUpperCase(),
+    fator_conversao: 1,
+  };
+  const fator = Number(unitPick.fator_conversao) || 1;
+  const quantidadeBase = calculateBaseQuantity(quantidade, fator);
   return {
     produto_id: produto.id,
     produto_nome: produto.nome,
@@ -92,6 +99,9 @@ export function buildQuickBudgetItem(produto, tabelaPreco) {
     preco_livre: !!produto.preco_livre,
     desconto: 0,
     quantidade,
+    unidade: unitPick.unidade,
+    fator_conversao: fator,
+    quantidade_base: quantidadeBase,
     total: precoTabela * quantidade,
   };
 }
@@ -103,11 +113,13 @@ export function recalculateItem(item) {
   const precoBase = Number(item.preco_unitario || 0);
   const preco = Math.max(precoBase, precoMin);
   const subtotal = quantidade * preco;
+  const fator = Number(item.fator_conversao) || 1;
   return {
     ...item,
     quantidade,
     desconto,
     preco_unitario: preco,
+    quantidade_base: calculateBaseQuantity(quantidade, fator),
     total: Math.max(subtotal - desconto, 0),
   };
 }

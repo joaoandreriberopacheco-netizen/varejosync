@@ -14,7 +14,7 @@ export default function QuickBudgetCartView({ items, summary, onClose, onShare, 
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Carrinho</p>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{summary.quantidadeItens} un · {items.length} itens</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{summary.quantidadeItens} qtd · {items.length} itens</p>
           </div>
           <div className="text-right">
             {summary.desconto > 0 && <p className="text-xs text-gray-400 line-through">{formatCurrency(summary.subtotal)}</p>}
@@ -28,7 +28,7 @@ export default function QuickBudgetCartView({ items, summary, onClose, onShare, 
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.produto_nome}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                  <span>{item.quantidade} ×</span>
+                  <span>{item.quantidade} {item.unidade || 'UN'} ×</span>
                   {item.tem_ajuste_tabela && Number(item.preco_venda_lista) > 0 && (
                     <span className="line-through text-gray-400">{formatCurrency(item.preco_venda_lista)}</span>
                   )}

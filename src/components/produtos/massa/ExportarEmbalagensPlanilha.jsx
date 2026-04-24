@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
-import { normalizeAlternativeUnits } from '@/lib/productUnits';
+import { normalizeAlternativeUnits, normalizeUnitCode } from '@/lib/productUnits';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 function produtoParaLinhaEmbalagens(p) {
@@ -13,10 +13,15 @@ function produtoParaLinhaEmbalagens(p) {
     codigo_interno: p.codigo_interno || '',
     nome: p.nome || '',
   };
+  const principal = normalizeUnitCode(p.unidade_principal) || 'UN';
+  row.emb1_rotulo = '';
+  row.emb1_sigla = principal;
+  row.emb1_fator = 1;
+  row.emb1_ajuste = 0;
   const alts = normalizeAlternativeUnits(p);
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 4; i++) {
     const a = alts[i];
-    const n = i + 1;
+    const n = i + 2;
     row[`emb${n}_rotulo`] = a?.rotulo ?? '';
     row[`emb${n}_sigla`] = a?.unidade ?? '';
     row[`emb${n}_fator`] = a?.fator_conversao ?? '';

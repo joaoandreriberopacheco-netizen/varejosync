@@ -6,11 +6,27 @@
 /** Até 5 alternativas de venda — usar planilha separada “Embalagens / unidades”. */
 export const EMB_SLOT_COLS = [];
 for (let n = 1; n <= 5; n++) {
+  const siglaLabel = n === 1 ? `Emb.${n} Sigla (base, fator 1)` : `Emb.${n} Sigla`;
+  const fatorLabel = n === 1 ? `Emb.${n} Fator (fixo 1)` : `Emb.${n} Fator (vs base)`;
   EMB_SLOT_COLS.push(
     { key: `emb${n}_rotulo`, label: `Emb.${n} Rótulo`, editavel: true, width: 18, tipo: 'string' },
-    { key: `emb${n}_sigla`, label: `Emb.${n} Sigla`, editavel: true, width: 12, tipo: 'string' },
-    { key: `emb${n}_fator`, label: `Emb.${n} Fator`, editavel: true, width: 12, tipo: 'numero' },
-    { key: `emb${n}_ajuste`, label: `Emb.${n} Ajuste %`, editavel: true, width: 14, tipo: 'numero' }
+    {
+      key: `emb${n}_sigla`,
+      label: siglaLabel,
+      altLabels: n === 1 ? [`Emb.${n} Sigla`] : [],
+      editavel: true,
+      width: 12,
+      tipo: 'string',
+    },
+    {
+      key: `emb${n}_fator`,
+      label: fatorLabel,
+      altLabels: n === 1 ? [`Emb.${n} Fator`] : [],
+      editavel: true,
+      width: 12,
+      tipo: 'numero',
+    },
+    { key: `emb${n}_ajuste`, label: `Emb.${n} Ajuste %`, editavel: true, width: 14, tipo: 'numero' },
   );
 }
 
@@ -20,9 +36,30 @@ export const COLUNAS_SOMENTE_EMBALAGENS = [
   { key: 'codigo_interno', label: 'Cód. Interno', editavel: false, width: 14, tipo: 'string' },
   { key: 'nome', label: 'Nome (referência)', editavel: false, width: 36, tipo: 'string' },
   ...EMB_SLOT_COLS,
-  { key: 'unidade_apresentacao_default', label: 'Apresentação PDV (sigla)', editavel: true, width: 22, tipo: 'string' },
-  { key: 'unidade_show_comercial', label: 'Show Comercial (sigla)', editavel: true, width: 22, tipo: 'string' },
-  { key: 'unidade_show_logistica', label: 'Show Logístico (sigla)', editavel: true, width: 22, tipo: 'string' },
+  {
+    key: 'unidade_apresentacao_default',
+    label: 'Unidade comercial (sigla)',
+    altLabels: ['Apresentação PDV (sigla)'],
+    editavel: true,
+    width: 22,
+    tipo: 'string',
+  },
+  {
+    key: 'unidade_show_comercial',
+    label: 'Espelho comercial (opcional)',
+    altLabels: ['Show Comercial (sigla)'],
+    editavel: true,
+    width: 22,
+    tipo: 'string',
+  },
+  {
+    key: 'unidade_show_logistica',
+    label: 'Unidade logística (sigla)',
+    altLabels: ['Show Logístico (sigla)'],
+    editavel: true,
+    width: 22,
+    tipo: 'string',
+  },
 ];
 
 export const COLUNAS_CONFIG = [
@@ -84,7 +121,14 @@ export const COLUNAS_CONFIG = [
   // --- Status ---
   { key: 'ativo',                   label: 'Ativo (SIM/NÃO)',        editavel: true,  width: 14, tipo: 'boolean' },
 
-  { key: 'unidade_apresentacao_default', label: 'Apresentação PDV (sigla)', editavel: true, width: 22, tipo: 'string' },
+  {
+    key: 'unidade_apresentacao_default',
+    label: 'Unidade comercial (sigla)',
+    altLabels: ['Apresentação PDV (sigla)'],
+    editavel: true,
+    width: 22,
+    tipo: 'string',
+  },
 
   // --- Verificação (somente leitura) ---
   { key: '_canon_snapshot',         label: '_base_hash',             editavel: false, width: 4, tipo: 'string', calculado: true },

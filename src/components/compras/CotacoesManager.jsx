@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
 
 export default function CotacoesManager() {
   const [cotacoes, setCotacoes] = useState([]);
@@ -188,14 +189,18 @@ export default function CotacoesManager() {
         };
         return next;
       }
+      const pu = pickDefaultPurchaseUnit(produto);
+      const unidade = pu?.unidade || produto.unidade_principal || 'UN';
+      const fator = pu?.fator_conversao ?? 1;
       return [
         ...prev,
         {
           produto_id: produto.id,
           produto_nome: produto.nome,
           quantidade: 1,
-          unidade: produto.unidade_principal || 'UN'
-        }
+          unidade,
+          fator_conversao: fator,
+        },
       ];
     });
   };

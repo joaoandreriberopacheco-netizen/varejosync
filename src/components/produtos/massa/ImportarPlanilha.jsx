@@ -56,7 +56,9 @@ export default function ImportarPlanilha({ onParsed }) {
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
         const label = (getCellValue(cell) || '').toString().trim();
-        const colConfig = COLUNAS_CONFIG.find(c => c.label === label);
+        const colConfig = COLUNAS_CONFIG.find(
+          (c) => c.label === label || (c.altLabels || []).includes(label),
+        );
         if (colConfig) colIndexMap[colConfig.key] = colNumber;
       });
 
