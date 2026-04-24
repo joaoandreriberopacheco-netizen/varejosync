@@ -587,7 +587,7 @@ Deno.serve(async (req) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       let itens = getItensRelatorio(pedido).map((item) => ({
         ...item,
-        _qtdEfetiva: Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0
+        _qtdEfetiva: Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0
       }));
 
       // Cabeçalho com valor ajustado
@@ -757,7 +757,7 @@ Deno.serve(async (req) => {
       // Para Pendência: filtrar apenas itens com quantidade pendente
       let itens = getItensRelatorio(pedido).map((item) => ({
         ...item,
-        _qtdMostrada: Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0
+        _qtdMostrada: Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0
       }));
 
       const valorHeader = isPendencia
