@@ -108,6 +108,93 @@ const getStatusProgress = (status) => {
   return STATUS_PROGRESS[key] ?? 1;
 };
 
+/** Alinha quantidade e sigla ao contracto de embalagens / unidade comercial (espelho de @/lib/productUnits). */
+const PDF_NN = (v, fb = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fb;
+};
+const PDF_NORM_CODE = (v) => String(v ?? '').trim().toUpperCase();
+const PDF_IS_SHOW = (p) => p?.unidade_show_ativa !== false;
+const PDF_NORM_ALTS = (p) =>
+  (Array.isArray(p?.unidades_alternativas) ? p.unidades_alternativas : [])
+    .filter((x) => x?.unidade && x?.ativo !== false)
+    .map((x) => ({
+      unidade: PDF_NORM_CODE(x.unidade),
+      fator_conversao: PDF_NN(x.fator_conversao, 1),
+      rotulo: typeof x.rotulo === 'string' ? x.rotulo.trim() : '',
+      ativo: x.ativo !== false,
+    }));
+const PDF_RESOLVE_PRIMARY = (p, fallbackUnit = 'UN') => {
+  const alts = PDF_NORM_ALTS(p);
+  const f1 = alts.filter((a) => PDF_NN(a.fator_conversao, 0) === 1);
+  const princAtual = PDF_NORM_CODE(p?.unidade_principal);
+  if (f1.length === 1) return f1[0].unidade;
+  if (f1.length > 1) {
+    const m = f1.find((a) => a.unidade === princAtual);
+    return m?.unidade || f1[0].unidade;
+  }
+  return princAtual || PDF_NORM_CODE(fallbackUnit) || 'UN';
+};
+const PDF_BUILD_PURCHASE_OPTS = (p) => {
+  const up = PDF_RESOLVE_PRIMARY(p, 'UN');
+  const custoBase = PDF_NN(p?.valor_compra, 0);
+  const princ = { unidade: up, fator_conversao: 1, valor_unitario: custoBase, is_primary: true };
+  const alts = PDF_NORM_ALTS(p).map((x) => ({
+    unidade: x.unidade,
+    fator_conversao: x.fator_conversao,
+    valor_unitario: custoBase * x.fator_conversao,
+    is_primary: false,
+    rotulo: x.rotulo,
+  }));
+  const seen = new Set();
+  const out = [princ, ...alts].filter((o) => {
+    if (!o.unidade || seen.has(o.unidade)) return false;
+    seen.add(o.unidade);
+    return true;
+  });
+  return out;
+};
+const PDF_RESOLVE_COMMERCIAL = (p, fallbackUnit = 'UN') => {
+  const opts = PDF_BUILD_PURCHASE_OPTS(p);
+  if (!opts.length) return PDF_NORM_CODE(fallbackUnit) || 'UN';
+  const rPrimary = PDF_RESOLVE_PRIMARY(p, opts[0]?.unidade || fallbackUnit);
+  if (!PDF_IS_SHOW(p)) return rPrimary || PDF_NORM_CODE(fallbackUnit) || 'UN';
+  const valids = new Set(opts.map((o) => o.unidade));
+  const pris = [p?.unidade_apresentacao_default, p?.unidade_show_comercial, rPrimary, fallbackUnit];
+  for (const pr of pris) {
+    const c = PDF_NORM_CODE(pr);
+    if (c && valids.has(c)) return c;
+  }
+  return opts[0]?.unidade || PDF_NORM_CODE(fallbackUnit) || 'UN';
+};
+const PDF_RESOLVE_COMMERCIAL_DISPLAY = (product, quantityBase, fallbackUnit = 'UN') => {
+  if (!PDF_IS_SHOW(product)) {
+    const u = PDF_RESOLVE_PRIMARY(product, fallbackUnit);
+    return { unidade: u, fator_conversao: 1, quantidade: PDF_NN(quantityBase, 0) };
+  }
+  const u = PDF_RESOLVE_COMMERCIAL(product, fallbackUnit);
+  const opts = PDF_BUILD_PURCHASE_OPTS(product);
+  const option = opts.find((o) => o.unidade === u) || opts[0] || null;
+  const f = PDF_NN(option?.fator_conversao, 1) || 1;
+  const qb = PDF_NN(quantityBase, 0);
+  const quantidade = f > 0 ? qb / f : qb;
+  return { unidade: u, fator_conversao: f, quantidade };
+};
+const PDF_PDV_PREFERIDO = (produto, item) => {
+  const op = PDF_BUILD_PURCHASE_OPTS(produto);
+  const principal = PDF_NORM_CODE(produto?.unidade_principal) || 'UN';
+  const raw = [produto?.unidade_apresentacao_default, item?.unidade_apresentacao_default, produto?.unidade_show_comercial, item?.unidade_show_comercial, item?.unidade_medida, 'UN']
+    .map((v) => PDF_NORM_CODE(v))
+    .filter(Boolean);
+  const mapA = (raw) => (raw === 'CAIXA' || raw === 'CAIXAS' ? 'CX' : raw === 'M²' || raw === 'M2' || raw === 'METRO QUADRADO' ? 'M2' : raw);
+  for (const c of raw) {
+    const a = mapA(c);
+    if (op.find((o) => o.unidade === a)) return a;
+  }
+  const naoP = op.find((o) => o.unidade !== principal);
+  return naoP?.unidade || principal;
+};
+
 const moeda = (valor = 0) =>
   `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const moedaSemSimbolo = (valor = 0) =>
@@ -134,6 +221,13 @@ const getQuantidadeRelatorio = (pedido) => {
   return itens.reduce((a, i) => a + (Number(i.quantidade) || Number(i.quantidade_embarcada) || Number(i.quantidade_pedida) || 0), 0);
 };
 const getItensRelatorio = (pedido) => pedido._display_itens || pedido.itens || [];
+/** Ordem alfabética estável por descrição do item (ou nome do produto em cache). */
+const sortItensAlfabeticamente = (itens, produtosMap) =>
+  [...itens].sort((a, b) => {
+    const na = String(a?.produto_nome || produtosMap[a?.produto_id]?.nome || '').toLocaleLowerCase('pt-BR');
+    const nb = String(b?.produto_nome || produtosMap[b?.produto_id]?.nome || '').toLocaleLowerCase('pt-BR');
+    return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
+  });
 const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_nome || 'Sem transportadora';
 const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
@@ -354,6 +448,19 @@ Deno.serve(async (req) => {
     };
 
     const scaledHeight = (value) => value * TEXT_VERTICAL_SCALE;
+
+    /** Barra de status (1–5 segmentos) — reutiliza desktop e mobile. */
+    const drawProgressBar = (status, barY) => {
+      const level = getStatusProgress(status);
+      const totalSegs = 5;
+      const segW = (CW - (totalSegs - 1) * 1) / totalSegs;
+      const sc = getStatusColors(status);
+      for (let s = 0; s < totalSegs; s++) {
+        const sx = M + s * (segW + 1);
+        doc.setFillColor(...(s < level ? sc.dot : [220, 225, 230]));
+        doc.roundedRect(sx, barY, segW, 1.5, 0.75, 0.75, 'F');
+      }
+    };
 
     // ════════════════════════════════════════════════════════════════════════
     //  HEADER
@@ -585,14 +692,41 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     const drawExpandido = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-      let itens = getItensRelatorio(pedido).map((item) => ({
-        ...item,
-        _qtdEfetiva: Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0
-      }));
+      const stPedido = pedido._display_status || pedido.status;
+      // Ordem alfabética + quantidade/sigla na unidade comercial (alinhado a embalagens / productUnits)
+      const itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
+        const prod = produtosMap[item.produto_id] || {};
+        const fatorItem = Number(item.fator_conversao) || 1;
+        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
+        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
+        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
+        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
+        return {
+          ...item,
+          quantidade: res.quantidade,
+          quantidade_embarcada: res.quantidade,
+          quantidade_pedida: res.quantidade,
+          unidade_medida: res.unidade,
+          fator_conversao: res.fator_conversao,
+          quantidade_base: qBase,
+          _qtdEfetiva: res.quantidade,
+        };
+      });
 
-      // Cabeçalho com valor ajustado
-      ensureSpace(34);
-      const sc = getStatusColors(normalizarStatusRelatorio(pedido._display_status || pedido.status));
+      // Cabeçalho + barra de progresso + 1ª linha da tabela na mesma página
+      const minPedidoH =
+        32 +
+        4.5 +
+        scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2) +
+        scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 2) +
+        14;
+      if (y + minPedidoH > pageH - 12) {
+        doc.addPage();
+        y = 14;
+      }
+
+      const sc = getStatusColors(normalizarStatusRelatorio(stPedido));
       doc.setFillColor(...C.panel);
       doc.roundedRect(M, y, CW, 28, 4, 4, 'F');
       doc.setFillColor(...sc.dot);
@@ -607,7 +741,7 @@ Deno.serve(async (req) => {
       doc.roundedRect(M + 9, y + 17, 33, 6.2, 3, 3, 'F');
       doc.setFontSize(7.1);
       doc.setTextColor(...sc.pillText);
-      doc.text(safe(normalizarStatusRelatorio(pedido._display_status || pedido.status)), M + 12, y + 21.2);
+      doc.text(safe(normalizarStatusRelatorio(stPedido)), M + 12, y + 21.2);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
@@ -624,8 +758,11 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
-      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${totalQtdExp.toLocaleString('pt-BR')} un.`, M + CW - 4, y + 16, { align: 'right' });
+      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${totalQtdExp.toLocaleString('pt-BR')} (un. comerc.)`, M + CW - 4, y + 16, { align: 'right' });
       y += 32;
+
+      drawProgressBar(stPedido, y);
+      y += 4.5;
 
       let totCusto = 0, totVenda = 0;
 
@@ -687,7 +824,7 @@ Deno.serve(async (req) => {
           doc.roundedRect(TM, y - 1, TW, scaledHeight(rowHeight - 1), 1.5, 1.5, 'F');
         }
         doc.setTextColor(...C.text);
-        doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(String((Number(qtd) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 4 })), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         doc.text(safe(item.unidade_medida || prod.unidade_principal || 'UN'), TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         nomeLinhas.forEach((line, li) => {
           doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
@@ -731,19 +868,6 @@ Deno.serve(async (req) => {
     const MOBILE_ITEMS_FONT_SCALE = 1.05;
     const MOBILE_ITEMS_VERTICAL_SCALE = 1.35;
 
-    // Barra de progresso multi-segmento
-    const drawProgressBar = (status, barY) => {
-      const level = getStatusProgress(status);
-      const totalSegs = 5;
-      const segW = (CW - (totalSegs - 1) * 1) / totalSegs;
-      const sc = getStatusColors(status);
-      for (let s = 0; s < totalSegs; s++) {
-        const sx = M + s * (segW + 1);
-        doc.setFillColor(...(s < level ? sc.dot : [220, 225, 230]));
-        doc.roundedRect(sx, barY, segW, 1.5, 0.75, 0.75, 'F');
-      }
-    };
-
     const NOME_X = ITEM_ML;
     const NOME_MAX_W = M + CW - NOME_X - 3;
 
@@ -754,11 +878,23 @@ Deno.serve(async (req) => {
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const sc = getStatusColors(statusRelatorio);
 
-      // Para Pendência: filtrar apenas itens com quantidade pendente
-      let itens = getItensRelatorio(pedido).map((item) => ({
-        ...item,
-        _qtdMostrada: Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0
-      }));
+      let itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
+        const prod = produtosMap[item.produto_id] || {};
+        const fatorItem = Number(item.fator_conversao) || 1;
+        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
+        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
+        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
+        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
+        return {
+          ...item,
+          quantidade: res.quantidade,
+          unidade_medida: res.unidade,
+          fator_conversao: res.fator_conversao,
+          quantidade_base: qBase,
+          _qtdMostrada: res.quantidade,
+        };
+      });
 
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
