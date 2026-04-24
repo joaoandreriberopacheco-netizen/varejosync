@@ -6,6 +6,39 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import { buildPurchaseUnitOptions, resolveCommercialDisplay } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
 
+function resolverUnidadePdvParaRelatorio(produtoSnapshot = {}, item = {}, fallback = 'UN') {
+  const opcoes = buildPurchaseUnitOptions(produtoSnapshot);
+  const unidadePrincipal = String(produtoSnapshot?.unidade_principal || fallback || 'UN').trim().toUpperCase();
+  const candidatosRaw = [
+    produtoSnapshot?.unidade_apresentacao_default,
+    item?.unidade_apresentacao_default,
+    produtoSnapshot?.unidade_show_comercial,
+    item?.unidade_show_comercial,
+    item?.unidade_medida,
+    fallback,
+  ]
+    .map((v) => String(v || '').trim().toUpperCase())
+    .filter(Boolean);
+
+  const mapAlias = (raw) => {
+    if (raw === 'CAIXA' || raw === 'CAIXAS') return 'CX';
+    if (raw === 'METRO QUADRADO' || raw === 'M2' || raw === 'M²') return 'M2';
+    if (raw === 'UNIDADE' || raw === 'UNIDADES') return 'UN';
+    return raw;
+  };
+
+  for (const candidato of candidatosRaw) {
+    const alias = mapAlias(candidato);
+    const matchSigla = opcoes.find((opt) => String(opt?.unidade || '').trim().toUpperCase() === alias);
+    if (matchSigla) return matchSigla.unidade;
+    const matchRotulo = opcoes.find((opt) => String(opt?.rotulo || '').trim().toUpperCase() === candidato);
+    if (matchRotulo) return matchRotulo.unidade;
+  }
+
+  const opcaoNaoPrincipal = opcoes.find((opt) => String(opt?.unidade || '').trim().toUpperCase() !== unidadePrincipal);
+  return opcaoNaoPrincipal?.unidade || unidadePrincipal;
+}
+
 function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
   const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
   const itensNormalizados = itens.map((item) => {
@@ -14,18 +47,7 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
     const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
     const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || item?.unidade_principal || 'UN';
     const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || item || {};
-    const desiredPdvRaw = String(
-      produtoSnapshot?.unidade_apresentacao_default ||
-      item?.unidade_apresentacao_default ||
-      produtoSnapshot?.unidade_show_comercial ||
-      item?.unidade_medida ||
-      fallback
-    ).trim().toUpperCase();
-
-    const opcoes = buildPurchaseUnitOptions(produtoSnapshot);
-    const pdvMatch = opcoes.find((opt) => String(opt?.unidade || '').trim().toUpperCase() === desiredPdvRaw)
-      || opcoes.find((opt) => String(opt?.rotulo || '').trim().toUpperCase() === desiredPdvRaw);
-    const pdvResolvido = pdvMatch?.unidade || desiredPdvRaw;
+    const pdvResolvido = resolverUnidadePdvParaRelatorio(produtoSnapshot, item, fallback);
 
     const snapshotForcandoPdv = {
       ...produtoSnapshot,
