@@ -12,9 +12,14 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
     const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
     const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
     const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
-    const fallback = item?.unidade_medida || item?.unidade_principal || 'UN';
+    const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || item?.unidade_principal || 'UN';
     const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || item || {};
-    const resolvido = resolveCommercialDisplay(produtoSnapshot, quantidadeBase, fallback);
+    const snapshotForcandoPdv = {
+      ...produtoSnapshot,
+      unidade_show_ativa: true,
+      unidade_apresentacao_default: produtoSnapshot?.unidade_apresentacao_default || item?.unidade_apresentacao_default || produtoSnapshot?.unidade_show_comercial || item?.unidade_medida || fallback,
+    };
+    const resolvido = resolveCommercialDisplay(snapshotForcandoPdv, quantidadeBase, fallback);
     const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
     const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;
     const divisorShow = quantidadeShow > 0 ? quantidadeShow : 1;
