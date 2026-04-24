@@ -29,6 +29,8 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
       ...item,
       unidade_medida: resolvido?.unidade || fallback,
       quantidade: quantidadeShow,
+      quantidade_embarcada: quantidadeShow,
+      quantidade_pedida: quantidadeShow,
       quantidade_base: quantidadeBase,
       fator_conversao: Number(resolvido?.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
       custo_unitario: total / divisorShow,

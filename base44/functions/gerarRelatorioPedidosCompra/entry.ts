@@ -131,7 +131,7 @@ const getFornecedorRelatorio = (pedido) => safe(pedido._display_fornecedor || pe
 const getDataRelatorio = (pedido) => pedido._display_date || pedido.data_prevista_entrega || pedido.data_emissao || pedido.created_date;
 const getQuantidadeRelatorio = (pedido) => {
   const itens = pedido._display_itens || pedido.itens || [];
-  return itens.reduce((a, i) => a + (Number(i.quantidade_embarcada) || Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
+  return itens.reduce((a, i) => a + (Number(i.quantidade) || Number(i.quantidade_embarcada) || Number(i.quantidade_pedida) || 0), 0);
 };
 const getItensRelatorio = (pedido) => pedido._display_itens || pedido.itens || [];
 const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_nome || 'Sem transportadora';
@@ -139,7 +139,7 @@ const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
 const isNecessidadeRelatorio = (pedido) => !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
 const getQuantidadeEfetivaItem = (item = {}) =>
-  Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0;
+  Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
 
 const getPercentualAjustePedido = (pedido = {}) => {
   const percentualDireto = Number(pedido.percentual_desconto);
