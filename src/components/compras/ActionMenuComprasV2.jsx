@@ -3,7 +3,7 @@ import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpre
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { buildPurchaseUnitOptions, resolveCommercialDisplay } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
 
 function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
@@ -14,10 +14,23 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
     const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
     const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || item?.unidade_principal || 'UN';
     const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || item || {};
+    const desiredPdvRaw = String(
+      produtoSnapshot?.unidade_apresentacao_default ||
+      item?.unidade_apresentacao_default ||
+      produtoSnapshot?.unidade_show_comercial ||
+      item?.unidade_medida ||
+      fallback
+    ).trim().toUpperCase();
+
+    const opcoes = buildPurchaseUnitOptions(produtoSnapshot);
+    const pdvMatch = opcoes.find((opt) => String(opt?.unidade || '').trim().toUpperCase() === desiredPdvRaw)
+      || opcoes.find((opt) => String(opt?.rotulo || '').trim().toUpperCase() === desiredPdvRaw);
+    const pdvResolvido = pdvMatch?.unidade || desiredPdvRaw;
+
     const snapshotForcandoPdv = {
       ...produtoSnapshot,
       unidade_show_ativa: true,
-      unidade_apresentacao_default: produtoSnapshot?.unidade_apresentacao_default || item?.unidade_apresentacao_default || produtoSnapshot?.unidade_show_comercial || item?.unidade_medida || fallback,
+      unidade_apresentacao_default: pdvResolvido,
     };
     const resolvido = resolveCommercialDisplay(snapshotForcandoPdv, quantidadeBase, fallback);
     const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
