@@ -48,6 +48,7 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
   return {
     ...pedido,
     itens: itensNormalizados,
+    _display_itens: itensNormalizados,
   };
 }
 
