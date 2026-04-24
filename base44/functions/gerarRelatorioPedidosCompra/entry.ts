@@ -873,6 +873,51 @@ Deno.serve(async (req) => {
 
     const fmtQtd = (n) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+    /** Altura de um bloco de item (mesma fórmula do `forEach` de itens) — y0=0 dá a altura absoluta da linha. */
+    const computeMobileItemRowBlockH = (pedido, item, y0 = 0) => {
+      const prod = produtosMap[item.produto_id] || {};
+      const qtd = item._qtdMostrada;
+      const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
+      const precoCompra = getValorUnitarioEfetivoItem(item, prod, pedido);
+      const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+      const tCompra = qtd * precoCompra;
+
+      const vs = MOBILE_ITEMS_VERTICAL_SCALE;
+      const nomeLineStep = 3.85 * vs;
+      const auxDetailStep = 3.15 * vs;
+      const gapNomeDetalhe = 3 * vs;
+      const margemLinhaInferiorItem = 2.2 * vs;
+
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
+      const nomeLinhas = doc.splitTextToSize(
+        toTitleCase(safe(item.produto_nome || prod.nome || '-')),
+        NOME_MAX_W
+      );
+      const nomeTop = y0 + 3.4 * vs;
+      const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+
+      doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
+      const fatorItem = Number(item.fator_conversao) || 1;
+      const qBase =
+        item.quantidade_base != null && item.quantidade_base !== ''
+          ? Number(item.quantidade_base)
+          : (Number(qtd) || 0) * fatorItem;
+      const upPrincipal = prod.unidade_principal || '';
+      let equivSuf = '';
+      if (
+        upPrincipal &&
+        (fatorItem !== 1 || String(un).toUpperCase() !== String(upPrincipal).toUpperCase())
+      ) {
+        equivSuf = ` · Equiv. ${fmtQtd(qBase)} ${upPrincipal} (base)`;
+      }
+      const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}${equivSuf}`;
+      const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
+      const detAux1 = lastNomeBaseline + gapNomeDetalhe;
+      const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+      return detAux2 + auxDetailStep + margemLinhaInferiorItem - y0;
+    };
+
     const drawMobileCard = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
@@ -929,7 +974,9 @@ Deno.serve(async (req) => {
       const gapCodeForn = 3;
       const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
 
-      ensureSpace(cardHeight + 8);
+      // Mesma ideia do desktop (minPedidoH): cabeçalho do pedido + 1.ª linha de itens na mesma página
+      const minPrimeiroItemH = itens.length > 0 ? computeMobileItemRowBlockH(pedido, itens[0], 0) : 0;
+      ensureSpace(cardHeight + 3 + minPrimeiroItemH + 6);
 
       const cardTop = y;
 
