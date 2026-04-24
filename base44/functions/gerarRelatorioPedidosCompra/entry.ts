@@ -237,14 +237,15 @@ const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.25;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 3.9;
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
   qtd: 2,
-  descricao: 14,
-  vlrUnit: 74,
-  frete: 91,
-  outros: 108,
-  custo: 125,
-  total: 142,
-  venda: 159,
-  markup: 173,
+  unidade: 13,
+  descricao: 22,
+  vlrUnit: 80,
+  frete: 97,
+  outros: 114,
+  custo: 131,
+  total: 148,
+  venda: 164,
+  markup: 176,
 };
 /** Margem horizontal (mm) entre fim da coluna descrição e coluna VLR. UN. (evita sobreposição ao imprimir). */
 const EXPANDED_DESC_TO_VLR_GAP_MM = 9;
@@ -635,6 +636,7 @@ Deno.serve(async (req) => {
       doc.setFontSize(EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE);
       doc.setTextColor(...C.text);
       doc.text('QTD', TM + EXPANDED_ITEMS_TABLE_COLUMNS.qtd, y + scaledHeight(7));
+      doc.text('UN', TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(7));
       doc.text('DESCRICAO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(7));
       doc.text(['VLR. UN.', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(5.2), { align: 'right' });
       doc.text(['FRETE', '(R$)'], TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(5.2), { align: 'right' });
@@ -686,6 +688,7 @@ Deno.serve(async (req) => {
         }
         doc.setTextColor(...C.text);
         doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(safe(item.unidade_medida || prod.unidade_principal || 'UN'), TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         nomeLinhas.forEach((line, li) => {
           doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
         });

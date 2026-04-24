@@ -29,7 +29,7 @@ export function normalizeAlternativeUnits(product) {
     }));
 }
 
-function resolvePrimaryFromFactorOne(product, fallbackUnit = "UN") {
+export function resolvePrimaryFromFactorOne(product, fallbackUnit = "UN") {
   const alternativas = normalizeAlternativeUnits(product);
   const fatorUm = alternativas.filter((item) => normalizeNumber(item.fator_conversao, 0) === 1);
   const principalAtual = normalizeUnitCode(product?.unidade_principal);
@@ -41,6 +41,50 @@ function resolvePrimaryFromFactorOne(product, fallbackUnit = "UN") {
   }
 
   return principalAtual || normalizeUnitCode(fallbackUnit) || "UN";
+}
+
+export function buildLegacyUnitBackfillPatch(product) {
+  const alternativas = normalizeAlternativeUnits(product);
+  const fatorUm = alternativas.filter((item) => normalizeNumber(item?.fator_conversao, 0) === 1);
+  if (fatorUm.length !== 1) {
+    return {
+      hasChanges: false,
+      conflict: true,
+      reason: fatorUm.length === 0 ? "missing_factor_one" : "multiple_factor_one",
+      patch: null,
+    };
+  }
+
+  const principal = normalizeUnitCode(fatorUm[0].unidade || product?.unidade_principal || "UN") || "UN";
+  const validUnits = new Set([principal, ...alternativas.map((item) => normalizeUnitCode(item?.unidade)).filter(Boolean)]);
+  const showLogisticoLegado = normalizeUnitCode(product?.unidade_show_logistica);
+  // Regra de tradução legada: quando há fator 1 intencional, ele substitui a unidade legada.
+  const pdvResolvida = principal;
+  const showComercialResolvida = pdvResolvida;
+  const showLogisticoResolvida = validUnits.has(showLogisticoLegado) ? showLogisticoLegado : pdvResolvida;
+
+  const patch = {
+    unidade_principal: principal,
+    unidade_apresentacao_default: pdvResolvida,
+    unidade_show_comercial: showComercialResolvida,
+    unidade_show_logistica: showLogisticoResolvida,
+    migracao_unidades_legacy_v2: true,
+    migracao_unidades_data: new Date().toISOString(),
+  };
+
+  const hasChanges =
+    normalizeUnitCode(product?.unidade_principal) !== patch.unidade_principal ||
+    normalizeUnitCode(product?.unidade_apresentacao_default) !== patch.unidade_apresentacao_default ||
+    normalizeUnitCode(product?.unidade_show_comercial) !== patch.unidade_show_comercial ||
+    normalizeUnitCode(product?.unidade_show_logistica) !== patch.unidade_show_logistica ||
+    product?.migracao_unidades_legacy_v2 !== true;
+
+  return {
+    hasChanges,
+    conflict: false,
+    reason: hasChanges ? "needs_update" : "already_consistent",
+    patch: hasChanges ? patch : null,
+  };
 }
 
 function dedupeUnits(units) {

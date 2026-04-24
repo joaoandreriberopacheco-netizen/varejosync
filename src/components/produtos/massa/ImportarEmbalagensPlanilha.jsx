@@ -197,7 +197,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
           dados.unidade_show_comercial = showComercialNormalizado;
         } else if (!atualShowComercial || !unidadesValidas.has(atualShowComercial)) {
-          dados.unidade_show_comercial = principalResolvida;
+          const apresentacaoNormalizada = temApresentacao ? normalizarTexto(apresentacao) : '';
+          dados.unidade_show_comercial = apresentacaoNormalizada || principalResolvida;
         }
 
         if (temShowLogistico) {
@@ -211,7 +212,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
           dados.unidade_show_logistica = showNormalizado;
         } else if (!atualShowLogistico || !unidadesValidas.has(atualShowLogistico)) {
-          dados.unidade_show_logistica = principalResolvida;
+          const fallbackShowComercial = normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
+          const fallbackApresentacao = temApresentacao
+            ? normalizarTexto(apresentacao)
+            : normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao);
+          dados.unidade_show_logistica = fallbackApresentacao || fallbackShowComercial || principalResolvida;
         }
 
         if (temApresentacao) {
@@ -225,8 +230,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
           dados.unidade_apresentacao_default = apresentacaoNormalizada;
         } else if (!atualApresentacao || !unidadesValidas.has(atualApresentacao)) {
-          const showResolvido = normalizarTexto(dados.unidade_show_logistica || atualShowLogistico);
-          dados.unidade_apresentacao_default = showResolvido || principalResolvida;
+          const showComercialResolvido = normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
+          dados.unidade_apresentacao_default = showComercialResolvido || principalResolvida;
         }
 
         const novoApresentacao = temApresentacao

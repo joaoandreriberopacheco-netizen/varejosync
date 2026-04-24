@@ -10,6 +10,7 @@ import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualiz
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque.jsx';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque.jsx';
 import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao.jsx';
+import { buildLegacyUnitBackfillPatch } from '@/lib/productUnits';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
@@ -18,6 +19,8 @@ export default function EditarProdutosEmMassa() {
   const [salvando, setSalvando] = useState(false);
   const [salvouOk, setSalvouOk] = useState(false);
   const [salvouOkEmbalagens, setSalvouOkEmbalagens] = useState(false);
+  const [processandoBackfillLegado, setProcessandoBackfillLegado] = useState(false);
+  const [resumoBackfillLegado, setResumoBackfillLegado] = useState(null);
 
   const handleParsed = useCallback((data) => {
     setParsedData(data);
@@ -184,6 +187,97 @@ export default function EditarProdutosEmMassa() {
     }
   };
 
+  const carregarTodosProdutos = async () => {
+    let produtos = [];
+    let skip = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const batch = await base44.entities.Produto.list('-updated_date', pageSize, skip);
+      if (!batch.length) {
+        hasMore = false;
+      } else {
+        produtos = produtos.concat(batch);
+        skip += pageSize;
+      }
+    }
+    return produtos;
+  };
+
+  const handleBackfillUnidadesLegadas = async () => {
+    if (processandoBackfillLegado) return;
+    setProcessandoBackfillLegado(true);
+    try {
+      const produtos = await carregarTodosProdutos();
+      const candidatos = [];
+      let ignoradosConsistentes = 0;
+      let conflitos = 0;
+
+      for (const produto of produtos) {
+        const analise = buildLegacyUnitBackfillPatch(produto);
+        if (analise.conflict) {
+          conflitos += 1;
+          continue;
+        }
+        if (!analise.hasChanges) {
+          ignoradosConsistentes += 1;
+          continue;
+        }
+        candidatos.push({ id: produto.id, nome: produto.nome, patch: analise.patch });
+      }
+
+      const resumoPrevio = {
+        total: produtos.length,
+        candidatos: candidatos.length,
+        conflitos,
+        ignorados: ignoradosConsistentes,
+        atualizados: 0,
+        erros: 0,
+      };
+      setResumoBackfillLegado(resumoPrevio);
+
+      if (!candidatos.length) return;
+
+      const confirmar = window.confirm(
+        `Backfill legado encontrado: ${candidatos.length} produto(s) para corrigir, ${conflitos} conflito(s) e ${ignoradosConsistentes} já consistente(s). Deseja aplicar agora?`
+      );
+      if (!confirmar) return;
+
+      const user = await base44.auth.me();
+      const idsAfetados = candidatos.map((item) => item.id);
+      const snapshotDados = await base44.entities.Produto.filter({ id: idsAfetados });
+      await base44.entities.ImportacaoLog.create({
+        usuario_responsavel: user?.full_name || user?.email,
+        quantidade_itens: candidatos.length,
+        snapshot_dados: snapshotDados || [],
+        tipo_importacao: 'Backfill Unidades Legadas',
+      });
+
+      let atualizados = 0;
+      let erros = 0;
+      for (const item of candidatos) {
+        try {
+          await base44.entities.Produto.update(item.id, item.patch);
+          atualizados += 1;
+        } catch (error) {
+          console.error(`Erro no backfill do produto ${item.id}:`, error);
+          erros += 1;
+        }
+      }
+
+      setResumoBackfillLegado({
+        ...resumoPrevio,
+        atualizados,
+        erros,
+      });
+    } catch (error) {
+      console.error('❌ Erro no backfill legado de unidades:', error);
+      alert(`Erro no backfill legado: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setProcessandoBackfillLegado(false);
+    }
+  };
+
   const podeConfirmar = parsedData && parsedData.alterados?.length > 0 && parsedData.erros?.length === 0;
   const podeConfirmarEmbalagens =
     parsedEmbalagens && parsedEmbalagens.alterados?.length > 0 && parsedEmbalagens.erros?.length === 0;
@@ -257,6 +351,30 @@ export default function EditarProdutosEmMassa() {
         </TabsContent>
 
         <TabsContent value="embalagens" className="space-y-8 mt-6">
+          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-6 shadow-sm border border-amber-100 dark:border-amber-800">
+            <StepLabel number={0} label="Backfill legado (importações antigas)" />
+            <p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
+              Reconstrói unidade principal (fator 1), PDV, show comercial e show logístico para produtos importados antes do novo contrato de unidades.
+            </p>
+            <Button
+              onClick={handleBackfillUnidadesLegadas}
+              disabled={processandoBackfillLegado || salvando}
+              className="w-full bg-amber-700 hover:bg-amber-600 text-white h-11 text-sm font-medium"
+            >
+              {processandoBackfillLegado ? 'Analisando/aplicando backfill...' : 'Corrigir unidades legadas'}
+            </Button>
+            {resumoBackfillLegado && (
+              <div className="mt-4 rounded-lg bg-white/70 dark:bg-gray-900/30 border border-amber-100 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
+                <p>Total analisado: {resumoBackfillLegado.total}</p>
+                <p>Candidatos: {resumoBackfillLegado.candidatos}</p>
+                <p>Conflitos (sem fator 1 único): {resumoBackfillLegado.conflitos}</p>
+                <p>Ignorados (já consistentes): {resumoBackfillLegado.ignorados}</p>
+                {typeof resumoBackfillLegado.atualizados === 'number' && <p>Atualizados: {resumoBackfillLegado.atualizados}</p>}
+                {typeof resumoBackfillLegado.erros === 'number' && <p>Erros de update: {resumoBackfillLegado.erros}</p>}
+              </div>
+            )}
+          </div>
+
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
