@@ -352,11 +352,17 @@ export default function PedidosCompraPage() {
         base44.entities.Embarque.list('-created_date', 600),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300),
       ]);
-      const produtoIds = [...new Set(
-        pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean))
-      )];
+      const produtoIds = [...new Set([
+        ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
+        ...embarquesDb.flatMap((e) => (e.itens || e.itens_embarcados || []).map((i) => i.produto_id).filter(Boolean)),
+      ])];
       const produtos = produtoIds.length
-        ? await Promise.all(produtoIds.map((id) => base44.entities.Produto.get(id).catch(() => null)))
+        ? await Promise.all(produtoIds.map(async (id) => {
+            const viaGet = await base44.entities.Produto.get(id).catch(() => null);
+            if (viaGet) return viaGet;
+            const viaFilter = await base44.entities.Produto.filter({ id }).catch(() => []);
+            return Array.isArray(viaFilter) ? (viaFilter[0] || null) : null;
+          }))
         : [];
       const produtosMap = Object.fromEntries((produtos || []).filter(Boolean).map((p) => [p.id, p]));
 
