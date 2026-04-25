@@ -439,7 +439,7 @@ export default function PedidosCompraPage() {
             ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
             : (hasLinkedItems(embarque)
                 ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
-                : (pedido.itens || []).map((item) => ({
+                : (pedido.itens || []).map((item) => {
                     const produto = produtosMap[item.produto_id] || null;
                     return normalizeDisplayItemCommercial(produto, item, {
                       produto_id: item.produto_id,
@@ -451,7 +451,7 @@ export default function PedidosCompraPage() {
                       fator_conversao: Number(item.fator_conversao) || 1,
                       unidade_medida: item.unidade_medida || '',
                     }, pedido);
-                  })));
+                  }));
 
           return {
             ...pedido,
