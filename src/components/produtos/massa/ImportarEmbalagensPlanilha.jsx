@@ -19,6 +19,14 @@ function normalizarTexto(v) {
   return String(v).trim().toUpperCase();
 }
 
+function normalizarAliasUnidade(v) {
+  return normalizarTexto(v)
+    .replace('CAIXA', 'CX')
+    .replace('CAIXAS', 'CX')
+    .replace('M²', 'M2')
+    .replace('METRO QUADRADO', 'M2');
+}
+
 function normalizarUnidadesAlternativas(unidades = []) {
   if (!Array.isArray(unidades)) return [];
   return unidades.map((u) => ({
@@ -123,9 +131,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
 
         const apresentacao = dadosExtraidos.unidade_apresentacao_default;
+        const embalagemFavoritaTitulo = dadosExtraidos.embalagem_favorita_titulo;
         const showComercial = dadosExtraidos.unidade_show_comercial;
         const showLogistico = dadosExtraidos.unidade_show_logistica;
         const temApresentacao = apresentacao != null && String(apresentacao).trim() !== '';
+        const temFavoritaTitulo = embalagemFavoritaTitulo != null && String(embalagemFavoritaTitulo).trim() !== '';
         const temShowComercial = showComercial != null && String(showComercial).trim() !== '';
         const temShowLogistico = showLogistico != null && String(showLogistico).trim() !== '';
 
@@ -157,7 +167,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const temEmb = parsed.hadSlotPayload;
 
         // Linha sem alterações de embalagem/apresentação/show logístico:
-        if (!temEmb && !temApresentacao && !temShowComercial && !temShowLogistico) {
+        if (!temEmb && !temApresentacao && !temFavoritaTitulo && !temShowComercial && !temShowLogistico) {
           linhasIgnoradasSemMudanca += 1;
           continue;
         }
@@ -181,6 +191,25 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           principalResolvida,
           ...novoAlt.map((u) => normalizarTexto(u.unidade)),
         ].filter(Boolean));
+
+        // Coluna fonte da verdade: título da embalagem favorita -> resolve para sigla comercial.
+        if (temFavoritaTitulo) {
+          const bruto = String(embalagemFavoritaTitulo).trim();
+          const favNorm = normalizarAliasUnidade(bruto);
+          const porSigla = [principalResolvida, ...novoAlt.map((u) => normalizarTexto(u.unidade))]
+            .find((u) => normalizarAliasUnidade(u) === favNorm);
+          const porRotulo = novoAlt.find((u) => normalizarAliasUnidade(u?.rotulo || '') === favNorm);
+          const unidadeFav = porSigla || normalizarTexto(porRotulo?.unidade || '');
+          if (!unidadeFav || !unidadesValidas.has(unidadeFav)) {
+            erros.push({
+              linha: i,
+              mensagem: `Linha ${i}: Embalagem favorita "${bruto}" não corresponde a nenhuma sigla/rótulo válido da linha.`,
+            });
+            continue;
+          }
+          dados.unidade_apresentacao_default = unidadeFav;
+          dados.unidade_show_comercial = unidadeFav;
+        }
 
         if (temShowComercial) {
           const showComercialNormalizado = normalizarTexto(showComercial);
@@ -215,7 +244,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           dados.unidade_show_logistica = fallbackApresentacao || fallbackShowComercial || principalResolvida;
         }
 
-        if (temApresentacao) {
+        if (temApresentacao && !temFavoritaTitulo) {
           const apresentacaoNormalizada = normalizarTexto(apresentacao);
           if (!unidadesValidas.has(apresentacaoNormalizada)) {
             erros.push({

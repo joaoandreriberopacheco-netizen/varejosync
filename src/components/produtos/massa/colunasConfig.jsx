@@ -45,6 +45,14 @@ export const COLUNAS_SOMENTE_EMBALAGENS = [
     tipo: 'string',
   },
   {
+    key: 'embalagem_favorita_titulo',
+    label: 'Embalagem favorita (título)',
+    altLabels: ['Unidade comercial (título)'],
+    editavel: true,
+    width: 28,
+    tipo: 'string',
+  },
+  {
     key: 'unidade_show_comercial',
     label: 'Espelho comercial (opcional)',
     altLabels: ['Show Comercial (sigla)'],
