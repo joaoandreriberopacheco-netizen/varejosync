@@ -66,11 +66,7 @@ function produtoParaLinhaEmbalagens(p) {
     row[`emb${n}_ajuste`] = a?.ajuste_percentual ?? '';
   }
   const unidadeComercial = normalizeUnitCode(p.unidade_apresentacao_default || p.unidade_show_comercial || principal) || principal;
-  const altComercial = alts.find((a) => normalizeUnitCode(a?.unidade) === unidadeComercial);
   row.unidade_apresentacao_default = unidadeComercial;
-  row.embalagem_favorita_titulo = (altComercial?.rotulo || unidadeComercial || '').trim();
-  row.unidade_show_comercial = p.unidade_show_comercial || '';
-  row.unidade_show_logistica = p.unidade_show_logistica || '';
   row.embalagens_alternativas_contexto = montarContextoAlternativas(p, principal, alts);
   return row;
 }

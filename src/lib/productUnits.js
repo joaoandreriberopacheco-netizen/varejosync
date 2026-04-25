@@ -290,7 +290,6 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
 
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
-    product?.unidade_show_logistica,
     product?.unidade_apresentacao_default,
     product?.unidade_show_comercial,
     principalResolvida,

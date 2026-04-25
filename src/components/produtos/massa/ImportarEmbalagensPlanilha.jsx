@@ -19,14 +19,6 @@ function normalizarTexto(v) {
   return String(v).trim().toUpperCase();
 }
 
-function normalizarAliasUnidade(v) {
-  return normalizarTexto(v)
-    .replace('CAIXA', 'CX')
-    .replace('CAIXAS', 'CX')
-    .replace('M²', 'M2')
-    .replace('METRO QUADRADO', 'M2');
-}
-
 function normalizarUnidadesAlternativas(unidades = []) {
   if (!Array.isArray(unidades)) return [];
   return unidades.map((u) => ({
@@ -131,13 +123,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
 
         const apresentacao = dadosExtraidos.unidade_apresentacao_default;
-        const embalagemFavoritaTitulo = dadosExtraidos.embalagem_favorita_titulo;
-        const showComercial = dadosExtraidos.unidade_show_comercial;
-        const showLogistico = dadosExtraidos.unidade_show_logistica;
         const temApresentacao = apresentacao != null && String(apresentacao).trim() !== '';
-        const temFavoritaTitulo = embalagemFavoritaTitulo != null && String(embalagemFavoritaTitulo).trim() !== '';
-        const temShowComercial = showComercial != null && String(showComercial).trim() !== '';
-        const temShowLogistico = showLogistico != null && String(showLogistico).trim() !== '';
 
         if (erroNaLinha) continue;
 
@@ -167,7 +153,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const temEmb = parsed.hadSlotPayload;
 
         // Linha sem alterações de embalagem/apresentação/show logístico:
-        if (!temEmb && !temApresentacao && !temFavoritaTitulo && !temShowComercial && !temShowLogistico) {
+        if (!temEmb && !temApresentacao) {
           linhasIgnoradasSemMudanca += 1;
           continue;
         }
@@ -181,8 +167,6 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
 
         const atualApresentacao = normalizarTexto(produto.unidade_apresentacao_default);
-        const atualShowComercial = normalizarTexto(produto.unidade_show_comercial);
-        const atualShowLogistico = normalizarTexto(produto.unidade_show_logistica);
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
         const novoAlt = parsed.hadSlotPayload ? normalizarUnidadesAlternativas(parsed.alternativas) : atualAlt;
         const principalResolvida = parsed.hadSlotPayload ? parsed.principalSigla : atualPrincipal;
@@ -192,59 +176,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           ...novoAlt.map((u) => normalizarTexto(u.unidade)),
         ].filter(Boolean));
 
-        // Coluna fonte da verdade: título da embalagem favorita -> resolve para sigla comercial.
-        if (temFavoritaTitulo) {
-          const bruto = String(embalagemFavoritaTitulo).trim();
-          const favNorm = normalizarAliasUnidade(bruto);
-          const porSigla = [principalResolvida, ...novoAlt.map((u) => normalizarTexto(u.unidade))]
-            .find((u) => normalizarAliasUnidade(u) === favNorm);
-          const porRotulo = novoAlt.find((u) => normalizarAliasUnidade(u?.rotulo || '') === favNorm);
-          const unidadeFav = porSigla || normalizarTexto(porRotulo?.unidade || '');
-          if (!unidadeFav || !unidadesValidas.has(unidadeFav)) {
-            erros.push({
-              linha: i,
-              mensagem: `Linha ${i}: Embalagem favorita "${bruto}" não corresponde a nenhuma sigla/rótulo válido da linha.`,
-            });
-            continue;
-          }
-          dados.unidade_apresentacao_default = unidadeFav;
-          dados.unidade_show_comercial = unidadeFav;
-        }
-
-        if (temShowComercial) {
-          const showComercialNormalizado = normalizarTexto(showComercial);
-          if (!unidadesValidas.has(showComercialNormalizado)) {
-            erros.push({
-              linha: i,
-              mensagem: `Linha ${i}: Espelho comercial "${showComercialNormalizado}" não existe nas unidades válidas da linha.`,
-            });
-            continue;
-          }
-          dados.unidade_show_comercial = showComercialNormalizado;
-        } else if (!atualShowComercial || !unidadesValidas.has(atualShowComercial)) {
-          const apresentacaoNormalizada = temApresentacao ? normalizarTexto(apresentacao) : '';
-          dados.unidade_show_comercial = apresentacaoNormalizada || principalResolvida;
-        }
-
-        if (temShowLogistico) {
-          const showNormalizado = normalizarTexto(showLogistico);
-          if (!unidadesValidas.has(showNormalizado)) {
-            erros.push({
-              linha: i,
-              mensagem: `Linha ${i}: Unidade logística "${showNormalizado}" não existe nas unidades válidas da linha.`,
-            });
-            continue;
-          }
-          dados.unidade_show_logistica = showNormalizado;
-        } else if (!atualShowLogistico || !unidadesValidas.has(atualShowLogistico)) {
-          const fallbackShowComercial = normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
-          const fallbackApresentacao = temApresentacao
-            ? normalizarTexto(apresentacao)
-            : normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao);
-          dados.unidade_show_logistica = fallbackApresentacao || fallbackShowComercial || principalResolvida;
-        }
-
-        if (temApresentacao && !temFavoritaTitulo) {
+        if (temApresentacao) {
           const apresentacaoNormalizada = normalizarTexto(apresentacao);
           if (!unidadesValidas.has(apresentacaoNormalizada)) {
             erros.push({
@@ -254,30 +186,26 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
             continue;
           }
           dados.unidade_apresentacao_default = apresentacaoNormalizada;
-          if (!temShowComercial) {
-            dados.unidade_show_comercial = apresentacaoNormalizada;
-          }
         } else if (!atualApresentacao || !unidadesValidas.has(atualApresentacao)) {
-          const showComercialResolvido = normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
-          dados.unidade_apresentacao_default = showComercialResolvido || principalResolvida;
+          dados.unidade_apresentacao_default = principalResolvida;
         }
+
+        const comercialResolvida = normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao || principalResolvida);
+        dados.unidade_show_comercial = comercialResolvida;
+        dados.unidade_show_logistica = comercialResolvida;
 
         const novoApresentacao = temApresentacao
           ? normalizarTexto(dados.unidade_apresentacao_default)
           : normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao);
-        const novoShowComercial = temShowComercial
-          ? normalizarTexto(dados.unidade_show_comercial)
-          : normalizarTexto(dados.unidade_show_comercial || atualShowComercial);
-        const novoShowLogistico = temShowLogistico
-          ? normalizarTexto(dados.unidade_show_logistica)
-          : normalizarTexto(dados.unidade_show_logistica || atualShowLogistico);
+        const novoShowComercial = normalizarTexto(dados.unidade_show_comercial || comercialResolvida);
+        const novoShowLogistico = normalizarTexto(dados.unidade_show_logistica || comercialResolvida);
         const novoPrincipal = normalizarTexto(dados.unidade_principal || atualPrincipal);
 
         const semMudanca =
           atualPrincipal === novoPrincipal
           && atualApresentacao === novoApresentacao
-          && atualShowComercial === novoShowComercial
-          && atualShowLogistico === novoShowLogistico
+          && normalizarTexto(produto.unidade_show_comercial) === novoShowComercial
+          && normalizarTexto(produto.unidade_show_logistica) === novoShowLogistico
           && JSON.stringify(atualAlt) === JSON.stringify(novoAlt);
 
         if (semMudanca) {

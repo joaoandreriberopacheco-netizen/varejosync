@@ -229,8 +229,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       };
       const showComercial = String(prev.unidade_apresentacao_default || prev.unidade_show_comercial || '').trim().toUpperCase() || principal;
       const showComercialValido = resolverUnidadeValida(showComercial) || principal;
-      const showLogistico = String(prev.unidade_show_logistica || '').trim().toUpperCase();
-      const showLogisticoValido = resolverUnidadeValida(showLogistico);
+      const showLogisticoValido = showComercialValido;
       if (
         prev.unidade_show_comercial === showComercialValido &&
         prev.unidade_show_logistica === showLogisticoValido &&
@@ -381,10 +380,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipal,
         { unidadePrincipal }
       ) || unidadePrincipal;
-      const unidadeLogisticaResolved = resolveUnitValue(
-        formData.unidade_show_logistica || '',
-        { unidadePrincipal }
-      );
+      const unidadeLogisticaResolved = unidadeComercialResolved;
 
       const produtoData = {
         ...formData,
@@ -1002,20 +998,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
 
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade logística (Boats / Itinerário fluvial)</Label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Sigla usada em embarques e logística. Se vazio, o sistema usa a unidade comercial.</p>
-              <Select
-                value={String(formData.unidade_show_logistica || '').trim().toUpperCase() || '__vazio__'}
-                onValueChange={(v) => handleChange('unidade_show_logistica', v === '__vazio__' ? '' : v)}
-              >
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md" disabled={formData.unidade_show_ativa === false}>
-                  <SelectValue placeholder="Vazio (usar fallback)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__vazio__">Vazio (usa unidade comercial)</SelectItem>
-                  {unitOptions.map((sigla) => <SelectItem key={`log-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade logística</Label>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Unificada com a unidade comercial (fonte única da verdade).
+              </p>
             </div>
 
             <div className="border-t pt-6 dark:border-gray-700">
