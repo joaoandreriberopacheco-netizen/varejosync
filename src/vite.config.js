@@ -12,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // sourceLocationBabelPlugin — injects data-source-location for Flare Mode
 // Loaded conditionally so a missing file never breaks production builds
 let sourceLocationBabelPlugin = null
-const pluginPath = path.resolve(__dirname, './build/sourceLocationBabelPlugin.cjs')
+const pluginPath = path.resolve(__dirname, './build/' + 'sourceLocationBabelPlugin.cjs')
 if (fs.existsSync(pluginPath)) {
   try {
     sourceLocationBabelPlugin = require(pluginPath)
