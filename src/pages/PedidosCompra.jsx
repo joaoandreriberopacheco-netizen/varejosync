@@ -11,6 +11,7 @@ import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
+import { buildPurchaseUnitOptions, normalizeUnitCode, resolveCommercialDisplay } from '@/lib/productUnits';
 
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -166,14 +167,34 @@ const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
   return baseUnit * multiplicadorPedido;
 };
 
-const normalizeDisplayItemCommercial = (pedidoItem = {}, item = {}, pedido = {}) => {
-  const fatorComercial = Number(pedidoItem?.fator_conversao) || Number(item?.fator_conversao) || 1;
-  const unidadeComercial = pedidoItem?.unidade_medida || item?.unidade_medida || '';
+const getFatorEntradaItem = (produto = null, pedidoItem = {}, item = {}) => {
+  const fatorDireto = Number(item?.fator_conversao) || Number(pedidoItem?.fator_conversao);
+  if (Number.isFinite(fatorDireto) && fatorDireto > 0) return fatorDireto;
+
+  if (!produto) return 1;
+  const opcoes = buildPurchaseUnitOptions(produto);
+  const unidadeEntrada = normalizeUnitCode(item?.unidade_medida || pedidoItem?.unidade_medida);
+  if (!unidadeEntrada) return 1;
+  const opt = opcoes.find((o) => normalizeUnitCode(o.unidade) === unidadeEntrada);
+  return Number(opt?.fator_conversao) || 1;
+};
+
+const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = {}, pedido = {}) => {
   const qtdRaw = Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || Number(item?.quantidade) || 0;
+  const fatorEntrada = getFatorEntradaItem(produto, pedidoItem, item);
   const quantidadeBase = Number(item?.quantidade_base) > 0
     ? Number(item.quantidade_base)
-    : (qtdRaw * fatorComercial);
-  const quantidadeComercial = fatorComercial > 0 ? (quantidadeBase / fatorComercial) : qtdRaw;
+    : (qtdRaw * fatorEntrada);
+  const commercial = produto
+    ? resolveCommercialDisplay(produto, quantidadeBase, item?.unidade_medida || pedidoItem?.unidade_medida || 'UN')
+    : { unidade: pedidoItem?.unidade_medida || item?.unidade_medida || '', fator_conversao: Number(pedidoItem?.fator_conversao) || 1, quantidade: qtdRaw };
+
+  const fatorComercial = Number(commercial?.fator_conversao) || 1;
+  const quantidadeComercial = Number(commercial?.quantidade) || (fatorComercial > 0 ? (quantidadeBase / fatorComercial) : qtdRaw);
+  const unidadeComercial = commercial?.unidade || pedidoItem?.unidade_medida || item?.unidade_medida || '';
+
+  const custoBase = getValorUnitarioEfetivoItemPedido(pedidoItem || item, pedido);
+  const custoUnitarioComercial = custoBase * fatorComercial;
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
     produto_nome: item.produto_nome || pedidoItem?.produto_nome,
@@ -182,15 +203,16 @@ const normalizeDisplayItemCommercial = (pedidoItem = {}, item = {}, pedido = {})
     quantidade_pedida: quantidadeComercial,
     quantidade_base: quantidadeBase,
     fator_conversao: fatorComercial,
-    custo_unitario: getValorUnitarioEfetivoItemPedido(pedidoItem || item, pedido),
+    custo_unitario: custoUnitarioComercial,
     unidade_medida: unidadeComercial,
   };
 };
 
-const buildDisplayItensFromEmbarque = (pedido, embarque) => {
+const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
-    return normalizeDisplayItemCommercial(pedidoItem, item, pedido);
+    const produto = produtosMap[item.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
+    return normalizeDisplayItemCommercial(produto, pedidoItem, item, pedido);
   });
 };
 
@@ -203,8 +225,8 @@ const getValorTotalPedidoCalculado = (pedido) => {
   }, 0);
 };
 
-const getDisplayValorEmbarque = (pedido, embarque) => {
-  const itensDisplay = buildDisplayItensFromEmbarque(pedido, embarque);
+const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
+  const itensDisplay = buildDisplayItensFromEmbarque(pedido, embarque, produtosMap);
   const valorItens = itensDisplay.reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
   const valorTotalPedido = getValorTotalPedidoCalculado(pedido);
   const valorBaseItens = (pedido?.itens || []).reduce((acc, item) => {
@@ -297,6 +319,13 @@ export default function PedidosCompraPage() {
         base44.entities.Embarque.list('-created_date', 600),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300),
       ]);
+      const produtoIds = [...new Set(
+        pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean))
+      )];
+      const produtos = produtoIds.length
+        ? await Promise.all(produtoIds.map((id) => base44.entities.Produto.get(id).catch(() => null)))
+        : [];
+      const produtosMap = Object.fromEntries((produtos || []).filter(Boolean).map((p) => [p.id, p]));
 
       const pedidoMap = new Map(pcs.map((pedido) => [pedido.id, pedido]));
       const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
@@ -374,19 +403,21 @@ export default function PedidosCompraPage() {
           const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
           const ehNecessidade = isNecessidadeRenderizada(embarque);
           const itensDoCard = ehNecessidade
-            ? buildDisplayItensFromEmbarque(pedido, embarque)
+            ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
             : (hasLinkedItems(embarque)
-                ? buildDisplayItensFromEmbarque(pedido, embarque)
+                ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
                 : (pedido.itens || []).map((item) => ({
-                    produto_id: item.produto_id,
-                    produto_nome: item.produto_nome,
-                    quantidade: Number(item.quantidade) || 0,
-                    quantidade_embarcada: 0,
-                    quantidade_pedida: Number(item.quantidade) || 0,
-                    quantidade_base: Number(item.quantidade_base) || Number(item.quantidade) || 0,
-                    fator_conversao: Number(item.fator_conversao) || 1,
-                    custo_unitario: getValorUnitarioEfetivoItemPedido(item, pedido),
-                    unidade_medida: item.unidade_medida || '',
+                    const produto = produtosMap[item.produto_id] || null;
+                    return normalizeDisplayItemCommercial(produto, item, {
+                      produto_id: item.produto_id,
+                      produto_nome: item.produto_nome,
+                      quantidade: Number(item.quantidade) || 0,
+                      quantidade_embarcada: 0,
+                      quantidade_pedida: Number(item.quantidade) || 0,
+                      quantidade_base: Number(item.quantidade_base) || 0,
+                      fator_conversao: Number(item.fator_conversao) || 1,
+                      unidade_medida: item.unidade_medida || '',
+                    }, pedido);
                   })));
 
           return {
@@ -396,7 +427,7 @@ export default function PedidosCompraPage() {
             _display_code: getDisplayEmbarqueCode(pedido, embarque),
             _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
             _display_status: getBorrowedStatus(pedido, embarque),
-            _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque) : getValorTotalPedidoCalculado(pedido),
+            _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : getValorTotalPedidoCalculado(pedido),
             _display_itens: itensDoCard,
             _display_date: getEmbarqueDisplayDate(pedido),
             _display_fornecedor: pedido.fornecedor_nome || '—',
