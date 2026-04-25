@@ -296,6 +296,19 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
   return (Number(produto.valor_compra) || 0) * multiplicadorPedido;
 };
 
+/** Converte custo unitário para a unidade comercial exibida (embalagem). */
+const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
+  const fatorComercial = Number(item.fator_conversao) || 1;
+  const qtdBase = Number(item.quantidade_base);
+  const totalItem = Number(item.total);
+  if (Number.isFinite(totalItem) && qtdBase > 0) {
+    const unitBase = totalItem / qtdBase;
+    return unitBase * fatorComercial;
+  }
+  const unitFallback = getValorUnitarioEfetivoItem(item, produto, pedido);
+  return unitFallback * fatorComercial;
+};
+
 const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
   const itens = getItensRelatorio(pedido);
   return itens.reduce((acc, item) => {
@@ -787,12 +800,13 @@ Deno.serve(async (req) => {
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdEfetiva;
-        const liq = getValorUnitarioEfetivoItem(item, prod, pedido);
-        const frete = Number(prod.custo_frete_padrao) || 0;
-        const outros = (Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0);
+        const fatorComercial = Number(item.fator_conversao) || 1;
+        const liq = getValorUnitarioComercialItem(item, prod, pedido);
+        const frete = (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
+        const outros = ((Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0)) * fatorComercial;
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
         const custo = liq + frete + outros;
-        const venda = Number(prod.preco_venda_padrao) || 0;
+        const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
         const totalLiq = qtd * liq;
         const totalCusto = qtd * custo;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
@@ -878,8 +892,10 @@ Deno.serve(async (req) => {
       const prod = produtosMap[item.produto_id] || {};
       const qtd = item._qtdMostrada;
       const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
-      const precoCompra = getValorUnitarioEfetivoItem(item, prod, pedido);
-      const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+      const fatorComercial = Number(item.fator_conversao) || 1;
+      const precoCompra = getValorUnitarioComercialItem(item, prod, pedido);
+      const custoBase = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+      const custo = custoBase * fatorComercial;
       const tCompra = qtd * precoCompra;
 
       const vs = MOBILE_ITEMS_VERTICAL_SCALE;
@@ -944,7 +960,7 @@ Deno.serve(async (req) => {
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
             const prod = produtosMap[i.produto_id] || {};
-            const cu = getValorUnitarioEfetivoItem(i, prod, pedido);
+            const cu = getValorUnitarioComercialItem(i, prod, pedido);
             return a + (i._qtdMostrada * cu);
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
@@ -1036,9 +1052,11 @@ Deno.serve(async (req) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdMostrada;
         const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
-        const precoCompra = getValorUnitarioEfetivoItem(item, prod, pedido);
-        const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
-        const venda = Number(prod.preco_venda_padrao) || 0;
+        const fatorComercial = Number(item.fator_conversao) || 1;
+        const precoCompra = getValorUnitarioComercialItem(item, prod, pedido);
+        const custoBase = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+        const custo = custoBase * fatorComercial;
+        const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
         const tCompra = qtd * precoCompra;
         const tVenda = qtd * venda;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
