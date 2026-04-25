@@ -166,20 +166,31 @@ const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
   return baseUnit * multiplicadorPedido;
 };
 
+const normalizeDisplayItemCommercial = (pedidoItem = {}, item = {}, pedido = {}) => {
+  const fatorComercial = Number(pedidoItem?.fator_conversao) || Number(item?.fator_conversao) || 1;
+  const unidadeComercial = pedidoItem?.unidade_medida || item?.unidade_medida || '';
+  const qtdRaw = Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || Number(item?.quantidade) || 0;
+  const quantidadeBase = Number(item?.quantidade_base) > 0
+    ? Number(item.quantidade_base)
+    : (qtdRaw * fatorComercial);
+  const quantidadeComercial = fatorComercial > 0 ? (quantidadeBase / fatorComercial) : qtdRaw;
+  return {
+    produto_id: item.produto_id || pedidoItem?.produto_id,
+    produto_nome: item.produto_nome || pedidoItem?.produto_nome,
+    quantidade: quantidadeComercial,
+    quantidade_embarcada: quantidadeComercial,
+    quantidade_pedida: quantidadeComercial,
+    quantidade_base: quantidadeBase,
+    fator_conversao: fatorComercial,
+    custo_unitario: getValorUnitarioEfetivoItemPedido(pedidoItem || item, pedido),
+    unidade_medida: unidadeComercial,
+  };
+};
+
 const buildDisplayItensFromEmbarque = (pedido, embarque) => {
   return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
-    const quantidadeEmbarcada = Number(item.quantidade_embarcada) || 0;
-    const quantidadePedida = Number(item.quantidade_pedida) || 0;
-    return {
-      produto_id: item.produto_id,
-      produto_nome: item.produto_nome,
-      quantidade: quantidadeEmbarcada || quantidadePedida,
-      quantidade_embarcada: quantidadeEmbarcada,
-      quantidade_pedida: quantidadePedida,
-      custo_unitario: getValorUnitarioEfetivoItemPedido(pedidoItem || {}, pedido),
-      unidade_medida: item.unidade_medida || pedidoItem?.unidade_medida || '',
-    };
+    return normalizeDisplayItemCommercial(pedidoItem, item, pedido);
   });
 };
 
@@ -187,7 +198,7 @@ const getValorTotalPedidoCalculado = (pedido) => {
   const valorPedidoConhecido = Number(pedido?.valor_total);
   if (Number.isFinite(valorPedidoConhecido) && valorPedidoConhecido > 0) return valorPedidoConhecido;
   return (pedido?.itens || []).reduce((acc, item) => {
-    const qtd = Number(item?.quantidade_base || item?.quantidade) || 0;
+    const qtd = Number(item?.quantidade) || 0;
     return acc + (qtd * getValorUnitarioEfetivoItemPedido(item, pedido));
   }, 0);
 };
@@ -197,7 +208,7 @@ const getDisplayValorEmbarque = (pedido, embarque) => {
   const valorItens = itensDisplay.reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
   const valorTotalPedido = getValorTotalPedidoCalculado(pedido);
   const valorBaseItens = (pedido?.itens || []).reduce((acc, item) => {
-    const qtd = Number(item?.quantidade_base || item?.quantidade) || 0;
+    const qtd = Number(item?.quantidade) || 0;
     return acc + (qtd * getValorUnitarioEfetivoItemPedido(item, pedido));
   }, 0);
 
@@ -221,7 +232,7 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
   }, {});
 
   const itensPendentes = (pedido.itens || []).map((item) => {
-    const quantidadePedida = Number(item.quantidade_base || item.quantidade) || 0;
+    const quantidadePedida = Number(item.quantidade) || 0;
     const quantidadeRecebida = Number(recebidosPorProduto[item.produto_id]) || 0;
     const quantidadePendente = Math.max(0, quantidadePedida - quantidadeRecebida);
     if (!quantidadePendente) return null;
@@ -372,6 +383,8 @@ export default function PedidosCompraPage() {
                     quantidade: Number(item.quantidade) || 0,
                     quantidade_embarcada: 0,
                     quantidade_pedida: Number(item.quantidade) || 0,
+                    quantidade_base: Number(item.quantidade_base) || Number(item.quantidade) || 0,
+                    fator_conversao: Number(item.fator_conversao) || 1,
                     custo_unitario: getValorUnitarioEfetivoItemPedido(item, pedido),
                     unidade_medida: item.unidade_medida || '',
                   })));

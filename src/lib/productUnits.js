@@ -255,6 +255,32 @@ export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit
   return { unidade, fator_conversao: fator, quantidade, option };
 }
 
+export function normalizePurchaseItemToCommercial(product, item = {}) {
+  const quantidadeInput = normalizeNumber(item.quantidade, 0);
+  const fatorInput = normalizeNumber(item.fator_conversao, 1) || 1;
+  const quantidadeBaseInformada = normalizeNumber(item.quantidade_base, NaN);
+  const quantidadeBase = Number.isFinite(quantidadeBaseInformada)
+    ? quantidadeBaseInformada
+    : calculateBaseQuantity(quantidadeInput, fatorInput);
+  const display = resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || "UN");
+  const quantidadeComercial = normalizeNumber(display.quantidade, 0);
+  const totalInformado = normalizeNumber(item.total, NaN);
+  const unitInput = normalizeNumber(item.custo_unitario, 0);
+  const totalEconomico = Number.isFinite(totalInformado) ? totalInformado : (quantidadeInput * unitInput);
+  const custoUnitarioComercial = quantidadeComercial > 0
+    ? (totalEconomico / quantidadeComercial)
+    : (unitInput * normalizeNumber(display.fator_conversao, 1));
+
+  return {
+    ...item,
+    unidade_medida: display.unidade || item.unidade_medida || product?.unidade_principal || "UN",
+    fator_conversao: normalizeNumber(display.fator_conversao, 1) || 1,
+    quantidade: quantidadeComercial,
+    quantidade_base: quantidadeBase,
+    custo_unitario: custoUnitarioComercial,
+  };
+}
+
 export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
   const options = buildSaleUnitOptions(product);
   if (!options.length) {

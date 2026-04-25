@@ -41,7 +41,7 @@ import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
-import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
+import { pickDefaultPurchaseUnit, normalizePurchaseItemToCommercial } from '@/lib/productUnits';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImporter = false }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -377,6 +377,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                 item.valor_desconto_item = produto.desconto_compra_padrao || 0; 
             }
         }
+    }
+
+    const produtoItem = produtos.find((p) => p.id === item.produto_id);
+    if (produtoItem) {
+      const totalBase = (parseFloat(item.quantidade) || 0) * (parseFloat(item.custo_unitario) || 0);
+      Object.assign(item, normalizePurchaseItemToCommercial(produtoItem, { ...item, total: totalBase }));
     }
 
     const qty = parseFloat(item.quantidade) || 0;
@@ -1408,11 +1414,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems }) => {
           setFormData(prev => {
             const novosItens = importedItems.map(item => {
-              const qty = parseFloat(item.quantidade) || 1;
-              const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
+              const produtoItem = produtos.find((p) => p.id === item.produto_id);
+              const itemComercial = produtoItem ? normalizePurchaseItemToCommercial(produtoItem, item) : item;
+              const qty = parseFloat(itemComercial.quantidade) || 1;
+              const cost = roundToTwoDecimals(parseFloat(itemComercial.custo_unitario) || 0);
               return {
-                ...item,
+                ...itemComercial,
                 custo_unitario: cost,
+                quantidade_base: (parseFloat(itemComercial.quantidade_base) || 0),
                 subtotal: roundToTwoDecimals(qty * cost),
                 total: roundToTwoDecimals(qty * cost),
                 custo_final_unitario: cost,

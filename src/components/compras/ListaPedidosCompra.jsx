@@ -51,6 +51,9 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 function EmbarquesInfo({ pedido }) {
   const embarque = pedido._embarque;
   const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const itensDisplay = pedido._display_itens || [];
+  const unidadesCard = [...new Set(itensDisplay.map((i) => String(i.unidade_medida || '').trim()).filter(Boolean))];
+  const sufixoUnidade = unidadesCard.length === 1 ? unidadesCard[0] : 'un.';
   const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
   const quantidadePendente = pedido._quantidade_pendente ?? 0;
   const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0;
@@ -72,7 +75,7 @@ function EmbarquesInfo({ pedido }) {
       </span>
       {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
         <span className="text-red-500 dark:text-red-400 font-medium">
-          {formatQuantity(pedido._quantidade_pendente)} un. faltando embarcar
+          {formatQuantity(pedido._quantidade_pendente)} {sufixoUnidade} faltando embarcar
         </span>
       )}
     </div>
@@ -124,6 +127,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const totalQtd = itensDisplay.reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
   const totalQtdEmbarcada = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_embarcada) || 0), 0);
   const totalQtdPedidaCard = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
+  const unidadesCard = [...new Set(itensDisplay.map((i) => String(i.unidade_medida || '').trim()).filter(Boolean))];
+  const sufixoUnidade = unidadesCard.length === 1 ? unidadesCard[0] : 'un.';
   const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
     : pedido.valor_total);
@@ -233,10 +238,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
                   {pedido._is_necessidade
-                    ? (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} un. pend.` : '')
+                    ? (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} ${sufixoUnidade} pend.` : '')
                     : totalQtdEmbarcada > 0
-                      ? ` · ${formatQuantity(totalQtdEmbarcada)} de ${formatQuantity(totalQtdPedidaCard)} un.`
-                      : (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} un.` : '')}
+                      ? ` · ${formatQuantity(totalQtdEmbarcada)} de ${formatQuantity(totalQtdPedidaCard)} ${sufixoUnidade}`
+                      : (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} ${sufixoUnidade}` : '')}
                 </span>
               </span>
 
