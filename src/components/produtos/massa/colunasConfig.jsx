@@ -60,6 +60,13 @@ export const COLUNAS_SOMENTE_EMBALAGENS = [
     width: 22,
     tipo: 'string',
   },
+  {
+    key: 'embalagens_alternativas_contexto',
+    label: 'Contexto alternativas (somente leitura)',
+    editavel: false,
+    width: 56,
+    tipo: 'string',
+  },
 ];
 
 export const COLUNAS_CONFIG = [

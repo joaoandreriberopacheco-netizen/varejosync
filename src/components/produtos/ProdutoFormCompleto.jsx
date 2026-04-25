@@ -192,6 +192,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return [principal, ...alternativas.filter((u) => u !== principal)];
   }, [formData.unidade_principal, formData.unidades_alternativas]);
 
+  const resolveUnitValue = (value, opts = {}) => {
+    const principal = String(opts.unidadePrincipal || formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
+    const alternativasNormalizadas = (opts.unidadesAlternativas || formData.unidades_alternativas || []).map((u) => ({
+      unidade: String(u?.unidade || '').trim().toUpperCase(),
+      rotulo: String(u?.rotulo || '').trim().toUpperCase(),
+    })).filter((u) => u.unidade);
+    const validSet = new Set([principal, ...alternativasNormalizadas.map((u) => u.unidade)]);
+    const normalizeAlias = (raw) => String(raw || '').trim().toUpperCase()
+      .replace('CAIXA', 'CX')
+      .replace('CAIXAS', 'CX')
+      .replace('M²', 'M2')
+      .replace('METRO QUADRADO', 'M2');
+    const normalized = normalizeAlias(value);
+    if (!normalized) return '';
+    if (validSet.has(normalized)) return normalized;
+    const byRotulo = alternativasNormalizadas.find((u) => u.rotulo && normalizeAlias(u.rotulo) === normalized);
+    if (byRotulo?.unidade) return byRotulo.unidade;
+    return '';
+  };
+
   useEffect(() => {
     setFormData((prev) => {
       const principal = String(prev.unidade_principal || 'UN').trim().toUpperCase();
@@ -356,6 +376,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       }
 
       // Converte campos de texto para maiúsculas antes de salvar
+      const unidadePrincipal = String(formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
+      const unidadeComercialResolved = resolveUnitValue(
+        formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipal,
+        { unidadePrincipal }
+      ) || unidadePrincipal;
+      const unidadeLogisticaResolved = resolveUnitValue(
+        formData.unidade_show_logistica || '',
+        { unidadePrincipal }
+      );
+
       const produtoData = {
         ...formData,
         codigo_interno: codigoInterno,
@@ -363,13 +393,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         marca: formData.marca?.toUpperCase(),
         categoria_nome: categoria?.nome?.toUpperCase() || '',
         fornecedor_padrao_codigo: formData.fornecedor_padrao_codigo?.toUpperCase(),
-        unidade_show_comercial: String(
-          formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
-        ).trim().toUpperCase(),
-        unidade_show_logistica: String(formData.unidade_show_logistica || '').trim().toUpperCase(),
-        unidade_apresentacao_default: String(
-          formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
-        ).trim().toUpperCase(),
+        unidade_principal: unidadePrincipal,
+        unidade_show_comercial: unidadeComercialResolved,
+        unidade_show_logistica: unidadeLogisticaResolved,
+        unidade_apresentacao_default: unidadeComercialResolved,
         unidade_show_ativa: formData.unidade_show_ativa !== false,
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,

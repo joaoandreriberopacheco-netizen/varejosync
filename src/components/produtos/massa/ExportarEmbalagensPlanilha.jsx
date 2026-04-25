@@ -7,6 +7,44 @@ import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
 import { normalizeAlternativeUnits, normalizeUnitCode } from '@/lib/productUnits';
 import { dataHoje } from '@/components/utils/dateUtils';
 
+function getAlternativasRaw(produto) {
+  const raw = produto?.unidades_alternativas;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (_) {
+      // ignora parse inválido, fallback para vazio
+    }
+  }
+  return [];
+}
+
+function montarContextoAlternativas(produto, principal, altsAtivas = []) {
+  const raw = getAlternativasRaw(produto).map((a) => ({
+    unidade: normalizeUnitCode(a?.unidade),
+    fator_conversao: Number(a?.fator_conversao) || 0,
+    rotulo: typeof a?.rotulo === 'string'
+      ? a.rotulo.trim()
+      : (typeof a?.rotulo_comercial === 'string' ? a.rotulo_comercial.trim() : ''),
+    ajuste_percentual: Number(a?.ajuste_percentual) || 0,
+    ativo: a?.ativo !== false,
+  })).filter((a) => a.unidade);
+  const origem = raw.length > 0 ? raw : altsAtivas;
+  if (!origem.length) return '';
+  return origem
+    .map((a) => {
+      const flag = a.ativo === false ? 'inativo' : 'ativo';
+      const rot = a.rotulo ? ` (${a.rotulo})` : '';
+      const fator = a.fator_conversao ? `${a.fator_conversao}` : '?';
+      const ajuste = Number(a.ajuste_percentual) || 0;
+      const sinal = ajuste > 0 ? `+${ajuste}` : `${ajuste}`;
+      return `${a.unidade}${rot}: 1 = ${fator} ${principal}, ajuste ${sinal}% [${flag}]`;
+    })
+    .join(' | ');
+}
+
 function produtoParaLinhaEmbalagens(p) {
   const row = {
     id: p.id,
@@ -30,6 +68,7 @@ function produtoParaLinhaEmbalagens(p) {
   row.unidade_apresentacao_default = p.unidade_apresentacao_default || '';
   row.unidade_show_comercial = p.unidade_show_comercial || '';
   row.unidade_show_logistica = p.unidade_show_logistica || '';
+  row.embalagens_alternativas_contexto = montarContextoAlternativas(p, principal, alts);
   return row;
 }
 
