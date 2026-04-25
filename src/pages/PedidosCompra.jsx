@@ -167,6 +167,34 @@ const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
   return baseUnit * multiplicadorPedido;
 };
 
+const resolverUnidadePdvParaCards = (produtoSnapshot = {}, item = {}, fallback = 'UN') => {
+  const opcoes = buildPurchaseUnitOptions(produtoSnapshot);
+  const unidadePrincipal = String(produtoSnapshot?.unidade_principal || fallback || 'UN').trim().toUpperCase();
+  const candidatosRaw = [
+    produtoSnapshot?.unidade_apresentacao_default,
+    item?.unidade_apresentacao_default,
+    produtoSnapshot?.unidade_show_comercial,
+    item?.unidade_show_comercial,
+    item?.unidade_medida,
+    fallback,
+    'UN',
+  ];
+  const normalizar = (v) => String(v || '').trim().toUpperCase()
+    .replace('CAIXA', 'CX')
+    .replace('CAIXAS', 'CX')
+    .replace('M²', 'M2')
+    .replace('METRO QUADRADO', 'M2');
+
+  for (const raw of candidatosRaw) {
+    const unidade = normalizar(raw);
+    if (!unidade) continue;
+    const match = opcoes.find((o) => normalizar(o.unidade) === unidade);
+    if (match) return match.unidade;
+  }
+  const opcaoNaoPrincipal = opcoes.find((o) => normalizar(o.unidade) !== normalizar(unidadePrincipal));
+  return opcaoNaoPrincipal?.unidade || unidadePrincipal;
+};
+
 const getFatorEntradaItem = (produto = null, pedidoItem = {}, item = {}) => {
   const fatorDireto = Number(item?.fator_conversao) || Number(pedidoItem?.fator_conversao);
   if (Number.isFinite(fatorDireto) && fatorDireto > 0) return fatorDireto;
@@ -185,8 +213,13 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
   const quantidadeBase = Number(item?.quantidade_base) > 0
     ? Number(item.quantidade_base)
     : (qtdRaw * fatorEntrada);
-  const commercial = produto
-    ? resolveCommercialDisplay(produto, quantidadeBase, item?.unidade_medida || pedidoItem?.unidade_medida || 'UN')
+  const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || pedidoItem?.unidade_medida || produto?.unidade_principal || 'UN';
+  const pdvResolvido = produto ? resolverUnidadePdvParaCards(produto, item, fallback) : fallback;
+  const snapshotForcandoPdv = produto
+    ? { ...produto, unidade_show_ativa: true, unidade_apresentacao_default: pdvResolvido }
+    : null;
+  const commercial = snapshotForcandoPdv
+    ? resolveCommercialDisplay(snapshotForcandoPdv, quantidadeBase, fallback)
     : { unidade: pedidoItem?.unidade_medida || item?.unidade_medida || '', fator_conversao: Number(pedidoItem?.fator_conversao) || 1, quantidade: qtdRaw };
 
   const fatorComercial = Number(commercial?.fator_conversao) || 1;
