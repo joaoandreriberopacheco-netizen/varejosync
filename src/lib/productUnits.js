@@ -255,6 +255,11 @@ export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit
   return { unidade, fator_conversao: fator, quantidade, option };
 }
 
+/**
+ * Garante quantidade, `custo_unitario` e fator alinhados à unidade de **apresentação comercial** do produto
+ * (útil p/ formulário, importação e depois o relatório PDF, que divide `total` pela qtd nessa mesma UM).
+ * Quando o preço de entrada veio no eixo fator-1, o `total` econômico continua a ser o contrato: total/quantidade comercial = R$/UN comercial.
+ */
 export function normalizePurchaseItemToCommercial(product, item = {}) {
   const quantidadeInput = normalizeNumber(item.quantidade, 0);
   const fatorInput = normalizeNumber(item.fator_conversao, 1) || 1;

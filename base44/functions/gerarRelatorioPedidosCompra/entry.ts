@@ -256,8 +256,9 @@ const linhaQuantidadeIgualBase = (linha = {}) => {
 };
 
 /**
- * Valor total R$ da linha na mesma base que `_qtdEfetiva` (UM comercial do PDF).
- * Prioriza `pedido.itens` rateado — evita misturar total “da planilha” com qtd comercial do card.
+ * Valor total R$ da linha alinhado a `_qtdEfetiva` (UM comercial do PDF).
+ * Só usado em **fallback** em `getValorUnitarioComercialItem` quando o `item` não traz `total`/`subtotal` úteis
+ * (ex. pedido sem preço preenchido na linha normalizada, mas a linha em `pedido.itens` ainda tem valor).
  * Quando a linha tem `quantidade_base`, o rateio antigo (tL×qComm/qtd_linha) falha se `quantidade`
  * estiver em m² e o PDF em CX — usa (tL×qComm×fator)/quantidade_base.
  */
@@ -398,7 +399,16 @@ const ajustarPrecoUnitarioComercialSeTotalConfundeBase = (
   return liqInicial;
 };
 
-/** Converte custo unitário para a unidade comercial exibida (embalagem). */
+/**
+ * VLR. UN. (R$) na unidade comercial exibida no PDF (QTD/UN do relatório).
+ *
+ * Ordem de prioridade: (1) `total` da **mesma** linha ÷ qtd comercial (o que bate com o preço/negociação no
+ * pedido, inclusive após `normalizarPedidoParaRelatorio` no cliente). (2) Só se não houver total útil, ratear
+ * via `pedido.itens` (`valorTotalLinhaPdf`) — cuida de dados sem total no item. (3) `total/quantidade_base`×fator
+ * quando base está explícita. (4) `custo_unitario` efetivo: se a linha original do pedido foi gravada no
+ * eixo fator-1, multiplica por `fator_conversao`; se já for no eixo comercial, usa o unitário sem multiplicar de novo.
+ * Validação: exportar JSON do item e conferir `total` ≈ `qtd` comercial (report) × VLR. UN. no PDF.
+ */
 const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
   const qtdComm =
     Number(item._qtdEfetiva) ||
@@ -408,24 +418,43 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
     Number(item.quantidade_pedida) ||
     0;
 
-  const vLinha = valorTotalLinhaPdf(item, pedido);
-  if (Number.isFinite(vLinha) && vLinha > 0 && qtdComm > 0) {
-    const liq0 = vLinha / qtdComm;
-    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq0, vLinha, qtdComm);
+  const fatorComercial = Number(item.fator_conversao) || 1;
+
+  const totalDaLinhaNoItem = Number(
+    item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? 0,
+  );
+  if (Number.isFinite(totalDaLinhaNoItem) && totalDaLinhaNoItem > 0 && qtdComm > 0) {
+    const liq0 = totalDaLinhaNoItem / qtdComm;
+    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(
+      item,
+      pedido,
+      produto,
+      liq0,
+      totalDaLinhaNoItem,
+      qtdComm,
+    );
   }
 
-  const fatorComercial = Number(item.fator_conversao) || 1;
-  const totalItem = Number(item.total ?? item.valor_total_item ?? 0);
-  const qtdBase = Number(item.quantidade_base);
-  if (Number.isFinite(totalItem) && totalItem > 0 && qtdBase > 0) {
-    const unitBase = totalItem / qtdBase;
-    const liq1 = unitBase * fatorComercial;
-    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq1, totalItem, qtdComm);
+  const vLinha = valorTotalLinhaPdf(item, pedido);
+  if (Number.isFinite(vLinha) && vLinha > 0 && qtdComm > 0) {
+    const liq1 = vLinha / qtdComm;
+    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq1, vLinha, qtdComm);
   }
+
+  const totalB = Number(item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? 0);
+  const qtdBase = Number(item.quantidade_base);
+  if (Number.isFinite(totalB) && totalB > 0 && qtdBase > 0) {
+    const unitBase = totalB / qtdBase;
+    const liq2 = unitBase * fatorComercial;
+    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq2, totalB, qtdComm);
+  }
+
+  const linhaOrig = findLinhaPedidoOriginal(pedido, item);
+  const precoNoEixoFator1 = linhaQuantidadeIgualBase(linhaOrig);
   const unitFallback = getValorUnitarioEfetivoItem(item, produto, pedido);
-  const liq2 = unitFallback * fatorComercial;
-  const refMoeda = Number(item.total ?? item.valor_total_item ?? vLinha ?? 0);
-  return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq2, refMoeda, qtdComm);
+  const liq3 = precoNoEixoFator1 && fatorComercial > 0 ? unitFallback * fatorComercial : unitFallback;
+  const refMoeda = Number(item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? vLinha ?? 0);
+  return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq3, refMoeda, qtdComm);
 };
 
 const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
@@ -929,6 +958,12 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     //  DESKTOP: layout expandido
     // ════════════════════════════════════════════════════════════════════════
+    /**
+     * Tabela detalhada: QTD/UN na unidade comercial; colunas R$ na mesma UM.
+     * VENDA: `preço venda` do cadastro (R$/fator-1) × fator de conversão da embalagem.
+     * FRETE/OUTROS: regra em `resolveFreteUnitarioExpanded` (ex. frete padrão R$/m² × fator, ou total na linha).
+     * VLR. UN. / TOTAL: preço de compra da **linha do item** (total ÷ qtd comercial) — ver `getValorUnitarioComercialItem`.
+     */
     const drawExpandido = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const stPedido = pedido._display_status || pedido.status;
@@ -1027,8 +1062,7 @@ Deno.serve(async (req) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdEfetiva;
         const fatorComercial = Number(item.fator_conversao) || 1;
-        // Um único caminho: inclui correção quando o total na linha foi gravado como qtd×preço(base)
-        // sem aplicar quantidade_base (ex.: mostra CX mas valor ainda é por m²).
+        // VLR. UN.: ver getValorUnitarioComercialItem (total ÷ qtd comercial; `ajustarPreco...` se total confundir base).
         const liq = getValorUnitarioComercialItem(item, prod, pedido);
         const frete = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
         const outros = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
