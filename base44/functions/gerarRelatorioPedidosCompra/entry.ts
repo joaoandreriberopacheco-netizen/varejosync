@@ -206,6 +206,9 @@ const moeda = (valor = 0) =>
   `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const moedaSemSimbolo = (valor = 0) =>
   Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** Quantidades no relatório: arredondamento visual com até 2 casas decimais (pt-BR). */
+const fmtQuantidadePdf = (valor = 0) =>
+  Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const percentual = (valor = 0) =>
   `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 const dataFmt = (valor) => {
@@ -362,6 +365,39 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
   return (Number(produto.valor_compra) || 0) * multiplicadorPedido;
 };
 
+/**
+ * Quando o pedido gravou o total como (qtd comercial × preço fator 1) em vez de (quantidade_base × preço fator 1),
+ * o PDF mostra CX na coluna UN mas VLR. UN. continua o do m². Corrige para preço por embalagem = unitBase × fator.
+ */
+const ajustarPrecoUnitarioComercialSeTotalConfundeBase = (
+  item = {},
+  pedido = {},
+  produto = {},
+  liqInicial = 0,
+  valorMonetarioRef = 0,
+  qtdComm = 0,
+) => {
+  const f = Number(item.fator_conversao) || 1;
+  const qB = Number(item.quantidade_base) || 0;
+  const unitBase = getValorUnitarioEfetivoItem(item, produto, pedido);
+  if (!(f > 1 && unitBase > 0 && qB > 0 && qtdComm > 0 && Number.isFinite(valorMonetarioRef) && valorMonetarioRef > 0)) {
+    return liqInicial;
+  }
+  const epsQ = 1e-3 * Math.max(1, qtdComm * f);
+  if (Math.abs(qB - qtdComm * f) > epsQ) return liqInicial;
+
+  const tol = Math.max(0.05, 0.004 * Math.max(valorMonetarioRef, qB * unitBase, qtdComm * unitBase));
+  const totalComoSeQtdComercialFosseSoPrecoBase = qtdComm * unitBase;
+  const totalCoerenteEmUnidadeBase = qB * unitBase;
+  if (
+    Math.abs(valorMonetarioRef - totalComoSeQtdComercialFosseSoPrecoBase) <= tol &&
+    Math.abs(valorMonetarioRef - totalCoerenteEmUnidadeBase) > tol
+  ) {
+    return unitBase * f;
+  }
+  return liqInicial;
+};
+
 /** Converte custo unitário para a unidade comercial exibida (embalagem). */
 const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
   const qtdComm =
@@ -373,17 +409,23 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
     0;
 
   const vLinha = valorTotalLinhaPdf(item, pedido);
-  if (Number.isFinite(vLinha) && vLinha > 0 && qtdComm > 0) return vLinha / qtdComm;
+  if (Number.isFinite(vLinha) && vLinha > 0 && qtdComm > 0) {
+    const liq0 = vLinha / qtdComm;
+    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq0, vLinha, qtdComm);
+  }
 
   const fatorComercial = Number(item.fator_conversao) || 1;
   const totalItem = Number(item.total ?? item.valor_total_item ?? 0);
   const qtdBase = Number(item.quantidade_base);
   if (Number.isFinite(totalItem) && totalItem > 0 && qtdBase > 0) {
     const unitBase = totalItem / qtdBase;
-    return unitBase * fatorComercial;
+    const liq1 = unitBase * fatorComercial;
+    return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq1, totalItem, qtdComm);
   }
   const unitFallback = getValorUnitarioEfetivoItem(item, produto, pedido);
-  return unitFallback * fatorComercial;
+  const liq2 = unitFallback * fatorComercial;
+  const refMoeda = Number(item.total ?? item.valor_total_item ?? vLinha ?? 0);
+  return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq2, refMoeda, qtdComm);
 };
 
 const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
@@ -846,7 +888,7 @@ Deno.serve(async (req) => {
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
-      doc.text(`${totalLinhas} itens - ${totalQtd.toLocaleString('pt-BR')} un.`, M + CW - 4, y + 16, { align: 'right' });
+      doc.text(`${totalLinhas} itens - ${fmtQuantidadePdf(totalQtd)} un.`, M + CW - 4, y + 16, { align: 'right' });
       y += 32;
     };
 
@@ -943,7 +985,7 @@ Deno.serve(async (req) => {
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
-      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${totalQtdExp.toLocaleString('pt-BR')} (un. comerc.)`, M + CW - 4, y + 16, { align: 'right' });
+      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${fmtQuantidadePdf(totalQtdExp)} (un. comerc.)`, M + CW - 4, y + 16, { align: 'right' });
       y += 32;
 
       drawProgressBar(stPedido, y);
@@ -973,11 +1015,9 @@ Deno.serve(async (req) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdEfetiva;
         const fatorComercial = Number(item.fator_conversao) || 1;
-        const valorLinhaRef = valorTotalLinhaPdf(item, pedido);
-        const liq =
-          valorLinhaRef > 0 && Number(qtd) > 0
-            ? valorLinhaRef / Number(qtd)
-            : getValorUnitarioComercialItem(item, prod, pedido);
+        // Um único caminho: inclui correção quando o total na linha foi gravado como qtd×preço(base)
+        // sem aplicar quantidade_base (ex.: mostra CX mas valor ainda é por m²).
+        const liq = getValorUnitarioComercialItem(item, prod, pedido);
         const frete = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
         const outros = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
@@ -1023,7 +1063,7 @@ Deno.serve(async (req) => {
           doc.roundedRect(TM, y - 1.25, TW, rowAdvance + scaledHeight(0.6), 1.5, 1.5, 'F');
         }
         doc.setTextColor(...C.text);
-        doc.text(String((Number(qtd) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 4 })), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(fmtQuantidadePdf(Number(qtd) || 0), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         doc.text(safe(item.unidade_medida || prod.unidade_principal || 'UN'), TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         nomeLinhas.forEach((line, li) => {
           doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
@@ -1070,7 +1110,7 @@ Deno.serve(async (req) => {
     const NOME_X = ITEM_ML;
     const NOME_MAX_W = M + CW - NOME_X - 3;
 
-    const fmtQtd = (n) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtQtd = fmtQuantidadePdf;
 
     /** Altura de um bloco de item (mesma fórmula do `forEach` de itens) — y0=0 dá a altura absoluta da linha. */
     const computeMobileItemRowBlockH = (pedido, item, y0 = 0) => {
