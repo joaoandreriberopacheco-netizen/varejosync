@@ -2,20 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import base44 from '@base44/vite-plugin'
 import path from 'path'
-import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import { createRequire } from 'module'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // sourceLocationBabelPlugin — injects data-source-location for Flare Mode
-// Loaded conditionally so a missing file never breaks production builds
+// Uses a fully dynamic require so esbuild cannot statically resolve the path
 let sourceLocationBabelPlugin = null
-const pluginPath = path.resolve(__dirname, './build/' + 'sourceLocationBabelPlugin.cjs')
+const pluginPath = path.join(__dirname, 'build', 'sourceLocationBabelPlugin.cjs')
 if (fs.existsSync(pluginPath)) {
   try {
-    sourceLocationBabelPlugin = require(pluginPath)
+    const _require = createRequire(import.meta.url)
+    // Defeat static analysis: build path at runtime
+    const dynamicPath = [pluginPath].find(Boolean)
+    sourceLocationBabelPlugin = _require(dynamicPath)
   } catch (_) {
     // plugin not loadable — skip silently
   }
