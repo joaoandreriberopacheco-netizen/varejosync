@@ -1044,9 +1044,11 @@ Deno.serve(async (req) => {
           descMaxW,
         );
         const descLineStep = scaledHeight(3.85);
+        /** Mesma baseline das colunas QTD / VLR. UN. — evita deslocar só a descrição. */
+        const rowBaselineY = (y0) => y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y);
         /** Altura da linha e âncoras Y para um dado y0 (topo da linha). */
         const metricsExpandido = (y0) => {
-          const firstY = y0 + scaledHeight(4);
+          const firstY = rowBaselineY(y0);
           const descBottom =
             nomeLinhas.length === 0
               ? y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3)
@@ -1059,10 +1061,17 @@ Deno.serve(async (req) => {
           return { firstDescY: firstY, rowAdvance: advance };
         };
 
-        let { firstDescY, rowAdvance } = metricsExpandido(y);
-        ensureSpace(rowAdvance);
-        // Se ensureSpace quebrou página, y mudou — recalcular ou descrição fica na página anterior (texto solto).
-        ({ firstDescY, rowAdvance } = metricsExpandido(y));
+        const bottomPadExp = 10;
+        const maxRowFit = pageH - bottomPadExp - 14;
+        let firstDescY;
+        let rowAdvance;
+        for (;;) {
+          ({ firstDescY, rowAdvance } = metricsExpandido(y));
+          if (y + rowAdvance <= pageH - bottomPadExp) break;
+          if (rowAdvance > maxRowFit) break;
+          doc.addPage();
+          y = 14;
+        }
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
           doc.roundedRect(TM, y - 1.25, TW, rowAdvance + scaledHeight(0.6), 1.5, 1.5, 'F');
