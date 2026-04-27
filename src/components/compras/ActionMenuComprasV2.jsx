@@ -174,7 +174,11 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       toast.success(`Relatório ${version} gerado com sucesso`, { id: 'gerando-relatorio' });
       setIsExpanded(false);
     } catch (error) {
-      toast.error('Erro ao gerar relatório', { id: 'gerando-relatorio' });
+      const msg = error?.message || String(error);
+      toast.error('Erro ao gerar relatório', {
+        id: 'gerando-relatorio',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+      });
       console.error(error);
     } finally {
       setGerando('');

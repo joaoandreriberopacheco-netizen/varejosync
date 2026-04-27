@@ -1,5 +1,5 @@
-import { invokeFunction } from './_invokeHelper';
+import { invokeFunctionBinary } from './_invokeHelper';
 
 export function gerarRelatorioPedidosCompra(body) {
-  return invokeFunction('gerarRelatorioPedidosCompra', body);
+  return invokeFunctionBinary('gerarRelatorioPedidosCompra', body);
 }
