@@ -286,11 +286,14 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
 
   // Regra principal: o cálculo final do item sempre prevalece.
   // Assim, qualquer desconto/acréscimo aplicado no formulário (inclusive via %) é refletido no relatório.
-  const totalItem = Number(item.total);
+  const totalItem = Number(item.total ?? item.valor_total_item ?? item.valor_total);
   const qtd = getQuantidadeEfetivaItem(item);
   if (Number.isFinite(totalItem) && qtd > 0) {
     const unitFromTotal = totalItem / qtd;
-    return temAjusteManualItem ? unitFromTotal : (baseUnit * multiplicadorPedido);
+    if (temAjusteManualItem) return unitFromTotal;
+    // Lista/catálogo zerado mas linha com total: usar o derivado da linha (evita colunas zeradas no PDF)
+    if (!Number.isFinite(baseUnit) || baseUnit <= 0) return unitFromTotal * multiplicadorPedido;
+    return baseUnit * multiplicadorPedido;
   }
 
   const descontoOuAcrescimo = Number(item.valor_desconto_item);
@@ -306,9 +309,25 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
 /** Converte custo unitário para a unidade comercial exibida (embalagem). */
 const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
   const fatorComercial = Number(item.fator_conversao) || 1;
+  const totalLinha = Number(
+    item.total ?? item.valor_total_item ?? item.valor_total ?? 0,
+  );
+  const qtdComm =
+    Number(item._qtdEfetiva) ||
+    Number(item._qtdMostrada) ||
+    Number(item.quantidade) ||
+    Number(item.quantidade_embarcada) ||
+    Number(item.quantidade_pedida) ||
+    0;
+
+  // Preço já na unidade comercial da linha (espelha o que a tela mostra)
+  if (Number.isFinite(totalLinha) && totalLinha > 0 && qtdComm > 0) {
+    return totalLinha / qtdComm;
+  }
+
   const qtdBase = Number(item.quantidade_base);
-  const totalItem = Number(item.total);
-  if (Number.isFinite(totalItem) && qtdBase > 0) {
+  const totalItem = Number(item.total ?? item.valor_total_item ?? 0);
+  if (Number.isFinite(totalItem) && totalItem > 0 && qtdBase > 0) {
     const unitBase = totalItem / qtdBase;
     return unitBase * fatorComercial;
   }
@@ -349,17 +368,18 @@ const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.25;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 3.9;
+/** Ancoras X (mm a partir de TM) para texto alinhado à direita; última coluna ≤ TW (evita extravasar a área da tabela). */
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
   qtd: 2,
   unidade: 13,
   descricao: 22,
-  vlrUnit: 80,
-  frete: 97,
-  outros: 114,
-  custo: 131,
-  total: 148,
-  venda: 164,
-  markup: 176,
+  vlrUnit: 72,
+  frete: 87,
+  outros: 102,
+  custo: 117,
+  total: 132,
+  venda: 147,
+  markup: 162,
 };
 /** Margem horizontal (mm) entre fim da coluna descrição e coluna VLR. UN. (evita sobreposição ao imprimir). */
 const EXPANDED_DESC_TO_VLR_GAP_MM = 9;
@@ -810,8 +830,24 @@ Deno.serve(async (req) => {
         const qtd = item._qtdEfetiva;
         const fatorComercial = Number(item.fator_conversao) || 1;
         const liq = getValorUnitarioComercialItem(item, prod, pedido);
-        const frete = (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
-        const outros = ((Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0)) * fatorComercial;
+        const fretePad = (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
+        const frete =
+          item.frete_unitario != null && item.frete_unitario !== ''
+            ? Number(item.frete_unitario) || 0
+            : fretePad;
+        const outrosLinha =
+          (Number(item.custo_outros) || 0) +
+          (Number(item.custo_imposto1) || 0) +
+          (Number(item.custo_imposto2) || 0);
+        const outrosPad =
+          ((Number(prod.custo_imposto1_padrao) || 0) +
+            (Number(prod.custo_imposto2_padrao) || 0) +
+            (Number(prod.custo_outros_padrao) || 0)) *
+          fatorComercial;
+        const temCustosLinha = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
+          (k) => item[k] !== undefined && item[k] !== null,
+        );
+        const outros = temCustosLinha ? outrosLinha : outrosPad;
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
         const custo = liq + frete + outros;
         const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
