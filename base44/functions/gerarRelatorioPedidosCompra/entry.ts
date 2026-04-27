@@ -235,6 +235,31 @@ const sortItensAlfabeticamente = (itens, produtosMap) =>
     const nb = String(b?.produto_nome || produtosMap[b?.produto_id]?.nome || '').toLocaleLowerCase('pt-BR');
     return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
   });
+
+/** Custos monetários autoritários costumam estar só em `pedido.itens` (evitar misturar UM do card com totals da linha). */
+const findLinhaPedidoOriginal = (pedido = {}, item = {}) => {
+  const pid = item.produto_id;
+  if (!pid) return {};
+  const linhas = (pedido.itens || []).filter((i) => i.produto_id === pid);
+  return linhas[0] || {};
+};
+
+/** Valor total R$ da linha na mesma base das quantidades comerciais do PDF (`_qtdEfetiva`). */
+const valorTotalLinhaPdf = (item = {}, pedido = {}) => {
+  const direto = Number(item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? 0);
+  if (Number.isFinite(direto) && direto > 0) return direto;
+
+  const qComm =
+    Number(item._qtdEfetiva ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) ||
+    0;
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const qL = Number(linha.quantidade) || 0;
+  const tL =
+    Number(linha.total ?? linha.valor_total_item ?? linha.valor_total ?? linha.subtotal ?? 0);
+  if (Number.isFinite(tL) && tL > 0 && qL > 0 && qComm > 0) return (tL * qComm) / qL;
+  return 0;
+};
+
 const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_nome || 'Sem transportadora';
 const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
@@ -308,10 +333,6 @@ const getValorUnitarioEfetivoItem = (item = {}, produto = {}, pedido = {}) => {
 
 /** Converte custo unitário para a unidade comercial exibida (embalagem). */
 const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
-  const fatorComercial = Number(item.fator_conversao) || 1;
-  const totalLinha = Number(
-    item.total ?? item.valor_total_item ?? item.valor_total ?? 0,
-  );
   const qtdComm =
     Number(item._qtdEfetiva) ||
     Number(item._qtdMostrada) ||
@@ -320,13 +341,12 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
     Number(item.quantidade_pedida) ||
     0;
 
-  // Preço já na unidade comercial da linha (espelha o que a tela mostra)
-  if (Number.isFinite(totalLinha) && totalLinha > 0 && qtdComm > 0) {
-    return totalLinha / qtdComm;
-  }
+  const vLinha = valorTotalLinhaPdf(item, pedido);
+  if (Number.isFinite(vLinha) && vLinha > 0 && qtdComm > 0) return vLinha / qtdComm;
 
-  const qtdBase = Number(item.quantidade_base);
+  const fatorComercial = Number(item.fator_conversao) || 1;
   const totalItem = Number(item.total ?? item.valor_total_item ?? 0);
+  const qtdBase = Number(item.quantidade_base);
   if (Number.isFinite(totalItem) && totalItem > 0 && qtdBase > 0) {
     const unitBase = totalItem / qtdBase;
     return unitBase * fatorComercial;
@@ -362,59 +382,55 @@ const custoCalculadoProduto = (produto = {}) =>
   + (Number(produto.custo_outros_padrao) || 0)
   - (Number(produto.desconto_compra_padrao) || 0);
 
-/** Custos na linha do pedido costumam existir só em `pedido.itens`, não em `_display_itens`. */
-const findLinhaPedidoOriginal = (pedido = {}, item = {}) => {
-  const pid = item.produto_id;
-  if (!pid) return {};
-  const itens = pedido.itens || [];
-  const linhas = itens.filter((i) => i.produto_id === pid);
-  return linhas[0] || {};
-};
-
 const sumOutrosCamposItem = (o = {}) =>
   (Number(o.custo_outros) || 0) +
   (Number(o.custo_imposto1) || 0) +
   (Number(o.custo_imposto2) || 0);
 
-/** Frete unitário na mesma base da tabela expandida (unidade comercial da linha). */
+/**
+ * Frete por unidade na mesma UM da linha guardada em `pedido.itens`.
+ * Evita dividir frete_total pela quantidade comercial do card (bases diferentes).
+ */
 const resolveFreteUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
-  const merged = { ...linha, ...item };
-  const qComm =
-    Number(item._qtdEfetiva ?? item.quantidade ?? merged.quantidade) || 0;
 
-  const direto = Number(
-    merged.frete_unitario ?? merged.valor_frete_unitario ?? merged.valor_frete,
-  );
-  if (Number.isFinite(direto)) return direto;
+  const fuLinha = Number(linha.frete_unitario ?? linha.valor_frete_unitario ?? linha.valor_frete);
+  if (Number.isFinite(fuLinha)) return fuLinha;
 
-  const ft = Number(merged.frete_total);
-  if (Number.isFinite(ft) && qComm > 0) return ft / qComm;
+  const qL = Number(linha.quantidade) || 0;
+  const ftL = Number(linha.frete_total);
+  if (Number.isFinite(ftL) && ftL > 0 && qL > 0) return ftL / qL;
 
-  const qLinha = Number(linha.quantidade) || 0;
-  const ftLinha = Number(linha.frete_total);
-  if (Number.isFinite(ftLinha) && qLinha > 0) return ftLinha / qLinha;
+  const fuItem = Number(item.frete_unitario ?? item.valor_frete_unitario);
+  if (Number.isFinite(fuItem)) return fuItem;
+
+  const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
+  const ftItem = Number(item.frete_total);
+  if (Number.isFinite(ftItem) && ftItem > 0 && qComm > 0) return ftItem / qComm;
 
   return (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
 };
 
 const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
-  const merged = { ...linha, ...item };
-  const qComm =
-    Number(item._qtdEfetiva ?? item.quantidade ?? merged.quantidade) || 0;
 
-  const temChavesImp = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
-    (k) => merged[k] !== undefined && merged[k] !== null,
+  const temImpLinha = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
+    (k) => linha[k] !== undefined && linha[k] !== null,
   );
-  if (temChavesImp) return sumOutrosCamposItem(merged);
+  if (temImpLinha) return sumOutrosCamposItem(linha);
 
-  const ot = Number(item.outros_total ?? linha.outros_total ?? merged.outros_total);
-  if (Number.isFinite(ot) && qComm > 0) return ot / qComm;
+  const qL = Number(linha.quantidade) || 0;
+  const otL = Number(linha.outros_total);
+  if (Number.isFinite(otL) && otL > 0 && qL > 0) return otL / qL;
 
-  const qLinha = Number(linha.quantidade) || 0;
-  const otLinha = Number(linha.outros_total);
-  if (Number.isFinite(otLinha) && qLinha > 0) return otLinha / qLinha;
+  const temImpItem = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
+    (k) => item[k] !== undefined && item[k] !== null,
+  );
+  if (temImpItem) return sumOutrosCamposItem(item);
+
+  const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
+  const otItem = Number(item.outros_total);
+  if (Number.isFinite(otItem) && otItem > 0 && qComm > 0) return otItem / qComm;
 
   return (
     ((Number(prod.custo_imposto1_padrao) || 0) +
