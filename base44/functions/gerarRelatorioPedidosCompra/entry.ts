@@ -244,11 +244,11 @@ const findLinhaPedidoOriginal = (pedido = {}, item = {}) => {
   return linhas[0] || {};
 };
 
-/** Valor total R$ da linha na mesma base das quantidades comerciais do PDF (`_qtdEfetiva`). */
+/**
+ * Valor total R$ da linha na mesma base que `_qtdEfetiva` (UM comercial do PDF).
+ * Prioriza `pedido.itens` rateado — evita misturar total “da planilha” com qtd comercial do card.
+ */
 const valorTotalLinhaPdf = (item = {}, pedido = {}) => {
-  const direto = Number(item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? 0);
-  if (Number.isFinite(direto) && direto > 0) return direto;
-
   const qComm =
     Number(item._qtdEfetiva ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) ||
     0;
@@ -256,7 +256,13 @@ const valorTotalLinhaPdf = (item = {}, pedido = {}) => {
   const qL = Number(linha.quantidade) || 0;
   const tL =
     Number(linha.total ?? linha.valor_total_item ?? linha.valor_total ?? linha.subtotal ?? 0);
-  if (Number.isFinite(tL) && tL > 0 && qL > 0 && qComm > 0) return (tL * qComm) / qL;
+
+  if (Number.isFinite(tL) && tL > 0 && qL > 0 && qComm > 0) {
+    return (tL * qComm) / qL;
+  }
+
+  const direto = Number(item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? 0);
+  if (Number.isFinite(direto) && direto > 0) return direto;
   return 0;
 };
 
@@ -445,8 +451,6 @@ const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // ~11px visual size in the generat
 const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 8.85;
-/** Espaço extra vertical dentro da linha de produto (multilinha descrição). */
-const EXPANDED_ITEMS_ROW_DESC_PAD_MM = 1.15;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.35;
 /** Ancoras X (mm a partir de TM) para texto alinhado à direita; última coluna ≤ TW (evita extravasar a área da tabela). */
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
@@ -937,18 +941,26 @@ Deno.serve(async (req) => {
         );
         const nomeLinhas = doc.splitTextToSize(
           safe(item.produto_nome || prod.nome || '-'),
-          descMaxW
+          descMaxW,
         );
         const descLineStep = scaledHeight(3.85);
         const firstDescY = y + scaledHeight(4);
-        const rowHeight = Math.max(
-          EXPANDED_ITEMS_TABLE_ROW_HEIGHT,
-          4.6 + nomeLinhas.length * 2.72 + EXPANDED_ITEMS_ROW_DESC_PAD_MM,
-        );
-        ensureSpace(scaledHeight(rowHeight));
+        const descBottomY =
+          nomeLinhas.length === 0
+            ? y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3)
+            : firstDescY +
+              Math.max(0, nomeLinhas.length - 1) * descLineStep +
+              scaledHeight(4.5);
+        const numericBottomY = y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 4);
+        const rowAdvance =
+          Math.max(descBottomY, numericBottomY, y + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 4)) -
+          y +
+          scaledHeight(3);
+
+        ensureSpace(rowAdvance);
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(TM, y - 1.25, TW, scaledHeight(rowHeight - 0.9), 1.5, 1.5, 'F');
+          doc.roundedRect(TM, y - 1.25, TW, rowAdvance + scaledHeight(0.6), 1.5, 1.5, 'F');
         }
         doc.setTextColor(...C.text);
         doc.text(String((Number(qtd) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 4 })), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
@@ -963,7 +975,7 @@ Deno.serve(async (req) => {
         doc.text(moedaSemSimbolo(totalLiq),  TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(venda),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(percentual(mk),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        y += scaledHeight(rowHeight);
+        y += rowAdvance;
       });
 
       ensureSpace(scaledHeight(22));
