@@ -10,9 +10,9 @@ import { toast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import {
   resolvePrimaryFromFactorOne,
-  resolveCommercialUnit,
   formatUnitConversion,
   buildPurchaseUnitOptions,
+  pickDefaultPurchaseUnit,
 } from '@/lib/productUnits';
 
 // Formata número para string BR
@@ -38,7 +38,7 @@ const calcMarkup = (custo, preco) => custo > 0 ? ((preco / custo) - 1) * 100 : 0
 
 const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
 
-/** Mesmas equivalências usadas em compras / produtos para casar CX, M2, etc. */
+/** Normalização de siglas para casar unidades equivalentes no cadastro / linha do pedido. */
 function normalizarSiglaUnidade(raw) {
   return String(raw || '').trim().toUpperCase()
     .replace('CAIXAS', 'CX')
@@ -49,7 +49,7 @@ function normalizarSiglaUnidade(raw) {
 
 /**
  * Fator da **linha do pedido**: converte custo_unitario → valor_compra na unidade base do cadastro.
- * (Quando compra está em M², isto é 1 — não misturar com embalagem só de apresentação.)
+ * (Quando a linha está na unidade base, isto é 1.)
  */
 function resolveFatorPedidoParaBase(item, produto) {
   const qtd = Number(item?.quantidade);
@@ -73,23 +73,18 @@ function resolveFatorPedidoParaBase(item, produto) {
 }
 
 /**
- * Fator da embalagem comercial **somente a partir do cadastro do produto**
- * (`unidades_alternativas` / importação de embalagens + unidade de apresentação).
- * Se não houver embalagem comercial distinta da base → fator 1.
+ * Unidade/fator de negociação de compra no cadastro — igual ao formulário do pedido (`pickDefaultPurchaseUnit`).
+ * Unidade padrão de compra com fator ≠ 1 → exibe nessa unidade; gravação segue na unidade base do cadastro.
  */
 function resolveFatorComercialCadastro(produto) {
   if (!produto) return 1;
-  const principal = resolvePrimaryFromFactorOne(produto, 'UN');
-  const pref = resolveCommercialUnit(produto, principal);
-  if (normalizarSiglaUnidade(pref) === normalizarSiglaUnidade(principal)) return 1;
-  const opcoes = buildPurchaseUnitOptions(produto);
-  const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === normalizarSiglaUnidade(pref));
-  if (match && Number(match.fator_conversao) > 1) return Number(match.fator_conversao);
-  return 1;
+  const pu = pickDefaultPurchaseUnit(produto);
+  if (!pu || Number(pu.fator_conversao) <= 1) return 1;
+  return Number(pu.fator_conversao);
 }
 
 /**
- * Fator para exibir na unidade comercial: pedido em embalagem (fator da linha), senão o cadastro.
+ * Fator para exibir: unidade da linha do pedido (se ≠ base), senão unidade padrão de compra do cadastro.
  */
 function resolveFatorExibicaoComercial(item, produto) {
   const fp = resolveFatorPedidoParaBase(item, produto);
@@ -136,7 +131,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Estado local dos inputs (strings para digitação livre)
   const [inputs, setInputs] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-  /** Padrão do diálogo: sempre unidade comercial (embalagem); unidade base só se o usuário alternar. */
+  /** Padrão: valores na unidade de compra configurada; alternativa é só unidade base do cadastro. */
   const [unidadeVisualizacao, setUnidadeVisualizacao] = useState('comercial');
 
   useEffect(() => {
@@ -146,7 +141,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Inicializa estado ao abrir — custos sempre na unidade base do cadastro; custo_unitario do item pode ser por embalagem
+  // Inicializa estado ao abrir — custos sempre na unidade base do cadastro; custo_unitario da linha pode estar na unidade do pedido
   useEffect(() => {
     if (!isOpen || !itens.length) return;
     const modoInicial = 'comercial';
@@ -338,15 +333,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const diferencaCusto = novoCusto - custoAtual;
     const temDiferenca = Math.abs(diferencaCusto) > 0.01;
     const principal = resolvePrimaryFromFactorOne(p, 'UN');
-    const uCadastroComercial = resolveCommercialUnit(p, principal);
+    const unidadeCompraPadrao = pickDefaultPurchaseUnit(p);
     const fatorPedido = resolveFatorPedidoParaBase(item, p);
     const fatorExibicao = resolveFatorExibicaoComercial(item, p);
     const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
     const unidadeBase = principal;
     const linhaSigla = normalizarSiglaUnidade(item?.unidade_medida || '');
-    const baseNorm = normalizarSiglaUnidade(principal);
-    const prefNorm = normalizarSiglaUnidade(uCadastroComercial);
-    /** Sigla só do cadastro ou da linha do pedido (sem usar nome/descrição do produto). */
+    const siglaPadraoCompra =
+      unidadeCompraPadrao && Number(unidadeCompraPadrao.fator_conversao) > 1
+        ? normalizarSiglaUnidade(unidadeCompraPadrao.unidade)
+        : null;
+    /** Siglas vindas do cadastro (unidade padrão de compra) ou da linha do pedido. */
     let unidadeComercialLegenda = null;
     if (fatorPedido > 1) {
       unidadeComercialLegenda = linhaSigla || null;
@@ -357,9 +354,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         );
         if (porFatorPedido) unidadeComercialLegenda = normalizarSiglaUnidade(porFatorPedido.unidade);
       }
-      if (!unidadeComercialLegenda && prefNorm !== baseNorm) unidadeComercialLegenda = prefNorm;
-    } else if (prefNorm !== baseNorm) {
-      unidadeComercialLegenda = prefNorm;
+      if (!unidadeComercialLegenda && siglaPadraoCompra) unidadeComercialLegenda = siglaPadraoCompra;
+    } else if (siglaPadraoCompra) {
+      unidadeComercialLegenda = siglaPadraoCompra;
     }
     return {
       ...item,
@@ -446,9 +443,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-            A unidade comercial vem só do <strong className="font-semibold text-gray-800 dark:text-gray-200">cadastro do produto</strong> (embalagens importadas / alternativas e unidade de apresentação).
-            Sem embalagem comercial configurada, os valores ficam na <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade base</strong> (fator 1).
-            Ao salvar, continua gravando na unidade base do cadastro.
+            Para cada produto, os valores monetários usam a <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade de compra definida no cadastro</strong> (alternativas e conversões, como no lançamento do pedido) — veja a coluna <strong className="font-semibold text-gray-800 dark:text-gray-200">Unidade</strong> para a sigla de cada linha.
+            Ao salvar, o sistema grava custos e preços na <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade base</strong> do produto. Sem alternativa com conversão, a grade permanece na unidade base (fator 1).
           </p>
         </DialogHeader>
 
@@ -463,7 +459,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 className="h-8 text-xs"
                 onClick={() => alternarUnidadeVisualizacao('comercial')}
               >
-                Unidade comercial (embalagem){siglasComerciais.length ? ` · ${siglasComerciais.join(', ')}` : ''}
+                Unidade de compra (cadastro){siglasComerciais.length ? ` · ${siglasComerciais.join(', ')}` : ''}
               </Button>
               <Button
                 type="button"
@@ -472,7 +468,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 className="h-8 text-xs"
                 onClick={() => alternarUnidadeVisualizacao('base')}
               >
-                Unidade base do cadastro ({itensCalc[0]?.unidadeBase || '—'})
+                Apenas na unidade base do produto
               </Button>
             </div>
           )}
@@ -551,7 +547,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         onChange={(e) => setInp(item.produto_id, 'valor_compra', e.target.value)}
                         onFocus={(e) => e.target.select()}
                         onBlur={() => handleCostBlur(item.produto_id, 'valor_compra')}
-                        className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
+                        className="h-11 text-base font-medium border border-input bg-background shadow-sm rounded-xl"
                       />
                     </div>
                     {/* Desconto/Acréscimo % com toggle */}
@@ -593,12 +589,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         onChange={(e) => setInp(item.produto_id, 'desconto_pct', sanitizeTwoDecimalInput(e.target.value))}
                         onFocus={(e) => e.target.select()}
                         onBlur={() => handleDescontoPctBlur(item.produto_id)}
-                        className={`h-11 text-base font-medium border-0 shadow-none rounded-xl ${
+                        className={`h-11 text-base font-medium rounded-xl shadow-sm border ${
                           (costs[item.produto_id]?.desconto_pct || 0) < 0
-                            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                            ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
                             : (costs[item.produto_id]?.desconto_pct || 0) > 0
-                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                            : 'bg-gray-100 dark:bg-gray-800'
+                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                            : 'border-input bg-background'
                         }`}
                       />
                     </div>
@@ -622,7 +618,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, field, e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleCostBlur(item.produto_id, field)}
-                          className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
+                          className="h-11 text-base font-medium border border-input bg-background shadow-sm rounded-xl"
                         />
                       </div>
                     ))}
@@ -648,7 +644,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'markup', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleMarkupBlur(item.produto_id)}
-                          className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-700 shadow-none rounded-xl"
+                          className="h-11 text-base font-medium border border-input bg-background shadow-sm rounded-xl"
                         />
                       </div>
                       <div className="space-y-1">
@@ -664,7 +660,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handlePrecoBlur(item.produto_id)}
-                          className="h-11 text-base font-bold border-0 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 shadow-none rounded-xl"
+                          className="h-11 text-base font-bold border border-input bg-background text-foreground shadow-sm rounded-xl"
                         />
                       </div>
                     </div>
@@ -683,45 +679,45 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     <th className="text-center p-2 w-[100px]">
                       <span className="block">Preço compra</span>
                       <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'unidade base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unidade de compra' : 'unidade base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">Desc/Acrésc %</th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Frete</span>
                       <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Imp 1</span>
                       <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Imp 2</span>
                       <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Outros</span>
                       <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">
                       <span className="block">Custo total</span>
                       <span className="block text-[10px] font-normal opacity-90">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'unidade base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'unidade base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[80px]">Markup %</th>
                     <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">
                       <span className="block">Preço venda</span>
                       <span className="block text-[10px] font-normal opacity-90">
-                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'unidade base'}
+                        {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'unidade base'}
                       </span>
                     </th>
                   </tr>
@@ -766,7 +762,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'valor_compra', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleCostBlur(item.produto_id, 'valor_compra')}
-                          className="h-8 text-center text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 border-0 shadow-sm"
+                          className="h-8 text-center text-sm bg-background border border-input shadow-sm"
                         />
                       </td>
                       {/* Desconto/Acréscimo % com toggle */}
@@ -802,12 +798,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                             onChange={(e) => setInp(item.produto_id, 'desconto_pct', sanitizeTwoDecimalInput(e.target.value))}
                             onFocus={(e) => e.target.select()}
                             onBlur={() => handleDescontoPctBlur(item.produto_id)}
-                            className={`h-8 text-center text-sm font-medium border-0 shadow-sm flex-1 min-w-0 ${
+                            className={`h-8 text-center text-sm font-medium shadow-sm border flex-1 min-w-0 ${
                               (costs[item.produto_id]?.desconto_pct || 0) < 0
-                                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                                ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
                                 : (costs[item.produto_id]?.desconto_pct || 0) > 0
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                                ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                                : 'border-input bg-background text-foreground'
                             }`}
                           />
                         </div>
@@ -821,7 +817,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                             onChange={(e) => setInp(item.produto_id, field, e.target.value)}
                             onFocus={(e) => e.target.select()}
                             onBlur={() => handleCostBlur(item.produto_id, field)}
-                            className="h-8 text-center text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 border-0 shadow-sm"
+                            className="h-8 text-center text-sm bg-background border border-input shadow-sm"
                           />
                         </td>
                       ))}
@@ -835,7 +831,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'markup', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleMarkupBlur(item.produto_id)}
-                          className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                          className="h-8 text-center text-sm bg-background border border-input shadow-sm"
                         />
                       </td>
                       <td className="p-2 bg-gray-50 dark:bg-gray-800">
@@ -845,7 +841,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handlePrecoBlur(item.produto_id)}
-                          className="h-8 text-center text-sm text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 border-0 shadow-none font-bold"
+                          className="h-8 text-center text-sm bg-background border border-input shadow-sm font-bold"
                         />
                       </td>
                     </tr>
