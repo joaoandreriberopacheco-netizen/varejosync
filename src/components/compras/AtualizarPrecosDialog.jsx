@@ -516,9 +516,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <div className="space-y-3 px-4 pb-4">
               {itensCalc.map(item => (
                 <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 space-y-4">
-                  <div className="rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 px-3 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-900/80 dark:text-amber-200/90">Unidade (valores em)</div>
-                    {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
+                  <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-800/50' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Referência dos valores</div>
+                    {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                       <div className="mt-1">
                         <span className="text-sm font-bold text-amber-900 dark:text-amber-100">{item.unidadeComercialLegenda}</span>
                         <span className="text-xs text-amber-800/90 dark:text-amber-200/80 ml-1.5">
@@ -526,7 +526,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         </span>
                       </div>
                     ) : (
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mt-0.5">{item.unidadeBase} (fator 1)</div>
+                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mt-0.5">
+                        {item.unidadeBase}
+                        <span className="text-xs font-normal text-gray-500 ml-1">(unidade base do cadastro)</span>
+                      </div>
                     )}
                   </div>
                   {/* Header do produto */}
@@ -557,7 +560,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     {/* Preço Compra */}
                     <div className="space-y-1">
                       <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        Preço Compra{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        Preço Compra
+                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                       </Label>
                       <Input
                         type="text"
@@ -626,7 +631,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     ].map(({ label, field }) => (
                       <div key={field} className="space-y-1">
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {label}{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                          {label}
+                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                          {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                         </Label>
                         <Input
                           type="text"
@@ -645,7 +652,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        Custo Total{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        Custo Total
+                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                       </span>
                       <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
                     </div>
@@ -664,7 +673,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          Preço Venda{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                          Preço Venda
+                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                          {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                         </Label>
                         <Input
                           type="text"
@@ -687,16 +698,52 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 <thead className="bg-gray-100 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200">
                   <tr>
                     <th className="w-8 p-2"></th>
+                    <th className="text-left p-2 w-[96px] min-w-[88px]">Unidade</th>
                     <th className="text-left p-2 min-w-[200px]">Produto</th>
-                    <th className="text-center p-2 w-[100px]">Preço Compra</th>
+                    <th className="text-center p-2 w-[100px]">
+                      <span className="block">Preço compra</span>
+                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'unidade base'}
+                      </span>
+                    </th>
                     <th className="text-center p-2 w-[90px]">Desc/Acrésc %</th>
-                    <th className="text-center p-2 w-[90px]">Frete</th>
-                    <th className="text-center p-2 w-[90px]">Imp 1</th>
-                    <th className="text-center p-2 w-[90px]">Imp 2</th>
-                    <th className="text-center p-2 w-[90px]">Outros</th>
-                    <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">Custo Total</th>
+                    <th className="text-center p-2 w-[90px]">
+                      <span className="block">Frete</span>
+                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                      </span>
+                    </th>
+                    <th className="text-center p-2 w-[90px]">
+                      <span className="block">Imp 1</span>
+                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                      </span>
+                    </th>
+                    <th className="text-center p-2 w-[90px]">
+                      <span className="block">Imp 2</span>
+                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                      </span>
+                    </th>
+                    <th className="text-center p-2 w-[90px]">
+                      <span className="block">Outros</span>
+                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'base'}
+                      </span>
+                    </th>
+                    <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">
+                      <span className="block">Custo total</span>
+                      <span className="block text-[10px] font-normal opacity-90">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'unidade base'}
+                      </span>
+                    </th>
                     <th className="text-center p-2 w-[80px]">Markup %</th>
-                    <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">Preço Venda</th>
+                    <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">
+                      <span className="block">Preço venda</span>
+                      <span className="block text-[10px] font-normal opacity-90">
+                        {unidadeVisualizacao === 'comercial' ? 'por embalagem' : 'unidade base'}
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -707,13 +754,20 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
                         )}
                       </td>
+                      <td className="p-2 align-top bg-amber-50/50 dark:bg-amber-950/20 border-r border-amber-100 dark:border-amber-900/40">
+                        {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
+                          <div>
+                            <div className="text-xs font-bold text-amber-900 dark:text-amber-100">{item.unidadeComercialLegenda}</div>
+                            <div className="text-[10px] text-amber-900/70 dark:text-amber-200/90 leading-snug mt-1">
+                              {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300">{item.unidadeBase}</div>
+                        )}
+                      </td>
                       <td className="p-2">
                         <div className="font-medium text-gray-900 dark:text-gray-100">{item.produto_nome}</div>
-                        {item.fatorExibicao !== 1 && item.unidadeComercialLegenda && (
-                          <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                            {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
-                          </div>
-                        )}
                         {item.temDiferenca && (
                           <div className="flex items-center gap-1 text-xs mt-0.5">
                             {item.diferencaCusto > 0 ? (
