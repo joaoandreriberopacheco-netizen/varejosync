@@ -457,16 +457,16 @@ const EXPANDED_ITEMS_TABLE_COLUMNS = {
   qtd: 2,
   unidade: 13,
   descricao: 22,
-  vlrUnit: 78,
-  frete: 93,
-  outros: 109,
-  custo: 125,
-  total: 141,
-  venda: 157,
-  markup: 173,
+  vlrUnit: 83,
+  frete: 98,
+  outros: 114,
+  custo: 130,
+  total: 146,
+  venda: 162,
+  markup: 178,
 };
 /** Margem horizontal (mm) entre fim da coluna descrição e coluna VLR. UN. (evita sobreposição ao imprimir). */
-const EXPANDED_DESC_TO_VLR_GAP_MM = 9;
+const EXPANDED_DESC_TO_VLR_GAP_MM = 15;
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
