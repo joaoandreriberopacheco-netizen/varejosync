@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown, DollarSign, ArrowUpDown } from 'lucide-react'
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { resolvePrimaryFromFactorOne, formatUnitConversion } from '@/lib/productUnits';
 
 // Formata número para string BR
 const fmt = (v) => (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -31,6 +32,18 @@ const calcPreco = (custo, markup) => custo > 0 ? custo * (1 + markup / 100) : 0;
 const calcMarkup = (custo, preco) => custo > 0 ? ((preco / custo) - 1) * 100 : 0;
 
 const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
+
+/** Fator do item do pedido (1 embalagem = fator × unidade base). */
+function fatorItemLinha(item) {
+  const f = Number(item?.fator_conversao);
+  return Number.isFinite(f) && f > 0 ? f : 1;
+}
+
+/** Multiplicador visual: na unidade comercial, valores monetários = base × fator. */
+function multiplicadorVisual(unidadeVisualizacao, fator) {
+  if (unidadeVisualizacao !== 'comercial') return 1;
+  return fator > 0 ? fator : 1;
+}
 
 const sanitizeTwoDecimalInput = (value) => {
   const raw = String(value ?? '');
@@ -64,6 +77,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Estado local dos inputs (strings para digitação livre)
   const [inputs, setInputs] = useState({});
   const [isMobile, setIsMobile] = useState(false);
+  /** base = valores como no cadastro (unidade base). comercial = embalagem/unidade do pedido. */
+  const [unidadeVisualizacao, setUnidadeVisualizacao] = useState('base');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -72,29 +87,34 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Inicializa estado ao abrir
+  // Inicializa estado ao abrir — custos sempre na unidade base do cadastro; custo_unitario do item pode ser por embalagem
   useEffect(() => {
     if (!isOpen || !itens.length) return;
+    const temConversao = itens.some((item) => fatorItemLinha(item) !== 1);
+    const modoInicial = temConversao ? 'comercial' : 'base';
+    setUnidadeVisualizacao(modoInicial);
+
     const initialCosts = {};
     const initialInputs = {};
     itens.forEach(item => {
       const p = produtos.find(x => x.id === item.produto_id);
       if (!p) return;
 
-      // Resolve desconto percentual: prioriza o % do item (vindo do buscador), senão calcula do valor absoluto
-      const custoBase = item.custo_unitario || p.valor_compra || 0;
+      const fator = fatorItemLinha(item);
+      const custoNaUnidadePedido = item.custo_unitario ?? p.valor_compra ?? 0;
+      const valorCompraBase = fator > 0 ? custoNaUnidadePedido / fator : custoNaUnidadePedido;
+
       let descontoPct = item.desconto_pct_item || 0;
-      if (!descontoPct && item.valor_desconto_item && custoBase > 0) {
-        descontoPct = (Math.abs(item.valor_desconto_item) / custoBase) * 100;
+      if (!descontoPct && item.valor_desconto_item && custoNaUnidadePedido > 0) {
+        descontoPct = (Math.abs(item.valor_desconto_item) / custoNaUnidadePedido) * 100;
       }
-      // Se valor_desconto_item negativo = acréscimo, pct fica negativo
       if (item.valor_desconto_item < 0) descontoPct = -Math.abs(descontoPct);
 
-      const descontoValorCalc = custoBase * Math.abs(descontoPct) / 100;
-      const descontoComSinal = descontoPct < 0 ? -descontoValorCalc : descontoValorCalc;
+      const descontoValorCalcBase = valorCompraBase * Math.abs(descontoPct) / 100;
+      const descontoComSinal = descontoPct < 0 ? -descontoValorCalcBase : descontoValorCalcBase;
 
       const c = {
-        valor_compra: custoBase,
+        valor_compra: valorCompraBase,
         custo_frete_padrao: p.custo_frete_padrao || 0,
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
@@ -104,18 +124,18 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         preco_venda_percentual: p.preco_venda_percentual || 40,
         preco_venda_padrao: p.preco_venda_padrao || 0,
       };
-      // Se não tem preço de venda, calcula pelo markup
       if (!c.preco_venda_padrao) {
         c.preco_venda_padrao = calcPreco(calcCusto(c), c.preco_venda_percentual);
       }
       initialCosts[item.produto_id] = c;
-      // Inputs locais para todos os campos
-      COST_FIELDS.forEach(f => {
-        initialInputs[`${item.produto_id}_${f}`] = fmt(c[f]);
+
+      const mult = multiplicadorVisual(modoInicial, fator);
+      COST_FIELDS.forEach(field => {
+        initialInputs[`${item.produto_id}_${field}`] = fmt((c[field] || 0) * mult);
       });
       initialInputs[`${item.produto_id}_desconto_pct`] = String(Math.round((descontoPct) * 100) / 100);
       initialInputs[`${item.produto_id}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
-      initialInputs[`${item.produto_id}_preco`] = fmt(c.preco_venda_padrao);
+      initialInputs[`${item.produto_id}_preco`] = fmt((c.preco_venda_padrao || 0) * mult);
     });
     setCosts(initialCosts);
     setInputs(initialInputs);
@@ -129,10 +149,33 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     return pct < 0 ? -absVal : absVal;
   };
 
+  const alternarUnidadeVisualizacao = (modo) => {
+    if (modo === unidadeVisualizacao) return;
+    setUnidadeVisualizacao(modo);
+    setInputs((prev) => {
+      const next = { ...prev };
+      itens.forEach((item) => {
+        const id = item.produto_id;
+        const c = costs[id];
+        if (!c) return;
+        const mult = multiplicadorVisual(modo, fatorItemLinha(item));
+        COST_FIELDS.forEach((field) => {
+          next[`${id}_${field}`] = fmt((c[field] || 0) * mult);
+        });
+        next[`${id}_desconto_pct`] = String(Math.round((c.desconto_pct || 0) * 100) / 100);
+        next[`${id}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
+        next[`${id}_preco`] = fmt((c.preco_venda_padrao || 0) * mult);
+      });
+      return next;
+    });
+  };
+
   // Ao sair de um campo de custo: commita valor e recalcula preço venda mantendo markup
   const handleCostBlur = (produtoId, field) => {
     const raw = inputs[`${produtoId}_${field}`];
-    const val = parse(raw);
+    const item = itens.find((i) => i.produto_id === produtoId);
+    const m = multiplicadorVisual(unidadeVisualizacao, fatorItemLinha(item || {}));
+    const val = parse(raw) / m;
     setCosts(prev => {
       const c = { ...prev[produtoId], [field]: val };
       // Se mudou valor_compra, recalcular desconto absoluto baseado no %
@@ -143,11 +186,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       const markup = c.preco_venda_percentual || 0;
       const novoPreco = calcPreco(custo, markup);
       const next = { ...c, preco_venda_padrao: novoPreco };
-      // Atualiza input do preço venda
+      const dm = multiplicadorVisual(unidadeVisualizacao, fatorItemLinha(item || {}));
       setInputs(p2 => ({
         ...p2,
-        [`${produtoId}_${field}`]: fmt(val),
-        [`${produtoId}_preco`]: fmt(novoPreco),
+        [`${produtoId}_${field}`]: fmt(val * dm),
+        [`${produtoId}_preco`]: fmt(novoPreco * dm),
       }));
       return { ...prev, [produtoId]: next };
     });
@@ -163,6 +206,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
   // Versão direta (usada pelo toggle)
   const handleDescontoPctBlurDirect = (produtoId, pct) => {
+    const linha = itens.find((i) => i.produto_id === produtoId);
+    const dm = multiplicadorVisual(unidadeVisualizacao, fatorItemLinha(linha || {}));
     setCosts(prev => {
       const c = { ...prev[produtoId], desconto_pct: pct };
       c.desconto_compra_padrao = recalcDesconto(c);
@@ -173,7 +218,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_desconto_pct`]: String(Math.round(pct * 100) / 100),
-        [`${produtoId}_preco`]: fmt(novoPreco),
+        [`${produtoId}_preco`]: fmt(novoPreco * dm),
       }));
       return { ...prev, [produtoId]: next };
     });
@@ -183,6 +228,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const handleMarkupBlur = (produtoId) => {
     const raw = inputs[`${produtoId}_markup`];
     const markup = parseFloat(raw) || 0;
+    const linha = itens.find((i) => i.produto_id === produtoId);
+    const dm = multiplicadorVisual(unidadeVisualizacao, fatorItemLinha(linha || {}));
     setCosts(prev => {
       const c = { ...prev[produtoId], preco_venda_percentual: markup };
       const custo = calcCusto(c);
@@ -191,7 +238,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_markup`]: String(Math.round(markup * 100) / 100),
-        [`${produtoId}_preco`]: fmt(novoPreco),
+        [`${produtoId}_preco`]: fmt(novoPreco * dm),
       }));
       return { ...prev, [produtoId]: next };
     });
@@ -200,22 +247,25 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Ao sair do preço venda: recalcula markup
   const handlePrecoBlur = (produtoId) => {
     const raw = inputs[`${produtoId}_preco`];
-    const preco = parse(raw);
+    const item = itens.find((i) => i.produto_id === produtoId);
+    const m = multiplicadorVisual(unidadeVisualizacao, fatorItemLinha(item || {}));
+    const preco = parse(raw) / m;
     setCosts(prev => {
       const c = prev[produtoId];
       const custo = calcCusto(c);
       const novoMarkup = Math.max(0, calcMarkup(custo, preco));
       const next = { ...c, preco_venda_padrao: preco, preco_venda_percentual: novoMarkup };
+      const dm = multiplicadorVisual(unidadeVisualizacao, fatorItemLinha(item || {}));
       setInputs(p2 => ({
         ...p2,
-        [`${produtoId}_preco`]: fmt(preco),
+        [`${produtoId}_preco`]: fmt(preco * dm),
         [`${produtoId}_markup`]: String(Math.round(novoMarkup * 100) / 100),
       }));
       return { ...prev, [produtoId]: next };
     });
   };
 
-  // Dados calculados por item para exibição
+  // Dados calculados por item para exibição (custos internos sempre na unidade base do cadastro)
   const itensCalc = itens.map(item => {
     const p = produtos.find(x => x.id === item.produto_id);
     if (!p) return null;
@@ -224,8 +274,27 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const custoAtual = p.preco_custo_calculado || p.valor_compra || 0;
     const diferencaCusto = novoCusto - custoAtual;
     const temDiferenca = Math.abs(diferencaCusto) > 0.01;
-    return { ...item, produto: p, novoCusto, custoAtual, diferencaCusto, temDiferenca, c };
+    const fatorLinha = fatorItemLinha(item);
+    const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorLinha);
+    const unidadeBase = resolvePrimaryFromFactorOne(p, 'UN');
+    const unidadeComercial = String(item.unidade_medida || '').trim().toUpperCase() || null;
+    return {
+      ...item,
+      produto: p,
+      novoCusto,
+      custoAtual,
+      diferencaCusto,
+      temDiferenca,
+      c,
+      fatorLinha,
+      multDisplay,
+      unidadeBase,
+      unidadeComercial,
+    };
   }).filter(Boolean);
+
+  const algumItemComConversao = itensCalc.some((i) => i.fatorLinha !== 1);
+  const siglasComerciais = [...new Set(itensCalc.filter((i) => i.fatorLinha !== 1).map((i) => i.unidadeComercial).filter(Boolean))];
 
   const qtdComDiferenca = itensCalc.filter(i => i.temDiferenca).length;
 
@@ -294,11 +363,34 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-            Ao salvar, os valores selecionados serão aplicados imediatamente no cadastro do produto.
+            Ao salvar, os valores selecionados serão aplicados imediatamente no cadastro do produto (sempre convertidos para a unidade base do cadastro).
           </p>
         </DialogHeader>
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
+          {algumItemComConversao && (
+            <div className={`flex flex-wrap items-center gap-2 mb-3 ${isMobile ? 'px-4' : ''}`}>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Valores por:</span>
+              <Button
+                type="button"
+                variant={unidadeVisualizacao === 'base' ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => alternarUnidadeVisualizacao('base')}
+              >
+                Unidade base ({itensCalc[0]?.unidadeBase || '—'})
+              </Button>
+              <Button
+                type="button"
+                variant={unidadeVisualizacao === 'comercial' ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => alternarUnidadeVisualizacao('comercial')}
+              >
+                Embalagem / pedido{siglasComerciais.length ? ` (${siglasComerciais.join(', ')})` : ''}
+              </Button>
+            </div>
+          )}
           <div className={`flex items-center justify-between mb-3 ${isMobile ? 'px-4' : ''}`}>
             <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
               {itensCalc.length} produto(s) no pedido
@@ -323,12 +415,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{item.produto_nome}</div>
+                      {item.fatorLinha !== 1 && item.unidadeComercial && (
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                          {formatUnitConversion({ unidade: item.unidadeComercial, fator_conversao: item.fatorLinha }, item.unidadeBase)}
+                        </div>
+                      )}
                       {item.temDiferenca && (
                         <div className="flex items-center gap-1 text-xs mt-1">
                           {item.diferencaCusto > 0 ? (
-                            <><TrendingUp className="w-3.5 h-3.5 text-red-500" /><span className="text-red-500 font-semibold">+R$ {fmt(item.diferencaCusto)} no custo</span></>
+                            <><TrendingUp className="w-3.5 h-3.5 text-red-500" /><span className="text-red-500 font-semibold">+R$ {fmt(item.diferencaCusto * item.multDisplay)} no custo</span></>
                           ) : (
-                            <><TrendingDown className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-500 font-semibold">-R$ {fmt(Math.abs(item.diferencaCusto))} no custo</span></>
+                            <><TrendingDown className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-500 font-semibold">-R$ {fmt(Math.abs(item.diferencaCusto * item.multDisplay))} no custo</span></>
                           )}
                         </div>
                       )}
@@ -430,7 +527,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Custo Total</span>
-                      <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto)}</span>
+                      <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -490,12 +587,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       </td>
                       <td className="p-2">
                         <div className="font-medium text-gray-900 dark:text-gray-100">{item.produto_nome}</div>
+                        {item.fatorLinha !== 1 && item.unidadeComercial && (
+                          <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                            {formatUnitConversion({ unidade: item.unidadeComercial, fator_conversao: item.fatorLinha }, item.unidadeBase)}
+                          </div>
+                        )}
                         {item.temDiferenca && (
                           <div className="flex items-center gap-1 text-xs mt-0.5">
                             {item.diferencaCusto > 0 ? (
-                              <><TrendingUp className="w-3 h-3 text-red-500" /><span className="text-red-600 dark:text-red-400 font-medium">+R$ {fmt(item.diferencaCusto)}</span></>
+                              <><TrendingUp className="w-3 h-3 text-red-500" /><span className="text-red-600 dark:text-red-400 font-medium">+R$ {fmt(item.diferencaCusto * item.multDisplay)}</span></>
                             ) : (
-                              <><TrendingDown className="w-3 h-3 text-green-500" /><span className="text-green-600 dark:text-green-400 font-medium">-R$ {fmt(Math.abs(item.diferencaCusto))}</span></>
+                              <><TrendingDown className="w-3 h-3 text-green-500" /><span className="text-green-600 dark:text-green-400 font-medium">-R$ {fmt(Math.abs(item.diferencaCusto * item.multDisplay))}</span></>
                             )}
                           </div>
                         )}
@@ -528,7 +630,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                               handleDescontoPctBlurDirect(item.produto_id, flipped);
                             }}
                             className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
-                              (costs[item.producto_id]?.desconto_pct || costs[item.produto_id]?.desconto_pct || 0) < 0
+                              (costs[item.produto_id]?.desconto_pct || 0) < 0
                                 ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                 : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                             }`}
@@ -568,7 +670,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         </td>
                       ))}
                       <td className="p-2 bg-gray-50 dark:bg-gray-800">
-                        <div className="text-center font-bold text-gray-900 dark:text-gray-100">R$ {fmt(item.novoCusto)}</div>
+                        <div className="text-center font-bold text-gray-900 dark:text-gray-100">R$ {fmt(item.novoCusto * item.multDisplay)}</div>
                       </td>
                       <td className="p-2">
                         <Input
