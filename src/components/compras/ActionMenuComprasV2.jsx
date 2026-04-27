@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
