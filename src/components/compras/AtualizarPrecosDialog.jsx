@@ -72,15 +72,47 @@ function resolveFatorPedidoParaBase(item, produto) {
   return Number.isFinite(f) && f > 0 ? f : 1;
 }
 
+/**
+ * Último recurso: extrai quantos m² tem a embalagem a partir do nome (ex.: "(2,10m²/CX)", "CX2,1M2").
+ */
+function extrairM2PorEmbalagemDoNome(nomeProduto) {
+  if (!nomeProduto || typeof nomeProduto !== 'string') return null;
+  const patterns = [
+    /\(\s*([\d]{1,4}[,.]?[\d]{0,4})\s*[mM][²2]\s*\/\s*[cC][xX]/,
+    /[cC][xX]\s*([\d]{1,4}[,.]?[\d]{0,4})\s*[mM][²2]/,
+    /[cC][xX]\s*([\d]{1,4}[,.]?[\d]{0,4})\s*[mM]2\b/i,
+  ];
+  for (const re of patterns) {
+    const m = nomeProduto.match(re);
+    if (m && m[1]) {
+      const num = parseFloat(String(m[1]).replace(/\./g, '').replace(',', '.'));
+      if (Number.isFinite(num) && num > 0) return num;
+    }
+  }
+  return null;
+}
+
+/** Inferência simples da sigla da embalagem pelo nome (para legenda quando cadastro não tem alternativa). */
+function inferSiglaEmbalagemDoNome(nomeProduto) {
+  if (!nomeProduto || typeof nomeProduto !== 'string') return null;
+  const u = nomeProduto.toUpperCase();
+  if (/\bCX\b|CX[\d]|\/\s*CX|\(.*CX|[cC][xX]\s*[\d]/i.test(u)) return 'CX';
+  if (/CAIXA/i.test(u)) return 'CX';
+  return null;
+}
+
 /** Fator da unidade comercial de apresentação no cadastro (ex.: 1 CX = 2,1 M2). */
 function resolveFatorComercialCadastro(produto) {
   if (!produto) return 1;
   const principal = resolvePrimaryFromFactorOne(produto, 'UN');
   const pref = resolveCommercialUnit(produto, principal);
-  if (normalizarSiglaUnidade(pref) === normalizarSiglaUnidade(principal)) return 1;
-  const opcoes = buildPurchaseUnitOptions(produto);
-  const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === normalizarSiglaUnidade(pref));
-  if (match && Number(match.fator_conversao) > 1) return Number(match.fator_conversao);
+  if (normalizarSiglaUnidade(pref) !== normalizarSiglaUnidade(principal)) {
+    const opcoes = buildPurchaseUnitOptions(produto);
+    const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === normalizarSiglaUnidade(pref));
+    if (match && Number(match.fator_conversao) > 1) return Number(match.fator_conversao);
+  }
+  const fromNome = extrairM2PorEmbalagemDoNome(produto.nome || '');
+  if (fromNome != null && fromNome > 0) return fromNome;
   return 1;
 }
 
@@ -133,8 +165,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Estado local dos inputs (strings para digitação livre)
   const [inputs, setInputs] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-  /** base = valores como no cadastro (unidade base). comercial = embalagem/unidade do pedido. */
-  const [unidadeVisualizacao, setUnidadeVisualizacao] = useState('base');
+  /** Padrão do diálogo: sempre unidade comercial (embalagem); unidade base só se o usuário alternar. */
+  const [unidadeVisualizacao, setUnidadeVisualizacao] = useState('comercial');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -146,11 +178,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Inicializa estado ao abrir — custos sempre na unidade base do cadastro; custo_unitario do item pode ser por embalagem
   useEffect(() => {
     if (!isOpen || !itens.length) return;
-    const temConversao = itens.some((item) => {
-      const p = produtos.find((x) => x.id === item.produto_id);
-      return resolveFatorExibicaoComercial(item, p) !== 1;
-    });
-    const modoInicial = temConversao ? 'comercial' : 'base';
+    const modoInicial = 'comercial';
     setUnidadeVisualizacao(modoInicial);
 
     const initialCosts = {};
@@ -345,8 +373,15 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
     const unidadeBase = principal;
     const linhaSigla = normalizarSiglaUnidade(item?.unidade_medida || '');
-    const unidadeComercialLegenda =
+    let unidadeComercialLegenda =
       fatorPedido > 1 ? (linhaSigla || normalizarSiglaUnidade(uCadastroComercial)) : normalizarSiglaUnidade(uCadastroComercial);
+    const baseNorm = normalizarSiglaUnidade(principal);
+    const legNorm = normalizarSiglaUnidade(unidadeComercialLegenda);
+    if (fatorExibicao > 1 && (!legNorm || legNorm === baseNorm)) {
+      const guessed = inferSiglaEmbalagemDoNome(p.nome || '');
+      if (guessed) unidadeComercialLegenda = guessed;
+      else if (extrairM2PorEmbalagemDoNome(p.nome || '')) unidadeComercialLegenda = 'CX';
+    }
     return {
       ...item,
       produto: p,
@@ -432,23 +467,15 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-            Ao salvar, os valores selecionados serão aplicados imediatamente no cadastro do produto (sempre convertidos para a unidade base do cadastro).
+            Os valores monetários são mostrados por <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade comercial</strong> (ex.: caixa), quando existir conversão — o sistema aplica o fator automaticamente.
+            Ao salvar, o cadastro continua gravado na <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade base</strong> (ex.: m²).
           </p>
         </DialogHeader>
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
           {algumItemComConversao && (
             <div className={`flex flex-wrap items-center gap-2 mb-3 ${isMobile ? 'px-4' : ''}`}>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Valores por:</span>
-              <Button
-                type="button"
-                variant={unidadeVisualizacao === 'base' ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => alternarUnidadeVisualizacao('base')}
-              >
-                Unidade base ({itensCalc[0]?.unidadeBase || '—'})
-              </Button>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Alternar apenas a visualização:</span>
               <Button
                 type="button"
                 variant={unidadeVisualizacao === 'comercial' ? 'default' : 'outline'}
@@ -456,7 +483,16 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 className="h-8 text-xs"
                 onClick={() => alternarUnidadeVisualizacao('comercial')}
               >
-                Embalagem / pedido{siglasComerciais.length ? ` (${siglasComerciais.join(', ')})` : ''}
+                Unidade comercial (embalagem){siglasComerciais.length ? ` · ${siglasComerciais.join(', ')}` : ''}
+              </Button>
+              <Button
+                type="button"
+                variant={unidadeVisualizacao === 'base' ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => alternarUnidadeVisualizacao('base')}
+              >
+                Unidade base do cadastro ({itensCalc[0]?.unidadeBase || '—'})
               </Button>
             </div>
           )}
@@ -480,15 +516,24 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <div className="space-y-3 px-4 pb-4">
               {itensCalc.map(item => (
                 <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 space-y-4">
+                  <div className="rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 px-3 py-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-900/80 dark:text-amber-200/90">Unidade (valores em)</div>
+                    {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
+                      <div className="mt-1">
+                        <span className="text-sm font-bold text-amber-900 dark:text-amber-100">{item.unidadeComercialLegenda}</span>
+                        <span className="text-xs text-amber-800/90 dark:text-amber-200/80 ml-1.5">
+                          {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mt-0.5">{item.unidadeBase} (fator 1)</div>
+                    )}
+                  </div>
                   {/* Header do produto */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{item.produto_nome}</div>
-                      {item.fatorExibicao !== 1 && item.unidadeComercialLegenda && (
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                          {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
-                        </div>
-                      )}
+                      <div className="text-[10px] uppercase text-gray-500 dark:text-gray-400 font-medium">Produto</div>
+                      <div className="font-semibold text-gray-900 dark:text-white text-sm leading-snug mt-0.5">{item.produto_nome}</div>
                       {item.temDiferenca && (
                         <div className="flex items-center gap-1 text-xs mt-1">
                           {item.diferencaCusto > 0 ? (
@@ -511,7 +556,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <div className="grid grid-cols-2 gap-3">
                     {/* Preço Compra */}
                     <div className="space-y-1">
-                      <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preço Compra</Label>
+                      <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        Preço Compra{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                      </Label>
                       <Input
                         type="text"
                         inputMode="decimal"
@@ -578,7 +625,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       { label: 'Outros', field: 'custo_outros_padrao' },
                     ].map(({ label, field }) => (
                       <div key={field} className="space-y-1">
-                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</Label>
+                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                          {label}{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        </Label>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -595,7 +644,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   {/* Custo total + markup + preço venda */}
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Custo Total</span>
+                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        Custo Total{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                      </span>
                       <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -612,7 +663,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preço Venda</Label>
+                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                          Preço Venda{item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        </Label>
                         <Input
                           type="text"
                           inputMode="decimal"
