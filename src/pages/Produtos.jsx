@@ -79,17 +79,17 @@ function ProdutosPageContent() {
   }, []);
 
   const loadData = async () => {
-    const [produtosData, fornecedoresData] = await Promise.all([
-      base44.entities.Produto.list('-created_date'),
-      base44.entities.Terceiro.list()
-    ]);
+    const produtosData = await base44.entities.Produto.list('-created_date');
+    const fornecedoresData = await base44.entities.Terceiro.filter(
+      { $or: [{ tipo: 'Fornecedor' }, { tipo: 'Ambos' }] }
+    );
     
     // Defensive filtering to ensure only valid objects with proper prototypes are used
     const safeProdutos = Array.isArray(produtosData) 
       ? produtosData.filter(p => p && typeof p === 'object' && p !== null) 
       : [];
     const safeFornecedores = Array.isArray(fornecedoresData) 
-      ? fornecedoresData.filter(f => f && typeof f === 'object' && f !== null && (f.tipo === 'Fornecedor' || f.tipo === 'Ambos')) 
+      ? fornecedoresData.filter(f => f && typeof f === 'object' && f !== null) 
       : [];
     
     setProdutos(safeProdutos);
