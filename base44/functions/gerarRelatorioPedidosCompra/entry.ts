@@ -244,20 +244,45 @@ const findLinhaPedidoOriginal = (pedido = {}, item = {}) => {
   return linhas[0] || {};
 };
 
+/** Linha guardou `quantidade` na UM base (ex.: m²) — custos explícitos costumam ser por base. */
+const linhaQuantidadeIgualBase = (linha = {}) => {
+  const qb = Number(linha.quantidade_base);
+  const qL = Number(linha.quantidade);
+  if (!(qb > 0 && qL > 0)) return false;
+  return Math.abs(qL - qb) < 1e-6;
+};
+
 /**
  * Valor total R$ da linha na mesma base que `_qtdEfetiva` (UM comercial do PDF).
  * Prioriza `pedido.itens` rateado — evita misturar total “da planilha” com qtd comercial do card.
+ * Quando a linha tem `quantidade_base`, o rateio antigo (tL×qComm/qtd_linha) falha se `quantidade`
+ * estiver em m² e o PDF em CX — usa (tL×qComm×fator)/quantidade_base.
  */
 const valorTotalLinhaPdf = (item = {}, pedido = {}) => {
   const qComm =
     Number(item._qtdEfetiva ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) ||
     0;
   const linha = findLinhaPedidoOriginal(pedido, item);
-  const qL = Number(linha.quantidade) || 0;
   const tL =
     Number(linha.total ?? linha.valor_total_item ?? linha.valor_total ?? linha.subtotal ?? 0);
 
-  if (Number.isFinite(tL) && tL > 0 && qL > 0 && qComm > 0) {
+  const qBaseLinha = Number(linha.quantidade_base);
+  const fator =
+    Number(item.fator_conversao) ||
+    Number(linha.fator_conversao) ||
+    1;
+
+  if (Number.isFinite(tL) && tL > 0 && qBaseLinha > 0 && qComm > 0 && fator > 0) {
+    return (tL * qComm * fator) / qBaseLinha;
+  }
+
+  const qL = Number(linha.quantidade) || 0;
+  const eps = 1e-3 * Math.max(1, qComm * fator);
+  // Sem quantidade_base: total da linha costuma ser o valor inteiro do item; quantidade na linha pode estar
+  // na UM comercial (igual ao PDF) ou na base (ex.: m² = qComm × fator).
+  if (Number.isFinite(tL) && tL > 0 && qComm > 0 && qL > 0 && fator > 0) {
+    if (Math.abs(qL - qComm) <= eps) return tL;
+    if (Math.abs(qL - qComm * fator) <= eps) return tL;
     return (tL * qComm) / qL;
   }
 
@@ -394,23 +419,38 @@ const sumOutrosCamposItem = (o = {}) =>
   (Number(o.custo_imposto2) || 0);
 
 /**
- * Frete por unidade na mesma UM da linha guardada em `pedido.itens`.
- * Evita dividir frete_total pela quantidade comercial do card (bases diferentes).
+ * Frete por unidade na UM comercial do PDF (mesma coluna UN / `_qtdEfetiva`).
  */
 const resolveFreteUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
+  const fator = Number(item.fator_conversao ?? fatorComercial) || 1;
+  const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
 
-  const fuLinha = Number(linha.frete_unitario ?? linha.valor_frete_unitario ?? linha.valor_frete);
-  if (Number.isFinite(fuLinha)) return fuLinha;
+  const ftL = Number(linha.frete_total);
+  const qBaseLinha = Number(linha.quantidade_base);
+  if (Number.isFinite(ftL) && ftL > 0 && qBaseLinha > 0 && fator > 0) {
+    return (ftL / qBaseLinha) * fator;
+  }
 
   const qL = Number(linha.quantidade) || 0;
-  const ftL = Number(linha.frete_total);
+  const eps = 1e-3 * Math.max(1, qComm * fator);
+  // frete_total ÷ qtd na base (linha em m², PDF em CX)
+  if (Number.isFinite(ftL) && ftL > 0 && qL > 0 && fator > 0 && qComm > 0) {
+    if (Math.abs(qL - qComm * fator) <= eps) return (ftL / qL) * fator;
+  }
+
+  const fuLinha = Number(linha.frete_unitario ?? linha.valor_frete_unitario ?? linha.valor_frete);
+  // 0 não deve bloquear o padrão do produto (muitas linhas vêm com zero explícito).
+  if (Number.isFinite(fuLinha) && fuLinha !== 0) {
+    if (linhaQuantidadeIgualBase(linha)) return fuLinha * fator;
+    return fuLinha;
+  }
+
   if (Number.isFinite(ftL) && ftL > 0 && qL > 0) return ftL / qL;
 
   const fuItem = Number(item.frete_unitario ?? item.valor_frete_unitario);
-  if (Number.isFinite(fuItem)) return fuItem;
+  if (Number.isFinite(fuItem) && fuItem !== 0) return fuItem;
 
-  const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
   const ftItem = Number(item.frete_total);
   if (Number.isFinite(ftItem) && ftItem > 0 && qComm > 0) return ftItem / qComm;
 
@@ -419,22 +459,42 @@ const resolveFreteUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorCo
 
 const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
+  const fator = Number(item.fator_conversao ?? fatorComercial) || 1;
+  const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
+
+  const otL = Number(linha.outros_total);
+  const qBaseLinha = Number(linha.quantidade_base);
+  if (Number.isFinite(otL) && otL > 0 && qBaseLinha > 0 && fator > 0) {
+    return (otL / qBaseLinha) * fator;
+  }
+
+  const qL = Number(linha.quantidade) || 0;
+  const eps = 1e-3 * Math.max(1, qComm * fator);
+  if (Number.isFinite(otL) && otL > 0 && qL > 0 && fator > 0 && qComm > 0) {
+    if (Math.abs(qL - qComm * fator) <= eps) return (otL / qL) * fator;
+  }
 
   const temImpLinha = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
     (k) => linha[k] !== undefined && linha[k] !== null,
   );
-  if (temImpLinha) return sumOutrosCamposItem(linha);
+  if (temImpLinha) {
+    const raw = sumOutrosCamposItem(linha);
+    if (raw !== 0) {
+      if (linhaQuantidadeIgualBase(linha)) return raw * fator;
+      return raw;
+    }
+  }
 
-  const qL = Number(linha.quantidade) || 0;
-  const otL = Number(linha.outros_total);
   if (Number.isFinite(otL) && otL > 0 && qL > 0) return otL / qL;
 
   const temImpItem = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
     (k) => item[k] !== undefined && item[k] !== null,
   );
-  if (temImpItem) return sumOutrosCamposItem(item);
+  if (temImpItem) {
+    const rawItem = sumOutrosCamposItem(item);
+    if (rawItem !== 0) return rawItem;
+  }
 
-  const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
   const otItem = Number(item.outros_total);
   if (Number.isFinite(otItem) && otItem > 0 && qComm > 0) return otItem / qComm;
 
@@ -923,8 +983,8 @@ Deno.serve(async (req) => {
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
         const custo = liq + frete + outros;
         const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
-        const totalLiq =
-          valorLinhaRef > 0 ? valorLinhaRef : (Number(qtd) || 0) * liq;
+        // TOTAL = quantidade comercial × VLR. UN. (colunas alinhadas ao mesmo conceito).
+        const totalLiq = (Number(qtd) || 0) * liq;
         const totalCusto = qtd * custo;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
         totCusto += totalCusto;
