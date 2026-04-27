@@ -909,13 +909,18 @@ Deno.serve(async (req) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = item._qtdEfetiva;
         const fatorComercial = Number(item.fator_conversao) || 1;
-        const liq = getValorUnitarioComercialItem(item, prod, pedido);
+        const valorLinhaRef = valorTotalLinhaPdf(item, pedido);
+        const liq =
+          valorLinhaRef > 0 && Number(qtd) > 0
+            ? valorLinhaRef / Number(qtd)
+            : getValorUnitarioComercialItem(item, prod, pedido);
         const frete = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
         const outros = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
         const custo = liq + frete + outros;
         const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
-        const totalLiq = qtd * liq;
+        const totalLiq =
+          valorLinhaRef > 0 ? valorLinhaRef : (Number(qtd) || 0) * liq;
         const totalCusto = qtd * custo;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
         totCusto += totalCusto;
