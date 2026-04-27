@@ -73,52 +73,23 @@ function resolveFatorPedidoParaBase(item, produto) {
 }
 
 /**
- * Último recurso: extrai quantos m² tem a embalagem a partir do nome (ex.: "(2,10m²/CX)", "CX2,1M2").
+ * Fator da embalagem comercial **somente a partir do cadastro do produto**
+ * (`unidades_alternativas` / importação de embalagens + unidade de apresentação).
+ * Se não houver embalagem comercial distinta da base → fator 1.
  */
-function extrairM2PorEmbalagemDoNome(nomeProduto) {
-  if (!nomeProduto || typeof nomeProduto !== 'string') return null;
-  const patterns = [
-    /\(\s*([\d]{1,4}[,.]?[\d]{0,4})\s*[mM][²2]\s*\/\s*[cC][xX]/,
-    /[cC][xX]\s*([\d]{1,4}[,.]?[\d]{0,4})\s*[mM][²2]/,
-    /[cC][xX]\s*([\d]{1,4}[,.]?[\d]{0,4})\s*[mM]2\b/i,
-  ];
-  for (const re of patterns) {
-    const m = nomeProduto.match(re);
-    if (m && m[1]) {
-      const num = parseFloat(String(m[1]).replace(/\./g, '').replace(',', '.'));
-      if (Number.isFinite(num) && num > 0) return num;
-    }
-  }
-  return null;
-}
-
-/** Inferência simples da sigla da embalagem pelo nome (para legenda quando cadastro não tem alternativa). */
-function inferSiglaEmbalagemDoNome(nomeProduto) {
-  if (!nomeProduto || typeof nomeProduto !== 'string') return null;
-  const u = nomeProduto.toUpperCase();
-  if (/\bCX\b|CX[\d]|\/\s*CX|\(.*CX|[cC][xX]\s*[\d]/i.test(u)) return 'CX';
-  if (/CAIXA/i.test(u)) return 'CX';
-  return null;
-}
-
-/** Fator da unidade comercial de apresentação no cadastro (ex.: 1 CX = 2,1 M2). */
 function resolveFatorComercialCadastro(produto) {
   if (!produto) return 1;
   const principal = resolvePrimaryFromFactorOne(produto, 'UN');
   const pref = resolveCommercialUnit(produto, principal);
-  if (normalizarSiglaUnidade(pref) !== normalizarSiglaUnidade(principal)) {
-    const opcoes = buildPurchaseUnitOptions(produto);
-    const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === normalizarSiglaUnidade(pref));
-    if (match && Number(match.fator_conversao) > 1) return Number(match.fator_conversao);
-  }
-  const fromNome = extrairM2PorEmbalagemDoNome(produto.nome || '');
-  if (fromNome != null && fromNome > 0) return fromNome;
+  if (normalizarSiglaUnidade(pref) === normalizarSiglaUnidade(principal)) return 1;
+  const opcoes = buildPurchaseUnitOptions(produto);
+  const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === normalizarSiglaUnidade(pref));
+  if (match && Number(match.fator_conversao) > 1) return Number(match.fator_conversao);
   return 1;
 }
 
 /**
- * Fator para **exibir** valores na unidade comercial: usa o pedido (CX, etc.) se houver;
- * senão usa a embalagem/apresentação do cadastro — assim compra em M2 ainda mostra preço por caixa.
+ * Fator para exibir na unidade comercial: pedido em embalagem (fator da linha), senão o cadastro.
  */
 function resolveFatorExibicaoComercial(item, produto) {
   const fp = resolveFatorPedidoParaBase(item, produto);
@@ -373,14 +344,22 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
     const unidadeBase = principal;
     const linhaSigla = normalizarSiglaUnidade(item?.unidade_medida || '');
-    let unidadeComercialLegenda =
-      fatorPedido > 1 ? (linhaSigla || normalizarSiglaUnidade(uCadastroComercial)) : normalizarSiglaUnidade(uCadastroComercial);
     const baseNorm = normalizarSiglaUnidade(principal);
-    const legNorm = normalizarSiglaUnidade(unidadeComercialLegenda);
-    if (fatorExibicao > 1 && (!legNorm || legNorm === baseNorm)) {
-      const guessed = inferSiglaEmbalagemDoNome(p.nome || '');
-      if (guessed) unidadeComercialLegenda = guessed;
-      else if (extrairM2PorEmbalagemDoNome(p.nome || '')) unidadeComercialLegenda = 'CX';
+    const prefNorm = normalizarSiglaUnidade(uCadastroComercial);
+    /** Sigla só do cadastro ou da linha do pedido (sem usar nome/descrição do produto). */
+    let unidadeComercialLegenda = null;
+    if (fatorPedido > 1) {
+      unidadeComercialLegenda = linhaSigla || null;
+      if (!unidadeComercialLegenda) {
+        const opcoes = buildPurchaseUnitOptions(p);
+        const porFatorPedido = opcoes.find(
+          (o) => Math.abs(Number(o.fator_conversao) - fatorPedido) < 0.02,
+        );
+        if (porFatorPedido) unidadeComercialLegenda = normalizarSiglaUnidade(porFatorPedido.unidade);
+      }
+      if (!unidadeComercialLegenda && prefNorm !== baseNorm) unidadeComercialLegenda = prefNorm;
+    } else if (prefNorm !== baseNorm) {
+      unidadeComercialLegenda = prefNorm;
     }
     return {
       ...item,
@@ -467,8 +446,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-            Os valores monetários são mostrados por <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade comercial</strong> (ex.: caixa), quando existir conversão — o sistema aplica o fator automaticamente.
-            Ao salvar, o cadastro continua gravado na <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade base</strong> (ex.: m²).
+            A unidade comercial vem só do <strong className="font-semibold text-gray-800 dark:text-gray-200">cadastro do produto</strong> (embalagens importadas / alternativas e unidade de apresentação).
+            Sem embalagem comercial configurada, os valores ficam na <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade base</strong> (fator 1).
+            Ao salvar, continua gravando na unidade base do cadastro.
           </p>
         </DialogHeader>
 
@@ -516,12 +496,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <div className="space-y-3 px-4 pb-4">
               {itensCalc.map(item => (
                 <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 space-y-4">
-                  <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-800/50' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
+                  <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Referência dos valores</div>
                     {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                       <div className="mt-1">
-                        <span className="text-sm font-bold text-amber-900 dark:text-amber-100">{item.unidadeComercialLegenda}</span>
-                        <span className="text-xs text-amber-800/90 dark:text-amber-200/80 ml-1.5">
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{item.unidadeComercialLegenda}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 ml-1.5">
                           {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                         </span>
                       </div>
@@ -561,7 +541,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     <div className="space-y-1">
                       <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                         Preço Compra
-                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                         {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                       </Label>
                       <Input
@@ -632,7 +612,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       <div key={field} className="space-y-1">
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                           {label}
-                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                           {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                         </Label>
                         <Input
@@ -653,7 +633,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     <div className="flex justify-between items-center">
                       <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                         Custo Total
-                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                        {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                         {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                       </span>
                       <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
@@ -674,7 +654,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       <div className="space-y-1">
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                           Preço Venda
-                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? ` (${item.unidadeComercialLegenda})` : ''}
+                          {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                           {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                         </Label>
                         <Input
@@ -754,11 +734,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
                         )}
                       </td>
-                      <td className="p-2 align-top bg-amber-50/50 dark:bg-amber-950/20 border-r border-amber-100 dark:border-amber-900/40">
+                      <td className="p-2 align-top bg-gray-50/90 dark:bg-gray-900/35 border-r border-gray-200 dark:border-gray-700">
                         {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                           <div>
-                            <div className="text-xs font-bold text-amber-900 dark:text-amber-100">{item.unidadeComercialLegenda}</div>
-                            <div className="text-[10px] text-amber-900/70 dark:text-amber-200/90 leading-snug mt-1">
+                            <div className="text-xs font-bold text-gray-900 dark:text-gray-100">{item.unidadeComercialLegenda}</div>
+                            <div className="text-[10px] text-gray-600 dark:text-gray-400 leading-snug mt-1">
                               {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                             </div>
                           </div>
