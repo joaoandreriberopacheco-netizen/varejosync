@@ -362,24 +362,88 @@ const custoCalculadoProduto = (produto = {}) =>
   + (Number(produto.custo_outros_padrao) || 0)
   - (Number(produto.desconto_compra_padrao) || 0);
 
+/** Custos na linha do pedido costumam existir só em `pedido.itens`, não em `_display_itens`. */
+const findLinhaPedidoOriginal = (pedido = {}, item = {}) => {
+  const pid = item.produto_id;
+  if (!pid) return {};
+  const itens = pedido.itens || [];
+  const linhas = itens.filter((i) => i.produto_id === pid);
+  return linhas[0] || {};
+};
+
+const sumOutrosCamposItem = (o = {}) =>
+  (Number(o.custo_outros) || 0) +
+  (Number(o.custo_imposto1) || 0) +
+  (Number(o.custo_imposto2) || 0);
+
+/** Frete unitário na mesma base da tabela expandida (unidade comercial da linha). */
+const resolveFreteUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const merged = { ...linha, ...item };
+  const qComm =
+    Number(item._qtdEfetiva ?? item.quantidade ?? merged.quantidade) || 0;
+
+  const direto = Number(
+    merged.frete_unitario ?? merged.valor_frete_unitario ?? merged.valor_frete,
+  );
+  if (Number.isFinite(direto)) return direto;
+
+  const ft = Number(merged.frete_total);
+  if (Number.isFinite(ft) && qComm > 0) return ft / qComm;
+
+  const qLinha = Number(linha.quantidade) || 0;
+  const ftLinha = Number(linha.frete_total);
+  if (Number.isFinite(ftLinha) && qLinha > 0) return ftLinha / qLinha;
+
+  return (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
+};
+
+const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const merged = { ...linha, ...item };
+  const qComm =
+    Number(item._qtdEfetiva ?? item.quantidade ?? merged.quantidade) || 0;
+
+  const temChavesImp = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
+    (k) => merged[k] !== undefined && merged[k] !== null,
+  );
+  if (temChavesImp) return sumOutrosCamposItem(merged);
+
+  const ot = Number(item.outros_total ?? linha.outros_total ?? merged.outros_total);
+  if (Number.isFinite(ot) && qComm > 0) return ot / qComm;
+
+  const qLinha = Number(linha.quantidade) || 0;
+  const otLinha = Number(linha.outros_total);
+  if (Number.isFinite(otLinha) && qLinha > 0) return otLinha / qLinha;
+
+  return (
+    ((Number(prod.custo_imposto1_padrao) || 0) +
+      (Number(prod.custo_imposto2_padrao) || 0) +
+      (Number(prod.custo_outros_padrao) || 0)) *
+    fatorComercial
+  );
+};
+
 const TEXT_VERTICAL_SCALE = 1.75;
 const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // ~11px visual size in the generated PDF
 const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
-const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.25;
-const EXPANDED_ITEMS_TABLE_TEXT_Y = 3.9;
+const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 8.85;
+/** Espaço extra vertical dentro da linha de produto (multilinha descrição). */
+const EXPANDED_ITEMS_ROW_DESC_PAD_MM = 1.15;
+const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.35;
 /** Ancoras X (mm a partir de TM) para texto alinhado à direita; última coluna ≤ TW (evita extravasar a área da tabela). */
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
   qtd: 2,
   unidade: 13,
   descricao: 22,
-  vlrUnit: 72,
-  frete: 87,
-  outros: 102,
-  custo: 117,
-  total: 132,
-  venda: 147,
-  markup: 162,
+  vlrUnit: 78,
+  frete: 93,
+  outros: 109,
+  custo: 125,
+  total: 141,
+  venda: 157,
+  markup: 173,
 };
 /** Margem horizontal (mm) entre fim da coluna descrição e coluna VLR. UN. (evita sobreposição ao imprimir). */
 const EXPANDED_DESC_TO_VLR_GAP_MM = 9;
@@ -460,8 +524,8 @@ Deno.serve(async (req) => {
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const M = isMobile ? 5 : 12;          // margem
-    const TM = isMobile ? 5 : 18;         // margem tabela
+    const M = isMobile ? 5 : 9;           // margem página (reduz faixa lateral)
+    const TM = isMobile ? 5 : 11;        // inset da tabela de itens (mais largura útil)
     const CW = pageW - M * 2;             // content width
     const TW = pageW - TM * 2;            // table width
 
@@ -830,24 +894,8 @@ Deno.serve(async (req) => {
         const qtd = item._qtdEfetiva;
         const fatorComercial = Number(item.fator_conversao) || 1;
         const liq = getValorUnitarioComercialItem(item, prod, pedido);
-        const fretePad = (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
-        const frete =
-          item.frete_unitario != null && item.frete_unitario !== ''
-            ? Number(item.frete_unitario) || 0
-            : fretePad;
-        const outrosLinha =
-          (Number(item.custo_outros) || 0) +
-          (Number(item.custo_imposto1) || 0) +
-          (Number(item.custo_imposto2) || 0);
-        const outrosPad =
-          ((Number(prod.custo_imposto1_padrao) || 0) +
-            (Number(prod.custo_imposto2_padrao) || 0) +
-            (Number(prod.custo_outros_padrao) || 0)) *
-          fatorComercial;
-        const temCustosLinha = ['custo_outros', 'custo_imposto1', 'custo_imposto2'].some(
-          (k) => item[k] !== undefined && item[k] !== null,
-        );
-        const outros = temCustosLinha ? outrosLinha : outrosPad;
+        const frete = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
+        const outros = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
         // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
         const custo = liq + frete + outros;
         const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
@@ -870,16 +918,16 @@ Deno.serve(async (req) => {
           safe(item.produto_nome || prod.nome || '-'),
           descMaxW
         );
-        const descLineStep = scaledHeight(3.7);
-        const firstDescY = y + scaledHeight(3.5);
+        const descLineStep = scaledHeight(3.85);
+        const firstDescY = y + scaledHeight(4);
         const rowHeight = Math.max(
           EXPANDED_ITEMS_TABLE_ROW_HEIGHT,
-          3.4 + nomeLinhas.length * 2.55
+          4.6 + nomeLinhas.length * 2.72 + EXPANDED_ITEMS_ROW_DESC_PAD_MM,
         );
         ensureSpace(scaledHeight(rowHeight));
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(TM, y - 1, TW, scaledHeight(rowHeight - 1), 1.5, 1.5, 'F');
+          doc.roundedRect(TM, y - 1.25, TW, scaledHeight(rowHeight - 0.9), 1.5, 1.5, 'F');
         }
         doc.setTextColor(...C.text);
         doc.text(String((Number(qtd) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 4 })), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
