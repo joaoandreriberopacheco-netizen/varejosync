@@ -40,8 +40,10 @@ function resolverUnidadePdvParaRelatorio(produtoSnapshot = {}, item = {}, fallba
 }
 
 function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
-  const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-  const itensNormalizados = itens.map((item) => {
+  const fonteItens = Array.isArray(pedido?._display_itens)
+    ? pedido._display_itens
+    : (Array.isArray(pedido?.itens) ? pedido.itens : []);
+  const itensNormalizados = fonteItens.map((item) => {
     const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
     const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
     const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
@@ -121,7 +123,9 @@ function normalizarGruposParaRelatorio(grupos = [], produtosMap = {}) {
     const clone = { ...node };
     if (Array.isArray(clone.itens)) {
       // Nó representando pedido dentro da estrutura agrupada
-      clone.itens = normalizarPedidoParaRelatorio(clone, produtosMap).itens;
+      const norm = normalizarPedidoParaRelatorio(clone, produtosMap);
+      clone.itens = norm.itens;
+      clone._display_itens = norm._display_itens;
     }
     if (Array.isArray(clone.pedidos)) clone.pedidos = clone.pedidos.map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
     if (Array.isArray(clone.grupos)) clone.grupos = clone.grupos.map(walk);
