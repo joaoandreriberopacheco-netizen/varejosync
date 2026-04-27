@@ -388,6 +388,9 @@ export default function EditarProdutosEmMassa() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Use o arquivo exportado nesta aba. O produto é identificado por <strong>ID</strong> ou <strong>Cód. Interno</strong>.
             </p>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
+              Importar apenas analisa e prepara os dados. A gravação no banco acontece somente ao clicar em <strong>Confirmar embalagens</strong>.
+            </p>
             <ImportarEmbalagensPlanilha onParsed={handleParsedEmbalagens} />
           </div>
 

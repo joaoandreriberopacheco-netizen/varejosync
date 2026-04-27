@@ -23,21 +23,25 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return campos.map(c => (c || '').trim()).filter(Boolean).join(' ').trim();
   };
 
+  const buildFormDataFromProduto = (produtoData) => ({
+    ...produtoData,
+    tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
+    unidades_alternativas: Array.isArray(produtoData?.unidades_alternativas) ? produtoData.unidades_alternativas : [],
+    tipo: produtoData?.tipo || 'Produto',
+    valor_compra: produtoData?.valor_compra || 0,
+    preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
+    preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
+    preco_venda_percentual: produtoData?.preco_venda_percentual || 0,
+    unidade_principal: produtoData?.unidade_principal || 'UN',
+    unidade_show_comercial: produtoData?.unidade_show_comercial || '',
+    unidade_show_logistica: produtoData?.unidade_show_logistica || '',
+    unidade_apresentacao_default: produtoData?.unidade_apresentacao_default || '',
+    unidade_show_ativa: typeof produtoData?.unidade_show_ativa === 'boolean' ? produtoData.unidade_show_ativa : true,
+    ativo: produtoData?.ativo !== false
+  });
+
   const [formData, setFormData] = useState(produto ? {
-    ...produto,
-    tags: Array.isArray(produto.tags) ? produto.tags : [],
-    unidades_alternativas: Array.isArray(produto.unidades_alternativas) ? produto.unidades_alternativas : [],
-    tipo: produto.tipo || 'Produto',
-    valor_compra: produto.valor_compra || 0,
-    preco_venda_padrao: produto.preco_venda_padrao || 0,
-    preco_venda_tipo: produto.preco_venda_tipo || 'percentual',
-    preco_venda_percentual: produto.preco_venda_percentual || 0,
-    unidade_principal: produto.unidade_principal || 'UN',
-    unidade_show_comercial: produto.unidade_show_comercial || '',
-    unidade_show_logistica: produto.unidade_show_logistica || '',
-    unidade_apresentacao_default: produto.unidade_apresentacao_default || '',
-    unidade_show_ativa: typeof produto.unidade_show_ativa === 'boolean' ? produto.unidade_show_ativa : true,
-    ativo: produto.ativo !== false
+    ...buildFormDataFromProduto(produto)
   } : {
     campo_hierarquico_1: '', campo_hierarquico_2: '', campo_hierarquico_3: '', campo_hierarquico_4: '', campo_hierarquico_5: '',
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
@@ -114,6 +118,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       loadMovimentacoes();
     }
   }, [produto]);
+
+  useEffect(() => {
+    if (!produto?.id || temAlteracoesNaoSalvas) return;
+    setFormData(buildFormDataFromProduto(produto));
+  }, [produto?.id, produto?.updated_date, temAlteracoesNaoSalvas]);
 
   const loadMovimentacoes = async () => {
     if (!produto?.id) return;

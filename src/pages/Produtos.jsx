@@ -94,6 +94,12 @@ function ProdutosPageContent() {
     
     setProdutos(safeProdutos);
     setFornecedores(safeFornecedores);
+    if (isFormOpen && selectedProduto?.id) {
+      const produtoAtualizado = safeProdutos.find((item) => item?.id === selectedProduto.id);
+      if (produtoAtualizado) {
+        setSelectedProduto(produtoAtualizado);
+      }
+    }
 
     // Calcular estatísticas e categorias
     let valorTotal = 0;
