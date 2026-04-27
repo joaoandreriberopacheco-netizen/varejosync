@@ -461,42 +461,54 @@ const sumOutrosCamposItem = (o = {}) =>
   (Number(o.custo_imposto2) || 0);
 
 /**
- * Frete por unidade na UM comercial do PDF (mesma coluna UN / `_qtdEfetiva`).
+ * Frete unitário (R$) na mesma UM comercial do PDF.
+ * Regra única: custos “por fator 1 / base” (ex. R$/m²) viram R$/[UN da coluna] = valor_base × fator de conversão.
+ * Se a linha já estiver toda em UM comercial = PDF, total/qtd nessa UM — sem multiplicar fator de novo.
  */
 const resolveFreteUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
   const fator = Number(item.fator_conversao ?? fatorComercial) || 1;
   const qComm = Number(item._qtdEfetiva ?? item.quantidade) || 0;
-
-  const ftL = Number(linha.frete_total);
-  const qBaseLinha = Number(linha.quantidade_base);
-  if (Number.isFinite(ftL) && ftL > 0 && qBaseLinha > 0 && fator > 0) {
-    return (ftL / qBaseLinha) * fator;
-  }
-
   const qL = Number(linha.quantidade) || 0;
-  const eps = 1e-3 * Math.max(1, qComm * fator);
-  // frete_total ÷ qtd na base (linha em m², PDF em CX)
-  if (Number.isFinite(ftL) && ftL > 0 && qL > 0 && fator > 0 && qComm > 0) {
-    if (Math.abs(qL - qComm * fator) <= eps) return (ftL / qL) * fator;
+  const qBaseL = Number(linha.quantidade_base) || 0;
+  const ftL = Number(linha.frete_total);
+  const epsQ = 1e-3 * Math.max(1, qComm * fator, qL, qBaseL);
+
+  // 1) Pedido: quantidade da linha = quantidade comercial exibida → frete total / qtd = R$ frete nessa UN (sem × fator)
+  if (ftL > 0 && qL > 0 && qComm > 0 && Math.abs(qL - qComm) <= epsQ) {
+    return ftL / qL;
   }
 
-  const fuLinha = Number(linha.frete_unitario ?? linha.valor_frete_unitario ?? linha.valor_frete);
-  // 0 não deve bloquear o padrão do produto (muitas linhas vêm com zero explícito).
-  if (Number.isFinite(fuLinha) && fuLinha !== 0) {
-    if (linhaQuantidadeIgualBase(linha)) return fuLinha * fator;
-    return fuLinha;
+  // 2) frete total ÷ quantidade base = R$/[fator 1] → × fator = R$/[UN comercial do PDF]
+  if (ftL > 0 && qBaseL > 0) {
+    return (ftL / qBaseL) * fator;
   }
 
-  if (Number.isFinite(ftL) && ftL > 0 && qL > 0) return ftL / qL;
+  // 3) qtd da linha em m² = qComercial×fator (sem quantidade_base preenchida)
+  if (ftL > 0 && qL > 0 && qComm > 0 && Math.abs(qL - qComm * fator) <= epsQ) {
+    return (ftL / qL) * fator;
+  }
 
-  const fuItem = Number(item.frete_unitario ?? item.valor_frete_unitario);
-  if (Number.isFinite(fuItem) && fuItem !== 0) return fuItem;
+  // 4) frete unitário na linha: em geral R$/[fator 1] (cadastro) → × fator; se linha U.M. = PDF, já é comercial
+  const fuL = Number(linha.frete_unitario ?? linha.valor_frete_unitario ?? linha.valor_frete);
+  if (Number.isFinite(fuL) && fuL !== 0) {
+    if (qL > 0 && qComm > 0 && Math.abs(qL - qComm) <= epsQ) return fuL;
+    return fuL * fator;
+  }
 
-  const ftItem = Number(item.frete_total);
-  if (Number.isFinite(ftItem) && ftItem > 0 && qComm > 0) return ftItem / qComm;
+  if (ftL > 0 && qL > 0) return ftL / qL;
 
-  return (Number(prod.custo_frete_padrao) || 0) * fatorComercial;
+  const fuI = Number(item.frete_unitario ?? item.valor_frete_unitario);
+  if (Number.isFinite(fuI) && fuI !== 0) {
+    if (fator > 1) return fuI * fator;
+    return fuI;
+  }
+  const ftI = Number(item.frete_total);
+  if (ftI > 0 && qComm > 0) return ftI / qComm;
+
+  // 5) Catálogo: custo_frete_padrao = R$ por fator-1
+  const padroBase = Number(prod.custo_frete_padrao) || 0;
+  return padroBase * fator;
 };
 
 const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
