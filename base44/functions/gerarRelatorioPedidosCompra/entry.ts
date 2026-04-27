@@ -1044,20 +1044,25 @@ Deno.serve(async (req) => {
           descMaxW,
         );
         const descLineStep = scaledHeight(3.85);
-        const firstDescY = y + scaledHeight(4);
-        const descBottomY =
-          nomeLinhas.length === 0
-            ? y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3)
-            : firstDescY +
-              Math.max(0, nomeLinhas.length - 1) * descLineStep +
-              scaledHeight(4.5);
-        const numericBottomY = y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 4);
-        const rowAdvance =
-          Math.max(descBottomY, numericBottomY, y + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 4)) -
-          y +
-          scaledHeight(3);
+        /** Altura da linha e âncoras Y para um dado y0 (topo da linha). */
+        const metricsExpandido = (y0) => {
+          const firstY = y0 + scaledHeight(4);
+          const descBottom =
+            nomeLinhas.length === 0
+              ? y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3)
+              : firstY + Math.max(0, nomeLinhas.length - 1) * descLineStep + scaledHeight(4.5);
+          const numericBottom = y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 4);
+          const advance =
+            Math.max(descBottom, numericBottom, y0 + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 4)) -
+            y0 +
+            scaledHeight(3);
+          return { firstDescY: firstY, rowAdvance: advance };
+        };
 
+        let { firstDescY, rowAdvance } = metricsExpandido(y);
         ensureSpace(rowAdvance);
+        // Se ensureSpace quebrou página, y mudou — recalcular ou descrição fica na página anterior (texto solto).
+        ({ firstDescY, rowAdvance } = metricsExpandido(y));
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
           doc.roundedRect(TM, y - 1.25, TW, rowAdvance + scaledHeight(0.6), 1.5, 1.5, 'F');
@@ -1299,8 +1304,6 @@ Deno.serve(async (req) => {
           toTitleCase(safe(item.produto_nome || prod.nome || '-')),
           NOME_MAX_W
         );
-        const nomeTop = y + 3.4 * vs;
-        const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
         doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
         const fatorItem = Number(item.fator_conversao) || 1;
@@ -1320,46 +1323,53 @@ Deno.serve(async (req) => {
         const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
         const auxValores2 = `Venda ${moeda(venda)} · Mk ${percentual(mk)}`;
 
-        const detAux1 = lastNomeBaseline + gapNomeDetalhe;
-        const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-        const rowBlockH = detAux2 + auxDetailStep + margemLinhaInferiorItem - y;
-        const branchY = y + 2.8 * vs;
+        const layoutMobileItem = (y0) => {
+          const nomeTop = y0 + 3.4 * vs;
+          const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+          const detAux1 = lastNomeBaseline + gapNomeDetalhe;
+          const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+          const rowBlockH = detAux2 + auxDetailStep + margemLinhaInferiorItem - y0;
+          const branchY = y0 + 2.8 * vs;
+          return { nomeTop, detAux1, detAux2, rowBlockH, branchY };
+        };
 
-        ensureSpace(rowBlockH + 6);
+        let mob = layoutMobileItem(y);
+        ensureSpace(mob.rowBlockH + 6);
+        mob = layoutMobileItem(y);
 
         doc.setFillColor(203, 213, 225);
-        doc.rect(LINE_X, y, 0.12, rowBlockH, 'F');
-        doc.rect(LINE_X, branchY, lineWidth, 0.12, 'F');
+        doc.rect(LINE_X, y, 0.12, mob.rowBlockH, 'F');
+        doc.rect(LINE_X, mob.branchY, lineWidth, 0.12, 'F');
 
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
         doc.setFontSize(6.8 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE900);
-        doc.text(fmtQtd(qtd), QTD_COL_RIGHT, nomeTop + 1.2, { align: 'right' });
+        doc.text(fmtQtd(qtd), QTD_COL_RIGHT, mob.nomeTop + 1.2, { align: 'right' });
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(5.9 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE700);
-        doc.text(un, QTD_COL_RIGHT, nomeTop + 4.6, { align: 'right' });
+        doc.text(un, QTD_COL_RIGHT, mob.nomeTop + 4.6, { align: 'right' });
 
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE700);
         nomeLinhas.forEach((line, li) => {
-          doc.text(line, NOME_X, nomeTop + li * nomeLineStep);
+          doc.text(line, NOME_X, mob.nomeTop + li * nomeLineStep);
         });
 
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE500);
         auxValoresLinhas.forEach((line, ai) => {
-          doc.text(line, NOME_X, detAux1 + ai * auxDetailStep);
+          doc.text(line, NOME_X, mob.detAux1 + ai * auxDetailStep);
         });
-        doc.text(auxValores2, NOME_X, detAux2);
+        doc.text(auxValores2, NOME_X, mob.detAux2);
 
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.15);
-        doc.line(ITEM_ML, y + rowBlockH, M + CW, y + rowBlockH);
+        doc.line(ITEM_ML, y + mob.rowBlockH, M + CW, y + mob.rowBlockH);
 
-        y += rowBlockH;
+        y += mob.rowBlockH;
       });
 
       y += 4; // espaço entre pedidos
