@@ -60,7 +60,21 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
     const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
     const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;
     const divisorShow = quantidadeShow > 0 ? quantidadeShow : 1;
-    const total = Number(item?.total ?? 0) || 0;
+    const totalBruto =
+      item?.total ??
+      item?.valor_total_item ??
+      item?.valor_total ??
+      item?.subtotal;
+    let total = Number(totalBruto);
+    if (!Number.isFinite(total) || total <= 0) {
+      const cu =
+        Number(item?.custo_final_unitario) ||
+        Number(item?.custo_unitario) ||
+        Number(item?.valor_unitario_compra) ||
+        0;
+      const q = Number(quantidadeShow || quantidadeAtual) || 0;
+      total = cu > 0 && q > 0 ? cu * q : 0;
+    }
     const freteTotal = Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
     const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
     const custoTotal = Number(item?.custo_total_item ?? ((Number(item?.custo_calculado ?? 0) || 0) * quantidadeAtual)) || 0;
@@ -96,6 +110,12 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
 
 function coletarProdutoIds(source) {
   const ids = new Set();
+  const coletarItens = (arr) => {
+    if (!Array.isArray(arr)) return;
+    arr.forEach((item) => {
+      if (item?.produto_id) ids.add(item.produto_id);
+    });
+  };
   const walk = (node) => {
     if (!node) return;
     if (Array.isArray(node)) {
@@ -103,11 +123,8 @@ function coletarProdutoIds(source) {
       return;
     }
     if (typeof node !== 'object') return;
-    if (Array.isArray(node.itens)) {
-      node.itens.forEach((item) => {
-        if (item?.produto_id) ids.add(item.produto_id);
-      });
-    }
+    coletarItens(node.itens);
+    coletarItens(node._display_itens);
     if (Array.isArray(node.pedidos)) walk(node.pedidos);
     if (Array.isArray(node.grupos)) walk(node.grupos);
     if (Array.isArray(node.children)) walk(node.children);
@@ -149,9 +166,24 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     toast.loading('Gerando relatório...', { id: 'gerando-relatorio' });
     try {
       const ids = coletarProdutoIds([pedidos, grupos]);
-      const produtos = await Promise.all(ids.map((id) => base44.entities.Produto.get(id).catch(() => null)));
       const produtosMap = {};
-      produtos.filter(Boolean).forEach((p) => { produtosMap[p.id] = p; });
+      if (ids.length > 0) {
+        try {
+          const rows = await base44.entities.Produto.filter({ id: ids });
+          (rows || []).forEach((p) => {
+            if (p?.id) produtosMap[p.id] = p;
+          });
+        } catch {
+          const chunkSize = 25;
+          for (let i = 0; i < ids.length; i += chunkSize) {
+            const slice = ids.slice(i, i + chunkSize);
+            const batch = await Promise.all(slice.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+            batch.filter(Boolean).forEach((p) => {
+              produtosMap[p.id] = p;
+            });
+          }
+        }
+      }
       const pedidosNormalizados = (pedidos || []).map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
       const gruposNormalizados = normalizarGruposParaRelatorio(grupos || [], produtosMap);
 

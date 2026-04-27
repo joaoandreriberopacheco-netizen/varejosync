@@ -228,6 +228,24 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
 
   const custoBase = getValorUnitarioEfetivoItemPedido(pedidoItem || item, pedido);
   const custoUnitarioComercial = custoBase * fatorComercial;
+
+  const linhaPedido = pedidoItem || item;
+  const qLinhaPedido = Number(linhaPedido?.quantidade) || 0;
+  const totalOrig =
+    Number(linhaPedido?.total) ||
+    Number(linhaPedido?.valor_total_item) ||
+    Number(linhaPedido?.valor_total) ||
+    Number(linhaPedido?.subtotal) ||
+    0;
+
+  let totalLinha;
+  if (Number.isFinite(totalOrig) && totalOrig > 0 && qLinhaPedido > 0) {
+    totalLinha = (quantidadeComercial / qLinhaPedido) * totalOrig;
+  } else {
+    totalLinha = quantidadeComercial * custoUnitarioComercial;
+  }
+  totalLinha = Number(Number(totalLinha).toFixed(2));
+
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
     produto_nome: item.produto_nome || pedidoItem?.produto_nome,
@@ -238,6 +256,8 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
     fator_conversao: fatorComercial,
     custo_unitario: custoUnitarioComercial,
     unidade_medida: unidadeComercial,
+    total: totalLinha,
+    valor_total_item: totalLinha,
   };
 };
 
