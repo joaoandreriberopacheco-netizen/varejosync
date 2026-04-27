@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import {
   resolvePrimaryFromFactorOne,
+  resolveCommercialUnit,
   formatUnitConversion,
   buildPurchaseUnitOptions,
 } from '@/lib/productUnits';
@@ -47,11 +48,10 @@ function normalizarSiglaUnidade(raw) {
 }
 
 /**
- * Fator da linha do pedido (1 embalagem = fator × unidade base).
- * Prioridade: proporção quantidade_base/quantidade (confiável no formulário e ao recarregar),
- * depois cadastro + unidade_medida, por último fator_conversao da linha.
+ * Fator da **linha do pedido**: converte custo_unitario → valor_compra na unidade base do cadastro.
+ * (Quando compra está em M², isto é 1 — não misturar com embalagem só de apresentação.)
  */
-function resolveFatorLinha(item, produto) {
+function resolveFatorPedidoParaBase(item, produto) {
   const qtd = Number(item?.quantidade);
   const qb = Number(item?.quantidade_base);
   if (qtd > 0 && qb > 0) {
@@ -70,6 +70,29 @@ function resolveFatorLinha(item, produto) {
   }
   const f = Number(item?.fator_conversao);
   return Number.isFinite(f) && f > 0 ? f : 1;
+}
+
+/** Fator da unidade comercial de apresentação no cadastro (ex.: 1 CX = 2,1 M2). */
+function resolveFatorComercialCadastro(produto) {
+  if (!produto) return 1;
+  const principal = resolvePrimaryFromFactorOne(produto, 'UN');
+  const pref = resolveCommercialUnit(produto, principal);
+  if (normalizarSiglaUnidade(pref) === normalizarSiglaUnidade(principal)) return 1;
+  const opcoes = buildPurchaseUnitOptions(produto);
+  const match = opcoes.find((o) => normalizarSiglaUnidade(o.unidade) === normalizarSiglaUnidade(pref));
+  if (match && Number(match.fator_conversao) > 1) return Number(match.fator_conversao);
+  return 1;
+}
+
+/**
+ * Fator para **exibir** valores na unidade comercial: usa o pedido (CX, etc.) se houver;
+ * senão usa a embalagem/apresentação do cadastro — assim compra em M2 ainda mostra preço por caixa.
+ */
+function resolveFatorExibicaoComercial(item, produto) {
+  const fp = resolveFatorPedidoParaBase(item, produto);
+  if (fp > 1) return fp;
+  const fc = resolveFatorComercialCadastro(produto);
+  return fc > 1 ? fc : 1;
 }
 
 /** Multiplicador visual: na unidade comercial, valores monetários = base × fator. */
@@ -125,7 +148,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     if (!isOpen || !itens.length) return;
     const temConversao = itens.some((item) => {
       const p = produtos.find((x) => x.id === item.produto_id);
-      return resolveFatorLinha(item, p) !== 1;
+      return resolveFatorExibicaoComercial(item, p) !== 1;
     });
     const modoInicial = temConversao ? 'comercial' : 'base';
     setUnidadeVisualizacao(modoInicial);
@@ -136,9 +159,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       const p = produtos.find(x => x.id === item.produto_id);
       if (!p) return;
 
-      const fator = resolveFatorLinha(item, p);
+      const fatorPedido = resolveFatorPedidoParaBase(item, p);
       const custoNaUnidadePedido = item.custo_unitario ?? p.valor_compra ?? 0;
-      const valorCompraBase = fator > 0 ? custoNaUnidadePedido / fator : custoNaUnidadePedido;
+      const valorCompraBase = fatorPedido > 0 ? custoNaUnidadePedido / fatorPedido : custoNaUnidadePedido;
 
       let descontoPct = item.desconto_pct_item || 0;
       if (!descontoPct && item.valor_desconto_item && custoNaUnidadePedido > 0) {
@@ -165,7 +188,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       }
       initialCosts[item.produto_id] = c;
 
-      const mult = multiplicadorVisual(modoInicial, fator);
+      const mult = multiplicadorVisual(modoInicial, resolveFatorExibicaoComercial(item, p));
       COST_FIELDS.forEach(field => {
         initialInputs[`${item.produto_id}_${field}`] = fmt((c[field] || 0) * mult);
       });
@@ -195,7 +218,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         const c = costs[id];
         if (!c) return;
         const pRow = produtos.find((x) => x.id === id);
-        const mult = multiplicadorVisual(modo, resolveFatorLinha(item, pRow));
+        const mult = multiplicadorVisual(modo, resolveFatorExibicaoComercial(item, pRow));
         COST_FIELDS.forEach((field) => {
           next[`${id}_${field}`] = fmt((c[field] || 0) * mult);
         });
@@ -212,7 +235,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const raw = inputs[`${produtoId}_${field}`];
     const item = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
+    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
     const val = parse(raw) / m;
     setCosts(prev => {
       const c = { ...prev[produtoId], [field]: val };
@@ -224,7 +247,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       const markup = c.preco_venda_percentual || 0;
       const novoPreco = calcPreco(custo, markup);
       const next = { ...c, preco_venda_padrao: novoPreco };
-      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
+      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_${field}`]: fmt(val * dm),
@@ -246,7 +269,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const handleDescontoPctBlurDirect = (produtoId, pct) => {
     const linha = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
+    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(linha || {}, prodRow));
     setCosts(prev => {
       const c = { ...prev[produtoId], desconto_pct: pct };
       c.desconto_compra_padrao = recalcDesconto(c);
@@ -269,7 +292,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const markup = parseFloat(raw) || 0;
     const linha = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
+    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(linha || {}, prodRow));
     setCosts(prev => {
       const c = { ...prev[produtoId], preco_venda_percentual: markup };
       const custo = calcCusto(c);
@@ -289,14 +312,14 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const raw = inputs[`${produtoId}_preco`];
     const item = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
+    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
     const preco = parse(raw) / m;
     setCosts(prev => {
       const c = prev[produtoId];
       const custo = calcCusto(c);
       const novoMarkup = Math.max(0, calcMarkup(custo, preco));
       const next = { ...c, preco_venda_padrao: preco, preco_venda_percentual: novoMarkup };
-      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
+      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_preco`]: fmt(preco * dm),
@@ -315,10 +338,15 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const custoAtual = p.preco_custo_calculado || p.valor_compra || 0;
     const diferencaCusto = novoCusto - custoAtual;
     const temDiferenca = Math.abs(diferencaCusto) > 0.01;
-    const fatorLinha = resolveFatorLinha(item, p);
-    const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorLinha);
-    const unidadeBase = resolvePrimaryFromFactorOne(p, 'UN');
-    const unidadeComercial = String(item.unidade_medida || '').trim().toUpperCase() || null;
+    const principal = resolvePrimaryFromFactorOne(p, 'UN');
+    const uCadastroComercial = resolveCommercialUnit(p, principal);
+    const fatorPedido = resolveFatorPedidoParaBase(item, p);
+    const fatorExibicao = resolveFatorExibicaoComercial(item, p);
+    const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
+    const unidadeBase = principal;
+    const linhaSigla = normalizarSiglaUnidade(item?.unidade_medida || '');
+    const unidadeComercialLegenda =
+      fatorPedido > 1 ? (linhaSigla || normalizarSiglaUnidade(uCadastroComercial)) : normalizarSiglaUnidade(uCadastroComercial);
     return {
       ...item,
       produto: p,
@@ -327,15 +355,15 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       diferencaCusto,
       temDiferenca,
       c,
-      fatorLinha,
+      fatorExibicao,
       multDisplay,
       unidadeBase,
-      unidadeComercial,
+      unidadeComercialLegenda,
     };
   }).filter(Boolean);
 
-  const algumItemComConversao = itensCalc.some((i) => i.fatorLinha !== 1);
-  const siglasComerciais = [...new Set(itensCalc.filter((i) => i.fatorLinha !== 1).map((i) => i.unidadeComercial).filter(Boolean))];
+  const algumItemComConversao = itensCalc.some((i) => i.fatorExibicao !== 1);
+  const siglasComerciais = [...new Set(itensCalc.filter((i) => i.fatorExibicao !== 1).map((i) => i.unidadeComercialLegenda).filter(Boolean))];
 
   const qtdComDiferenca = itensCalc.filter(i => i.temDiferenca).length;
 
@@ -456,9 +484,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{item.produto_nome}</div>
-                      {item.fatorLinha !== 1 && item.unidadeComercial && (
+                      {item.fatorExibicao !== 1 && item.unidadeComercialLegenda && (
                         <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                          {formatUnitConversion({ unidade: item.unidadeComercial, fator_conversao: item.fatorLinha }, item.unidadeBase)}
+                          {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                         </div>
                       )}
                       {item.temDiferenca && (
@@ -628,9 +656,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       </td>
                       <td className="p-2">
                         <div className="font-medium text-gray-900 dark:text-gray-100">{item.produto_nome}</div>
-                        {item.fatorLinha !== 1 && item.unidadeComercial && (
+                        {item.fatorExibicao !== 1 && item.unidadeComercialLegenda && (
                           <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                            {formatUnitConversion({ unidade: item.unidadeComercial, fator_conversao: item.fatorLinha }, item.unidadeBase)}
+                            {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                           </div>
                         )}
                         {item.temDiferenca && (
