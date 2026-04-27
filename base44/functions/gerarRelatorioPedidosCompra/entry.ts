@@ -247,33 +247,44 @@ const findLinhaPedidoOriginal = (pedido = {}, item = {}) => {
   return linhas[0] || {};
 };
 
-/** Linha guardou `quantidade` na UM base (ex.: m²) — custos explícitos costumam ser por base. */
-const linhaQuantidadeIgualBase = (linha = {}) => {
-  const qb = Number(linha.quantidade_base);
-  const qL = Number(linha.quantidade);
-  if (!(qb > 0 && qL > 0)) return false;
-  return Math.abs(qL - qb) < 1e-6;
+/**
+ * `true` = preços na linha (`custo_*`, `total/q`) estão no **eixo fator-1** (ex. R$/m²).
+ * `false` = linha em **UM comercial** (ex. CX): `quantidade × fator_conversao ≈ quantidade_base`.
+ * Sem isto, uma linha em caixa era lida como “fator-1” só por números mal guardados e o VLR alternava de eixo.
+ */
+const linhaPrecoNoEixoFatorUm = (linha = {}) => {
+  const qb = Number(linha.quantidade_base) || 0;
+  const qv = Number(linha.quantidade) || 0;
+  const f = Number(linha.fator_conversao) || 1;
+  if (!(qb > 0 && qv > 0)) return false;
+  if (Math.abs(qv - qb) < 1e-5) return true;
+  if (f > 1 && Math.abs(qv * f - qb) < Math.max(0.015 * qb, 0.05)) return false;
+  return false;
 };
+
+const linhaQuantidadeIgualBase = linhaPrecoNoEixoFatorUm;
 
 const roundTo2 = (n) => (Number.isFinite(n) ? Math.round(n * 100) / 100 : n);
 
 /**
- * Preço líquido **na unidade em que o utilizador guardou a linha do pedido** (`pedido.itens`, não o rateio do embarque).
- * O eixo (fator-1 vs comercial) infere-se só da linha **inteira** (`o`); custos negociados vêm preferencialmente de `o`,
- * para o X não mudar quando o embarque parte a quantidade.
- * Para `total / quantidade`, o numerador é o total **desta linha do relatório** (muitas vezes proporcional ao embarque)
- * e o denominador usa **primeiro** as quantidades do `item` (fatia), para casar com `normalizeDisplayItemCommercial` na lista.
+ * Preço unitário **sempre na UM comercial do PDF** (igual à coluna UN / QTD).
+ * Custos e totais vêm da linha do pedido (`o`); quantidades da fatia (`item`) só para `total/q` coerente com embarque.
+ * Converte explicitamente fator-1 → comercial (`× fator`) só quando `linhaPrecoNoEixoFatorUm(o)`.
  */
-const getPrecoLiquidoEixoCompra = (item = {}, pedido = {}) => {
+const getPrecoUmComercialPdf = (item = {}, pedido = {}) => {
   const o = findLinhaPedidoOriginal(pedido, item);
+  const fItem = Number(item.fator_conversao);
+  const fO = Number(o.fator_conversao);
+  const f = (Number.isFinite(fItem) && fItem > 0 ? fItem : fO) || 1;
+  const eixoF1 = linhaPrecoNoEixoFatorUm(o);
 
   const cf = Number(o.custo_final_unitario ?? item.custo_final_unitario);
-  if (Number.isFinite(cf) && cf > 0) return cf;
+  if (Number.isFinite(cf) && cf > 0) return eixoF1 ? cf * f : cf;
 
   const cu = Number(o.custo_unitario ?? item.custo_unitario) || 0;
   const descU = Number(o.valor_desconto_item ?? item.valor_desconto_item) || 0;
   const liqU = roundTo2(cu - descU);
-  if (liqU > 0) return liqU;
+  if (liqU > 0) return eixoF1 ? liqU * f : liqU;
 
   const t =
     Number(
@@ -281,20 +292,15 @@ const getPrecoLiquidoEixoCompra = (item = {}, pedido = {}) => {
     ) || 0;
   if (!(t > 0)) return NaN;
 
-  const fator1 = linhaQuantidadeIgualBase(o);
-  const qB =
-    Number(item.quantidade_base) ||
-    Number(o.quantidade_base) ||
-    0;
+  const qB = Number(item.quantidade_base) || Number(o.quantidade_base) || 0;
   const qV =
-    Number(item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) ||
-    Number(o.quantidade) ||
-    0;
+    Number(item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || Number(o.quantidade) || 0;
 
-  if (fator1 && qB > 0) return t / qB;
-  if (!fator1 && qV > 0) return t / qV;
-  if (qB > 0) return t / qB;
-  return qV > 0 ? t / qV : NaN;
+  if (eixoF1 && qB > 0) return (t / qB) * f;
+  if (!eixoF1 && qV > 0) return t / qV;
+  if (qV > 0) return t / qV;
+  if (qB > 0 && f > 0) return (t / qB) * f;
+  return NaN;
 };
 
 /**
@@ -442,12 +448,9 @@ const ajustarPrecoUnitarioComercialSeTotalConfundeBase = (
 };
 
 /**
- * VLR. UN. (R$) **sempre na unidade comercial** do PDF (QTD/UN do relatório).
- * Contrato: o utilizador negoceia X (líquido, por linha). Ao gravar, o eixo fica claro: se
- * `quantidade` = `quantidade_base`, o preço em `custo_*` e `total/quant` é no fator-1; caso contrário é
- * no eixo de compra escolhido (p.ex. caixa). O PDF só converte com `fator_conversao` de fator-1 → comercial
- * (× fator) — não recalcula a partir de catálogo, nem puxa outro ramo antes de consumir a linha salva.
- * Fallbacks abaixo servem **apenas** linhas antigas / incompletas.
+ * VLR. UN. (R$) **sempre** na UM comercial do PDF. A regra de eixo é única: `linhaPrecoNoEixoFatorUm` distingue
+ * linha em fator-1 (m² = m²) de linha em comercial (qtd×fator≈base). Tudo passa por `getPrecoUmComercialPdf` antes
+ * dos fallbacks.
  */
 const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
   const qtdComm =
@@ -460,13 +463,8 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
   const fatorComercial = Number(item.fator_conversao) || 1;
 
   const o = findLinhaPedidoOriginal(pedido, item);
-  /** Eixo do preço na linha **do pedido** (inteira); embarque só parte quantidade, não redefine X. */
-  const fator1 = linhaQuantidadeIgualBase(o);
-
-  const precoEixo = getPrecoLiquidoEixoCompra(item, pedido);
-  if (Number.isFinite(precoEixo) && precoEixo > 0) {
-    return fator1 && fatorComercial > 0 ? precoEixo * fatorComercial : precoEixo;
-  }
+  const precoComercial = getPrecoUmComercialPdf(item, pedido);
+  if (Number.isFinite(precoComercial) && precoComercial > 0) return precoComercial;
 
   const totalDaLinhaNoItem = Number(
     item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? 0,
@@ -498,7 +496,8 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
   }
 
   const unitFallback = getValorUnitarioEfetivoItem(item, produto, pedido);
-  const liq3 = fator1 && fatorComercial > 0 ? unitFallback * fatorComercial : unitFallback;
+  const eixoF1Fallback = linhaPrecoNoEixoFatorUm(o);
+  const liq3 = eixoF1Fallback && fatorComercial > 0 ? unitFallback * fatorComercial : unitFallback;
   const refMoeda = Number(item.total ?? item.valor_total_item ?? item.valor_total ?? item.subtotal ?? vLinha ?? 0);
   return ajustarPrecoUnitarioComercialSeTotalConfundeBase(item, pedido, produto, liq3, refMoeda, qtdComm);
 };
