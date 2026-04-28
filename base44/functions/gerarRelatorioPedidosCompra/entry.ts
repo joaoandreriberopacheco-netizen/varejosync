@@ -685,45 +685,19 @@ const getPrecoBaseFator1Pedido = (item = {}, pedido = {}) => {
   return NaN;
 };
 
-const getFreteUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
-  const linha = findLinhaPedidoOriginal(pedido, item);
-  const qBase = Number(item.quantidade_base ?? linha.quantidade_base) || 0;
-  const ftTotal = Number(item.frete_total ?? linha.frete_total);
-  if (Number.isFinite(ftTotal) && ftTotal > 0 && qBase > 0) {
-    return (ftTotal / qBase) * fatorComercial;
-  }
-
-  const freteBase = Number(
-    item.frete_unitario_base ??
-      linha.frete_unitario_base ??
-      item.frete_unitario ??
-      linha.frete_unitario ??
-      item.valor_frete_unitario ??
-      linha.valor_frete_unitario ??
-      item.valor_frete ??
-      linha.valor_frete,
-  );
-  if (Number.isFinite(freteBase) && freteBase !== 0) return freteBase * fatorComercial;
-
-  return NaN;
+const getFreteUnitarioConvertido = (prod = {}, fatorComercial = 1) => {
+  const freteBaseCatalogo = Number(prod.custo_frete_padrao);
+  if (!(Number.isFinite(freteBaseCatalogo) && freteBaseCatalogo >= 0)) return NaN;
+  return freteBaseCatalogo * fatorComercial;
 };
 
-const getOutrosUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
-  const linha = findLinhaPedidoOriginal(pedido, item);
-  const qBase = Number(item.quantidade_base ?? linha.quantidade_base) || 0;
-  const outrosTotal = Number(item.outros_total ?? linha.outros_total);
-  if (Number.isFinite(outrosTotal) && outrosTotal > 0 && qBase > 0) {
-    return (outrosTotal / qBase) * fatorComercial;
-  }
-
-  const outrosBase = Number(
-    item.outros_unitario_base ??
-      linha.outros_unitario_base ??
-      (sumOutrosCamposItem(linha) || sumOutrosCamposItem(item)),
-  );
-  if (Number.isFinite(outrosBase) && outrosBase !== 0) return outrosBase * fatorComercial;
-
-  return NaN;
+const getOutrosUnitarioConvertido = (prod = {}, fatorComercial = 1) => {
+  const outrosBaseCatalogo =
+    (Number(prod.custo_imposto1_padrao) || 0) +
+    (Number(prod.custo_imposto2_padrao) || 0) +
+    (Number(prod.custo_outros_padrao) || 0);
+  if (!Number.isFinite(outrosBaseCatalogo)) return NaN;
+  return outrosBaseCatalogo * fatorComercial;
 };
 
 const getMissingCamposConversaoItem = (item = {}, pedido = {}) => {
@@ -754,16 +728,16 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
     Number.isFinite(precoBaseFator1) && precoBaseFator1 > 0
       ? (precoBaseFator1 * fatorComercial)
       : NaN;
-  const freteUnit = getFreteUnitarioConvertido(item, prod, pedido, fatorComercial);
-  const outrosUnit = getOutrosUnitarioConvertido(item, prod, pedido, fatorComercial);
+  const freteUnit = getFreteUnitarioConvertido(prod, fatorComercial);
+  const outrosUnit = getOutrosUnitarioConvertido(prod, fatorComercial);
   const custoUnit = vlrUnit + freteUnit + outrosUnit;
   const totalLinha = (Number(qtd) || 0) * (Number(vlrUnit) || 0);
   const vendaUnit = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
   const markup = Number.isFinite(custoUnit) && custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : NaN;
 
   const missingFields = getMissingCamposConversaoItem(item, pedido);
-  if (!Number.isFinite(freteUnit)) missingFields.push('frete_base_fator1');
-  if (!Number.isFinite(outrosUnit)) missingFields.push('outros_base_fator1');
+  if (!Number.isFinite(freteUnit)) missingFields.push('custo_frete_padrao');
+  if (!Number.isFinite(outrosUnit)) missingFields.push('custos_catalogo_outros');
   const warningText =
     missingFields.length > 0 ? `ATENCAO: faltou ${missingFields.join(', ')}` : '';
 
