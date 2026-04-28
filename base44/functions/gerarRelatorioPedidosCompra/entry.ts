@@ -663,7 +663,73 @@ const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorC
 const getQuantidadeComercialPdf = (item = {}) =>
   Number(item._qtdEfetiva ?? item._qtdMostrada ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
 
-const getMissingCamposCanonicosItem = (item = {}, pedido = {}) => {
+const getPrecoBaseFator1Pedido = (item = {}, pedido = {}) => {
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const candidatos = [
+    linha.custo_final_unitario_base,
+    linha.custo_unitario_base,
+    item.custo_final_unitario_base,
+    item.custo_unitario_base,
+    linha.custo_final_unitario,
+    linha.custo_unitario,
+    item.custo_final_unitario,
+    item.custo_unitario,
+  ];
+  for (const c of candidatos) {
+    const n = Number(c);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return NaN;
+};
+
+const getFreteUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const qBase = Number(item.quantidade_base ?? linha.quantidade_base) || 0;
+  const ftTotal = Number(item.frete_total ?? linha.frete_total);
+  if (Number.isFinite(ftTotal) && ftTotal > 0 && qBase > 0) {
+    return (ftTotal / qBase) * fatorComercial;
+  }
+
+  const freteBase = Number(
+    item.frete_unitario_base ??
+      linha.frete_unitario_base ??
+      item.frete_unitario ??
+      linha.frete_unitario ??
+      item.valor_frete_unitario ??
+      linha.valor_frete_unitario ??
+      item.valor_frete ??
+      linha.valor_frete,
+  );
+  if (Number.isFinite(freteBase) && freteBase !== 0) return freteBase * fatorComercial;
+
+  const padroBase = Number(prod.custo_frete_padrao) || 0;
+  return padroBase * fatorComercial;
+};
+
+const getOutrosUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const qBase = Number(item.quantidade_base ?? linha.quantidade_base) || 0;
+  const outrosTotal = Number(item.outros_total ?? linha.outros_total);
+  if (Number.isFinite(outrosTotal) && outrosTotal > 0 && qBase > 0) {
+    return (outrosTotal / qBase) * fatorComercial;
+  }
+
+  const outrosBase = Number(
+    item.outros_unitario_base ??
+      linha.outros_unitario_base ??
+      (sumOutrosCamposItem(linha) || sumOutrosCamposItem(item)),
+  );
+  if (Number.isFinite(outrosBase) && outrosBase !== 0) return outrosBase * fatorComercial;
+
+  return (
+    ((Number(prod.custo_imposto1_padrao) || 0) +
+      (Number(prod.custo_imposto2_padrao) || 0) +
+      (Number(prod.custo_outros_padrao) || 0)) *
+    fatorComercial
+  );
+};
+
+const getMissingCamposConversaoItem = (item = {}, pedido = {}) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
   const missing: string[] = [];
 
@@ -673,16 +739,8 @@ const getMissingCamposCanonicosItem = (item = {}, pedido = {}) => {
   const fator = Number(item.fator_conversao ?? linha.fator_conversao);
   if (!(Number.isFinite(fator) && fator > 0)) missing.push('fator_conversao');
 
-  const eixo = String(item.preco_eixo ?? linha.preco_eixo ?? '').trim().toUpperCase();
-  if (eixo !== 'FATOR_1') missing.push('preco_eixo');
-
-  const baseUnit = Number(
-    item.custo_final_unitario_base ??
-      item.custo_unitario_base ??
-      linha.custo_final_unitario_base ??
-      linha.custo_unitario_base,
-  );
-  if (!(Number.isFinite(baseUnit) && baseUnit > 0)) missing.push('custo_unitario_base');
+  const precoBase = getPrecoBaseFator1Pedido(item, pedido);
+  if (!(Number.isFinite(precoBase) && precoBase > 0)) missing.push('preco_base_fator1');
 
   return missing;
 };
@@ -692,15 +750,21 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
   const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
   const fatorComercial = Number(item.fator_conversao) || 1;
 
-  const vlrUnit = getValorUnitarioComercialItem(item, prod, pedido);
-  const freteUnit = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
-  const outrosUnit = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
+  // Regra operacional fechada: preço informado no pedido está em fator-1.
+  // Portanto, o unitário comercial é sempre preço_base_fator1 × fator_comercial.
+  const precoBaseFator1 = getPrecoBaseFator1Pedido(item, pedido);
+  const vlrUnit =
+    Number.isFinite(precoBaseFator1) && precoBaseFator1 > 0
+      ? (precoBaseFator1 * fatorComercial)
+      : NaN;
+  const freteUnit = getFreteUnitarioConvertido(item, prod, pedido, fatorComercial);
+  const outrosUnit = getOutrosUnitarioConvertido(item, prod, pedido, fatorComercial);
   const custoUnit = vlrUnit + freteUnit + outrosUnit;
   const totalLinha = (Number(qtd) || 0) * (Number(vlrUnit) || 0);
   const vendaUnit = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
   const markup = custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : 0;
 
-  const missingFields = getMissingCamposCanonicosItem(item, pedido);
+  const missingFields = getMissingCamposConversaoItem(item, pedido);
   const warningText =
     missingFields.length > 0 ? `ATENCAO: faltou ${missingFields.join(', ')}` : '';
 
