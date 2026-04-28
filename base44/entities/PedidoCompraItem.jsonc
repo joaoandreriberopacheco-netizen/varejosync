@@ -1,6 +1,8 @@
 {
   "name": "PedidoCompraItem",
   "type": "object",
+  "title": "Item canonico de Pedido de Compra",
+  "description": "Linha canonica de um item de pedido de compra. Cada registro corresponde a uma linha do array legado PedidoCompra.itens[], com FK pedido_compra_id apontando para o pedido pai e produto_unidade_id apontando para a unidade comercial usada na linha. O preco canonico e custo_unitario_fator1 (R$/[unidade base]); o custo comercial e snapshot derivado.",
   "properties": {
     "pedido_compra_id": {
       "type": "string",
