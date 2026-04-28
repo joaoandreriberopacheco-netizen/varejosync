@@ -730,12 +730,8 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
   const vendaUnit = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
   const markup = Number.isFinite(custoUnit) && custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : NaN;
 
-  const missingFields = getMissingCamposConversaoItem(item, pedido);
-  if (!Number.isFinite(freteUnit)) missingFields.push('custo_frete_padrao');
-  if (!Number.isFinite(outrosUnit)) missingFields.push('custos_catalogo_outros');
-  const warningText =
-    missingFields.length > 0 ? `ATENCAO: faltou ${missingFields.join(', ')}` : '';
-
+  // Avisos por linha foram removidos do PDF (contrato simples e padding mais enxuto).
+  // Mantemos as chaves no retorno só para compatibilidade com chamadores existentes.
   return {
     qtd,
     un,
@@ -746,8 +742,8 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
     totalLinha,
     vendaUnit,
     markup,
-    missingFields,
-    warningText,
+    missingFields: [],
+    warningText: '',
   };
 };
 
@@ -755,7 +751,7 @@ const TEXT_VERTICAL_SCALE = 1.75;
 const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // ~11px visual size in the generated PDF
 const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
-const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 8.85;
+const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.2;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.35;
 /** Ancoras X (mm a partir de TM) para texto alinhado à direita; última coluna ≤ TW (evita extravasar a área da tabela). */
 const EXPANDED_ITEMS_TABLE_COLUMNS = {
@@ -1255,12 +1251,7 @@ Deno.serve(async (req) => {
           safe(item.produto_nome || prod.nome || '-'),
           descMaxW,
         );
-        doc.setFontSize(6.1);
-        const avisoLinhas = met.warningText ? doc.splitTextToSize(met.warningText, descMaxW) : [];
-        doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
         const descLineStep = scaledHeight(3.85);
-        const avisoLineStep = scaledHeight(3.2);
-        const avisoGap = scaledHeight(1.4);
         /** Mesma baseline das colunas QTD / VLR. UN. — evita deslocar só a descrição. */
         const rowBaselineY = (y0) => y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y);
         /** Altura da linha e âncoras Y para um dado y0 (topo da linha). */
@@ -1268,29 +1259,22 @@ Deno.serve(async (req) => {
           const firstY = rowBaselineY(y0);
           const nomeBottom =
             nomeLinhas.length === 0
-              ? y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3)
-              : firstY + Math.max(0, nomeLinhas.length - 1) * descLineStep + scaledHeight(4.5);
-          const avisoTop = nomeBottom + avisoGap;
-          const avisoBottom =
-            avisoLinhas.length === 0
-              ? nomeBottom
-              : avisoTop + Math.max(0, avisoLinhas.length - 1) * avisoLineStep + scaledHeight(3.4);
-          const descBottom = Math.max(nomeBottom, avisoBottom);
-          const numericBottom = y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 4);
+              ? y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 2)
+              : firstY + Math.max(0, nomeLinhas.length - 1) * descLineStep + scaledHeight(2.8);
+          const numericBottom = y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3);
           const advance =
-            Math.max(descBottom, numericBottom, y0 + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 4)) -
+            Math.max(nomeBottom, numericBottom, y0 + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 1.5)) -
             y0 +
-            scaledHeight(3);
-          return { firstDescY: firstY, avisoTop, rowAdvance: advance };
+            scaledHeight(1);
+          return { firstDescY: firstY, rowAdvance: advance };
         };
 
         const bottomPadExp = 10;
         const maxRowFit = pageH - bottomPadExp - 14;
         let firstDescY;
-        let avisoTop;
         let rowAdvance;
         for (;;) {
-          ({ firstDescY, avisoTop, rowAdvance } = metricsExpandido(y));
+          ({ firstDescY, rowAdvance } = metricsExpandido(y));
           if (y + rowAdvance <= pageH - bottomPadExp) break;
           if (rowAdvance > maxRowFit) break;
           doc.addPage();
@@ -1306,17 +1290,6 @@ Deno.serve(async (req) => {
         nomeLinhas.forEach((line, li) => {
           doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
         });
-        if (avisoLinhas.length > 0) {
-          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(6.1);
-          doc.setTextColor(180, 83, 9);
-          avisoLinhas.forEach((line, li) => {
-            doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, avisoTop + li * avisoLineStep);
-          });
-          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
-          doc.setTextColor(...C.text);
-        }
         doc.text(moedaSemSimboloOuTraco(liq),      TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimboloOuTraco(frete),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimboloOuTraco(outros),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
@@ -1373,9 +1346,9 @@ Deno.serve(async (req) => {
 
       const vs = MOBILE_ITEMS_VERTICAL_SCALE;
       const nomeLineStep = 3.85 * vs;
-      const auxDetailStep = 3.15 * vs;
-      const gapNomeDetalhe = 3 * vs;
-      const margemLinhaInferiorItem = 2.2 * vs;
+      const auxDetailStep = 2.95 * vs;
+      const gapNomeDetalhe = 2.4 * vs;
+      const margemLinhaInferiorItem = 1.3 * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
@@ -1404,12 +1377,9 @@ Deno.serve(async (req) => {
       const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
       const detAux1 = lastNomeBaseline + gapNomeDetalhe;
       const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-      const warningLinhas = met.warningText ? doc.splitTextToSize(met.warningText, NOME_MAX_W) : [];
-      const detAux3 = detAux2 + auxDetailStep;
-      const warningStep = 3.05 * vs;
-      const warningBlock = warningLinhas.length > 0 ? (warningLinhas.length * warningStep + 1.4 * vs) : 0;
-      const detBottom = warningLinhas.length > 0 ? (detAux3 + warningBlock) : detAux3;
-      return detBottom + margemLinhaInferiorItem - y0;
+      // Linha "Venda · Mk" abaixo do aux principal — sem mais espaço reservado para avisos.
+      const detVendaMk = detAux2 + auxDetailStep;
+      return detVendaMk + margemLinhaInferiorItem - y0;
     };
 
     const drawMobileCard = (pedido) => {
@@ -1540,9 +1510,9 @@ Deno.serve(async (req) => {
         const vs = MOBILE_ITEMS_VERTICAL_SCALE;
         const lineWidth = 2.5;
         const nomeLineStep = 3.85 * vs;
-        const auxDetailStep = 3.15 * vs;
-        const gapNomeDetalhe = 3 * vs;
-        const margemLinhaInferiorItem = 2.2 * vs;
+        const auxDetailStep = 2.95 * vs;
+        const gapNomeDetalhe = 2.4 * vs;
+        const margemLinhaInferiorItem = 1.3 * vs;
 
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
@@ -1568,20 +1538,16 @@ Deno.serve(async (req) => {
         const auxValores1 = `Total ${moedaOuTraco(tCompra)} · ${un} · Comp. ${moedaOuTraco(precoCompra)} · Custo ${moedaOuTraco(custo)}${equivSuf}`;
         const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
         const auxValores2 = `Venda ${moedaOuTraco(venda)} · Mk ${percentualOuTraco(mk)}`;
-        const warningLinhas = met.warningText ? doc.splitTextToSize(met.warningText, NOME_MAX_W) : [];
 
         const layoutMobileItem = (y0) => {
           const nomeTop = y0 + 3.4 * vs;
           const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
           const detAux1 = lastNomeBaseline + gapNomeDetalhe;
           const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-          const detAux3 = detAux2 + auxDetailStep;
-          const warningStep = 3.05 * vs;
-          const warningBlock = warningLinhas.length > 0 ? (warningLinhas.length * warningStep + 1.4 * vs) : 0;
-          const detBottom = warningLinhas.length > 0 ? (detAux3 + warningBlock) : detAux3;
-          const rowBlockH = detBottom + margemLinhaInferiorItem - y0;
+          const detVendaMk = detAux2 + auxDetailStep;
+          const rowBlockH = detVendaMk + margemLinhaInferiorItem - y0;
           const branchY = y0 + 2.8 * vs;
-          return { nomeTop, detAux1, detAux2, detAux3, rowBlockH, branchY, warningStep };
+          return { nomeTop, detAux1, detAux2, detVendaMk, rowBlockH, branchY };
         };
 
         let mob = layoutMobileItem(y);
@@ -1615,13 +1581,6 @@ Deno.serve(async (req) => {
           doc.text(line, NOME_X, mob.detAux1 + ai * auxDetailStep);
         });
         doc.text(auxValores2, NOME_X, mob.detAux2);
-        if (warningLinhas.length > 0) {
-          doc.setTextColor(180, 83, 9);
-          warningLinhas.forEach((line, wi) => {
-            doc.text(line, NOME_X, mob.detAux3 + 1.2 * vs + wi * mob.warningStep);
-          });
-          doc.setTextColor(...SLATE500);
-        }
 
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.15);
