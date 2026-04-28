@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, Sparkles } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
+import { gerarRelatorioPedidosComprav2 } from '@/functions/gerarRelatorioPedidosComprav2';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { buildPurchaseUnitOptions, resolveCommercialDisplay } from '@/lib/productUnits';
@@ -158,7 +159,63 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   const getActionVersion = (label) => {
     if (label === 'PDF expandido') return 'expandida';
     if (label === 'PDF mobile') return 'expandida_mobile';
+    if (label === 'PDF expandido v2') return 'expandida_v2';
+    if (label === 'PDF mobile v2') return 'expandida_mobile_v2';
     return '';
+  };
+
+  /** V2: chama o endpoint novo (`gerarRelatorioPedidosComprav2`) sem aplicar o normalizador antigo
+   *  do frontend (que sobrescreve fator/unidade/quantidade pelo produto). Os pedidos são enviados como vieram. */
+  const handleGerarRelatoriov2 = async (versionInterna /* 'expandida' | 'expandida_mobile' */) => {
+    const tag = `${versionInterna}_v2`;
+    setGerando(tag);
+    toast.loading('Gerando relatório (v2)...', { id: 'gerando-relatorio' });
+    try {
+      const ids = coletarProdutoIds([pedidos, grupos]);
+      const produtosMap = {};
+      if (ids.length > 0) {
+        try {
+          const rows = await base44.entities.Produto.filter({ id: ids });
+          (rows || []).forEach((p) => { if (p?.id) produtosMap[p.id] = p; });
+        } catch {
+          const chunkSize = 25;
+          for (let i = 0; i < ids.length; i += chunkSize) {
+            const slice = ids.slice(i, i + chunkSize);
+            const batch = await Promise.all(slice.map((id) => base44.entities.Produto.get(id).catch(() => null)));
+            batch.filter(Boolean).forEach((p) => { produtosMap[p.id] = p; });
+          }
+        }
+      }
+
+      const resposta = await gerarRelatorioPedidosComprav2({
+        pedidos,
+        version: versionInterna,
+        filtros_desc: filtrosDesc,
+        kpis,
+        grupos,
+        produtos_map: produtosMap,
+      });
+
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RelatorioCompras_v2_${versionInterna}_${dataHoje()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success('Relatório v2 gerado com sucesso', { id: 'gerando-relatorio' });
+      setIsExpanded(false);
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast.error('Erro ao gerar relatório v2', {
+        id: 'gerando-relatorio',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+      });
+      console.error(error);
+    } finally {
+      setGerando('');
+    }
   };
 
   const handleGerarRelatorio = async (version) => {
@@ -261,6 +318,20 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       label: 'PDF mobile',
       onClick: () => handleGerarRelatorio('expandida_mobile'),
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      disabled: !!gerando,
+    },
+    {
+      icon: <Sparkles className="w-5 h-5" />,
+      label: 'PDF expandido v2',
+      onClick: () => handleGerarRelatoriov2('expandida'),
+      color: 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800',
+      disabled: !!gerando,
+    },
+    {
+      icon: <Sparkles className="w-5 h-5" />,
+      label: 'PDF mobile v2',
+      onClick: () => handleGerarRelatoriov2('expandida_mobile'),
+      color: 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800',
       disabled: !!gerando,
     },
   ];
