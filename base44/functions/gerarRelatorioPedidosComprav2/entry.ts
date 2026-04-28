@@ -717,15 +717,19 @@ const getMissingCamposConversaoItem = (item = {}, pedido = {}) => {
 };
 
 /**
- * V2 — Espelha o `resolveFatorExibicaoComercial` da dialog `AtualizarPrecosDialog`.
+ * V2 — Resolução de fator comercial com prioridade no **cadastro do produto**, não na aritmética da linha.
  *
- * Ordem de tentativa (a primeira que produzir fator > 1 vence):
- *   1. `quantidade_base / quantidade` da linha (se ambos > 0).
- *   2. Sigla `unidade_medida` da linha → opção em `PDF_BUILD_PURCHASE_OPTS(produto)`.
- *   3. `pickDefaultPurchaseUnit` (opção não-principal com `fator_conversao` > 1).
+ * Motivo da ordem: dados legados podem ter `quantidade_base` gravado dobrado (q × fator²) e isso
+ * envenena `qb/q`. A config do produto (`unidades_alternativas`) é fonte canônica do fator e é o
+ * que a dialog `AtualizarPrecosDialog` *acaba* mostrando consistentemente.
+ *
+ * Ordem (primeiro que produzir fator > 1 vence):
+ *   1. Sigla da linha (`unidade_medida`) → opção em `PDF_BUILD_PURCHASE_OPTS(produto)`.
+ *   2. `pickDefault` do produto: opção não-principal com `fator_conversao` > 1.
+ *   3. `qb/q` da linha (só se o produto não ofereceu alternativa).
  *   4. `item.fator_conversao` da linha (último recurso).
  *
- * Sem nenhum desses dar > 1 → fator = 1 (linha já está em fator-1 puro).
+ * Nenhum dos passos der > 1 → fator = 1 (linha já em fator-1 puro).
  */
 const v2NormalizarSigla = (raw: any) =>
   String(raw || '').trim().toUpperCase()
@@ -733,7 +737,26 @@ const v2NormalizarSigla = (raw: any) =>
     .replace('M²', 'M2').replace('METRO QUADRADO', 'M2');
 
 const v2ResolveFatorComercial = (item: any = {}, prod: any = {}) => {
-  // 1) qb/q da própria linha (mais confiável quando a linha foi gravada em UM comercial).
+  const opcoes = prod ? PDF_BUILD_PURCHASE_OPTS(prod) : [];
+
+  // 1) Sigla da linha → fator do produto (fonte canônica).
+  const sigla = v2NormalizarSigla(item?.unidade_medida);
+  if (sigla && opcoes.length) {
+    const match = opcoes.find((o: any) => v2NormalizarSigla(o.unidade) === sigla);
+    if (match && Number(match.fator_conversao) > 1) {
+      return Number(match.fator_conversao);
+    }
+  }
+
+  // 2) Default de compra do cadastro (opção não-principal com fator > 1).
+  if (opcoes.length) {
+    const principal = v2NormalizarSigla(prod?.unidade_principal);
+    const naoPrincipal = opcoes.find((o: any) =>
+      v2NormalizarSigla(o.unidade) !== principal && Number(o.fator_conversao) > 1);
+    if (naoPrincipal) return Number(naoPrincipal.fator_conversao);
+  }
+
+  // 3) qb/q da linha — só quando o produto não ofereceu alternativa (a aritmética pode estar legado-bugada).
   const qtd = Number(item?.quantidade);
   const qb = Number(item?.quantidade_base);
   if (qtd > 0 && qb > 0) {
@@ -742,24 +765,7 @@ const v2ResolveFatorComercial = (item: any = {}, prod: any = {}) => {
       return Math.round(derivado * 10000) / 10000;
     }
   }
-  // 2) Casamento da sigla da linha com as opções do produto.
-  const sigla = v2NormalizarSigla(item?.unidade_medida);
-  if (prod && sigla) {
-    const opcoes = PDF_BUILD_PURCHASE_OPTS(prod);
-    const match = opcoes.find((o: any) => v2NormalizarSigla(o.unidade) === sigla);
-    if (match && Number(match.fator_conversao) > 1) {
-      return Number(match.fator_conversao);
-    }
-  }
-  // 3) Default de compra do cadastro (mesma regra do `pickDefaultPurchaseUnit`).
-  if (prod) {
-    const opcoes = PDF_BUILD_PURCHASE_OPTS(prod);
-    const principal = v2NormalizarSigla(prod?.unidade_principal);
-    const naoPrincipal = opcoes.find((o: any) => v2NormalizarSigla(o.unidade) !== principal && Number(o.fator_conversao) > 1);
-    if (naoPrincipal && Number(naoPrincipal.fator_conversao) > 1) {
-      return Number(naoPrincipal.fator_conversao);
-    }
-  }
+
   // 4) Último recurso: o que está na linha.
   const f = Number(item?.fator_conversao);
   return Number.isFinite(f) && f > 0 ? f : 1;
@@ -790,19 +796,31 @@ const calcularLinhav2 = (item: any = {}, prod: any = {}, _pedido: any = {}) => {
   const fator = v2ResolveFatorComercial(item, prod);
   const un = v2ResolveSiglaComercial(item, prod, fator);
 
-  // QTD comercial coerente com a fatia do embarque (`_qtdEfetiva` / `quantidade` do item já é a fatia).
+  // QTD comercial coerente com a fatia do embarque, robusta a `quantidade_base` legado-bugado.
   const qLinha = Number(item._qtdEfetiva ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
   const qbLinha = Number(item.quantidade_base) || 0;
+  const siglaLinha = v2NormalizarSigla(item?.unidade_medida);
+  const siglaPrincipal = v2NormalizarSigla(prod?.unidade_principal);
+
   let qtd: number;
-  if (fator > 1 && qbLinha > 0 && qLinha > 0) {
-    // qb/q ≈ fator → linha já em UM comercial. qtd da linha já é o número correto.
-    // qb/q = 1 → linha em fator-1. Converter: qb / fator.
-    const ratioLinha = qbLinha / qLinha;
-    qtd = Math.abs(ratioLinha - fator) < 1e-3 ? qLinha : qbLinha / fator;
-  } else if (fator > 1 && qLinha > 0) {
-    qtd = qLinha; // sem qb confiável: confia na qtd da linha.
+  if (fator <= 1 || qLinha <= 0) {
+    qtd = qLinha;
+  } else if (qbLinha > 0) {
+    const ratio = qbLinha / qLinha;
+    const tolFator = Math.max(0.05 * fator, 1e-3);
+    if (Math.abs(ratio - fator) <= tolFator) {
+      // q já é a quantidade comercial (qb = q × fator, contrato ideal).
+      qtd = qLinha;
+    } else if (Math.abs(ratio - 1) <= 0.05) {
+      // q == qb → linha em fator-1. Converter para comercial.
+      qtd = qbLinha / fator;
+    } else {
+      // qb incoerente (provável legado bug q × fator²). Decide pela sigla da linha.
+      qtd = siglaLinha && siglaLinha === siglaPrincipal ? qLinha / fator : qLinha;
+    }
   } else {
-    qtd = qLinha; // fator = 1 ou sem dados: linha como está.
+    // Sem qb: usa só a sigla.
+    qtd = siglaLinha && siglaLinha === siglaPrincipal ? qLinha / fator : qLinha;
   }
 
   const custoFator1 = Number(item.custo_unitario);
