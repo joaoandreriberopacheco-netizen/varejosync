@@ -667,46 +667,14 @@ const getQuantidadeComercialPdf = (item = {}) =>
   Number(item._qtdEfetiva ?? item._qtdMostrada ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
 
 /**
- * Preço unitário no eixo fator-1 (R$ por unidade base do produto).
+ * Contrato simples: confia que `custo_unitario` (ou `custo_final_unitario`) da linha do pedido
+ * está no eixo **fator-1** (unidade base do produto). O PDF aplica a conversão para a unidade
+ * comercial multiplicando pelo `fator_conversao` em `resolveMetricasItemPdf`.
  *
- * Por que NÃO usar `custo_unitario` direto:
- *   o formulário (`normalizePurchaseItemToCommercial`) salva `custo_unitario` na **unidade comercial**
- *   e cria `custo_unitario_base = custo_unitario / fator` para guardar o equivalente fator-1.
- *   Multiplicar `custo_unitario` por `fator` no PDF causa dupla conversão (comercial × fator²).
- *
- * Estratégia (em ordem):
- *   1. `linha.total / linha.quantidade_base` — invariante ao eixo de entrada do usuário.
- *      Mesmo que o formulário tenha salvado em comercial OU em fator-1, o total em R$ dividido
- *      pela quantidade na base (m², kg, etc.) sempre dá R$/[unidade base].
- *   2. `linha.custo_final_unitario_base` / `linha.custo_unitario_base` — campo canônico explicitamente fator-1.
- *   3. `linha.custo_final_unitario` / `linha.custo_unitario` — só como último recurso, assumido fator-1.
+ * Itens em que o usuário tenha digitado o valor já em comercial saem dobrados — são correções manuais.
  */
 const getPrecoBaseFator1Pedido = (item = {}, pedido = {}) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
-
-  const total = Number(
-    linha.total ??
-      linha.valor_total_item ??
-      linha.valor_total ??
-      linha.subtotal ??
-      item.total ??
-      item.valor_total_item ??
-      item.valor_total ??
-      item.subtotal,
-  );
-  const qBase = Number(linha.quantidade_base ?? item.quantidade_base);
-  if (Number.isFinite(total) && total > 0 && Number.isFinite(qBase) && qBase > 0) {
-    return total / qBase;
-  }
-
-  const baseField = Number(
-    linha.custo_final_unitario_base ??
-      linha.custo_unitario_base ??
-      item.custo_final_unitario_base ??
-      item.custo_unitario_base,
-  );
-  if (Number.isFinite(baseField) && baseField > 0) return baseField;
-
   const unit = Number(
     linha.custo_final_unitario ??
       linha.custo_unitario ??
@@ -1154,9 +1122,7 @@ Deno.serve(async (req) => {
      * Fórmula única (Expandido e Mobile):
      *   QTD     = quantidade do embarque (já em unidade comercial)
      *   UN      = sigla da unidade comercial
-     *   VLR UN  = (linha.total / linha.quantidade_base) × fator_conversao
-     *             ↑ invariante ao eixo: o formulário pode salvar custo_unitario em comercial OU em fator-1,
-     *               mas total/quantidade_base sempre dá R$/[unidade base] — ver `getPrecoBaseFator1Pedido`.
+     *   VLR UN  = linha.custo_unitario (assumido fator-1) × fator_conversao
      *   FRETE   = custo_frete_padrao do catálogo × fator_conversao
      *   OUTROS  = (custo_imposto1_padrao + custo_imposto2_padrao + custo_outros_padrao) do catálogo × fator_conversao
      *   CUSTO   = VLR UN + FRETE + OUTROS

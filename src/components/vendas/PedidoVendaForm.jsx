@@ -106,7 +106,8 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     item.quantidade_base = quantidade * (unidadeSelecionada.fator_conversao || 1);
     item.preco_unitario_praticado = unidadeSelecionada.valor_unitario || 0;
     item.custo_unitario_momento = produto.preco_custo_calculado || 0;
-    item.total = quantidade * item.preco_unitario_praticado;
+    // Total em R$: quantidade_base (fator-1) × preço (R$/fator-1).
+    item.total = item.quantidade_base * item.preco_unitario_praticado;
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'preco'));
 
     setFormData(prev => ({ ...prev, itens: newItems }));
@@ -141,7 +142,8 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     const price = parseFloat(item.preco_unitario_praticado) || 0;
     const fatorConversao = parseFloat(item.fator_conversao) || 1;
     item.quantidade_base = qty * fatorConversao;
-    item.total = qty * price;
+    // Total em R$: quantidade_base × preço (preço é R$/fator-1).
+    item.total = item.quantidade_base * price;
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'preco'));
 
     setFormData(prev => ({ ...prev, itens: newItems }));

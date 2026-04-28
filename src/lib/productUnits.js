@@ -251,6 +251,13 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/**
+ * Marca o item como canônico fator-1 e popula os snapshots auxiliares.
+ *
+ * Sob o novo contrato, o valor unitário (`custo_unitario` / `preco_unitario_praticado`) **já é fator-1**,
+ * então `*_base` é alias do canônico e `*_apresentacao` é o valor já em unidade comercial (× fator).
+ * Não dividimos mais por fator — fazer isso destruía itens entrados em fator-1 (legado).
+ */
 export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo") {
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
   const quantidade = normalizeNumber(item?.quantidade, 0);
@@ -262,8 +269,8 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
   const unitVal = normalizeNumber(item?.[unitField], 0);
   const finalVal = normalizeNumber(item?.[finalField], unitVal);
 
-  const unitBase = fator > 0 ? (unitVal / fator) : unitVal;
-  const finalBase = fator > 0 ? (finalVal / fator) : finalVal;
+  const unitApresentacao = unitVal * fator;
+  const finalApresentacao = finalVal * fator;
 
   const payload = {
     ...item,
@@ -273,13 +280,13 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
   };
 
   if (axisPrefix === "preco") {
-    payload.preco_unitario_apresentacao = unitVal;
-    payload.preco_unitario_base = unitBase;
+    payload.preco_unitario_base = unitVal;
+    payload.preco_unitario_apresentacao = unitApresentacao;
   } else {
-    payload.custo_unitario_apresentacao = unitVal;
-    payload.custo_final_unitario_apresentacao = finalVal;
-    payload.custo_unitario_base = unitBase;
-    payload.custo_final_unitario_base = finalBase;
+    payload.custo_unitario_base = unitVal;
+    payload.custo_final_unitario_base = finalVal;
+    payload.custo_unitario_apresentacao = unitApresentacao;
+    payload.custo_final_unitario_apresentacao = finalApresentacao;
   }
   return payload;
 }
@@ -320,9 +327,14 @@ export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit
 }
 
 /**
- * Garante quantidade, `custo_unitario` e fator alinhados à unidade de **apresentação comercial** do produto
- * (útil p/ formulário, importação e depois o relatório PDF, que divide `total` pela qtd nessa mesma UM).
- * Quando o preço de entrada veio no eixo fator-1, o `total` econômico continua a ser o contrato: total/quantidade comercial = R$/UN comercial.
+ * Contrato canônico: o item da linha do pedido é sempre persistido em **fator-1**:
+ *   - `quantidade` continua na unidade comercial (CX/CT/etc.) só pra UI;
+ *   - `quantidade_base = quantidade × fator_conversao` (m²/kg/etc., sempre fator-1);
+ *   - `custo_unitario` é R$/[unidade base do produto] = fator-1, sem conversão escondida;
+ *   - `custo_unitario_apresentacao = custo_unitario × fator_conversao` é só um snapshot p/ UI mostrar em comercial.
+ *
+ * Por que tratar a entrada do usuário como fator-1: o catálogo do produto guarda `valor_compra` em fator-1
+ * (R$/[unidade principal]), e é esse valor que pré-preenche `custo_unitario` no formulário. Mantemos o eixo.
  */
 export function normalizePurchaseItemToCommercial(product, item = {}) {
   const quantidadeInput = normalizeNumber(item.quantidade, 0);
@@ -333,32 +345,30 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
     : calculateBaseQuantity(quantidadeInput, fatorInput);
   const display = resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || "UN");
   const quantidadeComercial = normalizeNumber(display.quantidade, 0);
-  const totalInformado = normalizeNumber(item.total, NaN);
-  const unitInput = normalizeNumber(item.custo_unitario, 0);
-  const totalEconomico = Number.isFinite(totalInformado) ? totalInformado : (quantidadeInput * unitInput);
-  const custoUnitarioComercial = quantidadeComercial > 0
-    ? (totalEconomico / quantidadeComercial)
-    : (unitInput * normalizeNumber(display.fator_conversao, 1));
   const fatorDisplay = normalizeNumber(display.fator_conversao, 1) || 1;
-  const custoUnitarioBase = fatorDisplay > 0 ? (custoUnitarioComercial / fatorDisplay) : custoUnitarioComercial;
+
+  const custoUnitarioFator1 = normalizeNumber(item.custo_unitario, 0);
   const custoFinalUnitarioInput = normalizeNumber(item.custo_final_unitario, NaN);
-  const custoFinalUnitarioComercial = Number.isFinite(custoFinalUnitarioInput) ? custoFinalUnitarioInput : custoUnitarioComercial;
-  const custoFinalUnitarioBase = fatorDisplay > 0 ? (custoFinalUnitarioComercial / fatorDisplay) : custoFinalUnitarioComercial;
+  const custoFinalUnitarioFator1 = Number.isFinite(custoFinalUnitarioInput) ? custoFinalUnitarioInput : custoUnitarioFator1;
+  const custoUnitarioApresentacao = custoUnitarioFator1 * fatorDisplay;
+  const custoFinalUnitarioApresentacao = custoFinalUnitarioFator1 * fatorDisplay;
 
   return {
     ...item,
     unidade_medida: display.unidade || item.unidade_medida || product?.unidade_principal || "UN",
-    fator_conversao: normalizeNumber(display.fator_conversao, 1) || 1,
+    fator_conversao: fatorDisplay,
     quantidade: quantidadeComercial,
     quantidade_base: quantidadeBase,
-    custo_unitario: custoUnitarioComercial,
-    // Campos canónicos para back-end (sempre eixo fator-1) e snapshot de apresentação.
+    custo_unitario: custoUnitarioFator1,
+    custo_final_unitario: custoFinalUnitarioFator1,
     preco_eixo: "FATOR_1",
     unidade_apresentacao: display.unidade || item.unidade_medida || product?.unidade_principal || "UN",
-    custo_unitario_base: custoUnitarioBase,
-    custo_final_unitario_base: custoFinalUnitarioBase,
-    custo_unitario_apresentacao: custoUnitarioComercial,
-    custo_final_unitario_apresentacao: custoFinalUnitarioComercial,
+    // `*_base` são alias do canônico (mantidos para compat com leitores antigos).
+    custo_unitario_base: custoUnitarioFator1,
+    custo_final_unitario_base: custoFinalUnitarioFator1,
+    // `*_apresentacao` é o valor já convertido p/ unidade comercial (use só em UI/relatório).
+    custo_unitario_apresentacao: custoUnitarioApresentacao,
+    custo_final_unitario_apresentacao: custoFinalUnitarioApresentacao,
   };
 }
 

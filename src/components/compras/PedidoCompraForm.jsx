@@ -381,7 +381,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
     const produtoItem = produtos.find((p) => p.id === item.produto_id);
     if (produtoItem) {
-      const totalBase = (parseFloat(item.quantidade) || 0) * (parseFloat(item.custo_unitario) || 0);
+      // `custo_unitario` é fator-1 (R$/[unidade base]); o total em R$ é qty_base × custo_unitario.
+      const fatorAtual = parseFloat(item.fator_conversao) || 1;
+      const totalBase = (parseFloat(item.quantidade) || 0) * fatorAtual * (parseFloat(item.custo_unitario) || 0);
       Object.assign(item, normalizePurchaseItemToCommercial(produtoItem, { ...item, total: totalBase }));
     }
 
@@ -389,14 +391,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
     const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
     const fatorConversao = parseFloat(item.fator_conversao) || 1;
-    
+
     const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
     item.quantidade_base = qty * fatorConversao;
     item.custo_unitario = cost;
     item.valor_desconto_item = descUnit;
     item.custo_final_unitario = custoFinalUnitario;
-    item.subtotal = roundToTwoDecimals(qty * cost);
-    item.total = roundToTwoDecimals(custoFinalUnitario * qty);
+    // Total em R$: quantidade_base (fator-1) × custo_unitario (R$/fator-1).
+    item.subtotal = roundToTwoDecimals(qty * fatorConversao * cost);
+    item.total = roundToTwoDecimals(qty * fatorConversao * custoFinalUnitario);
     // Contrato canónico: back-end sempre no eixo fator-1.
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 
@@ -413,15 +416,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
         const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
         const fatorConversao = parseFloat(item.fator_conversao) || 1;
-        
+
         const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
-        const total = roundToTwoDecimals(custoFinalUnitario * qty);
+        // Total em R$: quantidade_base (= qty × fator) × custo_unitario (R$/fator-1).
+        const total = roundToTwoDecimals(qty * fatorConversao * custoFinalUnitario);
 
         return {
             ...item,
             custo_unitario: cost,
             valor_desconto_item: descUnit,
-            subtotal: roundToTwoDecimals(qty * cost),
+            subtotal: roundToTwoDecimals(qty * fatorConversao * cost),
             total: total,
             custo_final_unitario: custoFinalUnitario,
             ...normalizeItemToCanonicalFactorOne({
@@ -562,8 +566,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                           custo_unitario: finalCost,
                           custo_final_unitario: custoFinalUnitario,
                         }, 'custo'),
-                        subtotal: roundToTwoDecimals(qty * finalCost),
-                        total: roundToTwoDecimals(custoFinalUnitario * qty),
+                        // Total em R$: quantidade_base × custo_unitario (custo já em fator-1).
+                        subtotal: roundToTwoDecimals(qty * fatorImp * finalCost),
+                        total: roundToTwoDecimals(qty * fatorImp * custoFinalUnitario),
                         observacao_item: 'Importado via CSV'
                     });
                     successCount++;
@@ -1434,12 +1439,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               const itemComercial = produtoItem ? normalizePurchaseItemToCommercial(produtoItem, item) : item;
               const qty = parseFloat(itemComercial.quantidade) || 1;
               const cost = roundToTwoDecimals(parseFloat(itemComercial.custo_unitario) || 0);
+              const fator = parseFloat(itemComercial.fator_conversao) || 1;
+              const qtdBase = parseFloat(itemComercial.quantidade_base) || (qty * fator);
               return {
                 ...itemComercial,
                 custo_unitario: cost,
-                quantidade_base: (parseFloat(itemComercial.quantidade_base) || 0),
-                subtotal: roundToTwoDecimals(qty * cost),
-                total: roundToTwoDecimals(qty * cost),
+                quantidade_base: qtdBase,
+                // Total em R$: quantidade_base × custo_unitario (eixo fator-1).
+                subtotal: roundToTwoDecimals(qtdBase * cost),
+                total: roundToTwoDecimals(qtdBase * cost),
                 custo_final_unitario: cost,
               };
             });

@@ -8,26 +8,43 @@ const isPedidoNaoConcluido = (pedido: any) => {
   return status !== 'Concluído' && !statusReceb.startsWith('Concluído');
 };
 
+/**
+ * Backfill: confia que `custo_unitario` legado já está no eixo **fator-1** (R$/[unidade base]),
+ * conforme prática estável do usuário. Não altera o valor — só alinha os campos derivados:
+ *   - `_base`             = `custo_unitario` (alias canônico fator-1).
+ *   - `_apresentacao`     = `custo_unitario × fator_conversao` (snapshot p/ UI).
+ *   - `quantidade_base`   = `quantidade × fator_conversao` (se ausente).
+ *   - `total`             = `quantidade_base × custo_final_unitario` (se inconsistente).
+ *
+ * Itens em que o usuário tenha digitado o valor já em comercial saem dobrados no PDF —
+ * esses são correções manuais (Phoenix etc.).
+ */
 const normalizeItemCanonical = (item: any = {}) => {
   const fator = Number(item?.fator_conversao) || 1;
   const quantidade = Number(item?.quantidade) || 0;
   const quantidadeBase = Number(item?.quantidade_base);
-  const quantidadeBaseFinal = Number.isFinite(quantidadeBase) ? quantidadeBase : (quantidade * fator);
+  const quantidadeBaseFinal = Number.isFinite(quantidadeBase) && quantidadeBase > 0
+    ? quantidadeBase
+    : (quantidade * fator);
 
   const custoUnit = Number(item?.custo_unitario) || 0;
   const custoFinal = Number.isFinite(Number(item?.custo_final_unitario))
     ? Number(item?.custo_final_unitario)
     : custoUnit;
 
+  const totalRecalculado = quantidadeBaseFinal * custoFinal;
+
   return {
     ...item,
     quantidade_base: round6(quantidadeBaseFinal),
     preco_eixo: 'FATOR_1',
     unidade_apresentacao: item?.unidade_apresentacao || item?.unidade_medida || 'UN',
-    custo_unitario_base: round6(fator > 0 ? (custoUnit / fator) : custoUnit),
-    custo_final_unitario_base: round6(fator > 0 ? (custoFinal / fator) : custoFinal),
-    custo_unitario_apresentacao: round6(custoUnit),
-    custo_final_unitario_apresentacao: round6(custoFinal),
+    custo_unitario_base: round6(custoUnit),
+    custo_final_unitario_base: round6(custoFinal),
+    custo_unitario_apresentacao: round6(custoUnit * fator),
+    custo_final_unitario_apresentacao: round6(custoFinal * fator),
+    subtotal: round6(quantidadeBaseFinal * custoUnit),
+    total: round6(totalRecalculado),
   };
 };
 
