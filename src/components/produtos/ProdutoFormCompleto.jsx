@@ -491,6 +491,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       };
 
       let produtoId = produto?.id;
+      if (import.meta.env?.DEV) {
+        console.debug('[ProdutoFormCompleto] enviando ao backend:', {
+          id: produtoId,
+          unidade_principal: produtoData.unidade_principal,
+          unidade_apresentacao_default: produtoData.unidade_apresentacao_default,
+          unidade_show_comercial: produtoData.unidade_show_comercial,
+          unidade_show_logistica: produtoData.unidade_show_logistica,
+          unidade_comercial_id: produtoData.unidade_comercial_id,
+          unidades_alternativas: produtoData.unidades_alternativas,
+          unidades: produtoData.unidades,
+        });
+      }
       if (produtoId) {
         await base44.entities.Produto.update(produtoId, produtoData);
       } else {
@@ -498,18 +510,39 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         produtoId = novoProduto.id;
       }
 
-      // Re-le do banco e reidrata `formData` com o registro persistido.
-      // Antes, o form ficava com o estado "que o usuario digitou", e o pai
-      // (Produtos.jsx) nao atualiza `selectedProduto`, entao a prop `produto`
-      // permanecia stale. Esse re-fetch deixa o form 100% fiel a entidade
-      // (siglas normalizadas, IDs canonicos, espelho legado regravado).
+      // Reidrata `formData` IMEDIATAMENTE a partir do payload que acabamos de
+      // enviar (verdade canonica). Isso elimina dependencia de cache / leitura
+      // staleness do backend e garante feedback visual instantaneo do que foi
+      // pra rede.
+      setFormData(buildFormDataFromProduto({ ...produtoData, id: produtoId }));
+
+      // Verificacao adicional: re-le do banco e checa drift contra o payload.
+      // Se o backend rejeitou ou transformou algum campo, isso aparece no log
+      // ao inves de silenciosamente revertir o form.
       try {
         if (produtoId) {
           const fresh = await base44.entities.Produto.get(produtoId);
-          if (fresh) setFormData(buildFormDataFromProduto(fresh));
+          if (fresh) {
+            const driftKeys = [
+              'unidade_apresentacao_default',
+              'unidade_show_comercial',
+              'unidade_principal',
+              'unidade_comercial_id',
+            ];
+            const drift = driftKeys.filter((k) => String(fresh[k] || '').toUpperCase() !== String(produtoData[k] || '').toUpperCase());
+            if (drift.length > 0) {
+              console.warn('[ProdutoFormCompleto] DRIFT pos-save (backend nao gravou ou transformou):', drift.map((k) => ({ campo: k, enviado: produtoData[k], persistido: fresh[k] })));
+            } else if (import.meta.env?.DEV) {
+              console.debug('[ProdutoFormCompleto] persistido OK', {
+                unidade_apresentacao_default: fresh.unidade_apresentacao_default,
+                unidade_principal: fresh.unidade_principal,
+              });
+            }
+            setFormData(buildFormDataFromProduto(fresh));
+          }
         }
       } catch (refetchErr) {
-        console.warn('Re-fetch pos-save falhou (mantendo estado local):', refetchErr?.message || refetchErr);
+        console.warn('Re-fetch pos-save falhou (mantendo estado canonico):', refetchErr?.message || refetchErr);
       }
 
       toast({
