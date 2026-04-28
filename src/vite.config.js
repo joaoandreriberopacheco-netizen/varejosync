@@ -9,18 +9,16 @@ import { createRequire } from 'module'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // sourceLocationBabelPlugin — injects data-source-location for Flare Mode
-// Uses a fully dynamic require so esbuild cannot statically resolve the path
+// Loaded fully at runtime so esbuild never statically resolves the path.
 let sourceLocationBabelPlugin = null
-const pluginPath = path.join(__dirname, 'build', 'sourceLocationBabelPlugin.cjs')
-if (fs.existsSync(pluginPath)) {
-  try {
+try {
+  const pluginPath = path.join(__dirname, 'build', 'sourceLocationBabelPlugin.cjs')
+  if (fs.existsSync(pluginPath)) {
     const _require = createRequire(import.meta.url)
-    // Defeat static analysis: build path at runtime
-    const dynamicPath = [pluginPath].find(Boolean)
-    sourceLocationBabelPlugin = _require(dynamicPath)
-  } catch (_) {
-    // plugin not loadable — skip silently
+    sourceLocationBabelPlugin = _require(pluginPath)
   }
+} catch (_) {
+  // plugin not available — skip silently
 }
 
 export default defineConfig({
