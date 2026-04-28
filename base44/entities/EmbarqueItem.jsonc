@@ -1,0 +1,97 @@
+{
+  "name": "EmbarqueItem",
+  "type": "object",
+  "properties": {
+    "embarque_id": {
+      "type": "string",
+      "description": "FK para Embarque.id (pai)"
+    },
+    "embarque_numero": {
+      "type": "string",
+      "description": "Cache do numero do embarque"
+    },
+    "pedido_compra_id": {
+      "type": "string",
+      "description": "FK para PedidoCompra.id (denormalizado para queries cross-pedido)"
+    },
+    "pedido_compra_item_id": {
+      "type": "string",
+      "description": "FK para PedidoCompraItem.id - rastreio fino de qual linha de pedido foi embarcada"
+    },
+    "produto_id": {
+      "type": "string",
+      "description": "FK para Produto.id"
+    },
+    "produto_nome": {
+      "type": "string",
+      "description": "Cache do nome do produto"
+    },
+    "produto_unidade_id": {
+      "type": "string",
+      "description": "FK para Produto.unidades[].id (snapshot da unidade da linha)"
+    },
+    "unidade_sigla": {
+      "type": "string"
+    },
+    "fator_aplicado": {
+      "type": "number",
+      "default": 1
+    },
+    "quantidade_pedida_comercial": {
+      "type": "number",
+      "description": "Quantidade originalmente pedida (em unidade comercial)"
+    },
+    "quantidade_pedida_base": {
+      "type": "number",
+      "description": "Mesma quantidade pedida em unidade fator-1"
+    },
+    "quantidade_embarcada_comercial": {
+      "type": "number",
+      "description": "Quantidade efetivamente embarcada (em unidade comercial)"
+    },
+    "quantidade_embarcada_base": {
+      "type": "number"
+    },
+    "quantidade_recebida_comercial": {
+      "type": "number",
+      "default": 0
+    },
+    "quantidade_recebida_base": {
+      "type": "number",
+      "default": 0
+    },
+    "divergencia_tipo": {
+      "type": "string",
+      "enum": [
+        "Nenhuma",
+        "Quantidade A Menor",
+        "Produto Diferente - Aceite",
+        "Produto Diferente - Rejeitado",
+        "Produto Novo Recebido"
+      ],
+      "default": "Nenhuma"
+    },
+    "produto_id_recebido_diferente": {
+      "type": "string"
+    },
+    "produto_nome_recebido_diferente": {
+      "type": "string"
+    },
+    "acordo_financeiro_lancamento_id": {
+      "type": "string"
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "embarque_id",
+    "produto_id",
+    "quantidade_embarcada_comercial",
+    "quantidade_embarcada_base"
+  ]
+}

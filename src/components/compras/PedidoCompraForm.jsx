@@ -42,6 +42,7 @@ import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
 import { pickDefaultPurchaseUnit, normalizePurchaseItemToCommercial, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
+import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImporter = false }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -827,6 +828,44 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       // Salvar pedido primeiro
       const pedidoSalvo = await onSave(dataToSave);
       const pedidoId = pedidoSalvo?.id || pedido?.id;
+
+      // ── Sincroniza linhas canonicas em PedidoCompraItem ──
+      // O servico replaceAll persiste cada linha com produto_unidade_id, recompoe
+      // o espelho `PedidoCompra.itens[]` e atualiza `valor_total`. Os erros nao
+      // bloqueiam o save legado — apenas geram um aviso pra o usuario.
+      if (pedidoId && Array.isArray(dataToSave?.itens)) {
+        try {
+          const itensCanonicos = dataToSave.itens.map((it, idx) => ({
+            id: it?.pedido_compra_item_id || it?.id || undefined,
+            produto_id: it?.produto_id || '',
+            produto_unidade_id: it?.produto_unidade_id || '',
+            unidade_sigla: it?.unidade_medida || it?.unidade_apresentacao || '',
+            quantidade_comercial: Number(it?.quantidade) || 0,
+            custo_unitario_fator1: Number(it?.custo_unitario) || 0,
+            frete_unitario_fator1: Number(it?.custo_frete_unitario) || 0,
+            outros_unitario_fator1: Number(it?.custo_outros_unitario) || 0,
+            desconto_unitario_fator1: Number(it?.desconto_unitario) || 0,
+            quantidade_vinculada: Number(it?.quantidade_vinculada) || 0,
+            ordem: idx,
+            observacoes: typeof it?.observacoes === 'string' ? it.observacoes : '',
+            status_recebimento: it?.status_recebimento || 'Pendente',
+          })).filter((it) => it.produto_id && it.quantidade_comercial > 0);
+
+          if (itensCanonicos.length > 0) {
+            await savePedidoCompraItem({
+              action: 'replaceAll',
+              pedido_compra_id: pedidoId,
+              items: itensCanonicos,
+            });
+          }
+        } catch (canonicalErr) {
+          console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
+          toast({
+            title: 'Aviso de sincronia canonica',
+            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. O espelho legado segue valido. Detalhe: ' + (canonicalErr?.message || ''),
+          });
+        }
+      }
 
       // ── Registrar transição no log sempre que houver mudança de status ──
       if (pedidoId && (!pedido?.id || statusAnterior !== statusNovo)) {

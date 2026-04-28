@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { buildSaleUnitOptions, pickDefaultSaleUnit, hasAlternativeUnits, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
+import { savePedidoVendaItem } from '@/functions/savePedidoVendaItem';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -201,7 +202,42 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
 
     setIsSaving(true);
     try {
-      await onSave({ ...formData, subtotal, valor_total: valorTotal });
+      const pedidoSalvo = await onSave({ ...formData, subtotal, valor_total: valorTotal });
+      const pedidoId = pedidoSalvo?.id || pedido?.id;
+
+      // Sincronia canonica com PedidoVendaItem (espelho recomposto pelo backend).
+      if (pedidoId && Array.isArray(formData?.itens)) {
+        try {
+          const itensCanonicos = formData.itens.map((it, idx) => ({
+            id: it?.pedido_venda_item_id || it?.id || undefined,
+            produto_id: it?.produto_id || '',
+            produto_unidade_id: it?.produto_unidade_id || '',
+            unidade_sigla: it?.unidade_medida || it?.unidade_apresentacao || '',
+            quantidade_comercial: Number(it?.quantidade) || 0,
+            preco_unitario_fator1: Number(it?.preco_unitario_praticado) || 0,
+            desconto_unitario_fator1: Number(it?.desconto_unitario) || 0,
+            tabela_preco_id: typeof formData?.tabela_preco_id === 'string' ? formData.tabela_preco_id : '',
+            tabela_preco_multiplicador: Number(it?.tabela_preco_multiplicador) || 1,
+            ordem: idx,
+            observacoes: typeof it?.observacoes === 'string' ? it.observacoes : '',
+          })).filter((it) => it.produto_id && it.quantidade_comercial > 0);
+
+          if (itensCanonicos.length > 0) {
+            await savePedidoVendaItem({
+              action: 'replaceAll',
+              pedido_venda_id: pedidoId,
+              items: itensCanonicos,
+            });
+          }
+        } catch (canonicalErr) {
+          console.warn('Sincronia canonica de PedidoVendaItem falhou:', canonicalErr?.message || canonicalErr);
+          toast({
+            title: 'Aviso de sincronia canonica',
+            description: 'O pedido foi salvo, mas a entidade canonica PedidoVendaItem nao pode ser sincronizada. Detalhe: ' + (canonicalErr?.message || ''),
+          });
+        }
+      }
+
       toast({
         title: "✓ Pedido salvo!",
         description: "Pedido de venda criado com sucesso.",

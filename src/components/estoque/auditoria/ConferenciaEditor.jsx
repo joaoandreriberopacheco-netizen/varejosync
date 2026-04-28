@@ -7,6 +7,7 @@ import {
   CheckCircle2, Loader2, Package, ChevronDown, ChevronUp,
   ClipboardCheck, X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw
 } from "lucide-react";
+import { saveConferenciaItem } from "@/functions/saveConferenciaItem";
 
 // Tela de CONTAGEM CEGA — operário NÃO vê estoque do sistema
 export default function ConferenciaEditor({ conferencia: conferenciaInicial, onVoltar }) {
@@ -136,6 +137,34 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       data_fim: new Date().toISOString(),
       itens_conferidos: itens,
     });
+
+    // Sincronia canonica: agrupa contagens por produto, deriva qty_base e
+    // divergencia, e regrava em ConferenciaItem (espelho recomposto pelo backend).
+    try {
+      const agrupados = (itens || []).reduce((acc, it) => {
+        const key = it.produto_id;
+        if (!acc[key]) acc[key] = { produto_id: key, produto_nome: it.produto_nome, quantidade_contada: 0 };
+        acc[key].quantidade_contada += Number(it.quantidade_contada) || 0;
+        return acc;
+      }, {});
+      const itensCanonicos = Object.values(agrupados).map((it, idx) => ({
+        produto_id: it.produto_id,
+        produto_nome: it.produto_nome,
+        quantidade_contada_comercial: Number(it.quantidade_contada) || 0,
+        ordem: idx,
+      })).filter((it) => it.produto_id);
+
+      if (itensCanonicos.length > 0) {
+        await saveConferenciaItem({
+          action: 'replaceAll',
+          conferencia_id,
+          items: itensCanonicos,
+        });
+      }
+    } catch (canonicalErr) {
+      console.warn('Sincronia canonica de ConferenciaItem falhou:', canonicalErr?.message || canonicalErr);
+    }
+
     setFinalizando(false);
     setModalConfirmar(false);
     onVoltar();

@@ -102,6 +102,86 @@ Deno.serve(async (req) => {
     return Response.json({ error: `Erro ao criar pedido de venda: ${err.message}` }, { status: 500 });
   }
 
+  // ── PASSO 3.5: Sincronia canonica em PedidoVendaItem ─────────────────────────
+  // Cria uma linha em PedidoVendaItem para cada item do rascunho, resolvendo
+  // unidade pelo `produto_unidade_id` (ou sigla como fallback). Erros aqui nao
+  // bloqueiam a venda — sao reportados como avisos.
+  try {
+    const round6 = (n: any) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
+    const asNumberLocal = (v: any, f = 0) => { const n = Number(v); return Number.isFinite(n) ? n : f; };
+    const SMAP: Record<string, string> = {
+      CAIXA: 'CX', CAIXAS: 'CX', 'M²': 'M2', 'METRO QUADRADO': 'M2', 'METROS QUADRADOS': 'M2',
+      PEÇA: 'PC', PEÇAS: 'PC', PECA: 'PC', PECAS: 'PC', UNIDADE: 'UN', UNIDADES: 'UN',
+    };
+    const normSigla = (raw: any) => {
+      const s = String(raw || '').trim().toUpperCase();
+      if (!s) return '';
+      const noAccents = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return SMAP[s] || SMAP[noAccents] || s.replace('²', '2');
+    };
+    let ordem = 0;
+    for (const it of (rascunho.itens || [])) {
+      try {
+        const produto = await svc.entities.Produto.get(it.produto_id);
+        if (!produto) continue;
+        const unidades = Array.isArray(produto.unidades) && produto.unidades.length > 0
+          ? produto.unidades
+          : [{
+              id: 'principal',
+              sigla: normSigla(produto.unidade_principal || 'UN') || 'UN',
+              fator_conversao: 1,
+              fator_preco: 1,
+              is_principal: true,
+              is_comercial: true,
+              ativo: true,
+            }];
+        let unidade = it.produto_unidade_id ? unidades.find((u: any) => u.id === it.produto_unidade_id) : null;
+        if (!unidade) {
+          const sigla = normSigla(it.unidade_medida || it.unidade_apresentacao);
+          unidade = sigla ? unidades.find((u: any) => normSigla(u.sigla) === sigla) : null;
+        }
+        if (!unidade) {
+          unidade = unidades.find((u: any) => u.is_comercial && u.ativo !== false)
+            || unidades.find((u: any) => u.is_principal)
+            || unidades[0];
+        }
+        const fator = asNumberLocal(unidade?.fator_conversao, 1) || 1;
+        const fatorPreco = asNumberLocal(unidade?.fator_preco, 1) || 1;
+        const qComercial = asNumberLocal(it.quantidade, 0);
+        const qBase = round6(qComercial * fator);
+        const precoFator1 = asNumberLocal(it.preco_unitario_praticado, 0);
+        const desconto = asNumberLocal(it.desconto_unitario, 0);
+        const precoFinal = round6(precoFator1 - desconto);
+        const total = round6(qBase * precoFinal);
+        await svc.entities.PedidoVendaItem.create({
+          pedido_venda_id: pedidoVenda.id,
+          pedido_venda_numero: numeroPedido,
+          produto_id: produto.id,
+          produto_nome: produto.nome || it.produto_nome || '',
+          produto_unidade_id: unidade?.id || '',
+          unidade_sigla: normSigla(unidade?.sigla) || 'UN',
+          fator_aplicado: fator,
+          fator_preco_aplicado: fatorPreco,
+          quantidade_comercial: round6(qComercial),
+          quantidade_base: qBase,
+          preco_unitario_fator1: round6(precoFator1),
+          preco_unitario_comercial: round6(precoFator1 * fator),
+          desconto_unitario_fator1: round6(desconto),
+          preco_final_unitario_fator1: precoFinal,
+          tabela_preco_id: rascunho.tabela_preco_id || '',
+          tabela_preco_multiplicador: 1,
+          total,
+          ordem: ordem++,
+          observacoes: typeof it.observacoes === 'string' ? it.observacoes : '',
+        });
+      } catch (e) {
+        console.warn('PedidoVendaItem canonico falhou para item:', it?.produto_id, (e as Error).message);
+      }
+    }
+  } catch (e) {
+    console.warn('Sincronia canonica de PedidoVendaItem (PDV) falhou:', (e as Error).message);
+  }
+
   // ── PASSO 4: Operações paralelas ─────────────────────────────────────────────
   const erros = [];
   const hoje = getHoje();

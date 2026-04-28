@@ -16,6 +16,60 @@ const withRetry = async (fn, retries = 3, baseDelay = 1500) => {
   }
 };
 
+/* ----------------------------------------------------------------------------
+ * Validacao de invariantes de unidades (espelho da logica em
+ * src/lib/productUnitsCrud.js, inlined porque este runtime e Deno).
+ * Linhas com invariantes violados sao rejeitadas e reportadas no log.
+ * -------------------------------------------------------------------------- */
+
+const SIGLA_NORMALIZE_MAP: Record<string, string> = {
+  CAIXA: 'CX', CAIXAS: 'CX',
+  'M²': 'M2', 'METRO QUADRADO': 'M2', 'METROS QUADRADOS': 'M2',
+  PEÇA: 'PC', PEÇAS: 'PC', PECA: 'PC', PECAS: 'PC',
+  UNIDADE: 'UN', UNIDADES: 'UN',
+};
+
+const normalizeSigla = (raw: any): string => {
+  const s = String(raw || '').trim().toUpperCase();
+  if (!s) return '';
+  const noAccents = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (SIGLA_NORMALIZE_MAP[s]) return SIGLA_NORMALIZE_MAP[s];
+  if (SIGLA_NORMALIZE_MAP[noAccents]) return SIGLA_NORMALIZE_MAP[noAccents];
+  return s.replace('²', '2');
+};
+
+const validateUnidadesPayload = (dados: any): { ok: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  const principalSigla = normalizeSigla(dados?.unidade_principal || 'UN');
+  if (!principalSigla) errors.push('unidade_principal obrigatoria');
+
+  const alternativas = Array.isArray(dados?.unidades_alternativas) ? dados.unidades_alternativas : [];
+  if (alternativas.length > 5) errors.push(`maximo 5 unidades alternativas (atual: ${alternativas.length})`);
+
+  const siglasVistas = new Set<string>();
+  if (principalSigla) siglasVistas.add(principalSigla);
+
+  for (const alt of alternativas) {
+    if (!alt || typeof alt !== 'object') {
+      errors.push('entrada invalida em unidades_alternativas');
+      continue;
+    }
+    const sigla = normalizeSigla(alt.unidade);
+    if (!sigla) errors.push('unidade alternativa sem sigla');
+    if (sigla && siglasVistas.has(sigla)) errors.push(`sigla duplicada entre unidades: ${sigla}`);
+    if (sigla) siglasVistas.add(sigla);
+
+    const fator = Number(alt.fator_conversao);
+    if (!Number.isFinite(fator) || fator <= 0) {
+      errors.push(`unidade ${sigla || '(?)'}: fator_conversao deve ser > 0`);
+    } else if (fator === 1) {
+      errors.push(`unidade ${sigla}: fator_conversao=1 e reservado para a unidade principal`);
+    }
+  }
+
+  return errors.length === 0 ? { ok: true, errors: [] } : { ok: false, errors };
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -105,10 +159,25 @@ Deno.serve(async (req) => {
       'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome',
     ];
 
-    // Processar cada produto com pequeno delay para evitar rate limit
+    // Processar cada produto com pequeno delay para evitar rate limit.
+    // Antes de gravar, valida invariantes de unidades — linhas invalidas sao
+    // rejeitadas e reportadas (porta dos fundos historicamente aberta para typos).
     let processados = 0;
+    const linhasRejeitadas: Array<{ id: any; isNew: boolean; nome?: string; erros: string[] }> = [];
     for (const { id, dados, isNew } of alterados) {
       try {
+        const tocaUnidades =
+          Object.prototype.hasOwnProperty.call(dados || {}, 'unidade_principal') ||
+          Object.prototype.hasOwnProperty.call(dados || {}, 'unidades_alternativas');
+        if (tocaUnidades) {
+          const validation = validateUnidadesPayload(dados);
+          if (!validation.ok) {
+            linhasRejeitadas.push({ id, isNew, nome: dados?.nome, erros: validation.errors });
+            console.warn(`✗ Produto ${id || '(novo)'} rejeitado pela validacao de unidades: ${validation.errors.join('; ')}`);
+            continue;
+          }
+        }
+
         if (isNew) {
           const novoProduto = {
             tipo: dados.tipo && String(dados.tipo).trim() ? dados.tipo : 'Produto',
@@ -148,8 +217,9 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `Lote ${lote_numero}/${total_lotes} concluído. ${processados}/${alterados.length} produto(s) processado(s).`,
+      message: `Lote ${lote_numero}/${total_lotes} concluído. ${processados}/${alterados.length} produto(s) processado(s).${linhasRejeitadas.length > 0 ? ` ${linhasRejeitadas.length} rejeitado(s) por validacao de unidades.` : ''}`,
       count: processados,
+      rejeitados: linhasRejeitadas,
       ...(importacaoLogAviso ? { warning: importacaoLogAviso } : {}),
     });
   } catch (error) {

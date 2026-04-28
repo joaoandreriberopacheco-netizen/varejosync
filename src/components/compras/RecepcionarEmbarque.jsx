@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
+import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 
 function getItensDoEmbarque(embarque) {
   const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
@@ -241,6 +242,35 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           itens_embarcados: itensNorm,
           observacoes: novoEmbarque.observacoes,
         });
+
+        // Sincronia canonica de EmbarqueItem (recepcao reflete quantidade_recebida).
+        try {
+          const itensCanonicos = itensNorm
+            .map((it, idx) => ({
+              produto_id: it?.produto_id || '',
+              produto_unidade_id: it?.produto_unidade_id || '',
+              pedido_compra_item_id: it?.pedido_compra_item_id || '',
+              unidade_sigla: it?.unidade_medida || '',
+              quantidade_pedida_comercial: Number(it?.quantidade_pedida) || 0,
+              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
+              quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
+              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
+              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
+              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
+              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
+              ordem: idx,
+            }))
+            .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
+          if (itensCanonicos.length > 0) {
+            await saveEmbarqueItem({
+              action: 'replaceAll',
+              embarque_id: embarque.id,
+              items: itensCanonicos,
+            });
+          }
+        } catch (canonicalErr) {
+          console.warn('Sincronia canonica de EmbarqueItem (recepcao) falhou:', canonicalErr?.message || canonicalErr);
+        }
       }
 
       if (embarqueOrfao) {

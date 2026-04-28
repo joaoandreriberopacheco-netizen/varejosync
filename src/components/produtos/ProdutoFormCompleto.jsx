@@ -16,6 +16,7 @@ import CurrencyInput from './CurrencyInput';
 import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
+import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/productUnitsCrud';
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
   const normalizeAlternativas = (lista = []) => (Array.isArray(lista) ? lista : [])
@@ -400,27 +401,57 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         throw new Error('Já existe um produto com a mesma descrição. Ajuste modelo, cor, tamanho ou outro campo antes de salvar.');
       }
 
-      const altsInvalidas = (formData.unidades_alternativas || []).filter(
-        (u) => u?.ativo !== false && Number(u?.fator_conversao) === 1,
-      );
-      if (altsInvalidas.length > 0) {
-        throw new Error('Unidade alternativa não pode ter fator 1. A base é sempre a unidade principal (fator 1).');
-      }
-      if ((formData.unidades_alternativas || []).length > 5) {
-        throw new Error('O produto pode ter no máximo 5 unidades alternativas.');
-      }
-
-      // Converte campos de texto para maiúsculas antes de salvar
-      const unidadePrincipal = String(formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
-      const unidadeComercialResolved = resolveUnitValue(
-        formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipal,
-        { unidadePrincipal }
-      ) || unidadePrincipal;
+      // Monta o array canonico `unidades[]` a partir do estado do form e valida
+      // invariantes via productUnitsCrud (unica via legitima de mutacao).
+      const unidadePrincipalSigla = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
       const alternativasNormalizadas = normalizeAlternativas(formData.unidades_alternativas || []);
-      const unidadeComercialId = unidadeComercialResolved === unidadePrincipal
-        ? 'primary'
-        : (alternativasNormalizadas.find((u) => u.unidade === unidadeComercialResolved)?.id || '');
-      const unidadeLogisticaResolved = unidadeComercialResolved;
+      const comercialPreferenciaSigla = normalizeSigla(
+        formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipalSigla
+      ) || unidadePrincipalSigla;
+      const comercialIdPreferencia = String(formData.unidade_comercial_id || '').trim();
+
+      const principalCanonical = makeUnidade({
+        id: 'principal',
+        nome: 'Unidade base',
+        sigla: unidadePrincipalSigla,
+        fator_conversao: 1,
+        fator_preco: 1,
+        is_principal: true,
+        is_comercial: false,
+        ativo: true,
+      });
+
+      const alternativasCanonical = alternativasNormalizadas.map((u) => makeUnidade({
+        id: u.id,
+        nome: u.nome || u.rotulo || u.unidade,
+        sigla: u.unidade,
+        fator_conversao: Number(u.fator_conversao) || 1,
+        fator_preco: Number(u.fator_preco) || 1,
+        is_principal: false,
+        is_comercial: false,
+        ativo: u.ativo !== false,
+      }));
+
+      const unidadesCanonical = [principalCanonical, ...alternativasCanonical];
+
+      let comercialAplicado = false;
+      if (comercialIdPreferencia === 'primary' || comercialIdPreferencia === 'principal') {
+        unidadesCanonical[0].is_comercial = true;
+        comercialAplicado = true;
+      } else if (comercialIdPreferencia) {
+        const byId = unidadesCanonical.find((u) => u.id === comercialIdPreferencia);
+        if (byId) { byId.is_comercial = true; comercialAplicado = true; }
+      }
+      if (!comercialAplicado) {
+        const bySigla = unidadesCanonical.find((u) => normalizeSigla(u.sigla) === comercialPreferenciaSigla);
+        if (bySigla) { bySigla.is_comercial = true; comercialAplicado = true; }
+      }
+      if (!comercialAplicado) unidadesCanonical[0].is_comercial = true;
+
+      const applied = applyUnidadesToProduto({}, unidadesCanonical);
+      if (!applied.ok) {
+        throw new Error('Unidades invalidas: ' + applied.errors.join('; '));
+      }
 
       const produtoData = {
         ...formData,
@@ -429,12 +460,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         marca: formData.marca?.toUpperCase(),
         categoria_nome: categoria?.nome?.toUpperCase() || '',
         fornecedor_padrao_codigo: formData.fornecedor_padrao_codigo?.toUpperCase(),
-        unidade_principal: unidadePrincipal,
-        unidade_show_comercial: unidadeComercialResolved,
-        unidade_show_logistica: unidadeLogisticaResolved,
-        unidade_apresentacao_default: unidadeComercialResolved,
-        unidade_comercial_id: unidadeComercialId,
-        unidades_alternativas: alternativasNormalizadas,
+        unidades: applied.produto.unidades,
+        unidade_principal: applied.produto.unidade_principal,
+        unidade_show_comercial: applied.produto.unidade_show_comercial,
+        unidade_show_logistica: applied.produto.unidade_show_comercial,
+        unidade_apresentacao_default: applied.produto.unidade_apresentacao_default,
+        unidade_comercial_id: applied.produto.unidade_comercial_id,
+        unidades_alternativas: applied.produto.unidades_alternativas,
         unidade_show_ativa: formData.unidade_show_ativa !== false,
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,

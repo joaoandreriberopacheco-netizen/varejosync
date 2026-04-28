@@ -12,6 +12,7 @@ import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } f
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -441,10 +442,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         status: 'Pendente'
       };
 
+      let embarqueIdSalvo = embarqueExistente?.id || null;
       if (isEdicao) {
         await base44.entities.Embarque.update(embarqueExistente.id, payloadEmbarque);
       } else {
-        await base44.entities.Embarque.create({
+        const embCriado = await base44.entities.Embarque.create({
           pedido_compra_id: pedido.id,
           pedido_compra_numero: pedido.numero,
           fornecedor_id: fornecedorIdFinal,
@@ -455,6 +457,40 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           status_recebimento: 'Pendente',
           ...payloadEmbarque
         });
+        embarqueIdSalvo = embCriado?.id || null;
+      }
+
+      // Sincronia canonica de EmbarqueItem (espelho recomposto pelo backend).
+      if (embarqueIdSalvo && Array.isArray(payloadEmbarque?.itens)) {
+        try {
+          const itensCanonicos = payloadEmbarque.itens
+            .map((it, idx) => ({
+              id: it?.embarque_item_id || it?.id || undefined,
+              produto_id: it?.produto_id || '',
+              produto_unidade_id: it?.produto_unidade_id || '',
+              pedido_compra_item_id: it?.pedido_compra_item_id || '',
+              unidade_sigla: it?.unidade_medida || '',
+              quantidade_pedida_comercial: Number(it?.quantidade_pedida) || 0,
+              quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
+              quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
+              divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
+              produto_id_recebido_diferente: it?.produto_id_recebido_diferente || '',
+              produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
+              acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
+              ordem: idx,
+            }))
+            .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
+
+          if (itensCanonicos.length > 0) {
+            await saveEmbarqueItem({
+              action: 'replaceAll',
+              embarque_id: embarqueIdSalvo,
+              items: itensCanonicos,
+            });
+          }
+        } catch (canonicalErr) {
+          console.warn('Sincronia canonica de EmbarqueItem falhou:', canonicalErr?.message || canonicalErr);
+        }
       }
 
       // Cloud (Base44): deve recalcular só com base em recebido/movimentos — ver nota em embarqueFilters.js

@@ -372,6 +372,140 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
   };
 }
 
+/* ============================================================================
+ * Schema canonico do `Produto.unidades[]` (a partir desta refatoracao)
+ * ----------------------------------------------------------------------------
+ * Antes: dados de unidades viviam em 4 lugares diferentes (`unidade_principal`,
+ * `unidades_alternativas[]`, `unidade_comercial_id`, `unidade_apresentacao_default`).
+ * Cada referencia usava string match (sigla/nome) e qualquer typo orfanizava linhas
+ * de pedido — foi essa pilha que motivou esta refatoracao.
+ *
+ * Agora `Produto.unidades[]` e o array canonico, com IDs estaveis. Os campos
+ * legados continuam mantidos como espelho (recomposto a cada save) ate que todos
+ * os consumidores migrem.
+ *
+ * Forma de cada unidade:
+ *   {
+ *     id:              string   // UUID estavel; NUNCA mudar apos criada
+ *     nome:            string   // rotulo livre ("Caixa de 2,16 m²")
+ *     sigla:           string   // codigo curto, normalizado ("CX")
+ *     fator_conversao: number   // qty na sigla -> qty em fator-1; 1 se for a base
+ *     fator_preco:     number   // multiplicador opcional de preco; 1 se neutro
+ *     is_principal:    boolean  // EXATAMENTE 1 unidade no array; tem fator_conversao=1
+ *     is_comercial:    boolean  // EXATAMENTE 1 unidade no array; e a "sagrada" pra UI/relatorios
+ *     ativo:           boolean  // false = soft delete
+ *   }
+ *
+ * Invariantes (validados em `validateUnidades` do productUnitsCrud.js):
+ *   1. 1 <= unidades.length <= 5
+ *   2. todas com `id` nao vazio e unico
+ *   3. siglas unicas (apos normalizacao)
+ *   4. fator_conversao > 0
+ *   5. exatamente 1 com `is_principal = true`, e essa tem fator_conversao = 1
+ *   6. exatamente 1 com `is_comercial = true`
+ *
+ * Espelho legado (regravado a cada save canonico):
+ *   - `unidade_principal`         := unidades[is_principal].sigla
+ *   - `unidade_apresentacao_default`/`unidade_show_comercial` := unidades[is_comercial].sigla
+ *   - `unidade_comercial_id`      := unidades[is_comercial].id
+ *   - `unidades_alternativas[]`   := unidades.filter(!is_principal) mapeadas pro formato antigo
+ * ============================================================================ */
+
+/** Le o array canonico, caindo pra reconstrucao do legado se ainda nao migrado. */
+export function getUnidadesCanonical(produto = {}) {
+  if (Array.isArray(produto?.unidades) && produto.unidades.length > 0) {
+    return produto.unidades;
+  }
+  return null;
+}
+
+/** Resolve a unidade `is_principal` (fator-1). Cai pra `unidade_principal` se ainda nao migrado. */
+export function getUnidadePrincipalCanonical(produto = {}) {
+  const canonical = getUnidadesCanonical(produto);
+  if (canonical) {
+    return canonical.find((u) => u?.is_principal && u?.ativo !== false) || canonical[0] || null;
+  }
+  return {
+    id: "principal",
+    nome: "Unidade base",
+    sigla: normalizeUnitCode(produto?.unidade_principal) || "UN",
+    fator_conversao: 1,
+    fator_preco: 1,
+    is_principal: true,
+    is_comercial: false,
+    ativo: true,
+  };
+}
+
+/** Resolve a unidade `is_comercial` (sagrada). Cai pra heuristica legada se nao migrado. */
+export function getUnidadeComercialCanonical(produto = {}) {
+  const canonical = getUnidadesCanonical(produto);
+  if (canonical) {
+    const explicita = canonical.find((u) => u?.is_comercial && u?.ativo !== false);
+    if (explicita) return explicita;
+    return canonical.find((u) => u?.is_principal) || canonical[0] || null;
+  }
+  const sigla = resolveCommercialUnit(produto, getUnidadePrincipalCanonical(produto)?.sigla || "UN");
+  const principal = getUnidadePrincipalCanonical(produto);
+  if (sigla === principal?.sigla) return principal;
+  const alt = normalizeAlternativeUnits(produto).find((a) => a.unidade === sigla);
+  if (!alt) return principal;
+  return {
+    id: alt.id,
+    nome: alt.nome || alt.unidade,
+    sigla: alt.unidade,
+    fator_conversao: alt.fator_conversao,
+    fator_preco: alt.fator_preco || 1,
+    is_principal: false,
+    is_comercial: true,
+    ativo: alt.ativo,
+  };
+}
+
+/** Busca uma unidade canonica pelo `id` estavel. */
+export function getUnidadeByIdCanonical(produto = {}, unidadeId = "") {
+  if (!unidadeId) return null;
+  const canonical = getUnidadesCanonical(produto);
+  if (canonical) return canonical.find((u) => u?.id === unidadeId) || null;
+  if (unidadeId === "primary" || unidadeId === "principal") {
+    return getUnidadePrincipalCanonical(produto);
+  }
+  const alt = normalizeAlternativeUnits(produto).find((a) => a.id === unidadeId);
+  if (!alt) return null;
+  return {
+    id: alt.id,
+    nome: alt.nome || alt.unidade,
+    sigla: alt.unidade,
+    fator_conversao: alt.fator_conversao,
+    fator_preco: alt.fator_preco || 1,
+    is_principal: false,
+    is_comercial: false,
+    ativo: alt.ativo,
+  };
+}
+
+/** Busca uma unidade canonica pela sigla normalizada. */
+export function getUnidadeBySiglaCanonical(produto = {}, sigla = "") {
+  const target = normalizeUnitCode(sigla);
+  if (!target) return null;
+  const canonical = getUnidadesCanonical(produto);
+  if (canonical) return canonical.find((u) => normalizeUnitCode(u?.sigla) === target) || null;
+  const principal = getUnidadePrincipalCanonical(produto);
+  if (normalizeUnitCode(principal?.sigla) === target) return principal;
+  const alt = normalizeAlternativeUnits(produto).find((a) => normalizeUnitCode(a.unidade) === target);
+  if (!alt) return null;
+  return {
+    id: alt.id,
+    nome: alt.nome || alt.unidade,
+    sigla: alt.unidade,
+    fator_conversao: alt.fator_conversao,
+    fator_preco: alt.fator_preco || 1,
+    is_principal: false,
+    is_comercial: false,
+    ativo: alt.ativo,
+  };
+}
+
 export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
   const options = buildSaleUnitOptions(product);
   if (!options.length) {
