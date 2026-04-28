@@ -668,20 +668,45 @@ const getQuantidadeComercialPdf = (item = {}) =>
 
 const getPrecoBaseFator1Pedido = (item = {}, pedido = {}) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
-  const candidatos = [
+  const candidatosBase = [
     linha.custo_final_unitario_base,
     linha.custo_unitario_base,
     item.custo_final_unitario_base,
     item.custo_unitario_base,
-    linha.custo_final_unitario,
-    linha.custo_unitario,
-    item.custo_final_unitario,
-    item.custo_unitario,
   ];
-  for (const c of candidatos) {
+  for (const c of candidatosBase) {
     const n = Number(c);
     if (Number.isFinite(n) && n > 0) return n;
   }
+
+  // Fonte robusta quando campos *_base não vieram: total da linha / quantidade_base.
+  const qBase = Number(item.quantidade_base ?? linha.quantidade_base) || 0;
+  const totalLinha = Number(
+    linha.total ??
+      linha.valor_total_item ??
+      linha.valor_total ??
+      linha.subtotal ??
+      item.total ??
+      item.valor_total_item ??
+      item.valor_total ??
+      item.subtotal,
+  );
+  if (Number.isFinite(totalLinha) && totalLinha > 0 && qBase > 0) {
+    return totalLinha / qBase;
+  }
+
+  // Só aceita unitário "cru" quando o eixo está explícito como fator-1.
+  const eixo = String(item.preco_eixo ?? linha.preco_eixo ?? '').trim().toUpperCase();
+  if (eixo === 'FATOR_1') {
+    const unitCru = Number(
+      linha.custo_final_unitario ??
+        linha.custo_unitario ??
+        item.custo_final_unitario ??
+        item.custo_unitario,
+    );
+    if (Number.isFinite(unitCru) && unitCru > 0) return unitCru;
+  }
+
   return NaN;
 };
 
