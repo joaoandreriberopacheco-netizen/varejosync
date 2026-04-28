@@ -211,6 +211,9 @@ const fmtQuantidadePdf = (valor = 0) =>
   Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const percentual = (valor = 0) =>
   `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const moedaOuTraco = (valor) => (Number.isFinite(Number(valor)) ? moeda(valor) : '--');
+const moedaSemSimboloOuTraco = (valor) => (Number.isFinite(Number(valor)) ? moedaSemSimbolo(valor) : '--');
+const percentualOuTraco = (valor) => (Number.isFinite(Number(valor)) ? percentual(valor) : '--');
 const dataFmt = (valor) => {
   if (!valor) return '-';
   const d = new Date(valor);
@@ -702,8 +705,7 @@ const getFreteUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorCome
   );
   if (Number.isFinite(freteBase) && freteBase !== 0) return freteBase * fatorComercial;
 
-  const padroBase = Number(prod.custo_frete_padrao) || 0;
-  return padroBase * fatorComercial;
+  return NaN;
 };
 
 const getOutrosUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorComercial = 1) => {
@@ -721,12 +723,7 @@ const getOutrosUnitarioConvertido = (item = {}, prod = {}, pedido = {}, fatorCom
   );
   if (Number.isFinite(outrosBase) && outrosBase !== 0) return outrosBase * fatorComercial;
 
-  return (
-    ((Number(prod.custo_imposto1_padrao) || 0) +
-      (Number(prod.custo_imposto2_padrao) || 0) +
-      (Number(prod.custo_outros_padrao) || 0)) *
-    fatorComercial
-  );
+  return NaN;
 };
 
 const getMissingCamposConversaoItem = (item = {}, pedido = {}) => {
@@ -762,9 +759,11 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
   const custoUnit = vlrUnit + freteUnit + outrosUnit;
   const totalLinha = (Number(qtd) || 0) * (Number(vlrUnit) || 0);
   const vendaUnit = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
-  const markup = custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : 0;
+  const markup = Number.isFinite(custoUnit) && custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : NaN;
 
   const missingFields = getMissingCamposConversaoItem(item, pedido);
+  if (!Number.isFinite(freteUnit)) missingFields.push('frete_base_fator1');
+  if (!Number.isFinite(outrosUnit)) missingFields.push('outros_base_fator1');
   const warningText =
     missingFields.length > 0 ? `ATENCAO: faltou ${missingFields.join(', ')}` : '';
 
@@ -1342,13 +1341,13 @@ Deno.serve(async (req) => {
           doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
           doc.setTextColor(...C.text);
         }
-        doc.text(moedaSemSimbolo(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimbolo(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimbolo(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimbolo(custo),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimbolo(totalLiq),  TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimbolo(venda),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(percentual(mk),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(liq),      TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(frete),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(outros),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(custo),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(totalLiq), TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(venda),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
+        doc.text(percentualOuTraco(mk),            TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         y += rowAdvance;
       });
 
@@ -1360,7 +1359,7 @@ Deno.serve(async (req) => {
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.text);
-      doc.text(`Custo total (itens): ${moeda(totCusto)}`, M + 2, y + scaledHeight(3.5));
+      doc.text(`Custo total (itens): ${moedaOuTraco(totCusto)}`, M + 2, y + scaledHeight(3.5));
       doc.text(`Valor de venda total (referência): ${moeda(totVenda)}`, M + 2, y + scaledHeight(9));
       y += scaledHeight(12);
       doc.setFontSize(6.2);
@@ -1425,7 +1424,7 @@ Deno.serve(async (req) => {
       ) {
         equivSuf = ` · Equiv. ${fmtQtd(qBase)} ${upPrincipal} (base)`;
       }
-      const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}${equivSuf}`;
+      const auxValores1 = `Total ${moedaOuTraco(tCompra)} · ${un} · Comp. ${moedaOuTraco(precoCompra)} · Custo ${moedaOuTraco(custo)}${equivSuf}`;
       const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
       const detAux1 = lastNomeBaseline + gapNomeDetalhe;
       const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
@@ -1590,9 +1589,9 @@ Deno.serve(async (req) => {
         ) {
           equivSuf = ` · Equiv. ${fmtQtd(qBase)} ${upPrincipal} (base)`;
         }
-        const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}${equivSuf}`;
+        const auxValores1 = `Total ${moedaOuTraco(tCompra)} · ${un} · Comp. ${moedaOuTraco(precoCompra)} · Custo ${moedaOuTraco(custo)}${equivSuf}`;
         const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
-        const auxValores2 = `Venda ${moeda(venda)} · Mk ${percentual(mk)}`;
+        const auxValores2 = `Venda ${moedaOuTraco(venda)} · Mk ${percentualOuTraco(mk)}`;
         const warningLinhas = met.warningText ? doc.splitTextToSize(met.warningText, NOME_MAX_W) : [];
 
         const layoutMobileItem = (y0) => {
