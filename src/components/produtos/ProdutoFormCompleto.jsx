@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,10 +137,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     }
   }, [produto]);
 
+  // ── Reset de formData a partir da prop `produto` ────────────────────────────
+  // Mantemos `temAlteracoesNaoSalvas` em uma ref (e NAO no array de deps) para
+  // que quando o save flipa o flag de volta pra `false` o efeito NAO dispare e
+  // sobrescreva o estado fresco com a prop antiga (que o pai nao atualiza).
+  // Esse reset legítimo só roda quando o produto editado realmente troca
+  // (id ou updated_date diferentes vindos do servidor).
+  const temAlteracoesRef = useRef(temAlteracoesNaoSalvas);
   useEffect(() => {
-    if (!produto?.id || temAlteracoesNaoSalvas) return;
+    temAlteracoesRef.current = temAlteracoesNaoSalvas;
+  }, [temAlteracoesNaoSalvas]);
+
+  useEffect(() => {
+    if (!produto?.id || temAlteracoesRef.current) return;
     setFormData(buildFormDataFromProduto(produto));
-  }, [produto?.id, produto?.updated_date, temAlteracoesNaoSalvas]);
+  }, [produto?.id, produto?.updated_date]);
 
   const loadMovimentacoes = async () => {
     if (!produto?.id) return;
@@ -487,7 +498,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         produtoId = novoProduto.id;
       }
 
-
+      // Re-le do banco e reidrata `formData` com o registro persistido.
+      // Antes, o form ficava com o estado "que o usuario digitou", e o pai
+      // (Produtos.jsx) nao atualiza `selectedProduto`, entao a prop `produto`
+      // permanecia stale. Esse re-fetch deixa o form 100% fiel a entidade
+      // (siglas normalizadas, IDs canonicos, espelho legado regravado).
+      try {
+        if (produtoId) {
+          const fresh = await base44.entities.Produto.get(produtoId);
+          if (fresh) setFormData(buildFormDataFromProduto(fresh));
+        }
+      } catch (refetchErr) {
+        console.warn('Re-fetch pos-save falhou (mantendo estado local):', refetchErr?.message || refetchErr);
+      }
 
       toast({
         title: "✓ Produto salvo!",
