@@ -7,6 +7,7 @@ import { Plus, Trash2, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function UnidadesAlternativasEditor({ unidades = [], unidadePrincipal = 'UN', onChange }) {
+  const MAX_UNIDADES = 5;
   const handleItemChange = (index, field, value) => {
     if (field === 'fator_conversao') {
       const num = typeof value === 'number' ? value : parseFloat(value);
@@ -21,9 +22,13 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
   };
 
   const handleAdd = () => {
+    if ((unidades || []).length >= MAX_UNIDADES) {
+      toast.error(`Limite atingido: no máximo ${MAX_UNIDADES} unidades alternativas.`);
+      return;
+    }
     onChange([
       ...unidades,
-      { unidade: '', fator_conversao: 2, preco_venda: 0, rotulo: '', ajuste_percentual: 0, ativo: true },
+      { id: crypto.randomUUID(), nome: '', unidade: '', fator_conversao: 2, fator_preco: 1, preco_venda: 0, rotulo: '', ajuste_percentual: 0, ativo: true },
     ]);
   };
 
@@ -46,6 +51,9 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
           Adicionar
         </Button>
       </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        {(unidades || []).length}/{MAX_UNIDADES} unidades alternativas cadastradas.
+      </p>
 
       {unidades.length === 0 ? (
         <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-3">
@@ -67,6 +75,13 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Nome</Label>
+                  <Input
+                    value={item.nome || ''}
+                    onChange={(e) => handleItemChange(index, 'nome', e.target.value)}
+                    placeholder="Ex.: Caixa master"
+                    className="bg-white dark:bg-gray-900 border-0 shadow-sm mb-3"
+                  />
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Rótulo (opcional)</Label>
                   <Input
                     value={item.rotulo || ''}
@@ -105,6 +120,17 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
                     value={item.ajuste_percentual ?? 0}
                     onChange={(e) => handleItemChange(index, 'ajuste_percentual', parseFloat(e.target.value) || 0)}
                     placeholder="-10 ou +10"
+                    className="bg-white dark:bg-gray-900 border-0 shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Fator de preço</Label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={item.fator_preco ?? 1}
+                    onChange={(e) => handleItemChange(index, 'fator_preco', parseFloat(e.target.value) || 1)}
                     className="bg-white dark:bg-gray-900 border-0 shadow-sm"
                   />
                 </div>

@@ -11,7 +11,7 @@ import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
-import { buildPurchaseUnitOptions, normalizeUnitCode, resolveCommercialDisplay } from '@/lib/productUnits';
+import { buildPurchaseUnitOptions, normalizeUnitCode, resolveCommercialDisplay, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -108,6 +108,12 @@ const getBorrowedStatus = (pedido, embarque) => {
 };
 
 const getEmbarqueDisplayDate = (pedido) => pedido?.data_aprovacao_financeira || pedido?.data_emissao || pedido?.created_date;
+
+const pedidoNaoConcluido = (pedido = {}) => {
+  const status = String(pedido?.status || '').trim();
+  const statusReceb = String(pedido?.status_recebimento_geral || '').trim();
+  return status !== 'Concluído' && !statusReceb.startsWith('Concluído');
+};
 
 const getPercentualAjustePedido = (pedido = {}) => {
   const percentualDireto = Number(pedido.percentual_desconto);
@@ -507,10 +513,13 @@ export default function PedidosCompraPage() {
   };
 
   const handleSave = async (pedidoData) => {
-    const sanitizedData = {
+    const sanitizedDataBase = {
       ...pedidoData,
       valor_total: Number(pedidoData.valor_total) || 0,
     };
+    const sanitizedData = (pedidoNaoConcluido(sanitizedDataBase) && Array.isArray(sanitizedDataBase.itens))
+      ? { ...sanitizedDataBase, itens: sanitizedDataBase.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')) }
+      : sanitizedDataBase;
 
     if (sanitizedData.id) {
       await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);

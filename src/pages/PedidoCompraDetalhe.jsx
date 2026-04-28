@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
+import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — apenas Desktop.
@@ -61,11 +62,26 @@ export default function PedidoCompraDetalhe() {
     loadPedidoComVerdade(id, false);
   }, [loadPedidoComVerdade]);
 
+  const pedidoNaoConcluido = (pedidoData = {}) => {
+    const status = String(pedidoData?.status || '').trim();
+    const statusReceb = String(pedidoData?.status_recebimento_geral || '').trim();
+    return status !== 'Concluído' && !statusReceb.startsWith('Concluído');
+  };
+
+  const normalizarItensCanonicos = (pedidoData = {}) => {
+    if (!Array.isArray(pedidoData?.itens)) return pedidoData;
+    if (!pedidoNaoConcluido(pedidoData)) return pedidoData;
+    return {
+      ...pedidoData,
+      itens: pedidoData.itens.map((item) => normalizeItemToCanonicalFactorOne(item, 'custo')),
+    };
+  };
+
   const handleSave = async (pedidoData) => {
-    const sanitizedData = {
+    const sanitizedData = normalizarItensCanonicos({
       ...pedidoData,
       valor_total: Number(pedidoData.valor_total) || 0,
-    };
+    });
 
     let saved;
     if (sanitizedData.id) {

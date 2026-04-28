@@ -11,7 +11,7 @@ import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck, Sav
 import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import { buildSaleUnitOptions, pickDefaultSaleUnit, hasAlternativeUnits } from '@/lib/productUnits';
+import { buildSaleUnitOptions, pickDefaultSaleUnit, hasAlternativeUnits, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -107,6 +107,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     item.preco_unitario_praticado = unidadeSelecionada.valor_unitario || 0;
     item.custo_unitario_momento = produto.preco_custo_calculado || 0;
     item.total = quantidade * item.preco_unitario_praticado;
+    Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'preco'));
 
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
@@ -141,6 +142,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     const fatorConversao = parseFloat(item.fator_conversao) || 1;
     item.quantidade_base = qty * fatorConversao;
     item.total = qty * price;
+    Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'preco'));
 
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
@@ -148,7 +150,17 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const handleAddItem = () => {
     setFormData(prev => ({
       ...prev,
-      itens: [...prev.itens, { produto_id: '', produto_nome: '', quantidade: 1, unidade_medida: 'UN', fator_conversao: 1, quantidade_base: 1, preco_unitario_praticado: 0, custo_unitario_momento: 0, total: 0 }],
+      itens: [...prev.itens, normalizeItemToCanonicalFactorOne({
+        produto_id: '',
+        produto_nome: '',
+        quantidade: 1,
+        unidade_medida: 'UN',
+        fator_conversao: 1,
+        quantidade_base: 1,
+        preco_unitario_praticado: 0,
+        custo_unitario_momento: 0,
+        total: 0,
+      }, 'preco')],
     }));
   };
 

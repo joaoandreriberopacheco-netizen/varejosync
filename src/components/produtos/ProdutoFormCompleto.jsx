@@ -18,6 +18,22 @@ import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
+  const normalizeAlternativas = (lista = []) => (Array.isArray(lista) ? lista : [])
+    .slice(0, 5)
+    .filter((u) => String(u?.unidade || '').trim())
+    .map((u) => {
+      const ajuste = Number(u?.ajuste_percentual) || 0;
+      const fatorPreco = Number(u?.fator_preco) || 0;
+      return {
+        ...u,
+        id: String(u?.id || '').trim() || crypto.randomUUID(),
+        nome: typeof u?.nome === 'string' ? u.nome.trim() : '',
+        unidade: String(u?.unidade || '').trim().toUpperCase(),
+        fator_conversao: Number(u?.fator_conversao) || 1,
+        fator_preco: fatorPreco > 0 ? fatorPreco : (1 + (ajuste / 100)),
+      };
+    });
+
   const gerarNomeCompleto = (data) => {
     const campos = [data.campo_hierarquico_1, data.campo_hierarquico_2, data.campo_hierarquico_3, data.campo_hierarquico_4, data.campo_hierarquico_5];
     return campos.map(c => (c || '').trim()).filter(Boolean).join(' ').trim();
@@ -26,7 +42,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const buildFormDataFromProduto = (produtoData) => ({
     ...produtoData,
     tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
-    unidades_alternativas: Array.isArray(produtoData?.unidades_alternativas) ? produtoData.unidades_alternativas : [],
+    unidades_alternativas: normalizeAlternativas(produtoData?.unidades_alternativas),
     tipo: produtoData?.tipo || 'Produto',
     valor_compra: produtoData?.valor_compra || 0,
     preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
@@ -36,6 +52,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     unidade_show_comercial: produtoData?.unidade_show_comercial || '',
     unidade_show_logistica: produtoData?.unidade_show_logistica || '',
     unidade_apresentacao_default: produtoData?.unidade_apresentacao_default || '',
+    unidade_comercial_id: produtoData?.unidade_comercial_id || '',
     unidade_show_ativa: typeof produtoData?.unidade_show_ativa === 'boolean' ? produtoData.unidade_show_ativa : true,
     ativo: produtoData?.ativo !== false
   });
@@ -47,7 +64,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
     categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
-    unidade_principal: 'UN', unidade_show_comercial: '', unidade_show_logistica: '', unidade_apresentacao_default: '', unidade_show_ativa: true, unidades_por_pacote: 1, unidades_alternativas: [],
+    unidade_principal: 'UN', unidade_show_comercial: '', unidade_show_logistica: '', unidade_apresentacao_default: '', unidade_comercial_id: 'primary', unidade_show_ativa: true, unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
     tempo_reposicao_dias: 0, fornecedor_padrao_id: '', fornecedor_padrao_codigo: '',
     controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
@@ -195,7 +212,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   const unitOptions = useMemo(() => {
     const principal = String(formData.unidade_principal || 'UN').trim().toUpperCase();
-    const alternativas = (formData.unidades_alternativas || [])
+    const alternativas = normalizeAlternativas(formData.unidades_alternativas || [])
       .map((u) => String(u?.unidade || '').trim().toUpperCase())
       .filter(Boolean);
     return [principal, ...alternativas.filter((u) => u !== principal)];
@@ -203,7 +220,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   const resolveUnitValue = (value, opts = {}) => {
     const principal = String(opts.unidadePrincipal || formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
-    const alternativasNormalizadas = (opts.unidadesAlternativas || formData.unidades_alternativas || []).map((u) => ({
+      const alternativasNormalizadas = normalizeAlternativas(opts.unidadesAlternativas || formData.unidades_alternativas || []).map((u) => ({
       unidade: String(u?.unidade || '').trim().toUpperCase(),
       rotulo: String(u?.rotulo || '').trim().toUpperCase(),
     })).filter((u) => u.unidade);
@@ -224,7 +241,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   useEffect(() => {
     setFormData((prev) => {
       const principal = String(prev.unidade_principal || 'UN').trim().toUpperCase();
-      const alternativasNormalizadas = (prev.unidades_alternativas || []).map((u) => ({
+      const alternativasNormalizadas = normalizeAlternativas(prev.unidades_alternativas || []).map((u) => ({
+        id: String(u?.id || '').trim() || '',
         unidade: String(u?.unidade || '').trim().toUpperCase(),
         rotulo: String(u?.rotulo || '').trim().toUpperCase(),
       })).filter((u) => u.unidade);
@@ -238,17 +256,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       };
       const showComercial = String(prev.unidade_apresentacao_default || prev.unidade_show_comercial || '').trim().toUpperCase() || principal;
       const showComercialValido = resolverUnidadeValida(showComercial) || principal;
+      const comercialId = showComercialValido === principal
+        ? 'primary'
+        : (alternativasNormalizadas.find((u) => u.unidade === showComercialValido)?.id || '');
       const showLogisticoValido = showComercialValido;
       if (
         prev.unidade_show_comercial === showComercialValido &&
         prev.unidade_show_logistica === showLogisticoValido &&
-        prev.unidade_apresentacao_default === showComercialValido
+        prev.unidade_apresentacao_default === showComercialValido &&
+        prev.unidade_comercial_id === comercialId
       ) return prev;
       return {
         ...prev,
+        unidades_alternativas: normalizeAlternativas(prev.unidades_alternativas || []),
         unidade_show_comercial: showComercialValido,
         unidade_show_logistica: showLogisticoValido,
         unidade_apresentacao_default: showComercialValido,
+        unidade_comercial_id: comercialId,
       };
     });
   }, [formData.unidade_principal, formData.unidades_alternativas, formData.unidade_apresentacao_default]);
@@ -382,6 +406,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       if (altsInvalidas.length > 0) {
         throw new Error('Unidade alternativa não pode ter fator 1. A base é sempre a unidade principal (fator 1).');
       }
+      if ((formData.unidades_alternativas || []).length > 5) {
+        throw new Error('O produto pode ter no máximo 5 unidades alternativas.');
+      }
 
       // Converte campos de texto para maiúsculas antes de salvar
       const unidadePrincipal = String(formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
@@ -389,6 +416,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipal,
         { unidadePrincipal }
       ) || unidadePrincipal;
+      const alternativasNormalizadas = normalizeAlternativas(formData.unidades_alternativas || []);
+      const unidadeComercialId = unidadeComercialResolved === unidadePrincipal
+        ? 'primary'
+        : (alternativasNormalizadas.find((u) => u.unidade === unidadeComercialResolved)?.id || '');
       const unidadeLogisticaResolved = unidadeComercialResolved;
 
       const produtoData = {
@@ -402,6 +433,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade_show_comercial: unidadeComercialResolved,
         unidade_show_logistica: unidadeLogisticaResolved,
         unidade_apresentacao_default: unidadeComercialResolved,
+        unidade_comercial_id: unidadeComercialId,
+        unidades_alternativas: alternativasNormalizadas,
         unidade_show_ativa: formData.unidade_show_ativa !== false,
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,

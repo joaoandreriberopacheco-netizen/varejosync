@@ -11,6 +11,26 @@ export function normalizeUnitCode(value) {
   return String(value || "").trim().toUpperCase();
 }
 
+const MAX_ALTERNATIVE_UNITS = 5;
+
+function normalizeAlternativeUnitRow(item = {}) {
+  const unidade = String(item.unidade || "").trim().toUpperCase();
+  const fatorConversao = normalizeNumber(item.fator_conversao, 1);
+  const ajustePercentual = normalizeNumber(item.ajuste_percentual, 0);
+  const fatorPrecoRaw = normalizeNumber(item.fator_preco, 0);
+  return {
+    id: String(item.id || "").trim() || crypto.randomUUID(),
+    nome: typeof item.nome === "string" ? item.nome.trim() : "",
+    unidade,
+    fator_conversao: fatorConversao,
+    fator_preco: fatorPrecoRaw > 0 ? fatorPrecoRaw : (1 + (ajustePercentual / 100)),
+    preco_venda: normalizeNumber(item.preco_venda, 0),
+    rotulo: typeof item.rotulo === "string" ? item.rotulo.trim() : (item.rotulo_comercial ? String(item.rotulo_comercial).trim() : ""),
+    ajuste_percentual: ajustePercentual,
+    ativo: item.ativo !== false,
+  };
+}
+
 export function isShowUnitEnabled(product) {
   if (typeof product?.unidade_show_ativa === "boolean") return product.unidade_show_ativa;
   return true;
@@ -18,15 +38,9 @@ export function isShowUnitEnabled(product) {
 
 export function normalizeAlternativeUnits(product) {
   return (Array.isArray(product?.unidades_alternativas) ? product.unidades_alternativas : [])
+    .slice(0, MAX_ALTERNATIVE_UNITS)
     .filter((item) => item?.unidade && item.ativo !== false)
-    .map((item) => ({
-      unidade: String(item.unidade).trim().toUpperCase(),
-      fator_conversao: normalizeNumber(item.fator_conversao, 1),
-      preco_venda: normalizeNumber(item.preco_venda, 0),
-      rotulo: typeof item.rotulo === "string" ? item.rotulo.trim() : (item.rotulo_comercial ? String(item.rotulo_comercial).trim() : ""),
-      ajuste_percentual: normalizeNumber(item.ajuste_percentual, 0),
-      ativo: item.ativo !== false,
-    }));
+    .map((item) => normalizeAlternativeUnitRow(item));
 }
 
 /** Unidade base (fator 1): preferir alternativa com fator 1 (legado); senão `unidade_principal` (contrato Emb.1 / formulário). */
@@ -108,6 +122,8 @@ function saleUnitPriceFromAlternative(precoBase, item, priceMultiplier) {
   if (item.preco_venda > 0) {
     return item.preco_venda * mult;
   }
+  const fatorPreco = normalizeNumber(item.fator_preco, 0);
+  if (fatorPreco > 0) return precoBase * fator * fatorPreco * mult;
   const adj = normalizeNumber(item.ajuste_percentual, 0);
   return precoBase * fator * (1 + adj / 100) * mult;
 }
@@ -116,6 +132,8 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
   const unidadePrincipal = resolvePrimaryFromFactorOne(product, "UN");
   const precoBase = normalizeNumber(product?.preco_venda_padrao, 0);
   const principal = {
+    id: "primary",
+    nome: "Unidade base",
     unidade: unidadePrincipal,
     fator_conversao: 1,
     valor_unitario: precoBase * normalizeNumber(priceMultiplier, 1),
@@ -123,12 +141,15 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
   };
 
   const alternatives = normalizeAlternativeUnits(product).map((item) => ({
+    id: item.id,
+    nome: item.nome || item.rotulo || item.unidade,
     unidade: item.unidade,
     fator_conversao: item.fator_conversao,
     valor_unitario: saleUnitPriceFromAlternative(precoBase, item, priceMultiplier),
     is_primary: false,
     rotulo: item.rotulo || "",
     ajuste_percentual: item.ajuste_percentual,
+    fator_preco: item.fator_preco,
   }));
 
   return dedupeUnits([principal, ...alternatives]);
@@ -162,6 +183,11 @@ export function resolveCommercialUnit(product, fallbackUnit = "UN") {
     return principalResolvida || normalizeUnitCode(fallbackUnit) || "UN";
   }
   const validUnits = new Set(options.map((option) => option.unidade));
+  const comercialId = String(product?.unidade_comercial_id || "").trim();
+  if (comercialId) {
+    const byId = options.find((option) => String(option.id || "") === comercialId);
+    if (byId?.unidade) return byId.unidade;
+  }
   const priorities = [
     product?.unidade_apresentacao_default,
     product?.unidade_show_comercial,
@@ -179,6 +205,8 @@ export function buildPurchaseUnitOptions(product) {
   const unidadePrincipal = resolvePrimaryFromFactorOne(product, "UN");
   const custoBase = normalizeNumber(product?.valor_compra, 0);
   const principal = {
+    id: "primary",
+    nome: "Unidade base",
     unidade: unidadePrincipal,
     fator_conversao: 1,
     valor_unitario: custoBase,
@@ -186,11 +214,14 @@ export function buildPurchaseUnitOptions(product) {
   };
 
   const alternatives = normalizeAlternativeUnits(product).map((item) => ({
+    id: item.id,
+    nome: item.nome || item.rotulo || item.unidade,
     unidade: item.unidade,
     fator_conversao: item.fator_conversao,
-    valor_unitario: custoBase * item.fator_conversao,
+    valor_unitario: custoBase * item.fator_conversao * normalizeNumber(item.fator_preco, 1),
     is_primary: false,
     rotulo: item.rotulo || "",
+    fator_preco: item.fator_preco,
   }));
 
   return dedupeUnits([principal, ...alternatives]);
@@ -218,6 +249,39 @@ export function pickDefaultPurchaseUnit(product) {
 
 export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
+}
+
+export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo") {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const quantidade = normalizeNumber(item?.quantidade, 0);
+  const quantidadeBase = normalizeNumber(item?.quantidade_base, NaN);
+  const quantidadeBaseFinal = Number.isFinite(quantidadeBase) ? quantidadeBase : (quantidade * fator);
+
+  const unitField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_unitario";
+  const finalField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_final_unitario";
+  const unitVal = normalizeNumber(item?.[unitField], 0);
+  const finalVal = normalizeNumber(item?.[finalField], unitVal);
+
+  const unitBase = fator > 0 ? (unitVal / fator) : unitVal;
+  const finalBase = fator > 0 ? (finalVal / fator) : finalVal;
+
+  const payload = {
+    ...item,
+    preco_eixo: "FATOR_1",
+    unidade_apresentacao: item?.unidade_apresentacao || item?.unidade_medida || "UN",
+    quantidade_base: quantidadeBaseFinal,
+  };
+
+  if (axisPrefix === "preco") {
+    payload.preco_unitario_apresentacao = unitVal;
+    payload.preco_unitario_base = unitBase;
+  } else {
+    payload.custo_unitario_apresentacao = unitVal;
+    payload.custo_final_unitario_apresentacao = finalVal;
+    payload.custo_unitario_base = unitBase;
+    payload.custo_final_unitario_base = finalBase;
+  }
+  return payload;
 }
 
 export function formatUnitConversion(option, unidadePrincipal) {
@@ -275,6 +339,11 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
   const custoUnitarioComercial = quantidadeComercial > 0
     ? (totalEconomico / quantidadeComercial)
     : (unitInput * normalizeNumber(display.fator_conversao, 1));
+  const fatorDisplay = normalizeNumber(display.fator_conversao, 1) || 1;
+  const custoUnitarioBase = fatorDisplay > 0 ? (custoUnitarioComercial / fatorDisplay) : custoUnitarioComercial;
+  const custoFinalUnitarioInput = normalizeNumber(item.custo_final_unitario, NaN);
+  const custoFinalUnitarioComercial = Number.isFinite(custoFinalUnitarioInput) ? custoFinalUnitarioInput : custoUnitarioComercial;
+  const custoFinalUnitarioBase = fatorDisplay > 0 ? (custoFinalUnitarioComercial / fatorDisplay) : custoFinalUnitarioComercial;
 
   return {
     ...item,
@@ -283,6 +352,13 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
     quantidade: quantidadeComercial,
     quantidade_base: quantidadeBase,
     custo_unitario: custoUnitarioComercial,
+    // Campos canónicos para back-end (sempre eixo fator-1) e snapshot de apresentação.
+    preco_eixo: "FATOR_1",
+    unidade_apresentacao: display.unidade || item.unidade_medida || product?.unidade_principal || "UN",
+    custo_unitario_base: custoUnitarioBase,
+    custo_final_unitario_base: custoFinalUnitarioBase,
+    custo_unitario_apresentacao: custoUnitarioComercial,
+    custo_final_unitario_apresentacao: custoFinalUnitarioComercial,
   };
 }
 

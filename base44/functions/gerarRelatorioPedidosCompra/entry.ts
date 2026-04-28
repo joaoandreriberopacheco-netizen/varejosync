@@ -267,11 +267,36 @@ const linhaQuantidadeIgualBase = linhaPrecoNoEixoFatorUm;
 const roundTo2 = (n) => (Number.isFinite(n) ? Math.round(n * 100) / 100 : n);
 
 /**
+ * Unitário salvo no pedido pode estar em fator-1 (m²) mesmo com QTD em CX na linha (caso Lombardia).
+ * Converte para UM comercial quando: linha já era eixo fator-1;
+ * ou total/qtd_base/qtd encaixa em “preço foi por m² × fator → CX”.
+ */
+const unitarioSalvoParaPrecoComercialPdf = (unit, o, item, f, eixoF1) => {
+  if (!(Number.isFinite(unit) && unit > 0)) return NaN;
+  if (!(f > 1)) return unit;
+  if (eixoF1) return unit * f;
+
+  const qb = Number(o.quantidade_base) || Number(item.quantidade_base) || 0;
+  const qv = Number(o.quantidade) || Number(item.quantidade) || 0;
+  const t =
+    Number(
+      o.total ?? item.total ?? o.valor_total_item ?? item.valor_total_item ?? o.valor_total ?? item.valor_total ?? 0,
+    ) || 0;
+  if (qb > 0 && qv > 0 && t > 0) {
+    const perB = t / qb;
+    const perCx = t / qv;
+    const tol = (x) => Math.max(0.025 * x, 0.35);
+    if (Math.abs(unit - perB) <= tol(perB) && Math.abs(unit * f - perCx) <= tol(perCx)) return unit * f;
+    if (Math.abs(unit - perCx) <= tol(perCx)) return unit;
+  }
+  return unit;
+};
+
+/**
  * Preço unitário **sempre na UM comercial do PDF** (igual à coluna UN / QTD).
  * Custos e totais vêm da linha do pedido (`o`); quantidades da fatia (`item`) só para `total/q` coerente com embarque.
- * Converte explicitamente fator-1 → comercial (`× fator`) só quando `linhaPrecoNoEixoFatorUm(o)`.
  */
-const getPrecoUmComercialPdf = (item = {}, pedido = {}) => {
+const getPrecoUmComercialPdf = (item = {}, pedido = {}, produto = {}) => {
   const o = findLinhaPedidoOriginal(pedido, item);
   const fItem = Number(item.fator_conversao);
   const fO = Number(o.fator_conversao);
@@ -279,12 +304,12 @@ const getPrecoUmComercialPdf = (item = {}, pedido = {}) => {
   const eixoF1 = linhaPrecoNoEixoFatorUm(o);
 
   const cf = Number(o.custo_final_unitario ?? item.custo_final_unitario);
-  if (Number.isFinite(cf) && cf > 0) return eixoF1 ? cf * f : cf;
+  if (Number.isFinite(cf) && cf > 0) return unitarioSalvoParaPrecoComercialPdf(cf, o, item, f, eixoF1);
 
   const cu = Number(o.custo_unitario ?? item.custo_unitario) || 0;
   const descU = Number(o.valor_desconto_item ?? item.valor_desconto_item) || 0;
   const liqU = roundTo2(cu - descU);
-  if (liqU > 0) return eixoF1 ? liqU * f : liqU;
+  if (liqU > 0) return unitarioSalvoParaPrecoComercialPdf(liqU, o, item, f, eixoF1);
 
   const t =
     Number(
@@ -449,8 +474,9 @@ const ajustarPrecoUnitarioComercialSeTotalConfundeBase = (
 
 /**
  * VLR. UN. (R$) **sempre** na UM comercial do PDF. A regra de eixo é única: `linhaPrecoNoEixoFatorUm` distingue
- * linha em fator-1 (m² = m²) de linha em comercial (qtd×fator≈base). Tudo passa por `getPrecoUmComercialPdf` antes
- * dos fallbacks.
+ * linha em fator-1 (m² = m²) de linha em comercial (qtd×fator≈base). `getPrecoUmComercialPdf` aplica
+ * `unitarioSalvoParaPrecoComercialPdf` (coerência por eixo + total) para não mostrar R$/m² na coluna CX.
+ * Fallbacks abaixo só para dados incompletos.
  */
 const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => {
   const qtdComm =
@@ -463,7 +489,7 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
   const fatorComercial = Number(item.fator_conversao) || 1;
 
   const o = findLinhaPedidoOriginal(pedido, item);
-  const precoComercial = getPrecoUmComercialPdf(item, pedido);
+  const precoComercial = getPrecoUmComercialPdf(item, pedido, produto);
   if (Number.isFinite(precoComercial) && precoComercial > 0) return precoComercial;
 
   const totalDaLinhaNoItem = Number(
@@ -632,6 +658,65 @@ const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorC
       (Number(prod.custo_outros_padrao) || 0)) *
     fatorComercial
   );
+};
+
+const getQuantidadeComercialPdf = (item = {}) =>
+  Number(item._qtdEfetiva ?? item._qtdMostrada ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
+
+const getMissingCamposCanonicosItem = (item = {}, pedido = {}) => {
+  const linha = findLinhaPedidoOriginal(pedido, item);
+  const missing: string[] = [];
+
+  const qBase = Number(item.quantidade_base ?? linha.quantidade_base);
+  if (!(Number.isFinite(qBase) && qBase > 0)) missing.push('quantidade_base');
+
+  const fator = Number(item.fator_conversao ?? linha.fator_conversao);
+  if (!(Number.isFinite(fator) && fator > 0)) missing.push('fator_conversao');
+
+  const eixo = String(item.preco_eixo ?? linha.preco_eixo ?? '').trim().toUpperCase();
+  if (eixo !== 'FATOR_1') missing.push('preco_eixo');
+
+  const baseUnit = Number(
+    item.custo_final_unitario_base ??
+      item.custo_unitario_base ??
+      linha.custo_final_unitario_base ??
+      linha.custo_unitario_base,
+  );
+  if (!(Number.isFinite(baseUnit) && baseUnit > 0)) missing.push('custo_unitario_base');
+
+  return missing;
+};
+
+const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
+  const qtd = getQuantidadeComercialPdf(item);
+  const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
+  const fatorComercial = Number(item.fator_conversao) || 1;
+
+  const vlrUnit = getValorUnitarioComercialItem(item, prod, pedido);
+  const freteUnit = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
+  const outrosUnit = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
+  const custoUnit = vlrUnit + freteUnit + outrosUnit;
+  const totalLinha = (Number(qtd) || 0) * (Number(vlrUnit) || 0);
+  const vendaUnit = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
+  const markup = custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : 0;
+
+  const missingFields = getMissingCamposCanonicosItem(item, pedido);
+  const warningText =
+    missingFields.length > 0 ? `ATENCAO: faltou ${missingFields.join(', ')}` : '';
+
+  return {
+    qtd,
+    un,
+    vlrUnit,
+    freteUnit,
+    outrosUnit,
+    custoUnit,
+    totalLinha,
+    vendaUnit,
+    markup,
+    missingFields,
+    warningText,
+  };
 };
 
 const TEXT_VERTICAL_SCALE = 1.75;
@@ -1105,19 +1190,16 @@ Deno.serve(async (req) => {
 
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
-        const qtd = item._qtdEfetiva;
-        const fatorComercial = Number(item.fator_conversao) || 1;
-        // VLR. UN.: ver getValorUnitarioComercialItem (total ÷ qtd comercial; `ajustarPreco...` se total confundir base).
-        const liq = getValorUnitarioComercialItem(item, prod, pedido);
-        const frete = resolveFreteUnitarioExpanded(item, prod, pedido, fatorComercial);
-        const outros = resolveOutrosUnitarioExpanded(item, prod, pedido, fatorComercial);
-        // Regra do PDF expandido: custo unitário baseia-se no valor unitário + custos informados.
-        const custo = liq + frete + outros;
-        const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
-        // TOTAL = quantidade comercial × VLR. UN. (colunas alinhadas ao mesmo conceito).
-        const totalLiq = (Number(qtd) || 0) * liq;
-        const totalCusto = qtd * custo;
-        const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
+        const met = resolveMetricasItemPdf(item, prod, pedido);
+        const qtd = met.qtd;
+        const liq = met.vlrUnit;
+        const frete = met.freteUnit;
+        const outros = met.outrosUnit;
+        const custo = met.custoUnit;
+        const venda = met.vendaUnit;
+        const totalLiq = met.totalLinha;
+        const mk = met.markup;
+        const totalCusto = (Number(qtd) || 0) * (Number(custo) || 0);
         totCusto += totalCusto;
         totVenda += qtd * venda;
 
@@ -1134,30 +1216,42 @@ Deno.serve(async (req) => {
           safe(item.produto_nome || prod.nome || '-'),
           descMaxW,
         );
+        doc.setFontSize(6.1);
+        const avisoLinhas = met.warningText ? doc.splitTextToSize(met.warningText, descMaxW) : [];
+        doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
         const descLineStep = scaledHeight(3.85);
+        const avisoLineStep = scaledHeight(3.2);
+        const avisoGap = scaledHeight(1.4);
         /** Mesma baseline das colunas QTD / VLR. UN. — evita deslocar só a descrição. */
         const rowBaselineY = (y0) => y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y);
         /** Altura da linha e âncoras Y para um dado y0 (topo da linha). */
         const metricsExpandido = (y0) => {
           const firstY = rowBaselineY(y0);
-          const descBottom =
+          const nomeBottom =
             nomeLinhas.length === 0
               ? y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3)
               : firstY + Math.max(0, nomeLinhas.length - 1) * descLineStep + scaledHeight(4.5);
+          const avisoTop = nomeBottom + avisoGap;
+          const avisoBottom =
+            avisoLinhas.length === 0
+              ? nomeBottom
+              : avisoTop + Math.max(0, avisoLinhas.length - 1) * avisoLineStep + scaledHeight(3.4);
+          const descBottom = Math.max(nomeBottom, avisoBottom);
           const numericBottom = y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 4);
           const advance =
             Math.max(descBottom, numericBottom, y0 + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 4)) -
             y0 +
             scaledHeight(3);
-          return { firstDescY: firstY, rowAdvance: advance };
+          return { firstDescY: firstY, avisoTop, rowAdvance: advance };
         };
 
         const bottomPadExp = 10;
         const maxRowFit = pageH - bottomPadExp - 14;
         let firstDescY;
+        let avisoTop;
         let rowAdvance;
         for (;;) {
-          ({ firstDescY, rowAdvance } = metricsExpandido(y));
+          ({ firstDescY, avisoTop, rowAdvance } = metricsExpandido(y));
           if (y + rowAdvance <= pageH - bottomPadExp) break;
           if (rowAdvance > maxRowFit) break;
           doc.addPage();
@@ -1169,10 +1263,21 @@ Deno.serve(async (req) => {
         }
         doc.setTextColor(...C.text);
         doc.text(fmtQuantidadePdf(Number(qtd) || 0), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(safe(item.unidade_medida || prod.unidade_principal || 'UN'), TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
+        doc.text(met.un, TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
         nomeLinhas.forEach((line, li) => {
           doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
         });
+        if (avisoLinhas.length > 0) {
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize(6.1);
+          doc.setTextColor(180, 83, 9);
+          avisoLinhas.forEach((line, li) => {
+            doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, avisoTop + li * avisoLineStep);
+          });
+          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+          doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
+          doc.setTextColor(...C.text);
+        }
         doc.text(moedaSemSimbolo(liq),       TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(frete),     TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimbolo(outros),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
@@ -1220,13 +1325,12 @@ Deno.serve(async (req) => {
     /** Altura de um bloco de item (mesma fórmula do `forEach` de itens) — y0=0 dá a altura absoluta da linha. */
     const computeMobileItemRowBlockH = (pedido, item, y0 = 0) => {
       const prod = produtosMap[item.produto_id] || {};
-      const qtd = item._qtdMostrada;
-      const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
-      const fatorComercial = Number(item.fator_conversao) || 1;
-      const precoCompra = getValorUnitarioComercialItem(item, prod, pedido);
-      const custoBase = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
-      const custo = custoBase * fatorComercial;
-      const tCompra = qtd * precoCompra;
+      const met = resolveMetricasItemPdf(item, prod, pedido);
+      const qtd = met.qtd;
+      const un = met.un;
+      const precoCompra = met.vlrUnit;
+      const custo = met.custoUnit;
+      const tCompra = met.totalLinha;
 
       const vs = MOBILE_ITEMS_VERTICAL_SCALE;
       const nomeLineStep = 3.85 * vs;
@@ -1261,7 +1365,12 @@ Deno.serve(async (req) => {
       const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
       const detAux1 = lastNomeBaseline + gapNomeDetalhe;
       const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-      return detAux2 + auxDetailStep + margemLinhaInferiorItem - y0;
+      const warningLinhas = met.warningText ? doc.splitTextToSize(met.warningText, NOME_MAX_W) : [];
+      const detAux3 = detAux2 + auxDetailStep;
+      const warningStep = 3.05 * vs;
+      const warningBlock = warningLinhas.length > 0 ? (warningLinhas.length * warningStep + 1.4 * vs) : 0;
+      const detBottom = warningLinhas.length > 0 ? (detAux3 + warningBlock) : detAux3;
+      return detBottom + margemLinhaInferiorItem - y0;
     };
 
     const drawMobileCard = (pedido) => {
@@ -1290,8 +1399,8 @@ Deno.serve(async (req) => {
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
             const prod = produtosMap[i.produto_id] || {};
-            const cu = getValorUnitarioComercialItem(i, prod, pedido);
-            return a + (i._qtdMostrada * cu);
+            const met = resolveMetricasItemPdf(i, prod, pedido);
+            return a + met.totalLinha;
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
 
@@ -1380,16 +1489,14 @@ Deno.serve(async (req) => {
       // ── Itens ─────────────────────────────────────────────────────
       itens.forEach((item) => {
         const prod = produtosMap[item.produto_id] || {};
-        const qtd = item._qtdMostrada;
-        const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
-        const fatorComercial = Number(item.fator_conversao) || 1;
-        const precoCompra = getValorUnitarioComercialItem(item, prod, pedido);
-        const custoBase = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
-        const custo = custoBase * fatorComercial;
-        const venda = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
-        const tCompra = qtd * precoCompra;
-        const tVenda = qtd * venda;
-        const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
+        const met = resolveMetricasItemPdf(item, prod, pedido);
+        const qtd = met.qtd;
+        const un = met.un;
+        const precoCompra = met.vlrUnit;
+        const custo = met.custoUnit;
+        const venda = met.vendaUnit;
+        const tCompra = met.totalLinha;
+        const mk = met.markup;
 
         const vs = MOBILE_ITEMS_VERTICAL_SCALE;
         const lineWidth = 2.5;
@@ -1422,15 +1529,20 @@ Deno.serve(async (req) => {
         const auxValores1 = `Total ${moeda(tCompra)} · ${un} · Comp. ${moeda(precoCompra)} · Custo ${moeda(custo)}${equivSuf}`;
         const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
         const auxValores2 = `Venda ${moeda(venda)} · Mk ${percentual(mk)}`;
+        const warningLinhas = met.warningText ? doc.splitTextToSize(met.warningText, NOME_MAX_W) : [];
 
         const layoutMobileItem = (y0) => {
           const nomeTop = y0 + 3.4 * vs;
           const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
           const detAux1 = lastNomeBaseline + gapNomeDetalhe;
           const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-          const rowBlockH = detAux2 + auxDetailStep + margemLinhaInferiorItem - y0;
+          const detAux3 = detAux2 + auxDetailStep;
+          const warningStep = 3.05 * vs;
+          const warningBlock = warningLinhas.length > 0 ? (warningLinhas.length * warningStep + 1.4 * vs) : 0;
+          const detBottom = warningLinhas.length > 0 ? (detAux3 + warningBlock) : detAux3;
+          const rowBlockH = detBottom + margemLinhaInferiorItem - y0;
           const branchY = y0 + 2.8 * vs;
-          return { nomeTop, detAux1, detAux2, rowBlockH, branchY };
+          return { nomeTop, detAux1, detAux2, detAux3, rowBlockH, branchY, warningStep };
         };
 
         let mob = layoutMobileItem(y);
@@ -1464,6 +1576,13 @@ Deno.serve(async (req) => {
           doc.text(line, NOME_X, mob.detAux1 + ai * auxDetailStep);
         });
         doc.text(auxValores2, NOME_X, mob.detAux2);
+        if (warningLinhas.length > 0) {
+          doc.setTextColor(180, 83, 9);
+          warningLinhas.forEach((line, wi) => {
+            doc.text(line, NOME_X, mob.detAux3 + 1.2 * vs + wi * mob.warningStep);
+          });
+          doc.setTextColor(...SLATE500);
+        }
 
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.15);

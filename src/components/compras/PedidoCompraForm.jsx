@@ -41,7 +41,7 @@ import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
-import { pickDefaultPurchaseUnit, normalizePurchaseItemToCommercial } from '@/lib/productUnits';
+import { pickDefaultPurchaseUnit, normalizePurchaseItemToCommercial, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImporter = false }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -397,6 +397,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     item.custo_final_unitario = custoFinalUnitario;
     item.subtotal = roundToTwoDecimals(qty * cost);
     item.total = roundToTwoDecimals(custoFinalUnitario * qty);
+    // Contrato canónico: back-end sempre no eixo fator-1.
+    Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 
     const newData = { ...formData, itens: newItems };
     saveToHistory(newData);
@@ -410,6 +412,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         const qty = parseFloat(item.quantidade) || 0;
         const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
         const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
+        const fatorConversao = parseFloat(item.fator_conversao) || 1;
         
         const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
         const total = roundToTwoDecimals(custoFinalUnitario * qty);
@@ -420,7 +423,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             valor_desconto_item: descUnit,
             subtotal: roundToTwoDecimals(qty * cost),
             total: total,
-            custo_final_unitario: custoFinalUnitario
+            custo_final_unitario: custoFinalUnitario,
+            ...normalizeItemToCanonicalFactorOne({
+              ...item,
+              custo_unitario: cost,
+              custo_final_unitario: custoFinalUnitario,
+            }, 'custo'),
         };
     };
 
@@ -546,6 +554,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                         custo_unitario: finalCost,
                         valor_desconto_item: descontoImportado,
                         custo_final_unitario: custoFinalUnitario,
+                        ...normalizeItemToCanonicalFactorOne({
+                          unidade_medida: optImp?.unidade || product.unidade_principal || 'UN',
+                          fator_conversao: fatorImp,
+                          quantidade: qty,
+                          quantidade_base: roundToTwoDecimals(qty * fatorImp),
+                          custo_unitario: finalCost,
+                          custo_final_unitario: custoFinalUnitario,
+                        }, 'custo'),
                         subtotal: roundToTwoDecimals(qty * finalCost),
                         total: roundToTwoDecimals(custoFinalUnitario * qty),
                         observacao_item: 'Importado via CSV'
