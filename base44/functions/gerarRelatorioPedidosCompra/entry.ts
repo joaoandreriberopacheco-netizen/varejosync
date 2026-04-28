@@ -666,48 +666,20 @@ const resolveOutrosUnitarioExpanded = (item = {}, prod = {}, pedido = {}, fatorC
 const getQuantidadeComercialPdf = (item = {}) =>
   Number(item._qtdEfetiva ?? item._qtdMostrada ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
 
+/**
+ * Contrato fixo: TODO pedido de compra está em fator 1 (unidade base).
+ * O preço unitário do pedido é `custo_final_unitario` (ou `custo_unitario`) da linha do pedido — sem fallback,
+ * sem campos derivados, sem heurística. A multiplicação pelo fator de conversão é aplicada só no render do PDF.
+ */
 const getPrecoBaseFator1Pedido = (item = {}, pedido = {}) => {
   const linha = findLinhaPedidoOriginal(pedido, item);
-  const candidatosBase = [
-    linha.custo_final_unitario_base,
-    linha.custo_unitario_base,
-    item.custo_final_unitario_base,
-    item.custo_unitario_base,
-  ];
-  for (const c of candidatosBase) {
-    const n = Number(c);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
-
-  // Fonte robusta quando campos *_base não vieram: total da linha / quantidade_base.
-  const qBase = Number(item.quantidade_base ?? linha.quantidade_base) || 0;
-  const totalLinha = Number(
-    linha.total ??
-      linha.valor_total_item ??
-      linha.valor_total ??
-      linha.subtotal ??
-      item.total ??
-      item.valor_total_item ??
-      item.valor_total ??
-      item.subtotal,
+  const unit = Number(
+    linha.custo_final_unitario ??
+      linha.custo_unitario ??
+      item.custo_final_unitario ??
+      item.custo_unitario,
   );
-  if (Number.isFinite(totalLinha) && totalLinha > 0 && qBase > 0) {
-    return totalLinha / qBase;
-  }
-
-  // Só aceita unitário "cru" quando o eixo está explícito como fator-1.
-  const eixo = String(item.preco_eixo ?? linha.preco_eixo ?? '').trim().toUpperCase();
-  if (eixo === 'FATOR_1') {
-    const unitCru = Number(
-      linha.custo_final_unitario ??
-        linha.custo_unitario ??
-        item.custo_final_unitario ??
-        item.custo_unitario,
-    );
-    if (Number.isFinite(unitCru) && unitCru > 0) return unitCru;
-  }
-
-  return NaN;
+  return Number.isFinite(unit) && unit > 0 ? unit : NaN;
 };
 
 const getFreteUnitarioConvertido = (prod = {}, fatorComercial = 1) => {
@@ -725,19 +697,17 @@ const getOutrosUnitarioConvertido = (prod = {}, fatorComercial = 1) => {
   return outrosBaseCatalogo * fatorComercial;
 };
 
+/**
+ * Aviso por linha apenas quando faltar o que a fórmula efetivamente usa:
+ *  - preço do pedido (custo_final_unitario / custo_unitario da linha) → vira `VLR. UN.`
+ *  - frete padrão do catálogo (custo_frete_padrao) → vira `FRETE`
+ * `OUTROS` aceita 0 quando o catálogo não tem custos extras (não dispara aviso).
+ * `fator_conversao` ausente é tratado como 1 (sem conversão).
+ */
 const getMissingCamposConversaoItem = (item = {}, pedido = {}) => {
-  const linha = findLinhaPedidoOriginal(pedido, item);
   const missing: string[] = [];
-
-  const qBase = Number(item.quantidade_base ?? linha.quantidade_base);
-  if (!(Number.isFinite(qBase) && qBase > 0)) missing.push('quantidade_base');
-
-  const fator = Number(item.fator_conversao ?? linha.fator_conversao);
-  if (!(Number.isFinite(fator) && fator > 0)) missing.push('fator_conversao');
-
   const precoBase = getPrecoBaseFator1Pedido(item, pedido);
-  if (!(Number.isFinite(precoBase) && precoBase > 0)) missing.push('preco_base_fator1');
-
+  if (!(Number.isFinite(precoBase) && precoBase > 0)) missing.push('preco_pedido');
   return missing;
 };
 
@@ -1151,10 +1121,17 @@ Deno.serve(async (req) => {
     //  DESKTOP: layout expandido
     // ════════════════════════════════════════════════════════════════════════
     /**
-     * Tabela detalhada: QTD/UN na unidade comercial; colunas R$ na mesma UM.
-     * VENDA: `preço venda` do cadastro (R$/fator-1) × fator de conversão da embalagem.
-     * FRETE/OUTROS: regra em `resolveFreteUnitarioExpanded` (ex. frete padrão R$/m² × fator, ou total na linha).
-     * VLR. UN. / TOTAL: preço de compra da **linha do item** (total ÷ qtd comercial) — ver `getValorUnitarioComercialItem`.
+     * Fórmula única (Expandido e Mobile):
+     *   QTD     = quantidade do embarque (já em unidade comercial)
+     *   UN      = sigla da unidade comercial
+     *   VLR UN  = preço fator-1 do pedido (custo_final_unitario / custo_unitario) × fator_conversao
+     *   FRETE   = custo_frete_padrao do catálogo × fator_conversao
+     *   OUTROS  = (custo_imposto1_padrao + custo_imposto2_padrao + custo_outros_padrao) do catálogo × fator_conversao
+     *   CUSTO   = VLR UN + FRETE + OUTROS
+     *   TOTAL   = QTD × VLR UN
+     *   VENDA   = preco_venda_padrao do catálogo × fator_conversao
+     *   MARKUP  = (VENDA − CUSTO) / CUSTO × 100
+     * Toda essa lógica está concentrada em `resolveMetricasItemPdf`.
      */
     const drawExpandido = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
