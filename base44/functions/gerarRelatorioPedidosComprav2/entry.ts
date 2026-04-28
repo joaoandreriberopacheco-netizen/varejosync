@@ -717,17 +717,21 @@ const getMissingCamposConversaoItem = (item = {}, pedido = {}) => {
 };
 
 /**
- * V2 — Resolução de fator comercial com prioridade no **cadastro do produto**, não na aritmética da linha.
+ * V2 — Resolução de fator comercial com **prioridade máxima ao nome do produto**.
  *
- * Motivo da ordem: dados legados podem ter `quantidade_base` gravado dobrado (q × fator²) e isso
- * envenena `qb/q`. A config do produto (`unidades_alternativas`) é fonte canônica do fator e é o
- * que a dialog `AtualizarPrecosDialog` *acaba* mostrando consistentemente.
+ * Motivação: quando os números (cadastro, `qb/q`, `total/(q × cu)`) divergem entre si,
+ * temos uma fonte que está acima de todas e foi digitada explicitamente pelo user no
+ * cadastro: o **nome** do produto (ex. "PISO 60X120 GRAN PHOENIX RT POL (2,16M²/CX)").
+ * Esse texto não é envenenado por bugs legados de cálculo nem por typos em
+ * `unidades_alternativas`, então é a verdade que o user de fato afirmou.
  *
- * Ordem (primeiro que produzir fator > 1 vence):
- *   1. Sigla da linha (`unidade_medida`) → opção em `PDF_BUILD_PURCHASE_OPTS(produto)`.
- *   2. `pickDefault` do produto: opção não-principal com `fator_conversao` > 1.
- *   3. `qb/q` da linha (só se o produto não ofereceu alternativa).
- *   4. `item.fator_conversao` da linha (último recurso).
+ * Ordem (primeiro que produzir fator plausível vence):
+ *   1. **Regex do nome do produto** (ex. "(2,16M²/CX)" → 2,16). Vence sempre.
+ *   2. Sigla `unidade_medida` da linha → opção em `PDF_BUILD_PURCHASE_OPTS(produto)`.
+ *   3. `pickDefault` do produto: opção não-principal com `fator_conversao` > 1.
+ *   4. `total / (quantidade × custo_unitario)` da linha (reconciliação aritmética).
+ *   5. `quantidade_base / quantidade` da linha.
+ *   6. `item.fator_conversao` da linha.
  *
  * Nenhum dos passos der > 1 → fator = 1 (linha já em fator-1 puro).
  */
@@ -736,10 +740,56 @@ const v2NormalizarSigla = (raw: any) =>
     .replace('CAIXAS', 'CX').replace('CAIXA', 'CX')
     .replace('M²', 'M2').replace('METRO QUADRADO', 'M2');
 
+/** Tenta extrair `<n>M²/CX` (ou `CX <n>M²`) do nome do produto.
+ *  Aceita "CAIXA"/"CAIXAS" como sinônimo de CX e separadores comuns ("/", " ", "x").
+ */
+const v2ExtrairFatorDoNome = (...nomes: any[]): number | null => {
+  for (const raw of nomes) {
+    if (!raw) continue;
+    const s = String(raw)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace('METRO QUADRADO', 'M2').replace('M²', 'M2')
+      .replace(/CAIXAS?/g, 'CX');
+    const padroes = [
+      // "2,16M2/CX", "2,16 M2 / CX", "1,68M² CAIXA" → "1,68M2 CX"
+      /(\d+(?:[.,]\d+)?)\s*M2\s*[\/xX\\\s]*\s*CX/i,
+      // "CX 2,50 M2", "CX2,1M2"
+      /CX\s*(\d+(?:[.,]\d+)?)\s*M2/i,
+      // "(2,16M2)" — quando faltar a sigla mas há parênteses (assume CX por convenção pisos).
+      /\(\s*(\d+(?:[.,]\d+)?)\s*M2\s*\)/i,
+    ];
+    for (const re of padroes) {
+      const m = re.exec(s);
+      if (m) {
+        const v = Number(String(m[1]).replace(',', '.'));
+        if (Number.isFinite(v) && v > 1 && v < 100) return Math.round(v * 10000) / 10000;
+      }
+    }
+  }
+  return null;
+};
+
+const v2DerivarFatorDoTotal = (item: any = {}) => {
+  const cu = Number(item?.custo_unitario) || 0;
+  const q = Number(item?.quantidade) || 0;
+  const total = Number(
+    item?.total ?? item?.valor_total_item ?? item?.valor_total ?? item?.subtotal,
+  ) || 0;
+  if (!(cu > 0 && q > 0 && total > 0)) return null;
+  const fNat = total / (q * cu);
+  if (!Number.isFinite(fNat) || fNat < 0.5 || fNat > 100) return null;
+  return Math.round(fNat * 10000) / 10000;
+};
+
 const v2ResolveFatorComercial = (item: any = {}, prod: any = {}) => {
+  // 1) Nome do produto — fonte canônica acima de cadastro/linha (resolve typos em ambos).
+  const fNome = v2ExtrairFatorDoNome(prod?.nome, item?.produto_nome, item?.descricao);
+  if (fNome && fNome > 1.0001) return fNome;
+
   const opcoes = prod ? PDF_BUILD_PURCHASE_OPTS(prod) : [];
 
-  // 1) Sigla da linha → fator do produto (fonte canônica).
+  // 2) Sigla da linha → fator do produto.
   const sigla = v2NormalizarSigla(item?.unidade_medida);
   if (sigla && opcoes.length) {
     const match = opcoes.find((o: any) => v2NormalizarSigla(o.unidade) === sigla);
@@ -748,7 +798,7 @@ const v2ResolveFatorComercial = (item: any = {}, prod: any = {}) => {
     }
   }
 
-  // 2) Default de compra do cadastro (opção não-principal com fator > 1).
+  // 3) Default de compra do cadastro (opção não-principal com fator > 1).
   if (opcoes.length) {
     const principal = v2NormalizarSigla(prod?.unidade_principal);
     const naoPrincipal = opcoes.find((o: any) =>
@@ -756,7 +806,11 @@ const v2ResolveFatorComercial = (item: any = {}, prod: any = {}) => {
     if (naoPrincipal) return Number(naoPrincipal.fator_conversao);
   }
 
-  // 3) qb/q da linha — só quando o produto não ofereceu alternativa (a aritmética pode estar legado-bugada).
+  // 4) total ÷ (quantidade × custo_unitario): fator natural da linha.
+  const fNatural = v2DerivarFatorDoTotal(item);
+  if (fNatural && fNatural > 1.0001) return fNatural;
+
+  // 5) qb / q da linha.
   const qtd = Number(item?.quantidade);
   const qb = Number(item?.quantidade_base);
   if (qtd > 0 && qb > 0) {
@@ -766,7 +820,7 @@ const v2ResolveFatorComercial = (item: any = {}, prod: any = {}) => {
     }
   }
 
-  // 4) Último recurso: o que está na linha.
+  // 6) Último recurso: o que está na linha.
   const f = Number(item?.fator_conversao);
   return Number.isFinite(f) && f > 0 ? f : 1;
 };
