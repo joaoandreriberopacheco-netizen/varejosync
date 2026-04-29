@@ -71,9 +71,9 @@ jobs:
           if [ "$ok" != 1 ]; then exit 1; fi
           echo "OK: secrets obrigatórios presentes (valores não listados)."
 
-      # Sem isto, o primeiro UPSERT numa tabela que só existe em 002+ falha com 42P01 (relation does not exist).
+      # Só quando não é dry-run (`!inputs.dry_run` é o padrão GitHub para boolean no dispatch).
       - name: Aplicar migrações SQL (schema Supabase)
-        if: github.event.inputs.dry_run != 'true'
+        if: ${{ !inputs.dry_run }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run db:apply-migrations
