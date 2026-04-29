@@ -36,6 +36,12 @@ for each row execute function public.set_updated_at();
 
 alter table public.catalogo_interface enable row level security;
 
+-- Idempotente: re-correr migrations (ex.: GitHub Actions) sem falhar se políticas já existirem.
+drop policy if exists "catalogo_interface_select_authenticated" on public.catalogo_interface;
+drop policy if exists "catalogo_interface_insert_authenticated" on public.catalogo_interface;
+drop policy if exists "catalogo_interface_update_authenticated" on public.catalogo_interface;
+drop policy if exists "catalogo_interface_delete_authenticated" on public.catalogo_interface;
+
 -- Homologação: leitura e escrita para sessões autenticadas (apertar em produção).
 create policy "catalogo_interface_select_authenticated"
   on public.catalogo_interface for select
