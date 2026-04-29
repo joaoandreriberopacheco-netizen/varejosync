@@ -495,4 +495,12 @@ async function main() {
   }
 }
 
-main();
+// SDK pode deixar sockets / timers abertos; sem isto o Node não termina após dry-run ou sucesso.
+main()
+  .catch((e) => {
+    console.error('[migrate] Falha:', e);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    process.exit(process.exitCode != null ? process.exitCode : 0);
+  });
