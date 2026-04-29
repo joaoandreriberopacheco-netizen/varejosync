@@ -43,13 +43,12 @@ O mesmo comando / workflow **corre outra vez** quando quiseres: cada registo vin
 |---------------|---------|
 | **Incluído no resync** | Novos registos no Base44; alterações a campos em registos existentes (pelo que a API devolver na listagem). |
 | **Não incluído** | Registos **apagados no Base44** continuam no Supabase (não há `DELETE`). Para espelho exacto seria preciso lógica extra (soft-delete ou comparar conjuntos de ids). |
-| **JWT (`BASE44_ACCESS_TOKEN`)** | Expira; para resync automático usa **`BASE44_API_KEY`** nos secrets ou renova o token. |
+| **JWT (`BASE44_ACCESS_TOKEN`)** | Expira; para corridas frequentes prefere **`BASE44_API_KEY`** nos secrets ou renova o token. |
 | **Limite** | Por defeito até **10 000** linhas por entidade por corrida; entidades maiores exigem subir `--limit` ou várias passagens (ver script). |
 
 **GitHub Actions**
 
-- **Manual:** igual a cima — **Run workflow** com `dry_run: false` sempre que quiseres um resync.
-- **Agendado:** o workflow inclui `schedule` (diário 05:00 UTC). Comenta ou remove o bloco `schedule:` no YAML se não quiseres corrida automática. Só uma corrida de cada vez (`concurrency`).
+- **Só manual:** Actions → **Migrate Base44 to Supabase** → **Run workflow** com `dry_run: false` para migrar ou resync. Uma corrida de cada vez (`concurrency`).
 
 **Local**
 
