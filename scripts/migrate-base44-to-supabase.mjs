@@ -136,6 +136,50 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Mensagens extra no log (útil em GitHub Actions onde só aparece stderr). */
+function migrationErrorHints(e) {
+  const hints = [];
+  const msg = String(e?.message || e || '').toLowerCase();
+  const code = e?.code;
+  if (code === 'ENOTFOUND' || msg.includes('getaddrinfo') || msg.includes('enotfound')) {
+    hints.push(
+      'DNS/IPv6: use a URI do Transaction pooler (.pooler.supabase.com:6543) ou o secret MIGRATE_DNS_SERVERS=8.8.8.8,1.1.1.1'
+    );
+  }
+  if (code === '42P01' || (msg.includes('relation') && msg.includes('does not exist'))) {
+    hints.push(
+      'Tabela em falta: aplique supabase/migrations ao projeto antes de migrar (ex.: npm run db:apply-migrations).'
+    );
+  }
+  if (code === '28P01' || msg.includes('password authentication failed')) {
+    hints.push(
+      'Auth Postgres: confirme user/senha na DATABASE_URL; na password, # → %23 e outros carateres especiais → URL-encoded.'
+    );
+  }
+  if (code === 'ECONNREFUSED') {
+    hints.push('Ligação recusada: host/porta — pooler costuma ser porta 6543, não 5432 direto no runner.');
+  }
+  if (msg.includes('column') && msg.includes('does not exist')) {
+    hints.push('Coluna em falta: migrações desatualizadas em relação ao código; rode migrações mais recentes.');
+  }
+  if (msg.includes('self-signed') || msg.includes('certificate') || code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
+    hints.push('TLS: com IP em MIGRATE_PG_HOST pode falhar validação; só para teste: MIGRATE_PG_SSL_INSECURE=true.');
+  }
+  if (msg.includes('401') || msg.includes('403') || msg.includes('unauthorized')) {
+    hints.push('Base44: confirme BASE44_API_KEY / BASE44_ACCESS_TOKEN e VITE_BASE44_APP_ID no repositório P38.');
+  }
+  return hints;
+}
+
+function logMigrateFatal(label, e) {
+  const code = e?.code ? ` [${e.code}]` : '';
+  console.error(`[migrate] ${label}${code}:`, e?.message || e);
+  for (const h of migrationErrorHints(e)) {
+    console.error('[migrate] →', h);
+  }
+  if (e?.stack) console.error(e.stack);
+}
+
 function chunkArray(arr, size) {
   if (!size || size <= 0) return [arr];
   const out = [];
@@ -487,7 +531,7 @@ async function main() {
     console.log('[migrate] Concluído com sucesso.');
   } catch (e) {
     if (atomic) await client.query('ROLLBACK').catch(() => {});
-    console.error('[migrate] Erro:', e.message);
+    logMigrateFatal('Erro Postgres/migração', e);
     process.exitCode = 1;
   } finally {
     client.release();
@@ -498,7 +542,7 @@ async function main() {
 // SDK pode deixar sockets / timers abertos; sem isto o Node não termina após dry-run ou sucesso.
 main()
   .catch((e) => {
-    console.error('[migrate] Falha:', e);
+    logMigrateFatal('Falha', e);
     process.exitCode = 1;
   })
   .finally(() => {

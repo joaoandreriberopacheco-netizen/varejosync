@@ -38,7 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      # GitHub Actions: actions/checkout e setup-node deixam de avisar Node 20 deprecated nos runners.
+      # Até ~2026-06-02 os runners usam Node 20 por defeito nos actions JS; isto força Node 24 (changelog GitHub).
+      # Depois dessa data o default passa a Node 24 — esta linha pode ser removida se não precisares de pin explícito.
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
