@@ -63,6 +63,10 @@ export function prepareWritePayload(payload, entityName, mapping) {
   }
   if (entityName === 'PedidoVenda') {
     delete p.valor_total;
+    const cid = p.cliente_id;
+    if (cid && typeof cid === 'object' && !Array.isArray(cid) && !(cid instanceof Date) && cid.id != null) {
+      p.cliente_id = String(cid.id);
+    }
   }
 
   // Caso 1: schema 100% modelado (núcleo) — `columns` é null. Grava tudo direto.

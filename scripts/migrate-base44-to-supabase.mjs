@@ -367,15 +367,54 @@ function serializeCell(val) {
   return val;
 }
 
+/**
+ * Base44 por vezes devolve FKs como `{ id: "..." }`. Colunas `text` + `pg` com object
+ * podem gerar binds inválidos em conjunto com jsonb (erro 22P02 "invalid input syntax for type json").
+ */
+function coerceReferenceObjectsForPg(row, allowedCols, jsonbMeta) {
+  const out = { ...row };
+  for (const [k, v] of Object.entries(out)) {
+    if (allowedCols && !allowedCols.has(k)) continue;
+    if (jsonbMeta?.has(k)) continue;
+    if (v == null || typeof v !== 'object') continue;
+    if (Array.isArray(v) || Buffer.isBuffer(v) || v instanceof Date) continue;
+    const ref = v.id ?? v._id;
+    if (ref != null && (typeof ref === 'string' || typeof ref === 'number')) {
+      out[k] = String(ref);
+      continue;
+    }
+    if (k === 'cliente_id' || k.endsWith('_id')) {
+      console.warn(
+        `[migrate] FK "${k}" veio como object sem .id — a usar null (registo id=${String(out.id ?? '?')})`
+      );
+      out[k] = null;
+    }
+  }
+  return out;
+}
+
+/** PostgreSQL json/jsonb rejeita U+0000 em strings; remove recursivamente. */
+function deepStripNulFromJsonTree(val) {
+  if (typeof val === 'string') return val.replace(/\u0000/g, '');
+  if (!val || typeof val !== 'object') return val;
+  if (Array.isArray(val)) return val.map(deepStripNulFromJsonTree);
+  const o = {};
+  for (const [k, v] of Object.entries(val)) {
+    o[k] = deepStripNulFromJsonTree(v);
+  }
+  return o;
+}
+
 async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
   for (const row of rows) {
+    const rowCoerced = coerceReferenceObjectsForPg(row, allowedCols, jsonbMeta);
     const clean = {};
-    for (const [k, v] of Object.entries(row)) {
+    for (const [k, v] of Object.entries(rowCoerced)) {
       if (v === undefined) continue;
       if (allowedCols && !allowedCols.has(k)) continue;
       let out = v;
       if (jsonbMeta?.has(k)) {
-        out = normalizeJsonbForPg(v, jsonbMeta.get(k), k, row.id);
+        out = normalizeJsonbForPg(v, jsonbMeta.get(k), k, rowCoerced.id);
         if (out === undefined) continue;
       }
       clean[k] = out;
@@ -493,7 +532,12 @@ function normalizeJsonbForPg(val, meta, colName, rowId) {
   }
   if (typeof val === 'object' && val !== null && !Buffer.isBuffer(val)) {
     try {
-      return JSON.parse(JSON.stringify(val));
+      const stripped = deepStripNulFromJsonTree(val);
+      const s = JSON.stringify(stripped, (_key, x) => {
+        if (typeof x === 'bigint') return x.toString();
+        return x;
+      });
+      return JSON.parse(s);
     } catch {
       console.warn(`[migrate] jsonb não serializável em ${colName} (id=${rowId ?? '?'})`);
       return meta.notNull ? jsonbFallback(meta) : null;
