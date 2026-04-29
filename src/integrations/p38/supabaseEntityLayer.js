@@ -1,4 +1,7 @@
-import { ENTITY_TO_TABLE } from './entityTableMap';
+import { ENTITY_TO_TABLE, resolveEntityMapping } from './entityTableMap';
+
+/** Colunas físicas comuns às tabelas managed pelo app. */
+const META_COLUMNS = new Set(['id', 'created_at', 'updated_at', 'created_by']);
 
 function parseOrder(order) {
   if (order === undefined || order === null || order === '') {
@@ -12,11 +15,20 @@ function parseOrder(order) {
   return { column: field, ascending };
 }
 
-function decorateRow(row, entityName) {
+function decorateRow(row, entityName, mapping) {
   if (!row || typeof row !== 'object') return row;
   const out = { ...row };
   if ('created_at' in out && out.created_at != null) out.created_date = out.created_at;
   if ('updated_at' in out && out.updated_at != null) out.updated_date = out.updated_at;
+
+  if (mapping?.mode === 'jsonb') {
+    const dados = out.dados && typeof out.dados === 'object' ? out.dados : {};
+    delete out.dados;
+    for (const [k, v] of Object.entries(dados)) {
+      if (!(k in out)) out[k] = v;
+    }
+  }
+
   if (entityName === 'TargetFlare') {
     if ('flare_line' in out) out.line = out.flare_line;
     if ('flare_column' in out) out.column = out.flare_column;
@@ -27,11 +39,12 @@ function decorateRow(row, entityName) {
   return out;
 }
 
-function prepareWritePayload(payload, entityName) {
+function prepareWritePayload(payload, entityName, mapping) {
   if (!payload || typeof payload !== 'object') return payload;
   const p = { ...payload };
   delete p.created_date;
   delete p.updated_date;
+
   if (entityName === 'TargetFlare') {
     if ('line' in p) {
       p.flare_line = p.line;
@@ -45,19 +58,52 @@ function prepareWritePayload(payload, entityName) {
   if (entityName === 'PedidoVenda' && p.valor_total != null && p.total == null) {
     p.total = p.valor_total;
   }
-  delete p.valor_total;
+  if (entityName === 'PedidoVenda') {
+    delete p.valor_total;
+  }
+
+  if (mapping?.mode === 'jsonb') {
+    const allowedColumns = new Set([...(mapping.columns || []), ...META_COLUMNS]);
+    const dadosBase = p.dados && typeof p.dados === 'object' && !Array.isArray(p.dados) ? p.dados : {};
+    const out = {
+      id: p.id,
+      created_by: p.created_by,
+      dados: { ...dadosBase }
+    };
+    for (const [k, v] of Object.entries(p)) {
+      if (k === 'dados') continue;
+      if (allowedColumns.has(k)) {
+        out[k] = v;
+      } else if (k === 'created_at' || k === 'updated_at') {
+        out[k] = v;
+      } else {
+        out.dados[k] = v;
+      }
+    }
+    if (out.id === undefined) delete out.id;
+    if (out.created_by === undefined) delete out.created_by;
+    return out;
+  }
+
   return p;
 }
 
-function applyFilters(query, where) {
+function applyFilters(query, where, mapping) {
   if (!where || typeof where !== 'object') return query;
   let q = query;
+  const isJsonb = mapping?.mode === 'jsonb';
+  const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
+
   for (const [key, val] of Object.entries(where)) {
     if (val === undefined) continue;
+    let target = key;
+    if (isJsonb && !cols.has(key)) {
+      target = `dados->>${key}`;
+    }
     if (Array.isArray(val)) {
-      q = q.in(key, val);
+      q = q.in(target, val);
     } else {
-      q = q.eq(key, val);
+      q = q.eq(target, val);
     }
   }
   return q;
@@ -69,55 +115,66 @@ function throwIfError(result, context) {
   }
 }
 
-function createEntityApi(supabase, entityName, table) {
+function normalizeOrderColumn(field, mapping) {
+  const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
+  if (mapping?.mode === 'jsonb' && !cols.has(field)) {
+    return `dados->>${field}`;
+  }
+  return field;
+}
+
+function createEntityApi(supabase, entityName, mapping) {
+  const { table } = mapping;
+
   async function list(order, limit) {
     const { column, ascending } = parseOrder(order);
-    let q = supabase.from(table).select('*').order(column, { ascending, nullsFirst: false });
+    const orderCol = normalizeOrderColumn(column, mapping);
+    let q = supabase.from(table).select('*').order(orderCol, { ascending, nullsFirst: false });
     if (limit != null && Number.isFinite(Number(limit))) {
       q = q.limit(Number(limit));
     }
     const res = await q;
     throwIfError(res, `${entityName}.list`);
-    return (res.data || []).map((row) => decorateRow(row, entityName));
+    return (res.data || []).map((row) => decorateRow(row, entityName, mapping));
   }
 
   async function filter(where, order, limit) {
     let q = supabase.from(table).select('*');
-    q = applyFilters(q, where);
+    q = applyFilters(q, where, mapping);
     if (order !== undefined && order !== null && order !== '') {
       const { column, ascending } = parseOrder(order);
-      q = q.order(column, { ascending, nullsFirst: false });
+      q = q.order(normalizeOrderColumn(column, mapping), { ascending, nullsFirst: false });
     }
     if (limit != null && Number.isFinite(Number(limit))) {
       q = q.limit(Number(limit));
     }
     const res = await q;
     throwIfError(res, `${entityName}.filter`);
-    return (res.data || []).map((row) => decorateRow(row, entityName));
+    return (res.data || []).map((row) => decorateRow(row, entityName, mapping));
   }
 
   async function get(id) {
     const res = await supabase.from(table).select('*').eq('id', id).maybeSingle();
     throwIfError(res, `${entityName}.get`);
-    return decorateRow(res.data, entityName);
+    return decorateRow(res.data, entityName, mapping);
   }
 
   async function create(payload) {
-    const row = prepareWritePayload(payload, entityName);
+    const row = prepareWritePayload(payload, entityName, mapping);
     if (!row.id) {
       row.id = crypto.randomUUID();
     }
     const res = await supabase.from(table).insert(row).select('*').single();
     throwIfError(res, `${entityName}.create`);
-    return decorateRow(res.data, entityName);
+    return decorateRow(res.data, entityName, mapping);
   }
 
   async function update(id, payload) {
-    const row = prepareWritePayload(payload, entityName);
+    const row = prepareWritePayload(payload, entityName, mapping);
     delete row.id;
     const res = await supabase.from(table).update(row).eq('id', id).select('*').single();
     throwIfError(res, `${entityName}.update`);
-    return decorateRow(res.data, entityName);
+    return decorateRow(res.data, entityName, mapping);
   }
 
   async function remove(id) {
@@ -129,13 +186,13 @@ function createEntityApi(supabase, entityName, table) {
   async function bulkCreate(rows) {
     if (!Array.isArray(rows) || rows.length === 0) return [];
     const prepared = rows.map((r) => {
-      const row = prepareWritePayload(r, entityName);
+      const row = prepareWritePayload(r, entityName, mapping);
       if (!row.id) row.id = crypto.randomUUID();
       return row;
     });
     const res = await supabase.from(table).insert(prepared).select('*');
     throwIfError(res, `${entityName}.bulkCreate`);
-    return (res.data || []).map((row) => decorateRow(row, entityName));
+    return (res.data || []).map((row) => decorateRow(row, entityName, mapping));
   }
 
   function subscribe(_callback) {
@@ -203,7 +260,7 @@ function createStubEntityApi(entityName) {
 /**
  * Proxy em cima de base44.entities: rotas listadas em ENTITY_TO_TABLE vão para Supabase.
  *
- * @param {object} base44Entities - quando definido, entidades não mapeadas caem nele
+ * @param {object|null} base44Entities - quando definido, entidades não mapeadas caem nele
  *   (modo híbrido). Passe `null` para usar stub silencioso (modo bypass total Base44).
  * @param {object} supabase - cliente Supabase já inicializado.
  */
@@ -212,9 +269,9 @@ export function createSupabaseEntityLayer(base44Entities, supabase) {
   return new Proxy(fallbackTarget, {
     get(target, prop) {
       const name = String(prop);
-      const table = ENTITY_TO_TABLE[name];
-      if (table) {
-        return createEntityApi(supabase, name, table);
+      const mapping = resolveEntityMapping(name);
+      if (mapping) {
+        return createEntityApi(supabase, name, mapping);
       }
       if (base44Entities) {
         return target[prop];
@@ -223,3 +280,6 @@ export function createSupabaseEntityLayer(base44Entities, supabase) {
     }
   });
 }
+
+// Reexporta pra compatibilidade com imports antigos (se houver).
+export { ENTITY_TO_TABLE };
