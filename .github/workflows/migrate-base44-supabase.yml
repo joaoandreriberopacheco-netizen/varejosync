@@ -71,6 +71,13 @@ jobs:
           if [ "$ok" != 1 ]; then exit 1; fi
           echo "OK: secrets obrigatórios presentes (valores não listados)."
 
+      # Sem isto, o primeiro UPSERT numa tabela que só existe em 002+ falha com 42P01 (relation does not exist).
+      - name: Aplicar migrações SQL (schema Supabase)
+        if: github.event.inputs.dry_run != 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run db:apply-migrations
+
       - name: Run migration
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

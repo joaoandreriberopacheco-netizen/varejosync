@@ -123,6 +123,9 @@ function buildPgPoolConfig(connectionString) {
   if (insecure) {
     cfg.ssl = { rejectUnauthorized: false };
     console.warn('[migrate] SSL: rejectUnauthorized=false (MIGRATE_PG_SSL_INSECURE)');
+  } else if (connectionString.includes('supabase')) {
+    // Igual a scripts/apply-supabase-migrations.mjs (pooler / certificados no runner).
+    cfg.ssl = { rejectUnauthorized: false };
   }
   return cfg;
 }
@@ -167,6 +170,11 @@ function migrationErrorHints(e) {
   }
   if (msg.includes('401') || msg.includes('403') || msg.includes('unauthorized')) {
     hints.push('Base44: confirme BASE44_API_KEY / BASE44_ACCESS_TOKEN e VITE_BASE44_APP_ID no repositório P38.');
+  }
+  if (msg.includes('invalid input syntax for type json')) {
+    hints.push(
+      'Valor incompatível com JSONB (ex.: string vazia, texto que não é JSON). O script normaliza campos jsonb conhecidos; volte a correr ou veja avisos [migrate] JSON inválido.'
+    );
   }
   return hints;
 }
@@ -359,13 +367,18 @@ function serializeCell(val) {
   return val;
 }
 
-async function upsertBatch(client, table, rows, allowedCols) {
+async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
   for (const row of rows) {
     const clean = {};
     for (const [k, v] of Object.entries(row)) {
       if (v === undefined) continue;
       if (allowedCols && !allowedCols.has(k)) continue;
-      clean[k] = v;
+      let out = v;
+      if (jsonbMeta?.has(k)) {
+        out = normalizeJsonbForPg(v, jsonbMeta.get(k), k, row.id);
+        if (out === undefined) continue;
+      }
+      clean[k] = out;
     }
     if (!clean.id) {
       console.warn(`[migrate] Linha sem id na tabela ${table}, ignorada.`);
@@ -386,11 +399,11 @@ async function upsertBatch(client, table, rows, allowedCols) {
   }
 }
 
-async function upsertInReplicaSession(client, table, rows, allowedCols) {
+async function upsertInReplicaSession(client, table, rows, allowedCols, jsonbMeta) {
   await client.query('BEGIN');
   try {
     await client.query("SET LOCAL session_replication_role = 'replica'");
-    await upsertBatch(client, table, rows, allowedCols);
+    await upsertBatch(client, table, rows, allowedCols, jsonbMeta);
     await client.query("SET LOCAL session_replication_role = 'origin'");
     await client.query('COMMIT');
   } catch (e) {
@@ -405,6 +418,61 @@ async function loadTableColumns(client, table) {
     [table]
   );
   return new Set(r.rows.map((x) => x.column_name));
+}
+
+/** Metadados de colunas jsonb para normalizar strings vazias / JSON inválido antes do INSERT. */
+async function loadJsonbColumnMeta(client, table) {
+  const r = await client.query(
+    `select column_name, is_nullable, coalesce(column_default::text, '') as def
+     from information_schema.columns
+     where table_schema = 'public' and table_name = $1 and udt_name = 'jsonb'`,
+    [table]
+  );
+  const meta = new Map();
+  for (const row of r.rows) {
+    const def = String(row.def || '');
+    meta.set(row.column_name, {
+      notNull: row.is_nullable === 'NO',
+      defaultIsArray: def.includes('[]'),
+    });
+  }
+  return meta;
+}
+
+function jsonbFallback(meta) {
+  return meta.defaultIsArray ? [] : {};
+}
+
+/** Garante valor aceite por PostgreSQL jsonb (evita `''::jsonb` e strings mal formadas). */
+function normalizeJsonbForPg(val, meta, colName, rowId) {
+  if (val === undefined) return undefined;
+  if (val === null) {
+    return meta.notNull ? jsonbFallback(meta) : null;
+  }
+  if (typeof val === 'string') {
+    const s = val.trim();
+    if (s === '') {
+      return meta.notNull ? jsonbFallback(meta) : null;
+    }
+    try {
+      return JSON.parse(s);
+    } catch {
+      console.warn(
+        `[migrate] JSON inválido em ${colName} (id=${rowId ?? '?'}); a usar fallback. Trecho: ${s.slice(0, 160)}`
+      );
+      return meta.notNull ? jsonbFallback(meta) : null;
+    }
+  }
+  if (typeof val === 'object' && val !== null && !Buffer.isBuffer(val)) {
+    try {
+      return JSON.parse(JSON.stringify(val));
+    } catch {
+      console.warn(`[migrate] jsonb não serializável em ${colName} (id=${rowId ?? '?'})`);
+      return meta.notNull ? jsonbFallback(meta) : null;
+    }
+  }
+  console.warn(`[migrate] tipo ${typeof val} inesperado para jsonb ${colName} (id=${rowId ?? '?'})`);
+  return meta.notNull ? jsonbFallback(meta) : null;
 }
 
 async function main() {
@@ -504,16 +572,18 @@ async function main() {
         continue;
       }
 
+      const jsonbMeta = await loadJsonbColumnMeta(client, table);
+
       console.log(`[migrate] ${table} ← ${sourceEntity}: ${prepared.length} linhas…`);
 
       if (atomic) {
-        await upsertBatch(client, table, prepared, allowedCols);
+        await upsertBatch(client, table, prepared, allowedCols, jsonbMeta);
       } else {
         const chunks = chunkArray(prepared, rowsPerCommit);
         let partNum = 0;
         for (const part of chunks) {
           partNum += 1;
-          await upsertInReplicaSession(client, table, part, allowedCols);
+          await upsertInReplicaSession(client, table, part, allowedCols, jsonbMeta);
           if (chunks.length > 1) {
             console.log(`[migrate]   … commit parcial ${partNum}/${chunks.length} (${part.length} linhas)`);
           }
