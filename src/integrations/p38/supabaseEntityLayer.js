@@ -21,8 +21,11 @@ function decorateRow(row, entityName, mapping) {
   if ('created_at' in out && out.created_at != null) out.created_date = out.created_at;
   if ('updated_at' in out && out.updated_at != null) out.updated_date = out.updated_at;
 
-  if (mapping?.mode === 'jsonb') {
-    const dados = out.dados && typeof out.dados === 'object' ? out.dados : {};
+  // Sempre que houver coluna `dados` jsonb na resposta, "espalha" no objeto.
+  // Vale tanto para mode='jsonb' quanto para mode='columns' com `columns` explícito
+  // (entidades estendidas com `dados` para overflow durante a transição).
+  if ('dados' in out && out.dados && typeof out.dados === 'object') {
+    const dados = out.dados;
     delete out.dados;
     for (const [k, v] of Object.entries(dados)) {
       if (!(k in out)) out[k] = v;
@@ -62,42 +65,46 @@ function prepareWritePayload(payload, entityName, mapping) {
     delete p.valor_total;
   }
 
-  if (mapping?.mode === 'jsonb') {
-    const allowedColumns = new Set([...(mapping.columns || []), ...META_COLUMNS]);
-    const dadosBase = p.dados && typeof p.dados === 'object' && !Array.isArray(p.dados) ? p.dados : {};
-    const out = {
-      id: p.id,
-      created_by: p.created_by,
-      dados: { ...dadosBase }
-    };
-    for (const [k, v] of Object.entries(p)) {
-      if (k === 'dados') continue;
-      if (allowedColumns.has(k)) {
-        out[k] = v;
-      } else if (k === 'created_at' || k === 'updated_at') {
-        out[k] = v;
-      } else {
-        out.dados[k] = v;
-      }
-    }
-    if (out.id === undefined) delete out.id;
-    if (out.created_by === undefined) delete out.created_by;
-    return out;
+  // Caso 1: schema 100% modelado (núcleo) — `columns` é null. Grava tudo direto.
+  // Caso 2: entidade com dados jsonb de overflow — `columns` é lista explícita.
+  //   Campos listados vão para coluna; o resto cai em `dados` (silenciosamente).
+  // Caso 3: modo 'jsonb' puro — só META + `columns` viram coluna; resto em dados.
+  const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
+  if (!hasOverflowJsonb) {
+    return p;
   }
 
-  return p;
+  const allowedColumns = new Set([...(mapping.columns || []), ...META_COLUMNS]);
+  const dadosBase =
+    p.dados && typeof p.dados === 'object' && !Array.isArray(p.dados) ? p.dados : {};
+  const out = { dados: { ...dadosBase } };
+  for (const [k, v] of Object.entries(p)) {
+    if (k === 'dados') continue;
+    if (allowedColumns.has(k) || k === 'created_at' || k === 'updated_at') {
+      out[k] = v;
+    } else {
+      out.dados[k] = v;
+    }
+  }
+  if (out.id === undefined) delete out.id;
+  if (out.created_by === undefined) delete out.created_by;
+  // Se nada foi parar em `dados`, remove para não sobrescrever JSONB existente desnecessariamente
+  if (Object.keys(out.dados).length === 0) delete out.dados;
+  return out;
 }
 
 function applyFilters(query, where, mapping) {
   if (!where || typeof where !== 'object') return query;
   let q = query;
-  const isJsonb = mapping?.mode === 'jsonb';
+  const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
   const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
 
   for (const [key, val] of Object.entries(where)) {
     if (val === undefined) continue;
+    // Operadores especiais do Base44 (ex: $or) não são suportados aqui — ignorar.
+    if (key.startsWith('$')) continue;
     let target = key;
-    if (isJsonb && !cols.has(key)) {
+    if (hasOverflowJsonb && !cols.has(key)) {
       target = `dados->>${key}`;
     }
     if (Array.isArray(val)) {
@@ -116,8 +123,9 @@ function throwIfError(result, context) {
 }
 
 function normalizeOrderColumn(field, mapping) {
+  const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
   const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
-  if (mapping?.mode === 'jsonb' && !cols.has(field)) {
+  if (hasOverflowJsonb && !cols.has(field)) {
     return `dados->>${field}`;
   }
   return field;

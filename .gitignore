@@ -30,4 +30,7 @@ dist-ssr
 # Export local da fila Flare (pode conter dados sensíveis)
 docs/flare-export/flare-pending.json
 
+# Cache local de scripts (inferência, fragmentos gerados)
+scripts/.cache/
+
 .env
