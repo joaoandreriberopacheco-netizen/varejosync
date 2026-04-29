@@ -157,19 +157,69 @@ function createEntityApi(supabase, entityName, table) {
   };
 }
 
+function createStubEntityApi(entityName) {
+  const warn = (op) => {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        `[P38][supabase-stub] ${entityName}.${op} — entidade não mapeada em entityTableMap.js; ` +
+          'devolvendo valor neutro. Adicione a tabela e migre para retirar este stub.'
+      );
+    }
+  };
+
+  return {
+    list: async () => {
+      warn('list');
+      return [];
+    },
+    filter: async () => {
+      warn('filter');
+      return [];
+    },
+    get: async () => {
+      warn('get');
+      return null;
+    },
+    create: async (payload) => {
+      warn('create');
+      return { ...(payload || {}), id: payload?.id || crypto.randomUUID() };
+    },
+    update: async (id, payload) => {
+      warn('update');
+      return { ...(payload || {}), id };
+    },
+    delete: async () => {
+      warn('delete');
+      return null;
+    },
+    bulkCreate: async (rows) => {
+      warn('bulkCreate');
+      return Array.isArray(rows) ? rows.map((r) => ({ ...r, id: r?.id || crypto.randomUUID() })) : [];
+    },
+    subscribe: () => () => {}
+  };
+}
+
 /**
  * Proxy em cima de base44.entities: rotas listadas em ENTITY_TO_TABLE vão para Supabase.
+ *
+ * @param {object} base44Entities - quando definido, entidades não mapeadas caem nele
+ *   (modo híbrido). Passe `null` para usar stub silencioso (modo bypass total Base44).
+ * @param {object} supabase - cliente Supabase já inicializado.
  */
 export function createSupabaseEntityLayer(base44Entities, supabase) {
-  return new Proxy(base44Entities, {
+  const fallbackTarget = base44Entities || {};
+  return new Proxy(fallbackTarget, {
     get(target, prop) {
       const name = String(prop);
       const table = ENTITY_TO_TABLE[name];
       if (table) {
         return createEntityApi(supabase, name, table);
       }
-      const orig = target[prop];
-      return orig;
+      if (base44Entities) {
+        return target[prop];
+      }
+      return createStubEntityApi(name);
     }
   });
 }

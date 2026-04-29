@@ -1,6 +1,7 @@
 const PROVIDERS = {
   BASE44: 'base44',
-  SUBPAYZE: 'subpayze'
+  SUBPAYZE: 'subpayze',
+  SUPABASE: 'supabase'
 };
 
 function parseBooleanEnv(value, defaultValue = false) {
@@ -16,6 +17,10 @@ export function resolveP38ProviderName() {
 
   if (provider === PROVIDERS.SUBPAYZE) {
     return PROVIDERS.SUBPAYZE;
+  }
+
+  if (provider === PROVIDERS.SUPABASE) {
+    return PROVIDERS.SUPABASE;
   }
 
   return PROVIDERS.BASE44;
@@ -35,4 +40,23 @@ export function isSubpayzeRolloutEnabled() {
 
 export function isSubpayzeReadyForTraffic() {
   return parseBooleanEnv(import.meta.env.VITE_P38_SUBPAYZE_READY, false);
+}
+
+/**
+ * Quando ativo, o app roda em "modo bypass": o boot não consulta Base44 (auth, public-settings).
+ * Útil para hospedar somente em Vercel + Supabase. `auth.me()` devolve o mockUser configurado
+ * em VITE_P38_BYPASS_USER_* até o login Supabase real estar pronto.
+ */
+export function isBase44BypassEnabled() {
+  if (resolveP38ProviderName() === PROVIDERS.SUPABASE) {
+    return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, true);
+  }
+  return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false);
+}
+
+/**
+ * Quando ativo, `auth.me()` tenta `supabase.auth.getUser()` em vez de devolver o mockUser.
+ */
+export function isSupabaseAuthEnabled() {
+  return parseBooleanEnv(import.meta.env.VITE_P38_USE_SUPABASE_AUTH, false);
 }

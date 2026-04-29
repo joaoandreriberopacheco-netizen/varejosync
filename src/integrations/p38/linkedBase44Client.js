@@ -1,5 +1,7 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
+import { createSupabaseLegacyClient } from './supabaseAdapter';
+import { getP38Providers, resolveP38ProviderName } from './providers';
 
 function parseBooleanEnv(value, defaultValue = false) {
   if (value === undefined || value === null || value === '') {
@@ -9,12 +11,31 @@ function parseBooleanEnv(value, defaultValue = false) {
 }
 
 /**
- * Quando o datalink Supabase está ativo, devolve o mesmo client Base44 com `entities`
- * substituído por uma camada híbrida (Supabase para tabelas mapeadas, Base44 para o resto).
+ * Devolve o client legado a ser exposto como `p38.legacyClient` (e, por compat, `base44`).
+ *
+ * 3 modos:
+ *   1. provider=supabase → pseudo-client 100% Supabase (zero chamada ao Base44).
+ *   2. provider=base44 + VITE_USE_SUPABASE_ENTITIES=true → híbrido: entidades mapeadas no
+ *      Supabase, restante (auth, funções, entidades não mapeadas) ainda no Base44.
+ *   3. caso contrário → client Base44 puro.
  */
 export function resolveLegacyClient(base44SdkClient) {
-  const enabled = parseBooleanEnv(import.meta.env.VITE_USE_SUPABASE_ENTITIES, false);
-  if (!enabled || !isSupabaseBrowserConfigured()) {
+  const providers = getP38Providers();
+  const providerName = resolveP38ProviderName();
+
+  if (providerName === providers.SUPABASE) {
+    if (!isSupabaseBrowserConfigured()) {
+      console.warn(
+        '[P38] VITE_P38_PROVIDER=supabase definido, mas VITE_SUPABASE_URL/ANON_KEY ausentes — ' +
+          'caindo no client Base44 para evitar tela branca.'
+      );
+      return base44SdkClient;
+    }
+    return createSupabaseLegacyClient();
+  }
+
+  const datalinkEnabled = parseBooleanEnv(import.meta.env.VITE_USE_SUPABASE_ENTITIES, false);
+  if (!datalinkEnabled || !isSupabaseBrowserConfigured()) {
     return base44SdkClient;
   }
 

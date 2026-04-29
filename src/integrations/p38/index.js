@@ -2,38 +2,64 @@ import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
 import { createBase44Adapter } from './base44Adapter';
 import { createSubpayzeAdapter } from './subpayzeAdapter';
+import { createSupabaseAdapter } from './supabaseAdapter';
 import { createRequestContext } from './requestContext';
 import { resolveLegacyClient } from './linkedBase44Client';
 import {
   getP38Providers,
+  isBase44BypassEnabled,
   isP38SafeModeEnabled,
   isSubpayzeReadyForTraffic,
   isSubpayzeRolloutEnabled,
+  isSupabaseAuthEnabled,
   resolveP38ProviderName
 } from './providers';
 
+const providers = getP38Providers();
+const providerName = resolveP38ProviderName();
+const bypassBase44 = isBase44BypassEnabled();
+
 const { appId, serverUrl, token, functionsVersion } = appParams;
 
-const base44SdkClient = createClient({
-  appId,
-  serverUrl,
-  token,
-  functionsVersion,
-  requiresAuth: false
-});
+/**
+ * Quando estamos em modo bypass total, evitamos sequer instanciar o SDK do Base44
+ * com URL real — devolvemos um stub que joga erro caso alguém ainda chame.
+ */
+function createBase44StubClient(reason) {
+  const fail = () => {
+    throw new Error(`[P38] Base44 desativado (${reason}). Migre a chamada para Supabase Edge Function.`);
+  };
+  const handler = {
+    get: () =>
+      new Proxy(function () {}, {
+        get: () => handler.get(),
+        apply: fail
+      })
+  };
+  return new Proxy({ name: 'base44-stub' }, handler);
+}
+
+const base44SdkClient = bypassBase44
+  ? createBase44StubClient('VITE_P38_BYPASS_BASE44=true')
+  : createClient({
+      appId,
+      serverUrl,
+      token,
+      functionsVersion,
+      requiresAuth: false
+    });
 
 /** Exportado como `base44` em `base44Client.js` — pode incluir datalink Supabase nas entidades mapeadas. */
 const linkedLegacyClient = resolveLegacyClient(base44SdkClient);
 
-const base44Adapter = createBase44Adapter(base44SdkClient);
+const base44Adapter = bypassBase44 ? null : createBase44Adapter(base44SdkClient);
 const subpayzeAdapter = createSubpayzeAdapter({
   apiUrl: import.meta.env.VITE_SUBPAYZE_API_URL,
   apiKey: import.meta.env.VITE_SUBPAYZE_API_KEY,
   webhookSecret: import.meta.env.VITE_SUBPAYZE_WEBHOOK_SECRET
 });
+const supabaseAdapter = createSupabaseAdapter();
 
-const providers = getP38Providers();
-const providerName = resolveP38ProviderName();
 const safeMode = isP38SafeModeEnabled();
 const subpayzeRolloutEnabled = isSubpayzeRolloutEnabled();
 const subpayzeReadyForTraffic = isSubpayzeReadyForTraffic();
@@ -44,10 +70,19 @@ const shouldUseSubpayze =
   subpayzeReadyForTraffic &&
   subpayzeAdapter.isConfigured;
 
-const activeAdapter = shouldUseSubpayze ? subpayzeAdapter : base44Adapter;
+const shouldUseSupabase = providerName === providers.SUPABASE && supabaseAdapter.isConfigured;
+
+const activeAdapter = shouldUseSupabase
+  ? supabaseAdapter
+  : shouldUseSubpayze
+    ? subpayzeAdapter
+    : base44Adapter || supabaseAdapter;
 
 function withSafeFallback(sectionName, candidateSection, fallbackSection) {
-  if (!safeMode || activeAdapter.name !== providers.SUBPAYZE) {
+  if (!safeMode || !fallbackSection) {
+    return candidateSection;
+  }
+  if (activeAdapter.name === providers.BASE44) {
     return candidateSection;
   }
 
@@ -78,23 +113,28 @@ export const p38 = {
   providerName: activeAdapter.name,
   providers,
   safeMode,
+  bypassBase44,
   rollout: {
     subpayzeEnabled: subpayzeRolloutEnabled,
     subpayzeReadyForTraffic,
+    supabaseConfigured: supabaseAdapter.isConfigured,
+    supabaseAuth: isSupabaseAuthEnabled(),
     requestedProvider: providerName,
-    usingSubpayze: shouldUseSubpayze
+    usingSubpayze: shouldUseSubpayze,
+    usingSupabase: shouldUseSupabase
   },
   adapter: activeAdapter,
   base44Fallback: base44Adapter,
+  supabaseAdapter,
   createRequestContext,
   // Mantemos acesso ao client legado durante a fase de compatibilidade.
   legacyClient: linkedLegacyClient,
-  auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter.auth),
-  entities: withSafeFallback('entities', activeAdapter.entities, base44Adapter.entities),
-  functions: withSafeFallback('functions', activeAdapter.functions, base44Adapter.functions),
+  auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter?.auth),
+  entities: withSafeFallback('entities', activeAdapter.entities, base44Adapter?.entities),
+  functions: withSafeFallback('functions', activeAdapter.functions, base44Adapter?.functions),
   integrations: withSafeFallback(
     'integrations',
     activeAdapter.integrations,
-    base44Adapter.integrations
+    base44Adapter?.integrations
   )
 };

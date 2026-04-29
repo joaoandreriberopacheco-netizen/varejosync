@@ -1,8 +1,16 @@
 import * as React from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, p38 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 
 const AuthContext = React.createContext();
+
+const SUPABASE_PUBLIC_SETTINGS_STUB = Object.freeze({
+  id: 'p38-supabase',
+  public_settings: {
+    auth_required: false,
+    provider: 'supabase'
+  }
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = React.useState(null);
@@ -20,7 +28,14 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
-      
+
+      if (p38?.bypassBase44 || p38?.providerName === p38?.providers?.SUPABASE) {
+        setAppPublicSettings(SUPABASE_PUBLIC_SETTINGS_STUB);
+        setIsLoadingPublicSettings(false);
+        await checkUserAuth();
+        return;
+      }
+
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
       try {
@@ -113,19 +128,30 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
+
+    try {
+      if (shouldRedirect) {
+        base44.auth.logout(window.location.href);
+      } else {
+        base44.auth.logout();
+      }
+    } catch (err) {
+      console.warn('logout falhou; limpando estado local apenas.', err);
+      if (shouldRedirect && typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     }
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    try {
+      base44.auth.redirectToLogin(window.location.href);
+    } catch (err) {
+      console.warn('redirectToLogin falhou; tentando fallback /login.', err);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
   };
 
   return (
