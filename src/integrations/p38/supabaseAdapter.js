@@ -144,6 +144,42 @@ function buildAuth(supabase) {
       const target = useSupabaseAuth ? '/login' : returnUrl || '/';
       window.location.href = target;
     },
+    /**
+     * Compat com `User.loginWithRedirect(returnUrl)` do Base44 SDK.
+     * Em modo bypass apenas garante que existe um usuário persistido e devolve.
+     */
+    async loginWithRedirect(returnUrl) {
+      if (useSupabaseAuth) {
+        if (typeof window !== 'undefined') {
+          window.location.href = returnUrl || '/login';
+        }
+        return null;
+      }
+      const merged = { ...readBypassUserFromEnv(), ...readPersistedUser() };
+      persistUser(merged);
+      return merged;
+    },
+    /**
+     * Compat com `User.updateMyUserData(patch)` do Base44 SDK.
+     * Atualiza o usuário persistido localmente; em supabase-auth também atualiza
+     * `user_metadata` quando possível.
+     */
+    async updateMe(patch = {}) {
+      if (useSupabaseAuth) {
+        try {
+          const { data, error } = await supabase.auth.updateUser({ data: patch });
+          if (error) throw error;
+          return data?.user || null;
+        } catch (err) {
+          console.warn('[P38][supabaseAdapter] updateUser falhou', err);
+          throw err;
+        }
+      }
+      const current = readPersistedUser() || readBypassUserFromEnv();
+      const next = { ...current, ...patch };
+      persistUser(next);
+      return next;
+    },
     setBypassUser(user) {
       persistUser(user);
       return user;
