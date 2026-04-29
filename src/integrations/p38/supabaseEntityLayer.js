@@ -1,4 +1,4 @@
-import { ENTITY_TO_TABLE, resolveEntityMapping } from './entityTableMap';
+import { ENTITY_TO_TABLE, resolveEntityMapping } from './entityTableMap.js';
 
 /** Colunas físicas comuns às tabelas managed pelo app. */
 const META_COLUMNS = new Set(['id', 'created_at', 'updated_at', 'created_by']);
@@ -42,7 +42,7 @@ function decorateRow(row, entityName, mapping) {
   return out;
 }
 
-function prepareWritePayload(payload, entityName, mapping) {
+export function prepareWritePayload(payload, entityName, mapping) {
   if (!payload || typeof payload !== 'object') return payload;
   const p = { ...payload };
   delete p.created_date;
