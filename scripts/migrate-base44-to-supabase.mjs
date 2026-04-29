@@ -34,7 +34,7 @@
  *   - `--atomic`: uma transação global (comportamento antigo; falha = rollback total).
  *   - Cada COMMIT usa `SET LOCAL session_replication_role = 'replica'` para relaxar FKs durante o upsert.
  *   - Listagem Base44 é paginada (10k/pedido); o limite `--limit` aplica ao total por entidade.
- *   - Faz `ON CONFLICT (id) DO UPDATE` — pode voltar a correr para sincronizar.
+ *   - Faz `ON CONFLICT (id) DO UPDATE` — pode voltar a correr para **resync** (insert/update por id).
  *   - Tabelas partilhadas por mais do que um nome de entidade (ex.: User/Usuario) só são migradas uma vez.
  *
  * Ligação Postgres (Node não resolve o host, mas `nslookup` no PowerShell resolve):

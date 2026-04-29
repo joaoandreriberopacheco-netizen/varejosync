@@ -1,5 +1,8 @@
 # Migração Base44 → Supabase (usa secrets do repositório — não colar credenciais no YAML).
 #
+# - workflow_dispatch: corre manualmente (dry-run ou migração/resync).
+# - schedule: resync automático (dry_run=false). Comenta ou apaga `schedule` para desligar.
+#
 # Secrets necessários (Settings → Secrets and variables → Actions):
 #   DATABASE_URL
 #   VITE_BASE44_APP_ID
@@ -14,9 +17,14 @@
 #   MIGRATE_ONLY_ENTITIES
 #   MIGRATE_ROWS_PER_COMMIT
 #
-# Disparo: Actions → "Migrate Base44 to Supabase" → Run workflow.
+# Disparo manual: Actions → "Migrate Base44 to Supabase" → Run workflow.
+# Resync: ver docs/migration/BASE44_TO_SUPABASE_GITHUB.md
 
 name: Migrate Base44 to Supabase
+
+concurrency:
+  group: migrate-base44-to-supabase
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -25,6 +33,9 @@ on:
         description: 'Apenas contar linhas (não escreve no Postgres)'
         type: boolean
         default: true
+  schedule:
+    # Resync diário 05:00 UTC (~02:00 BRT). Ajusta ou remove este bloco para desativar.
+    - cron: '0 5 * * *'
 
 jobs:
   migrate:
@@ -42,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run migration
+      - name: Run migration or resync
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BASE44_ACCESS_TOKEN: ${{ secrets.BASE44_ACCESS_TOKEN }}
@@ -56,7 +67,10 @@ jobs:
           MIGRATE_ROWS_PER_COMMIT: ${{ secrets.MIGRATE_ROWS_PER_COMMIT }}
         run: |
           set -e
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "[migrate] Resync agendado (UPSERT por id; sem apagar linhas órfãs no Supabase)"
+            npm run migrate:base44-to-supabase
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
             npm run migrate:base44-to-supabase -- --dry-run
           else
             npm run migrate:base44-to-supabase

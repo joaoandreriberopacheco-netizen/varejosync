@@ -35,6 +35,28 @@ Opcionais (ver comentários no workflow e no cabeçalho do script): `MIGRATE_DNS
 2. Primeiro **dry_run: true** (só contagens).
 3. Depois **dry_run: false** para `UPSERT` em massa (o script usa `ON CONFLICT (id) DO UPDATE`; podes voltar a correr para sincronizar).
 
+### Modo resync (sincronização repetida)
+
+O mesmo comando / workflow **corre outra vez** quando quiseres: cada registo vindo do Base44 é **actualizado ou inserido** no Supabase pela chave `id`. Não precisas de “modo especial” — o script já é idempotente para inserts/updates.
+
+| Comportamento | Detalhe |
+|---------------|---------|
+| **Incluído no resync** | Novos registos no Base44; alterações a campos em registos existentes (pelo que a API devolver na listagem). |
+| **Não incluído** | Registos **apagados no Base44** continuam no Supabase (não há `DELETE`). Para espelho exacto seria preciso lógica extra (soft-delete ou comparar conjuntos de ids). |
+| **JWT (`BASE44_ACCESS_TOKEN`)** | Expira; para resync automático usa **`BASE44_API_KEY`** nos secrets ou renova o token. |
+| **Limite** | Por defeito até **10 000** linhas por entidade por corrida; entidades maiores exigem subir `--limit` ou várias passagens (ver script). |
+
+**GitHub Actions**
+
+- **Manual:** igual a cima — **Run workflow** com `dry_run: false` sempre que quiseres um resync.
+- **Agendado:** o workflow inclui `schedule` (diário 05:00 UTC). Comenta ou remove o bloco `schedule:` no YAML se não quiseres corrida automática. Só uma corrida de cada vez (`concurrency`).
+
+**Local**
+
+```bash
+npm run migrate:base44-to-supabase
+```
+
 ### Notas
 
 - Este fluxo **não** mete `SUPABASE_SERVICE_KEY` no GitHub: a escrita é **direta no Postgres**, não pela API REST do Supabase.
