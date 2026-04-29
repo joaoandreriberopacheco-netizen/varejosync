@@ -11,18 +11,52 @@ function parseBooleanEnv(value, defaultValue = false) {
   return String(value).toLowerCase().trim() === 'true';
 }
 
+function nonEmptyString(value) {
+  if (value === undefined || value === null) return false;
+  return String(value).trim().length > 0;
+}
+
+/**
+ * `true` quando as envs Base44 estão **realmente** configuradas. Sem appId+serverUrl
+ * o SDK Base44 não funciona — qualquer chamada vira fetch para `null/api/apps/null/...`
+ * (foi exatamente o que estourava o PDV no Vercel).
+ */
+export function hasBase44Credentials() {
+  const env = import.meta.env || {};
+  return nonEmptyString(env.VITE_BASE44_APP_ID) && nonEmptyString(env.VITE_BASE44_BACKEND_URL);
+}
+
+/**
+ * `true` quando temos URL + ANON_KEY do Supabase no build. Não inicializa client aqui;
+ * usado apenas para autodetecção de provider.
+ */
+export function hasSupabaseCredentials() {
+  const env = import.meta.env || {};
+  return nonEmptyString(env.VITE_SUPABASE_URL) && nonEmptyString(env.VITE_SUPABASE_ANON_KEY);
+}
+
 export function resolveP38ProviderName() {
-  const rawProvider = import.meta.env.VITE_P38_PROVIDER || PROVIDERS.BASE44;
-  const provider = String(rawProvider).toLowerCase().trim();
+  const rawProvider = import.meta.env.VITE_P38_PROVIDER;
+  const provider = rawProvider ? String(rawProvider).toLowerCase().trim() : '';
 
   if (provider === PROVIDERS.SUBPAYZE) {
     return PROVIDERS.SUBPAYZE;
   }
-
   if (provider === PROVIDERS.SUPABASE) {
     return PROVIDERS.SUPABASE;
   }
+  if (provider === PROVIDERS.BASE44) {
+    return PROVIDERS.BASE44;
+  }
 
+  // Provider não definido explicitamente: autodetecta pelo que está disponível.
+  // Preferência: Supabase > Base44. Se nenhum dos dois, marca como Base44 (vai cair no stub).
+  if (hasSupabaseCredentials() && !hasBase44Credentials()) {
+    return PROVIDERS.SUPABASE;
+  }
+  if (hasSupabaseCredentials() && parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false)) {
+    return PROVIDERS.SUPABASE;
+  }
   return PROVIDERS.BASE44;
 }
 
@@ -43,15 +77,27 @@ export function isSubpayzeReadyForTraffic() {
 }
 
 /**
- * Quando ativo, o app roda em "modo bypass": o boot não consulta Base44 (auth, public-settings).
- * Útil para hospedar somente em Vercel + Supabase. `auth.me()` devolve o mockUser configurado
- * em VITE_P38_BYPASS_USER_* até o login Supabase real estar pronto.
+ * Quando ativo, o app roda em "modo bypass": o boot não consulta Base44 (auth, public-settings)
+ * e o `@base44/sdk` real nunca é instanciado (evita o analytics tracker que vaza fetch para
+ * `null/api/apps/null/analytics/track/batch`).
+ *
+ * Regras (em ordem):
+ *   1. provider=supabase → bypass=true (default).
+ *   2. VITE_P38_BYPASS_BASE44 explícito → respeita.
+ *   3. Sem credenciais Base44 → força bypass=true (proteção contra config incompleta no Vercel).
+ *   4. Caso contrário → false (fluxo Base44 normal).
  */
 export function isBase44BypassEnabled() {
   if (resolveP38ProviderName() === PROVIDERS.SUPABASE) {
     return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, true);
   }
-  return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false);
+  if (import.meta.env.VITE_P38_BYPASS_BASE44 !== undefined) {
+    return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false);
+  }
+  if (!hasBase44Credentials()) {
+    return true;
+  }
+  return false;
 }
 
 /**

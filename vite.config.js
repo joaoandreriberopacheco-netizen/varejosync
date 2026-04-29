@@ -1,6 +1,6 @@
 import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sourceLocationBabelPlugin from './build/sourceLocationBabelPlugin.cjs'
@@ -57,28 +57,24 @@ function p38LegacyBase44ClientOverride() {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode ?? 'development', process.cwd(), '')
-  const provider = (env.VITE_P38_PROVIDER || '').toLowerCase()
-  const bypass =
-    env.VITE_P38_BYPASS_BASE44 === 'true' ||
-    env.VITE_P38_BYPASS_BASE44 === '1' ||
-    provider === 'supabase'
-
+export default defineConfig(() => {
   return {
     logLevel: 'error',
     server: {
       allowedHosts: true
     },
     plugins: [
-      // O override precisa rodar ANTES do plugin do Base44 para vencer o resolveId interno.
-      // Só ativa quando estamos em modo bypass — em modo Base44 real, o compat original
-      // continua funcionando normalmente.
-      ...(bypass ? [p38LegacyBase44ClientOverride()] : []),
+      // O override SEMPRE roda antes do plugin do Base44 — substitui o cliente interno
+      // do compat layer pelo nosso `@/api/base44Client.js`. Em modo bypass aponta para
+      // Supabase; em modo Base44 real reusa a mesma instância do SDK que o resto do app
+      // usa (evitando duplicar `createClient` e o analytics tracker auto-iniciado).
+      // Crítico: sem isso, quando `VITE_BASE44_APP_ID`/`VITE_BASE44_BACKEND_URL` estão
+      // vazias, o SDK do compat dispara fetch para `null/api/apps/null/analytics/...`.
+      p38LegacyBase44ClientOverride(),
       base44({
         // Continuamos com legacySDKImports=true: o app inteiro depende dos imports
         // `@/entities/X`, `@/functions/X`, etc. O override acima garante que os compat
-        // delegam para o nosso `base44` (Supabase) em vez do SDK real.
+        // delegam para o nosso `base44` (do P38) em vez de criar um SDK separado.
         legacySDKImports:
           process.env.BASE44_LEGACY_SDK_IMPORTS !== 'false' &&
           process.env.BASE44_LEGACY_SDK_IMPORTS !== '0',
