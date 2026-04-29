@@ -395,7 +395,28 @@ async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
     const sql =
       `INSERT INTO public.${table.replace(/[^a-z0-9_]/gi, '')} (${colList}) VALUES (${placeholders}) ` +
       `ON CONFLICT (id) DO UPDATE SET ${updateSet || '"id" = EXCLUDED."id"'}`;
-    await client.query(sql, values);
+    try {
+      await client.query(sql, values);
+    } catch (e) {
+      const types = keys.map((k) => `${k}:${typeof clean[k]}`).join(', ');
+      console.error(`[migrate] UPSERT falhou → tabela=${table} id=${String(clean.id)}`);
+      console.error(`[migrate] Tipos das colunas: ${types}`);
+      if (jsonbMeta?.size) {
+        for (const col of jsonbMeta.keys()) {
+          if (!(col in clean)) continue;
+          const v = clean[col];
+          let preview;
+          try {
+            preview =
+              typeof v === 'string' ? v.slice(0, 120) : JSON.stringify(v).slice(0, 200);
+          } catch {
+            preview = String(v).slice(0, 120);
+          }
+          console.error(`[migrate]   coluna jsonb "${col}": ${preview}`);
+        }
+      }
+      throw e;
+    }
   }
 }
 
@@ -425,7 +446,7 @@ async function loadJsonbColumnMeta(client, table) {
   const r = await client.query(
     `select column_name, is_nullable, coalesce(column_default::text, '') as def
      from information_schema.columns
-     where table_schema = 'public' and table_name = $1 and udt_name = 'jsonb'`,
+     where table_schema = 'public' and table_name = $1 and udt_name in ('jsonb', 'json')`,
     [table]
   );
   const meta = new Map();
@@ -449,8 +470,15 @@ function normalizeJsonbForPg(val, meta, colName, rowId) {
   if (val === null) {
     return meta.notNull ? jsonbFallback(meta) : null;
   }
+  if (typeof val === 'number' || typeof val === 'boolean') {
+    return val;
+  }
+  if (typeof val === 'bigint') {
+    const n = Number(val);
+    return Number.isSafeInteger(n) ? n : val.toString();
+  }
   if (typeof val === 'string') {
-    const s = val.trim();
+    const s = val.replace(/^\uFEFF/, '').trim();
     if (s === '') {
       return meta.notNull ? jsonbFallback(meta) : null;
     }
