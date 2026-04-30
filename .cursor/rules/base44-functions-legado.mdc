@@ -1,0 +1,11 @@
+---
+description: Ao editar Backend Functions em base44/ — ainda correm na infra Base44 até ao corte operacional.
+globs: base44/**
+alwaysApply: false
+---
+
+# `base44/functions` — legado em paralelo
+
+- Estes ficheiros (`base44/**`, sobretudo `entry.ts`) são implantados na **infra Base44**, não no bundle Vercel.
+- Até o utilizador confirmar que **já não há operação** dependente destas funções, trata alterações como **produção sensível**: mudanças pequenas, reversíveis, e menciona se algo equivalente precisa existir no **repo Vercel** (Edge Functions, API routes, etc.).
+- Se o pedido for só para o **novo repo / Vercel**, sugere mover lógica para lá em vez de expandir o legado Base44, salvo se o utilizador pedir explicitamente o contrário.

@@ -378,7 +378,7 @@ function coerceReferenceObjectsForPg(row, allowedCols, jsonbMeta) {
     if (jsonbMeta?.has(k)) continue;
     if (v == null || typeof v !== 'object') continue;
     if (Array.isArray(v) || Buffer.isBuffer(v) || v instanceof Date) continue;
-    const ref = v.id ?? v._id;
+    const ref = v.id ?? v._id ?? v.terceiro_id ?? v.cliente_id;
     if (ref != null && (typeof ref === 'string' || typeof ref === 'number')) {
       out[k] = String(ref);
       continue;
@@ -403,6 +403,64 @@ function deepStripNulFromJsonTree(val) {
     o[k] = deepStripNulFromJsonTree(v);
   }
   return o;
+}
+
+/**
+ * Base44 embute FKs em linhas de itens/pagamentos como `{ id: "..." , nome: "..." }`.
+ * Mantém JSON válido mas grosso; normaliza para string só no campo *_id (ou nomes usuais).
+ */
+function deepCoerceNestedFkObjects(val) {
+  if (Array.isArray(val)) return val.map(deepCoerceNestedFkObjects);
+  if (val && typeof val === 'object' && !(val instanceof Date) && !Buffer.isBuffer(val)) {
+    const o = {};
+    for (const [k, v] of Object.entries(val)) {
+      if (
+        v &&
+        typeof v === 'object' &&
+        !Array.isArray(v) &&
+        !(v instanceof Date) &&
+        !Buffer.isBuffer(v)
+      ) {
+        const nestedId =
+          v.id ?? v._id ?? v.cliente_id ?? v.terceiro_id ?? v.produto_id ?? v.fornecedor_id;
+        const coercivel =
+          k.endsWith('_id') ||
+          k === 'produto' ||
+          k === 'cliente' ||
+          k === 'terceiro' ||
+          k === 'forma_pagamento_ref';
+        if (
+          coercivel &&
+          nestedId != null &&
+          (typeof nestedId === 'string' || typeof nestedId === 'number')
+        ) {
+          o[k] = String(nestedId);
+          continue;
+        }
+      }
+      o[k] = deepCoerceNestedFkObjects(v);
+    }
+    return o;
+  }
+  return val;
+}
+
+/** Último round-trip JSON compatível com Postgres (NUL, NaN/Infinity, BigInt em árvore). */
+function finalizeJsonbForPostgres(val) {
+  if (val === null || typeof val === 'number' || typeof val === 'boolean') return val;
+  if (typeof val === 'string') return val.replace(/\u0000/g, '');
+  try {
+    const stripped = deepStripNulFromJsonTree(deepCoerceNestedFkObjects(val));
+    const s = JSON.stringify(stripped, (_key, x) => {
+      if (typeof x === 'bigint') return x.toString();
+      if (typeof x === 'number' && !Number.isFinite(x)) return null;
+      if (x instanceof Date) return x.toISOString();
+      return x;
+    });
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
 }
 
 async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
@@ -437,7 +495,14 @@ async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
     try {
       await client.query(sql, values);
     } catch (e) {
-      const types = keys.map((k) => `${k}:${typeof clean[k]}`).join(', ');
+      const types = keys
+        .map((k) => {
+          const v = clean[k];
+          const t =
+            v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
+          return `${k}:${t}`;
+        })
+        .join(', ');
       console.error(`[migrate] UPSERT falhou → tabela=${table} id=${String(clean.id)}`);
       console.error(`[migrate] Tipos das colunas: ${types}`);
       if (jsonbMeta?.size) {
@@ -503,7 +568,7 @@ function jsonbFallback(meta) {
   return meta.defaultIsArray ? [] : {};
 }
 
-/** Garante valor aceite por PostgreSQL jsonb (evita `''::jsonb` e strings mal formadas). */
+/** Garante valor aceite por PostgreSQL jsonb (evita `''::jsonb`, NUL, FKs aninhadas, NaN). */
 function normalizeJsonbForPg(val, meta, colName, rowId) {
   if (val === undefined) return undefined;
   if (val === null) {
@@ -522,7 +587,15 @@ function normalizeJsonbForPg(val, meta, colName, rowId) {
       return meta.notNull ? jsonbFallback(meta) : null;
     }
     try {
-      return JSON.parse(s);
+      const parsed = JSON.parse(s);
+      const fin = finalizeJsonbForPostgres(parsed);
+      if (fin === null && parsed !== null) {
+        console.warn(
+          `[migrate] JSON inválido ou não normalizável em ${colName} (id=${rowId ?? '?'}); a usar fallback. Trecho: ${s.slice(0, 160)}`
+        );
+        return meta.notNull ? jsonbFallback(meta) : null;
+      }
+      return fin;
     } catch {
       console.warn(
         `[migrate] JSON inválido em ${colName} (id=${rowId ?? '?'}); a usar fallback. Trecho: ${s.slice(0, 160)}`
@@ -531,17 +604,12 @@ function normalizeJsonbForPg(val, meta, colName, rowId) {
     }
   }
   if (typeof val === 'object' && val !== null && !Buffer.isBuffer(val)) {
-    try {
-      const stripped = deepStripNulFromJsonTree(val);
-      const s = JSON.stringify(stripped, (_key, x) => {
-        if (typeof x === 'bigint') return x.toString();
-        return x;
-      });
-      return JSON.parse(s);
-    } catch {
+    const fin = finalizeJsonbForPostgres(val);
+    if (fin === null) {
       console.warn(`[migrate] jsonb não serializável em ${colName} (id=${rowId ?? '?'})`);
       return meta.notNull ? jsonbFallback(meta) : null;
     }
+    return fin;
   }
   console.warn(`[migrate] tipo ${typeof val} inesperado para jsonb ${colName} (id=${rowId ?? '?'})`);
   return meta.notNull ? jsonbFallback(meta) : null;

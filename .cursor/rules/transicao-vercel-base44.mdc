@@ -1,0 +1,28 @@
+---
+description: Transição maio 2026 — a29-erp (Vercel+Supabase) vs varejosync/Base44; fase paralela sem quebrar o outro lado.
+alwaysApply: true
+---
+
+# Transição Vercel ↔ Base44 (repos no workspace)
+
+## Mapa de repositórios (autoridade)
+
+| Repo | Papel |
+|------|--------|
+| **`a29-erp`** | **Novo repositório canónico:** stack Next.js + **Supabase** como BD; **Vercel** deve passar a apontar aqui após a migração. |
+| **`varejosync`** | **Legado em produção no Vercel hoje** (e possível sync com Base44 até ao corte). Código Vite + `@base44/sdk` + `base44/functions/`. |
+
+- **Vercel (estado actual):** deployment ainda com código **`varejosync`**; a intenção é ligar/ligar já a **base de dados Supabase** e migrar o projecto Vercel para o Git **`a29-erp`**.
+- **A partir de 2026-05-01:** operação do negócio deixa o **Base44**; continua no **Vercel** (idealmente já no **`a29-erp`** + Supabase).
+
+## Como o agente deve trabalhar
+
+1. **Ambiguidade:** se não estiver claro, pergunta: trabalho em **`a29-erp`** (futuro canónico) ou em **`varejosync`** (legado / Vercel actual)? Ou pede prefixos `[a29]` / `[varejo]`.
+2. **Em `varejosync`:** não removes fluxos Base44 críticos **sem confirmação** até ao corte; alterações em `base44/functions/**` afectam a infra Base44.
+3. **Em `a29-erp`:** assume **Supabase + Vercel** como alvo; não reintroduz dependência Base44 salvo pedido explícito (ex.: toolkit de migração).
+4. **Paralelo:** se uma alteração tocar **os dois** repos, resume o que mudou em cada um (cherry-pick / PRs).
+5. **Segurança:** sem secrets em commits ou em regras.
+
+## Objetivo
+
+Evoluir **`a29-erp`** como linha principal pós-corte **sem prejudicar** o que ainda corre em **`varejosync`** / Base44 até à data acordada.

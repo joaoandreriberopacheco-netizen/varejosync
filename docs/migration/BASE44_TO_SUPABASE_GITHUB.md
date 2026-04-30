@@ -2,6 +2,8 @@
 
 Este repositório suporta **duas abordagens**. Escolhe **uma** conforme onde queres correr a lógica e que segredos queres guardar.
 
+**Critério de dados:** o script em massa é para **sincronizar entidades escolhidas**; nem tudo precisa de vir do Base44. Ver **[README.md](./README.md)** (secção *Política: peças vs carga* — peças vitais migrar de propósito; carga de produtos pode ser XLSX no Supabase). Usa `--only=Entidade1,Entidade2` para migrações parciais.
+
 ## Abordagem A — GitHub Actions + script Node (recomendada aqui)
 
 O workflow lê entidades pelo SDK Base44 e grava em **PostgreSQL** (Supabase) com `pg`, usando o mapa `src/integrations/p38/entityTableMap.js`.

@@ -19,6 +19,7 @@
     "catalogo:generate-seed": "node scripts/generate-catalogo-interface-seed.mjs",
     "catalogo:build-preview": "node scripts/build-catalogo-preview.mjs",
     "db:apply-migrations": "node scripts/apply-supabase-migrations.mjs",
+    "db:cold-start-keep-produto": "node scripts/cold-start-keep-produto.mjs",
     "migrate:base44-to-supabase": "node scripts/migrate-base44-to-supabase.mjs"
   },
   "dependencies": {

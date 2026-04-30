@@ -2,6 +2,19 @@
 
 Este diretório é o **canal versionado** para pedidos, respostas e artefactos da migração: o que estiver aqui em `main` (ou na vossa branch) é a **fonte de verdade** para a equipa e para o Cursor — não depende da memória de um chat.
 
+## Política: peças (vital) vs carga (operacional)
+
+Separar o que **tem de existir** para o motor da app funcionar do que é **volume de negócio** evita migrações frágeis e custosas à toa.
+
+| Tipo | O que é | Como trazer |
+|------|---------|-------------|
+| **Peças (vital)** | Referências, catálogo de UI, tabelas de apoio, parâmetros mínimos sem os quais ecrãs ou fluxos rebentam (ex.: formas de pagamento, contas financeiras base, categorias, `catalogo_interface`, perfis de acesso, transportadoras se o fluxo exigir, etc.) | **Migrar sim ou sim** (seed versionado em `supabase/seed.sql` + extensões, script `migrate:base44-to-supabase` com `--only=…` para entidades concretas, ou SQL/Studio quando fizer sentido). |
+| **Carga (dados)** | Histórico de vendas, movimentos antigos, pedidos fechados — e **catálogo de produtos** se preferirem controlo editorial | **Produtos:** import direto no Supabase (CSV/XLSX no Table Editor ou `COPY`/ferramentas oficiais). **Resto da carga:** opcional, faseada, ou só a partir de cutover. |
+
+**Partida fria só com stock de produtos:** ver `supabase/scripts/cold_start_keep_produto.sql` e `npm run db:cold-start-keep-produto` (com `CONFIRM_COLD_START=1`). Depois encher **peças** via seed ou migração selectiva; **produtos** via XLSX.
+
+Para uma lista técnica de entidades e funções, cruzar com `src/docs/migration/ENTITIES_MANIFEST.json` e `MIGRATION_CHECKLIST.md`.
+
 ## Documentos
 
 - **[REQUEST_BASE44_AUTOMATED_MIGRATION_DISCLOSURE.md](./REQUEST_BASE44_AUTOMATED_MIGRATION_DISCLOSURE.md)** — Pedido formal ao Base44 para **revelar todo o âmbito** de integrações, análise e automações em formatos **automatizáveis** (migração o menos manual possível).
