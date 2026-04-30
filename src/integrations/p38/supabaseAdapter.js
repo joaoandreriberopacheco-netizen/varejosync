@@ -254,13 +254,7 @@ function buildAppLogs() {
  * Substitui `p38.legacyClient` quando provider === 'supabase'.
  */
 export function createSupabaseLegacyClient() {
-  if (!isSupabaseBrowserConfigured()) {
-    throw new Error(
-      '[P38][supabaseAdapter] VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY ausentes — ' +
-        'não é possível inicializar o provider supabase.'
-    );
-  }
-  const supabase = getSupabaseBrowserClient();
+  const supabase = isSupabaseBrowserConfigured() ? getSupabaseBrowserClient() : null;
   const entities = createSupabaseEntityLayer(null, supabase);
   const auth = buildAuth(supabase);
   const functions = buildFunctions(supabase);
@@ -285,9 +279,9 @@ export function createSupabaseAdapter() {
   return {
     name: 'supabase',
     isConfigured: Boolean(supabase),
-    legacyClient: supabase ? createSupabaseLegacyClient() : null,
-    auth: supabase ? buildAuth(supabase) : null,
-    entities: supabase ? createSupabaseEntityLayer(null, supabase) : null,
+    legacyClient: createSupabaseLegacyClient(),
+    auth: buildAuth(supabase),
+    entities: createSupabaseEntityLayer(null, supabase),
     functions: buildFunctions(supabase),
     integrations: buildIntegrations()
   };

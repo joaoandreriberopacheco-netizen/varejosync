@@ -6,19 +6,23 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
-    base44({
-      legacySDKImports: false,
-      hmrNotifier: true,
-      navigationNotifier: true,
-      visualEditAgent: true,
-    }),
+    ...(command === 'build'
+      ? [
+          base44({
+            legacySDKImports: false,
+            hmrNotifier: true,
+            navigationNotifier: true,
+            visualEditAgent: true,
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
-})
+}))

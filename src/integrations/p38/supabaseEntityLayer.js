@@ -281,6 +281,9 @@ export function createSupabaseEntityLayer(base44Entities, supabase) {
   return new Proxy(fallbackTarget, {
     get(target, prop) {
       const name = String(prop);
+      if (!supabase) {
+        return createStubEntityApi(name);
+      }
       const mapping = resolveEntityMapping(name);
       if (mapping) {
         return createEntityApi(supabase, name, mapping);

@@ -4,7 +4,7 @@ import { createPageUrl } from '@/components/utils';
 import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
-import { base44 } from '@/api/base44Client';
+import { base44, p38 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/sonner";
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
@@ -115,12 +115,12 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
-      const user = await base44.auth.me();
+      const user = await p38.auth.me();
       if (user) {
         let perfil = null;
         if (user.perfil_acesso_id) {
           try {
-            const perfis = await base44.entities.PerfilDeAcesso.filter({ id: user.perfil_acesso_id });
+            const perfis = await p38.entities.PerfilDeAcesso.filter({ id: user.perfil_acesso_id });
             perfil = perfis?.[0] || null;
           } catch (e) {
             console.warn('Perfil de acesso não encontrado:', e);
