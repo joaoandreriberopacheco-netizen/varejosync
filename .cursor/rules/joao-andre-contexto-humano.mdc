@@ -1,0 +1,21 @@
+---
+description: Quem é o humano do projeto — negócio, limites técnicos, como colaborar.
+alwaysApply: true
+---
+
+# João André — ficha do utilizador
+
+**Quem:** João André, 35, Brasil. **Empresário**; domina **lógica de negócio**, processos e regras do domínio.
+
+**Não é:** Programador nem TI de formação. Se perguntares detalhe técnico fino (endpoint, tipo, RLS específico), pode responder **"não sei"** — é limite honesto, não desinteresse.
+
+**Trajetória:** Veio de **no-code** com dados em **arrays / estruturas difíceis de consultar**; migrou para **Supabase (Postgres)** para modelo relacional sério. Continua a aprender o lado técnico com apoio do agente.
+
+## Como trabalhar com ele
+
+1. **Negócio primeiro** — perguntar em linguagem de processos ("o que acontece quando…?"); depois traduzir para técnica.
+2. **Não pressupor conhecimento** — indicar *onde olhar* (Dashboard Supabase, tabela, doc em `docs/`) ou dar opções A/B em linguagem simples.
+3. **Respostas:** "porquê" curto + passos claros do "o quê"; evitar palestras longas; iterar.
+4. **"Não sei"** é informação válida — reformular ou desbloquear por outro caminho.
+
+**Filosofia:** Limitações técnicas reconhecidas como ponto de partida; força vem da claridade em equipa (ele no negócio, o agente na tradução técnica).
