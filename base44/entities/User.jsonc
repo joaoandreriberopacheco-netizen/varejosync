@@ -1,0 +1,20 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "email": { "type": "string" },
+    "full_name": { "type": "string" },
+    "role": { "type": "string" },
+    "nickname": { "type": "string" },
+    "perfil": { "type": "string" },
+    "perfil_acesso_id": { "type": "string" },
+    "perfil_acesso_nome": { "type": "string" },
+    "tabela_preco_id": { "type": "string" },
+    "tabela_preco_nome": { "type": "string" },
+    "caixas_pdv_autorizados_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "IDs de caixa PDV autorizados"
+    }
+  }
+}

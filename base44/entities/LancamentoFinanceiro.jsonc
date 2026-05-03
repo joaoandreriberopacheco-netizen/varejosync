@@ -1,0 +1,9 @@
+{
+  "name": "LancamentoFinanceiro",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "valor": { "type": "number" },
+    "tipo": { "type": "string" }
+  }
+}

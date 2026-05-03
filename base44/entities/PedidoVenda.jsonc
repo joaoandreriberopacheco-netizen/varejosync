@@ -1,0 +1,9 @@
+{
+  "name": "PedidoVenda",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "numero": { "type": "string" },
+    "status": { "type": "string" }
+  }
+}

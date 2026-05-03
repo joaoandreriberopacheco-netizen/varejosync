@@ -1,0 +1,8 @@
+{
+  "name": "OrdemSeparacao",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "status": { "type": "string" }
+  }
+}

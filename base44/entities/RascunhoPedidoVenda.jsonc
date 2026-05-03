@@ -1,0 +1,7 @@
+{
+  "name": "RascunhoPedidoVenda",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Produto",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "nome": { "type": "string" },
+    "codigo": { "type": "string" }
+  }
+}

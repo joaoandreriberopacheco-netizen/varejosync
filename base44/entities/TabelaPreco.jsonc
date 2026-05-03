@@ -1,0 +1,8 @@
+{
+  "name": "TabelaPreco",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "nome": { "type": "string" }
+  }
+}

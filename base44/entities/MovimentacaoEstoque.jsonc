@@ -1,0 +1,9 @@
+{
+  "name": "MovimentacaoEstoque",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "tipo": { "type": "string" },
+    "quantidade": { "type": "number" }
+  }
+}

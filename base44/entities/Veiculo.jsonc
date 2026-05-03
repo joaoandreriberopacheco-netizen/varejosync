@@ -1,0 +1,9 @@
+{
+  "name": "Veiculo",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "placa": { "type": "string" },
+    "descricao": { "type": "string" }
+  }
+}

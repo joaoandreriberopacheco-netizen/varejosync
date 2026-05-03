@@ -1,0 +1,8 @@
+{
+  "name": "Terceiro",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "nome": { "type": "string" }
+  }
+}

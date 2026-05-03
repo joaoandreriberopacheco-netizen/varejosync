@@ -1,0 +1,9 @@
+{
+  "name": "Tarefa",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "titulo": { "type": "string" },
+    "status": { "type": "string" }
+  }
+}
