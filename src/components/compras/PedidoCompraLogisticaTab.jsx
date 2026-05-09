@@ -8,6 +8,7 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
+import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado } from '@/lib/embarqueLogisticaHelpers';
 
 // Calcula total embarcado por produto em TODOS os embarques
 function calcularTotalEmbarcado(embarques) {
@@ -200,10 +201,20 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
   const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
   const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
   const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => (emb.itens || emb.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
-  const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || pedido?.percentual_despachado || 0);
-  const percentualConcluido = Number(pedido?.percentual_concluido || 0);
-  const percentualPendente = Number(pedido?.percentual_pendente || Math.max(0, 100 - percentualEmbarcado));
+  const percentuaisCalculados = useMemo(
+    () => calcularPercentuaisLogistica(pedido, embarques),
+    [pedido?.id, pedido?.itens, embarques]
+  );
+  const percentualEmbarcado = percentuaisCalculados.despachado;
+  const percentualConcluido = percentuaisCalculados.concluido;
+  const percentualPendente = percentuaisCalculados.pendente;
   const temEmbarqueReal = embarquesComDespacho.length > 0;
+  const statusEmbarqueAgregado = useMemo(() => {
+    if (!temEmbarqueReal) return 'Nenhum';
+    const derivado = derivarStatusEmbarqueAgregado(percentualEmbarcado);
+    if (derivado !== 'Nenhum') return derivado;
+    return pedido?.status_embarque || 'Nenhum';
+  }, [temEmbarqueReal, percentualEmbarcado, pedido?.status_embarque]);
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarquesComItensAssociados), [embarquesComItensAssociados]);
 
   // Itens órfãos: qty pedida - qty embarcada em todos os embarques reais
@@ -251,7 +262,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">Status agregado</p>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{temEmbarqueReal ? (pedido?.status_embarque || 'Nenhum') : 'Nenhum'}</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{statusEmbarqueAgregado}</p>
           </div>
         </div>
         <div className="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex">

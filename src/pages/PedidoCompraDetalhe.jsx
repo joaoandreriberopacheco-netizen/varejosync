@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
+import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
 
 /**
  * Página inteira de detalhe/criação de Pedido de Compra — apenas Desktop.
@@ -36,7 +37,8 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
-    const embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
+    let embarques = filterEmbarquesVisiveisParaPedido(embarquesRes || []);
+    embarques = await hydrateEmbarquesLinhasDesdeCanonical(base44, pedidoBase.id, embarques);
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]
