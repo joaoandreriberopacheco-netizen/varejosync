@@ -23,22 +23,30 @@ function useBrandDarkMode() {
 }
 
 /**
- * Raio — logomarca oficial (silhueta única, preenchimento sólido).
+ * Raio oficial — sempre `/brand/p38-icon.svg` (tile arredondado + silhueta).
+ * O ícone inline 24×24 antigo era só placeholder e não coincide com a marca.
  */
-function LightningIcon({ size = 32, color = '#000000', className = '' }) {
+function OfficialRaioMark({ size = 32, className = '' }) {
+  const s = Math.min(96, Math.max(16, Number(size) || 32));
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill={color}
-      className={className}
-      style={{ flexShrink: 0, display: 'block' }}
-      aria-hidden
-    >
-      <path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z" />
-    </svg>
+    <img
+      src="/brand/p38-icon.svg"
+      alt=""
+      role="img"
+      aria-label="P38 ERP"
+      width={s}
+      height={s}
+      className={`block flex-shrink-0 select-none object-contain ${className}`}
+      style={{ width: s, height: s }}
+    />
   );
+}
+
+/**
+ * @deprecated Parâmetro `color` ignorado — mantido para código que importava o símbolo antigo.
+ */
+function LightningIcon({ size = 32, color: _color, className = '' }) {
+  return <OfficialRaioMark size={size} className={className} />;
 }
 
 /**
@@ -98,25 +106,14 @@ export default function P38Logo({
     lineHeight: 1,
   };
 
-  /** Sidebar recolhida: sempre o SVG oficial (sem invert — fundo branco + raio no asset). */
+  /** Sidebar recolhida: mesmo asset que o login / PWA (sem invert no dark). */
   if (resolved === 'icon-only') {
     const side = Math.min(40, Math.max(26, cfg.icon));
-    return (
-      <img
-        src="/brand/p38-icon.svg"
-        alt=""
-        role="img"
-        aria-label="P38 ERP"
-        width={side}
-        height={side}
-        className={`block flex-shrink-0 select-none object-contain ${className}`}
-        style={{ width: side, height: side }}
-      />
-    );
+    return <OfficialRaioMark size={side} className={className} />;
   }
 
   const pngKey =
-    resolved === 'icon-only' ? 'icon' : resolved === 'mobile' ? 'mobile' : resolved === 'vertical' ? 'vertical' : 'horizontal';
+    resolved === 'mobile' ? 'mobile' : resolved === 'vertical' ? 'vertical' : 'horizontal';
   const pngSrc = OFFICIAL_PNG[pngKey];
   const pngHeight =
     resolved === 'vertical'
@@ -157,7 +154,7 @@ export default function P38Logo({
         role="img"
         aria-label="P38 ERP"
       >
-        <LightningIcon size={cfg.icon} color={fg} />
+        <OfficialRaioMark size={cfg.icon} />
         <span
           className="font-glacial"
           style={{ ...textP38, fontSize: cfg.p38 }}
@@ -176,7 +173,7 @@ export default function P38Logo({
         role="img"
         aria-label="P38 ERP"
       >
-        <LightningIcon size={cfg.icon} color={fg} />
+        <OfficialRaioMark size={cfg.icon} />
         <span className="font-glacial text-center" style={{ ...textP38, fontSize: cfg.p38 }}>
           P38
         </span>
@@ -204,7 +201,7 @@ export default function P38Logo({
       role="img"
       aria-label="P38 ERP"
     >
-      <LightningIcon size={cfg.icon} color={fg} />
+      <OfficialRaioMark size={cfg.icon} />
       <div className="flex items-center" style={{ gap: Math.max(6, cfg.gap * 0.45) }}>
         <span className="font-glacial" style={{ ...textP38, fontSize: cfg.p38 }}>
           P38
@@ -218,4 +215,4 @@ export default function P38Logo({
   );
 }
 
-export { LightningIcon, useBrandDarkMode };
+export { LightningIcon, OfficialRaioMark, useBrandDarkMode };
