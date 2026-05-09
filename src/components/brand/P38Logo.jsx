@@ -23,22 +23,29 @@ function useBrandDarkMode() {
 }
 
 /**
- * Raio oficial — sempre `/brand/p38-icon.svg` (tile arredondado + silhueta).
- * O ícone inline 24×24 antigo era só placeholder e não coincide com a marca.
+ * Raio oficial — mesmas paths que `public/brand/p38-icon.svg` (manter em sincronia).
+ * Inline evita cache / falha ao carregar o ficheiro e o fallback antigo (vetor 24×24).
  */
 function OfficialRaioMark({ size = 32, className = '' }) {
   const s = Math.min(96, Math.max(16, Number(size) || 32));
   return (
-    <img
-      src="/brand/p38-icon.svg"
-      alt=""
-      role="img"
-      aria-label="P38 ERP"
-      width={s}
-      height={s}
-      className={`block flex-shrink-0 select-none object-contain ${className}`}
+    <span
+      className={`inline-flex flex-shrink-0 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 ${className}`}
       style={{ width: s, height: s }}
-    />
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 512 512"
+        width={s}
+        height={s}
+        className="block select-none rounded-2xl"
+        role="img"
+        aria-label="P38 ERP"
+      >
+        <rect width="512" height="512" rx="112" fill="#ffffff" />
+        <path fill="#000000" d="M316 76L116 316h160l-20 160 220-240h-160l20-160z" />
+      </svg>
+    </span>
   );
 }
 
