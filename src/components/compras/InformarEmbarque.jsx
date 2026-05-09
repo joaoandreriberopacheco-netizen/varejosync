@@ -11,7 +11,7 @@ import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelec
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -415,7 +415,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       const podeSalvarSoTransporte = isEdicao && itensEmbarcados.length === 0 && itensJaLancados.length > 0;
 
       if (!podeSalvarSoTransporte && itensEmbarcados.length === 0) {
-        return toast.error('Informe quantidades maiores que zero');
+        toast.error('Informe quantidades maiores que zero');
+        return;
       }
 
       // Volumes: texto descritivo resumido para campo legado
@@ -460,8 +461,19 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         embarqueIdSalvo = embCriado?.id || null;
       }
 
+      const linhasComQuantidade = (payloadEmbarque.itens_embarcados || payloadEmbarque.itens || []).filter(
+        (it) => it?.produto_id && (Number(it?.quantidade_embarcada) || 0) > 0
+      );
+      const nProdutosVinculados = linhasComQuantidade.length;
+      const totalUnidadesEmbarcadas = linhasComQuantidade.reduce(
+        (s, i) => s + (Number(i.quantidade_embarcada) || 0),
+        0
+      );
+
       // Sincronia canonica de EmbarqueItem (espelho recomposto pelo backend).
-      if (embarqueIdSalvo && Array.isArray(payloadEmbarque?.itens)) {
+      let sincroniaCanonical = 'nao_aplicavel';
+      if (embarqueIdSalvo && Array.isArray(payloadEmbarque?.itens) && nProdutosVinculados > 0) {
+        sincroniaCanonical = 'pendente';
         try {
           const itensCanonicos = payloadEmbarque.itens
             .map((it, idx) => ({
@@ -487,8 +499,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
               embarque_id: embarqueIdSalvo,
               items: itensCanonicos,
             });
+            sincroniaCanonical = 'ok';
+          } else {
+            sincroniaCanonical = 'linhas_invalidas';
           }
         } catch (canonicalErr) {
+          sincroniaCanonical = 'erro';
           console.warn('Sincronia canonica de EmbarqueItem falhou:', canonicalErr?.message || canonicalErr);
         }
       }
@@ -497,10 +513,27 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
       const msgOk = isEdicao ? 'Despacho atualizado com sucesso.' : 'Despacho registrado com sucesso.';
-      toast.success(msgOk, {
-        description: 'Aguarde: vamos para a aba Recepção em instantes.',
-        duration: 4500,
-      });
+      const resumoItens =
+        nProdutosVinculados > 0
+          ? `${nProdutosVinculados} produto(s) com quantidades embarcadas (${formatQuantity(totalUnidadesEmbarcadas)} un.). `
+          : 'Sem linhas novas por produto neste envio (apenas transporte/dados logísticos). ';
+      const seguirRecepcao = 'A seguir abrimos a Recepção.';
+      const avisoSync =
+        sincroniaCanonical === 'erro' || sincroniaCanonical === 'linhas_invalidas'
+          ? ' Atenção: a sincronização extra das linhas (EmbarqueItem) falhou ou ficou incompleta — confira na Recepção.'
+          : '';
+
+      if (sincroniaCanonical === 'erro' || sincroniaCanonical === 'linhas_invalidas') {
+        toast.warning(isEdicao ? 'Despacho guardado com ressalvas' : 'Despacho registado com ressalvas', {
+          description: `${resumoItens}${seguirRecepcao}${avisoSync}`,
+          duration: 9000,
+        });
+      } else {
+        toast.success(msgOk, {
+          description: `${resumoItens}${seguirRecepcao}`,
+          duration: 6500,
+        });
+      }
       await new Promise((r) => setTimeout(r, PAUSA_ANTES_RECEPCAO_MS));
       onSuccess?.();
       onIrParaRecepcao?.();
