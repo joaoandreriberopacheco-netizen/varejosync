@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 
+/** Raio PWA + menu — substituir o ficheiro em public/brand para rebrand. */
+const BRAND_APP_ICON_URL = '/brand/p38-app-icon.png';
+
 /** Coloque os PNGs oficiais em /public/brand/ — se ausentes, o componente volta ao vetor. */
 const OFFICIAL_PNG = {
   horizontal: '/brand/p38-logo-full.png',
   mobile: '/brand/p38-logo-mobile.png',
   vertical: '/brand/p38-logo-mobile.png',
-  icon: '/brand/p38-icon.svg',
+  icon: BRAND_APP_ICON_URL,
 };
 
 /** Sincroniza com a classe `dark` em <html> (Tailwind). */
@@ -22,29 +25,47 @@ function useBrandDarkMode() {
   return isDark;
 }
 
-/**
- * Raio oficial — mesmas paths que `public/brand/p38-icon.svg` (manter em sincronia).
- * Inline evita cache / falha ao carregar o ficheiro e o fallback antigo (vetor 24×24).
- */
+/** Mesmo ficheiro que o manifest PWA (public/brand/p38-app-icon.png). Fallback: vetor legado. */
 function OfficialRaioMark({ size = 32, className = '' }) {
   const s = Math.min(96, Math.max(16, Number(size) || 32));
+  const [imgFailed, setImgFailed] = useState(false);
+  if (imgFailed) {
+    return (
+      <span
+        className={`inline-flex flex-shrink-0 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 ${className}`}
+        style={{ width: s, height: s }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          width={s}
+          height={s}
+          className="block select-none rounded-2xl"
+          role="img"
+          aria-label="P38 ERP"
+        >
+          <rect width="512" height="512" rx="112" fill="#ffffff" />
+          <path fill="#000000" d="M316 76L116 316h160l-20 160 220-240h-160l20-160z" />
+        </svg>
+      </span>
+    );
+  }
   return (
     <span
-      className={`inline-flex flex-shrink-0 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 ${className}`}
+      className={`inline-flex flex-shrink-0 overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 ${className}`}
       style={{ width: s, height: s }}
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 512 512"
-        width={s}
-        height={s}
-        className="block select-none rounded-2xl"
+      <img
+        src={BRAND_APP_ICON_URL}
+        alt=""
         role="img"
         aria-label="P38 ERP"
-      >
-        <rect width="512" height="512" rx="112" fill="#ffffff" />
-        <path fill="#000000" d="M316 76L116 316h160l-20 160 220-240h-160l20-160z" />
-      </svg>
+        width={s}
+        height={s}
+        draggable={false}
+        className="block h-full w-full select-none object-cover"
+        onError={() => setImgFailed(true)}
+      />
     </span>
   );
 }
