@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 /** Coloque os PNGs oficiais em /public/brand/ — se ausentes, o componente volta ao vetor. */
 const OFFICIAL_PNG = {
@@ -98,15 +98,30 @@ export default function P38Logo({
     lineHeight: 1,
   };
 
+  /** Sidebar recolhida: sempre o SVG oficial (sem invert — fundo branco + raio no asset). */
+  if (resolved === 'icon-only') {
+    const side = Math.min(40, Math.max(26, cfg.icon));
+    return (
+      <img
+        src="/brand/p38-icon.svg"
+        alt=""
+        role="img"
+        aria-label="P38 ERP"
+        width={side}
+        height={side}
+        className={`block flex-shrink-0 select-none object-contain ${className}`}
+        style={{ width: side, height: side }}
+      />
+    );
+  }
+
   const pngKey =
     resolved === 'icon-only' ? 'icon' : resolved === 'mobile' ? 'mobile' : resolved === 'vertical' ? 'vertical' : 'horizontal';
   const pngSrc = OFFICIAL_PNG[pngKey];
   const pngHeight =
     resolved === 'vertical'
       ? Math.min(220, Math.round(cfg.icon + cfg.p38 + cfg.erp + cfg.vGap * 6))
-      : resolved === 'icon-only'
-        ? cfg.icon
-        : Math.max(cfg.icon, Math.round(cfg.p38 * 1.25));
+      : Math.max(cfg.icon, Math.round(cfg.p38 * 1.25));
 
   if (useOfficialPng && !pngMissing && pngSrc) {
     return (
@@ -132,10 +147,6 @@ export default function P38Logo({
         onError={() => setPngMissing(true)}
       />
     );
-  }
-
-  if (resolved === 'icon-only') {
-    return <LightningIcon size={cfg.icon} color={fg} className={className} />;
   }
 
   if (resolved === 'mobile') {
