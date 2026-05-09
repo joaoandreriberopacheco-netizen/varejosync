@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
@@ -102,7 +102,7 @@ export default function PedidoCompraDetalhe() {
         tem_divergencias: sanitizedData.tem_divergencias ?? pedidoAtual.tem_divergencias,
       });
     } else {
-      const { id, ...newPedido } = sanitizedData;
+      const { id: _id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
         const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
         newPedido.numero = resp?.data?.numero;
