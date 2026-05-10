@@ -39,6 +39,7 @@ import AuditoriaPins from '@/pages/AuditoriaPins';
 import AgefinConsulta from '@/pages/AgefinConsulta';
 import ItinerarioFluvial from '@/pages/ItinerarioFluvial.jsx';
 import AuditoriaCodigoProjeto from '@/pages/AuditoriaCodigoProjeto';
+import CorrecaoRecepcaoEstoque from '@/pages/CorrecaoRecepcaoEstoque';
 import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 
@@ -191,6 +192,7 @@ const AuthenticatedApp = () => {
       <Route path="/AgefinConsulta" element={<LayoutWrapper currentPageName="AgefinConsulta"><AgefinConsulta /></LayoutWrapper>} />
       <Route path="/ItinerarioFluvial" element={<LayoutWrapper currentPageName="ItinerarioFluvial"><ItinerarioFluvial /></LayoutWrapper>} />
       <Route path="/AuditoriaCodigoProjeto" element={<LayoutWrapper currentPageName="AuditoriaCodigoProjeto"><AuditoriaCodigoProjeto /></LayoutWrapper>} />
+      <Route path="/CorrecaoRecepcaoEstoque" element={<LayoutWrapper currentPageName="CorrecaoRecepcaoEstoque"><CorrecaoRecepcaoEstoque /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>

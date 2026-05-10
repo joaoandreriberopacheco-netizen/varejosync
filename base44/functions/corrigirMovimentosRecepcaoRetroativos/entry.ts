@@ -49,22 +49,34 @@ async function loadEmbarquesForPedido(svc: any, pedido: Record<string, unknown>)
 }
 
 async function sumMovedByProduct(svc: any, pedidoId: string): Promise<Record<string, number>> {
-  const movs = await svc.entities.MovimentacaoEstoque.filter(
-    {
-      referencia_tipo: 'PedidoCompra',
-      referencia_id: pedidoId,
-    },
+  const seen = new Set<string>();
+  const acc: Record<string, number> = {};
+
+  const ingest = (movs: any[]) => {
+    for (const m of movs || []) {
+      if (m?.id && seen.has(m.id)) continue;
+      if (m?.id) seen.add(m.id);
+      if (m.tipo !== 'Entrada' || m.motivo !== 'Compra') continue;
+      const pid = m.produto_id;
+      if (!pid) continue;
+      const q = Number(m.quantidade) || 0;
+      acc[pid] = roundQty((acc[pid] || 0) + q);
+    }
+  };
+
+  let movs = await svc.entities.MovimentacaoEstoque.filter(
+    { referencia_tipo: 'PedidoCompra', referencia_id: pedidoId },
     '-created_date',
     2000,
   );
-  const acc: Record<string, number> = {};
-  for (const m of movs || []) {
-    if (m.tipo !== 'Entrada' || m.motivo !== 'Compra') continue;
-    const pid = m.produto_id;
-    if (!pid) continue;
-    const q = Number(m.quantidade) || 0;
-    acc[pid] = roundQty((acc[pid] || 0) + q);
-  }
+  ingest(movs);
+  const alt = await svc.entities.MovimentacaoEstoque.filter(
+    { referencia_tipo: 'PedidoCompra', referencia_id: String(pedidoId) },
+    '-created_date',
+    2000,
+  );
+  ingest(alt);
+
   return acc;
 }
 
@@ -115,26 +127,41 @@ Deno.serve(async (req) => {
       dataFim,
       pedidoIds,
       dryRun = true,
+      varreduraCompletaPedidos = false,
+      limitePedidos = 8000,
     } = body as {
       dataInicio?: string;
       dataFim?: string;
       pedidoIds?: string[];
       dryRun?: boolean;
+      varreduraCompletaPedidos?: boolean;
+      limitePedidos?: number;
     };
 
     const svc = base44.asServiceRole;
     const pedidos: Record<string, unknown>[] = [];
+    let escopoUsado = '';
 
     if (Array.isArray(pedidoIds) && pedidoIds.length > 0) {
+      escopoUsado = 'lista_ids';
       for (const id of pedidoIds) {
         const [p] = await svc.entities.PedidoCompra.filter({ id });
         if (p) pedidos.push(p as Record<string, unknown>);
       }
+    } else if (varreduraCompletaPedidos === true) {
+      escopoUsado = 'varredura_todos';
+      const lim = Math.min(Math.max(Number(limitePedidos) || 8000, 1), 15000);
+      const todos = await svc.entities.PedidoCompra.list('-created_date', lim);
+      for (const p of todos || []) {
+        pedidos.push(p as Record<string, unknown>);
+      }
     } else {
+      escopoUsado = 'intervalo_created_date';
       if (!dataInicio || !dataFim || !/^\d{4}-\d{2}-\d{2}$/.test(dataInicio) || !/^\d{4}-\d{2}-\d{2}$/.test(dataFim)) {
         return Response.json(
           {
-            error: 'Forneça pedidoIds (array não vazio) ou dataInicio e dataFim no formato YYYY-MM-DD.',
+            error:
+              'Forneça pedidoIds (array), varreduraCompletaPedidos:true, ou dataInicio e dataFim (YYYY-MM-DD).',
           },
           { status: 400 },
         );
@@ -241,10 +268,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    const comDelta = (report || []).filter(
+      (r) => Array.isArray((r as { deltas?: unknown[] }).deltas) && ((r as { deltas: unknown[] }).deltas?.length ?? 0) > 0,
+    ).length;
+
     return Response.json({
       success: true,
       dryRun,
+      escopo: escopoUsado,
       pedidos_analisados: pedidos.length,
+      pedidos_com_delta: comDelta,
       linhas_corrigidas: dryRun ? 0 : linhasCorrigidas,
       produtos_recalculados: dryRun ? 0 : produtosRecalc.size,
       detalhes: report,

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
 import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt, Printer, Trash2 } from 'lucide-react';
@@ -18,12 +17,12 @@ import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '@/components/config/RecomecarDoZero';
+import CorrecaoRecepcaoEstoquePainel from '@/components/config/CorrecaoRecepcaoEstoquePainel';
 import { useNavigate } from 'react-router-dom';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
 
 export default function ConfiguracoesPage() {
-  const { currentUser } = useAuth();
   const [userLoaded, setUserLoaded] = useState(false);
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('vendas');
@@ -195,6 +194,23 @@ export default function ConfiguracoesPage() {
                 </Link>
               </div>
             </div>
+
+            {isAdmin && (
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                    Compras / Stock (admin)
+                  </p>
+                  <Link
+                    to="/CorrecaoRecepcaoEstoque"
+                    className="text-xs font-medium text-teal-600 dark:text-teal-400 hover:underline"
+                  >
+                    Abrir página dedicada →
+                  </Link>
+                </div>
+                <CorrecaoRecepcaoEstoquePainel />
+              </div>
+            )}
 
             <RecomecarDoZero />
           </div>
