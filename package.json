@@ -21,7 +21,8 @@
     "db:apply-migrations": "node scripts/apply-supabase-migrations.mjs",
     "db:cold-start-keep-produto": "node scripts/cold-start-keep-produto.mjs",
     "migrate:base44-to-supabase": "node scripts/migrate-base44-to-supabase.mjs",
-    "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs"
+    "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
+    "git:ship": "node scripts/git-ship.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.27",

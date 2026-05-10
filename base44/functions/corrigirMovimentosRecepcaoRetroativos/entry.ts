@@ -1,0 +1,258 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+
+const roundQty = (n: number) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
+
+function parseEmbarquesRegistrados(pedido: Record<string, unknown>): unknown[] {
+  const raw = pedido?.embarques_registrados;
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === 'string') {
+    try {
+      const p = JSON.parse(raw);
+      return Array.isArray(p) ? p.filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function sumReceivedByProduct(embarques: unknown[]): Record<string, number> {
+  const acc: Record<string, number> = {};
+  for (const emb of embarques) {
+    const e = emb as Record<string, unknown>;
+    const arr =
+      Array.isArray(e?.itens_embarcados) && (e.itens_embarcados as unknown[]).length
+        ? (e.itens_embarcados as Record<string, unknown>[])
+        : Array.isArray(e?.itens)
+          ? (e.itens as Record<string, unknown>[])
+          : [];
+    for (const item of arr) {
+      const q = Number(item?.quantidade_recebida) || 0;
+      if (q <= 0) continue;
+      const pid = String(item?.produto_id_recebido_diferente || item?.produto_id || '');
+      if (!pid) continue;
+      acc[pid] = roundQty((acc[pid] || 0) + q);
+    }
+  }
+  return acc;
+}
+
+async function loadEmbarquesForPedido(svc: any, pedido: Record<string, unknown>): Promise<unknown[]> {
+  const embedded = parseEmbarquesRegistrados(pedido);
+  if (embedded.length > 0) return embedded;
+  try {
+    const rows = await svc.entities.Embarque.filter({ pedido_compra_id: pedido.id }, '-created_date', 500);
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+async function sumMovedByProduct(svc: any, pedidoId: string): Promise<Record<string, number>> {
+  const movs = await svc.entities.MovimentacaoEstoque.filter(
+    {
+      referencia_tipo: 'PedidoCompra',
+      referencia_id: pedidoId,
+    },
+    '-created_date',
+    2000,
+  );
+  const acc: Record<string, number> = {};
+  for (const m of movs || []) {
+    if (m.tipo !== 'Entrada' || m.motivo !== 'Compra') continue;
+    const pid = m.produto_id;
+    if (!pid) continue;
+    const q = Number(m.quantidade) || 0;
+    acc[pid] = roundQty((acc[pid] || 0) + q);
+  }
+  return acc;
+}
+
+function nomeProdutoPedido(pedido: Record<string, unknown>, produtoId: string): string {
+  const itens = Array.isArray(pedido?.itens) ? (pedido.itens as Record<string, unknown>[]) : [];
+  const hit = itens.find((it) => String(it?.produto_id) === produtoId);
+  return String(hit?.produto_nome || '');
+}
+
+async function recalcularEstoqueLocal(svc: any, produtoId: string) {
+  const [produto] = await svc.entities.Produto.filter({ id: produtoId });
+  if (!produto) return;
+  const movimentacoes = await svc.entities.MovimentacaoEstoque.filter({ produto_id: produtoId }, '-created_date', 1000);
+  const saldoMovimentos = (movimentacoes || []).reduce((acc: number, mov: Record<string, unknown>) => {
+    const quantidade = Number(mov.quantidade) || 0;
+    if (mov.tipo === 'Entrada') return acc + quantidade;
+    if (mov.tipo === 'Saída') return acc - quantidade;
+    return acc;
+  }, 0);
+  const estoqueAvariado = Number(produto.estoque_avariado) || 0;
+  const estoqueAtual = Math.max(0, saldoMovimentos - estoqueAvariado);
+  await svc.entities.Produto.update(produtoId, { estoque_atual: estoqueAtual });
+}
+
+function inDateRange(isoDate: string | undefined | null, start: Date, end: Date): boolean {
+  if (!isoDate) return false;
+  const d = new Date(isoDate);
+  if (Number.isNaN(d.getTime())) return false;
+  return d >= start && d <= end;
+}
+
+Deno.serve(async (req) => {
+  try {
+    if (req.method !== 'POST') {
+      return Response.json({ error: 'Use POST com JSON.' }, { status: 405 });
+    }
+
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Acesso restrito a administradores.' }, { status: 403 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const {
+      dataInicio,
+      dataFim,
+      pedidoIds,
+      dryRun = true,
+    } = body as {
+      dataInicio?: string;
+      dataFim?: string;
+      pedidoIds?: string[];
+      dryRun?: boolean;
+    };
+
+    const svc = base44.asServiceRole;
+    const pedidos: Record<string, unknown>[] = [];
+
+    if (Array.isArray(pedidoIds) && pedidoIds.length > 0) {
+      for (const id of pedidoIds) {
+        const [p] = await svc.entities.PedidoCompra.filter({ id });
+        if (p) pedidos.push(p as Record<string, unknown>);
+      }
+    } else {
+      if (!dataInicio || !dataFim || !/^\d{4}-\d{2}-\d{2}$/.test(dataInicio) || !/^\d{4}-\d{2}-\d{2}$/.test(dataFim)) {
+        return Response.json(
+          {
+            error: 'Forneça pedidoIds (array não vazio) ou dataInicio e dataFim no formato YYYY-MM-DD.',
+          },
+          { status: 400 },
+        );
+      }
+      const start = new Date(`${dataInicio}T00:00:00.000Z`);
+      const end = new Date(`${dataFim}T23:59:59.999Z`);
+      const todos = await svc.entities.PedidoCompra.list();
+      for (const p of todos || []) {
+        const po = p as Record<string, unknown>;
+        if (inDateRange(po.created_date as string, start, end)) pedidos.push(po);
+      }
+    }
+
+    const report: Record<string, unknown>[] = [];
+    let linhasCorrigidas = 0;
+    const produtosRecalc = new Set<string>();
+    const erros: Record<string, unknown>[] = [];
+
+    for (const pedido of pedidos) {
+      try {
+        const embarques = await loadEmbarquesForPedido(svc, pedido);
+        const recebido = sumReceivedByProduct(embarques);
+        const movimentado = await sumMovedByProduct(svc, String(pedido.id));
+
+        const produtoIds = new Set([...Object.keys(recebido), ...Object.keys(movimentado)]);
+        const deltas: Record<string, unknown>[] = [];
+
+        for (const pid of produtoIds) {
+          const r = recebido[pid] || 0;
+          const m = movimentado[pid] || 0;
+          const faltante = roundQty(Math.max(0, r - m));
+          if (faltante > 0) {
+            deltas.push({
+              produto_id: pid,
+              recebido_documental: r,
+              ja_movimentado: m,
+              faltante,
+            });
+          }
+        }
+
+        if (!deltas.length) {
+          report.push({
+            pedido_id: pedido.id,
+            numero: pedido.numero,
+            skipped: true,
+            motivo: 'sem_delta',
+          });
+          continue;
+        }
+
+        const linhaReport = {
+          pedido_id: pedido.id,
+          numero: pedido.numero,
+          deltas,
+        };
+
+        if (dryRun) {
+          report.push({ ...linhaReport, dryRun: true });
+          continue;
+        }
+
+        const obsBase = `Correção retroativa recepção→estoque (admin ${user.email || ''}); reconcilia embarques vs MovimentacaoEstoque Compra.`;
+
+        for (const d of deltas) {
+          const row = d as { produto_id: string; faltante: number };
+          await svc.entities.MovimentacaoEstoque.create({
+            produto_id: row.produto_id,
+            produto_nome: nomeProdutoPedido(pedido, row.produto_id) || 'Produto',
+            tipo: 'Entrada',
+            motivo: 'Compra',
+            quantidade: row.faltante,
+            referencia_tipo: 'PedidoCompra',
+            referencia_id: pedido.id,
+            referencia_numero: pedido.numero,
+            observacoes: obsBase,
+          });
+          linhasCorrigidas += 1;
+          produtosRecalc.add(row.produto_id);
+        }
+
+        try {
+          const tag = `\n[CORREÇÃO MOVIMENTOS RECEPÇÃO RETROATIVA | PC ${pedido.numero || pedido.id} | ${deltas.length} linha(s) | ${new Date().toISOString()}]`;
+          await svc.entities.PedidoCompra.update(String(pedido.id), {
+            historico: String(pedido.historico || '') + tag,
+          });
+        } catch (e) {
+          erros.push({ pedido_id: pedido.id, etapa: 'historico', erro: (e as Error).message });
+        }
+
+        report.push({ ...linhaReport, aplicado: true });
+      } catch (e) {
+        erros.push({ pedido_id: pedido?.id, erro: (e as Error).message });
+      }
+    }
+
+    if (!dryRun) {
+      for (const produtoId of produtosRecalc) {
+        try {
+          await recalcularEstoqueLocal(svc, produtoId);
+        } catch (e) {
+          erros.push({ produto_id: produtoId, etapa: 'recalcular_estoque', erro: (e as Error).message });
+        }
+      }
+    }
+
+    return Response.json({
+      success: true,
+      dryRun,
+      pedidos_analisados: pedidos.length,
+      linhas_corrigidas: dryRun ? 0 : linhasCorrigidas,
+      produtos_recalculados: dryRun ? 0 : produtosRecalc.size,
+      detalhes: report,
+      erros,
+      executadoPor: user.email,
+    });
+  } catch (error) {
+    console.error('corrigirMovimentosRecepcaoRetroativos:', error);
+    return Response.json({ error: (error as Error)?.message || 'Erro inesperado' }, { status: 500 });
+  }
+});

@@ -176,6 +176,14 @@
       "critical": true
     },
     {
+      "name": "corrigirMovimentosRecepcaoRetroativos",
+      "description": "Reconcilia recepções (embarques) com MovimentacaoEstoque motivo Compra; cria deltas em falta e recalcula estoque (admin, dryRun primeiro).",
+      "entities_written": ["MovimentacaoEstoque", "PedidoCompra", "Produto"],
+      "entities_read": ["PedidoCompra", "Embarque", "MovimentacaoEstoque", "Produto"],
+      "admin_only": true,
+      "critical": true
+    },
+    {
       "name": "gerenciarPin",
       "description": "Cria, valida e gerencia PINs de autenticação de usuários para operações sensíveis.",
       "entities_written": ["User"],

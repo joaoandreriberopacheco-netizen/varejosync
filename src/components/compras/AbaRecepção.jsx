@@ -10,42 +10,26 @@ import {
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
 
+function motivoEntradaCompraOk(mov) {
+  const m = mov?.motivo;
+  if (m == null || m === '') return true;
+  if (m === 'Compra') return true;
+  return String(m).toLowerCase() === 'compra';
+}
+
 export default function AbaRecepção({ pedido }) {
   const [movimentos, setMovimentos] = useState([]);
   const [isLoadingMovimentos, setIsLoadingMovimentos] = useState(false);
   const [pedidoAtual, setPedidoAtual] = useState(pedido);
   const [recebimentoSucesso, setRecebimentoSucesso] = useState(null);
+  const [selectedEmbarque, setSelectedEmbarque] = useState(null);
+  const [retificandoEmbId, setRetificandoEmbId] = useState(null);
 
   useEffect(() => {
     setPedidoAtual(pedido);
   }, [pedido]);
 
-  useEffect(() => {
-    if (pedido?.id) loadMovimentos();
-  }, [pedido?.id]);
-
-  useEffect(() => {
-    if (!pedido?.id) return;
-    const unsubscribe = base44.entities.PedidoCompra.subscribe((event) => {
-      if (event.id === pedido.id && event.type === 'update') {
-        setPedidoAtual(event.data);
-      }
-    });
-    return unsubscribe;
-  }, [pedido?.id]);
-
-  useEffect(() => {
-    setSelectedEmbarque(null);
-  }, [pedidoAtual?.embarques_registrados]);
-
-  const motivoEntradaCompraOk = (mov) => {
-    const m = mov?.motivo;
-    if (m == null || m === '') return true;
-    if (m === 'Compra') return true;
-    return String(m).toLowerCase() === 'compra';
-  };
-
-  const loadMovimentos = async () => {
+  const loadMovimentos = useCallback(async () => {
     if (!pedido?.id) return;
     setIsLoadingMovimentos(true);
     try {
@@ -53,13 +37,13 @@ export default function AbaRecepção({ pedido }) {
       let movs = await base44.entities.MovimentacaoEstoque.filter(
         { referencia_tipo: 'PedidoCompra', referencia_id: pid },
         '-created_date',
-        150
+        200
       );
       if (!movs?.length) {
         movs = await base44.entities.MovimentacaoEstoque.filter(
           { referencia_tipo: 'PedidoCompra', referencia_id: String(pid) },
           '-created_date',
-          150
+          200
         );
       }
       if (!movs?.length && pedido.numero != null && pedido.numero !== '') {
@@ -70,7 +54,7 @@ export default function AbaRecepção({ pedido }) {
               referencia_numero: String(pedido.numero),
             },
             '-created_date',
-            150
+            200
           );
         } catch (e) {
           console.warn(
@@ -89,9 +73,40 @@ export default function AbaRecepção({ pedido }) {
     } finally {
       setIsLoadingMovimentos(false);
     }
-  };
+  }, [pedido?.id, pedido?.numero]);
 
-  const [retificandoEmbId, setRetificandoEmbId] = useState(null);
+  useEffect(() => {
+    if (pedido?.id) loadMovimentos();
+  }, [pedido?.id, loadMovimentos]);
+
+  useEffect(() => {
+    if (!pedido?.id) return;
+    const unsubscribe = base44.entities.PedidoCompra.subscribe((event) => {
+      if (event.id === pedido.id && event.type === 'update') {
+        setPedidoAtual(event.data);
+      }
+    });
+    return unsubscribe;
+  }, [pedido?.id]);
+
+  useEffect(() => {
+    if (!pedido?.id) return;
+    const unsubscribe = base44.entities.MovimentacaoEstoque.subscribe((event) => {
+      const d = event?.data || {};
+      const rid = d.referencia_id;
+      if (
+        d.referencia_tipo === 'PedidoCompra' &&
+        (rid === pedido.id || rid === String(pedido.id))
+      ) {
+        loadMovimentos();
+      }
+    });
+    return typeof unsubscribe === 'function' ? unsubscribe : undefined;
+  }, [pedido?.id, loadMovimentos]);
+
+  useEffect(() => {
+    setSelectedEmbarque(null);
+  }, [pedidoAtual?.embarques_registrados]);
 
   const handleRetificarStockEmbarque = useCallback(
     async (embarqueEl, codigoExibicaoVal, evt) => {
@@ -126,10 +141,8 @@ export default function AbaRecepção({ pedido }) {
         setRetificandoEmbId(null);
       }
     },
-    [pedido, pedidoAtual, movimentos]
+    [pedido, pedidoAtual, movimentos, loadMovimentos]
   );
-
-  const [selectedEmbarque, setSelectedEmbarque] = useState(null);
 
   const embarques = useMemo(() => {
     if (Array.isArray(pedidoAtual?._embarques)) return pedidoAtual._embarques.filter(Boolean);
@@ -303,10 +316,20 @@ export default function AbaRecepção({ pedido }) {
                   <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
                       <Warehouse className="w-3 h-3" /> Movimento de Estoque
+                      {isLoadingMovimentos ? (
+                        <Loader2 className="w-3 h-3 animate-spin text-gray-400" aria-hidden />
+                      ) : null}
                     </p>
                     {movimentosDoEmbarque.map((mov) => (
-                      <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">{mov.quantidade}</span> un. - {mov.produto_nome}
+                      <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300 space-y-0.5">
+                        <div>
+                          <span className="font-medium">{mov.quantidade}</span> un. — {mov.produto_nome}
+                        </div>
+                        {mov.observacoes ? (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-500 pl-0 leading-snug">
+                            {mov.observacoes}
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>
