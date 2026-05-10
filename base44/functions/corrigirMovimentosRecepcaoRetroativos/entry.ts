@@ -48,6 +48,16 @@ async function loadEmbarquesForPedido(svc: any, pedido: Record<string, unknown>)
   }
 }
 
+/** Pelo menos um embarque com recepção já registada (não «Pendente» nos campos usados na UI). */
+function temRecepcaoConcluidaEmAlgumEmbarque(embarques: unknown[]): boolean {
+  for (const emb of embarques) {
+    const e = emb as Record<string, unknown>;
+    const st = String(e.status_recebimento || e.status_recebimento_embarque || '').trim();
+    if (st && st !== 'Pendente') return true;
+  }
+  return false;
+}
+
 async function sumMovedByProduct(svc: any, pedidoId: string): Promise<Record<string, number>> {
   const seen = new Set<string>();
   const acc: Record<string, number> = {};
@@ -78,6 +88,38 @@ async function sumMovedByProduct(svc: any, pedidoId: string): Promise<Record<str
   ingest(alt);
 
   return acc;
+}
+
+type DeltaRow = { produto_id: string; recebido_documental: number; ja_movimentado: number; faltante: number };
+
+function buildDeltas(
+  recebido: Record<string, number>,
+  movimentado: Record<string, number>,
+): DeltaRow[] {
+  const produtoIds = new Set([...Object.keys(recebido), ...Object.keys(movimentado)]);
+  const deltas: DeltaRow[] = [];
+  for (const pid of produtoIds) {
+    const r = recebido[pid] || 0;
+    const m = movimentado[pid] || 0;
+    const faltante = roundQty(Math.max(0, r - m));
+    if (faltante > 0) {
+      deltas.push({
+        produto_id: pid,
+        recebido_documental: r,
+        ja_movimentado: m,
+        faltante,
+      });
+    }
+  }
+  return deltas;
+}
+
+async function computeDeltasPedido(svc: any, pedido: Record<string, unknown>) {
+  const embarques = await loadEmbarquesForPedido(svc, pedido);
+  const recebido = sumReceivedByProduct(embarques);
+  const movimentado = await sumMovedByProduct(svc, String(pedido.id));
+  const deltas = buildDeltas(recebido, movimentado);
+  return { embarques, recebido, movimentado, deltas };
 }
 
 function nomeProdutoPedido(pedido: Record<string, unknown>, produtoId: string): string {
@@ -129,6 +171,8 @@ Deno.serve(async (req) => {
       dryRun = true,
       varreduraCompletaPedidos = false,
       limitePedidos = 8000,
+      /** Modo simples: só pedidos com recepção já concluída (≠ Pendente) e com stock em falta. */
+      somenteConcluidosRecepcaoSemStock = false,
     } = body as {
       dataInicio?: string;
       dataFim?: string;
@@ -136,13 +180,36 @@ Deno.serve(async (req) => {
       dryRun?: boolean;
       varreduraCompletaPedidos?: boolean;
       limitePedidos?: number;
+      somenteConcluidosRecepcaoSemStock?: boolean;
     };
 
     const svc = base44.asServiceRole;
-    const pedidos: Record<string, unknown>[] = [];
+    let pedidos: Record<string, unknown>[] = [];
+    /** No modo simples pré-calculamos deltas uma vez por pedido candidato. */
+    let trabalhoPre: { pedido: Record<string, unknown>; deltas: DeltaRow[] }[] | null = null;
+    let pedidosRevistosNaLista = 0;
     let escopoUsado = '';
 
-    if (Array.isArray(pedidoIds) && pedidoIds.length > 0) {
+    if (somenteConcluidosRecepcaoSemStock === true) {
+      escopoUsado = 'somente_concluidos_recepcao_sem_stock';
+      const lim = Math.min(Math.max(Number(limitePedidos) || 3000, 1), 15000);
+      const todos = await svc.entities.PedidoCompra.list('-created_date', lim);
+      pedidosRevistosNaLista = (todos || []).length;
+      const pre: { pedido: Record<string, unknown>; deltas: DeltaRow[] }[] = [];
+      for (const p of todos || []) {
+        const pedido = p as Record<string, unknown>;
+        try {
+          const { embarques, deltas } = await computeDeltasPedido(svc, pedido);
+          if (!temRecepcaoConcluidaEmAlgumEmbarque(embarques)) continue;
+          if (!deltas.length) continue;
+          pre.push({ pedido, deltas });
+        } catch {
+          /* ignora pedido problemático na pré-listagem */
+        }
+      }
+      trabalhoPre = pre;
+      pedidos = pre.map((x) => x.pedido);
+    } else if (Array.isArray(pedidoIds) && pedidoIds.length > 0) {
       escopoUsado = 'lista_ids';
       for (const id of pedidoIds) {
         const [p] = await svc.entities.PedidoCompra.filter({ id });
@@ -161,7 +228,7 @@ Deno.serve(async (req) => {
         return Response.json(
           {
             error:
-              'Forneça pedidoIds (array), varreduraCompletaPedidos:true, ou dataInicio e dataFim (YYYY-MM-DD).',
+              'Use somenteConcluidosRecepcaoSemStock:true, ou pedidoIds, ou varreduraCompletaPedidos, ou dataInicio+dataFim.',
           },
           { status: 400 },
         );
@@ -180,28 +247,15 @@ Deno.serve(async (req) => {
     const produtosRecalc = new Set<string>();
     const erros: Record<string, unknown>[] = [];
 
+    const mapaPre =
+      trabalhoPre != null
+        ? new Map(trabalhoPre.map((t) => [String(t.pedido.id), t.deltas]))
+        : null;
+
     for (const pedido of pedidos) {
       try {
-        const embarques = await loadEmbarquesForPedido(svc, pedido);
-        const recebido = sumReceivedByProduct(embarques);
-        const movimentado = await sumMovedByProduct(svc, String(pedido.id));
-
-        const produtoIds = new Set([...Object.keys(recebido), ...Object.keys(movimentado)]);
-        const deltas: Record<string, unknown>[] = [];
-
-        for (const pid of produtoIds) {
-          const r = recebido[pid] || 0;
-          const m = movimentado[pid] || 0;
-          const faltante = roundQty(Math.max(0, r - m));
-          if (faltante > 0) {
-            deltas.push({
-              produto_id: pid,
-              recebido_documental: r,
-              ja_movimentado: m,
-              faltante,
-            });
-          }
-        }
+        const deltas =
+          mapaPre?.get(String(pedido.id)) ?? (await computeDeltasPedido(svc, pedido)).deltas;
 
         if (!deltas.length) {
           report.push({
@@ -227,20 +281,19 @@ Deno.serve(async (req) => {
         const obsBase = `Correção retroativa recepção→estoque (admin ${user.email || ''}); reconcilia embarques vs MovimentacaoEstoque Compra.`;
 
         for (const d of deltas) {
-          const row = d as { produto_id: string; faltante: number };
           await svc.entities.MovimentacaoEstoque.create({
-            produto_id: row.produto_id,
-            produto_nome: nomeProdutoPedido(pedido, row.produto_id) || 'Produto',
+            produto_id: d.produto_id,
+            produto_nome: nomeProdutoPedido(pedido, d.produto_id) || 'Produto',
             tipo: 'Entrada',
             motivo: 'Compra',
-            quantidade: row.faltante,
+            quantidade: d.faltante,
             referencia_tipo: 'PedidoCompra',
             referencia_id: pedido.id,
             referencia_numero: pedido.numero,
             observacoes: obsBase,
           });
           linhasCorrigidas += 1;
-          produtosRecalc.add(row.produto_id);
+          produtosRecalc.add(d.produto_id);
         }
 
         try {
@@ -276,6 +329,7 @@ Deno.serve(async (req) => {
       success: true,
       dryRun,
       escopo: escopoUsado,
+      pedidos_revistos_na_fonte: pedidosRevistosNaLista || undefined,
       pedidos_analisados: pedidos.length,
       pedidos_com_delta: comDelta,
       linhas_corrigidas: dryRun ? 0 : linhasCorrigidas,

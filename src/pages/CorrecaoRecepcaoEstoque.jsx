@@ -24,7 +24,7 @@ export default function CorrecaoRecepcaoEstoquePage() {
           Correção de stock após recepção (lote)
         </h1>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Simula ou aplica entradas em falta, para vários pedidos de uma vez — só administradores.
+          Lista pedidos com recepção concluída e stock em falta; aplica a correção só neles.
         </p>
       </div>
 

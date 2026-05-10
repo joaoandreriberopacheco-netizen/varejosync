@@ -1,225 +1,156 @@
-import React, { useMemo, useState } from 'react';
-import { Warehouse, PlayCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Warehouse, Loader2, ListChecks, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { corrigirMovimentosRecepcaoRetroativos } from '@/functions/corrigirMovimentosRecepcaoRetroativos';
 
-function defaultIntervaloDatas() {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - 90);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  return { dataInicio: fmt(start), dataFim: fmt(end) };
-}
-
-function parsePedidoIds(text) {
-  if (!text || !String(text).trim()) return [];
-  return String(text)
-    .split(/[\s,;]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-/** Corpo JSON da resposta invoke (axios-style). */
 function unwrapInvoke(res) {
   if (res == null) return null;
   return res.data !== undefined ? res.data : res;
 }
 
 export default function CorrecaoRecepcaoEstoquePainel() {
-  const defaults = useMemo(() => defaultIntervaloDatas(), []);
-  const [modo, setModo] = useState('intervalo');
-  const [dataInicio, setDataInicio] = useState(defaults.dataInicio);
-  const [dataFim, setDataFim] = useState(defaults.dataFim);
-  const [idsTexto, setIdsTexto] = useState('');
-  const [limitePedidos, setLimitePedidos] = useState('8000');
+  const [limite, setLimite] = useState('3000');
   const [loading, setLoading] = useState(false);
-  const [ultimoRelatorio, setUltimoRelatorio] = useState(null);
+  const [ultimo, setUltimo] = useState(null);
 
-  const montarPayload = (dryRun) => {
-    const base = { dryRun };
-    if (modo === 'ids') {
-      const pedidoIds = parsePedidoIds(idsTexto);
-      if (!pedidoIds.length) {
-        throw new Error('Informe pelo menos um ID de pedido de compra.');
-      }
-      return { ...base, pedidoIds };
+  const payloadBase = () => {
+    const lim = Number(limite);
+    if (!Number.isFinite(lim) || lim < 1) {
+      throw new Error('Indica um limite entre 1 e 15000 (quantos pedidos recentes analisar).');
     }
-    if (modo === 'varredura') {
-      const lim = Number(limitePedidos);
-      if (!Number.isFinite(lim) || lim < 1) {
-        throw new Error('Limite de pedidos inválido.');
-      }
-      return { ...base, varreduraCompletaPedidos: true, limitePedidos: Math.min(Math.round(lim), 15000) };
-    }
-    if (!dataInicio || !dataFim) {
-      throw new Error('Informe data inicial e final.');
-    }
-    return { ...base, dataInicio, dataFim };
+    return {
+      somenteConcluidosRecepcaoSemStock: true,
+      limitePedidos: Math.min(Math.round(lim), 15000),
+    };
   };
 
-  const executar = async (dryRun) => {
-    let payload;
+  const simular = async () => {
+    let body;
     try {
-      payload = montarPayload(dryRun);
+      body = { ...payloadBase(), dryRun: true };
     } catch (e) {
       toast.error(e.message);
       return;
     }
-
-    if (!dryRun) {
-      const ok = window.confirm(
-        'Vai criar movimentos de stock em falta e recalcular produtos afetados. Confirma a execução real (não é simulação)?'
-      );
-      if (!ok) return;
-    }
-
     setLoading(true);
     try {
-      const res = await corrigirMovimentosRecepcaoRetroativos(payload);
-      const data = unwrapInvoke(res);
-
+      const data = unwrapInvoke(await corrigirMovimentosRecepcaoRetroativos(body));
       if (data?.error) {
         toast.error(String(data.error));
         return;
       }
-
-      setUltimoRelatorio(data);
-
-      const analisados = data.pedidos_analisados ?? '—';
-      const comDelta = data.pedidos_com_delta ?? '—';
-      const linhas = data.linhas_corrigidas ?? 0;
-      const produtos = data.produtos_recalculados ?? 0;
-
-      if (dryRun) {
-        toast.message('Simulação concluída', {
-          description: `${comDelta} pedido(s) com diferença a corrigir (de ${analisados} analisados). Escopo: ${data.escopo || '—'}`,
-        });
-      } else {
-        toast.success('Correção aplicada em lote', {
-          description: `${linhas} linha(s) criada(s), ${produtos} produto(s) recalculado(s).`,
-        });
-      }
+      setUltimo(data);
+      const n = data.pedidos_com_delta ?? 0;
+      const rev = data.pedidos_revistos_na_fonte;
+      toast.message(n ? `${n} pedido(s) precisam de correção` : 'Nenhum pedido nesta situação', {
+        description:
+          rev != null
+            ? `Revistos ${rev} pedido(s) recentes; ${n} com falta de stock (recepção já concluída).`
+            : `${data.pedidos_analisados ?? 0} pedido(s) na lista.`,
+      });
     } catch (e) {
-      toast.error(e?.message || 'Falha ao chamar a função.');
+      toast.error(e?.message || 'Falha ao simular.');
     } finally {
       setLoading(false);
     }
   };
 
+  const aplicar = async () => {
+    let body;
+    try {
+      body = { ...payloadBase(), dryRun: false };
+    } catch (e) {
+      toast.error(e.message);
+      return;
+    }
+    const ok = window.confirm(
+      'Serão criadas as entradas de stock em falta só para os pedidos desta lista (recepção já concluída). Continuar?'
+    );
+    if (!ok) return;
+    setLoading(true);
+    try {
+      const data = unwrapInvoke(await corrigirMovimentosRecepcaoRetroativos(body));
+      if (data?.error) {
+        toast.error(String(data.error));
+        return;
+      }
+      setUltimo(data);
+      toast.success('Correção aplicada', {
+        description: `${data.linhas_corrigidas ?? 0} linha(s), ${data.produtos_recalculados ?? 0} produto(s) recalculado(s).`,
+      });
+    } catch (e) {
+      toast.error(e?.message || 'Falha ao aplicar.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const candidatos =
+    ultimo?.detalhes?.filter((r) => Array.isArray(r.deltas) && r.deltas.length > 0) ?? [];
+
   return (
     <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-4 border border-amber-200/60 dark:border-amber-900/40">
       <div className="flex items-start gap-3">
         <Warehouse className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            Correção automática em lote — recepção → stock
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-            Processa <strong>todos os pedidos</strong> do intervalo ou da varredura de uma vez (não é um a um).
-            Use primeiro <strong>Simular</strong>; só depois <strong>Aplicar</strong>.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant={modo === 'intervalo' ? 'default' : 'outline'}
-          size="sm"
-          className="text-xs"
-          onClick={() => setModo('intervalo')}
-        >
-          Por datas (created_date)
-        </Button>
-        <Button
-          type="button"
-          variant={modo === 'ids' ? 'default' : 'outline'}
-          size="sm"
-          className="text-xs"
-          onClick={() => setModo('ids')}
-        >
-          Lista de IDs
-        </Button>
-        <Button
-          type="button"
-          variant={modo === 'varredura' ? 'default' : 'outline'}
-          size="sm"
-          className="text-xs"
-          onClick={() => setModo('varredura')}
-        >
-          Varredura (últimos N PCs)
-        </Button>
-      </div>
-
-      {modo === 'intervalo' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Data inicial</Label>
-            <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Data final</Label>
-            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
-          </div>
-        </div>
-      )}
-
-      {modo === 'ids' && (
         <div className="space-y-1">
-          <Label className="text-xs">IDs dos PedidoCompra (vírgula ou linha)</Label>
-          <Textarea
-            placeholder="ex.: abc123, def456 ou um ID por linha"
-            value={idsTexto}
-            onChange={(e) => setIdsTexto(e.target.value)}
-            className="min-h-[88px] font-mono text-xs"
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            Stock em falta após recepção
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            Procuramos entre os pedidos mais recentes aqueles em que a <strong>recepção já não está pendente</strong>{' '}
+            (embarque com estado de recepção concluído) mas o <strong>stock documental ainda não bate</strong> com as
+            movimentações de compra. Um clique lista; outro corrige <strong>só esses</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="space-y-1 w-40">
+          <Label className="text-xs">Pedidos recentes a analisar</Label>
+          <Input
+            type="number"
+            min={1}
+            max={15000}
+            value={limite}
+            onChange={(e) => setLimite(e.target.value)}
           />
         </div>
-      )}
-
-      {modo === 'varredura' && (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-            <p>
-              Analisa os pedidos mais recentes até ao limite indicado (pesado). Ideal para uma correção global sem
-              definir datas.
-            </p>
-          </div>
-          <div className="space-y-1 max-w-xs">
-            <Label className="text-xs">Máx. pedidos a analisar</Label>
-            <Input
-              type="number"
-              min={1}
-              max={15000}
-              value={limitePedidos}
-              onChange={(e) => setLimitePedidos(e.target.value)}
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" disabled={loading} variant="secondary" onClick={() => executar(true)}>
-          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
-          Simular (dry-run)
+        <Button type="button" variant="secondary" disabled={loading} onClick={simular}>
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ListChecks className="w-4 h-4 mr-2" />}
+          Ver lista (simulação)
         </Button>
-        <Button type="button" disabled={loading} variant="destructive" onClick={() => executar(false)}>
-          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-          Aplicar correções em lote
+        <Button type="button" variant="destructive" disabled={loading} onClick={aplicar}>
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wrench className="w-4 h-4 mr-2" />}
+          Corrigir estes pedidos
         </Button>
       </div>
 
-      {ultimoRelatorio && (
+      {candidatos.length > 0 && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 overflow-hidden">
+          <p className="text-xs font-medium px-3 py-2 bg-gray-100 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300">
+            Última simulação — {candidatos.length} pedido(s)
+          </p>
+          <ul className="max-h-48 overflow-auto text-xs divide-y divide-gray-100 dark:divide-gray-800">
+            {candidatos.map((row) => (
+              <li key={String(row.pedido_id)} className="px-3 py-2 flex justify-between gap-2">
+                <span className="font-medium text-gray-800 dark:text-gray-200">
+                  PC {row.numero ?? row.pedido_id}
+                </span>
+                <span className="text-gray-500 shrink-0">{row.deltas?.length ?? 0} linha(s) em falta</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {ultimo && (
         <details className="text-xs bg-white dark:bg-gray-900/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
-          <summary className="cursor-pointer font-medium text-gray-700 dark:text-gray-200">
-            Último resultado (JSON)
-          </summary>
-          <pre className="mt-2 overflow-auto max-h-56 text-[11px] leading-snug">
-            {JSON.stringify(ultimoRelatorio, null, 2)}
+          <summary className="cursor-pointer font-medium text-gray-700 dark:text-gray-200">Detalhe técnico (JSON)</summary>
+          <pre className="mt-2 overflow-auto max-h-48 text-[11px] leading-snug">
+            {JSON.stringify(ultimo, null, 2)}
           </pre>
         </details>
       )}
