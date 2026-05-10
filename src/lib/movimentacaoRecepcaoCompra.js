@@ -6,7 +6,7 @@
  * os restantes campos servem rastreio no painel Base44.
  */
 
-import { invokeRecalcularEstoqueProduto } from '@/lib/p38StockRecalc';
+import { invokeRecalcularEstoqueProduto } from './p38StockRecalc.js';
 
 /** Compara código do embarque com observações/documento (Base44 pode gravar maiúsculas diferentes). */
 export function movimentoCombinaCodigoEmbarque(mov, codigoExibicao) {

@@ -61,6 +61,70 @@ function persistUser(user) {
   }
 }
 
+function normalizeEmail(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Mesmo flatten que `decorateRow` em supabaseEntityLayer — promove `dados` jsonb e datas.
+ */
+function flattenUsuarioRow(row) {
+  if (!row || typeof row !== 'object') return null;
+  const out = { ...row };
+  const obKey = 'dados';
+  if (obKey in out && out[obKey] && typeof out[obKey] === 'object') {
+    const blob = out[obKey];
+    delete out[obKey];
+    for (const [k, v] of Object.entries(blob)) {
+      if (!(k in out)) out[k] = v;
+    }
+  }
+  if ('created_at' in out && out.created_at != null) out.created_date = out.created_at;
+  if ('updated_at' in out && out.updated_at != null) out.updated_date = out.updated_at;
+  return out;
+}
+
+/**
+ * Liga auth.users à linha `public.usuario`: (1) email case-insensitive; (2) nickname nos metadados.
+ * O `id` da linha operacional é o que o P38 usa em FKs (vendedor_id, caixas, etc.).
+ */
+async function fetchUsuarioOperacional(supabase, authUser) {
+  const norm = normalizeEmail(authUser?.email);
+  if (norm) {
+    const { data: rows, error } = await supabase.from('usuario').select('*').ilike('email', norm).limit(5);
+    if (error) {
+      console.warn('[P38][supabaseAdapter] usuario por email:', error.message);
+    } else if (rows?.length === 1) {
+      return flattenUsuarioRow(rows[0]);
+    } else if (rows?.length > 1) {
+      console.warn('[P38][supabaseAdapter] várias linhas em usuario para o mesmo email; usando a primeira.');
+      return flattenUsuarioRow(rows[0]);
+    }
+  }
+
+  const nickRaw =
+    authUser.user_metadata?.nickname ||
+    authUser.user_metadata?.preferred_username ||
+    authUser.user_metadata?.user_name;
+  const nickTrim = nickRaw != null ? String(nickRaw).trim() : '';
+  if (nickTrim) {
+    const { data: rows2, error: err2 } = await supabase.from('usuario').select('*').eq('nickname', nickTrim).limit(5);
+    if (err2) {
+      console.warn('[P38][supabaseAdapter] usuario por nickname:', err2.message);
+      return null;
+    }
+    if (rows2?.length === 1) return flattenUsuarioRow(rows2[0]);
+    if (rows2?.length > 1) {
+      console.warn('[P38][supabaseAdapter] várias linhas em usuario para o mesmo nickname; usando a primeira.');
+      return flattenUsuarioRow(rows2[0]);
+    }
+  }
+
+  return null;
+}
+
 function buildAuth(supabase) {
   const useSupabaseAuth = isSupabaseAuthEnabled() && Boolean(supabase);
 
@@ -77,13 +141,35 @@ function buildAuth(supabase) {
       err.status = 401;
       throw err;
     }
-    return {
+
+    const authShape = {
       id: u.id,
       email: u.email,
       full_name: u.user_metadata?.full_name || u.user_metadata?.name || u.email,
       role: u.user_metadata?.role || u.app_metadata?.role || 'user',
       perfil_acesso_id: u.user_metadata?.perfil_acesso_id || null,
       created_date: u.created_at,
+      supabase_auth_user_id: u.id,
+      raw: u
+    };
+
+    const operacional = await fetchUsuarioOperacional(supabase, u);
+    if (!operacional) {
+      return authShape;
+    }
+
+    return {
+      ...authShape,
+      ...operacional,
+      id: operacional.id,
+      email: operacional.email || authShape.email,
+      full_name: operacional.full_name || authShape.full_name,
+      role: operacional.role || authShape.role,
+      perfil_acesso_id:
+        operacional.perfil_acesso_id != null && operacional.perfil_acesso_id !== ''
+          ? operacional.perfil_acesso_id
+          : authShape.perfil_acesso_id,
+      supabase_auth_user_id: u.id,
       raw: u
     };
   }
@@ -99,12 +185,7 @@ function buildAuth(supabase) {
   return {
     async me() {
       if (useSupabaseAuth) {
-        try {
-          return await meViaSupabase();
-        } catch (err) {
-          // Em supabase-auth ligado mas sem sessão, mantém comportamento de auth_required
-          throw err;
-        }
+        return await meViaSupabase();
       }
       return meViaBypass();
     },
@@ -246,6 +327,49 @@ function buildAppLogs() {
     async logUserInApp() {
       // No-op: telemetria do Base44 desligada.
     }
+  };
+}
+
+/**
+ * Quando `VITE_P38_PROVIDER=supabase` mas faltam URL/anon key no `.env.local`, não usar o stub
+ * Base44 (mensagem confusa). Auth em modo bypass + leituras vazias para o shell local abrir.
+ */
+function createMissingSupabaseEnvEntitiesProxy() {
+  const hint =
+    '[P38] Cria legacy/varejosync/.env.local com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ver .env.casa-nova.example). Reinicia npm run dev.';
+  const emptyList = async () => [];
+  const rejectWrite = async () => {
+    throw new Error(hint);
+  };
+  return new Proxy(
+    {},
+    {
+      get() {
+        return {
+          list: emptyList,
+          filter: emptyList,
+          get: async () => null,
+          create: rejectWrite,
+          update: rejectWrite,
+          delete: rejectWrite
+        };
+      }
+    }
+  );
+}
+
+/**
+ * Cliente legado para desenvolvimento local sem `.env.local` completo — evita stub Base44 em auth.me().
+ */
+export function createLegacyClientWithoutSupabaseEnv() {
+  return {
+    name: 'p38-supabase-env-missing-local',
+    supabase: null,
+    auth: buildAuth(null),
+    entities: createMissingSupabaseEnvEntitiesProxy(),
+    functions: buildFunctions(null),
+    integrations: buildIntegrations(),
+    appLogs: buildAppLogs()
   };
 }
 

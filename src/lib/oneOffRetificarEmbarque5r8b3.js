@@ -7,8 +7,8 @@
  * Depois de correr com sucesso, remover o bloco correspondente em `main.jsx`.
  */
 
-import { criarMovimentosStockRecepcaoEmFalta } from '@/lib/movimentacaoRecepcaoCompra';
-import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
+import { criarMovimentosStockRecepcaoEmFalta } from './movimentacaoRecepcaoCompra.js';
+import { invokeRecalcularConclusaoPedidoCompra } from './p38StockRecalc.js';
 
 const CODIGO_EMBARQUE_NORMALIZADO = '5r8b3-a';
 
