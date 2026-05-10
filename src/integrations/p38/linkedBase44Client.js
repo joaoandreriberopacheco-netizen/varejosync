@@ -1,23 +1,15 @@
-import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
-import { createSupabaseEntityLayer } from './supabaseEntityLayer';
-import { createSupabaseLegacyClient } from './supabaseAdapter';
-import { getP38Providers, resolveP38ProviderName } from './providers';
-
-function parseBooleanEnv(value, defaultValue = false) {
-  if (value === undefined || value === null || value === '') {
-    return defaultValue;
-  }
-  return String(value).toLowerCase().trim() === 'true';
-}
+import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { createLegacyClientWithoutSupabaseEnv, createSupabaseLegacyClient } from './supabaseAdapter';
+import { getP38Providers, hasBase44Credentials, resolveP38ProviderName } from './providers';
 
 /**
- * Devolve o client legado a ser exposto como `p38.legacyClient` (e, por compat, `base44`).
+ * Devolve o client legado exposto como `p38.legacyClient` (alias `base44`).
  *
- * 3 modos:
- *   1. provider=supabase → pseudo-client 100% Supabase (zero chamada ao Base44).
- *   2. provider=base44 + VITE_USE_SUPABASE_ENTITIES=true → híbrido: entidades mapeadas no
- *      Supabase, restante (auth, funções, entidades não mapeadas) ainda no Base44.
- *   3. caso contrário → client Base44 puro.
+ * Dois ecossistemas separados (sem modo híbrido Base44+Postgres):
+ * - **Casa nova:** `VITE_P38_PROVIDER=supabase` → cliente só Supabase (`createSupabaseLegacyClient`).
+ * - **P38 Base44:** qualquer outro ramo com SDK → `base44SdkClient` (dados na DB Base44).
+ *
+ * `VITE_USE_SUPABASE_ENTITIES` deixou de ter efeito — evitar ruído entre dois destinos de dados.
  */
 export function resolveLegacyClient(base44SdkClient) {
   const providers = getP38Providers();
@@ -26,32 +18,31 @@ export function resolveLegacyClient(base44SdkClient) {
   if (providerName === providers.SUPABASE) {
     if (!isSupabaseBrowserConfigured()) {
       console.warn(
-        '[P38] VITE_P38_PROVIDER=supabase definido, mas VITE_SUPABASE_URL/ANON_KEY ausentes — ' +
-          'caindo no client Base44 para evitar tela branca.'
+        '[P38] VITE_P38_PROVIDER=supabase mas VITE_SUPABASE_URL/ANON_KEY ausentes — ' +
+          'usando bypass local (sem dados reais). Preenche legacy/varejosync/.env.local e reinicia npm run dev.'
       );
-      return base44SdkClient;
+      return createLegacyClientWithoutSupabaseEnv();
     }
     return createSupabaseLegacyClient();
   }
 
-  const datalinkEnabled = parseBooleanEnv(import.meta.env.VITE_USE_SUPABASE_ENTITIES, false);
-  if (!datalinkEnabled || !isSupabaseBrowserConfigured()) {
-    return base44SdkClient;
+  if (providerName === providers.BASE44 && !hasBase44Credentials()) {
+    console.warn(
+      '[P38] Nenhum provider explícito / sem credenciais Base44 — shell local com bypass. ' +
+        'Para dados reais: adiciona legacy/varejosync/.env.local (VITE_SUPABASE_*) e/ou VITE_P38_PROVIDER=supabase.'
+    );
+    return createLegacyClientWithoutSupabaseEnv();
   }
 
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) {
-    return base44SdkClient;
+  if (
+    import.meta.env.DEV &&
+    String(import.meta.env.VITE_USE_SUPABASE_ENTITIES || '').toLowerCase().trim() === 'true'
+  ) {
+    console.warn(
+      '[P38] VITE_USE_SUPABASE_ENTITIES ignorado: modo híbrido foi removido. ' +
+        'Base44 → só SDK (DB Base44). Casa nova → VITE_P38_PROVIDER=supabase.'
+    );
   }
 
-  const hybridEntities = createSupabaseEntityLayer(base44SdkClient.entities, supabase);
-
-  return new Proxy(base44SdkClient, {
-    get(target, prop) {
-      if (prop === 'entities') {
-        return hybridEntities;
-      }
-      return target[prop];
-    }
-  });
+  return base44SdkClient;
 }

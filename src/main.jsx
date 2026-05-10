@@ -29,6 +29,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   // </React.StrictMode>,
 )
 
+/** Remover após executar `await window.__retificarEmbarque5r8b3()` uma vez com sessão Base44 (stock 5R8B3-A). */
+if (import.meta.env.DEV) {
+  import('@/api/base44Client').then(({ base44 }) =>
+    import('@/lib/oneOffRetificarEmbarque5r8b3.js').then((m) => {
+      window.__retificarEmbarque5r8b3 = () => m.retificarEmbarque5r8b3UmaVez(base44);
+    })
+  );
+}
+
 if (import.meta.hot) {
   import.meta.hot.on('vite:beforeUpdate', () => {
     window.parent?.postMessage({ type: 'sandbox:beforeUpdate' }, '*');

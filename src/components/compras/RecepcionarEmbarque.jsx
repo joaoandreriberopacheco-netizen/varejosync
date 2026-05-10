@@ -12,6 +12,11 @@ import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, 
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import {
+  invokeRecalcularConclusaoPedidoCompra,
+  invokeRecalcularEstoqueProduto,
+} from '@/lib/p38StockRecalc';
+import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 
 function getItensDoEmbarque(embarque) {
   const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
@@ -30,7 +35,8 @@ function getItensDoEmbarque(embarque) {
     } else if (hasExplicitRecebida) {
       quantidade_recebida = roundToTwoDecimals(Number(item.quantidade_recebida) || 0);
     } else {
-      quantidade_recebida = 0;
+      // Embarque ainda «Pendente»: assumir entrada = embarcado até o utilizador ajustar (evita confirmar com zeros).
+      quantidade_recebida = roundToTwoDecimals(Number(item.quantidade_embarcada) || 0);
     }
     return {
       ...item,
@@ -163,12 +169,42 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
   const handleConfirmarRecebimento = async () => {
     setIsSaving(true);
+    let avisoSincroniaEmbarqueItem = null;
     try {
       const itensNorm = itens.map((item) => ({
         ...item,
         quantidade_embarcada: roundToTwoDecimals(item.quantidade_embarcada),
         quantidade_recebida: roundToTwoDecimals(item.quantidade_recebida),
       }));
+      if (!embarque?.id) {
+        toast({
+          title: 'Embarque sem identificador',
+          description:
+            'Não é possível concluir a receção sem o id do embarque na Base44. Recarregue o pedido ou abra de novo na aba Logística.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const totalRecebido = itensNorm.reduce((s, i) => s + (Number(i.quantidade_recebida) || 0), 0);
+      const totalEmbarcadoItens = itensNorm.reduce((s, i) => s + (Number(i.quantidade_embarcada) || 0), 0);
+      if (totalEmbarcadoItens <= 0) {
+        toast({
+          title: 'Sem linhas embarcadas',
+          description: 'Este embarque não tem quantidades embarcadas para receber. Corrija na logística antes de confirmar.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (totalRecebido <= 0 && totalEmbarcadoItens > 0) {
+        toast({
+          title: 'Quantidades recebidas em branco',
+          description:
+            'Use «Copiar quantidades iguais ao embarcado» ou preencha o que entrou antes de confirmar. Sem quantidade recebida não há entrada em estoque.',
+          variant: 'destructive',
+        });
+        return;
+      }
       const novoEmbarque = { ...embarque, itens: itensNorm, itens_embarcados: itensNorm };
       const temDivergencia = itensNorm.some(i => i.divergencia_tipo !== 'Nenhuma');
       const todosRecebidos = itensNorm.every(
@@ -228,30 +264,46 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         itens_embarcados: itensOrfaos
       } : null;
 
-      const embarquesAtualizados = [
-        ...outrosEmbarques,
-        novoEmbarque,
-        ...(embarqueOrfao ? [embarqueOrfao] : [])
-      ].sort((a, b) => String(a.numero || '').localeCompare(String(b.numero || '')));
+      // 1) Entrada em stock na DB Base44 (antes de fechar o embarque — se falhar, receção não fica «Concluída»).
+      for (const item of itensNorm) {
+        if (item.quantidade_recebida > 0) {
+          const produtoId = item.produto_id_recebido_diferente || item.produto_id;
+          await base44.entities.MovimentacaoEstoque.create(
+            buildMovimentacaoRecepcaoCompraPayload({
+              produtoId,
+              produtoNome: item.produto_nome_recebido_diferente || item.produto_nome,
+              quantidade: item.quantidade_recebida,
+              pedido,
+              embarque,
+            })
+          );
+          await invokeRecalcularEstoqueProduto(base44, produtoId);
+        }
+      }
 
-      if (embarque.id) {
-        await base44.entities.Embarque.update(embarque.id, {
-          status: novoEmbarque.status,
-          status_recebimento: statusRecebimento,
-          itens: itensNorm,
-          itens_embarcados: itensNorm,
-          observacoes: novoEmbarque.observacoes,
-        });
+      await base44.entities.Embarque.update(embarque.id, {
+        status: novoEmbarque.status,
+        status_recebimento: statusRecebimento,
+        itens: itensNorm,
+        itens_embarcados: itensNorm,
+        observacoes: novoEmbarque.observacoes,
+      });
 
-        // Sincronia canonica de EmbarqueItem (recepcao reflete quantidade_recebida).
-        try {
-          const itensCanonicos = itensNorm
-            .map((it, idx) => ({
+      const pedidoItens = Array.isArray(pedido?.itens) ? pedido.itens : [];
+      try {
+        const itensCanonicos = itensNorm
+          .map((it, idx) => {
+            const linhaPedido = pedidoItens.find((pi) => pi.produto_id === it?.produto_id);
+            const qPedida =
+              Number(it?.quantidade_pedida) ||
+              Number(linhaPedido?.quantidade) ||
+              0;
+            return {
               produto_id: it?.produto_id || '',
               produto_unidade_id: it?.produto_unidade_id || '',
               pedido_compra_item_id: it?.pedido_compra_item_id || '',
               unidade_sigla: it?.unidade_medida || '',
-              quantidade_pedida_comercial: Number(it?.quantidade_pedida) || 0,
+              quantidade_pedida_comercial: qPedida,
               quantidade_embarcada_comercial: Number(it?.quantidade_embarcada) || 0,
               quantidade_recebida_comercial: Number(it?.quantidade_recebida) || 0,
               divergencia_tipo: it?.divergencia_tipo || 'Nenhuma',
@@ -259,18 +311,19 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               produto_nome_recebido_diferente: it?.produto_nome_recebido_diferente || '',
               acordo_financeiro_lancamento_id: it?.acordo_financeiro_lancamento_id || '',
               ordem: idx,
-            }))
-            .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
-          if (itensCanonicos.length > 0) {
-            await saveEmbarqueItem({
-              action: 'replaceAll',
-              embarque_id: embarque.id,
-              items: itensCanonicos,
-            });
-          }
-        } catch (canonicalErr) {
-          console.warn('Sincronia canonica de EmbarqueItem (recepcao) falhou:', canonicalErr?.message || canonicalErr);
+            };
+          })
+          .filter((it) => it.produto_id && it.quantidade_embarcada_comercial > 0);
+        if (itensCanonicos.length > 0) {
+          await saveEmbarqueItem({
+            action: 'replaceAll',
+            embarque_id: embarque.id,
+            items: itensCanonicos,
+          });
         }
+      } catch (canonicalErr) {
+        console.warn('Sincronia canonica de EmbarqueItem (recepcao) falhou:', canonicalErr?.message || canonicalErr);
+        avisoSincroniaEmbarqueItem = String(canonicalErr?.message || canonicalErr);
       }
 
       if (embarqueOrfao) {
@@ -285,29 +338,19 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`
       });
 
-      await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
-
-      // Movimentos de compra abaixo; a função cloud não deve duplicar entrada (ver embarqueFilters.js)
-      // Gerar movimentações de estoque
-      for (const item of itensNorm) {
-        if (item.quantidade_recebida > 0) {
-          const produtoId = item.produto_id_recebido_diferente || item.produto_id;
-          await base44.entities.MovimentacaoEstoque.create({
-            produto_id: produtoId,
-            produto_nome: item.produto_nome_recebido_diferente || item.produto_nome,
-            tipo: 'Entrada',
-            motivo: 'Compra',
-            quantidade: item.quantidade_recebida,
-            referencia_tipo: 'PedidoCompra',
-            referencia_id: pedido.id,
-            referencia_numero: pedido.numero
-          });
-          await base44.functions.invoke('recalcularEstoqueProduto', { produtoId });
-        }
-      }
+      await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
 
       const recebimentoNumero = `REC-${String(embarque?.id || '').slice(-6) || String(Date.now()).slice(-6)}`;
-      toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
+      if (avisoSincroniaEmbarqueItem) {
+        toast({
+          title: 'Recebimento concluído com ressalvas',
+          description: `Entrada em stock e embarque guardados. Sincronização EmbarqueItem falhou: ${avisoSincroniaEmbarqueItem.slice(0, 200)}`,
+          variant: 'destructive',
+          duration: 12000,
+        });
+      } else {
+        toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
+      }
       onRecebido?.({ recebimentoNumero });
       onClose();
     } catch (error) {
@@ -394,6 +437,12 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                   </Button>
                 )}
               </div>
+              {!isReadOnly &&
+                (!embarque?.status_recebimento || embarque.status_recebimento === 'Pendente') && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 px-1 -mt-2 mb-1">
+                    Por defeito, a quantidade recebida iguala ao embarcado — ajuste só em caso de falta ou divergência.
+                  </p>
+                )}
               {itens.map((item, idx) => {
                 const hasDivergencia = item.divergencia_tipo !== 'Nenhuma';
                 return (

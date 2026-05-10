@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+import {
+  criarMovimentosStockRecepcaoEmFalta,
+  movimentoCombinaCodigoEmbarque,
+} from '@/lib/movimentacaoRecepcaoCompra';
+import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
 
 export default function AbaRecepção({ pedido }) {
@@ -32,21 +38,97 @@ export default function AbaRecepção({ pedido }) {
     setSelectedEmbarque(null);
   }, [pedidoAtual?.embarques_registrados]);
 
+  const motivoEntradaCompraOk = (mov) => {
+    const m = mov?.motivo;
+    if (m == null || m === '') return true;
+    if (m === 'Compra') return true;
+    return String(m).toLowerCase() === 'compra';
+  };
+
   const loadMovimentos = async () => {
     if (!pedido?.id) return;
     setIsLoadingMovimentos(true);
     try {
-      const movs = await base44.entities.MovimentacaoEstoque.filter({
-        referencia_tipo: 'PedidoCompra',
-        referencia_id: pedido.id
-      }, '-created_date', 100);
-      setMovimentos((movs || []).filter((mov) => mov.tipo === 'Entrada' && mov.motivo === 'Compra'));
+      const pid = pedido.id;
+      let movs = await base44.entities.MovimentacaoEstoque.filter(
+        { referencia_tipo: 'PedidoCompra', referencia_id: pid },
+        '-created_date',
+        150
+      );
+      if (!movs?.length) {
+        movs = await base44.entities.MovimentacaoEstoque.filter(
+          { referencia_tipo: 'PedidoCompra', referencia_id: String(pid) },
+          '-created_date',
+          150
+        );
+      }
+      if (!movs?.length && pedido.numero != null && pedido.numero !== '') {
+        try {
+          movs = await base44.entities.MovimentacaoEstoque.filter(
+            {
+              referencia_tipo: 'PedidoCompra',
+              referencia_numero: String(pedido.numero),
+            },
+            '-created_date',
+            150
+          );
+        } catch (e) {
+          console.warn(
+            'MovimentacaoEstoque: filtro por referencia_numero não aplicado.',
+            e
+          );
+        }
+      }
+      setMovimentos(
+        (movs || []).filter(
+          (mov) => mov.tipo === 'Entrada' && motivoEntradaCompraOk(mov)
+        )
+      );
     } catch (error) {
       console.error('Erro ao carregar movimentos:', error);
     } finally {
       setIsLoadingMovimentos(false);
     }
   };
+
+  const [retificandoEmbId, setRetificandoEmbId] = useState(null);
+
+  const handleRetificarStockEmbarque = useCallback(
+    async (embarqueEl, codigoExibicaoVal, evt) => {
+      evt?.preventDefault?.();
+      evt?.stopPropagation?.();
+      const id = embarqueEl?.id;
+      if (!id) {
+        toast.error('Embarque sem id — recarregue o pedido.');
+        return;
+      }
+      setRetificandoEmbId(id);
+      try {
+        const pedidoRef = pedidoAtual || pedido;
+        const n = await criarMovimentosStockRecepcaoEmFalta(base44, {
+          pedido: pedidoRef,
+          embarque: { ...embarqueEl, codigo_exibicao: codigoExibicaoVal },
+          movimentosExistentes: movimentos,
+        });
+        if (n === 0) {
+          toast.message('Nenhuma entrada nova', {
+            description:
+              'Já existem movimentos com este código de embarque ou as quantidades recebidas no documento estão a zero.',
+          });
+        } else {
+          toast.success(`${n} entrada(s) em stock gerada(s).`);
+          await invokeRecalcularConclusaoPedidoCompra(base44, pedidoRef?.id);
+        }
+        await loadMovimentos();
+      } catch (err) {
+        toast.error(err?.message || 'Falha ao gerar movimentos de stock.');
+      } finally {
+        setRetificandoEmbId(null);
+      }
+    },
+    [pedido, pedidoAtual, movimentos]
+  );
+
   const [selectedEmbarque, setSelectedEmbarque] = useState(null);
 
   const embarques = useMemo(() => {
@@ -113,6 +195,28 @@ export default function AbaRecepção({ pedido }) {
         const qtdItens = itensEmbarque.length || 0;
         const codigoExibicao = embarque.codigo_exibicao || `${pedidoAtual?.numero || pedido?.numero || '-----'}-${String.fromCharCode(65 + idx)}`;
 
+        const movimentosDoEmbarque = movimentos.filter((mov) => {
+          const porCodigoEmbarque =
+            codigoExibicao && movimentoCombinaCodigoEmbarque(mov, codigoExibicao);
+          if (porCodigoEmbarque) return true;
+          const pidMov = mov.produto_id != null ? String(mov.produto_id) : '';
+          const itemDoEmbarque = itensEmbarque.find(
+            (item) =>
+              (item.produto_id != null && String(item.produto_id) === pidMov) ||
+              (item.produto_id_recebido_diferente != null &&
+                String(item.produto_id_recebido_diferente) === pidMov)
+          );
+          return !!itemDoEmbarque;
+        });
+
+        const tinhaLinhasEmbarcadas = itensEmbarque.some(
+          (it) => (Number(it.quantidade_embarcada) || 0) > 0
+        );
+        const alertaSemMovimentoAssociado =
+          statusRecebimento !== 'Pendente' &&
+          tinhaLinhasEmbarcadas &&
+          movimentosDoEmbarque.length === 0;
+
         return (
           <button
             key={embarque.id || idx}
@@ -166,28 +270,47 @@ export default function AbaRecepção({ pedido }) {
                   {getStatusLabel(statusRecebimento)}
                 </span>
 
-                {/* Movimentos de Estoque vinculados */}
-                {(() => {
-                  const movimentosDoEmbarque = movimentos.filter((mov) => {
-                    const itemDoEmbarque = itensEmbarque.find((item) => item.produto_id === mov.produto_id || item.produto_id_recebido_diferente === mov.produto_id);
-                    return !!itemDoEmbarque;
-                  });
-
-                  if (!movimentosDoEmbarque.length) return null;
-
-                  return (
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
-                        <Warehouse className="w-3 h-3" /> Movimento de Estoque
+                {alertaSemMovimentoAssociado && (
+                  <div className="mt-2 flex flex-col gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-left">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-900 dark:text-amber-100 leading-snug">
+                        Este embarque já não está pendente, mas não há movimento de stock ligado ao código{' '}
+                        <span className="font-semibold">{codigoExibicao}</span>. Pode gerar as entradas a partir das
+                        quantidades <span className="font-medium">recebidas</span> já gravadas no embarque.
                       </p>
-                      {movimentosDoEmbarque.map(mov => (
-                        <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">{mov.quantidade}</span> un. - {mov.produto_nome}
-                        </div>
-                      ))}
                     </div>
-                  );
-                })()}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="self-start border-amber-300 bg-white text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/50"
+                      disabled={retificandoEmbId === embarque.id}
+                      onClick={(e) => handleRetificarStockEmbarque(embarque, codigoExibicao, e)}
+                    >
+                      {retificandoEmbId === embarque.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> A gerar…
+                        </>
+                      ) : (
+                        'Gerar entrada em stock (retificar)'
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {movimentosDoEmbarque.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
+                      <Warehouse className="w-3 h-3" /> Movimento de Estoque
+                    </p>
+                    {movimentosDoEmbarque.map((mov) => (
+                      <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">{mov.quantidade}</span> un. - {mov.produto_nome}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 </div>
 
                 {/* Ação - Play Icon */}
