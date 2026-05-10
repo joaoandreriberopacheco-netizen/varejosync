@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
@@ -12,8 +12,6 @@ import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
 import { buildPurchaseUnitOptions, normalizeUnitCode, resolveCommercialDisplay, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
-import { useAuth } from '@/lib/AuthContext';
-
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
@@ -346,7 +344,6 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
 
 export default function PedidosCompraPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -791,14 +788,6 @@ export default function PedidosCompraPage() {
           <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Embarques</p>
           <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
           <p className="text-xs text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          {user?.role === 'admin' && (
-            <Link
-              to="/CorrecaoRecepcaoEstoque"
-              className="inline-flex text-xs font-medium text-amber-700 dark:text-amber-400 hover:underline pt-1"
-            >
-              Correção de stock em lote (recepção) →
-            </Link>
-          )}
         </div>
         <PedidosCompraOrganizer
           groupBy={groupBy}
