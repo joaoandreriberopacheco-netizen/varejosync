@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
+import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -130,14 +132,20 @@ export default function PDVAuditoria() {
       return acc;
     }, {});
 
-    const movimentacoes = Object.entries(totaisConferidos)
-      .map(([produtoId, quantidadeContada]) => {
+    const movimentacoesPayload = await Promise.all(
+      Object.entries(totaisConferidos).map(async ([produtoId, quantidadeContada]) => {
         const produto = mapaProdutos[produtoId];
         if (!produto) return null;
 
-        const estoqueAtual = Number(produto.estoque_atual) || 0;
-        const diferenca = quantidadeContada - estoqueAtual;
-        if (diferenca === 0) return null;
+        const movs = await base44.entities.MovimentacaoEstoque.filter({ produto_id: produtoId }, "-created_date", 1000);
+        const saldoExtrato = calcularSaldoMovimentacoes(movs);
+        const diferenca = quantidadeContada - saldoExtrato;
+        if (Math.abs(diferenca) < 1e-6) return null;
+
+        const cadastro = parseEstoqueCadastro(produto.estoque_atual);
+        const obsExtra = cadastro !== saldoExtrato
+          ? ` (saldo extrato ${saldoExtrato}; cadastro ${cadastro})`
+          : "";
 
         return {
           produto_id: produto.id,
@@ -149,11 +157,14 @@ export default function PDVAuditoria() {
           referencia_tipo: "ConferenciaEstoque",
           referencia_id: conferencia_id,
           referencia_numero: conferencia?.nome_conferencia || conferencia_id,
-          observacoes: `Ajuste automático gerado pela conferência ${conferencia?.nome_conferencia || conferencia_id}`,
-          usuario_responsavel: conferencia?.responsavel_nome || conferencia?.responsavel_id || "Sistema"
+          observacoes: `Ajuste automático — contagem física ${quantidadeContada}${obsExtra} · ${conferencia?.nome_conferencia || conferencia_id}`,
+          usuario_responsavel: conferencia?.responsavel_nome || conferencia?.responsavel_id || "Sistema",
         };
       })
-      .filter(Boolean);
+    );
+
+    const movimentacoes = movimentacoesPayload.filter(Boolean);
+    const idsRecalc = [...new Set(movimentacoes.map((m) => m.produto_id).filter(Boolean))];
 
     await Promise.all([
       base44.entities.ConferenciaEstoque.update(conferencia_id, {
@@ -162,8 +173,12 @@ export default function PDVAuditoria() {
         itens_conferidos: itens,
         ajuste_aplicado: true,
       }),
-      ...movimentacoes.map((movimentacao) => base44.entities.MovimentacaoEstoque.create(movimentacao))
+      ...movimentacoes.map((movimentacao) => base44.entities.MovimentacaoEstoque.create(movimentacao)),
     ]);
+
+    for (const pid of idsRecalc) {
+      await invokeRecalcularEstoqueProduto(base44, pid);
+    }
 
     setFinalizando(false);
     navigate(createPageUrl("AuditoriaEstoque"));

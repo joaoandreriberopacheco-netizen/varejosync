@@ -8,6 +8,7 @@ import {
   ClipboardCheck, X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw
 } from "lucide-react";
 import { saveConferenciaItem } from "@/functions/saveConferenciaItem";
+import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 
 // Tela de CONTAGEM CEGA — operário NÃO vê estoque do sistema
 export default function ConferenciaEditor({ conferencia: conferenciaInicial, onVoltar }) {
@@ -108,20 +109,25 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   // Verifica divergências vs sistema antes de finalizar
   const abrirConfirmacao = async () => {
     setVerificandoDivergencias(true);
-    // Busca estoque atual dos produtos contados
-    const ids = [...new Set(itens.map(i => i.produto_id))];
     const divs = [];
     for (const grupo of itensAgrupados) {
       const prod = produtos.find(p => p.id === grupo.produto_id);
-      if (prod && prod.estoque_atual !== undefined && prod.estoque_atual !== null) {
-        if (Math.abs(grupo.total - prod.estoque_atual) > 0.001) {
-          divs.push({
-            produto_id: grupo.produto_id,
-            produto_nome: grupo.produto_nome,
-            contado: grupo.total,
-            sistema: prod.estoque_atual,
-          });
-        }
+      if (!prod) continue;
+      const movs = await base44.entities.MovimentacaoEstoque.filter(
+        { produto_id: grupo.produto_id },
+        "-created_date",
+        1000
+      );
+      const saldoExtrato = calcularSaldoMovimentacoes(movs);
+      if (Math.abs(grupo.total - saldoExtrato) > 0.001) {
+        const cad = parseEstoqueCadastro(prod.estoque_atual);
+        divs.push({
+          produto_id: grupo.produto_id,
+          produto_nome: grupo.produto_nome,
+          contado: grupo.total,
+          sistema: saldoExtrato,
+          sistema_cadastro: cad !== saldoExtrato ? cad : null,
+        });
       }
     }
     setDivergencias(divs);
@@ -408,7 +414,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             {divergencias.length > 0 && (
               <>
                 <p className="text-xs text-amber-600 dark:text-amber-400 mb-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl px-3 py-2">
-                  Os itens abaixo diferem do estoque do sistema. Você pode revisar antes de enviar, ou prosseguir — o auditor verá as diferenças.
+                  Os itens abaixo diferem do saldo calculado pelas movimentações (a quantidade que você informou é a contagem física, não um acréscimo ou decréscimo). Você pode revisar antes de enviar — o auditor verá as diferenças.
                 </p>
                 <div className="overflow-y-auto flex-1 space-y-1.5 mb-4">
                   {divergencias.map(div => (
@@ -417,8 +423,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                       <p className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{div.produto_nome}</p>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <span className="text-xs font-semibold text-gray-900 dark:text-white">{div.contado}</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-600">vs</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-600">vs saldo</span>
                         <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{div.sistema}</span>
+                        {div.sistema_cadastro != null && (
+                          <span className="text-[10px] text-gray-500 dark:text-gray-600">cad. {div.sistema_cadastro}</span>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
+import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, Loader2, CheckCircle2, XCircle, Printer,
@@ -11,20 +13,30 @@ import { openPrintWindowOrShareHtml } from "@/lib/mobilePrintAndShare";
 
 export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualizar }) {
   const [produtos, setProdutos] = useState([]);
+  const [saldoPorProduto, setSaldoPorProduto] = useState({});
   const [loading, setLoading] = useState(true);
   const [aprovando, setAprovando] = useState(false);
   const printRef = useRef(null);
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); }, [conferencia?.id]);
 
   const carregar = async () => {
     setLoading(true);
     const prods = await base44.entities.Produto.list("-nome", 2000);
     setProdutos(prods);
+    const ids = [...new Set((conferencia.itens_conferidos || []).map((i) => i.produto_id).filter(Boolean))];
+    const saldos = {};
+    await Promise.all(
+      ids.map(async (id) => {
+        const movs = await base44.entities.MovimentacaoEstoque.filter({ produto_id: id }, "-created_date", 1000);
+        saldos[id] = calcularSaldoMovimentacoes(movs);
+      })
+    );
+    setSaldoPorProduto(saldos);
     setLoading(false);
   };
 
-  // Constrói comparativo: contado x sistema
+  // Constrói comparativo: contado físico x saldo do extrato (base do ajuste; pode divergir do campo cadastro)
   const comparativo = React.useMemo(() => {
     if (!produtos.length) return [];
 
@@ -37,14 +49,19 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
 
     return Object.entries(contagens).map(([produto_id, c]) => {
       const prod = produtos.find(p => p.id === produto_id);
-      const estoque_sistema = prod?.estoque_atual ?? null;
+      const estoque_cadastro = prod ? parseEstoqueCadastro(prod.estoque_atual) : null;
+      const saldo_movimentos = Object.prototype.hasOwnProperty.call(saldoPorProduto, produto_id)
+        ? saldoPorProduto[produto_id]
+        : null;
       const contado = c.total;
-      const diferenca = estoque_sistema !== null ? contado - estoque_sistema : null;
+      const baseline = saldo_movimentos !== null ? saldo_movimentos : estoque_cadastro;
+      const diferenca = baseline !== null && Number.isFinite(baseline) ? contado - baseline : null;
       return {
         produto_id,
         produto_nome: c.nome,
         contado,
-        estoque_sistema,
+        estoque_sistema: baseline,
+        estoque_cadastro,
         diferenca,
         unidade: prod?.unidade_principal || "UN",
         hierarquia: [prod?.campo_hierarquico_1, prod?.campo_hierarquico_2].filter(Boolean).join(" › "),
@@ -54,7 +71,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
       const db = Math.abs(b.diferenca ?? 0);
       return db - da; // maior diferença primeiro
     });
-  }, [produtos, conferencia]);
+  }, [produtos, conferencia, saldoPorProduto]);
 
   const totais = React.useMemo(() => {
     const com_dif = comparativo.filter(i => i.diferenca !== null && i.diferenca !== 0);
@@ -66,32 +83,39 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
 
   const aprovar = async () => {
     setAprovando(true);
-    // Atualiza estoque de cada produto conforme contagem
-    for (const item of comparativo) {
-      if (item.diferenca !== null && item.diferenca !== 0) {
-        const prod = produtos.find(p => p.id === item.produto_id);
-        if (prod && prod.campo_hierarquico_1) {
-          // Patch mínimo — apenas o campo de estoque
-          await base44.entities.Produto.update(item.produto_id, {
-            campo_hierarquico_1: prod.campo_hierarquico_1,
-            estoque_atual: item.contado,
-          });
-          // Registra movimentação
-          await base44.entities.MovimentacaoEstoque.create({
-            produto_id: item.produto_id,
-            produto_nome: item.produto_nome,
-            tipo: item.diferenca > 0 ? "Entrada" : "Saída",
-            motivo: "Ajuste de Inventário",
-            quantidade: Math.abs(item.diferenca),
-            referencia_tipo: "ConferenciaEstoque",
-            referencia_id: conferencia.id,
-            referencia_numero: conferencia.nome_conferencia,
-            observacoes: `Auditoria: ${conferencia.nome_conferencia}`,
-          });
-        }
-      }
+    const recalcIds = new Set();
+    for (const row of comparativo) {
+      const movs = await base44.entities.MovimentacaoEstoque.filter(
+        { produto_id: row.produto_id },
+        "-created_date",
+        1000
+      );
+      const saldo = calcularSaldoMovimentacoes(movs);
+      const delta = row.contado - saldo;
+      if (Math.abs(delta) < 1e-6) continue;
+
+      const prod = produtos.find((p) => p.id === row.produto_id);
+      if (!prod) continue;
+
+      await base44.entities.MovimentacaoEstoque.create({
+        produto_id: row.produto_id,
+        produto_nome: row.produto_nome,
+        tipo: delta > 0 ? "Entrada" : "Saída",
+        motivo: "Ajuste de Inventário",
+        quantidade: Math.abs(delta),
+        custo_unitario: Number(prod.preco_custo_calculado) || Number(prod.valor_compra) || 0,
+        referencia_tipo: "ConferenciaEstoque",
+        referencia_id: conferencia.id,
+        referencia_numero: conferencia.nome_conferencia,
+        observacoes: `Auditoria: ${conferencia.nome_conferencia} — contagem física ${row.contado} (saldo extrato ${saldo})`,
+        usuario_responsavel: conferencia?.responsavel_nome || conferencia?.responsavel_id || "Sistema",
+      });
+      recalcIds.add(row.produto_id);
     }
     await base44.entities.ConferenciaEstoque.update(conferencia.id, { status: "Concluída" });
+    for (const pid of recalcIds) {
+      await invokeRecalcularEstoqueProduto(base44, pid);
+    }
     setAprovando(false);
     onAtualizar();
   };
@@ -111,7 +135,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
         <tr>
           <td>${item.produto_nome}</td>
           <td style="text-align:center">${item.contado} ${item.unidade}</td>
-          <td style="text-align:center">${item.estoque_sistema ?? "—"} ${item.unidade}</td>
+          <td style="text-align:center">${item.estoque_sistema ?? "—"} ${item.unidade}${item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? ` <span style="color:#9ca3af">(cad. ${item.estoque_cadastro})</span>` : ""}</td>
           <td style="text-align:center" class="${difClass}">${difStr}</td>
         </tr>`;
     }).join("");
@@ -158,7 +182,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
               <tr>
                 <th>Produto</th>
                 <th>Contado</th>
-                <th>Sistema</th>
+                <th>Saldo (mov.)</th>
                 <th>Diferença</th>
               </tr>
             </thead>
@@ -242,7 +266,12 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
                 <div className="flex items-center gap-1.5 text-xs">
                   <span className="font-semibold text-gray-700 dark:text-gray-200">{item.contado}</span>
                   <span className="text-gray-300 dark:text-gray-700">·</span>
-                  <span className="text-gray-400 dark:text-gray-500">{item.estoque_sistema ?? "—"} {item.unidade}</span>
+                  <span className="text-gray-400 dark:text-gray-500" title={item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? `Cadastro: ${item.estoque_cadastro}` : ""}>
+                    {item.estoque_sistema ?? "—"} {item.unidade}
+                    {item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? (
+                      <span className="text-gray-500 dark:text-gray-600 font-normal"> · cad. {item.estoque_cadastro}</span>
+                    ) : null}
+                  </span>
                 </div>
                 <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${difColor}`}>
                   <DifIcon className="w-3 h-3" />
@@ -268,7 +297,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
               <div className="flex items-start gap-2.5 bg-gray-50 dark:bg-gray-900 rounded-2xl px-4 py-3 mb-3">
                 <AlertTriangle className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {totais.com_dif} produto{totais.com_dif !== 1 ? "s" : ""} com divergência. Ao aprovar, o estoque será ajustado automaticamente.
+                  {totais.com_dif} produto{totais.com_dif !== 1 ? "s" : ""} com divergência. A quantidade informada na conferência é a contagem física (real); o ajuste compara com o saldo do histórico de movimentações até deixar o cadastro alinhado a essa contagem.
                 </p>
               </div>
             )}
