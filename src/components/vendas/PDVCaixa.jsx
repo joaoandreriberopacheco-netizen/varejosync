@@ -70,6 +70,10 @@ import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
+/** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
+const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
+const PDV_CAIXA_IDLE_SYNC_TICK_MS = 45 * 1000;
+
 export default function PDVCaixa() {
   const navigate = useNavigate();
   const [configVenda, setConfigVenda] = useState(null);
@@ -194,6 +198,10 @@ export default function PDVCaixa() {
   const [modoVisualizacao, setModoVisualizacao] = useState(false);
   const [showSeletorCaixa, setShowSeletorCaixa] = useState(true);
   const [fechandoCaixa, setFechandoCaixa] = useState(false);
+
+  const lastUserActivityAtRef = useRef(Date.now());
+  const loadDataRef = useRef(null);
+  const idleSyncBlockedRef = useRef(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -532,6 +540,64 @@ export default function PDVCaixa() {
     }
   };
 
+  loadDataRef.current = loadData;
+
+  idleSyncBlockedRef.current =
+    showSeletorCaixa ||
+    isDialogOpen ||
+    showMovimentoDialog ||
+    showFechamentoDialog ||
+    showDespesaDialog ||
+    processandoVenda ||
+    fechandoCaixa ||
+    showComprovanteCaixa ||
+    showPromissoria ||
+    showRetornoDialog ||
+    showComprovanteMovimento ||
+    showCalculadoraCedulas ||
+    salvandoDespesa ||
+    showVendasDialog ||
+    showReforcosDialog ||
+    showSangriasDialog ||
+    showDespesasDialog ||
+    showSaldoConsolidadoDialog ||
+    showGerenciarMovimentoDialog ||
+    showLiberacaoEntrega ||
+    showComprovanteDespesa ||
+    buscandoVale ||
+    vendaDetalhada != null ||
+    saldoResidualVale != null;
+
+  useEffect(() => {
+    const cap = { capture: true };
+    const bump = () => {
+      lastUserActivityAtRef.current = Date.now();
+    };
+    window.addEventListener('pointerdown', bump, cap);
+    window.addEventListener('keydown', bump, cap);
+    window.addEventListener('touchstart', bump, cap);
+    return () => {
+      window.removeEventListener('pointerdown', bump, cap);
+      window.removeEventListener('keydown', bump, cap);
+      window.removeEventListener('touchstart', bump, cap);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showSeletorCaixa || !turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
+    const tick = window.setInterval(() => {
+      if (idleSyncBlockedRef.current) return;
+      if (Date.now() - lastUserActivityAtRef.current < PDV_CAIXA_IDLE_SYNC_AFTER_MS) return;
+      const run = loadDataRef.current;
+      if (typeof run === 'function') {
+        void run().finally(() => {
+          lastUserActivityAtRef.current = Date.now();
+        });
+      }
+    }, PDV_CAIXA_IDLE_SYNC_TICK_MS);
+    return () => window.clearInterval(tick);
+  }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
+
   const handleAbrirPedido = (pedido) => {
     if (modoVisualizacao) {
       toast({
@@ -546,6 +612,7 @@ export default function PDVCaixa() {
   };
 
   const handleSelecionarCaixa = (caixa, turno, somenteLeitura) => {
+    lastUserActivityAtRef.current = Date.now();
     setCaixaSelecionado(caixa);
     setTurnoAtivo(turno);
     setModoVisualizacao(somenteLeitura);
