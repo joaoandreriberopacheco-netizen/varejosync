@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
   const navigate = useNavigate();
@@ -51,6 +52,17 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
       ]);
 
+      const receitasByTurnoId = {};
+      await Promise.all(
+        todosTurnos.map(async (t) => {
+          const rec = await base44.entities.LancamentoFinanceiro.filter({
+            turno_caixa_id: t.id,
+            tipo: 'Receita',
+          });
+          receitasByTurnoId[t.id] = rec;
+        })
+      );
+
       const caixasPDV = todasContas.filter(c => 
         c.ativo && 
         (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
@@ -61,8 +73,15 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
       caixasPDV.forEach(caixa => {
         const turnoAberto = todosTurnos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turnoAberto) {
-          // Somar vendas do turno
-          const vendasTurno = todasVendas.filter(v => v.turno_caixa_id === turnoAberto.id);
+          const pedidoIdsReceita = buildPedidoIdsReceitasTurno(receitasByTurnoId[turnoAberto.id] || []);
+          const vendasTurno = todasVendas.filter((v) =>
+            isPedidoVendaNoTurnoCaixa(v, {
+              turno: turnoAberto,
+              caixa,
+              pedidoIdsDasReceitasDoTurno: pedidoIdsReceita,
+              incluirRetrocompatSemTurno: !turnoAberto.data_fechamento,
+            })
+          );
           const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
           
           // Somar reforços

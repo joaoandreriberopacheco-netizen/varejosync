@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
 const fmt = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -16,7 +17,16 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
 
   const reforcos = movimentos.filter(m => m.tipo === 'Reforço' && m.turno_caixa_id === turno.id);
   const sangrias = movimentos.filter(m => m.tipo === 'Sangria' && m.turno_caixa_id === turno.id);
-  const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
+  const vendasIdsSnapshot = new Set((turno.vendas_ids || []).map((id) => String(id)));
+  const vendasTurno = vendas.filter(
+    (v) =>
+      vendasIdsSnapshot.has(String(v.id)) ||
+      isPedidoVendaNoTurnoCaixa(v, {
+        turno,
+        caixa: { id: turno.conta_caixa_pdv_id },
+        incluirRetrocompatSemTurno: false,
+      })
+  );
 
   const duracao = () => {
     if (!turno.data_abertura || !turno.data_fechamento) return '-';

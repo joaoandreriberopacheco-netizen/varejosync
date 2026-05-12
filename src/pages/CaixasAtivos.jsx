@@ -4,6 +4,7 @@ import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket, RefreshCw }
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -28,19 +29,29 @@ export default function CaixasAtivosPage() {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      const [turnos, contas, vendas, movs, despesas, fiados, consumos, rascunhos] = await Promise.all([
+      const [turnos, contas, vendas, movs, despesas, consumos, rascunhos] = await Promise.all([
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
         base44.entities.ContasFinanceiras.list(),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
         base44.entities.ConsumoInterno.list('-created_date'),
         base44.entities.RascunhoPedidoVenda.list(),
       ]);
 
       const turnosUnicos = turnos.filter((turno, index, array) =>
         array.findIndex(t => t.conta_caixa_pdv_id === turno.conta_caixa_pdv_id) === index
+      );
+
+      const receitasByTurnoId = {};
+      await Promise.all(
+        turnosUnicos.map(async (t) => {
+          const rec = await base44.entities.LancamentoFinanceiro.filter({
+            turno_caixa_id: t.id,
+            tipo: 'Receita',
+          });
+          receitasByTurnoId[t.id] = rec;
+        })
       );
 
       const rascunhosPendentesCaixa = rascunhos.filter((r) => {
@@ -66,7 +77,15 @@ export default function CaixasAtivosPage() {
       caixasPDV.forEach(caixa => {
         const turno = turnosUnicos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turno) {
-          const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
+          const pedidoIdsReceita = buildPedidoIdsReceitasTurno(receitasByTurnoId[turno.id] || []);
+          const vendasTurno = vendas.filter((v) =>
+            isPedidoVendaNoTurnoCaixa(v, {
+              turno,
+              caixa,
+              pedidoIdsDasReceitasDoTurno: pedidoIdsReceita,
+              incluirRetrocompatSemTurno: !turno.data_fechamento,
+            })
+          );
           const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
           let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
           vendasTurno.forEach(v => {
@@ -83,7 +102,9 @@ export default function CaixasAtivosPage() {
           const sangrias = movs.filter(m => m.turno_caixa_id === turno.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')).reduce((s, m) => s + (m.valor || 0), 0);
           const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa').reduce((s, d) => s + (d.valor || 0), 0);
           const liquidezTurno = (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno;
-          const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
+          const lancamentosFiado = (receitasByTurnoId[turno.id] || []).filter(
+            (f) => f.forma_pagamento === 'Conta a Pagar'
+          );
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
           const senhasAguardando = rascunhosPendentesCaixa;

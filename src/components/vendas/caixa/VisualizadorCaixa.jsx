@@ -10,6 +10,7 @@ import ListaMovimentosDialog from './ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
@@ -67,13 +68,13 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
     if (showSpinner) setLoading(true);
     try {
-      const [turnoFresh, caixaFresh, todosPedidos, todasMovimentacoes, todasDespesasRaw, fiados] = await Promise.all([
+      const [turnoFresh, caixaFresh, todosPedidos, todasMovimentacoes, todasDespesasRaw, receitasTurno] = await Promise.all([
         base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
         base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita' }),
       ]);
 
       const turnoBase = turnoFresh || turnoAtivo;
@@ -86,8 +87,17 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const todasDespesas = todasDespesasRaw.filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
 
-      const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-      const vendas = todosPedidos.filter((p) => statusOk.includes(p.status) && sameTurno(p));
+      const fiados = (receitasTurno || []).filter((l) => l.forma_pagamento === 'Conta a Pagar');
+
+      const pedidoIdsReceitaTurno = buildPedidoIdsReceitasTurno(receitasTurno || []);
+      const vendas = todosPedidos.filter((p) =>
+        isPedidoVendaNoTurnoCaixa(p, {
+          turno: turnoBase,
+          caixa: caixaFresh || caixaSelecionado,
+          pedidoIdsDasReceitasDoTurno: pedidoIdsReceitaTurno,
+          incluirRetrocompatSemTurno: !turnoBase.data_fechamento,
+        })
+      );
 
       const movimentosTurno = todasMovimentacoes.filter((m) => sameTurno(m) && sameConta(m));
 

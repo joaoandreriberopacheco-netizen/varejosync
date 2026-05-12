@@ -68,6 +68,7 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
 export default function PDVCaixa() {
   const navigate = useNavigate();
@@ -422,11 +423,12 @@ export default function PDVCaixa() {
       const caixaAtual = contaAtualizada || caixa;
       setContaCaixaPDV(caixaAtual);
 
-      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw] = await Promise.all([
+      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw, receitasTurno] = await Promise.all([
         base44.entities.PedidoVenda.list(),
         base44.entities.RascunhoPedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' })
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Receita' }),
       ]);
 
       // Filtrar despesas: excluir as que foram geradas automaticamente para sangrias/recolhimentos
@@ -449,18 +451,17 @@ export default function PDVCaixa() {
       setPedidosAguardando(pedidosAguardandoCaixa);
       setRascunhosAguardando(rascunhosAguardandoCaixa);
 
-      // Filtrar vendas do turno ativo:
-      // 1. Vinculadas pelo turno_caixa_id, OU
-      // 2. Listadas em vendas_ids do turno, OU
-      // 3. Criadas após a abertura do turno sem turno vinculado (retrocompatibilidade)
-      const dataAbertura = new Date(turno.data_abertura);
-      const dataFechamento = turno.data_fechamento ? new Date(turno.data_fechamento) : null;
-      const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-      // SELO FRIO: apenas vendas com turno_caixa_id igual ao turno atual
-      const vendasTurno = todosPedidos.filter((p) => {
-        if (!statusOk.includes(p.status)) return false;
-        return p.turno_caixa_id === turno.id;
-      });
+      // Vendas do turno: turno_caixa_id no pedido, snapshot vendas_ids, receitas com referencia PedidoVenda,
+      // ou (turno aberto) legado sem selo no pedido mas mesma conta e data dentro do turno.
+      const pedidoIdsReceitaTurno = buildPedidoIdsReceitasTurno(receitasTurno || []);
+      const vendasTurno = todosPedidos.filter((p) =>
+        isPedidoVendaNoTurnoCaixa(p, {
+          turno,
+          caixa: caixaAtual,
+          pedidoIdsDasReceitasDoTurno: pedidoIdsReceitaTurno,
+          incluirRetrocompatSemTurno: !turno.data_fechamento,
+        })
+      );
       setVendasFinalizadas(vendasTurno);
 
       // Filtrar movimentos do turno ativo
