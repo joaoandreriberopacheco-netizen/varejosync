@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2 } from 'lucide-react';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
@@ -239,26 +237,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     if (unitOptions.includes(raw)) return raw;
     return unitOptions[0] || 'UN';
   }, [unitOptions, formData.unidade_apresentacao_default, formData.unidade_show_comercial, formData.unidade_principal]);
-
-  const resolveUnitValue = (value, opts = {}) => {
-    const principal = String(opts.unidadePrincipal || formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
-      const alternativasNormalizadas = normalizeAlternativas(opts.unidadesAlternativas || formData.unidades_alternativas || []).map((u) => ({
-      unidade: String(u?.unidade || '').trim().toUpperCase(),
-      rotulo: String(u?.rotulo || '').trim().toUpperCase(),
-    })).filter((u) => u.unidade);
-    const validSet = new Set([principal, ...alternativasNormalizadas.map((u) => u.unidade)]);
-    const normalizeAlias = (raw) => String(raw || '').trim().toUpperCase()
-      .replace('CAIXA', 'CX')
-      .replace('CAIXAS', 'CX')
-      .replace('M²', 'M2')
-      .replace('METRO QUADRADO', 'M2');
-    const normalized = normalizeAlias(value);
-    if (!normalized) return '';
-    if (validSet.has(normalized)) return normalized;
-    const byRotulo = alternativasNormalizadas.find((u) => u.rotulo && normalizeAlias(u.rotulo) === normalized);
-    if (byRotulo?.unidade) return byRotulo.unidade;
-    return '';
-  };
 
   useEffect(() => {
     setFormData((prev) => {
