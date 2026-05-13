@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
-import { formatEstoqueApresentacao, resolveCommercialUnit } from '@/lib/productUnits';
+import { formatEstoqueApresentacao, resolveCommercialUnit, getCatalogUnitLabels } from '@/lib/productUnits';
 
 const headMap = {
   status: 'Status', cadastro: 'Cadastro', codigo_interno: 'Código', codigo_barras: 'Cód. Barras', categoria: 'Categoria', tags: 'Tags', fornecedor: 'Fornecedor', preco_venda: 'Preço Venda', preco_custo: 'Custo Total', margem: 'Margem', valor_compra: 'Vl. Compra', markup: 'Markup %', estoque_atual: 'Estoque', estoque_minimo: 'Est. Mín', estoque_ideal: 'Est. Ideal', estoque_maximo: 'Est. Máx', tempo_reposicao: 'Repos.', peso: 'Peso', dimensoes: 'Dimensões', tipo: 'Tipo', unidade: 'Unid.', unidades_pacote: 'Un/Pct', show_comercial: 'Show Comercial', show_logistica: 'Show Logístico'
@@ -27,7 +27,6 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
         </TableHeader>
         <TableBody>
           {filteredProdutos.map(produto => {
-            const produtoForcandoShow = { ...produto, unidade_show_ativa: true };
             const custoReal = produto.preco_custo_calculado > 0 ? produto.preco_custo_calculado : (produto.valor_compra || 0) + (produto.custo_frete_padrao || 0) + (produto.custo_imposto1_padrao || 0) + (produto.custo_imposto2_padrao || 0) + (produto.custo_outros_padrao || 0) - (produto.desconto_compra_padrao || 0);
             const margem = produto.preco_venda_padrao > 0 && custoReal > 0 ? ((produto.preco_venda_padrao - custoReal) / produto.preco_venda_padrao) * 100 : 0;
             const cadastroStatus = isCadastroIncompleto(produto);
@@ -73,13 +72,13 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                     <div className="flex flex-col leading-tight">
                       <span>
                         {(() => {
-                          const apresent = formatEstoqueApresentacao(produtoForcandoShow);
+                          const apresent = formatEstoqueApresentacao(produto);
                           if (apresent) return `${formatarNumero(apresent.quantidade)} ${apresent.sigla}`;
                           return `${formatarNumero(produto.estoque_atual)} ${(produto.unidade_principal || 'UN').toUpperCase()}`;
                         })()}
                       </span>
                       {(() => {
-                        const apresent = formatEstoqueApresentacao(produtoForcandoShow);
+                        const apresent = formatEstoqueApresentacao(produto);
                         if (!apresent) return null;
                         return (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
@@ -97,7 +96,21 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 {visibleColumns.includes('peso') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.peso_kg)}kg</TableCell>}
                 {visibleColumns.includes('dimensoes') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.dimensoes_cm || '-'}</TableCell>}
                 {visibleColumns.includes('tipo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>}
-                {visibleColumns.includes('unidade') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidade_principal}</TableCell>}
+                {visibleColumns.includes('unidade') && (() => {
+                  const { unidadeBase, unidadeComercial, mostramMesma } = getCatalogUnitLabels(produto);
+                  return (
+                    <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                      <div className="flex flex-col leading-tight">
+                        <span>{unidadeBase}</span>
+                        {!mostramMesma && (
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                            comercial {unidadeComercial}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                  );
+                })()}
                 {visibleColumns.includes('unidades_pacote') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>}
                 {visibleColumns.includes('show_comercial') && (
                   <TableCell className="text-xs text-gray-700 dark:text-gray-300">

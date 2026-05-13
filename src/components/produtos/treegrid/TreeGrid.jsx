@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from './useTreeGrid';
-import { formatEstoqueApresentacao } from '@/lib/productUnits';
+import { formatEstoqueApresentacao, getCatalogUnitLabels } from '@/lib/productUnits';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -61,7 +61,6 @@ function StatusDot({ produto }) {
 
 // ── Valor de célula SKU ───────────────────────────────────────────────────────
 function skuCellValue(colId, produto, margem, lastro, markup) {
-  const produtoForcandoShow = { ...produto, unidade_show_ativa: true };
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
     case 'codigo_interno':       return <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{produto.codigo_interno || '—'}</span>;
@@ -82,7 +81,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : '—'}</span>;
     case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
-      const apresent = formatEstoqueApresentacao(produtoForcandoShow);
+      const apresent = formatEstoqueApresentacao(produto);
       const qtdExibicao = apresent ? apresent.quantidade : produto.estoque_atual;
       const unExibicao = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
       return (
@@ -103,7 +102,17 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     case 'peso':                 return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.peso_kg)}kg</span>;
     case 'dimensoes':            return <span className="text-xs text-gray-400">{produto.dimensoes_cm || '—'}</span>;
     case 'tipo':                 return <span className="text-xs text-gray-400">{produto.tipo || '—'}</span>;
-    case 'unidade':              return <span className="text-xs text-gray-400">{produto.unidade_principal || '—'}</span>;
+    case 'unidade': {
+      const { unidadeBase, unidadeComercial, mostramMesma } = getCatalogUnitLabels(produto);
+      return (
+        <span className="flex flex-col text-xs text-gray-400 leading-tight">
+          <span>{unidadeBase || '—'}</span>
+          {!mostramMesma && (
+            <span className="text-[9px] text-gray-500 dark:text-gray-500 mt-0.5">com. {unidadeComercial}</span>
+          )}
+        </span>
+      );
+    }
     case 'unidades_pacote':      return <span className="text-xs text-gray-400">{produto.unidades_por_pacote || 1}</span>;
     default:                     return <span className="text-xs text-gray-400">—</span>;
   }

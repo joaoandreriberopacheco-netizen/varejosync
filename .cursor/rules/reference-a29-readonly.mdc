@@ -1,0 +1,12 @@
+---
+description: Onde e como usar a cópia local só-leitura do a29-erp dentro do varejosync.
+globs: docs/reference-a29-erp/**/*
+alwaysApply: false
+---
+
+# Referência A29 dentro do VarejoSync
+
+- **Caminho:** `docs/reference-a29-erp/checkout/` — deve ser um `git clone` **raso** do repositório **a29-erp** (instruções em `docs/reference-a29-erp/README.md`). O conteúdo está em `.gitignore`; não commitar.
+- **Uso permitido:** leitura, comparação de implementação (embalagens, OCR, catálogo, formulários), copiar **trechos adaptados** para `src/` ou `docs/` do varejosync com revisão humana.
+- **Proibido:** `import` ou alias Vite para `checkout/`; alterar ficheiros dentro de `checkout/` como se fosse este projeto (o canónico é o repo A29); assumir que env/RLS do A29 existem no Base44.
+- Se `checkout/` estiver vazio ou ausente, pedir ao utilizador que execute o clone descrito no README antes de afirmar equivalências com o A29.

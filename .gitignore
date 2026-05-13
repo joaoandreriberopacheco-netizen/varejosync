@@ -30,6 +30,9 @@ dist-ssr
 # Export local da fila Flare (pode conter dados sensíveis)
 docs/flare-export/flare-pending.json
 
+# Clone só-leitura do A29 para comparação (ver docs/reference-a29-erp/README.md)
+docs/reference-a29-erp/checkout/
+
 # Cache local de scripts (inferência, fragmentos gerados)
 scripts/.cache/
 

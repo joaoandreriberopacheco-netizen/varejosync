@@ -117,6 +117,10 @@ export const AuthProvider = ({ children }) => {
       
       // If user auth fails, it might be an expired token
       if (error.status === 401 || error.status === 403) {
+        // Visitante na página de login: não marcar erro global (evita redirect / overlay em loop).
+        if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+          return;
+        }
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'

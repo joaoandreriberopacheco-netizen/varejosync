@@ -222,8 +222,13 @@ function buildAuth(supabase) {
     },
     redirectToLogin(returnUrl) {
       if (typeof window === 'undefined') return;
-      const target = useSupabaseAuth ? '/login' : returnUrl || '/';
-      window.location.href = target;
+      if (useSupabaseAuth) {
+        // Evita loop de reload: AuthContext + App chamam isto ao estar já em /login.
+        if (window.location.pathname === '/login') return;
+        window.location.href = '/login';
+        return;
+      }
+      window.location.href = returnUrl || '/';
     },
     /**
      * Compat com `User.loginWithRedirect(returnUrl)` do Base44 SDK.
@@ -232,6 +237,7 @@ function buildAuth(supabase) {
     async loginWithRedirect(returnUrl) {
       if (useSupabaseAuth) {
         if (typeof window !== 'undefined') {
+          if (window.location.pathname === '/login') return null;
           window.location.href = returnUrl || '/login';
         }
         return null;

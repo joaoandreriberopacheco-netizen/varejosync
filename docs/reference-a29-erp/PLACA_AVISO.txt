@@ -1,0 +1,9 @@
+
+  ****************************************************************
+  *                                                              *
+  *   A29-ERP — PASTA checkout/ = CLONE GIT, SÓ PARA CONSULTA   *
+  *   Não é dependência do VarejoSync. Não importar no bundle.   *
+  *   Ver README.md nesta pasta.                                 *
+  *                                                              *
+  ****************************************************************
+

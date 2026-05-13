@@ -8,7 +8,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NavigationTransitionProvider, NavigationTransitionDetector } from '@/lib/NavigationTransitionContext';
@@ -41,6 +41,7 @@ import ItinerarioFluvial from '@/pages/ItinerarioFluvial.jsx';
 import AuditoriaCodigoProjeto from '@/pages/AuditoriaCodigoProjeto';
 import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
+import LoginPage from '@/components/auth/LoginPage';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -49,7 +50,8 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
   const [showSplash, setShowSplash] = React.useState(() => !sessionStorage.getItem('p38_splash_shown'));
 
   const handleSplashFinish = () => {
@@ -57,20 +59,35 @@ const AuthenticatedApp = () => {
     setShowSplash(false);
   };
 
+  React.useEffect(() => {
+    if (authError?.type === 'auth_required' && location.pathname !== '/login') {
+      navigateToLogin();
+    }
+  }, [authError, location.pathname, navigateToLogin]);
+
   if (showSplash) {
     return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
-
+  if (isLoadingPublicSettings || isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
+        A carregar…
+      </div>
+    );
+  }
 
   // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+    }
+    if (authError.type === 'auth_required') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
+          A redirecionar para o login…
+        </div>
+      );
     }
   }
 
@@ -79,6 +96,7 @@ const AuthenticatedApp = () => {
     <>
       <NavigationTransitionDetector />
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={
         <LayoutWrapper currentPageName="Home">
           <Home />

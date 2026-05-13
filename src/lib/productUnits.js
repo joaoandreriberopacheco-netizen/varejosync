@@ -298,6 +298,18 @@ export function formatUnitConversion(option, unidadePrincipal) {
   return `1 ${option?.unidade || principal} = ${fator} ${principal}`;
 }
 
+/**
+ * Rótulos consistentes para colunas de catálogo: unidade base (fator 1) vs unidade comercial (PDV).
+ * Usa as mesmas regras que `resolveCommercialUnit` / `formatEstoqueApresentacao`.
+ */
+export function getCatalogUnitLabels(product) {
+  const base = resolvePrimaryFromFactorOne(product, product?.unidade_principal || "UN");
+  const comercial = resolveCommercialUnit(product, base);
+  const same =
+    normalizeUnitCode(base) === normalizeUnitCode(comercial) || !isShowUnitEnabled(product);
+  return { unidadeBase: base, unidadeComercial: comercial, mostramMesma: same };
+}
+
 export function formatEstoqueApresentacao(produto) {
   if (!isShowUnitEnabled(produto)) return null;
   const estoque = normalizeNumber(produto?.estoque_atual, 0);

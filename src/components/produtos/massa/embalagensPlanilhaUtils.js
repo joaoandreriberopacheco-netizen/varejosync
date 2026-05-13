@@ -72,8 +72,19 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
   }
 
   const alternativas = [];
+  const siglasAlternativasUsadas = new Set();
   for (const slot of slots.slice(1)) {
     if (!slot.sigla) continue;
+    if (siglasAlternativasUsadas.has(slot.sigla)) {
+      return {
+        alternativas: [],
+        principalSigla: null,
+        emb1Explicit: false,
+        error: `Emb.${slot.n}: sigla "${slot.sigla}" repetida noutro slot (Emb.2–5).`,
+        warnings,
+        hadSlotPayload: true,
+      };
+    }
     if (slot.fator == null || !Number.isFinite(slot.fator)) {
       return {
         alternativas: [],
@@ -122,6 +133,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       preco_venda: 0,
       ativo: true,
     });
+    siglasAlternativasUsadas.add(slot.sigla);
   }
 
   return {

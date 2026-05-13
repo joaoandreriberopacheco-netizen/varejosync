@@ -17,6 +17,7 @@ import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/productUnitsCrud';
+import { resolvePrimaryFromFactorOne, resolveCommercialUnit, resolveCommercialDisplay } from '@/lib/productUnits';
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
   const normalizeAlternativas = (lista = []) => (Array.isArray(lista) ? lista : [])
@@ -229,6 +230,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       .filter(Boolean);
     return [principal, ...alternativas.filter((u) => u !== principal)];
   }, [formData.unidade_principal, formData.unidades_alternativas]);
+
+  /** Evita valor controlado fora da lista (Radix) até o efeito de correção rodar. */
+  const comercialSelectValue = useMemo(() => {
+    const raw = String(
+      formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
+    ).trim().toUpperCase();
+    if (unitOptions.includes(raw)) return raw;
+    return unitOptions[0] || 'UN';
+  }, [unitOptions, formData.unidade_apresentacao_default, formData.unidade_show_comercial, formData.unidade_principal]);
 
   const resolveUnitValue = (value, opts = {}) => {
     const principal = String(opts.unidadePrincipal || formData.unidade_principal || 'UN').trim().toUpperCase() || 'UN';
@@ -567,6 +577,31 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const rounded = Math.round(numero * 100) / 100;
     return rounded.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
+
+  const catalogUnitsPreview = useMemo(() => {
+    const snapshot = {
+      unidade_principal: formData.unidade_principal,
+      unidades_alternativas: (formData.unidades_alternativas || []).map((u) => ({ ...u, ativo: u.ativo !== false })),
+      unidade_apresentacao_default: formData.unidade_apresentacao_default,
+      unidade_show_comercial: formData.unidade_show_comercial,
+      unidade_show_ativa: formData.unidade_show_ativa,
+      unidade_comercial_id: formData.unidade_comercial_id,
+      estoque_atual: formData.estoque_atual,
+    };
+    const base = resolvePrimaryFromFactorOne(snapshot, formData.unidade_principal || 'UN');
+    const comercial = resolveCommercialUnit(snapshot, base);
+    const estoqueBase = Number(formData.estoque_atual) || 0;
+    const display = resolveCommercialDisplay(snapshot, estoqueBase, base);
+    return { base, comercial, display };
+  }, [
+    formData.unidade_principal,
+    formData.unidades_alternativas,
+    formData.unidade_apresentacao_default,
+    formData.unidade_show_comercial,
+    formData.unidade_show_ativa,
+    formData.unidade_comercial_id,
+    formData.estoque_atual,
+  ]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-900">
@@ -1113,9 +1148,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade comercial (sigla)</Label>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Exibida em todo o sistema (PDV, compras, relatórios). Deve ser uma das siglas da base ou das alternativas.</p>
               <Select
-                value={String(
-                  formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
-                ).trim().toUpperCase()}
+                value={comercialSelectValue}
                 onValueChange={(v) => handleChange('unidade_apresentacao_default', v)}
               >
                 <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md" disabled={formData.unidade_show_ativa === false}>
@@ -1125,6 +1158,28 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   {unitOptions.map((sigla) => <SelectItem key={`com-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {formData.unidade_show_ativa !== false && (
+                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                  <p>
+                    Pré-visualização (listagens / estoque em show comercial): base{' '}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.base}</span>
+                    {catalogUnitsPreview.base !== catalogUnitsPreview.comercial && (
+                      <>
+                        {' · '}
+                        comercial{' '}
+                        <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.comercial}</span>
+                      </>
+                    )}
+                  </p>
+                  {catalogUnitsPreview.base !== catalogUnitsPreview.comercial &&
+                    catalogUnitsPreview.display?.fator_conversao > 1 && (
+                    <p className="text-[11px]">
+                      Com estoque {formatarNumero(Number(formData.estoque_atual) || 0)} na base, o sistema pode mostrar ~{' '}
+                      {formatarNumero(catalogUnitsPreview.display.quantidade)} {catalogUnitsPreview.display.unidade}.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
