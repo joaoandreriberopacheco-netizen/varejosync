@@ -11,8 +11,21 @@ Legenda: **A29** = preencher após inventário no clone em `docs/reference-a29-e
 | Compras / pedido | _TBD_ | `resolveCommercialDisplay` em [`PedidosCompra.jsx`](../../src/pages/PedidosCompra.jsx), [`SugestaoCompra.jsx`](../../src/components/compras/SugestaoCompra.jsx), etc. | Já centralizado; comparar só mensagens e edge cases com A29. |
 | OCR / LLM | _TBD_ | [`ImportadorPedidoCompra.jsx`](../../src/components/compras/ImportadorPedidoCompra.jsx), [`EstimativaEmbalagensIA.jsx`](../../src/pages/EstimativaEmbalagensIA.jsx) | Ver [`OCR_EMBALAGENS_BACKEND_DECISAO.md`](./OCR_EMBALAGENS_BACKEND_DECISAO.md). |
 
-## Próximo passo
+## Próximo passo (quando existir clone A29)
 
-1. Clonar A29 em `docs/reference-a29-erp/checkout/`.
+1. Clonar A29 em `docs/reference-a29-erp/checkout/` (ver [`../reference-a29-erp/README.md`](../reference-a29-erp/README.md)).
 2. Substituir `_TBD_` / `_Preencher…_` por caminhos reais.
 3. Para cada linha com diferença de regra, abrir PR pequeno em `src/lib` ou componente correspondente.
+
+**Estado actual do workspace:** `checkout/` ainda **não** existe — não foi possível preencher linhas concretas da coluna A29 a partir do código de referência.
+
+## Próximas acções (só VarejoSync, até ao inventário A29)
+
+Melhorias locais que continuam a fazer sentido **sem** o clone do monorepo A29:
+
+| Prioridade | Acção |
+|------------|--------|
+| UX importação | Aba **Embalagens** em [`ImportacaoProdutos.jsx`](../../src/pages/ImportacaoProdutos.jsx): mensagens de erro mais visíveis (toast + resumo), ponteiro para documentação em `docs/migration/` no ecrã. |
+| Robustez planilha | [`ImportarEmbalagensPlanilha.jsx`](../../src/components/produtos/massa/ImportarEmbalagensPlanilha.jsx): validar folha vazia / ficheiro corrupto; superfície de erro no `catch` com contexto (formato `.xlsx`, cabeçalhos). |
+| Qualidade | Testes unitários para [`parseEmbalagensPlanilhaImport`](../../src/components/produtos/massa/embalagensPlanilhaUtils.js) (casos: Emb.1 vazia com Emb.2–5, sigla duplicada, fator 1 em slot alternativo, sigla = base). |
+| Export catálogo | Revisar colunas CSV em [`Produtos.jsx`](../../src/pages/Produtos.jsx) (unidades / embalagens) para alinhar com `getCatalogUnitLabels` / `formatEstoqueApresentacao` onde a listagem já usa essas funções. |

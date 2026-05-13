@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Download, RotateCcw, AlertCircle, CheckCircle2, Package } from 'lucide-react';
+import { Upload, Download, RotateCcw, AlertCircle, CheckCircle2, Package, BookOpen } from 'lucide-react';
 import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha';
 import ImportarEmbalagensPlanilha from '@/components/produtos/massa/ImportarEmbalagensPlanilha';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque';
@@ -342,6 +342,15 @@ export default function ImportacaoProdutosPage() {
                   Baixar planilha de embalagens
                 </h2>
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-2 mb-2">
+                <BookOpen className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+                <span>
+                  Documentação da migração (no clone Git):{' '}
+                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-gray-700/80 px-1 py-0.5">docs/migration/README.md</code>
+                  {' · '}
+                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-gray-700/80 px-1 py-0.5">docs/migration/A29_VS_VAREJO_EMBALAGENS_GAP.md</code>
+                </span>
+              </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Slots Emb.1–5 e unidade de apresentação PDV em planilha separada da importação geral de produtos.
               </p>

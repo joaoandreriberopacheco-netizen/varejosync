@@ -6,6 +6,12 @@ import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
 import { parseEmbalagensPlanilhaImport } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
+function mensagemErroLeitura(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Erro desconhecido';
+}
+
 function getCellValue(cell) {
   if (!cell) return null;
   if (cell.value !== null && typeof cell.value === 'object' && 'result' in cell.value) {
@@ -67,6 +73,12 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
+      if (!ws) {
+        const mensagem = 'O ficheiro não tem folha de cálculo na primeira posição ou está vazio.';
+        toast.error('Planilha inválida', { description: mensagem });
+        onParsed({ alterados: [], erros: [{ linha: 0, mensagem }] });
+        return;
+      }
 
       const headerRow = ws.getRow(1);
       const colIndexMap = {};
@@ -222,7 +234,14 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       }
 
       if (erros.length > 0) {
-        toast.error(`${erros.length} linha(s) com problema. Veja a lista no resumo.`);
+        const preview = erros
+          .slice(0, 2)
+          .map((e) => e.mensagem)
+          .join(' · ');
+        const extra = erros.length > 2 ? ` (+${erros.length - 2} mais)` : '';
+        toast.error(`${erros.length} linha(s) com problema`, {
+          description: `${preview}${extra}. Veja a lista completa no resumo abaixo.`,
+        });
       }
       if (alterados.length > 0 || linhasIgnoradasSemMudanca > 0) {
         const partes = [];
@@ -236,8 +255,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       onParsed({ alterados, erros, linhasIgnoradasSemMudanca });
     } catch (error) {
       console.error(error);
-      toast.error(`Erro ao ler planilha: ${error.message}`);
-      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: error.message }] });
+      const msg = mensagemErroLeitura(error);
+      toast.error(`Erro ao ler planilha: ${msg}`, {
+        description: 'Use um .xlsx válido exportado nesta aba; a 1.ª folha deve ter os cabeçalhos esperados.',
+      });
+      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: msg }] });
     } finally {
       setParsing(false);
     }

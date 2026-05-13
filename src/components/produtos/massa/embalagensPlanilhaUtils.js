@@ -18,7 +18,21 @@ function parseNum(v) {
  * Interpreta Emb.1 como unidade base (fator 1) e Emb.2–5 como alternativas (fator ≠ 1 em relação à base).
  * @param {Record<string, unknown>} dados — linha lida da planilha (mutado: remove emb*)
  * @param {{ fallbackPrincipal?: string }} options — sigla base quando Emb.1 vem vazia mas há Emb.2–5
- * @returns {{ alternativas: Array, principalSigla: string|null, emb1Explicit: boolean, error: string|null, warnings: string[] }}
+ * @returns {{
+ *   alternativas: Array<{
+ *     unidade: string,
+ *     fator_conversao: number,
+ *     rotulo: string,
+ *     ajuste_percentual: number,
+ *     preco_venda: number,
+ *     ativo: boolean
+ *   }>,
+ *   principalSigla: string|null,
+ *   emb1Explicit: boolean,
+ *   error: string|null,
+ *   warnings: string[],
+ *   hadSlotPayload: boolean
+ * }} `hadSlotPayload` — houve conteúdo em slots Emb.* ou regra de erro/warning por causa deles; `false` quando a linha não traz dados de embalagem.
  */
 export function parseEmbalagensPlanilhaImport(dados, options = {}) {
   const fallbackPrincipal = String(options.fallbackPrincipal || 'UN').trim().toUpperCase() || 'UN';
