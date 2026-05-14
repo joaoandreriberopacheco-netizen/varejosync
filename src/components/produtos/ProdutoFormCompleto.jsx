@@ -238,6 +238,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return unitOptions[0] || 'UN';
   }, [unitOptions, formData.unidade_apresentacao_default, formData.unidade_show_comercial, formData.unidade_principal]);
 
+  /** Só id/sigla/rótulo: evita re-disparar o efeito de correção a cada mudança de fator/preço (combativo com o editor). */
+  const unidadesAlternativasLayoutKey = useMemo(
+    () =>
+      (formData.unidades_alternativas || [])
+        .map((u) =>
+          [
+            String(u?.id || '').trim(),
+            String(u?.unidade || '').trim().toUpperCase(),
+            String(u?.rotulo || '').trim().toUpperCase(),
+          ].join(':'),
+        )
+        .join('|'),
+    [formData.unidades_alternativas],
+  );
+
   useEffect(() => {
     setFormData((prev) => {
       const principal = String(prev.unidade_principal || 'UN').trim().toUpperCase();
@@ -268,14 +283,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       ) return prev;
       return {
         ...prev,
-        unidades_alternativas: normalizeAlternativas(prev.unidades_alternativas || []),
         unidade_show_comercial: showComercialValido,
         unidade_show_logistica: showLogisticoValido,
         unidade_apresentacao_default: showComercialValido,
         unidade_comercial_id: comercialId,
       };
     });
-  }, [formData.unidade_principal, formData.unidades_alternativas, formData.unidade_apresentacao_default]);
+  }, [formData.unidade_principal, formData.unidade_apresentacao_default, unidadesAlternativasLayoutKey]);
 
 
 
