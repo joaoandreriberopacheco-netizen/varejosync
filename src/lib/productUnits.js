@@ -18,7 +18,7 @@ function normalizeAlternativeUnitRow(item = {}) {
   const fatorConversao = normalizeNumber(item.fator_conversao, 1);
   const ajustePercentual = normalizeNumber(item.ajuste_percentual, 0);
   const fatorPrecoRaw = normalizeNumber(item.fator_preco, 0);
-  return {
+  const row = {
     id: String(item.id || "").trim() || crypto.randomUUID(),
     nome: typeof item.nome === "string" ? item.nome.trim() : "",
     unidade,
@@ -29,6 +29,14 @@ function normalizeAlternativeUnitRow(item = {}) {
     ajuste_percentual: ajustePercentual,
     ativo: item.ativo !== false,
   };
+  if (
+    Object.prototype.hasOwnProperty.call(item, "percentual_preco_vs_principal") &&
+    item.percentual_preco_vs_principal != null &&
+    item.percentual_preco_vs_principal !== ""
+  ) {
+    row.percentual_preco_vs_principal = normalizeNumber(item.percentual_preco_vs_principal, 0);
+  }
+  return row;
 }
 
 export function isShowUnitEnabled(product) {
@@ -119,13 +127,25 @@ export function getItemUnitKey(produtoId, unidadeMedida) {
 function saleUnitPriceFromAlternative(precoBase, item, priceMultiplier) {
   const mult = normalizeNumber(priceMultiplier, 1);
   const fator = normalizeNumber(item.fator_conversao, 1);
-  if (item.preco_venda > 0) {
-    return item.preco_venda * mult;
+  if (normalizeNumber(item.preco_venda, 0) > 0) {
+    return normalizeNumber(item.preco_venda, 0) * mult;
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(item, "percentual_preco_vs_principal") &&
+    item.percentual_preco_vs_principal != null &&
+    item.percentual_preco_vs_principal !== ""
+  ) {
+    const pct = normalizeNumber(item.percentual_preco_vs_principal, 0);
+    return precoBase * fator * (1 + pct / 100) * mult;
   }
   const fatorPreco = normalizeNumber(item.fator_preco, 0);
-  if (fatorPreco > 0) return precoBase * fator * fatorPreco * mult;
   const adj = normalizeNumber(item.ajuste_percentual, 0);
-  return precoBase * fator * (1 + adj / 100) * mult;
+  const derived = 1 + adj / 100;
+  if (fatorPreco > 0 && Math.abs(fatorPreco - derived) < 0.0001) {
+    return precoBase * fator * derived * mult;
+  }
+  if (fatorPreco > 0) return precoBase * fator * fatorPreco * mult;
+  return precoBase * fator * derived * mult;
 }
 
 export function buildSaleUnitOptions(product, priceMultiplier = 1) {
@@ -150,6 +170,11 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
     rotulo: item.rotulo || "",
     ajuste_percentual: item.ajuste_percentual,
     fator_preco: item.fator_preco,
+    ...(Object.prototype.hasOwnProperty.call(item, "percentual_preco_vs_principal") &&
+    item.percentual_preco_vs_principal != null &&
+    item.percentual_preco_vs_principal !== ""
+      ? { percentual_preco_vs_principal: normalizeNumber(item.percentual_preco_vs_principal, 0) }
+      : {}),
   }));
 
   return dedupeUnits([principal, ...alternatives]);
@@ -213,16 +238,38 @@ export function buildPurchaseUnitOptions(product) {
     is_primary: true,
   };
 
-  const alternatives = normalizeAlternativeUnits(product).map((item) => ({
-    id: item.id,
-    nome: item.nome || item.rotulo || item.unidade,
-    unidade: item.unidade,
-    fator_conversao: item.fator_conversao,
-    valor_unitario: custoBase * item.fator_conversao * normalizeNumber(item.fator_preco, 1),
-    is_primary: false,
-    rotulo: item.rotulo || "",
-    fator_preco: item.fator_preco,
-  }));
+  const alternatives = normalizeAlternativeUnits(product).map((item) => {
+    const f = normalizeNumber(item.fator_conversao, 1);
+    let valor;
+    if (
+      Object.prototype.hasOwnProperty.call(item, "percentual_preco_vs_principal") &&
+      item.percentual_preco_vs_principal != null &&
+      item.percentual_preco_vs_principal !== ""
+    ) {
+      const pct = normalizeNumber(item.percentual_preco_vs_principal, 0);
+      valor = custoBase * f * (1 + pct / 100);
+    } else {
+      const fp = normalizeNumber(item.fator_preco, 1) || 1;
+      const adj = normalizeNumber(item.ajuste_percentual, 0);
+      const derived = 1 + adj / 100;
+      valor = Math.abs(fp - derived) < 0.0001 ? custoBase * f * derived : custoBase * f * fp;
+    }
+    return {
+      id: item.id,
+      nome: item.nome || item.rotulo || item.unidade,
+      unidade: item.unidade,
+      fator_conversao: item.fator_conversao,
+      valor_unitario: valor,
+      is_primary: false,
+      rotulo: item.rotulo || "",
+      fator_preco: item.fator_preco,
+      ...(Object.prototype.hasOwnProperty.call(item, "percentual_preco_vs_principal") &&
+      item.percentual_preco_vs_principal != null &&
+      item.percentual_preco_vs_principal !== ""
+        ? { percentual_preco_vs_principal: normalizeNumber(item.percentual_preco_vs_principal, 0) }
+        : {}),
+    };
+  });
 
   return dedupeUnits([principal, ...alternatives]);
 }

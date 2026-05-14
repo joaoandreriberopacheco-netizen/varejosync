@@ -420,16 +420,28 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         ativo: true,
       });
 
-      const alternativasCanonical = alternativasNormalizadas.map((u) => makeUnidade({
-        id: u.id,
-        nome: u.nome || u.rotulo || u.unidade,
-        sigla: u.unidade,
-        fator_conversao: Number(u.fator_conversao) || 1,
-        fator_preco: Number(u.fator_preco) || 1,
-        is_principal: false,
-        is_comercial: false,
-        ativo: u.ativo !== false,
-      }));
+      const alternativasCanonical = alternativasNormalizadas.map((u) => {
+        const payload = {
+          id: u.id,
+          nome: u.nome || u.rotulo || u.unidade,
+          sigla: u.unidade,
+          fator_conversao: Number(u.fator_conversao) || 1,
+          fator_preco: Number(u.fator_preco) || 1,
+          ajuste_percentual: Number(u.ajuste_percentual) || 0,
+          preco_venda: Number(u.preco_venda) || 0,
+          is_principal: false,
+          is_comercial: false,
+          ativo: u.ativo !== false,
+        };
+        if (
+          Object.prototype.hasOwnProperty.call(u, "percentual_preco_vs_principal") &&
+          u.percentual_preco_vs_principal != null &&
+          u.percentual_preco_vs_principal !== ""
+        ) {
+          payload.percentual_preco_vs_principal = Number(u.percentual_preco_vs_principal) || 0;
+        }
+        return makeUnidade(payload);
+      });
 
       const unidadesCanonical = [principalCanonical, ...alternativasCanonical];
 

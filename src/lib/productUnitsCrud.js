@@ -53,12 +53,21 @@ export function normalizeSigla(raw) {
 
 /** Constroi um objeto de unidade com defaults consistentes (NAO valida). */
 export function makeUnidade(input = {}) {
+  const adj = asNumber(input.ajuste_percentual, 0);
+  const pctRaw = input.percentual_preco_vs_principal;
+  const hasPct =
+    Object.prototype.hasOwnProperty.call(input, "percentual_preco_vs_principal") &&
+    pctRaw !== "" &&
+    pctRaw != null;
   return {
     id: String(input.id || "").trim() || newId(),
     nome: typeof input.nome === "string" ? input.nome.trim() : "",
     sigla: normalizeSigla(input.sigla || input.unidade),
     fator_conversao: asNumber(input.fator_conversao, 1) || 1,
     fator_preco: asNumber(input.fator_preco, 1) || 1,
+    ajuste_percentual: adj,
+    preco_venda: asNumber(input.preco_venda, 0),
+    ...(hasPct ? { percentual_preco_vs_principal: asNumber(pctRaw, 0) } : {}),
     is_principal: input.is_principal === true,
     is_comercial: input.is_comercial === true,
     ativo: input.ativo !== false,
@@ -163,6 +172,19 @@ export function updateUnidade(unidades, id, patch = {}) {
     }
     if (Object.prototype.hasOwnProperty.call(patch, "fator_preco")) {
       merged.fator_preco = asNumber(patch.fator_preco, u.fator_preco) || u.fator_preco;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "ajuste_percentual")) {
+      merged.ajuste_percentual = asNumber(patch.ajuste_percentual, u.ajuste_percentual);
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "preco_venda")) {
+      merged.preco_venda = asNumber(patch.preco_venda, u.preco_venda);
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "percentual_preco_vs_principal")) {
+      if (patch.percentual_preco_vs_principal === "" || patch.percentual_preco_vs_principal == null) {
+        delete merged.percentual_preco_vs_principal;
+      } else {
+        merged.percentual_preco_vs_principal = asNumber(patch.percentual_preco_vs_principal, 0);
+      }
     }
     return merged;
   });
@@ -272,16 +294,26 @@ export function migrateLegacyToUnidades(produto = {}) {
         fixes.push(`unidade CX: fator ${fator} -> ${fatorNome} (corrigido pelo regex do nome)`);
         fator = fatorNome;
       }
-      return makeUnidade({
+      const mu = {
         id: a.id || newId(),
         nome: a.nome || a.rotulo || sigla,
         sigla,
         fator_conversao: fator,
         fator_preco: asNumber(a.fator_preco, 1) || 1,
+        ajuste_percentual: asNumber(a.ajuste_percentual, 0),
+        preco_venda: asNumber(a.preco_venda, 0),
         is_principal: false,
         is_comercial: false,
         ativo: a.ativo !== false,
-      });
+      };
+      if (
+        Object.prototype.hasOwnProperty.call(a, "percentual_preco_vs_principal") &&
+        a.percentual_preco_vs_principal != null &&
+        a.percentual_preco_vs_principal !== ""
+      ) {
+        mu.percentual_preco_vs_principal = asNumber(a.percentual_preco_vs_principal, 0);
+      }
+      return makeUnidade(mu);
     });
 
   const unidades = [principal, ...alternativas];
@@ -355,17 +387,27 @@ export function unidadesToLegacyMirror(unidades) {
 
   const alternativasLegacy = unidades
     .filter((u) => u && u.id !== principal.id)
-    .map((u) => ({
-      id: u.id,
-      nome: u.nome || "",
-      unidade: normalizeSigla(u.sigla),
-      fator_conversao: asNumber(u.fator_conversao, 1) || 1,
-      fator_preco: asNumber(u.fator_preco, 1) || 1,
-      ajuste_percentual: 0,
-      preco_venda: 0,
-      rotulo: u.nome || "",
-      ativo: u.ativo !== false,
-    }));
+    .map((u) => {
+      const row = {
+        id: u.id,
+        nome: u.nome || "",
+        unidade: normalizeSigla(u.sigla),
+        fator_conversao: asNumber(u.fator_conversao, 1) || 1,
+        fator_preco: asNumber(u.fator_preco, 1) || 1,
+        ajuste_percentual: asNumber(u.ajuste_percentual, 0),
+        preco_venda: asNumber(u.preco_venda, 0),
+        rotulo: typeof u.nome === "string" && u.nome.trim() ? u.nome.trim() : normalizeSigla(u.sigla) || "",
+        ativo: u.ativo !== false,
+      };
+      if (
+        Object.prototype.hasOwnProperty.call(u, "percentual_preco_vs_principal") &&
+        u.percentual_preco_vs_principal != null &&
+        u.percentual_preco_vs_principal !== ""
+      ) {
+        row.percentual_preco_vs_principal = asNumber(u.percentual_preco_vs_principal, 0);
+      }
+      return row;
+    });
 
   const principalSigla = normalizeSigla(principal?.sigla) || "UN";
   const comercialSigla = normalizeSigla(comercial?.sigla) || principalSigla;

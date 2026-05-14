@@ -44,6 +44,7 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Fator: quantos {unidadePrincipal || 'UN'} equivalem a <strong>1</strong> desta sigla (ex.: 1 CX = 2,5 M² → fator 2,5).
             Diferença %: negativo vende mais barato que o proporcional, positivo mais caro. Preço fixo (opcional) ignora proporcional e diferença.
+            Opcional: % preço vs base (A29) — se preenchido, tem prioridade sobre a combinação fator de preço + diferença % para o cálculo alinhado ao monorepo A29.
           </p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="border-0 shadow-sm">
@@ -120,6 +121,35 @@ export default function UnidadesAlternativasEditor({ unidades = [], unidadePrinc
                     value={item.ajuste_percentual ?? 0}
                     onChange={(e) => handleItemChange(index, 'ajuste_percentual', parseFloat(e.target.value) || 0)}
                     placeholder="-10 ou +10"
+                    className="bg-white dark:bg-gray-900 border-0 shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">% preço vs base (opcional, A29)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={
+                      Object.prototype.hasOwnProperty.call(item, 'percentual_preco_vs_principal') &&
+                      item.percentual_preco_vs_principal !== '' &&
+                      item.percentual_preco_vs_principal != null
+                        ? item.percentual_preco_vs_principal
+                        : ''
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === '' || raw === null) {
+                        const next = { ...item };
+                        delete next.percentual_preco_vs_principal;
+                        const arr = [...unidades];
+                        arr[index] = next;
+                        onChange(arr);
+                        return;
+                      }
+                      handleItemChange(index, 'percentual_preco_vs_principal', parseFloat(raw) || 0);
+                    }}
+                    placeholder="vazio = usa diferença % + fator preço"
                     className="bg-white dark:bg-gray-900 border-0 shadow-sm"
                   />
                 </div>
