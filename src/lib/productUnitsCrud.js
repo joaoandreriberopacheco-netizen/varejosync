@@ -374,6 +374,22 @@ export function migrateLegacyToUnidades(produto = {}) {
  * Espelho legado: canonico -> legado (recomposto a cada save)
  * -------------------------------------------------------------------------- */
 
+/**
+ * Se `unidades[]` for canónico e válido, devolve o espelho legado (incl. logística alinhada à comercial).
+ * Base44 / leitores antigos por vezes gravam só parte dos campos — use isto no hydrate do formulário.
+ */
+export function tryLegacyMirrorFromCanonicalUnidades(unidades) {
+  if (!Array.isArray(unidades) || unidades.length === 0) return null;
+  const validation = validateUnidades(unidades);
+  if (!validation.ok) return null;
+  const legacyMirror = unidadesToLegacyMirror(unidades);
+  const sigla = normalizeSigla(legacyMirror.unidade_show_comercial) || normalizeSigla(legacyMirror.unidade_apresentacao_default) || "";
+  return {
+    ...legacyMirror,
+    unidade_show_logistica: sigla || legacyMirror.unidade_show_comercial || "",
+  };
+}
+
 /** Monta os campos legados (`unidade_principal`, `unidades_alternativas[]`, ...)
  *  a partir do array canonico. NAO valida — chame `validateUnidades` antes. */
 export function unidadesToLegacyMirror(unidades) {

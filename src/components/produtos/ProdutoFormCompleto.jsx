@@ -14,7 +14,7 @@ import CurrencyInput from './CurrencyInput';
 import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
-import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/productUnitsCrud';
+import { applyUnidadesToProduto, makeUnidade, normalizeSigla, tryLegacyMirrorFromCanonicalUnidades } from '@/lib/productUnitsCrud';
 import { resolvePrimaryFromFactorOne, resolveCommercialUnit, resolveCommercialDisplay } from '@/lib/productUnits';
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
@@ -40,23 +40,75 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return campos.map(c => (c || '').trim()).filter(Boolean).join(' ').trim();
   };
 
-  const buildFormDataFromProduto = (produtoData) => ({
-    ...produtoData,
-    tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
-    unidades_alternativas: normalizeAlternativas(produtoData?.unidades_alternativas),
-    tipo: produtoData?.tipo || 'Produto',
-    valor_compra: produtoData?.valor_compra || 0,
-    preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
-    preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
-    preco_venda_percentual: produtoData?.preco_venda_percentual || 0,
-    unidade_principal: normalizeSigla(produtoData?.unidade_principal) || 'UN',
-    unidade_show_comercial: normalizeSigla(produtoData?.unidade_show_comercial) || '',
-    unidade_show_logistica: normalizeSigla(produtoData?.unidade_show_logistica) || '',
-    unidade_apresentacao_default: normalizeSigla(produtoData?.unidade_apresentacao_default) || '',
-    unidade_comercial_id: produtoData?.unidade_comercial_id || '',
-    unidade_show_ativa: typeof produtoData?.unidade_show_ativa === 'boolean' ? produtoData.unidade_show_ativa : true,
-    ativo: produtoData?.ativo !== false
-  });
+  const buildFormDataFromProduto = (produtoData) => {
+    const normalizedAlts = normalizeAlternativas(produtoData?.unidades_alternativas);
+    const principalFinal = normalizeSigla(produtoData?.unidade_principal) || 'UN';
+    const canonLegacy = tryLegacyMirrorFromCanonicalUnidades(produtoData?.unidades);
+
+    let apresentacao = normalizeSigla(produtoData?.unidade_apresentacao_default) || '';
+    let showComercial = normalizeSigla(produtoData?.unidade_show_comercial) || '';
+    let showLogistica = normalizeSigla(produtoData?.unidade_show_logistica) || '';
+    let comercialId = String(produtoData?.unidade_comercial_id ?? '').trim();
+
+    if (canonLegacy) {
+      const ca = normalizeSigla(canonLegacy.unidade_apresentacao_default);
+      const cs = normalizeSigla(canonLegacy.unidade_show_comercial);
+      const cl = normalizeSigla(canonLegacy.unidade_show_logistica);
+      const cc = String(canonLegacy.unidade_comercial_id ?? '').trim();
+      if (ca) apresentacao = ca;
+      if (cs) showComercial = cs;
+      if (cl) showLogistica = cl;
+      if (cc) comercialId = cc;
+    }
+
+    const comIdNorm = comercialId;
+    if (comIdNorm && comIdNorm !== 'primary' && comIdNorm !== 'principal') {
+      const row = normalizedAlts.find((u) => String(u?.id || '').trim() === comIdNorm);
+      if (row?.unidade) {
+        const u = normalizeSigla(row.unidade) || String(row.unidade || '').trim().toUpperCase();
+        apresentacao = u;
+        showComercial = u;
+        if (!showLogistica) showLogistica = u;
+      }
+    }
+
+    if (!apresentacao && !showComercial && (comIdNorm === 'primary' || comIdNorm === 'principal' || !comIdNorm)) {
+      apresentacao = principalFinal;
+      showComercial = principalFinal;
+      if (!showLogistica) showLogistica = principalFinal;
+      comercialId = 'primary';
+    }
+
+    const siglaComercialFinal = apresentacao || showComercial || principalFinal;
+    const logisticaFinal = showLogistica || siglaComercialFinal;
+
+    if (!comercialId || comercialId === 'principal') {
+      if (siglaComercialFinal === principalFinal) {
+        comercialId = 'primary';
+      } else {
+        const altMatch = normalizedAlts.find((u) => normalizeSigla(u?.unidade) === siglaComercialFinal);
+        comercialId = altMatch?.id ? String(altMatch.id).trim() : '';
+      }
+    }
+
+    return {
+      ...produtoData,
+      tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
+      unidades_alternativas: normalizedAlts,
+      tipo: produtoData?.tipo || 'Produto',
+      valor_compra: produtoData?.valor_compra || 0,
+      preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
+      preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
+      preco_venda_percentual: produtoData?.preco_venda_percentual || 0,
+      unidade_principal: principalFinal,
+      unidade_show_comercial: showComercial || siglaComercialFinal,
+      unidade_show_logistica: logisticaFinal,
+      unidade_apresentacao_default: apresentacao || siglaComercialFinal,
+      unidade_comercial_id: comercialId,
+      unidade_show_ativa: typeof produtoData?.unidade_show_ativa === 'boolean' ? produtoData.unidade_show_ativa : true,
+      ativo: produtoData?.ativo !== false,
+    };
+  };
 
   const [formData, setFormData] = useState(produto ? {
     ...buildFormDataFromProduto(produto)
@@ -235,12 +287,33 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   /** Evita valor controlado fora da lista (Radix) até o efeito de correção rodar. */
   const comercialSelectValue = useMemo(() => {
+    const cid = String(formData.unidade_comercial_id || '').trim();
+    let fromId = '';
+    if (cid && cid !== 'primary' && cid !== 'principal') {
+      const row = normalizeAlternativas(formData.unidades_alternativas || []).find(
+        (u) => String(u?.id || '').trim() === cid,
+      );
+      if (row?.unidade) {
+        fromId = normalizeSigla(row.unidade) || String(row.unidade || '').trim().toUpperCase();
+      }
+    }
     const raw = normalizeSigla(
-      formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
+      formData.unidade_apresentacao_default ||
+        formData.unidade_show_comercial ||
+        fromId ||
+        formData.unidade_principal ||
+        'UN',
     ) || 'UN';
     if (unitOptions.includes(raw)) return raw;
     return unitOptions[0] || 'UN';
-  }, [unitOptions, formData.unidade_apresentacao_default, formData.unidade_show_comercial, formData.unidade_principal]);
+  }, [
+    unitOptions,
+    formData.unidade_apresentacao_default,
+    formData.unidade_show_comercial,
+    formData.unidade_principal,
+    formData.unidade_comercial_id,
+    formData.unidades_alternativas,
+  ]);
 
   /** Só id/sigla/rótulo: evita re-disparar o efeito de correção a cada mudança de fator/preço (combativo com o editor). */
   const unidadesAlternativasLayoutKey = useMemo(
@@ -274,7 +347,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         const porRotulo = alternativasNormalizadas.find((u) => u.rotulo && u.rotulo === valorRotulo);
         return porRotulo?.unidade || '';
       };
-      const showComercial = normalizeSigla(prev.unidade_apresentacao_default || prev.unidade_show_comercial || '') || principal;
+      const idResolvedSigla = (() => {
+        const cid = String(prev.unidade_comercial_id || '').trim();
+        if (!cid || cid === 'primary' || cid === 'principal') return '';
+        const row = alternativasNormalizadas.find((u) => String(u?.id || '').trim() === cid);
+        if (!row?.unidade) return '';
+        return normalizeSigla(row.unidade) || String(row.unidade || '').trim().toUpperCase();
+      })();
+      const showComercial = normalizeSigla(
+        prev.unidade_apresentacao_default || prev.unidade_show_comercial || idResolvedSigla || '',
+      ) || principal;
       const showComercialValido = resolverUnidadeValida(showComercial) || principal;
       const comercialId = showComercialValido === principal
         ? 'primary'
@@ -294,7 +376,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade_comercial_id: comercialId,
       };
     });
-  }, [formData.unidade_principal, formData.unidade_apresentacao_default, unidadesAlternativasLayoutKey]);
+  }, [formData.unidade_principal, formData.unidade_apresentacao_default, formData.unidade_comercial_id, unidadesAlternativasLayoutKey]);
 
 
 
@@ -622,6 +704,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               'unidade_principal',
               'unidade_show_logistica',
             ];
+            const UNIT_SNAPSHOT_KEYS = [
+              'unidades',
+              'unidade_principal',
+              'unidades_alternativas',
+              'unidade_apresentacao_default',
+              'unidade_show_comercial',
+              'unidade_show_logistica',
+              'unidade_comercial_id',
+            ];
             const drift = driftSigKeys.filter(
               (k) => normalizeSigla(fresh[k]) !== normalizeSigla(produtoData[k]),
             );
@@ -650,29 +741,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 duration: 9000,
                 className: 'bg-amber-50 text-amber-950 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-800',
               });
-              const UNIT_SNAPSHOT_KEYS = [
-                'unidades',
-                'unidade_principal',
-                'unidades_alternativas',
-                'unidade_apresentacao_default',
-                'unidade_show_comercial',
-                'unidade_show_logistica',
-                'unidade_comercial_id',
-              ];
-              const overlay = UNIT_SNAPSHOT_KEYS.reduce((acc, key) => {
-                if (produtoData[key] !== undefined) acc[key] = produtoData[key];
-                return acc;
-              }, {});
-              setFormData(buildFormDataFromProduto({ ...fresh, ...overlay }));
-            } else {
-              if (import.meta.env?.DEV) {
-                console.debug('[ProdutoFormCompleto] persistido OK', {
-                  unidade_apresentacao_default: fresh.unidade_apresentacao_default,
-                  unidade_principal: fresh.unidade_principal,
-                });
-              }
-              setFormData(buildFormDataFromProduto(fresh));
+            } else if (import.meta.env?.DEV) {
+              console.debug('[ProdutoFormCompleto] persistido OK', {
+                unidade_apresentacao_default: fresh.unidade_apresentacao_default,
+                unidade_principal: fresh.unidade_principal,
+              });
             }
+            // Base44 pode omitir ou atrasar campos espelho no GET; mesclar o pacote enviado evita regressão visual.
+            const unitOverlay = UNIT_SNAPSHOT_KEYS.reduce((acc, key) => {
+              if (produtoData[key] !== undefined) acc[key] = produtoData[key];
+              return acc;
+            }, {});
+            setFormData(buildFormDataFromProduto({ ...fresh, ...unitOverlay }));
           }
         }
       } catch (refetchErr) {
