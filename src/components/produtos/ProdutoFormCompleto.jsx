@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2 } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Layers } from 'lucide-react';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
@@ -1109,88 +1109,147 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
+            </div>
 
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40 p-4 md:p-6 space-y-8">
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade base (fator 1)</Label>
+                <div className="flex flex-wrap items-center gap-2 gap-y-1 mb-1">
+                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Embalagem e unidades</h3>
+                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+                    Modelo híbrido VarejoSync
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 pl-6 md:pl-6 max-w-3xl leading-relaxed">
+                  Parte dos dados fica em <span className="font-medium text-gray-700 dark:text-gray-300">colunas do cadastro do produto</span>
+                  {' '}(ex.: unidade base, vitrine). Outra parte fica no{' '}
+                  <span className="font-medium text-gray-700 dark:text-gray-300">array</span>{' '}
+                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidades_alternativas</code>
+                  . Ao salvar, o sistema ainda monta o espelho canónico <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidades[]</code> para validação — sem mudar a sua estratégia de BD.
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Box className="w-4 h-4 text-gray-500 shrink-0" />
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Unidade base (fator 1)</h4>
+                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+                    Coluna: unidade_principal
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed">
+                  É a unidade em que <span className="font-medium text-gray-700 dark:text-gray-300">custo</span>,{' '}
+                  <span className="font-medium text-gray-700 dark:text-gray-300">preço padrão</span> e{' '}
+                  <span className="font-medium text-gray-700 dark:text-gray-300">estoque</span> são contabilizados internamente (eixo fator&nbsp;1).
+                </p>
                 <Input 
                   value={formData.unidade_principal} 
                   onChange={e => handleChange('unidade_principal', e.target.value.toUpperCase())} 
-                  placeholder="UN" 
-                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                  placeholder="UN, M2, KG…" 
+                  className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md h-11 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
-            </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <UnidadesAlternativasEditor
-                unidades={formData.unidades_alternativas || []}
-                unidadePrincipal={formData.unidade_principal || 'UN'}
-                onChange={(value) => handleChange('unidades_alternativas', value)}
-              />
-            </div>
-
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="unidade_show_ativa"
-                  checked={formData.unidade_show_ativa !== false}
-                  onCheckedChange={(v) => handleChange('unidade_show_ativa', v !== false)}
-                  className="mt-0.5"
-                />
-                <div>
-                  <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
-                    Usar unidade comercial no sistema
-                  </Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Quando desativado, listagens e fluxos usam só a unidade base (fator 1), sem conversão para a unidade comercial.
-                  </p>
+              <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Layers className="w-4 h-4 text-gray-500 shrink-0" />
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Outras embalagens / unidades de venda</h4>
+                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+                    Array: unidades_alternativas
+                  </Badge>
                 </div>
+                <UnidadesAlternativasEditor
+                  unidades={formData.unidades_alternativas || []}
+                  unidadePrincipal={formData.unidade_principal || 'UN'}
+                  onChange={(value) => handleChange('unidades_alternativas', value)}
+                />
               </div>
-            </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade comercial (sigla)</Label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Exibida em todo o sistema (PDV, compras, relatórios). Deve ser uma das siglas da base ou das alternativas.</p>
-              <Select
-                value={comercialSelectValue}
-                onValueChange={(v) => handleChange('unidade_apresentacao_default', v)}
-              >
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md" disabled={formData.unidade_show_ativa === false}>
-                  <SelectValue placeholder="Selecione a unidade comercial" />
-                </SelectTrigger>
-                <SelectContent>
-                  {unitOptions.map((sigla) => <SelectItem key={`com-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {formData.unidade_show_ativa !== false && (
-                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                  <p>
-                    Pré-visualização (listagens / estoque em show comercial): base{' '}
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.base}</span>
-                    {catalogUnitsPreview.base !== catalogUnitsPreview.comercial && (
-                      <>
-                        {' · '}
-                        comercial{' '}
-                        <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.comercial}</span>
-                      </>
-                    )}
-                  </p>
-                  {catalogUnitsPreview.base !== catalogUnitsPreview.comercial &&
-                    catalogUnitsPreview.display?.fator_conversao > 1 && (
-                    <p className="text-[11px]">
-                      Com estoque {formatarNumero(Number(formData.estoque_atual) || 0)} na base, o sistema pode mostrar ~{' '}
-                      {formatarNumero(catalogUnitsPreview.display.quantidade)} {catalogUnitsPreview.display.unidade}.
+              <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Warehouse className="w-4 h-4 text-gray-500 shrink-0" />
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Vitrine no PDV e telas</h4>
+                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+                    Colunas no Produto
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed">
+                  A escolha abaixo grava em{' '}
+                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_apresentacao_default</code>,{' '}
+                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_show_comercial</code>,{' '}
+                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_comercial_id</code>
+                  {' '}e espelha logística em{' '}
+                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_show_logistica</code>.
+                </p>
+
+                <div className="rounded-xl bg-white dark:bg-gray-900/80 p-4 shadow-sm space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="unidade_show_ativa"
+                      checked={formData.unidade_show_ativa !== false}
+                      onCheckedChange={(v) => handleChange('unidade_show_ativa', v !== false)}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
+                        Usar unidade comercial no sistema
+                      </Label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Coluna <code className="text-[10px]">unidade_show_ativa</code>. Desligado: listagens e fluxos usam só a base (fator&nbsp;1), sem converter para a unidade de vitrine.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade comercial (sigla)</Label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      Deve ser a sigla da base ou de uma linha do array de alternativas. Ao salvar, o id estável correspondente vai para{' '}
+                      <code className="text-[10px]">unidade_comercial_id</code>.
                     </p>
-                  )}
+                    <Select
+                      value={comercialSelectValue}
+                      onValueChange={(v) => handleChange('unidade_apresentacao_default', v)}
+                    >
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl max-w-md h-11" disabled={formData.unidade_show_ativa === false}>
+                        <SelectValue placeholder="Selecione a unidade comercial" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unitOptions.map((sigla) => <SelectItem key={`com-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {formData.unidade_show_ativa !== false && (
+                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                        <p>
+                          Pré-visualização (listagens / estoque em show comercial): base{' '}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.base}</span>
+                          {catalogUnitsPreview.base !== catalogUnitsPreview.comercial && (
+                            <>
+                              {' · '}
+                              comercial{' '}
+                              <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.comercial}</span>
+                            </>
+                          )}
+                        </p>
+                        {catalogUnitsPreview.base !== catalogUnitsPreview.comercial &&
+                          catalogUnitsPreview.display?.fator_conversao > 1 && (
+                          <p className="text-[11px]">
+                            Com estoque {formatarNumero(Number(formData.estoque_atual) || 0)} na base, o sistema pode mostrar ~{' '}
+                            {formatarNumero(catalogUnitsPreview.display.quantidade)} {catalogUnitsPreview.display.unidade}.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade logística</Label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Unificada com a unidade comercial (fonte única da verdade).
-              </p>
+                <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-900/40 px-4 py-3">
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Unidade logística</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    No VarejoSync fica <span className="font-medium text-gray-700 dark:text-gray-300">alinhada à comercial</span> ao gravar (coluna{' '}
+                    <code className="text-[10px]">unidade_show_logistica</code>). Não há segundo seletor — evita duas “verdades” divergentes.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="border-t pt-6 dark:border-gray-700">
