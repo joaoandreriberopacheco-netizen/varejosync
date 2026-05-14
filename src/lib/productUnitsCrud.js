@@ -82,14 +82,14 @@ export function makeUnidade(input = {}) {
 export function validateUnidades(unidades) {
   const errors = [];
   if (!Array.isArray(unidades)) {
-    return { ok: false, errors: ["unidades deve ser um array"] };
+    return { ok: false, errors: ["O campo de unidades deve ser uma lista (array)."] };
   }
   const ativas = unidades.filter((u) => u?.ativo !== false);
   if (ativas.length === 0) {
-    return { ok: false, errors: ["produto deve ter pelo menos 1 unidade ativa"] };
+    return { ok: false, errors: ["É necessário pelo menos uma unidade ativa no produto."] };
   }
   if (unidades.length > MAX_UNIDADES) {
-    errors.push(`maximo ${MAX_UNIDADES} unidades por produto (atual: ${unidades.length})`);
+    errors.push(`No máximo ${MAX_UNIDADES} unidades por produto (atual: ${unidades.length}).`);
   }
 
   const ids = new Set();
@@ -100,24 +100,24 @@ export function validateUnidades(unidades) {
 
   for (const u of unidades) {
     if (!u || typeof u !== "object") {
-      errors.push("entrada invalida no array unidades");
+      errors.push("Há uma entrada inválida na lista de unidades.");
       continue;
     }
     const id = String(u.id || "").trim();
     if (!id) {
-      errors.push("unidade sem id estavel");
+      errors.push("Cada unidade precisa de um id estável.");
     } else if (ids.has(id)) {
-      errors.push(`id duplicado: ${id}`);
+      errors.push(`Id de unidade duplicado: ${id}.`);
     } else {
       ids.add(id);
     }
 
     const sigla = normalizeSigla(u.sigla);
     if (!sigla) {
-      errors.push(`unidade ${id || "(sem id)"}: sigla obrigatoria`);
+      errors.push(`Unidade ${id || "(sem id)"}: informe a sigla.`);
     } else if (u.ativo !== false) {
       if (siglas.has(sigla)) {
-        errors.push(`sigla duplicada entre unidades ativas: ${sigla}`);
+        errors.push(`Sigla duplicada entre unidades ativas: ${sigla}.`);
       } else {
         siglas.add(sigla);
       }
@@ -125,7 +125,7 @@ export function validateUnidades(unidades) {
 
     const fator = asNumber(u.fator_conversao, NaN);
     if (!Number.isFinite(fator) || fator <= 0) {
-      errors.push(`unidade ${sigla || id || "(?)"}: fator_conversao deve ser > 0`);
+      errors.push(`Unidade ${sigla || id || "(?)"}: o fator de conversão deve ser maior que zero.`);
     }
 
     if (u.is_principal === true && u.ativo !== false) {
@@ -138,12 +138,16 @@ export function validateUnidades(unidades) {
   }
 
   if (countPrincipal !== 1) {
-    errors.push(`exatamente 1 unidade ativa com is_principal=true exigida (encontrado ${countPrincipal})`);
+    errors.push(`Deve existir exatamente uma unidade base ativa (encontradas: ${countPrincipal}).`);
   } else if (!principalFator1) {
-    errors.push("a unidade is_principal deve ter fator_conversao = 1");
+    errors.push("A unidade base deve ter fator de conversão igual a 1.");
   }
   if (countComercial !== 1) {
-    errors.push(`exatamente 1 unidade ativa com is_comercial=true exigida (encontrado ${countComercial})`);
+    errors.push(
+      countComercial === 0
+        ? "Marque uma unidade comercial ativa (a de vitrine não pode estar inativa ou sem correspondência)."
+        : `Deve existir exatamente uma unidade comercial ativa (encontradas: ${countComercial}).`,
+    );
   }
 
   return errors.length === 0 ? { ok: true, errors: [] } : { ok: false, errors };

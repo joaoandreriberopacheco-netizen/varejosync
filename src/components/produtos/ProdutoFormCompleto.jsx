@@ -398,16 +398,42 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return base.filter(item => (item.nome || '').toLowerCase().includes(query)).slice(0, 8);
   }, [produtosSimilares, similarSearch]);
 
+  const toastSaveBlocked = (title, description) => {
+    toast({
+      variant: 'destructive',
+      title,
+      description,
+      duration: 8000,
+    });
+  };
+
+  const describeSaveError = (error) => {
+    if (error == null) return 'Erro desconhecido ao salvar. Tente novamente.';
+    if (typeof error === 'string' && error.trim()) return error.trim();
+    const msg = error?.message;
+    if (typeof msg === 'string' && msg.trim()) return msg.trim();
+    return 'Erro desconhecido ao salvar. Tente novamente ou verifique sua conexão.';
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       let codigoInterno = formData.codigo_interno;
       if (!produto?.id && !codigoInterno) {
-        const todosProdutos = await base44.entities.Produto.list();
-        const ultimoNumero = todosProdutos
-          .map(p => parseInt(p.codigo_interno) || 0)
-          .reduce((max, num) => Math.max(max, num), 0);
-        codigoInterno = String(ultimoNumero + 1).padStart(6, '0');
+        try {
+          const todosProdutos = await base44.entities.Produto.list();
+          const ultimoNumero = (todosProdutos || [])
+            .map(p => parseInt(p.codigo_interno, 10) || 0)
+            .reduce((max, num) => Math.max(max, num), 0);
+          codigoInterno = String(ultimoNumero + 1).padStart(6, '0');
+        } catch (listErr) {
+          console.error('[ProdutoFormCompleto] Falha ao listar produtos para código interno:', listErr);
+          toastSaveBlocked(
+            'Não foi possível gerar o código interno',
+            describeSaveError(listErr) + ' Verifique a conexão e tente de novo.',
+          );
+          return;
+        }
       }
 
       const categoria = categorias.find(c => c.id === formData.categoria_id);
@@ -416,16 +442,37 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       const produtoDuplicado = produtosSimilares.find(item => item.id !== produtoOriginalId && (item.nome || '').trim().toUpperCase() === nomeNormalizado);
 
       if (produtoDuplicado) {
-        throw new Error('Já existe um produto com a mesma descrição. Ajuste modelo, cor, tamanho ou outro campo antes de salvar.');
+        toastSaveBlocked(
+          'Descrição já cadastrada',
+          'Já existe um produto com a mesma descrição. Ajuste modelo, cor, tamanho ou outro campo hierárquico antes de salvar.',
+        );
+        return;
       }
 
       // Monta o array canonico `unidades[]` a partir do estado do form e valida
       // invariantes via productUnitsCrud (unica via legitima de mutacao).
       const unidadePrincipalSigla = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
       const alternativasNormalizadas = normalizeAlternativas(formData.unidades_alternativas || []);
-      const comercialPreferenciaSigla = normalizeSigla(
-        formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipalSigla
-      ) || unidadePrincipalSigla;
+      const alternativasMeta = alternativasNormalizadas
+        .map((u) => ({
+          id: String(u?.id || '').trim(),
+          unidade: normalizeSigla(u?.unidade) || '',
+          rotulo: String(u?.rotulo || '').trim().toUpperCase(),
+        }))
+        .filter((u) => u.unidade);
+      const validSiglaSet = new Set([unidadePrincipalSigla, ...alternativasMeta.map((u) => u.unidade)]);
+      const resolverComercialPreferencia = (valor) => {
+        const normalizado = normalizeSigla(valor) || String(valor || '').trim().toUpperCase();
+        if (normalizado && validSiglaSet.has(normalizado)) return normalizado;
+        const valorRotulo = String(valor || '').trim().toUpperCase();
+        const porRotulo = alternativasMeta.find((u) => u.rotulo && u.rotulo === valorRotulo);
+        if (porRotulo?.unidade && validSiglaSet.has(porRotulo.unidade)) return porRotulo.unidade;
+        return '';
+      };
+      const comercialPreferenciaSiglaRaw =
+        formData.unidade_apresentacao_default || formData.unidade_show_comercial || unidadePrincipalSigla;
+      const comercialPreferenciaSigla =
+        resolverComercialPreferencia(comercialPreferenciaSiglaRaw) || unidadePrincipalSigla;
       const comercialIdPreferencia = String(formData.unidade_comercial_id || '').trim();
 
       const principalCanonical = makeUnidade({
@@ -477,15 +524,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         if (bySigla) { bySigla.is_comercial = true; comercialAplicado = true; }
       }
       if (!comercialAplicado && comercialPreferenciaSigla && comercialPreferenciaSigla !== unidadePrincipalSigla) {
-        throw new Error(
-          'A unidade comercial escolhida não corresponde à base nem às alternativas ativas. Inclua a sigla em "Outras embalagens" ou verifique se a linha não está inativa.',
+        toastSaveBlocked(
+          'Unidade comercial não reconhecida',
+          'A unidade de vitrine precisa ser a sigla da base (UN, M2, KG…) ou de uma linha ativa em "Outras embalagens". Inclua a sigla correspondente, confira se a linha não está inativa ou use o mesmo rótulo cadastrado na alternativa.',
         );
+        return;
       }
       if (!comercialAplicado) unidadesCanonical[0].is_comercial = true;
 
       const applied = applyUnidadesToProduto({}, unidadesCanonical);
       if (!applied.ok) {
-        throw new Error('Unidades invalidas: ' + applied.errors.join('; '));
+        toastSaveBlocked(
+          'Validação de unidades',
+          (applied.errors || []).filter(Boolean).join(' · ') || 'Revise unidades base, alternativas e vitrine antes de salvar.',
+        );
+        return;
       }
 
       const produtoData = {
@@ -527,11 +580,27 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           unidades: produtoData.unidades,
         });
       }
-      if (produtoId) {
-        await base44.entities.Produto.update(produtoId, produtoData);
-      } else {
-        const novoProduto = await base44.entities.Produto.create(produtoData);
-        produtoId = novoProduto.id;
+      try {
+        if (produtoId) {
+          await base44.entities.Produto.update(produtoId, produtoData);
+        } else {
+          const novoProduto = await base44.entities.Produto.create(produtoData);
+          produtoId = novoProduto?.id;
+          if (!produtoId) {
+            toastSaveBlocked(
+              'Resposta inválida do servidor',
+              'O cadastro não devolveu o id do novo produto. Atualize a lista e confira se o item foi criado.',
+            );
+            return;
+          }
+        }
+      } catch (apiErr) {
+        console.error('[ProdutoFormCompleto] Falha create/update Produto:', apiErr);
+        toastSaveBlocked(
+          'Falha ao gravar no servidor',
+          describeSaveError(apiErr),
+        );
+        return;
       }
 
       // Reidrata `formData` IMEDIATAMENTE a partir do payload que acabamos de
@@ -622,9 +691,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       if (produtoId) loadMovimentacoes();
       // onClose(); // Mantendo aberto para feedback
     } catch (error) {
-      toast({ title: "Erro ao salvar produto", description: error.message, variant: "destructive", duration: 5000 });
+      console.error('[ProdutoFormCompleto] Erro inesperado no salvamento:', error);
+      toastSaveBlocked('Não foi possível salvar', describeSaveError(error));
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const formatarNumero = (numero) => {
