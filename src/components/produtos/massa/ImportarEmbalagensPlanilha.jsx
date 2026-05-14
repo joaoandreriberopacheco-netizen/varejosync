@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';

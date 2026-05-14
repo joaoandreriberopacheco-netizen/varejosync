@@ -29,3 +29,5 @@ Melhorias locais que continuam a fazer sentido **sem** o clone do monorepo A29:
 | Robustez planilha | [`ImportarEmbalagensPlanilha.jsx`](../../src/components/produtos/massa/ImportarEmbalagensPlanilha.jsx): validar folha vazia / ficheiro corrupto; superfície de erro no `catch` com contexto (formato `.xlsx`, cabeçalhos). |
 | Qualidade | Testes unitários para [`parseEmbalagensPlanilhaImport`](../../src/components/produtos/massa/embalagensPlanilhaUtils.js) (casos: Emb.1 vazia com Emb.2–5, sigla duplicada, fator 1 em slot alternativo, sigla = base). |
 | Export catálogo | Revisar colunas CSV em [`Produtos.jsx`](../../src/pages/Produtos.jsx) (unidades / embalagens) para alinhar com `getCatalogUnitLabels` / `formatEstoqueApresentacao` onde a listagem já usa essas funções. |
+
+*Feito neste ciclo (VarejoSync):* toasts da importação de embalagens com pré-visualização das primeiras mensagens + `description` no `catch`; validação de workbook sem primeira folha; JSDoc do retorno de `parseEmbalagensPlanilhaImport`; apontador no ecrã da aba Embalagens para `docs/migration/README.md` e `A29_VS_VAREJO_EMBALAGENS_GAP.md`.
