@@ -230,6 +230,7 @@ function App() {
               <CatalogOverlay />
             </ModoFlareProvider>
           </Router>
+          <Toaster />
           <VisualEditAgent />
         </NavigationTransitionProvider>
       </QueryClientProvider>

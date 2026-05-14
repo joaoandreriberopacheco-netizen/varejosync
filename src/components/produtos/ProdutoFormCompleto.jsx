@@ -24,11 +24,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     .map((u) => {
       const ajuste = Number(u?.ajuste_percentual) || 0;
       const fatorPreco = Number(u?.fator_preco) || 0;
+      const siglaCanon = normalizeSigla(u?.unidade) || String(u?.unidade || '').trim().toUpperCase();
       return {
         ...u,
         id: String(u?.id || '').trim() || crypto.randomUUID(),
         nome: typeof u?.nome === 'string' ? u.nome.trim() : '',
-        unidade: String(u?.unidade || '').trim().toUpperCase(),
+        unidade: siglaCanon,
         fator_conversao: Number(u?.fator_conversao) || 1,
         fator_preco: fatorPreco > 0 ? fatorPreco : (1 + (ajuste / 100)),
       };
@@ -48,10 +49,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
     preco_venda_tipo: produtoData?.preco_venda_tipo || 'percentual',
     preco_venda_percentual: produtoData?.preco_venda_percentual || 0,
-    unidade_principal: produtoData?.unidade_principal || 'UN',
-    unidade_show_comercial: produtoData?.unidade_show_comercial || '',
-    unidade_show_logistica: produtoData?.unidade_show_logistica || '',
-    unidade_apresentacao_default: produtoData?.unidade_apresentacao_default || '',
+    unidade_principal: normalizeSigla(produtoData?.unidade_principal) || 'UN',
+    unidade_show_comercial: normalizeSigla(produtoData?.unidade_show_comercial) || '',
+    unidade_show_logistica: normalizeSigla(produtoData?.unidade_show_logistica) || '',
+    unidade_apresentacao_default: normalizeSigla(produtoData?.unidade_apresentacao_default) || '',
     unidade_comercial_id: produtoData?.unidade_comercial_id || '',
     unidade_show_ativa: typeof produtoData?.unidade_show_ativa === 'boolean' ? produtoData.unidade_show_ativa : true,
     ativo: produtoData?.ativo !== false
@@ -207,9 +208,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
       if (field === 'unidade_show_comercial' || field === 'unidade_apresentacao_default') {
-        const u = String(value || '').trim().toUpperCase();
+        const u = normalizeSigla(value) || String(value || '').trim().toUpperCase();
         updated.unidade_apresentacao_default = u;
         updated.unidade_show_comercial = u;
+      }
+      if (field === 'unidade_principal') {
+        updated.unidade_principal = normalizeSigla(value) || String(value || '').trim().toUpperCase() || 'UN';
       }
       // Auto-gerar nome ao mudar qualquer campo hierárquico
       if (field.startsWith('campo_hierarquico_')) {
@@ -222,18 +226,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   };
 
   const unitOptions = useMemo(() => {
-    const principal = String(formData.unidade_principal || 'UN').trim().toUpperCase();
+    const principal = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
     const alternativas = normalizeAlternativas(formData.unidades_alternativas || [])
-      .map((u) => String(u?.unidade || '').trim().toUpperCase())
+      .map((u) => normalizeSigla(u?.unidade) || '')
       .filter(Boolean);
     return [principal, ...alternativas.filter((u) => u !== principal)];
   }, [formData.unidade_principal, formData.unidades_alternativas]);
 
   /** Evita valor controlado fora da lista (Radix) até o efeito de correção rodar. */
   const comercialSelectValue = useMemo(() => {
-    const raw = String(
+    const raw = normalizeSigla(
       formData.unidade_apresentacao_default || formData.unidade_show_comercial || formData.unidade_principal || 'UN',
-    ).trim().toUpperCase();
+    ) || 'UN';
     if (unitOptions.includes(raw)) return raw;
     return unitOptions[0] || 'UN';
   }, [unitOptions, formData.unidade_apresentacao_default, formData.unidade_show_comercial, formData.unidade_principal]);
@@ -245,7 +249,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         .map((u) =>
           [
             String(u?.id || '').trim(),
-            String(u?.unidade || '').trim().toUpperCase(),
+            normalizeSigla(u?.unidade) || String(u?.unidade || '').trim().toUpperCase(),
             String(u?.rotulo || '').trim().toUpperCase(),
           ].join(':'),
         )
@@ -255,21 +259,22 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   useEffect(() => {
     setFormData((prev) => {
-      const principal = String(prev.unidade_principal || 'UN').trim().toUpperCase();
+      const principal = normalizeSigla(prev.unidade_principal || 'UN') || 'UN';
       const alternativasNormalizadas = normalizeAlternativas(prev.unidades_alternativas || []).map((u) => ({
         id: String(u?.id || '').trim() || '',
-        unidade: String(u?.unidade || '').trim().toUpperCase(),
+        unidade: normalizeSigla(u?.unidade) || '',
         rotulo: String(u?.rotulo || '').trim().toUpperCase(),
       })).filter((u) => u.unidade);
       const validSet = new Set([principal, ...alternativasNormalizadas.map((u) => u.unidade)]);
       const resolverUnidadeValida = (valor) => {
-        const normalizado = String(valor || '').trim().toUpperCase();
+        const normalizado = normalizeSigla(valor) || String(valor || '').trim().toUpperCase();
         if (!normalizado) return '';
         if (validSet.has(normalizado)) return normalizado;
-        const porRotulo = alternativasNormalizadas.find((u) => u.rotulo && u.rotulo === normalizado);
+        const valorRotulo = String(valor || '').trim().toUpperCase();
+        const porRotulo = alternativasNormalizadas.find((u) => u.rotulo && u.rotulo === valorRotulo);
         return porRotulo?.unidade || '';
       };
-      const showComercial = String(prev.unidade_apresentacao_default || prev.unidade_show_comercial || '').trim().toUpperCase() || principal;
+      const showComercial = normalizeSigla(prev.unidade_apresentacao_default || prev.unidade_show_comercial || '') || principal;
       const showComercialValido = resolverUnidadeValida(showComercial) || principal;
       const comercialId = showComercialValido === principal
         ? 'primary'
@@ -471,6 +476,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         const bySigla = unidadesCanonical.find((u) => normalizeSigla(u.sigla) === comercialPreferenciaSigla);
         if (bySigla) { bySigla.is_comercial = true; comercialAplicado = true; }
       }
+      if (!comercialAplicado && comercialPreferenciaSigla && comercialPreferenciaSigla !== unidadePrincipalSigla) {
+        throw new Error(
+          'A unidade comercial escolhida não corresponde à base nem às alternativas ativas. Inclua a sigla em "Outras embalagens" ou verifique se a linha não está inativa.',
+        );
+      }
       if (!comercialAplicado) unidadesCanonical[0].is_comercial = true;
 
       const applied = applyUnidadesToProduto({}, unidadesCanonical);
@@ -537,22 +547,63 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         if (produtoId) {
           const fresh = await base44.entities.Produto.get(produtoId);
           if (fresh) {
-            const driftKeys = [
+            const driftSigKeys = [
               'unidade_apresentacao_default',
               'unidade_show_comercial',
               'unidade_principal',
-              'unidade_comercial_id',
+              'unidade_show_logistica',
             ];
-            const drift = driftKeys.filter((k) => String(fresh[k] || '').toUpperCase() !== String(produtoData[k] || '').toUpperCase());
-            if (drift.length > 0) {
-              console.warn('[ProdutoFormCompleto] DRIFT pos-save (backend nao gravou ou transformou):', drift.map((k) => ({ campo: k, enviado: produtoData[k], persistido: fresh[k] })));
-            } else if (import.meta.env?.DEV) {
-              console.debug('[ProdutoFormCompleto] persistido OK', {
-                unidade_apresentacao_default: fresh.unidade_apresentacao_default,
-                unidade_principal: fresh.unidade_principal,
+            const drift = driftSigKeys.filter(
+              (k) => normalizeSigla(fresh[k]) !== normalizeSigla(produtoData[k]),
+            );
+            const idDrift = String(fresh.unidade_comercial_id || '') !== String(produtoData.unidade_comercial_id || '');
+            if (drift.length > 0 || idDrift) {
+              console.warn('[ProdutoFormCompleto] DRIFT pos-save (backend nao gravou ou transformou):', {
+                drift,
+                idDrift,
+                enviado: {
+                  unidade_apresentacao_default: produtoData.unidade_apresentacao_default,
+                  unidade_show_comercial: produtoData.unidade_show_comercial,
+                  unidade_principal: produtoData.unidade_principal,
+                  unidade_comercial_id: produtoData.unidade_comercial_id,
+                },
+                persistido: {
+                  unidade_apresentacao_default: fresh.unidade_apresentacao_default,
+                  unidade_show_comercial: fresh.unidade_show_comercial,
+                  unidade_principal: fresh.unidade_principal,
+                  unidade_comercial_id: fresh.unidade_comercial_id,
+                },
               });
+              toast({
+                title: 'Unidades: resposta diferente do enviado',
+                description:
+                  'O servidor devolveu outra combinação de unidade comercial. A tela mantém o pacote que você acabou de gravar; confira o cadastro no painel se isto se repetir.',
+                duration: 9000,
+                className: 'bg-amber-50 text-amber-950 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-800',
+              });
+              const UNIT_SNAPSHOT_KEYS = [
+                'unidades',
+                'unidade_principal',
+                'unidades_alternativas',
+                'unidade_apresentacao_default',
+                'unidade_show_comercial',
+                'unidade_show_logistica',
+                'unidade_comercial_id',
+              ];
+              const overlay = UNIT_SNAPSHOT_KEYS.reduce((acc, key) => {
+                if (produtoData[key] !== undefined) acc[key] = produtoData[key];
+                return acc;
+              }, {});
+              setFormData(buildFormDataFromProduto({ ...fresh, ...overlay }));
+            } else {
+              if (import.meta.env?.DEV) {
+                console.debug('[ProdutoFormCompleto] persistido OK', {
+                  unidade_apresentacao_default: fresh.unidade_apresentacao_default,
+                  unidade_principal: fresh.unidade_principal,
+                });
+              }
+              setFormData(buildFormDataFromProduto(fresh));
             }
-            setFormData(buildFormDataFromProduto(fresh));
           }
         }
       } catch (refetchErr) {
