@@ -1,3 +1,16 @@
+/** 1 base + 2 alternativas; alinhado a `MAX_EMBALAGENS` em produtoEmbalagensEntity. */
+export const MAX_EMBALAGENS_PLANILHA = 3;
+export const MAX_ALTERNATIVAS_PLANILHA = MAX_EMBALAGENS_PLANILHA - 1;
+
+const LEGACY_EMB_SLOTS = 5;
+
+function slotDisplayName(n) {
+  if (n === 1) return 'Base';
+  if (n === 2) return 'Alt.1';
+  if (n === 3) return 'Alt.2';
+  return `Emb.${n}`;
+}
+
 /** Lê coluna de vitrine da linha; legado `unidade_apresentacao_default` só se a nova estiver vazia. */
 export function resolveVitrineColunaPlanilha(dados = {}) {
   const novo = dados.unidade_vitrine;
@@ -26,12 +39,27 @@ export function vitrineExibicaoParaArmazenada(siglaExibicao, principalSigla) {
 
 /** Remove chaves emb1…emb5 do objeto linha (mutação). */
 function stripEmbSlotKeys(dados) {
-  for (let n = 1; n <= 5; n++) {
+  for (let n = 1; n <= LEGACY_EMB_SLOTS; n++) {
     delete dados[`emb${n}_rotulo`];
     delete dados[`emb${n}_sigla`];
     delete dados[`emb${n}_fator`];
     delete dados[`emb${n}_ajuste`];
   }
+}
+
+function detectLegacyOverflowSlots(dados) {
+  for (let n = MAX_EMBALAGENS_PLANILHA + 1; n <= LEGACY_EMB_SLOTS; n++) {
+    const s = dados[`emb${n}_sigla`];
+    const f = dados[`emb${n}_fator`];
+    const r = dados[`emb${n}_rotulo`];
+    const hasSigla = s != null && String(s).trim() !== '';
+    const hasRotulo = r != null && String(r).trim() !== '';
+    const hasFator = f != null && String(f).trim() !== '';
+    if (hasSigla || hasRotulo || hasFator) {
+      return `Emb.${n} (legado): no máximo ${MAX_ALTERNATIVAS_PLANILHA} alternativas (Alt.1 e Alt.2). Remova colunas Emb.4–5.`;
+    }
+  }
+  return null;
 }
 
 function parseNum(v) {
@@ -41,9 +69,9 @@ function parseNum(v) {
 }
 
 /**
- * Interpreta Emb.1 como unidade base (fator 1) e Emb.2–5 como alternativas (fator ≠ 1 em relação à base).
+ * Interpreta Base (emb1) como unidade principal (fator 1) e Alt.1–Alt.2 como alternativas.
  * @param {Record<string, unknown>} dados — linha lida da planilha (mutado: remove emb*)
- * @param {{ fallbackPrincipal?: string }} options — sigla base quando Emb.1 vem vazia mas há Emb.2–5
+ * @param {{ fallbackPrincipal?: string }} options — sigla base quando Base vem vazia mas há alternativas
  * @returns {{
  *   alternativas: Array<{
  *     unidade: string,
@@ -58,14 +86,27 @@ function parseNum(v) {
  *   error: string|null,
  *   warnings: string[],
  *   hadSlotPayload: boolean
- * }} `hadSlotPayload` — houve conteúdo em slots Emb.* ou regra de erro/warning por causa deles; `false` quando a linha não traz dados de embalagem.
+ * }} `hadSlotPayload` — houve conteúdo em slots ou regra de erro/warning por causa deles.
  */
 export function parseEmbalagensPlanilhaImport(dados, options = {}) {
   const fallbackPrincipal = String(options.fallbackPrincipal || 'UN').trim().toUpperCase() || 'UN';
   const warnings = [];
 
+  const overflowError = detectLegacyOverflowSlots(dados);
+  if (overflowError) {
+    stripEmbSlotKeys(dados);
+    return {
+      alternativas: [],
+      principalSigla: null,
+      emb1Explicit: false,
+      error: overflowError,
+      warnings,
+      hadSlotPayload: true,
+    };
+  }
+
   const slots = [];
-  for (let n = 1; n <= 5; n++) {
+  for (let n = 1; n <= MAX_EMBALAGENS_PLANILHA; n++) {
     const r = dados[`emb${n}_rotulo`];
     const s = dados[`emb${n}_sigla`];
     const f = dados[`emb${n}_fator`];
@@ -81,7 +122,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
   stripEmbSlotKeys(dados);
 
   const emb1 = slots[0];
-  const hasEmb2345 = slots.slice(1).some((sl) => sl.sigla && sl.fator != null);
+  const hasAlts = slots.slice(1).some((sl) => sl.sigla && sl.fator != null);
   const hasAnyEmb = slots.some((sl) => sl.sigla || sl.rotulo || sl.fator != null);
 
   if (!hasAnyEmb) {
@@ -91,9 +132,9 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
   const emb1Explicit = Boolean(emb1.sigla);
   let principalSigla = emb1.sigla || '';
 
-  if (!principalSigla && hasEmb2345) {
+  if (!principalSigla && hasAlts) {
     principalSigla = fallbackPrincipal;
-    warnings.push('Emb.1 sigla vazia; usando a unidade principal atual do produto como base (fator 1).');
+    warnings.push('Base (sigla) vazia; usando a unidade principal atual do produto como base (fator 1).');
   }
 
   if (!principalSigla) {
@@ -101,26 +142,27 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       alternativas: [],
       principalSigla: null,
       emb1Explicit: false,
-      error: 'Preencha Emb.1 (sigla da unidade base, fator 1) para importar embalagens.',
+      error: 'Preencha Base Sigla (unidade base, fator 1) para importar embalagens.',
       warnings,
       hadSlotPayload: true,
     };
   }
 
   if (emb1.fator != null && emb1.fator !== 1) {
-    warnings.push(`Emb.1 Fator (${emb1.fator}) ignorado; a base é sempre fator 1.`);
+    warnings.push(`Base Fator (${emb1.fator}) ignorado; a base é sempre fator 1.`);
   }
 
   const alternativas = [];
   const siglasAlternativasUsadas = new Set();
   for (const slot of slots.slice(1)) {
     if (!slot.sigla) continue;
+    const label = slotDisplayName(slot.n);
     if (siglasAlternativasUsadas.has(slot.sigla)) {
       return {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `Emb.${slot.n}: sigla "${slot.sigla}" repetida noutro slot (Emb.2–5).`,
+        error: `${label}: sigla "${slot.sigla}" repetida noutra alternativa.`,
         warnings,
         hadSlotPayload: true,
       };
@@ -130,7 +172,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `Emb.${slot.n}: informe fator numérico para a sigla "${slot.sigla}".`,
+        error: `${label}: informe fator numérico para a sigla "${slot.sigla}".`,
         warnings,
         hadSlotPayload: true,
       };
@@ -140,7 +182,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `Emb.${slot.n}: fator não pode ser 1 (use apenas Emb.1 como base; demais fatores são relativos à Emb.1).`,
+        error: `${label}: fator não pode ser 1 (use apenas Base como fator 1; demais fatores são relativos à base).`,
         warnings,
         hadSlotPayload: true,
       };
@@ -150,7 +192,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `Emb.${slot.n}: fator deve ser maior que zero.`,
+        error: `${label}: fator deve ser maior que zero.`,
         warnings,
         hadSlotPayload: true,
       };
@@ -160,7 +202,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `Emb.${slot.n}: sigla igual à unidade base (Emb.1).`,
+        error: `${label}: sigla igual à unidade base.`,
         warnings,
         hadSlotPayload: true,
       };
@@ -174,6 +216,17 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       ativo: true,
     });
     siglasAlternativasUsadas.add(slot.sigla);
+  }
+
+  if (alternativas.length > MAX_ALTERNATIVAS_PLANILHA) {
+    return {
+      alternativas: [],
+      principalSigla: null,
+      emb1Explicit: false,
+      error: `No máximo ${MAX_ALTERNATIVAS_PLANILHA} unidades alternativas (Alt.1 e Alt.2).`,
+      warnings,
+      hadSlotPayload: true,
+    };
   }
 
   return {

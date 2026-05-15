@@ -93,7 +93,20 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const colConfig = COLUNAS_SOMENTE_EMBALAGENS.find(
           (c) => c.label === label || (c.altLabels || []).includes(label),
         );
-        if (colConfig) colIndexMap[colConfig.key] = colNumber;
+        if (colConfig) {
+          colIndexMap[colConfig.key] = colNumber;
+          return;
+        }
+        const embLegacy = label.match(/^Emb\.([45])\s+(.+)$/i);
+        if (!embLegacy) return;
+        const n = embLegacy[1];
+        const rest = embLegacy[2].toLowerCase();
+        let field = null;
+        if (rest.startsWith('rótulo') || rest.startsWith('rotulo')) field = 'rotulo';
+        else if (rest.startsWith('sigla')) field = 'sigla';
+        else if (rest.startsWith('fator')) field = 'fator';
+        else if (rest.startsWith('ajuste')) field = 'ajuste';
+        if (field) colIndexMap[`emb${n}_${field}`] = colNumber;
       });
 
       const alterados = [];
@@ -301,7 +314,9 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
               <>
                 <FileSpreadsheet className="w-10 h-10 text-gray-400 mb-2" />
                 <p className="text-sm font-medium text-gray-900 dark:text-white">Arraste ou clique — só embalagens</p>
-                <p className="text-xs text-gray-500 mt-1">Cabeçalhos devem coincidir com a planilha exportada nesta aba.</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Cabeçalhos: Base + Alt.1–2 + Unidade vitrine (planilha exportada nesta aba).
+                </p>
               </>
             )}
           </div>

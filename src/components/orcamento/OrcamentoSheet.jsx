@@ -205,7 +205,7 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{produto.nome}</p>
         <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-          R$ {fmtR(preco)} · {e.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
+          R$ {fmtR(preco)} / {unidadeSelecionada?.unidade || produto.unidade_principal || 'UN'} · {e.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
           {apresent ? ` · ~${apresent.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${apresent.sigla}` : ''}
           {unitOptions?.length > 1 ? ` · ${unitOptions.length} unidades` : ''}
         </p>
@@ -607,7 +607,17 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
       if (existe) {
         return prev.map(i =>
           i.id === produto.id
-            ? { ...i, qtd, preco_unit: preco ?? i.preco_unit, unidade, fator_conversao: fator, quantidade_base: qtd * fator, preco_referencia_tabela: i.preco_referencia_tabela ?? preco }
+            ? {
+                ...i,
+                qtd,
+                preco_unit: preco ?? i.preco_unit,
+                unidade,
+                unidade_medida: unidade,
+                unidade_sigla: unidade,
+                fator_conversao: fator,
+                quantidade_base: qtd * fator,
+                preco_referencia_tabela: i.preco_referencia_tabela ?? preco,
+              }
             : i
         );
       }
@@ -617,6 +627,8 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         preco_unit: preco,
         qtd,
         unidade,
+        unidade_medida: unidade,
+        unidade_sigla: unidade,
         fator_conversao: fator,
         quantidade_base: qtd * fator,
         preco_livre: produto.preco_livre || false,

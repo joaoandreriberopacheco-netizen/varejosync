@@ -6,8 +6,13 @@ import { Check, Loader2, MessageCircle, Search, ShoppingCart, X } from 'lucide-r
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
-import { buildQuickBudgetItem, getBudgetSummary, getFullPrice, recalculateItem } from './quickBudgetUtils';
-import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
+import {
+  buildQuickBudgetItem,
+  getBudgetSummary,
+  getFullPrice,
+  getQuickBudgetUnitContext,
+  recalculateItem,
+} from './quickBudgetUtils';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
 
@@ -21,6 +26,8 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   const [flowStage, setFlowStage] = useState('quantity');
   const [quantityDraft, setQuantityDraft] = useState('1');
   const [priceDraft, setPriceDraft] = useState('0');
+  const [unitOptions, setUnitOptions] = useState([]);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
   const searchInputRef = useRef(null);
@@ -64,15 +71,26 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   }, [open]);
 
   const handleSelectProduct = (produto) => {
+    const ctx = getQuickBudgetUnitContext(produto, tabelaSelecionada);
     setSelectedProduct(produto);
+    setUnitOptions(ctx.unitOptions || []);
+    setSelectedUnit(ctx.unidadeDefault);
     setFlowStage('quantity');
     setQuantityDraft('1');
-    setPriceDraft(String(getFullPrice(produto, tabelaSelecionada)));
+    setPriceDraft(String(getFullPrice(produto, tabelaSelecionada, ctx.unidadeDefault)));
     setTimeout(() => quantityInputRef.current?.focus(), 50);
+  };
+
+  const handleUnitChange = (unit) => {
+    if (!selectedProduct || !unit) return;
+    setSelectedUnit(unit);
+    setPriceDraft(String(getFullPrice(selectedProduct, tabelaSelecionada, unit)));
   };
 
   const resetFlow = () => {
     setSelectedProduct(null);
+    setUnitOptions([]);
+    setSelectedUnit(null);
     setFlowStage('quantity');
     setQuantityDraft('1');
     setPriceDraft('0');
@@ -89,8 +107,8 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   const handleSaveItem = () => {
     if (!selectedProduct) return;
-    const draft = buildQuickBudgetItem(selectedProduct, tabelaSelecionada);
-    const piso = calcularPrecoVendaTabela(selectedProduct, tabelaSelecionada);
+    const draft = buildQuickBudgetItem(selectedProduct, tabelaSelecionada, selectedUnit);
+    const piso = getFullPrice(selectedProduct, tabelaSelecionada, selectedUnit);
     let precoUnitario = draft.preco_unitario;
     if (selectedProduct.preco_livre) {
       precoUnitario = String(Math.max(Number(priceDraft) || 0, piso));
@@ -100,11 +118,12 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
       quantidade: quantityDraft,
       preco_unitario: selectedProduct.preco_livre ? precoUnitario : draft.preco_unitario,
     });
+    const lineKey = nextItem.item_key;
 
     setItems((prev) => {
-      const existing = prev.find((item) => item.produto_id === selectedProduct.id);
+      const existing = prev.find((item) => item.item_key === lineKey);
       if (existing) {
-        return prev.map((item) => item.produto_id === selectedProduct.id
+        return prev.map((item) => (item.item_key === lineKey
           ? recalculateItem({
               ...item,
               preco_venda_lista: nextItem.preco_venda_lista,
@@ -113,10 +132,12 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
               preco_minimo: nextItem.preco_minimo,
               quantidade: Number(item.quantidade || 0) + Number(nextItem.quantidade || 0),
               preco_unitario: nextItem.preco_unitario,
-              unidade: item.unidade || nextItem.unidade,
-              fator_conversao: item.fator_conversao ?? nextItem.fator_conversao,
+              unidade: nextItem.unidade,
+              unidade_medida: nextItem.unidade_medida,
+              unidade_sigla: nextItem.unidade_sigla,
+              fator_conversao: nextItem.fator_conversao,
             })
-          : item);
+          : item));
       }
       return [nextItem, ...prev];
     });
@@ -259,6 +280,9 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
             stage={flowStage}
             quantity={quantityDraft}
             price={priceDraft}
+            unitOptions={unitOptions}
+            selectedUnit={selectedUnit}
+            onUnitChange={handleUnitChange}
             onQuantityChange={setQuantityDraft}
             onPriceChange={setPriceDraft}
             onNext={handleNextStep}

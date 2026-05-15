@@ -4,8 +4,8 @@ import { Search, Package, Boxes, Loader2, Calculator } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
-import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
-import { formatEstoqueApresentacao, hasAlternativeUnits } from '@/lib/productUnits';
+import { calcularPrecoVendaTabela, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
+import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -20,12 +20,16 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
     : e <= m                 ? 'bg-orange-400'
     : 'bg-green-500';
 
-  const precoFinal = calcularPreco(p);
-  const precoOriginal = p.preco_venda_padrao || 0;
+  const { unidadeDefault, precoSelecionado } = getSaleUnitContextForTabela(p, tabelaSelecionada);
+  const siglaVitrine = unidadeDefault?.unidade || getUnidadeExibicaoSigla(p, p.unidade_principal || 'UN');
+  const precoFinal = precoSelecionado ?? calcularPreco(p);
+  const listaOpts = getSaleUnitContextForTabela(p, null).unitOptions;
+  const listaUnit = listaOpts.find((o) => o.unidade === siglaVitrine) || listaOpts[0];
+  const precoOriginal = Number(listaUnit?.valor_unitario ?? p.preco_venda_padrao ?? 0);
   const temAjuste = tabelaSelecionada && tabelaSelecionada.fator_ajuste !== 1;
   const apresentEstoque = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresentEstoque ? apresentEstoque.quantidade : e;
-  const unidadeExibicao = apresentEstoque ? apresentEstoque.sigla : (p.unidade_principal || 'UN');
+  const unidadeExibicao = apresentEstoque ? apresentEstoque.sigla : siglaVitrine;
 
   return (
     <div
@@ -77,6 +81,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
         {precoFinal > 0 && (
           <div className="text-base font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap tabular-nums">
             R$ {fmtR(precoFinal)}
+            <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400 ml-0.5">/{siglaVitrine}</span>
           </div>
         )}
         {e <= 0 && (

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
+import { MAX_ALTERNATIVAS_PLANILHA } from './embalagensPlanilhaUtils';
 import { normalizeAlternativeUnits, normalizeUnitCode, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { dataHoje } from '@/components/utils/dateUtils';
 
@@ -56,8 +57,8 @@ function produtoParaLinhaEmbalagens(p) {
   row.emb1_sigla = principal;
   row.emb1_fator = 1;
   row.emb1_ajuste = 0;
-  const alts = normalizeAlternativeUnits(p);
-  for (let i = 0; i < 4; i++) {
+  const alts = normalizeAlternativeUnits(p).slice(0, MAX_ALTERNATIVAS_PLANILHA);
+  for (let i = 0; i < MAX_ALTERNATIVAS_PLANILHA; i++) {
     const a = alts[i];
     const n = i + 2;
     row[`emb${n}_rotulo`] = a?.rotulo ?? '';

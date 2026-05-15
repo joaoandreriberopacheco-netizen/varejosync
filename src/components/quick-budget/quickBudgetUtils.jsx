@@ -1,6 +1,6 @@
 import React from 'react';
-import { calcularPrecoVendaTabela } from '@/lib/orcamentoPrecoTabela';
-import { calculateBaseQuantity, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { getPrecoUnitarioNaUnidade, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
+import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
 
 export function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -20,14 +20,18 @@ export function getProductSearchText(produto) {
   ].filter(Boolean).join(' ').toLowerCase();
 }
 
-/** Piso e referência: preço de venda da tabela (não custo). */
-export function getMinimumPrice(produto, tabelaPreco) {
-  return calcularPrecoVendaTabela(produto, tabelaPreco);
+export function getQuickBudgetUnitContext(produto, tabelaPreco) {
+  return getSaleUnitContextForTabela(produto, tabelaPreco);
 }
 
-/** Preço de tabela aplicado ao produto (mesmo que piso comercial). */
-export function getFullPrice(produto, tabelaPreco) {
-  return calcularPrecoVendaTabela(produto, tabelaPreco);
+/** Piso e referência: preço de venda da tabela na embalagem (não custo). */
+export function getMinimumPrice(produto, tabelaPreco, unitOption = null) {
+  return getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitOption);
+}
+
+/** Preço de tabela aplicado ao produto na embalagem escolhida. */
+export function getFullPrice(produto, tabelaPreco, unitOption = null) {
+  return getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitOption);
 }
 
 /**
@@ -37,12 +41,18 @@ export function getFullPrice(produto, tabelaPreco) {
 export function PrecoVendaTabelaLinhas({
   produto,
   tabelaPreco,
+  unitOption = null,
   finalClassName = 'text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums',
   labelBottom,
   variant = 'default',
 }) {
-  const precoFinal = calcularPrecoVendaTabela(produto, tabelaPreco);
-  const precoOriginal = Number(produto?.preco_venda_padrao || 0);
+  const ctx = getQuickBudgetUnitContext(produto, tabelaPreco);
+  const unit = unitOption || ctx.unidadeDefault;
+  const precoFinal = getPrecoUnitarioNaUnidade(produto, tabelaPreco, unit);
+  const listaOpts = buildSaleUnitOptions(produto, 1);
+  const listaUnit = listaOpts.find((o) => o.unidade === unit?.unidade) || listaOpts[0];
+  const precoOriginal = Number(listaUnit?.valor_unitario ?? produto?.preco_venda_padrao ?? 0);
+  const sigla = unit?.unidade || listaUnit?.unidade || produto?.unidade_principal || 'UN';
   const temAjuste = tabelaPreco && tabelaPreco.fator_ajuste !== 1;
   const qb = variant === 'quickBudget';
 
@@ -56,6 +66,7 @@ export function PrecoVendaTabelaLinhas({
       {precoFinal > 0 && (
         <div className={`tabular-nums whitespace-nowrap ${finalClassName}`}>
           {formatCurrency(precoFinal)}
+          <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400 ml-0.5">/{sigla}</span>
         </div>
       )}
     </>
@@ -75,15 +86,20 @@ export function PrecoVendaTabelaLinhas({
   );
 }
 
-export function buildQuickBudgetItem(produto, tabelaPreco) {
-  const precoTabela = calcularPrecoVendaTabela(produto, tabelaPreco);
-  const quantidade = 1;
-  const precoLista = Number(produto.preco_venda_padrao || 0);
-  const temAjusteTabela = !!(tabelaPreco && tabelaPreco.fator_ajuste !== 1);
-  const unitPick = pickDefaultSaleUnit(produto, 1) || {
+export function buildQuickBudgetItem(produto, tabelaPreco, unitOption = null) {
+  const ctx = getQuickBudgetUnitContext(produto, tabelaPreco);
+  const unitPick = unitOption || ctx.unidadeDefault || {
     unidade: String(produto.unidade_principal || 'UN').trim().toUpperCase(),
     fator_conversao: 1,
+    valor_unitario: ctx.precoSelecionado,
   };
+  const sigla = unitPick.unidade || 'UN';
+  const precoTabela = getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitPick);
+  const quantidade = 1;
+  const listaOpts = buildSaleUnitOptions(produto, 1);
+  const listaUnit = listaOpts.find((o) => o.unidade === sigla) || listaOpts[0];
+  const precoLista = Number(listaUnit?.valor_unitario ?? produto.preco_venda_padrao ?? 0);
+  const temAjusteTabela = !!(tabelaPreco && tabelaPreco.fator_ajuste !== 1);
   const fator = Number(unitPick.fator_conversao) || 1;
   const quantidadeBase = calculateBaseQuantity(quantidade, fator);
   return {
@@ -91,6 +107,7 @@ export function buildQuickBudgetItem(produto, tabelaPreco) {
     produto_nome: produto.nome,
     codigo_interno: produto.codigo_interno || '',
     estoque_atual: Number(produto.estoque_atual || 0),
+    item_key: getItemUnitKey(produto.id, sigla),
     preco_cheio: precoTabela,
     preco_minimo: precoTabela,
     preco_unitario: precoTabela,
@@ -99,7 +116,9 @@ export function buildQuickBudgetItem(produto, tabelaPreco) {
     preco_livre: !!produto.preco_livre,
     desconto: 0,
     quantidade,
-    unidade: unitPick.unidade,
+    unidade: sigla,
+    unidade_medida: sigla,
+    unidade_sigla: sigla,
     fator_conversao: fator,
     quantidade_base: quantidadeBase,
     total: precoTabela * quantidade,

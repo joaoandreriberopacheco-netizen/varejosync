@@ -319,7 +319,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Gera um <strong>.xlsx</strong> com todos os produtos (sem colunas Emb.1–5 — use a aba Embalagens). Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
+              Gera um <strong>.xlsx</strong> com todos os produtos (sem colunas Base / Alt. — use a aba Embalagens). Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
             </p>
             <ExportarPlanilha />
           </div>
@@ -383,7 +383,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Planilha dedicada: <strong>Emb.1</strong> = unidade base (fator 1); <strong>Emb.2–5</strong> = alternativas com fator em relação à Emb.1; coluna <strong>Unidade vitrine</strong> (sigla exibida no catálogo/PDV).
+              Planilha dedicada: <strong>Base</strong> = unidade principal (fator 1); <strong>Alt.1</strong> e <strong>Alt.2</strong> = alternativas (fator vs base); coluna <strong>Unidade vitrine</strong> grava <code className="text-xs">unidade_vitrine</code> (sigla no catálogo/PDV — vazio = base).
             </p>
             <ExportarEmbalagensPlanilha />
           </div>

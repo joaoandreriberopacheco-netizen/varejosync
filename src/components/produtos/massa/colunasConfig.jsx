@@ -3,34 +3,82 @@
 // tipo: 'string' | 'numero' | 'boolean'
 // calculado: true = coluna bloqueada gerada na exportação (não importada)
 
-/** Até 5 alternativas de venda — usar planilha separada “Embalagens / unidades”. */
+import { MAX_EMBALAGENS_PLANILHA } from './embalagensPlanilhaUtils';
+
+/** 1 base + 2 alternativas — usar planilha separada “Embalagens / unidades”. */
+const EMB_SLOT_META = [
+  {
+    nome: 'Base',
+    legacyEmb: 1,
+    siglaLabel: 'Base Sigla (fator 1)',
+    fatorLabel: 'Base Fator (fixo 1)',
+    rotuloAlt: ['Emb.1 Rótulo'],
+    siglaAlt: ['Emb.1 Sigla (base, fator 1)', 'Emb.1 Sigla'],
+    fatorAlt: ['Emb.1 Fator (fixo 1)', 'Emb.1 Fator'],
+    ajusteAlt: ['Emb.1 Ajuste %'],
+  },
+  {
+    nome: 'Alt.1',
+    legacyEmb: 2,
+    siglaLabel: 'Alt.1 Sigla',
+    fatorLabel: 'Alt.1 Fator (vs base)',
+    rotuloAlt: ['Emb.2 Rótulo'],
+    siglaAlt: ['Emb.2 Sigla'],
+    fatorAlt: ['Emb.2 Fator (vs base)', 'Emb.2 Fator'],
+    ajusteAlt: ['Emb.2 Ajuste %'],
+  },
+  {
+    nome: 'Alt.2',
+    legacyEmb: 3,
+    siglaLabel: 'Alt.2 Sigla',
+    fatorLabel: 'Alt.2 Fator (vs base)',
+    rotuloAlt: ['Emb.3 Rótulo'],
+    siglaAlt: ['Emb.3 Sigla'],
+    fatorAlt: ['Emb.3 Fator (vs base)', 'Emb.3 Fator'],
+    ajusteAlt: ['Emb.3 Ajuste %'],
+  },
+];
+
 export const EMB_SLOT_COLS = [];
-for (let n = 1; n <= 5; n++) {
-  const siglaLabel = n === 1 ? `Emb.${n} Sigla (base, fator 1)` : `Emb.${n} Sigla`;
-  const fatorLabel = n === 1 ? `Emb.${n} Fator (fixo 1)` : `Emb.${n} Fator (vs base)`;
+for (let n = 1; n <= MAX_EMBALAGENS_PLANILHA; n++) {
+  const meta = EMB_SLOT_META[n - 1];
   EMB_SLOT_COLS.push(
-    { key: `emb${n}_rotulo`, label: `Emb.${n} Rótulo`, editavel: true, width: 18, tipo: 'string' },
+    {
+      key: `emb${n}_rotulo`,
+      label: `${meta.nome} Rótulo`,
+      altLabels: meta.rotuloAlt,
+      editavel: true,
+      width: 18,
+      tipo: 'string',
+    },
     {
       key: `emb${n}_sigla`,
-      label: siglaLabel,
-      altLabels: n === 1 ? [`Emb.${n} Sigla`] : [],
+      label: meta.siglaLabel,
+      altLabels: meta.siglaAlt,
       editavel: true,
-      width: 12,
+      width: 14,
       tipo: 'string',
     },
     {
       key: `emb${n}_fator`,
-      label: fatorLabel,
-      altLabels: n === 1 ? [`Emb.${n} Fator`] : [],
+      label: meta.fatorLabel,
+      altLabels: meta.fatorAlt,
       editavel: true,
-      width: 12,
+      width: 14,
       tipo: 'numero',
     },
-    { key: `emb${n}_ajuste`, label: `Emb.${n} Ajuste %`, editavel: true, width: 14, tipo: 'numero' },
+    {
+      key: `emb${n}_ajuste`,
+      label: `${meta.nome} Ajuste %`,
+      altLabels: meta.ajusteAlt,
+      editavel: true,
+      width: 14,
+      tipo: 'numero',
+    },
   );
 }
 
-/** Só ID, código, nome de referência, slots Emb.1–5 e apresentação PDV. */
+/** Só ID, código, nome de referência, Base + Alt.1–2 e unidade vitrine. */
 export const COLUNAS_SOMENTE_EMBALAGENS = [
   { key: 'id', label: 'ID (não editar)', editavel: false, width: 28, tipo: 'string' },
   { key: 'codigo_interno', label: 'Cód. Interno', editavel: false, width: 14, tipo: 'string' },

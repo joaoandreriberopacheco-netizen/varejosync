@@ -3,7 +3,6 @@ import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PrecoVendaTabelaLinhas, getMinimumPrice } from './quickBudgetUtils';
-import { pickDefaultSaleUnit } from '@/lib/productUnits';
 
 export default function QuickBudgetFlowItemEditor({
   selectedProduct,
@@ -11,6 +10,9 @@ export default function QuickBudgetFlowItemEditor({
   stage,
   quantity,
   price,
+  unitOptions = [],
+  selectedUnit,
+  onUnitChange,
   onQuantityChange,
   onPriceChange,
   onNext,
@@ -31,6 +33,7 @@ export default function QuickBudgetFlowItemEditor({
       onSave();
     }
   };
+
   if (!selectedProduct) {
     return (
       <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm px-4 py-10 text-center text-sm text-gray-400">
@@ -40,8 +43,8 @@ export default function QuickBudgetFlowItemEditor({
   }
 
   const isFreePrice = !!selectedProduct.preco_livre;
-  const pisoVenda = getMinimumPrice(selectedProduct, tabelaPreco);
-  const saleUnit = pickDefaultSaleUnit(selectedProduct, 1);
+  const pisoVenda = getMinimumPrice(selectedProduct, tabelaPreco, selectedUnit);
+  const siglaAtiva = selectedUnit?.unidade || selectedProduct.unidade_principal || 'UN';
 
   return (
     <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm p-4 space-y-4">
@@ -60,6 +63,7 @@ export default function QuickBudgetFlowItemEditor({
             <PrecoVendaTabelaLinhas
               produto={selectedProduct}
               tabelaPreco={tabelaPreco}
+              unitOption={selectedUnit}
               variant="quickBudget"
               finalClassName="text-lg font-bold text-gray-800 dark:text-gray-100 tabular-nums"
               labelBottom={false}
@@ -68,11 +72,36 @@ export default function QuickBudgetFlowItemEditor({
         </div>
       </div>
 
+      {unitOptions.length > 1 && (
+        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm p-3">
+          <p className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">Embalagem</p>
+          <div className="flex flex-wrap gap-2">
+            {unitOptions.map((opt) => {
+              const active = opt.unidade === siglaAtiva;
+              return (
+                <button
+                  key={opt.unidade}
+                  type="button"
+                  onClick={() => onUnitChange?.(opt)}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
+                    active
+                      ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200'
+                  }`}
+                >
+                  {opt.unidade}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         <div className={`rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm p-3 ${stage !== 'quantity' ? 'opacity-60' : ''}`}>
           <p className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">Quantidade</p>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
-            Unidade comercial: <span className="font-semibold text-gray-700 dark:text-gray-200">{saleUnit?.unidade || selectedProduct.unidade_principal || 'UN'}</span>
+            Unidade: <span className="font-semibold text-gray-700 dark:text-gray-200">{siglaAtiva}</span>
           </p>
           <Input
             ref={quantityInputRef}
