@@ -131,7 +131,7 @@ export default function EditarProdutosEmMassa() {
         usuario_responsavel: user?.full_name || user?.email,
         quantidade_itens: parsedEmbalagens.alterados.length,
         snapshot_dados: snapshotDados,
-        tipo_importacao: 'Embalagens / Unidades',
+        tipo_importacao: 'Embalagens (planilha)',
       });
       const camposEmb = ['unidade_principal', 'unidade_vitrine', 'unidades_alternativas'];
       for (const { id, dados } of parsedEmbalagens.alterados) {
@@ -155,7 +155,7 @@ export default function EditarProdutosEmMassa() {
       setParsedEmbalagens(null);
     } catch (error) {
       console.error('❌ Erro na sincronização de embalagens:', error);
-      alert(`Erro ao sincronizar embalagens: ${error?.message || 'Erro desconhecido'}`);
+      alert(`Erro ao gravar embalagens: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
     }
@@ -244,7 +244,7 @@ export default function EditarProdutosEmMassa() {
       if (!candidatos.length) return;
 
       const confirmar = window.confirm(
-        `Backfill legado encontrado: ${candidatos.length} produto(s) para corrigir, ${conflitos} conflito(s) e ${ignoradosConsistentes} já consistente(s). Deseja aplicar agora?`
+        `Encontrados ${candidatos.length} produto(s) para alinhar ao formato atual de embalagens, ${conflitos} em conflito (não serão alterados) e ${ignoradosConsistentes} já corretos. Aplicar agora?`
       );
       if (!confirmar) return;
 
@@ -255,7 +255,7 @@ export default function EditarProdutosEmMassa() {
         usuario_responsavel: user?.full_name || user?.email,
         quantidade_itens: candidatos.length,
         snapshot_dados: snapshotDados || [],
-        tipo_importacao: 'Backfill Unidades Legadas',
+        tipo_importacao: 'Recuperação embalagens (importação antiga)',
       });
 
       let atualizados = 0;
@@ -277,7 +277,7 @@ export default function EditarProdutosEmMassa() {
       });
     } catch (error) {
       console.error('❌ Erro no backfill legado de unidades:', error);
-      alert(`Erro no backfill legado: ${error?.message || 'Erro desconhecido'}`);
+      alert(`Erro ao padronizar embalagens: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setProcessandoBackfillLegado(false);
     }
@@ -295,7 +295,7 @@ export default function EditarProdutosEmMassa() {
           Edição em Massa
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Atualize detalhes, embalagens/unidades ou estoque em lote via planilha.
+          Atualize detalhes, embalagens (base, alternativas e unidade vitrine) ou estoque em lote via planilha.
         </p>
       </div>
 
@@ -357,23 +357,23 @@ export default function EditarProdutosEmMassa() {
 
         <TabsContent value="embalagens" className="space-y-8 mt-6">
           <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-6 shadow-sm border border-amber-100 dark:border-amber-800">
-            <StepLabel number={0} label="Backfill legado (importações antigas)" />
+            <StepLabel number={0} label="Correção pontual (cadastros legados)" />
             <p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
-              Reconstrói unidade principal (fator 1), PDV, show comercial e show logístico para produtos importados antes do novo contrato de unidades.
+              Uso <strong>opcional</strong>: produtos que ainda refletem importações muito antigas. A ferramenta alinha o modelo atual — <strong>unidade principal</strong> (base, fator 1), até <strong>duas alternativas</strong> com <strong>fator de conversão</strong> e <strong>ajuste preço (×)</strong> sobre o preço da embalagem, e <strong>unidade vitrine</strong> (sigla gravada; célula vazia ou igual à base equivale à base). O fluxo normal de planilha nesta aba é independente disto.
             </p>
             <Button
               onClick={handleBackfillUnidadesLegadas}
               disabled={processandoBackfillLegado || salvando}
               className="w-full bg-amber-700 hover:bg-amber-600 text-white h-11 text-sm font-medium"
             >
-              {processandoBackfillLegado ? 'Analisando/aplicando backfill...' : 'Corrigir unidades legadas'}
+              {processandoBackfillLegado ? 'Analisando e aplicando…' : 'Analisar e aplicar correção nos elegíveis'}
             </Button>
             {resumoBackfillLegado && (
               <div className="mt-4 rounded-lg bg-white/70 dark:bg-gray-900/30 border border-amber-100 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
                 <p>Total analisado: {resumoBackfillLegado.total}</p>
-                <p>Candidatos: {resumoBackfillLegado.candidatos}</p>
-                <p>Conflitos (sem fator 1 único): {resumoBackfillLegado.conflitos}</p>
-                <p>Ignorados (já consistentes): {resumoBackfillLegado.ignorados}</p>
+                <p>Podem ser corrigidos: {resumoBackfillLegado.candidatos}</p>
+                <p>Conflitos (revisão manual): {resumoBackfillLegado.conflitos}</p>
+                <p>Já conformes ao formato atual: {resumoBackfillLegado.ignorados}</p>
                 {typeof resumoBackfillLegado.atualizados === 'number' && <p>Atualizados: {resumoBackfillLegado.atualizados}</p>}
                 {typeof resumoBackfillLegado.erros === 'number' && <p>Erros de update: {resumoBackfillLegado.erros}</p>}
               </div>
@@ -383,7 +383,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Base + até 2 alternativas. Coluna Unidade vitrine = sigla da embalagem no catálogo.
+              Colunas: <strong>ID</strong>, <strong>Cód. Interno</strong>, <strong>Nome (referência)</strong>; para a <strong>base</strong> e até <strong>Alt.1</strong> e <strong>Alt.2</strong> — <strong>sigla</strong>, <strong>fator de conversão</strong> e <strong>ajuste preço (×)</strong> (multiplicador sobre o preço daquela embalagem; em branco conta como 1). Por fim, <strong>Unidade vitrine</strong>: sigla tal como fica gravada; célula vazia (com embalagens preenchidas) corresponde à base (<code className="text-xs">unidade_principal</code>).
             </p>
             <ExportarEmbalagensPlanilha />
           </div>
@@ -391,17 +391,17 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={2} label="Subir planilha editada" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Use o arquivo exportado nesta aba. O produto é identificado por <strong>ID</strong> ou <strong>Cód. Interno</strong>.
+              Prefira o arquivo gerado no passo anterior. Cada linha é reconhecida pelo <strong>ID</strong> ou pelo <strong>Cód. Interno</strong> (colunas bloqueadas). Alguns <strong>cabeçalhos antigos</strong> ainda são aceites automaticamente onde o importador reconhece o padrão.
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
-              Importar apenas analisa e prepara os dados. A gravação no banco acontece somente ao clicar em <strong>Confirmar embalagens</strong>.
+              O envio só <strong>prepara</strong> as alterações (leitura e validação). Nada é gravado no Base44 até você clicar em <strong>Confirmar embalagens</strong>, quando <code className="text-xs">unidade_principal</code>, <code className="text-xs">unidades_alternativas</code> e <code className="text-xs">unidade_vitrine</code> são atualizados no cadastro.
             </p>
             <ImportarEmbalagensPlanilha onParsed={handleParsedEmbalagens} />
           </div>
 
           {parsedEmbalagens && (
             <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm space-y-4">
-              <StepLabel number={3} label="Validar e confirmar" />
+              <StepLabel number={3} label="Conferir e gravar no sistema" />
               <ResumoPrevisualizacao data={parsedEmbalagens} />
               <Button
                 onClick={handleConfirmarEmbalagens}
@@ -409,7 +409,7 @@ export default function EditarProdutosEmMassa() {
                 className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium"
               >
                 {salvando
-                  ? 'Sincronizando...'
+                  ? 'Gravando embalagens…'
                   : `Confirmar embalagens (${parsedEmbalagens.alterados?.length ?? 0} produtos)`}
               </Button>
             </div>
@@ -418,7 +418,7 @@ export default function EditarProdutosEmMassa() {
           {salvouOkEmbalagens && (
             <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                ✓ Embalagens e unidades atualizadas com sucesso!
+                ✓ Embalagens gravadas: base, alternativas e unidade vitrine atualizadas no cadastro.
               </p>
             </div>
           )}

@@ -114,10 +114,12 @@ function detectLegacyOverflowSlots(dados) {
   for (let n = MAX_EMBALAGENS_PLANILHA + 1; n <= LEGACY_EMB_SLOTS; n++) {
     const s = dados[`emb${n}_sigla`];
     const f = dados[`emb${n}_fator`];
+    const a = dados[`emb${n}_ajuste`];
     const hasSigla = s != null && String(s).trim() !== '';
     const hasFator = f != null && String(f).trim() !== '';
-    if (hasSigla || hasFator) {
-      return `Máximo 3 unidades (base + Alt.1 e Alt.2). Remova colunas Emb.${n} ou superiores.`;
+    const hasAjuste = a != null && String(a).trim() !== '';
+    if (hasSigla || hasFator || hasAjuste) {
+      return `No máximo 3 embalagens na planilha (1 base + Alt.1 e Alt.2). Remova dados nas colunas Emb.${n} ou posteriores.`;
     }
   }
   return null;
@@ -139,6 +141,7 @@ function parseNum(v) {
  *     fator_conversao: number,
  *     rotulo: string,
  *     ajuste_percentual: number,
+ *     fator_preco: number,
  *     preco_venda: number,
  *     ativo: boolean
  *   }>,
@@ -170,19 +173,23 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
   for (let n = 1; n <= MAX_EMBALAGENS_PLANILHA; n++) {
     const s = dados[`emb${n}_sigla`];
     const f = dados[`emb${n}_fator`];
+    const adj = dados[`emb${n}_ajuste`];
     slots.push({
       n,
       rotulo: '',
       sigla: s != null ? String(s).trim().toUpperCase() : '',
       fator: parseNum(f),
-      ajuste: 0,
+      fatorPreco: parseNum(adj),
     });
   }
   stripEmbSlotKeys(dados);
 
   const emb1 = slots[0];
   const hasAlts = slots.slice(1).some((sl) => sl.sigla && sl.fator != null);
-  const hasAnyEmb = slots.some((sl) => sl.sigla || sl.fator != null);
+  const hasAnyEmb = slots.some((sl) => {
+    const temAjuste = sl.fatorPreco != null && Number.isFinite(sl.fatorPreco);
+    return Boolean(sl.sigla || sl.fator != null || temAjuste);
+  });
 
   if (!hasAnyEmb) {
     return { alternativas: [], principalSigla: null, emb1Explicit: false, error: null, warnings, hadSlotPayload: false };
@@ -193,7 +200,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
 
   if (!principalSigla && hasAlts) {
     principalSigla = fallbackPrincipal;
-    warnings.push('Base sigla vazia; usando unidade principal do produto.');
+    warnings.push('Sigla da base vazia na planilha; usando a base já cadastrada no produto.');
   }
 
   if (!principalSigla) {
@@ -201,14 +208,18 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       alternativas: [],
       principalSigla: null,
       emb1Explicit: false,
-      error: 'Preencha Base sigla.',
+      error: 'Preencha a sigla da base.',
       warnings,
       hadSlotPayload: true,
     };
   }
 
   if (emb1.fator != null && emb1.fator !== 1) {
-    warnings.push('Base fator ignorado (sempre 1).');
+    warnings.push('Fator de conversão da base na planilha é ignorado (na base vale sempre 1).');
+  }
+
+  if (emb1.fatorPreco != null && Number.isFinite(emb1.fatorPreco) && emb1.fatorPreco !== 1) {
+    warnings.push('Ajuste preço (×) da base na planilha é ignorado (na base vale sempre 1,00).');
   }
 
   const alternativas = [];
@@ -221,7 +232,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `${label}: sigla "${slot.sigla}" repetida noutra alternativa.`,
+        error: `${label}: sigla "${slot.sigla}" repetida em outra alternativa.`,
         warnings,
         hadSlotPayload: true,
       };
@@ -231,7 +242,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `${label}: informe fator numérico para a sigla "${slot.sigla}".`,
+        error: `${label}: informe o fator de conversão (número) para a sigla "${slot.sigla}".`,
         warnings,
         hadSlotPayload: true,
       };
@@ -241,7 +252,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `${label}: fator não pode ser 1 (use apenas Base como fator 1; demais fatores são relativos à base).`,
+        error: `${label}: fator de conversão não pode ser 1 (só a base tem fator 1; nas alternativas é a conversão em relação à base).`,
         warnings,
         hadSlotPayload: true,
       };
@@ -251,7 +262,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `${label}: fator deve ser maior que zero.`,
+        error: `${label}: fator de conversão deve ser maior que zero.`,
         warnings,
         hadSlotPayload: true,
       };
@@ -261,7 +272,19 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
         alternativas: [],
         principalSigla: null,
         emb1Explicit: false,
-        error: `${label}: sigla igual à unidade base.`,
+        error: `${label}: sigla igual à da base.`,
+        warnings,
+        hadSlotPayload: true,
+      };
+    }
+    const fpRaw = slot.fatorPreco;
+    const fatorPreco = fpRaw == null || !Number.isFinite(fpRaw) ? 1 : fpRaw;
+    if (fatorPreco <= 0) {
+      return {
+        alternativas: [],
+        principalSigla: null,
+        emb1Explicit: false,
+        error: `${label}: ajuste preço (×) deve ser maior que zero (ex.: 1,10 ou 0,80).`,
         warnings,
         hadSlotPayload: true,
       };
@@ -270,7 +293,8 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       unidade: slot.sigla,
       fator_conversao: slot.fator,
       rotulo: slot.rotulo,
-      ajuste_percentual: slot.ajuste || 0,
+      ajuste_percentual: 0,
+      fator_preco: fatorPreco,
       preco_venda: 0,
       ativo: true,
     });
@@ -282,7 +306,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       alternativas: [],
       principalSigla: null,
       emb1Explicit: false,
-      error: `No máximo ${MAX_ALTERNATIVAS_PLANILHA} unidades alternativas (Alt.1 e Alt.2).`,
+      error: `No máximo ${MAX_ALTERNATIVAS_PLANILHA} alternativas (Alt.1 e Alt.2).`,
       warnings,
       hadSlotPayload: true,
     };

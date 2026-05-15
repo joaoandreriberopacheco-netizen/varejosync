@@ -34,14 +34,21 @@ function normalizarTexto(v) {
 
 function normalizarUnidadesAlternativas(unidades = []) {
   if (!Array.isArray(unidades)) return [];
-  return unidades.map((u) => ({
-    unidade: normalizarTexto(u?.unidade),
-    fator_conversao: Number(u?.fator_conversao) || 0,
-    rotulo: u?.rotulo != null ? String(u.rotulo).trim() : '',
-    ajuste_percentual: Number(u?.ajuste_percentual) || 0,
-    preco_venda: Number(u?.preco_venda) || 0,
-    ativo: Boolean(u?.ativo),
-  }));
+  return unidades.map((u) => {
+    const ajustePercentual = Number(u?.ajuste_percentual) || 0;
+    const fatorPrecoRaw = Number(u?.fator_preco) || 0;
+    const fatorPreco = fatorPrecoRaw > 0 ? fatorPrecoRaw : 1 + ajustePercentual / 100;
+    return {
+      unidade: normalizarTexto(u?.unidade),
+      fator_conversao: Number(u?.fator_conversao) || 0,
+      rotulo: u?.rotulo != null ? String(u.rotulo).trim() : '',
+      ajuste_percentual: ajustePercentual,
+      fator_preco: fatorPreco,
+      preco_venda: Number(u?.preco_venda) || 0,
+      ativo: Boolean(u?.ativo),
+      is_comercial: u?.is_comercial === true,
+    };
+  });
 }
 
 export default function ImportarEmbalagensPlanilha({ onParsed }) {
@@ -81,8 +88,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
       if (!ws) {
-        const mensagem = 'O ficheiro não tem folha de cálculo na primeira posição ou está vazio.';
-        toast.error('Planilha inválida', { description: mensagem });
+        const mensagem = 'O arquivo não tem planilha na primeira aba ou está vazio.';
+        toast.error('Planilha inválida ou vazia', { description: mensagem });
         onParsed({ alterados: [], erros: [{ linha: 0, mensagem }] });
         return;
       }
@@ -214,7 +221,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           if (!unidadesValidas.has(vitrineExib)) {
             erros.push({
               linha: i,
-              mensagem: `Linha ${i}: Unidade vitrine "${vitrineExib}" não existe nas embalagens da linha (base + alternativas).`,
+              mensagem: `Linha ${i}: Unidade vitrine "${vitrineExib}" não existe nesta linha (base ou Alt.1/Alt.2).`,
             });
             continue;
           }
@@ -260,23 +267,24 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           .join(' · ');
         const extra = erros.length > 2 ? ` (+${erros.length - 2} mais)` : '';
         toast.error(`${erros.length} linha(s) com problema`, {
-          description: `${preview}${extra}. Veja a lista completa no resumo abaixo.`,
+          description: `${preview}${extra}. Confira o resumo abaixo antes de gravar.`,
         });
       }
       if (alterados.length > 0 || linhasIgnoradasSemMudanca > 0) {
         const partes = [];
-        if (alterados.length > 0) partes.push(`${alterados.length} produto(s) pronto(s) para atualizar embalagens`);
+        if (alterados.length > 0) partes.push(`${alterados.length} produto(s) com alterações prontas — clique em Confirmar embalagens para gravar no Base44`);
         if (linhasIgnoradasSemMudanca > 0) partes.push(`${linhasIgnoradasSemMudanca} linha(s) inalteradas ignoradas`);
         toast.success(partes.join(' · '));
       } else if (erros.length === 0) {
-        toast.info('Nenhuma alteração detectada.');
+        toast.info('Nenhuma diferença em relação ao cadastro atual.');
       }
 
       onParsed({ alterados, erros, linhasIgnoradasSemMudanca });
     } catch (error) {
       const msg = mensagemErroLeitura(error);
-      toast.error(`Erro ao ler planilha: ${msg}`, {
-        description: 'Use um .xlsx válido exportado nesta aba; a 1.ª folha deve ter os cabeçalhos esperados.',
+      toast.error(`Erro ao ler a planilha: ${msg}`, {
+        description:
+          'Use um .xlsx exportado na aba Embalagens (primeira planilha com cabeçalhos atuais). Cabeçalhos antigos ainda podem ser reconhecidos quando o formato for compatível.',
       });
       onParsed({ alterados: [], erros: [{ linha: 0, mensagem: msg }] });
     } finally {
@@ -298,7 +306,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
             e.preventDefault();
             const f = e.dataTransfer.files?.[0];
             if (f?.name?.endsWith('.xlsx')) handleArquivo(f);
-            else toast.error('Use um arquivo .xlsx');
+            else toast.error('Selecione um arquivo .xlsx');
           }}
           className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-8"
         >
@@ -312,13 +320,15 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           />
           <div className="flex flex-col items-center text-center pointer-events-none">
             {parsing ? (
-              <p className="text-sm text-gray-600 dark:text-gray-300">Lendo embalagens…</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Lendo planilha de embalagens…</p>
             ) : (
               <>
                 <FileSpreadsheet className="w-10 h-10 text-gray-400 mb-2" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Arraste ou clique — só embalagens</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  Arraste o .xlsx aqui ou clique para selecionar
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Use a planilha exportada nesta aba (Base + Alt.1–2 + Unidade vitrine).
+                  Modele pela exportação desta aba: base + Alt.1–2 (sigla, fator de conversão, ajuste preço × sobre o preço da embalagem; em branco = 1) e coluna Unidade vitrine. Isto só prepara o resumo — a gravação é no botão Confirmar embalagens.
                 </p>
               </>
             )}

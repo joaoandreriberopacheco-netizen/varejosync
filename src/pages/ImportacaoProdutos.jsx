@@ -123,7 +123,7 @@ export default function ImportacaoProdutosPage() {
 
         const resp = await base44.functions.invoke('importarProdutos', {
           alterados: lote,
-          tipo_importacao: 'Embalagens / Unidades',
+          tipo_importacao: 'Embalagens (planilha)',
           is_ultimo_lote: i === totalLotes - 1,
           lote_numero: i + 1,
           total_lotes: totalLotes,

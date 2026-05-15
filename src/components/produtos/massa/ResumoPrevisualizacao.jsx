@@ -40,7 +40,7 @@ export default function ResumoPrevisualizacao({ data }) {
       {alterados.length === 0 && erros.length === 0 && (
         <p className="text-sm text-gray-400 text-center">
           {linhasIgnoradasSemMudanca > 0
-            ? `Nada a sincronizar: ${linhasIgnoradasSemMudanca} linha(s) de produto existente coincidem com o hash (sem mudanças).`
+            ? `Nada a sincronizar: ${linhasIgnoradasSemMudanca} linha(s) sem diferença em relação ao cadastro atual.`
             : 'Nenhuma alteração detectada na planilha.'}
         </p>
       )}
