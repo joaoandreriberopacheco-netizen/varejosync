@@ -904,7 +904,20 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       });
 
       setTemAlteracoesNaoSalvas(false);
-      onSave();
+      const unitSnapshot = produtoId
+        ? {
+            id: produtoId,
+            unidade_apresentacao_default: produtoData.unidade_apresentacao_default,
+            unidade_show_comercial: produtoData.unidade_show_comercial,
+            unidade_show_logistica: produtoData.unidade_show_logistica,
+            unidade_comercial_id: produtoData.unidade_comercial_id,
+            unidade_show_ativa: produtoData.unidade_show_ativa,
+            unidades: produtoData.unidades,
+            unidades_alternativas: produtoData.unidades_alternativas,
+            unidade_principal: produtoData.unidade_principal,
+          }
+        : null;
+      await Promise.resolve(onSave?.(unitSnapshot));
       if (produtoId) loadMovimentacoes();
       // onClose(); // Mantendo aberto para feedback
     } catch (error) {

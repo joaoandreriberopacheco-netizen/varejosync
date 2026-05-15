@@ -55,6 +55,20 @@ function mergeProdutoPreferVitrine(baseRow, fromGet) {
   return merged;
 }
 
+/** O que acabou de ser gravado no formulário — prevalece sobre list/get ainda stale no mesmo tick. */
+function applyJustSavedUnitSnapshot(merged, snap) {
+  if (!merged || !snap || merged.id !== snap.id) return merged;
+  const out = { ...merged };
+  for (const k of VITRINE_MERGE_KEYS) {
+    if (!isEmptyishVitrine(snap[k])) out[k] = snap[k];
+  }
+  if (typeof snap.unidade_show_ativa === 'boolean') out.unidade_show_ativa = snap.unidade_show_ativa;
+  if (Array.isArray(snap.unidades_alternativas)) out.unidades_alternativas = snap.unidades_alternativas;
+  if (Array.isArray(snap.unidades)) out.unidades = snap.unidades;
+  if (!isEmptyishVitrine(snap.unidade_principal)) out.unidade_principal = snap.unidade_principal;
+  return out;
+}
+
 function ProdutosPageContent() {
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -107,6 +121,8 @@ function ProdutosPageContent() {
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
   const produtoDetailFetchGenRef = useRef(0);
+  /** Pacote de unidades/vitrine recém-gravado pelo `ProdutoFormCompleto` — aplicado em `loadData` antes de repassar a prop ao form. */
+  const justSavedUnitSnapshotRef = useRef(null);
 
   useEffect(() => {
     loadData();
@@ -130,6 +146,7 @@ function ProdutosPageContent() {
     setFornecedores(safeFornecedores);
     if (isFormOpen && selectedProduto?.id) {
       const editingId = selectedProduto.id;
+      const savedSnap = justSavedUnitSnapshotRef.current;
       produtoDetailFetchGenRef.current += 1;
       const gen = produtoDetailFetchGenRef.current;
       const fromList = safeProdutos.find((item) => item?.id === editingId);
@@ -137,15 +154,21 @@ function ProdutosPageContent() {
         const full = await base44.entities.Produto.get(editingId);
         if (gen === produtoDetailFetchGenRef.current) {
           if (full && typeof full === 'object') {
-            setSelectedProduto(fromList ? mergeProdutoPreferVitrine(fromList, full) : full);
+            let merged = fromList ? mergeProdutoPreferVitrine(fromList, full) : full;
+            if (savedSnap?.id === editingId) merged = applyJustSavedUnitSnapshot(merged, savedSnap);
+            setSelectedProduto(merged);
           } else if (fromList) {
-            setSelectedProduto(fromList);
+            let merged = fromList;
+            if (savedSnap?.id === editingId) merged = applyJustSavedUnitSnapshot(merged, savedSnap);
+            setSelectedProduto(merged);
           }
         }
       } catch (e) {
         console.warn('[Produtos] Produto.get ao refrescar edição falhou; usando linha da lista.', e);
         if (gen === produtoDetailFetchGenRef.current && fromList) {
-          setSelectedProduto(fromList);
+          let merged = fromList;
+          if (savedSnap?.id === editingId) merged = applyJustSavedUnitSnapshot(merged, savedSnap);
+          setSelectedProduto(merged);
         }
       }
     }
@@ -168,8 +191,15 @@ function ProdutosPageContent() {
     setCategorias(Array.from(catSet));
   };
 
-  const handleSave = async () => {
-    await loadData();
+  const handleSave = async (unitSnapshot) => {
+    if (unitSnapshot && unitSnapshot.id) {
+      justSavedUnitSnapshotRef.current = unitSnapshot;
+    }
+    try {
+      await loadData();
+    } finally {
+      justSavedUnitSnapshotRef.current = null;
+    }
     // setIsFormOpen(false); // Mantendo aberto para feedback
   };
 
