@@ -17,6 +17,13 @@ import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla, tryLegacyMirrorFromCanonicalUnidades } from '@/lib/productUnitsCrud';
 import { resolvePrimaryFromFactorOne, resolveCommercialUnit, resolveCommercialDisplay } from '@/lib/productUnits';
+import {
+  fetchEmbalagensByProdutoId,
+  isProdutoEmbalagemEntityFlagOn,
+  patchProdutoUnidadesFromEmbalagensRows,
+  replaceEmbalagensForProduto,
+} from '@/lib/produtoEmbalagensEntity';
+import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } from '@/lib/produtoEmbalagensAdapter';
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
@@ -227,6 +234,29 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   useEffect(() => {
     if (!produto?.id || temAlteracoesRef.current) return;
     setFormData(buildFormDataFromProduto(produto));
+  }, [produto?.id, produto?.updated_date]);
+
+  // Hidratação opcional a partir da entidade auxiliar `ProdutoEmbalagem` (flag).
+  useEffect(() => {
+    if (!isProdutoEmbalagemEntityFlagOn() || !produto?.id || temAlteracoesRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await fetchEmbalagensByProdutoId(base44, produto.id);
+        if (cancelled || temAlteracoesRef.current) return;
+        if (!rows.length) return;
+        const patch = embalagensRowsToLegacyProdutoPatch(rows);
+        if (!Object.keys(patch).length) return;
+        setFormData(buildFormDataFromProduto({ ...produto, ...patch }));
+      } catch (e) {
+        if (import.meta.env?.DEV) {
+          console.warn('[ProdutoFormCompleto] embalagens (entidade) hydrate no-op:', e?.message || e);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [produto?.id, produto?.updated_date]);
 
   const loadMovimentacoes = async () => {
@@ -776,6 +806,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         desconto_compra_padrao: parseFloat(formData.desconto_compra_padrao) || 0,
       };
 
+      let savedPayload = produtoData;
       let produtoId = produto?.id;
       if (import.meta.env?.DEV) {
         console.debug('[ProdutoFormCompleto] enviando ao backend:', {
@@ -812,11 +843,30 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         return;
       }
 
+      if (isProdutoEmbalagemEntityFlagOn() && produtoId) {
+        try {
+          const embRows = legacyProdutoToEmbalagensRows({ ...produtoData, id: produtoId });
+          const rep = await replaceEmbalagensForProduto(base44, produtoId, embRows);
+          if (rep.ok && !rep.skipped) {
+            await patchProdutoUnidadesFromEmbalagensRows(base44, produtoId, embalagensRowsToLegacyProdutoPatch);
+            const freshRows = await fetchEmbalagensByProdutoId(base44, produtoId);
+            const entPatch = embalagensRowsToLegacyProdutoPatch(freshRows);
+            if (Object.keys(entPatch).length) {
+              savedPayload = { ...produtoData, ...entPatch };
+            }
+          }
+        } catch (embErr) {
+          if (import.meta.env?.DEV) {
+            console.warn('[ProdutoFormCompleto] ProdutoEmbalagem save no-op:', embErr?.message || embErr);
+          }
+        }
+      }
+
       // Reidrata `formData` IMEDIATAMENTE a partir do payload que acabamos de
       // enviar (verdade canonica). Isso elimina dependencia de cache / leitura
       // staleness do backend e garante feedback visual instantaneo do que foi
       // pra rede.
-      setFormData(buildFormDataFromProduto({ ...produtoData, id: produtoId }));
+      setFormData(buildFormDataFromProduto({ ...savedPayload, id: produtoId }));
 
       // Verificacao adicional: re-le do banco e checa drift contra o payload.
       // Se o backend rejeitou ou transformou algum campo, isso aparece no log
@@ -851,18 +901,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               'unidade_show_ativa',
             ];
             const drift = driftSigKeys.filter(
-              (k) => normalizeSigla(fresh[k]) !== normalizeSigla(produtoData[k]),
+              (k) => normalizeSigla(fresh[k]) !== normalizeSigla(savedPayload[k]),
             );
-            const idDrift = String(fresh.unidade_comercial_id || '') !== String(produtoData.unidade_comercial_id || '');
+            const idDrift = String(fresh.unidade_comercial_id || '') !== String(savedPayload.unidade_comercial_id || '');
             if (drift.length > 0 || idDrift) {
               console.warn('[ProdutoFormCompleto] DRIFT pos-save (backend nao gravou ou transformou):', {
                 drift,
                 idDrift,
                 enviado: {
-                  unidade_apresentacao_default: produtoData.unidade_apresentacao_default,
-                  unidade_show_comercial: produtoData.unidade_show_comercial,
-                  unidade_principal: produtoData.unidade_principal,
-                  unidade_comercial_id: produtoData.unidade_comercial_id,
+                  unidade_apresentacao_default: savedPayload.unidade_apresentacao_default,
+                  unidade_show_comercial: savedPayload.unidade_show_comercial,
+                  unidade_principal: savedPayload.unidade_principal,
+                  unidade_comercial_id: savedPayload.unidade_comercial_id,
                 },
                 persistido: {
                   unidade_apresentacao_default: fresh.unidade_apresentacao_default,
@@ -886,7 +936,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             }
             // Base44 pode omitir ou atrasar campos espelho no GET; mesclar o pacote enviado evita regressão visual.
             const unitOverlay = UNIT_SNAPSHOT_KEYS.reduce((acc, key) => {
-              if (produtoData[key] !== undefined) acc[key] = produtoData[key];
+              if (savedPayload[key] !== undefined) acc[key] = savedPayload[key];
               return acc;
             }, {});
             setFormData(buildFormDataFromProduto({ ...fresh, ...unitOverlay }));
@@ -907,14 +957,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       const unitSnapshot = produtoId
         ? {
             id: produtoId,
-            unidade_apresentacao_default: produtoData.unidade_apresentacao_default,
-            unidade_show_comercial: produtoData.unidade_show_comercial,
-            unidade_show_logistica: produtoData.unidade_show_logistica,
-            unidade_comercial_id: produtoData.unidade_comercial_id,
-            unidade_show_ativa: produtoData.unidade_show_ativa,
-            unidades: produtoData.unidades,
-            unidades_alternativas: produtoData.unidades_alternativas,
-            unidade_principal: produtoData.unidade_principal,
+            unidade_apresentacao_default: savedPayload.unidade_apresentacao_default,
+            unidade_show_comercial: savedPayload.unidade_show_comercial,
+            unidade_show_logistica: savedPayload.unidade_show_logistica,
+            unidade_comercial_id: savedPayload.unidade_comercial_id,
+            unidade_show_ativa: savedPayload.unidade_show_ativa,
+            unidades: savedPayload.unidades,
+            unidades_alternativas: savedPayload.unidades_alternativas,
+            unidade_principal: savedPayload.unidade_principal,
           }
         : null;
       await Promise.resolve(onSave?.(unitSnapshot));
