@@ -77,6 +77,11 @@ export default function EditarProdutosEmMassa() {
            // Adicionar apenas campos válidos do schema (excluir 'numero' e outros inválidos)
            const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
            validFields.forEach(field => {
+             if (field === 'unidade_vitrine') {
+               if (!Object.prototype.hasOwnProperty.call(dados, field)) return;
+               novosProduto[field] = dados[field] == null ? '' : String(dados[field]).trim();
+               return;
+             }
              const valor = dados[field];
              if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
                novosProduto[field] = valor;

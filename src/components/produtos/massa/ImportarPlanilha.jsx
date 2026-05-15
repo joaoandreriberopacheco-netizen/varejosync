@@ -4,6 +4,7 @@ import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
 import { produtoCombinaHashArmazenado } from './produtoMassaChecksum';
+import { normalizeUnitCode } from '@/lib/productUnits';
 import {
   mapLegacyVitrineColumn,
   vitrineExibicaoParaArmazenada,
@@ -176,12 +177,25 @@ export default function ImportarPlanilha({ onParsed }) {
           }
         });
 
-        if (Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
-          const principalBase = String(
-            dadosExtraidos.unidade_principal
-            || (id && mapaAtual[id]?.unidade_principal)
-            || 'UN',
-          ).trim().toUpperCase() || 'UN';
+        // Coluna presente na planilha: célula vazia = vitrine na base (`''` gravado). Sem isto a chave
+        // somece, o merge para o hash mantém o valor antigo e a linha é ignorada como inalterada.
+        if (colIndexMap.unidade_vitrine) {
+          const raw = getCellValue(row.getCell(colIndexMap.unidade_vitrine));
+          const rawStr = raw == null || raw === '' ? '' : String(raw).trim();
+          const principalBase =
+            normalizeUnitCode(
+              dadosExtraidos.unidade_principal
+                || (id && mapaAtual[id]?.unidade_principal)
+                || 'UN',
+            ) || 'UN';
+          dadosExtraidos.unidade_vitrine = vitrineExibicaoParaArmazenada(rawStr, principalBase);
+        } else if (Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
+          const principalBase =
+            normalizeUnitCode(
+              dadosExtraidos.unidade_principal
+                || (id && mapaAtual[id]?.unidade_principal)
+                || 'UN',
+            ) || 'UN';
           dadosExtraidos.unidade_vitrine = vitrineExibicaoParaArmazenada(
             dadosExtraidos.unidade_vitrine,
             principalBase,
