@@ -383,7 +383,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Planilha dedicada: <strong>Base</strong> = unidade principal (fator 1); <strong>Alt.1</strong> e <strong>Alt.2</strong> = alternativas (fator vs base); coluna <strong>Unidade vitrine</strong> grava <code className="text-xs">unidade_vitrine</code> (sigla no catálogo/PDV — vazio = base).
+              Base + até 2 alternativas. Coluna Unidade vitrine = sigla da embalagem no catálogo.
             </p>
             <ExportarEmbalagensPlanilha />
           </div>

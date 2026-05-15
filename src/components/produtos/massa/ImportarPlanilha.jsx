@@ -1,10 +1,14 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
 import { produtoCombinaHashArmazenado } from './produtoMassaChecksum';
-import { mapLegacyVitrineColumn, vitrineExibicaoParaArmazenada } from './embalagensPlanilhaUtils';
+import {
+  mapLegacyVitrineColumn,
+  vitrineExibicaoParaArmazenada,
+  findColunaByHeader,
+} from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
 function getCellValue(cell) {
@@ -57,9 +61,7 @@ export default function ImportarPlanilha({ onParsed }) {
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
         const label = (getCellValue(cell) || '').toString().trim();
-        const colConfig = COLUNAS_CONFIG.find(
-          (c) => c.label === label || (c.altLabels || []).includes(label),
-        );
+        const colConfig = findColunaByHeader(label, COLUNAS_CONFIG);
         if (colConfig) colIndexMap[colConfig.key] = colNumber;
       });
 

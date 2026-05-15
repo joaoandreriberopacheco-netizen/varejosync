@@ -6,10 +6,11 @@ import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
 import {
   parseEmbalagensPlanilhaImport,
   mapLegacyVitrineColumn,
-  resolveVitrineColunaPlanilha,
-  vitrineExibicaoParaArmazenada,
+  findColunaByHeader,
+  parseVitrineFromRow,
+  vitrineArmazenadaDoProduto,
+  syncIsComercialOnAlternativas,
 } from './embalagensPlanilhaUtils';
-import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { toast } from 'sonner';
 
 function mensagemErroLeitura(error) {
@@ -90,28 +91,22 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
         const label = (getCellValue(cell) || '').toString().trim();
-        const colConfig = COLUNAS_SOMENTE_EMBALAGENS.find(
-          (c) => c.label === label || (c.altLabels || []).includes(label),
-        );
+        const colConfig = findColunaByHeader(label, COLUNAS_SOMENTE_EMBALAGENS);
         if (colConfig) {
           colIndexMap[colConfig.key] = colNumber;
           return;
         }
-        const embLegacy = label.match(/^Emb\.([45])\s+(.+)$/i);
-        if (!embLegacy) return;
-        const n = embLegacy[1];
-        const rest = embLegacy[2].toLowerCase();
-        let field = null;
-        if (rest.startsWith('rótulo') || rest.startsWith('rotulo')) field = 'rotulo';
-        else if (rest.startsWith('sigla')) field = 'sigla';
-        else if (rest.startsWith('fator')) field = 'fator';
-        else if (rest.startsWith('ajuste')) field = 'ajuste';
-        if (field) colIndexMap[`emb${n}_${field}`] = colNumber;
+        const embLegacy = label.match(/^Emb\.([45])\s+(Sigla|Fator)/i);
+        if (embLegacy) {
+          const field = embLegacy[2].toLowerCase() === 'sigla' ? 'sigla' : 'fator';
+          colIndexMap[`emb${embLegacy[1]}_${field}`] = colNumber;
+        }
       });
 
       const alterados = [];
       const erros = [];
       let linhasIgnoradasSemMudanca = 0;
+      const colVitrinePresente = Boolean(colIndexMap.unidade_vitrine);
 
       for (let i = 2; i <= ws.rowCount; i++) {
         const row = ws.getRow(i);
@@ -133,29 +128,27 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         for (const col of COLUNAS_SOMENTE_EMBALAGENS) {
           const colNum = colIndexMap[col.key];
           if (!colNum) continue;
+          const valorBruto = getCellValue(row.getCell(colNum));
           if (!col.editavel) {
-            const valorBruto = getCellValue(row.getCell(colNum));
             if (valorBruto !== null && valorBruto !== undefined) {
               dadosExtraidos[col.key] = String(valorBruto).trim();
             }
-          } else if (col.editavel) {
-            const valorBruto = getCellValue(row.getCell(colNum));
-            if (col.tipo === 'numero') {
-              const num = parseFloat(valorBruto);
-              if (!Number.isNaN(num)) dadosExtraidos[col.key] = num;
-              else if (valorBruto !== null && valorBruto !== undefined && String(valorBruto).trim() !== '') {
-                erros.push({ linha: i, mensagem: `Linha ${i}: "${col.label}" deve ser numérico.` });
-                erroNaLinha = true;
-              }
-            } else if (valorBruto !== null && valorBruto !== undefined) {
-              dadosExtraidos[col.key] = String(valorBruto).trim();
+          } else if (col.tipo === 'numero') {
+            const num = parseFloat(valorBruto);
+            if (!Number.isNaN(num)) dadosExtraidos[col.key] = num;
+            else if (valorBruto !== null && valorBruto !== undefined && String(valorBruto).trim() !== '') {
+              erros.push({ linha: i, mensagem: `Linha ${i}: "${col.label}" deve ser numérico.` });
+              erroNaLinha = true;
             }
+          } else if (col.key === 'unidade_vitrine' && colVitrinePresente) {
+            dadosExtraidos[col.key] =
+              valorBruto !== null && valorBruto !== undefined ? String(valorBruto).trim() : '';
+          } else if (valorBruto !== null && valorBruto !== undefined) {
+            dadosExtraidos[col.key] = String(valorBruto).trim();
           }
         }
 
         mapLegacyVitrineColumn(dadosExtraidos);
-        const vitrineRaw = resolveVitrineColunaPlanilha(dadosExtraidos);
-        const temVitrine = vitrineRaw !== '';
 
         if (erroNaLinha) continue;
 
@@ -184,8 +177,13 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
         const temEmb = parsed.hadSlotPayload;
 
-        // Linha sem alterações de embalagem ou vitrine:
-        if (!temEmb && !temVitrine) {
+        const principalResolvida = parsed.hadSlotPayload ? parsed.principalSigla : atualPrincipal;
+        const vitrineParsed = parseVitrineFromRow(dadosExtraidos, {
+          colPresent: colVitrinePresente,
+          principalSigla: principalResolvida,
+        });
+
+        if (!temEmb && !colVitrinePresente) {
           linhasIgnoradasSemMudanca += 1;
           continue;
         }
@@ -200,20 +198,19 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
         const novoAlt = parsed.hadSlotPayload ? normalizarUnidadesAlternativas(parsed.alternativas) : atualAlt;
-        const principalResolvida = parsed.hadSlotPayload ? parsed.principalSigla : atualPrincipal;
 
         const unidadesValidas = new Set([
           principalResolvida,
           ...novoAlt.map((u) => normalizarTexto(u.unidade)),
         ].filter(Boolean));
 
-        const atualVitrineExib = getUnidadeExibicaoSigla(
-          { ...produto, unidade_principal: atualPrincipal, unidades_alternativas: novoAlt },
-          principalResolvida,
-        );
+        const atualVitrineArmazenada = vitrineArmazenadaDoProduto(produto, atualPrincipal);
+        let novoVitrineArmazenada = atualVitrineArmazenada;
 
-        if (temVitrine) {
-          const vitrineExib = normalizarTexto(vitrineRaw);
+        if (colVitrinePresente) {
+          const vitrineExib = vitrineParsed.rawExibicao
+            ? normalizarTexto(vitrineParsed.rawExibicao)
+            : principalResolvida;
           if (!unidadesValidas.has(vitrineExib)) {
             erros.push({
               linha: i,
@@ -221,20 +218,27 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
             });
             continue;
           }
-          dados.unidade_vitrine = vitrineExibicaoParaArmazenada(vitrineExib, principalResolvida);
+          novoVitrineArmazenada = vitrineParsed.stored ?? '';
+          dados.unidade_vitrine = novoVitrineArmazenada;
         }
 
-        const novoVitrineExib = temVitrine
-          ? normalizarTexto(vitrineRaw)
-          : atualVitrineExib;
-        const novoVitrineArmazenada = vitrineExibicaoParaArmazenada(novoVitrineExib, principalResolvida);
-        const atualVitrineArmazenada = vitrineExibicaoParaArmazenada(atualVitrineExib, atualPrincipal);
         const novoPrincipal = normalizarTexto(dados.unidade_principal || atualPrincipal);
+        const vitrineMudou = colVitrinePresente && atualVitrineArmazenada !== novoVitrineArmazenada;
 
+        const altsParaSync = dados.unidades_alternativas ?? novoAlt;
+        if (colVitrinePresente && (vitrineMudou || dados.unidades_alternativas)) {
+          dados.unidades_alternativas = syncIsComercialOnAlternativas(
+            altsParaSync,
+            novoVitrineArmazenada,
+            principalResolvida,
+          );
+        }
+
+        const novoAltFinal = dados.unidades_alternativas ?? novoAlt;
         const semMudanca =
           atualPrincipal === novoPrincipal
           && atualVitrineArmazenada === novoVitrineArmazenada
-          && JSON.stringify(atualAlt) === JSON.stringify(novoAlt);
+          && JSON.stringify(atualAlt) === JSON.stringify(novoAltFinal);
 
         if (semMudanca) {
           linhasIgnoradasSemMudanca += 1;
@@ -270,7 +274,6 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
       onParsed({ alterados, erros, linhasIgnoradasSemMudanca });
     } catch (error) {
-      console.error(error);
       const msg = mensagemErroLeitura(error);
       toast.error(`Erro ao ler planilha: ${msg}`, {
         description: 'Use um .xlsx válido exportado nesta aba; a 1.ª folha deve ter os cabeçalhos esperados.',
@@ -315,7 +318,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
                 <FileSpreadsheet className="w-10 h-10 text-gray-400 mb-2" />
                 <p className="text-sm font-medium text-gray-900 dark:text-white">Arraste ou clique — só embalagens</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Cabeçalhos: Base + Alt.1–2 + Unidade vitrine (planilha exportada nesta aba).
+                  Use a planilha exportada nesta aba (Base + Alt.1–2 + Unidade vitrine).
                 </p>
               </>
             )}

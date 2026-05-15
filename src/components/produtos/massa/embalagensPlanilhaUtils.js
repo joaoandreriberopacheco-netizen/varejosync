@@ -37,6 +37,69 @@ export function vitrineExibicaoParaArmazenada(siglaExibicao, principalSigla) {
   return s === p ? '' : s;
 }
 
+/** Alias estável usado na importação em massa. */
+export const vitrineSiglaToStoredValue = vitrineExibicaoParaArmazenada;
+
+export function normalizeHeaderLabel(label) {
+  return String(label ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+/** Casa cabeçalho da 1.ª linha com `label` / `altLabels` (ignora maiúsculas e acentos). */
+export function findColunaByHeader(label, colunas = []) {
+  const norm = normalizeHeaderLabel(label);
+  if (!norm) return null;
+  return (
+    colunas.find((c) => {
+      if (normalizeHeaderLabel(c.label) === norm) return true;
+      return (c.altLabels || []).some((alt) => normalizeHeaderLabel(alt) === norm);
+    }) || null
+  );
+}
+
+/**
+ * Lê vitrine da linha já extraída; distingue coluna ausente vs célula vazia.
+ * @returns {{ rawExibicao: string, colPresent: boolean, cellPresent: boolean, stored: string|null }}
+ */
+export function parseVitrineFromRow(dados = {}, options = {}) {
+  const { colPresent = false, principalSigla = 'UN' } = options;
+  const principal = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  if (!colPresent) {
+    return { rawExibicao: '', colPresent: false, cellPresent: false, stored: null };
+  }
+  const hasKey = Object.prototype.hasOwnProperty.call(dados, 'unidade_vitrine');
+  const raw = resolveVitrineColunaPlanilha(dados);
+  const cellPresent = hasKey || raw !== '';
+  const rawExibicao = raw ? String(raw).trim().toUpperCase() : '';
+  const siglaParaArmazenar = rawExibicao || principal;
+  const stored = vitrineExibicaoParaArmazenada(siglaParaArmazenar, principal);
+  return { rawExibicao: raw || '', colPresent: true, cellPresent, stored };
+}
+
+/** Valor canónico gravado em `unidade_vitrine` (não mistura legado de exibição). */
+export function vitrineArmazenadaDoProduto(produto, principalSigla) {
+  const principal = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  const raw = produto?.unidade_vitrine;
+  if (raw == null || String(raw).trim() === '') return '';
+  return vitrineExibicaoParaArmazenada(String(raw).trim(), principal);
+}
+
+/** Espelha `is_comercial` nas alternativas conforme `unidade_vitrine` gravada. */
+export function syncIsComercialOnAlternativas(alternativas = [], vitrineStored, principalSigla) {
+  const principal = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  const vitrineSigla = vitrineStored ? String(vitrineStored).trim().toUpperCase() : principal;
+  return alternativas.map((u) => {
+    const unidade = String(u?.unidade ?? '').trim().toUpperCase();
+    return {
+      ...u,
+      is_comercial: vitrineStored !== '' && unidade === vitrineSigla,
+    };
+  });
+}
+
 /** Remove chaves emb1…emb5 do objeto linha (mutação). */
 function stripEmbSlotKeys(dados) {
   for (let n = 1; n <= LEGACY_EMB_SLOTS; n++) {
@@ -51,12 +114,10 @@ function detectLegacyOverflowSlots(dados) {
   for (let n = MAX_EMBALAGENS_PLANILHA + 1; n <= LEGACY_EMB_SLOTS; n++) {
     const s = dados[`emb${n}_sigla`];
     const f = dados[`emb${n}_fator`];
-    const r = dados[`emb${n}_rotulo`];
     const hasSigla = s != null && String(s).trim() !== '';
-    const hasRotulo = r != null && String(r).trim() !== '';
     const hasFator = f != null && String(f).trim() !== '';
-    if (hasSigla || hasRotulo || hasFator) {
-      return `Emb.${n} (legado): no máximo ${MAX_ALTERNATIVAS_PLANILHA} alternativas (Alt.1 e Alt.2). Remova colunas Emb.4–5.`;
+    if (hasSigla || hasFator) {
+      return `Máximo 3 unidades (base + Alt.1 e Alt.2). Remova colunas Emb.${n} ou superiores.`;
     }
   }
   return null;
@@ -107,23 +168,21 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
 
   const slots = [];
   for (let n = 1; n <= MAX_EMBALAGENS_PLANILHA; n++) {
-    const r = dados[`emb${n}_rotulo`];
     const s = dados[`emb${n}_sigla`];
     const f = dados[`emb${n}_fator`];
-    const a = dados[`emb${n}_ajuste`];
     slots.push({
       n,
-      rotulo: r != null ? String(r).trim() : '',
+      rotulo: '',
       sigla: s != null ? String(s).trim().toUpperCase() : '',
       fator: parseNum(f),
-      ajuste: parseNum(a) ?? 0,
+      ajuste: 0,
     });
   }
   stripEmbSlotKeys(dados);
 
   const emb1 = slots[0];
   const hasAlts = slots.slice(1).some((sl) => sl.sigla && sl.fator != null);
-  const hasAnyEmb = slots.some((sl) => sl.sigla || sl.rotulo || sl.fator != null);
+  const hasAnyEmb = slots.some((sl) => sl.sigla || sl.fator != null);
 
   if (!hasAnyEmb) {
     return { alternativas: [], principalSigla: null, emb1Explicit: false, error: null, warnings, hadSlotPayload: false };
@@ -134,7 +193,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
 
   if (!principalSigla && hasAlts) {
     principalSigla = fallbackPrincipal;
-    warnings.push('Base (sigla) vazia; usando a unidade principal atual do produto como base (fator 1).');
+    warnings.push('Base sigla vazia; usando unidade principal do produto.');
   }
 
   if (!principalSigla) {
@@ -142,14 +201,14 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
       alternativas: [],
       principalSigla: null,
       emb1Explicit: false,
-      error: 'Preencha Base Sigla (unidade base, fator 1) para importar embalagens.',
+      error: 'Preencha Base sigla.',
       warnings,
       hadSlotPayload: true,
     };
   }
 
   if (emb1.fator != null && emb1.fator !== 1) {
-    warnings.push(`Base Fator (${emb1.fator}) ignorado; a base é sempre fator 1.`);
+    warnings.push('Base fator ignorado (sempre 1).');
   }
 
   const alternativas = [];
