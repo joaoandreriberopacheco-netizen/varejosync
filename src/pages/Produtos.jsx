@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,32 @@ import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
+
+/** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
+function isEmptyishVitrine(v) {
+  if (v === null || v === undefined) return true;
+  if (typeof v === 'string' && v.trim() === '') return true;
+  return false;
+}
+
+const VITRINE_MERGE_KEYS = [
+  'unidade_apresentacao_default',
+  'unidade_show_comercial',
+  'unidade_show_logistica',
+  'unidade_comercial_id',
+];
+
+function mergeProdutoPreferVitrine(baseRow, fromGet) {
+  if (!fromGet || typeof fromGet !== 'object') return baseRow || fromGet;
+  if (!baseRow || typeof baseRow !== 'object') return fromGet;
+  const merged = { ...baseRow, ...fromGet };
+  for (const k of VITRINE_MERGE_KEYS) {
+    if (isEmptyishVitrine(fromGet[k]) && !isEmptyishVitrine(baseRow[k])) {
+      merged[k] = baseRow[k];
+    }
+  }
+  return merged;
+}
 
 function ProdutosPageContent() {
   const [produtos, setProdutos] = useState([]);
@@ -79,6 +105,9 @@ function ProdutosPageContent() {
 
   const { toast } = useToast();
 
+  /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
+  const produtoDetailFetchGenRef = useRef(0);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -100,17 +129,24 @@ function ProdutosPageContent() {
     setProdutos(safeProdutos);
     setFornecedores(safeFornecedores);
     if (isFormOpen && selectedProduto?.id) {
-      const fromList = safeProdutos.find((item) => item?.id === selectedProduto.id);
+      const editingId = selectedProduto.id;
+      produtoDetailFetchGenRef.current += 1;
+      const gen = produtoDetailFetchGenRef.current;
+      const fromList = safeProdutos.find((item) => item?.id === editingId);
       try {
-        const full = await base44.entities.Produto.get(selectedProduto.id);
-        if (full && typeof full === 'object') {
-          setSelectedProduto(fromList ? { ...fromList, ...full } : full);
-        } else if (fromList) {
-          setSelectedProduto(fromList);
+        const full = await base44.entities.Produto.get(editingId);
+        if (gen === produtoDetailFetchGenRef.current) {
+          if (full && typeof full === 'object') {
+            setSelectedProduto(fromList ? mergeProdutoPreferVitrine(fromList, full) : full);
+          } else if (fromList) {
+            setSelectedProduto(fromList);
+          }
         }
       } catch (e) {
         console.warn('[Produtos] Produto.get ao refrescar edição falhou; usando linha da lista.', e);
-        if (fromList) setSelectedProduto(fromList);
+        if (gen === produtoDetailFetchGenRef.current && fromList) {
+          setSelectedProduto(fromList);
+        }
       }
     }
 
@@ -143,10 +179,12 @@ function ProdutosPageContent() {
     setIsFormOpen(true);
     const id = produto?.id;
     if (!id) return;
+    const gen = ++produtoDetailFetchGenRef.current;
     base44.entities.Produto.get(id)
       .then((full) => {
+        if (gen !== produtoDetailFetchGenRef.current) return;
         if (full && typeof full === 'object') {
-          setSelectedProduto((prev) => (prev?.id === id ? { ...prev, ...full } : prev));
+          setSelectedProduto((prev) => (prev?.id === id ? mergeProdutoPreferVitrine(prev, full) : prev));
         }
       })
       .catch((e) => {
