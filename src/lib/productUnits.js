@@ -181,8 +181,35 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
 }
 
 /**
+ * Sigla de vitrine gravada no produto (`unidade_vitrine`), com leitura legada única.
+ * Vazio/null/ inválido → unidade principal (fator-1).
+ */
+export function resolveVitrineSigla(product, fallbackUnit = "UN") {
+  const options = buildSaleUnitOptions(product);
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || fallbackUnit);
+  const principalNorm = normalizeUnitCode(principalResolvida) || normalizeUnitCode(fallbackUnit) || "UN";
+  const validBySigla = new Map(options.map((o) => [o.unidade, o]));
+
+  const vitrineCanon = normalizeUnitCode(product?.unidade_vitrine);
+  if (vitrineCanon && validBySigla.has(vitrineCanon)) return vitrineCanon;
+
+  const comercialId = String(product?.unidade_comercial_id || "").trim();
+  if (comercialId) {
+    const byId = options.find((o) => String(o.id || "") === comercialId);
+    if (byId?.unidade && validBySigla.has(byId.unidade)) return byId.unidade;
+  }
+
+  for (const pref of [product?.unidade_apresentacao_default, product?.unidade_show_comercial]) {
+    const normalized = normalizeUnitCode(pref);
+    if (normalized && validBySigla.has(normalized)) return normalized;
+  }
+
+  return principalNorm;
+}
+
+/**
  * Fonte única: qual embalagem o catálogo, PDV e relatórios exibem.
- * Prioridade: `unidade_comercial_id` → siglas de vitrine → unidade principal (fator-1).
+ * Prioridade: `unidade_vitrine` → legado (uma vez) → unidade principal (fator-1).
  */
 export function resolveUnidadeExibicao(product, fallbackUnit = "UN") {
   const options = buildSaleUnitOptions(product);
@@ -212,26 +239,12 @@ export function resolveUnidadeExibicao(product, fallbackUnit = "UN") {
   }
 
   const validBySigla = new Map(options.map((o) => [o.unidade, o]));
-  const comercialId = String(product?.unidade_comercial_id || "").trim();
-  if (comercialId) {
-    const byId = options.find((o) => String(o.id || "") === comercialId);
-    if (byId?.unidade) {
-      return {
-        sigla: byId.unidade,
-        id: byId.id || comercialId,
-        option: byId,
-        vitrineAtiva: true,
-      };
-    }
-  }
-
-  for (const pref of [product?.unidade_apresentacao_default, product?.unidade_show_comercial]) {
-    const normalized = normalizeUnitCode(pref);
-    if (!normalized || !validBySigla.has(normalized)) continue;
-    const opt = validBySigla.get(normalized);
+  const sigla = resolveVitrineSigla(product, fallbackUnit);
+  const opt = validBySigla.get(sigla);
+  if (opt) {
     return {
-      sigla: normalized,
-      id: opt?.id || (opt?.is_primary ? "primary" : normalized),
+      sigla,
+      id: opt.id || (opt.is_primary ? "primary" : sigla),
       option: opt,
       vitrineAtiva: true,
     };
@@ -687,7 +700,8 @@ export function resolveUnidadeExibicaoParaCompras(produto = {}, item = {}, fallb
   const opcoes = buildPurchaseUnitOptions(produto);
   const principal = resolvePrimaryFromFactorOne(produto, fallbackUnit);
   const fb = normalizeUnitCode(
-    item?.unidade_apresentacao_default ||
+    produto?.unidade_vitrine ||
+      item?.unidade_apresentacao_default ||
       item?.unidade_medida ||
       produto?.unidade_apresentacao_default ||
       fallbackUnit ||
@@ -700,6 +714,7 @@ export function resolveUnidadeExibicaoParaCompras(produto = {}, item = {}, fallb
   }
 
   const candidatos = [
+    produto?.unidade_vitrine,
     produto?.unidade_apresentacao_default,
     item?.unidade_apresentacao_default,
     produto?.unidade_show_comercial,
@@ -723,6 +738,7 @@ export function buildSnapshotExibicaoComercial(produto = {}, siglaOverride = nul
   return {
     ...produto,
     unidade_show_ativa: true,
+    unidade_vitrine: sigla === normalizeUnitCode(produto?.unidade_principal) ? "" : sigla,
     unidade_apresentacao_default: sigla,
     unidade_show_comercial: sigla,
   };
@@ -773,6 +789,7 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
     product?.unidade_show_logistica,
+    product?.unidade_vitrine,
     getUnidadeExibicaoSigla(product, fallbackUnit),
     product?.unidade_apresentacao_default,
     product?.unidade_show_comercial,

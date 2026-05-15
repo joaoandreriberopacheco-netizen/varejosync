@@ -325,6 +325,7 @@ export function migrateLegacyToUnidades(produto = {}) {
   // Resolve a unidade comercial usando os campos legados.
   const comercialIdLegacy = String(produto?.unidade_comercial_id || "").trim();
   const comercialSiglaLegacy = normalizeSigla(
+    produto?.unidade_vitrine ||
     produto?.unidade_apresentacao_default ||
     produto?.unidade_show_comercial ||
     principalSigla
@@ -470,13 +471,21 @@ export function applyUnidadesToProduto(produto = {}, unidades) {
     return { ok: false, produto, errors: validation.errors };
   }
   const legacyMirror = unidadesToLegacyMirror(unidades);
+  const principalSigla = normalizeSigla(legacyMirror.unidade_principal) || "UN";
+  const comercialSigla =
+    normalizeSigla(legacyMirror.unidade_apresentacao_default) ||
+    normalizeSigla(legacyMirror.unidade_show_comercial) ||
+    principalSigla;
+  const unidadeVitrine = comercialSigla === principalSigla ? "" : comercialSigla;
   return {
     ok: true,
     errors: [],
     produto: {
       ...produto,
       unidades,
-      ...legacyMirror,
+      unidade_principal: legacyMirror.unidade_principal,
+      unidades_alternativas: legacyMirror.unidades_alternativas,
+      unidade_vitrine: unidadeVitrine,
     },
   };
 }

@@ -36,12 +36,7 @@ function isEmptyishVitrine(v) {
   return false;
 }
 
-const VITRINE_MERGE_KEYS = [
-  'unidade_apresentacao_default',
-  'unidade_show_comercial',
-  'unidade_show_logistica',
-  'unidade_comercial_id',
-];
+const VITRINE_MERGE_KEYS = ['unidade_vitrine'];
 
 function mergeProdutoPreferVitrine(baseRow, fromGet) {
   if (!fromGet || typeof fromGet !== 'object') return baseRow || fromGet;

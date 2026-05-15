@@ -612,32 +612,39 @@
           "note": "Embalagens além da base. Cada item: id (string), unidade (sigla), fator_conversao (number), is_comercial (boolean, exatamente uma true no produto ou vitrine na base via unidade_comercial_id=primary), is_principal (boolean, false nas linhas do array). Opcionais: nome, rotulo, fator_preco, ajuste_percentual, preco_venda, percentual_preco_vs_principal, ativo."
         },
         {
+          "name": "unidade_vitrine",
+          "type": "string",
+          "default": "",
+          "pg_type": "TEXT DEFAULT ''",
+          "note": "Canónico: sigla da vitrine (UN, CX, M2…). Vazio = unidade_principal. Deve existir em unidade_principal ou unidades_alternativas[]."
+        },
+        {
           "name": "unidade_comercial_id",
           "type": "string",
           "default": "",
           "pg_type": "TEXT DEFAULT ''",
-          "note": "ID estável da vitrine: primary (unidade base) ou id de uma linha em unidades_alternativas[]. Gravar sempre com unidade_apresentacao_default."
+          "note": "Legado (opcional): só leitura se unidade_vitrine vazio."
         },
         {
           "name": "unidade_apresentacao_default",
           "type": "string",
           "default": "",
           "pg_type": "TEXT DEFAULT ''",
-          "note": "Sigla da vitrine (UN, CX, M2…). Espelho desnormalizado; gravar sempre com unidade_comercial_id."
+          "note": "Legado (opcional): só leitura se unidade_vitrine vazio."
         },
         {
           "name": "unidade_show_comercial",
           "type": "string",
           "default": "",
           "pg_type": "TEXT DEFAULT ''",
-          "note": "Sigla comercial legada (espelho de unidade_apresentacao_default no save)."
+          "note": "Legado (opcional)."
         },
         {
           "name": "unidade_show_logistica",
           "type": "string",
           "default": "",
           "pg_type": "TEXT DEFAULT ''",
-          "note": "Sigla para logística/embarques; pode coincidir com a comercial."
+          "note": "Legado (opcional): logística/embarques."
         },
         {
           "name": "unidade_show_ativa",
