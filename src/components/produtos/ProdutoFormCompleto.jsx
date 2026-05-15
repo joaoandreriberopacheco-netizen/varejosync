@@ -7,16 +7,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Package } from 'lucide-react';
+import { DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Package, Boxes } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
+import ProductUnitSelectorDialog from './ProductUnitSelectorDialog';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/productUnitsCrud';
-import { resolvePrimaryFromFactorOne, resolveUnidadeExibicao, resolveCommercialDisplay } from '@/lib/productUnits';
+import {
+  buildProductSnapshotForPricing,
+  buildSaleUnitOptions,
+  custoDisplayScale,
+  getPrecoVendaNaUnidadeCatalogo,
+  precoVendaPadraoFromPrecoCatalogo,
+  resolvePrimaryFromFactorOne,
+  resolveUnidadeExibicao,
+  resolveCommercialDisplay,
+} from '@/lib/productUnits';
 import {
   fetchEmbalagensByProdutoId,
   isProdutoEmbalagemEntityFlagOn,
@@ -149,6 +159,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   // Histórico de undo/redo
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [unitSelectorOpen, setUnitSelectorOpen] = useState(false);
 
   useUnsavedChangesWarning(temAlteracoesNaoSalvas);
 
@@ -276,9 +287,53 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     ? (parseFloat(formData.preco_venda_padrao) || 0)
     : precoCustoCalculado * (1 + (parseFloat(formData.preco_venda_percentual) || 0) / 100);
 
-  const margemContribuicao = precoCustoCalculado > 0 && precoVendaCalculado > 0
-    ? ((precoVendaCalculado - precoCustoCalculado) / precoVendaCalculado) * 100
-    : 0;
+  const snapshotPrecificacao = useMemo(
+    () => buildProductSnapshotForPricing(formData, precoVendaCalculado),
+    [
+      formData.unidade_principal,
+      formData.unidades_alternativas,
+      formData.unidade_vitrine,
+      formData.unidade_show_ativa,
+      precoVendaCalculado,
+    ],
+  );
+
+  const precoCatalogo = useMemo(
+    () => getPrecoVendaNaUnidadeCatalogo(snapshotPrecificacao, 1),
+    [snapshotPrecificacao],
+  );
+
+  const custoCatalogoScale = useMemo(
+    () => custoDisplayScale(snapshotPrecificacao),
+    [snapshotPrecificacao],
+  );
+
+  const precoCustoCatalogo = precoCustoCalculado * custoCatalogoScale;
+
+  const margemContribuicao = useMemo(() => {
+    const venda = precoCatalogo.valor;
+    const custo = precoCustoCatalogo;
+    return custo > 0 && venda > 0 ? ((venda - custo) / venda) * 100 : 0;
+  }, [precoCatalogo.valor, precoCustoCatalogo]);
+
+  const markupCatalogo = useMemo(() => {
+    const venda = precoCatalogo.valor;
+    const custo = precoCustoCatalogo;
+    return custo > 0 ? ((venda - custo) / custo) * 100 : 0;
+  }, [precoCatalogo.valor, precoCustoCatalogo]);
+
+  const vendasUnitOptions = useMemo(
+    () => buildSaleUnitOptions(snapshotPrecificacao, 1),
+    [snapshotPrecificacao],
+  );
+
+  const productForUnitDialog = useMemo(
+    () => ({
+      ...snapshotPrecificacao,
+      nome: formData.nome || 'Produto',
+    }),
+    [snapshotPrecificacao, formData.nome],
+  );
 
   const saveToHistory = (newData) => {
     setHistory(prev => {
@@ -328,6 +383,60 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       return updated;
     });
     setTemAlteracoesNaoSalvas(true);
+  };
+
+  const aplicarPrecoVendaCatalogo = (val) => {
+    const snap = buildProductSnapshotForPricing(formData, precoVendaCalculado);
+    const conv = precoVendaPadraoFromPrecoCatalogo(val, snap, 1);
+    if (conv && typeof conv === 'object' && conv.kind === 'fixed_packaging') {
+      setFormData((prev) => {
+        const raw = [...(prev.unidades_alternativas || [])];
+        const ix = raw.findIndex((r) => normalizeSigla(r.unidade) === normalizeSigla(conv.sigla));
+        if (ix < 0) return prev;
+        const next = [...raw];
+        next[ix] = { ...next[ix], preco_venda: conv.preco_venda };
+        saveToHistory(prev);
+        return {
+          ...prev,
+          unidades_alternativas: next,
+          preco_venda_tipo: 'numerico',
+        };
+      });
+      setTemAlteracoesNaoSalvas(true);
+      return;
+    }
+    const novoBase = typeof conv === 'number' ? conv : precoVendaCalculado;
+    setFormData((prev) => {
+      saveToHistory(prev);
+      const custoBaseLoc = parseFloat(prev.valor_compra) || 0;
+      const precoCustoLoc =
+        custoBaseLoc +
+        (parseFloat(prev.custo_frete_padrao) || 0) +
+        (parseFloat(prev.custo_imposto1_padrao) || 0) +
+        (parseFloat(prev.custo_imposto2_padrao) || 0) +
+        (parseFloat(prev.custo_outros_padrao) || 0) -
+        (parseFloat(prev.desconto_compra_padrao) || 0);
+      let markup = prev.preco_venda_percentual;
+      if (precoCustoLoc > 0) {
+        markup = ((novoBase - precoCustoLoc) / precoCustoLoc) * 100;
+      }
+      return {
+        ...prev,
+        preco_venda_padrao: novoBase,
+        preco_venda_tipo: 'numerico',
+        preco_venda_percentual: markup,
+      };
+    });
+    setTemAlteracoesNaoSalvas(true);
+  };
+
+  const aplicarUnidadeCatalogoDesdeOpcao = (option) => {
+    if (!option) return;
+    if (option.is_primary) {
+      applyCommercialUnitSelection(formData.unidade_principal || 'UN');
+    } else {
+      applyCommercialUnitSelection(option.unidade);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -1242,19 +1351,84 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
           {/* ABA COMERCIAL — KPIs primeiro, como no A29 */}
           <TabsContent value="comercial" className="mt-0">
+            {vendasUnitOptions.length > 0 && (
+              <div
+                className="mb-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50/95 to-gray-100/60 dark:from-gray-950/80 dark:to-gray-900/50 px-4 py-3"
+                title="Escolha a embalagem para ver preço e custo escalados — alinha com unidade_vitrine e o catálogo."
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Embalagem
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {precoCatalogo.sigla}
+                    </span>
+                    <span className="text-xs tabular-nums text-gray-600 dark:text-gray-300">
+                      R$ {formatarNumero(precoCatalogo.valor)}
+                    </span>
+                    <span className="text-[11px] text-gray-400 dark:text-gray-500 hidden sm:inline max-w-md truncate">
+                      Preço e margem na embalagem escolhida; cadastro em base continua por unidade fator 1.
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {vendasUnitOptions.map((opt) => {
+                      const vitrineNorm = normalizeSigla(formData.unidade_vitrine || '');
+                      const vitrineNaBase = !vitrineNorm;
+                      const active = vitrineNaBase
+                        ? Boolean(opt.is_primary)
+                        : normalizeSigla(opt.unidade) === vitrineNorm;
+                      return (
+                        <button
+                          key={opt.unidade}
+                          type="button"
+                          onClick={() => aplicarUnidadeCatalogoDesdeOpcao(opt)}
+                          title={opt.is_primary ? 'Vitrine na unidade base' : `Vitrine em ${opt.unidade}`}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
+                            active
+                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500'
+                          }`}
+                        >
+                          {opt.unidade}
+                        </button>
+                      );
+                    })}
+                    {vendasUnitOptions.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9 gap-1.5 rounded-xl border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-900"
+                        onClick={() => setUnitSelectorOpen(true)}
+                        title="Lista completa com conversão e preço sugerido"
+                      >
+                        <Boxes className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="hidden sm:inline">Todas</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-gray-200 dark:border-gray-700">
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Custo Total</div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  Custo Total{custoCatalogoScale !== 1 && precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
+                </div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCatalogo)}</div>
               </div>
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Preço de venda</div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoVendaCalculado)}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  Preço de venda{precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
+                </div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCatalogo.valor)}</div>
               </div>
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Markup</div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">{formatarNumero(formData.preco_venda_percentual || 0)}%</div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">{formatarNumero(markupCatalogo)}%</div>
               </div>
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Margem</div>
@@ -1266,10 +1440,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
               {/* Composição de Custos - direto dos campos do produto */}
               <div className="relative">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-2">
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                   <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Composição de Custos</h3>
                 </div>
+                {custoCatalogoScale !== 1 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
+                    Valores por embalagem <strong className="text-gray-700 dark:text-gray-300">{precoCatalogo.sigla}</strong>
+                    {' '}(×{formatarNumero(custoCatalogoScale)} vs. base {formData.unidade_principal || 'UN'}). Na base de dados continuam por unidade base.
+                  </p>
+                )}
                 <div className="space-y-1">
                   {[
                     { label: 'Valor de Compra', field: 'valor_compra', icon: <Box className="w-3.5 h-3.5" />, isCurrency: true },
@@ -1279,7 +1459,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     { label: 'Outros Custos', field: 'custo_outros_padrao', icon: <Plus className="w-3.5 h-3.5" />, isCurrency: true },
                     { label: 'Desconto Comercial', field: 'desconto_compra_padrao', icon: <Tag className="w-3.5 h-3.5" />, isCurrency: true, isNegativo: true },
                   ].map(({ label, field, icon, isNegativo }) => {
-                    const valor = parseFloat(formData[field]) || 0;
+                    const sc = custoCatalogoScale > 0 ? custoCatalogoScale : 1;
+                    const baseVal = parseFloat(formData[field]) || 0;
+                    const displayVal = baseVal * sc;
                     return (
                       <div key={field} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -1297,7 +1479,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                           <span className="text-xs text-gray-400 w-8">(R$)</span>
                         </div>
                         <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap">
-                          {isNegativo ? '-' : ''}R$ {formatarNumero(valor)}
+                          {isNegativo ? '-' : ''}R$ {formatarNumero(displayVal)}
                         </span>
                       </div>
                     );
@@ -1306,7 +1488,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   {/* TOTAL */}
                   <div className="flex items-center justify-between pt-6 mt-4 border-t-2 border-gray-300 dark:border-gray-600">
                     <span className="text-base font-bold text-gray-800 dark:text-gray-200">CUSTO TOTAL</span>
-                    <span className="text-xl font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</span>
+                    <span className="text-xl font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCatalogo)}</span>
                   </div>
                 </div>
               </div>
@@ -1322,19 +1504,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <span className="text-gray-400"><DollarSign className="w-3.5 h-3.5" /></span>
-                      <span className="whitespace-nowrap">Preço de venda</span>
+                      <span className="whitespace-nowrap">
+                        Preço de venda{precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
+                      </span>
                     </div>
                     <div className="flex items-center justify-end gap-2">
                       <CurrencyInput
-                        value={formData.preco_venda_tipo === 'numerico' ? formData.preco_venda_padrao : precoVendaCalculado}
-                        onChange={val => {
-                          handleChange('preco_venda_padrao', val);
-                          handleChange('preco_venda_tipo', 'numerico');
-                          if (precoCustoCalculado > 0) {
-                            const markupCalc = ((val - precoCustoCalculado) / precoCustoCalculado) * 100;
-                            handleChange('preco_venda_percentual', markupCalc);
-                          }
-                        }}
+                        value={precoCatalogo.valor}
+                        onChange={aplicarPrecoVendaCatalogo}
                         dataIndex="preco_venda"
                         placeholder="0,00"
                         className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
@@ -1757,6 +1934,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           </TabsContent>
         </div>
       </Tabs>
+
+      <ProductUnitSelectorDialog
+        open={unitSelectorOpen}
+        product={productForUnitDialog}
+        mode="sale"
+        priceMultiplier={1}
+        onClose={() => setUnitSelectorOpen(false)}
+        onConfirm={(unit) => {
+          aplicarUnidadeCatalogoDesdeOpcao(unit);
+          setUnitSelectorOpen(false);
+        }}
+      />
     </div>
   );
 }

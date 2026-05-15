@@ -37,9 +37,9 @@ export const COLUNAS_SOMENTE_EMBALAGENS = [
   { key: 'nome', label: 'Nome (referência)', editavel: false, width: 36, tipo: 'string' },
   ...EMB_SLOT_COLS,
   {
-    key: 'unidade_apresentacao_default',
-    label: 'Unidade comercial (sigla)',
-    altLabels: ['Apresentação PDV (sigla)'],
+    key: 'unidade_vitrine',
+    label: 'Unidade vitrine',
+    altLabels: ['Unidade comercial (sigla)', 'Apresentação PDV (sigla)', 'unidade_apresentacao_default'],
     editavel: true,
     width: 22,
     tipo: 'string',
@@ -113,9 +113,9 @@ export const COLUNAS_CONFIG = [
   { key: 'ativo',                   label: 'Ativo (SIM/NÃO)',        editavel: true,  width: 14, tipo: 'boolean' },
 
   {
-    key: 'unidade_apresentacao_default',
-    label: 'Unidade comercial (sigla)',
-    altLabels: ['Apresentação PDV (sigla)'],
+    key: 'unidade_vitrine',
+    label: 'Unidade vitrine',
+    altLabels: ['Unidade comercial (sigla)', 'Apresentação PDV (sigla)', 'unidade_apresentacao_default'],
     editavel: true,
     width: 22,
     tipo: 'string',

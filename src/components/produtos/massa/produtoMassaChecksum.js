@@ -3,6 +3,8 @@
  * Ordem dos segmentos = fonte única para hash, import e fórmula visual no Excel.
  */
 
+import { getUnidadeExibicaoSigla, normalizeUnitCode } from '@/lib/productUnits';
+
 function normNum(value) {
   if (value === null || value === undefined || value === '') return '0';
   const normalized = String(value).trim().replace(',', '.');
@@ -49,11 +51,17 @@ export const PRODUTO_CANON_SEGMENTS = [
   { key: 'controla_serial', kind: 'ativo' },
   { key: 'controla_lote', kind: 'ativo' },
   { key: 'controla_validade', kind: 'ativo' },
-  { key: 'unidade_apresentacao_default', kind: 'str' },
+  { key: 'unidade_vitrine', kind: 'str' },
   { key: 'ativo', kind: 'ativo' },
 ];
 
+function vitrineCanonSegment(produto) {
+  const principal = normalizeUnitCode(produto?.unidade_principal) || 'UN';
+  return normStr(getUnidadeExibicaoSigla(produto, principal));
+}
+
 function segmentValue(produto, seg) {
+  if (seg.key === 'unidade_vitrine') return vitrineCanonSegment(produto);
   if (seg.kind === 'str') return normStr(produto[seg.key]);
   if (seg.kind === 'num') return normNum(produto[seg.key] ?? 0);
   if (seg.kind === 'ativo') return produto[seg.key] !== false ? 'sim' : 'não';

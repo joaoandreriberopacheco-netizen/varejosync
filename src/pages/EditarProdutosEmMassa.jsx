@@ -75,7 +75,7 @@ export default function EditarProdutosEmMassa() {
            };
 
            // Adicionar apenas campos válidos do schema (excluir 'numero' e outros inválidos)
-           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
+           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
            validFields.forEach(field => {
              const valor = dados[field];
              if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
@@ -88,10 +88,13 @@ export default function EditarProdutosEmMassa() {
         } else {
           // Produto existente: atualizar apenas campos alterados
           const dadosAtualizacao = {};
-          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
+          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
           validFields.forEach(field => {
             const valor = dados[field];
-            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+            if (valor === null || valor === undefined) return;
+            if (field === 'unidade_vitrine') {
+              dadosAtualizacao[field] = String(valor).trim();
+            } else if (String(valor).trim() !== '') {
               dadosAtualizacao[field] = valor;
             }
           });
@@ -130,7 +133,7 @@ export default function EditarProdutosEmMassa() {
         snapshot_dados: snapshotDados,
         tipo_importacao: 'Embalagens / Unidades',
       });
-      const camposEmb = ['unidade_principal', 'unidade_apresentacao_default', 'unidade_comercial_id', 'unidade_show_comercial', 'unidade_show_logistica', 'unidades_alternativas'];
+      const camposEmb = ['unidade_principal', 'unidade_vitrine', 'unidades_alternativas'];
       for (const { id, dados } of parsedEmbalagens.alterados) {
         const dadosAtualizacao = {};
         camposEmb.forEach((field) => {
@@ -138,6 +141,8 @@ export default function EditarProdutosEmMassa() {
           if (valor === null || valor === undefined) return;
           if (field === 'unidades_alternativas' && Array.isArray(valor)) {
             dadosAtualizacao[field] = valor;
+          } else if (field === 'unidade_vitrine') {
+            dadosAtualizacao[field] = String(valor).trim();
           } else if (field !== 'unidades_alternativas' && String(valor).trim() !== '') {
             dadosAtualizacao[field] = valor;
           }
@@ -378,7 +383,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Planilha dedicada: <strong>Emb.1</strong> = unidade base (fator 1); <strong>Emb.2–5</strong> = alternativas com fator em relação à Emb.1; colunas de unidade comercial, espelho comercial e logística (siglas).
+              Planilha dedicada: <strong>Emb.1</strong> = unidade base (fator 1); <strong>Emb.2–5</strong> = alternativas com fator em relação à Emb.1; coluna <strong>Unidade vitrine</strong> (sigla exibida no catálogo/PDV).
             </p>
             <ExportarEmbalagensPlanilha />
           </div>

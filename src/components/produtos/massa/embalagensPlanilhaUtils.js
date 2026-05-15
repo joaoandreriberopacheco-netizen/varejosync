@@ -1,3 +1,29 @@
+/** Lê coluna de vitrine da linha; legado `unidade_apresentacao_default` só se a nova estiver vazia. */
+export function resolveVitrineColunaPlanilha(dados = {}) {
+  const novo = dados.unidade_vitrine;
+  const temNovo = novo != null && String(novo).trim() !== '';
+  if (temNovo) return String(novo).trim();
+  const legado = dados.unidade_apresentacao_default;
+  if (legado != null && String(legado).trim() !== '') return String(legado).trim();
+  return '';
+}
+
+/** Remove campo legado após mapear para `unidade_vitrine` (mutação). */
+export function mapLegacyVitrineColumn(dados) {
+  const vitrine = resolveVitrineColunaPlanilha(dados);
+  if (vitrine) dados.unidade_vitrine = vitrine;
+  delete dados.unidade_apresentacao_default;
+  return dados;
+}
+
+/** Sigla exibida na planilha → valor gravado (`''` = vitrine na unidade base). */
+export function vitrineExibicaoParaArmazenada(siglaExibicao, principalSigla) {
+  const s = String(siglaExibicao ?? '').trim().toUpperCase();
+  const p = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  if (!s) return '';
+  return s === p ? '' : s;
+}
+
 /** Remove chaves emb1…emb5 do objeto linha (mutação). */
 function stripEmbSlotKeys(dados) {
   for (let n = 1; n <= 5; n++) {

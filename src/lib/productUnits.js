@@ -280,6 +280,88 @@ export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
   return options.find((o) => o.is_primary) || options[0] || null;
 }
 
+/**
+ * Snapshot para precificação no formulário: `precoVendaBaseEfectivo` é o preço por unidade base (fator 1),
+ * já com markup percentual aplicado quando o formulário está em modo %.
+ */
+export function buildProductSnapshotForPricing(formData, precoVendaBaseEfectivo) {
+  const principal = normalizeUnitCode(formData?.unidade_principal || "UN") || "UN";
+  return {
+    preco_venda_padrao: normalizeNumber(precoVendaBaseEfectivo, 0),
+    unidade_principal: principal,
+    unidade_vitrine: formData?.unidade_vitrine || "",
+    unidades_alternativas: Array.isArray(formData?.unidades_alternativas) ? formData.unidades_alternativas : [],
+    unidade_show_ativa: formData?.unidade_show_ativa,
+  };
+}
+
+/** Preço unitário na embalagem de vitrine (ou na principal por defeito). */
+export function getPrecoVendaNaUnidadeCatalogo(product, priceMultiplier = 1) {
+  const unit = pickDefaultSaleUnit(product, priceMultiplier);
+  const principal = resolvePrimaryFromFactorOne(product, unit?.unidade || "UN");
+  if (!unit) {
+    return {
+      sigla: principal,
+      valor: 0,
+      isPrincipal: true,
+    };
+  }
+  return {
+    sigla: unit.unidade,
+    valor: normalizeNumber(unit.valor_unitario, 0),
+    isPrincipal: Boolean(unit.is_primary) || normalizeUnitCode(unit.unidade) === principal,
+  };
+}
+
+/**
+ * Converte um valor introduzido «por embalagem de vitrine» para `preco_venda_padrao` (base).
+ * Se a embalagem usa preço fixo, devolve instrução para actualizar `preco_venda` na linha.
+ *
+ * @returns {number | { kind: 'fixed_packaging', sigla: string, preco_venda: number }}
+ */
+export function precoVendaPadraoFromPrecoCatalogo(precoDisplay, product, priceMultiplier = 1) {
+  const principal = resolvePrimaryFromFactorOne(product);
+  const exib = resolveVitrineSigla(product, principal);
+  const v = normalizeNumber(precoDisplay, 0);
+  const mult = normalizeNumber(priceMultiplier, 1);
+
+  if (!exib || exib === principal) {
+    return mult > 0 ? v / mult : v;
+  }
+
+  const alts = normalizeAlternativeUnits(product);
+  const alt = alts.find((u) => normalizeUnitCode(u.unidade) === exib);
+  if (!alt) {
+    return mult > 0 ? v / mult : v;
+  }
+
+  if (normalizeNumber(alt.preco_venda, 0) > 0) {
+    return {
+      kind: "fixed_packaging",
+      sigla: exib,
+      preco_venda: mult > 0 ? v / mult : v,
+    };
+  }
+
+  const fator = normalizeNumber(alt.fator_conversao, 1);
+  const pct = normalizeNumber(alt.percentual_preco_vs_principal, 0);
+  const fatorPreco = normalizeNumber(alt.fator_preco, 0);
+  const adj = normalizeNumber(alt.ajuste_percentual, 0);
+  const derived = 1 + adj / 100;
+  let denom;
+  if (pct !== 0 || Object.prototype.hasOwnProperty.call(alt, "percentual_preco_vs_principal")) {
+    denom = fator * (1 + pct / 100) * mult;
+  } else if (fatorPreco > 0 && Math.abs(fatorPreco - derived) < 0.0001) {
+    denom = fator * derived * mult;
+  } else if (fatorPreco > 0) {
+    denom = fator * fatorPreco * mult;
+  } else {
+    denom = fator * derived * mult;
+  }
+  if (denom <= 0) return normalizeNumber(product?.preco_venda_padrao, 0);
+  return v / denom;
+}
+
 /** @deprecated Prefer `getUnidadeExibicaoSigla` — mantido como alias estável. */
 export function resolveCommercialUnit(product, fallbackUnit = "UN") {
   return getUnidadeExibicaoSigla(product, fallbackUnit);

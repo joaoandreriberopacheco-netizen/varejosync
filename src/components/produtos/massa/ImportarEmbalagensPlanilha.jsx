@@ -3,7 +3,13 @@ import { base44 } from '@/api/base44Client';
 import { FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
-import { parseEmbalagensPlanilhaImport } from './embalagensPlanilhaUtils';
+import {
+  parseEmbalagensPlanilhaImport,
+  mapLegacyVitrineColumn,
+  resolveVitrineColunaPlanilha,
+  vitrineExibicaoParaArmazenada,
+} from './embalagensPlanilhaUtils';
+import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { toast } from 'sonner';
 
 function mensagemErroLeitura(error) {
@@ -134,8 +140,9 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
         }
 
-        const apresentacao = dadosExtraidos.unidade_apresentacao_default;
-        const temApresentacao = apresentacao != null && String(apresentacao).trim() !== '';
+        mapLegacyVitrineColumn(dadosExtraidos);
+        const vitrineRaw = resolveVitrineColunaPlanilha(dadosExtraidos);
+        const temVitrine = vitrineRaw !== '';
 
         if (erroNaLinha) continue;
 
@@ -164,8 +171,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
 
         const temEmb = parsed.hadSlotPayload;
 
-        // Linha sem alterações de embalagem/apresentação/show logístico:
-        if (!temEmb && !temApresentacao) {
+        // Linha sem alterações de embalagem ou vitrine:
+        if (!temEmb && !temVitrine) {
           linhasIgnoradasSemMudanca += 1;
           continue;
         }
@@ -178,7 +185,6 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
         }
 
-        const atualApresentacao = normalizarTexto(produto.unidade_apresentacao_default);
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
         const novoAlt = parsed.hadSlotPayload ? normalizarUnidadesAlternativas(parsed.alternativas) : atualAlt;
         const principalResolvida = parsed.hadSlotPayload ? parsed.principalSigla : atualPrincipal;
@@ -188,36 +194,33 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           ...novoAlt.map((u) => normalizarTexto(u.unidade)),
         ].filter(Boolean));
 
-        if (temApresentacao) {
-          const apresentacaoNormalizada = normalizarTexto(apresentacao);
-          if (!unidadesValidas.has(apresentacaoNormalizada)) {
+        const atualVitrineExib = getUnidadeExibicaoSigla(
+          { ...produto, unidade_principal: atualPrincipal, unidades_alternativas: novoAlt },
+          principalResolvida,
+        );
+
+        if (temVitrine) {
+          const vitrineExib = normalizarTexto(vitrineRaw);
+          if (!unidadesValidas.has(vitrineExib)) {
             erros.push({
               linha: i,
-              mensagem: `Linha ${i}: Unidade comercial "${apresentacaoNormalizada}" não existe nas unidades válidas da linha.`,
+              mensagem: `Linha ${i}: Unidade vitrine "${vitrineExib}" não existe nas embalagens da linha (base + alternativas).`,
             });
             continue;
           }
-          dados.unidade_apresentacao_default = apresentacaoNormalizada;
-        } else if (!atualApresentacao || !unidadesValidas.has(atualApresentacao)) {
-          dados.unidade_apresentacao_default = principalResolvida;
+          dados.unidade_vitrine = vitrineExibicaoParaArmazenada(vitrineExib, principalResolvida);
         }
 
-        const comercialResolvida = normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao || principalResolvida);
-        dados.unidade_show_comercial = comercialResolvida;
-        dados.unidade_show_logistica = comercialResolvida;
-
-        const novoApresentacao = temApresentacao
-          ? normalizarTexto(dados.unidade_apresentacao_default)
-          : normalizarTexto(dados.unidade_apresentacao_default || atualApresentacao);
-        const novoShowComercial = normalizarTexto(dados.unidade_show_comercial || comercialResolvida);
-        const novoShowLogistico = normalizarTexto(dados.unidade_show_logistica || comercialResolvida);
+        const novoVitrineExib = temVitrine
+          ? normalizarTexto(vitrineRaw)
+          : atualVitrineExib;
+        const novoVitrineArmazenada = vitrineExibicaoParaArmazenada(novoVitrineExib, principalResolvida);
+        const atualVitrineArmazenada = vitrineExibicaoParaArmazenada(atualVitrineExib, atualPrincipal);
         const novoPrincipal = normalizarTexto(dados.unidade_principal || atualPrincipal);
 
         const semMudanca =
           atualPrincipal === novoPrincipal
-          && atualApresentacao === novoApresentacao
-          && normalizarTexto(produto.unidade_show_comercial) === novoShowComercial
-          && normalizarTexto(produto.unidade_show_logistica) === novoShowLogistico
+          && atualVitrineArmazenada === novoVitrineArmazenada
           && JSON.stringify(atualAlt) === JSON.stringify(novoAlt);
 
         if (semMudanca) {

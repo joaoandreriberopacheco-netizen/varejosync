@@ -65,7 +65,7 @@ function produtoParaLinhaEmbalagens(p) {
     row[`emb${n}_fator`] = a?.fator_conversao ?? '';
     row[`emb${n}_ajuste`] = a?.ajuste_percentual ?? '';
   }
-  row.unidade_apresentacao_default = getUnidadeExibicaoSigla(p, principal);
+  row.unidade_vitrine = getUnidadeExibicaoSigla(p, principal);
   row.embalagens_alternativas_contexto = montarContextoAlternativas(p, principal, alts);
   return row;
 }
