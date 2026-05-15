@@ -294,6 +294,84 @@ export function pickDefaultPurchaseUnit(product) {
   return options[0] || null;
 }
 
+/** Custo total por unidade base (catálogo / TreeGrid). */
+export function resolveCustoTotalUnitBaseProduto(p) {
+  const salvo = normalizeNumber(p?.preco_custo_calculado, 0);
+  if (salvo > 0) return salvo;
+  return (
+    normalizeNumber(p?.valor_compra, 0) +
+    normalizeNumber(p?.custo_frete_padrao, 0) +
+    normalizeNumber(p?.custo_imposto1_padrao, 0) +
+    normalizeNumber(p?.custo_imposto2_padrao, 0) +
+    normalizeNumber(p?.custo_outros_padrao, 0) -
+    normalizeNumber(p?.desconto_compra_padrao, 0)
+  );
+}
+
+/**
+ * Escala de custo/preço para a unidade comercial de exibição (mesma ideia que A29 `custoDisplayScale`).
+ */
+export function custoDisplayScale(product) {
+  const principal = resolvePrimaryFromFactorOne(product);
+  const exib = resolveCommercialUnit(product, principal);
+  if (!exib || exib === normalizeUnitCode(principal)) return 1;
+  const alt = normalizeAlternativeUnits(product).find((u) => normalizeUnitCode(u.unidade) === exib);
+  if (!alt) return 1;
+  const f = normalizeNumber(alt.fator_conversao, 1);
+  const pct =
+    Object.prototype.hasOwnProperty.call(alt, "percentual_preco_vs_principal") &&
+    alt.percentual_preco_vs_principal != null &&
+    alt.percentual_preco_vs_principal !== ""
+      ? normalizeNumber(alt.percentual_preco_vs_principal, 0)
+      : 0;
+  return f * (1 + pct / 100);
+}
+
+/**
+ * Preço de venda, custo e margens na embalagem comercial (alinha catálogo ao A29 / PDV).
+ */
+export function getCatalogoComercialView(produto) {
+  const sale = pickDefaultSaleUnit(produto, 1);
+  const siglaComercial = normalizeUnitCode(sale?.unidade || produto?.unidade_principal || "UN");
+  const precoVenda = normalizeNumber(sale?.valor_unitario, normalizeNumber(produto?.preco_venda_padrao, 0));
+
+  const custoUnitBase = resolveCustoTotalUnitBaseProduto(produto);
+  const custoScale = custoDisplayScale(produto);
+  const custoNaEmbalagem = custoUnitBase * custoScale;
+
+  const vcBase = normalizeNumber(produto?.valor_compra, 0);
+  const valorCompraNaEmbalagem = vcBase * custoScale;
+
+  const options = buildSaleUnitOptions(produto);
+  const rowAtivo =
+    options.find((o) => normalizeUnitCode(o.unidade) === siglaComercial) ||
+    options.find((o) => o.is_primary) ||
+    options[0];
+
+  let margemContribuicaoPct = 0;
+  let markupSobreCustoPct = 0;
+  if (precoVenda > 0) {
+    if (custoNaEmbalagem >= 0) {
+      margemContribuicaoPct = ((precoVenda - custoNaEmbalagem) / precoVenda) * 100;
+    }
+    if (custoNaEmbalagem > 0) {
+      markupSobreCustoPct = ((precoVenda - custoNaEmbalagem) / custoNaEmbalagem) * 100;
+    }
+  }
+
+  return {
+    sigla: siglaComercial,
+    precoVenda,
+    custoNaEmbalagem,
+    valorCompraNaEmbalagem,
+    custoUnitBase,
+    fatorEmbalagem: custoScale,
+    margemContribuicaoPct,
+    markupSobreCustoPct,
+    rotuloUnidade: rowAtivo?.nome || rowAtivo?.rotulo || "",
+  };
+}
+
 export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }

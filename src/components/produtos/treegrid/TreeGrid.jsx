@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTreeGrid, flattenTree, buildExpandedForLevel } from './useTreeGrid';
-import { formatEstoqueApresentacao, getCatalogUnitLabels } from '@/lib/productUnits';
+import { Badge } from '@/components/ui/badge';
+import { useTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
+import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -17,7 +18,7 @@ const COL_DEFS = [
   { id: 'categoria',            label: 'Categoria',      w: 120 },
   { id: 'tags',                 label: 'Tags',           w: 110 },
   { id: 'fornecedor',           label: 'Fornecedor',     w: 130 },
-  { id: 'preco_venda',          label: 'Preço Venda',    w: 108 },
+  { id: 'preco_venda',          label: 'Preço de venda', w: 108 },
   { id: 'margem',               label: 'Margem',         w: 80  },
   { id: 'preco_custo',          label: 'Custo Total',    w: 104 },
   { id: 'valor_compra',         label: 'Vl. Compra',     w: 100 },
@@ -31,7 +32,7 @@ const COL_DEFS = [
   { id: 'peso',                 label: 'Peso',           w: 72  },
   { id: 'dimensoes',            label: 'Dimensões',      w: 112 },
   { id: 'tipo',                 label: 'Tipo',           w: 80  },
-  { id: 'unidade',              label: 'Unid.',          w: 64  },
+  { id: 'unidade',              label: 'Unidades',       w: 72  },
   { id: 'unidades_pacote',      label: 'Un/Pct',         w: 72  },
 ];
 
@@ -61,6 +62,7 @@ function StatusDot({ produto }) {
 
 // ── Valor de célula SKU ───────────────────────────────────────────────────────
 function skuCellValue(colId, produto, margem, lastro, markup) {
+  const cat = getCatalogoComercialView(produto);
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
     case 'codigo_interno':       return <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{produto.codigo_interno || '—'}</span>;
@@ -74,11 +76,42 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
       </div>
     );
     case 'fornecedor':           return <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px] block">{produto.fornecedor_padrao_codigo || '—'}</span>;
-    case 'preco_venda':          return <span className="text-xs text-gray-700 dark:text-gray-200 tabular-nums">{produto.preco_venda_padrao ? `R$ ${fmtR(produto.preco_venda_padrao)}` : '—'}</span>;
+    case 'preco_venda':          return (
+      <span className="text-xs text-gray-700 dark:text-gray-200 tabular-nums inline-flex flex-col leading-tight">
+        {cat.precoVenda > 0 ? (
+          <>
+            <span>R$ {fmtR(cat.precoVenda)}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+          </>
+        ) : '—'}
+      </span>
+    );
     case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'text-green-600 dark:text-green-400' : margem > 0 ? 'text-gray-500 dark:text-gray-400' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
-    case 'preco_custo':          return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.preco_custo_calculado ? `R$ ${fmtR(produto.preco_custo_calculado)}` : '—'}</span>;
-    case 'valor_compra':         return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.valor_compra ? `R$ ${fmtR(produto.valor_compra)}` : '—'}</span>;
-    case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : '—'}</span>;
+    case 'preco_custo':          return (
+      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums inline-flex flex-col leading-tight">
+        {cat.custoNaEmbalagem > 0 ? (
+          <>
+            <span>R$ {fmtR(cat.custoNaEmbalagem)}</span>
+            <span className="text-[10px] text-gray-500">/{cat.sigla}</span>
+          </>
+        ) : '—'}
+      </span>
+    );
+    case 'valor_compra':         return (
+      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums inline-flex flex-col leading-tight">
+        {cat.valorCompraNaEmbalagem > 0 ? (
+          <>
+            <span>R$ {fmtR(cat.valorCompraNaEmbalagem)}</span>
+            <span className="text-[10px] text-gray-500">/{cat.sigla}</span>
+          </>
+        ) : '—'}
+      </span>
+    );
+    case 'markup':               return (
+      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+        {lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : (produto.preco_venda_percentual > 0 ? `${fmtN(produto.preco_venda_percentual)}%` : '—')}
+      </span>
+    );
     case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
       const apresent = formatEstoqueApresentacao(produto);
@@ -89,7 +122,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
           <span>{fmtN(qtdExibicao)} {unExibicao}</span>
           {apresent && (
             <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-              {apresent.rotulo ? `(${apresent.rotulo})` : 'show comercial'}
+              {apresent.rotulo ? `(${apresent.rotulo})` : '(unidade de vitrine)'}
             </span>
           )}
         </span>
@@ -108,7 +141,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
         <span className="flex flex-col text-xs text-gray-400 leading-tight">
           <span>{unidadeBase || '—'}</span>
           {!mostramMesma && (
-            <span className="text-[9px] text-gray-500 dark:text-gray-500 mt-0.5">com. {unidadeComercial}</span>
+            <span className="text-[9px] text-gray-500 dark:text-gray-500 mt-0.5">Vitrine: {unidadeComercial}</span>
           )}
         </span>
       );
@@ -119,27 +152,59 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
 }
 
 // ── Valor agregado para grupos ────────────────────────────────────────────────
-function groupCellValue(colId, agg) {
+function groupCellValue(colId, row) {
   const tilde  = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(v)}</span> : dash();
   const tildeP = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(v)}</span> : dash();
   const dash   = () => <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
   switch (colId) {
-    case 'preco_venda':           return tilde(agg.precoMedio);
-    case 'preco_custo':           return tilde(agg.custoMedio);
-    case 'valor_compra':          return tilde(agg.valorCompraMedio);
-    case 'markup':                return tildeP(agg.markupMedio);
-    case 'margem':                return tildeP(agg.margemMedia);
-    case 'inventario_valorizado': return agg.lastroTotal > 0
-      ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(agg.lastroTotal)}</span>
+    case 'preco_venda':           return tilde(row.precoMedio);
+    case 'preco_custo':           return tilde(row.custoMedio);
+    case 'valor_compra':          return tilde(row.valorCompraMedio);
+    case 'markup':                return tildeP(row.markupMedio);
+    case 'margem':                return tildeP(row.margemMedia);
+    case 'inventario_valorizado': return row.lastroTotal > 0
+      ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(row.lastroTotal)}</span>
       : dash();
-    case 'estoque_atual':         return <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(agg.estoqueTotal)}</span>;
-    case 'estoque_minimo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMinTotal)}</span>;
-    case 'estoque_ideal':         return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueIdealTotal)}</span>;
-    case 'estoque_maximo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMaxTotal)}</span>;
-    case 'peso':                  return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.pesoTotal)}kg</span>;
-    case 'status':                return agg.criticalCount > 0
-      ? <span className="text-[10px] text-red-500">{agg.criticalCount} crítico{agg.criticalCount > 1 ? 's' : ''}</span>
-      : <span className="text-[10px] text-green-600">OK</span>;
+    case 'estoque_atual': {
+      const skus = collectSkus(row.node);
+      const disp = aggregateEstoqueDisplay(skus);
+      if (disp.mode === 'empty') return dash();
+      if (disp.mode === 'mixed') {
+        return (
+          <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums inline-flex flex-col leading-tight items-end">
+            <span>{fmtN(disp.quantidade)}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">un. base (mistura)</span>
+          </span>
+        );
+      }
+      return (
+        <span className="flex flex-col text-xs text-gray-600 dark:text-gray-300 tabular-nums leading-tight items-end">
+          <span>
+            {fmtN(disp.quantidade)} {disp.sigla || (skus[0]?.unidade_principal || 'UN')}
+          </span>
+          {disp.mode === 'display' ? (
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+              {disp.rotulo ? `(${disp.rotulo})` : '(unidade de vitrine)'}
+            </span>
+          ) : null}
+        </span>
+      );
+    }
+    case 'estoque_minimo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.estoqueMinTotal)}</span>;
+    case 'estoque_ideal':         return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.estoqueIdealTotal)}</span>;
+    case 'estoque_maximo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.estoqueMaxTotal)}</span>;
+    case 'peso':                  return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.pesoTotal)}kg</span>;
+    case 'status':                return row.criticalCount > 0
+      ? (
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400">
+          {row.criticalCount} crítico{row.criticalCount > 1 ? 's' : ''}
+        </Badge>
+      )
+      : (
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">
+          OK
+        </Badge>
+      );
     default:                      return dash();
   }
 }
@@ -172,7 +237,9 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-100 truncate uppercase tracking-wide">
             {row.label}
           </span>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 ml-0.5">({row.count})</span>
+          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 flex-shrink-0 ml-0.5">
+            {row.count}
+          </Badge>
         </div>
       </td>
       {activeCols.map(col => (
@@ -248,7 +315,7 @@ export function LevelControl({ level, onChange }) {
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          {v === 99 ? 'all' : v}
+          {v === 99 ? 'todos' : v}
         </button>
       ))}
     </div>
@@ -273,7 +340,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     );
   }, [masterLevel, tree]);
 
-  const rows = useMemo(() => flattenTree(tree, expandedKeys), [tree, expandedKeys]);
+  const rows = useMemo(() => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys)), [tree, expandedKeys]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys(prev => {

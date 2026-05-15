@@ -3,13 +3,61 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
-import { formatEstoqueApresentacao, resolveCommercialUnit, getCatalogUnitLabels } from '@/lib/productUnits';
+import { formatEstoqueApresentacao, resolveCommercialUnit, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 
 const headMap = {
-  status: 'Status', cadastro: 'Cadastro', codigo_interno: 'Código', codigo_barras: 'Cód. Barras', categoria: 'Categoria', tags: 'Tags', fornecedor: 'Fornecedor', preco_venda: 'Preço Venda', preco_custo: 'Custo Total', margem: 'Margem', valor_compra: 'Vl. Compra', markup: 'Markup %', estoque_atual: 'Estoque', estoque_minimo: 'Est. Mín', estoque_ideal: 'Est. Ideal', estoque_maximo: 'Est. Máx', tempo_reposicao: 'Repos.', peso: 'Peso', dimensoes: 'Dimensões', tipo: 'Tipo', unidade: 'Unid.', unidades_pacote: 'Un/Pct', show_comercial: 'Show Comercial', show_logistica: 'Show Logístico'
+  status: 'Status',
+  cadastro: 'Cadastro',
+  codigo_interno: 'Código',
+  codigo_barras: 'Cód. Barras',
+  categoria: 'Categoria',
+  tags: 'Tags',
+  fornecedor: 'Fornecedor',
+  preco_venda: 'Preço Venda',
+  preco_custo: 'Custo Total',
+  margem: 'Margem',
+  valor_compra: 'Vl. Compra',
+  markup: 'Markup %',
+  estoque_atual: 'Estoque',
+  estoque_minimo: 'Est. Mín',
+  estoque_ideal: 'Est. Ideal',
+  estoque_maximo: 'Est. Máx',
+  tempo_reposicao: 'Repos.',
+  peso: 'Peso',
+  dimensoes: 'Dimensões',
+  tipo: 'Tipo',
+  unidade: 'Unid.',
+  unidades_pacote: 'Un/Pct',
+  show_comercial: 'Unidade comercial (PDV)',
+  show_logistica: 'Unidade de exibição (sigla)',
+  inventario_valorizado: 'Inventário valorizado',
 };
 const widthMap = {
-  status: 'min-w-[100px]', cadastro: 'min-w-[110px]', codigo_interno: 'min-w-[110px]', codigo_barras: 'min-w-[130px]', categoria: 'min-w-[130px]', tags: 'min-w-[130px]', fornecedor: 'min-w-[140px]', preco_venda: 'min-w-[110px]', preco_custo: 'min-w-[110px]', margem: 'min-w-[90px]', valor_compra: 'min-w-[110px]', markup: 'min-w-[90px]', estoque_atual: 'min-w-[110px]', estoque_minimo: 'min-w-[90px]', estoque_ideal: 'min-w-[90px]', estoque_maximo: 'min-w-[90px]', tempo_reposicao: 'min-w-[100px]', peso: 'min-w-[90px]', dimensoes: 'min-w-[120px]', tipo: 'min-w-[90px]', unidade: 'min-w-[70px]', unidades_pacote: 'min-w-[90px]', show_comercial: 'min-w-[120px]', show_logistica: 'min-w-[120px]'
+  status: 'min-w-[100px]',
+  cadastro: 'min-w-[110px]',
+  codigo_interno: 'min-w-[110px]',
+  codigo_barras: 'min-w-[130px]',
+  categoria: 'min-w-[130px]',
+  tags: 'min-w-[130px]',
+  fornecedor: 'min-w-[140px]',
+  preco_venda: 'min-w-[110px]',
+  preco_custo: 'min-w-[110px]',
+  margem: 'min-w-[90px]',
+  valor_compra: 'min-w-[110px]',
+  markup: 'min-w-[90px]',
+  estoque_atual: 'min-w-[110px]',
+  estoque_minimo: 'min-w-[90px]',
+  estoque_ideal: 'min-w-[90px]',
+  estoque_maximo: 'min-w-[90px]',
+  tempo_reposicao: 'min-w-[100px]',
+  peso: 'min-w-[90px]',
+  dimensoes: 'min-w-[120px]',
+  tipo: 'min-w-[90px]',
+  unidade: 'min-w-[70px]',
+  unidades_pacote: 'min-w-[90px]',
+  show_comercial: 'min-w-[120px]',
+  show_logistica: 'min-w-[120px]',
+  inventario_valorizado: 'min-w-[120px]',
 };
 
 export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, handleEdit, setProdutoParaExcluir, formatarNumero, fornecedorMap, handleCreateSimilar }) {
@@ -26,8 +74,9 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
         </TableHeader>
         <TableBody>
           {filteredProdutos.map(produto => {
-            const custoReal = produto.preco_custo_calculado > 0 ? produto.preco_custo_calculado : (produto.valor_compra || 0) + (produto.custo_frete_padrao || 0) + (produto.custo_imposto1_padrao || 0) + (produto.custo_imposto2_padrao || 0) + (produto.custo_outros_padrao || 0) - (produto.desconto_compra_padrao || 0);
-            const margem = produto.preco_venda_padrao > 0 && custoReal > 0 ? ((produto.preco_venda_padrao - custoReal) / produto.preco_venda_padrao) * 100 : 0;
+            const cat = getCatalogoComercialView(produto);
+            const margem =
+              cat.precoVenda > 0 && cat.custoNaEmbalagem >= 0 ? cat.margemContribuicaoPct : 0;
             const cadastroStatus = isCadastroIncompleto(produto);
 
             return (
@@ -61,11 +110,36 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 {visibleColumns.includes('status') && <TableCell>{getStockStatusIndicator(produto)}</TableCell>}
                 {visibleColumns.includes('cadastro') && <TableCell>{cadastroStatus.incompleto ? <div className="flex flex-col gap-0.5">{cadastroStatus.checks.semCategoria && <span className="text-[10px] text-red-600 dark:text-red-400">Sem categoria</span>}{cadastroStatus.checks.semFornecedor && <span className="text-[10px] text-red-600 dark:text-red-400">Sem fornecedor</span>}{cadastroStatus.checks.semPrecoVenda && <span className="text-[10px] text-red-600 dark:text-red-400">Sem preço</span>}{cadastroStatus.checks.semCodigoBarras && <span className="text-[10px] text-red-600 dark:text-red-400">Sem cód. barras</span>}{cadastroStatus.checks.semImagem && <span className="text-[10px] text-red-600 dark:text-red-400">Sem imagem</span>}</div> : <span className="text-xs text-green-600 dark:text-green-400">Completo</span>}</TableCell>}
                 {visibleColumns.includes('fornecedor') && <TableCell>{fornecedorMap[produto.fornecedor_padrao_id] ? <div className="text-xs text-gray-700 dark:text-gray-300">{fornecedorMap[produto.fornecedor_padrao_id]}</div> : <span className="text-xs text-gray-600 dark:text-gray-400">N/A</span>}</TableCell>}
-                {visibleColumns.includes('preco_venda') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_venda_padrao)}</TableCell>}
+                {visibleColumns.includes('preco_venda') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    <div className="flex flex-col leading-tight">
+                      <span>R$ {formatarNumero(cat.precoVenda)}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+                    </div>
+                  </TableCell>
+                )}
                 {visibleColumns.includes('margem') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(margem)}%</TableCell>}
-                {visibleColumns.includes('preco_custo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>}
-                {visibleColumns.includes('valor_compra') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.valor_compra)}</TableCell>}
-                {visibleColumns.includes('markup') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.preco_venda_percentual || 0}%</TableCell>}
+                {visibleColumns.includes('preco_custo') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    <div className="flex flex-col leading-tight">
+                      <span>R$ {formatarNumero(cat.custoNaEmbalagem)}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+                    </div>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('valor_compra') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    <div className="flex flex-col leading-tight">
+                      <span>R$ {formatarNumero(cat.valorCompraNaEmbalagem)}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+                    </div>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('markup') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    {cat.markupSobreCustoPct > 0 ? `${formatarNumero(cat.markupSobreCustoPct)}%` : `${produto.preco_venda_percentual || 0}%`}
+                  </TableCell>
+                )}
                 {visibleColumns.includes('estoque_atual') && (
                   <TableCell className="text-xs text-gray-700 dark:text-gray-300">
                     <div className="flex flex-col leading-tight">
@@ -81,7 +155,7 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                         if (!apresent) return null;
                         return (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                            {apresent.rotulo ? `(${apresent.rotulo})` : 'show comercial'}
+                            {apresent.rotulo ? `(${apresent.rotulo})` : 'unidade de exibição'}
                           </span>
                         );
                       })()}
@@ -103,7 +177,7 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                         <span>{unidadeBase}</span>
                         {!mostramMesma && (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                            comercial {unidadeComercial}
+                            com. {unidadeComercial}
                           </span>
                         )}
                       </div>
@@ -111,12 +185,25 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                   );
                 })()}
                 {visibleColumns.includes('unidades_pacote') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>}
+                {visibleColumns.includes('inventario_valorizado') && (() => {
+                  const custo = resolveCustoTotalUnitBaseProduto(produto);
+                  const lastro = custo * (produto.estoque_atual || 0);
+                  return (
+                    <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                      {lastro > 0 ? `R$ ${formatarNumero(lastro)}` : '—'}
+                    </TableCell>
+                  );
+                })()}
                 {visibleColumns.includes('show_comercial') && (
                   <TableCell className="text-xs text-gray-700 dark:text-gray-300">
                     {resolveCommercialUnit(produto, produto.unidade_principal || 'UN')}
                   </TableCell>
                 )}
-                {visibleColumns.includes('show_logistica') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_show_logistica || '-').toUpperCase()}</TableCell>}
+                {visibleColumns.includes('show_logistica') && (
+                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
+                    {(produto.unidade_exibicao_sigla || resolveCommercialUnit(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

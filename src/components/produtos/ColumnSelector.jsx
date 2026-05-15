@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,7 +28,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
         { id: 'fornecedor', label: 'Fornecedor Padrão' },
         { id: 'preco_venda', label: 'Preço Venda' },
         { id: 'margem', label: 'Margem Bruta' },
-        { id: 'show_comercial', label: 'Show Comercial' }
+        { id: 'show_comercial', label: 'Unidade comercial (PDV)' }
       ],
       subgroups: [
         {
@@ -47,7 +47,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
       icon: Truck,
       columns: [
         { id: 'estoque_atual', label: 'Estoque Atual' },
-        { id: 'show_logistica', label: 'Show Logístico' },
+        { id: 'show_logistica', label: 'Unidade de exibição (sigla)' },
         { id: 'estoque_minimo', label: 'Estoque Mínimo' },
         { id: 'estoque_ideal', label: 'Estoque Ideal' },
         { id: 'estoque_maximo', label: 'Estoque Máximo' },

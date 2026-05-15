@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getCatalogoComercialView, formatEstoqueApresentacao } from '@/lib/productUnits';
 
 // ── IQR Mean: remove outliers e retorna média do miolo ───────────────────────
 export function iqrMean(values) {
@@ -39,28 +40,119 @@ export function calcCusto(p) {
     - (p.desconto_compra_padrao || 0);
 }
 
-// ── Calcula markup real: sempre a partir de custo e preço de venda ────────────
+// ── Markup % sobre custo na embalagem comercial (alinha ao catálogo A29) ─────
 export function calcMarkup(p) {
-  const custo = calcCusto(p);
-  const pv = p.preco_venda_padrao || 0;
-  if (custo > 0 && pv > 0) return ((pv - custo) / custo) * 100;
-  // Fallback: usa o percentual configurado se não há dados de custo/venda
+  const cat = getCatalogoComercialView(p);
+  if (cat.precoVenda > 0 && cat.custoNaEmbalagem > 0) return cat.markupSobreCustoPct;
   if (p.preco_venda_percentual > 0) return p.preco_venda_percentual;
   return 0;
 }
 
+/**
+ * Soma de estoque em linhas de grupo: mesma lógica que A29 (exibição vs base vs mistura).
+ */
+export function aggregateEstoqueDisplay(skus) {
+  if (!skus?.length) return { mode: 'empty', quantidade: 0 };
+  const rows = skus.map((p) => ({ ap: formatEstoqueApresentacao(p) }));
+  const allDisp = rows.every((x) => x.ap);
+  if (allDisp) {
+    const s0 = rows[0].ap.sigla;
+    if (rows.every((x) => x.ap.sigla === s0)) {
+      const quantidade = rows.reduce((s, x) => s + x.ap.quantidade, 0);
+      return {
+        mode: 'display',
+        quantidade,
+        sigla: s0,
+        rotulo: rows[0].ap.rotulo || '',
+      };
+    }
+  }
+  const allBase = rows.every((x) => !x.ap);
+  if (allBase) {
+    const quantidade = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
+    const sigla = (skus[0].unidade_principal || 'UN').toUpperCase();
+    return { mode: 'base', quantidade, sigla };
+  }
+  const quantidade = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
+  return { mode: 'mixed', quantidade };
+}
+
+/**
+ * Cabeçalhos de grupo consecutivos com o mesmo label/nível fundem-se (A29).
+ */
+export function mergeAdjacentDuplicateGroupHeaders(rows) {
+  if (!rows?.length) return rows || [];
+  const out = [];
+  let i = 0;
+  while (i < rows.length) {
+    const row = rows[i];
+    if (row.type !== 'group') {
+      out.push(row);
+      i++;
+      continue;
+    }
+
+    const label = row.label;
+    const level = row.level;
+    const firstGroup = row;
+    const bucketSkuRows = [];
+    i++;
+
+    while (i < rows.length && rows[i].type === 'sku') {
+      bucketSkuRows.push(rows[i]);
+      i++;
+    }
+
+    let merged = false;
+    while (
+      i < rows.length &&
+      rows[i].type === 'group' &&
+      rows[i].label === label &&
+      rows[i].level === level
+    ) {
+      merged = true;
+      i++;
+      while (i < rows.length && rows[i].type === 'sku') {
+        bucketSkuRows.push(rows[i]);
+        i++;
+      }
+    }
+
+    if (!merged) {
+      out.push(firstGroup);
+      out.push(...bucketSkuRows);
+      continue;
+    }
+
+    const products = bucketSkuRows.map((r) => r.produto);
+    const agg = aggregateSkus(products);
+    out.push({
+      type: 'group',
+      key: firstGroup.key,
+      label: firstGroup.label,
+      level: firstGroup.level,
+      node: firstGroup.node,
+      isLeafGroup: firstGroup.isLeafGroup,
+      ...agg,
+    });
+    out.push(...bucketSkuRows);
+  }
+  return out;
+}
+
 // ── Agrega métricas IQR para um conjunto de SKUs ─────────────────────────────
 export function aggregateSkus(skus) {
-  const precos        = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
-  const custos        = skus.map(p => calcCusto(p)).filter(v => v > 0);
-  const valorCompras  = skus.map(p => p.valor_compra || 0).filter(v => v > 0);
-  const markups       = skus.map(p => calcMarkup(p)).filter(v => v > 0);
-  const margens       = skus.map(p => {
-    const pv = p.preco_venda_padrao || 0;
-    const pc = calcCusto(p);
-    return pv > 0 && pc > 0 ? ((pv - pc) / pv) * 100 : 0;
-  }).filter(v => v > 0);
-  const lastros = skus.map(p => calcCusto(p) * (p.estoque_atual || 0));
+  const precos = skus.map((p) => getCatalogoComercialView(p).precoVenda).filter((v) => v > 0);
+  const custos = skus.map((p) => getCatalogoComercialView(p).custoNaEmbalagem).filter((v) => v > 0);
+  const valorCompras = skus.map((p) => getCatalogoComercialView(p).valorCompraNaEmbalagem).filter((v) => v > 0);
+  const markups = skus.map((p) => calcMarkup(p)).filter((v) => v > 0);
+  const margens = skus
+    .map((p) => {
+      const cat = getCatalogoComercialView(p);
+      return cat.precoVenda > 0 && cat.custoNaEmbalagem >= 0 ? cat.margemContribuicaoPct : 0;
+    })
+    .filter((v) => v > 0);
+  const lastros = skus.map((p) => calcCusto(p) * (p.estoque_atual || 0));
 
   return {
     precoMedio:      iqrMean(precos),
@@ -163,15 +255,14 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
   if (visualLevel === 0 && treeNode._rootSkus) {
     for (const sku of treeNode._rootSkus) {
       const custo = calcCusto(sku);
+      const cat = getCatalogoComercialView(sku);
       rows.push({
         type:    'sku',
         key:     sku.id,
         produto: sku,
         level:   1,
         lastro:  custo * (sku.estoque_atual || 0),
-        margem:  sku.preco_venda_padrao > 0 && custo > 0
-          ? ((sku.preco_venda_padrao - custo) / sku.preco_venda_padrao) * 100
-          : 0,
+        margem:  cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
         markup:  calcMarkup(sku),
       });
     }
@@ -196,15 +287,14 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     if (!isRoot && isLeafGroup) {
       for (const sku of finalNode.skus) {
         const custo = calcCusto(sku);
+        const cat = getCatalogoComercialView(sku);
         rows.push({
           type:    'sku',
           key:     sku.id,
           produto: sku,
           level:   rowLevel,
           lastro:  custo * (sku.estoque_atual || 0),
-          margem:  sku.preco_venda_padrao > 0 && custo > 0
-            ? ((sku.preco_venda_padrao - custo) / sku.preco_venda_padrao) * 100
-            : 0,
+          margem:  cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
           markup:  calcMarkup(sku),
         });
       }
@@ -227,15 +317,14 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
       }
       for (const sku of finalNode.skus) {
         const custo = calcCusto(sku);
+        const cat = getCatalogoComercialView(sku);
         rows.push({
           type:    'sku',
           key:     sku.id,
           produto: sku,
           level:   rowLevel + 1,
           lastro:  custo * (sku.estoque_atual || 0),
-          margem:  sku.preco_venda_padrao > 0 && custo > 0
-            ? ((sku.preco_venda_padrao - custo) / sku.preco_venda_padrao) * 100
-            : 0,
+          margem:  cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
           markup:  calcMarkup(sku),
         });
       }

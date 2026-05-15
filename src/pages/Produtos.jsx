@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,12 @@ function ProdutosPageContent() {
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState([
-    'status', 'fornecedor', 'show_comercial', 'show_logistica', 'estoque_atual', 'preco_venda', 'margem'
+    'status',
+    'fornecedor',
+    'estoque_atual',
+    'preco_venda',
+    'margem',
+    'show_logistica',
   ]);
   // ── Nível de expansão do TreeGrid (controlado pelo painel fixo externo) ─────
   const [treeLevel, setTreeLevel] = useState(1);
@@ -206,7 +211,7 @@ function ProdutosPageContent() {
       const camposPendentes = [];
       if (cadastroStatus.checks.semCategoria) camposPendentes.push('Categoria');
       if (cadastroStatus.checks.semFornecedor) camposPendentes.push('Fornecedor');
-      if (cadastroStatus.checks.semPrecoVenda) camposPendentes.push('Preço');
+      if (cadastroStatus.checks.semPrecoVenda) camposPendentes.push('Preço de venda');
       if (cadastroStatus.checks.semCodigoBarras) camposPendentes.push('Cód.Barras');
       if (cadastroStatus.checks.semImagem) camposPendentes.push('Imagem');
       const camposPendentesString = camposPendentes.length > 0 ? camposPendentes.join(', ') : '';
@@ -1154,7 +1159,7 @@ function ProdutosPageContent() {
                         <TableRow>
                           <TableHead className="dark:text-gray-400 text-xs">Nome</TableHead>
                           <TableHead className="text-right dark:text-gray-400 text-xs">Custo Calculado</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Preço Venda</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Preço de venda</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1366,7 +1371,7 @@ function ProdutosPageContent() {
                           <TableHead className="text-right dark:text-gray-400 text-xs">Custo Atual</TableHead>
                           <TableHead className="text-right dark:text-gray-400 text-xs">Novo Valor Compra</TableHead>
                           <TableHead className="text-right dark:text-gray-400 text-xs">Novo Custo Total</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo Preço Venda</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo preço de venda</TableHead>
                           <TableHead className="text-right dark:text-gray-400 text-xs">Variação</TableHead>
                         </TableRow>
                       </TableHeader>

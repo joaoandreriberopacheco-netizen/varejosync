@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ChevronRight, Package } from 'lucide-react';
-import { useTreeGrid, flattenTree, buildExpandedForLevel } from './treegrid/useTreeGrid';
-import { formatEstoqueApresentacao } from '@/lib/productUnits';
+import { Badge } from '@/components/ui/badge';
+import { useTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders } from './treegrid/useTreeGrid';
+import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -10,6 +11,7 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
   const p      = row.produto;
   const markup = row.markup;
+  const cat    = getCatalogoComercialView(p);
   const e = p.estoque_atual  || 0;
   const m = p.estoque_minimo || 0;
   const dotCls = !p.ativo    ? 'bg-gray-400'
@@ -43,7 +45,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
             <span className="flex flex-col text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap leading-tight">
               <span>{fmtN(estoqueExibicao)} {unidadeExibicao}</span>
-              {apresent && <span className="mt-0.5">{apresent.rotulo ? `(${apresent.rotulo})` : '(show comercial)'}</span>}
+              {apresent && <span className="mt-0.5">{apresent.rotulo ? `(${apresent.rotulo})` : '(unidade de exibição)'}</span>}
             </span>
           </div>
           {p.codigo_interno && (
@@ -51,16 +53,17 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
               #{p.codigo_interno}
             </span>
           )}
-          {p.preco_venda_padrao > 0 && (
+          {cat.precoVenda > 0 && (
             <span className="text-[12px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums whitespace-nowrap">
-              R$ {fmtR(p.preco_venda_padrao)}
+              R$ {fmtR(cat.precoVenda)}
+              <span className="text-[10px] font-normal text-gray-400 ml-0.5">/{cat.sigla}</span>
             </span>
           )}
           {markup > 0 && (() => {
-            const custo = row.produto.preco_custo_calculado || 0;
-            const pv = row.produto.preco_venda_padrao || 0;
+            const custo = cat.custoNaEmbalagem || 0;
+            const pv = cat.precoVenda || 0;
             const label = (custo > 0 && pv > 0)
-              ? `Custo R$${fmtR(custo)} → Venda R$${fmtR(pv)} = ${markup.toFixed(1)}% mk`
+              ? `Custo R$${fmtR(custo)} → Venda R$${fmtR(pv)} (${cat.sigla}) = ${markup.toFixed(1)}% mk`
               : `${markup.toFixed(1)}% markup`;
             return (
               <span
@@ -105,17 +108,20 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       </span>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {row.criticalCount > 0 && (
-          <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">
-            {row.criticalCount}⚠
-          </span>
+          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400">
+            {row.criticalCount} {row.criticalCount > 1 ? 'críticos' : 'crítico'}
+          </Badge>
         )}
-        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-          isRoot
-            ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-        }`}>
+        <Badge
+          variant="outline"
+          className={`h-5 px-1.5 text-[10px] font-medium ${
+            isRoot
+              ? 'border-gray-700 text-gray-800 dark:border-gray-500 dark:text-gray-100'
+              : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300'
+          }`}
+        >
           {row.count}
-        </span>
+        </Badge>
       </div>
     </button>
   );
@@ -132,7 +138,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   }, [tree]);
 
   const rows = useMemo(() => {
-    const all = flattenTree(tree, expandedKeys);
+    const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
     // Filtra grupos fantasmas (count = 0) que aparecem quando busca filtra todos os SKUs do grupo
     return all.filter(r => !(r.type === 'group' && r.count === 0));
   }, [tree, expandedKeys]);

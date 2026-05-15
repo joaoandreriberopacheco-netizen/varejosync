@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Layers } from 'lucide-react';
+import { DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Package } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
@@ -17,6 +18,25 @@ import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEs
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla, tryLegacyMirrorFromCanonicalUnidades } from '@/lib/productUnitsCrud';
 import { resolvePrimaryFromFactorOne, resolveCommercialUnit, resolveCommercialDisplay } from '@/lib/productUnits';
 
+/** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
+function hashString(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i += 1) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return (h >>> 0).toString(36);
+}
+
+function syntheticAlternativaId(row) {
+  const sig = normalizeSigla(row?.unidade) || '';
+  const rot = String(row?.rotulo || '').trim();
+  const nome = String(row?.nome || '').trim();
+  const fator = String(Number(row?.fator_conversao) || '');
+  const body = [sig, rot, nome, fator].join('\u0001');
+  if (!body.replace(/\u0001/g, '')) {
+    return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `alt-${Date.now().toString(36)}`;
+  }
+  return `alt-${hashString(body)}`;
+}
+
 export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
   const normalizeAlternativas = (lista = []) => (Array.isArray(lista) ? lista : [])
     .slice(0, 5)
@@ -25,9 +45,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       const ajuste = Number(u?.ajuste_percentual) || 0;
       const fatorPreco = Number(u?.fator_preco) || 0;
       const siglaCanon = normalizeSigla(u?.unidade) || String(u?.unidade || '').trim().toUpperCase();
+      const idExistente = String(u?.id || '').trim();
       return {
         ...u,
-        id: String(u?.id || '').trim() || crypto.randomUUID(),
+        id: idExistente || syntheticAlternativaId({ ...u, unidade: siglaCanon }),
         nome: typeof u?.nome === 'string' ? u.nome.trim() : '',
         unidade: siglaCanon,
         fator_conversao: Number(u?.fator_conversao) || 1,
@@ -256,14 +277,54 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     setHistoryIndex(prev => Math.min(prev + 1, 49));
   };
 
+  /** Uma única atualização: siglas de vitrine + `unidade_comercial_id` coerente (primary vs id da linha). */
+  const applyCommercialUnitSelection = (siglaOuRotuloRaw) => {
+    setFormData((prev) => {
+      const principal = normalizeSigla(prev.unidade_principal || 'UN') || 'UN';
+      const alts = normalizeAlternativas(prev.unidades_alternativas || []);
+      const validSet = new Set([principal, ...alts.map((a) => normalizeSigla(a.unidade)).filter(Boolean)]);
+
+      const resolverUnidadeValida = (valor) => {
+        const normalizado = normalizeSigla(valor) || String(valor || '').trim().toUpperCase();
+        if (!normalizado) return '';
+        if (validSet.has(normalizado)) return normalizado;
+        const valorRotulo = String(valor || '').trim().toUpperCase();
+        const porRotulo = alts.find((u) => u.rotulo && String(u.rotulo).trim().toUpperCase() === valorRotulo);
+        return normalizeSigla(porRotulo?.unidade) || '';
+      };
+
+      let siglaFinal = resolverUnidadeValida(siglaOuRotuloRaw);
+      if (!siglaFinal) siglaFinal = principal;
+
+      let comercialId = 'primary';
+      if (siglaFinal !== principal) {
+        const candidates = alts.filter((u) => normalizeSigla(u.unidade) === siglaFinal);
+        const prevCid = String(prev.unidade_comercial_id || '').trim();
+        const matchPrev = candidates.find((c) => String(c.id || '').trim() === prevCid);
+        const chosen = matchPrev || candidates[0];
+        comercialId = chosen?.id ? String(chosen.id).trim() : 'primary';
+      }
+
+      const updated = {
+        ...prev,
+        unidade_apresentacao_default: siglaFinal,
+        unidade_show_comercial: siglaFinal,
+        unidade_show_logistica: siglaFinal,
+        unidade_comercial_id: comercialId,
+      };
+      saveToHistory(prev);
+      return updated;
+    });
+    setTemAlteracoesNaoSalvas(true);
+  };
+
   const handleChange = (field, value) => {
+    if (field === 'unidade_show_comercial' || field === 'unidade_apresentacao_default') {
+      applyCommercialUnitSelection(value);
+      return;
+    }
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
-      if (field === 'unidade_show_comercial' || field === 'unidade_apresentacao_default') {
-        const u = normalizeSigla(value) || String(value || '').trim().toUpperCase();
-        updated.unidade_apresentacao_default = u;
-        updated.unidade_show_comercial = u;
-      }
       if (field === 'unidade_principal') {
         updated.unidade_principal = normalizeSigla(value) || String(value || '').trim().toUpperCase() || 'UN';
       }
@@ -285,34 +346,71 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return [principal, ...alternativas.filter((u) => u !== principal)];
   }, [formData.unidade_principal, formData.unidades_alternativas]);
 
-  /** Evita valor controlado fora da lista (Radix) até o efeito de correção rodar. */
+  /** Evita valor controlado fora da lista (Radix): prioriza `unidade_comercial_id` → sigla da linha; não faz fallback silencioso para principal. */
   const comercialSelectValue = useMemo(() => {
+    const principal = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
     const cid = String(formData.unidade_comercial_id || '').trim();
-    let fromId = '';
+    const rows = normalizeAlternativas(formData.unidades_alternativas || []);
+
     if (cid && cid !== 'primary' && cid !== 'principal') {
-      const row = normalizeAlternativas(formData.unidades_alternativas || []).find(
-        (u) => String(u?.id || '').trim() === cid,
-      );
-      if (row?.unidade) {
-        fromId = normalizeSigla(row.unidade) || String(row.unidade || '').trim().toUpperCase();
-      }
+      const row = rows.find((u) => String(u?.id || '').trim() === cid);
+      const fromId = normalizeSigla(row?.unidade) || '';
+      if (fromId) return fromId;
     }
-    const raw = normalizeSigla(
-      formData.unidade_apresentacao_default ||
-        formData.unidade_show_comercial ||
-        fromId ||
-        formData.unidade_principal ||
-        'UN',
-    ) || 'UN';
-    if (unitOptions.includes(raw)) return raw;
-    return unitOptions[0] || 'UN';
+
+    const raw =
+      normalizeSigla(
+        formData.unidade_apresentacao_default ||
+          formData.unidade_show_comercial ||
+          principal,
+      ) || principal;
+    return raw;
   }, [
-    unitOptions,
+    formData.unidade_principal,
     formData.unidade_apresentacao_default,
     formData.unidade_show_comercial,
-    formData.unidade_principal,
     formData.unidade_comercial_id,
     formData.unidades_alternativas,
+  ]);
+
+  /** Inclui sigla atual se ainda não estiver na lista (ex.: referência órfã / transição). */
+  const commercialSelectOptions = useMemo(() => {
+    const base = [...unitOptions];
+    if (comercialSelectValue && !base.includes(comercialSelectValue)) base.push(comercialSelectValue);
+    return base;
+  }, [unitOptions, comercialSelectValue]);
+
+  /** Vitrine na unidade base (interruptor ao lado da sigla principal). */
+  const catalogoNaBase = useMemo(() => {
+    const principal = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
+    const cid = String(formData.unidade_comercial_id || '').trim();
+    const siglaOk = comercialSelectValue === principal;
+    const idOk = cid === 'primary' || cid === 'principal' || cid === '';
+    return siglaOk && idOk;
+  }, [formData.unidade_principal, formData.unidade_comercial_id, comercialSelectValue]);
+
+  const commercialSelectWarning = useMemo(() => {
+    const cid = String(formData.unidade_comercial_id || '').trim();
+    if (!cid || cid === 'primary' || cid === 'principal') {
+      if (comercialSelectValue && !unitOptions.includes(comercialSelectValue)) {
+        return `A sigla “${comercialSelectValue}” não está nas embalagens com sigla preenchida. Confira “Outras embalagens” ou escolha outra opção.`;
+      }
+      return '';
+    }
+    const raw = formData.unidades_alternativas || [];
+    const exists = raw.some((u) => String(u?.id || '').trim() === cid);
+    if (!exists) {
+      return 'A unidade de vitrine aponta para uma linha que não existe mais. Escolha de novo no menu abaixo.';
+    }
+    if (comercialSelectValue && !unitOptions.includes(comercialSelectValue)) {
+      return `A sigla “${comercialSelectValue}” não está nas opções usuais; confira embalagens ou salve após corrigir.`;
+    }
+    return '';
+  }, [
+    formData.unidade_comercial_id,
+    formData.unidades_alternativas,
+    comercialSelectValue,
+    unitOptions,
   ]);
 
   /** Só id/sigla/rótulo: evita re-disparar o efeito de correção a cada mudança de fator/preço (combativo com o editor). */
@@ -330,44 +428,76 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     [formData.unidades_alternativas],
   );
 
+  /** Corrige só inconsistências reais (sigla inválida, id órfão, mudança de base/alternativas) — não substitui escolha válida por “primeira linha com a mesma sigla”. */
   useEffect(() => {
     setFormData((prev) => {
       const principal = normalizeSigla(prev.unidade_principal || 'UN') || 'UN';
-      const alternativasNormalizadas = normalizeAlternativas(prev.unidades_alternativas || []).map((u) => ({
-        id: String(u?.id || '').trim() || '',
-        unidade: normalizeSigla(u?.unidade) || '',
-        rotulo: String(u?.rotulo || '').trim().toUpperCase(),
-      })).filter((u) => u.unidade);
-      const validSet = new Set([principal, ...alternativasNormalizadas.map((u) => u.unidade)]);
+      const rawAlts = Array.isArray(prev.unidades_alternativas) ? prev.unidades_alternativas : [];
+      const alternativasNormalizadas = normalizeAlternativas(rawAlts);
+      const meta = alternativasNormalizadas
+        .map((u) => ({
+          id: String(u?.id || '').trim(),
+          unidade: normalizeSigla(u?.unidade) || '',
+          rotulo: String(u?.rotulo || '').trim().toUpperCase(),
+        }))
+        .filter((u) => u.unidade);
+
+      const validSet = new Set([principal, ...meta.map((u) => u.unidade)]);
+
       const resolverUnidadeValida = (valor) => {
         const normalizado = normalizeSigla(valor) || String(valor || '').trim().toUpperCase();
         if (!normalizado) return '';
         if (validSet.has(normalizado)) return normalizado;
         const valorRotulo = String(valor || '').trim().toUpperCase();
-        const porRotulo = alternativasNormalizadas.find((u) => u.rotulo && u.rotulo === valorRotulo);
+        const porRotulo = meta.find((x) => x.rotulo && x.rotulo === valorRotulo);
         return porRotulo?.unidade || '';
       };
-      const idResolvedSigla = (() => {
-        const cid = String(prev.unidade_comercial_id || '').trim();
-        if (!cid || cid === 'primary' || cid === 'principal') return '';
-        const row = alternativasNormalizadas.find((u) => String(u?.id || '').trim() === cid);
-        if (!row?.unidade) return '';
-        return normalizeSigla(row.unidade) || String(row.unidade || '').trim().toUpperCase();
-      })();
-      const showComercial = normalizeSigla(
-        prev.unidade_apresentacao_default || prev.unidade_show_comercial || idResolvedSigla || '',
-      ) || principal;
-      const showComercialValido = resolverUnidadeValida(showComercial) || principal;
-      const comercialId = showComercialValido === principal
-        ? 'primary'
-        : (alternativasNormalizadas.find((u) => u.unidade === showComercialValido)?.id || '');
+
+      const cid = String(prev.unidade_comercial_id || '').trim();
+      let idResolvedSigla = '';
+      if (cid && cid !== 'primary' && cid !== 'principal') {
+        const metaRow = meta.find((u) => u.id === cid);
+        idResolvedSigla = metaRow?.unidade || '';
+      }
+
+      const fromFields = normalizeSigla(prev.unidade_apresentacao_default || prev.unidade_show_comercial) || '';
+      const fieldResolved = resolverUnidadeValida(fromFields);
+
+      let showComercialValido = fieldResolved || resolverUnidadeValida(idResolvedSigla) || principal;
+      if (!validSet.has(showComercialValido)) showComercialValido = principal;
+
+      let comercialId = 'primary';
+      if (showComercialValido === principal) {
+        comercialId = 'primary';
+      } else {
+        const candidates = meta.filter((u) => u.unidade === showComercialValido);
+        if (cid && cid !== 'primary' && cid !== 'principal') {
+          const still = candidates.find((c) => c.id === cid);
+          if (still) comercialId = cid;
+          else if (candidates.length) comercialId = candidates[0].id;
+          else comercialId = 'primary';
+        } else if (candidates.length) {
+          comercialId = candidates[0].id;
+        } else {
+          comercialId = 'primary';
+        }
+      }
+
+      if (cid && cid !== 'primary' && cid !== 'principal' && !rawAlts.some((u) => String(u?.id || '').trim() === cid)) {
+        comercialId = showComercialValido === principal ? 'primary' : (meta.find((u) => u.unidade === showComercialValido)?.id || 'primary');
+      }
+
       const showLogisticoValido = showComercialValido;
+
       if (
         prev.unidade_show_comercial === showComercialValido &&
         prev.unidade_show_logistica === showLogisticoValido &&
         prev.unidade_apresentacao_default === showComercialValido &&
-        prev.unidade_comercial_id === comercialId
-      ) return prev;
+        String(prev.unidade_comercial_id || '').trim() === String(comercialId)
+      ) {
+        return prev;
+      }
+
       return {
         ...prev,
         unidade_show_comercial: showComercialValido,
@@ -376,7 +506,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade_comercial_id: comercialId,
       };
     });
-  }, [formData.unidade_principal, formData.unidade_apresentacao_default, formData.unidade_comercial_id, unidadesAlternativasLayoutKey]);
+  }, [formData.unidade_principal, unidadesAlternativasLayoutKey]);
 
 
 
@@ -438,7 +568,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const applyProdutoSimilar = (produtoBase) => {
     if (!produtoBase) return;
 
-    const nextData = {
+    const patch = {
       ...produtoBase,
       id: undefined,
       codigo_interno: '',
@@ -449,15 +579,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       estoque_atual: 0,
       nome: produtoBase.nome || '',
       tags: Array.isArray(produtoBase.tags) ? produtoBase.tags : [],
-      unidades_alternativas: Array.isArray(produtoBase.unidades_alternativas) ? produtoBase.unidades_alternativas : [],
-        unidade_show_comercial: produtoBase.unidade_show_comercial || '',
-        unidade_show_logistica: produtoBase.unidade_show_logistica || '',
-      unidade_apresentacao_default: produtoBase.unidade_apresentacao_default || '',
-      unidade_show_ativa: typeof produtoBase.unidade_show_ativa === 'boolean' ? produtoBase.unidade_show_ativa : true,
-      ativo: produtoBase.ativo !== false,
     };
 
-    setFormData(nextData);
+    setFormData(buildFormDataFromProduto(patch));
     setSimilarSearch(produtoBase.nome || '');
     setTemAlteracoesNaoSalvas(true);
     toast({
@@ -607,7 +731,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       }
       if (!comercialAplicado && comercialPreferenciaSigla && comercialPreferenciaSigla !== unidadePrincipalSigla) {
         toastSaveBlocked(
-          'Unidade comercial não reconhecida',
+          'Unidade de vitrine não reconhecida',
           'A unidade de vitrine precisa ser a sigla da base (UN, M2, KG…) ou de uma linha ativa em "Outras embalagens". Inclua a sigla correspondente, confira se a linha não está inativa ou use o mesmo rótulo cadastrado na alternativa.',
         );
         return;
@@ -735,9 +859,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 },
               });
               toast({
-                title: 'Unidades: resposta diferente do enviado',
+                title: 'Embalagens: resposta diferente do enviado',
                 description:
-                  'O servidor devolveu outra combinação de unidade comercial. A tela mantém o pacote que você acabou de gravar; confira o cadastro no painel se isto se repetir.',
+                  'O servidor devolveu outra combinação de unidade de vitrine. A tela mantém o pacote que você acabou de gravar; confira o cadastro no painel se isto se repetir.',
                 duration: 9000,
                 className: 'bg-amber-50 text-amber-950 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-800',
               });
@@ -819,7 +943,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               <h2 className="text-lg md:text-xl font-medium text-gray-800 dark:text-gray-200 truncate">
                 {produto?.id ? 'Editar:' : 'Novo Produto'}
               </h2>
-              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1 truncate">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
                 {formData.nome || 'Sem nome'}
               </p>
             </div>
@@ -867,12 +991,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <TabsList className="grid grid-cols-5 w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex-shrink-0">
           <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <Package className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Características</span>
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Identificação</span>
           </TabsTrigger>
           <TabsTrigger value="comercial" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
@@ -880,7 +1003,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           </TabsTrigger>
           <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <Warehouse className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Logística</span>
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Embalagens e logística</span>
           </TabsTrigger>
           <TabsTrigger value="historico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm" disabled={!produto?.id}>
             <History className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
@@ -888,12 +1011,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           </TabsTrigger>
           <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <Settings className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Sistema</span>
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Avançado</span>
           </TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8">
-          {/* ABA DESCRITIVO */}
+          {/* ABA IDENTIFICAÇÃO — `descritivo` no estado interno das abas */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
             {!produto?.id && (
               <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5 shadow-sm space-y-3">
@@ -923,7 +1046,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               </div>
             )}
 
-            {/* Image Upload */}
             <div className="flex flex-col sm:flex-row gap-4 items-start p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="w-28 h-28 shrink-0 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
                 {formData.imagem_url ? (
@@ -1025,7 +1147,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Código Interno</Label>
                 <Input 
                   value={formData.codigo_interno} 
-                  placeholder="Automático"
+                  placeholder="Gerado ao salvar"
                   disabled 
                   className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
                 />
@@ -1043,7 +1165,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
 
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Categoria</Label>
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Categoria (opcional)</Label>
               <Select value={formData.categoria_id} onValueChange={v => handleChange('categoria_id', v)}>
                 <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
                   <SelectValue placeholder="Selecione a categoria..." />
@@ -1057,7 +1179,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
 
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Fornecedor Padrão</Label>
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Fornecedor padrão (opcional)</Label>
               <Select value={formData.fornecedor_padrao_id} onValueChange={v => {
                 const forn = fornecedores.find(f => f.id === v);
                 handleChange('fornecedor_padrao_id', v);
@@ -1113,7 +1235,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
           </TabsContent>
 
-          {/* ABA COMERCIAL */}
+          {/* ABA COMERCIAL — KPIs primeiro, como no A29 */}
           <TabsContent value="comercial" className="mt-0">
             {/* KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-gray-200 dark:border-gray-700">
@@ -1122,7 +1244,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</div>
               </div>
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Preço Venda</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Preço de venda</div>
                 <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoVendaCalculado)}</div>
               </div>
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
@@ -1184,18 +1306,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </div>
               </div>
 
-              {/* Preço de Venda */}
+              {/* Preço de venda */}
               <div className="relative">
                 <div className="flex items-center gap-2 mb-4">
                   <ChevronRight className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preço de Venda</h3>
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preço de venda</h3>
                 </div>
 
                 <div className="space-y-1">
                   <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <span className="text-gray-400"><DollarSign className="w-3.5 h-3.5" /></span>
-                      <span className="whitespace-nowrap">Preço de Venda</span>
+                      <span className="whitespace-nowrap">Preço de venda</span>
                     </div>
                     <div className="flex items-center justify-end gap-2">
                       <CurrencyInput
@@ -1266,22 +1388,22 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             </div>
           </TabsContent>
 
-          {/* ABA LOGÍSTICO */}
+          {/* ABA LOGÍSTICA — medidas, unidade base com «Vitrine», embalagens, lista/avisos, níveis de estoque */}
           <TabsContent value="logistico" className="space-y-6 mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Dimensões (AxLxP cm)</Label>
-                <Input 
-                  value={formData.dimensoes_cm} 
-                  onChange={e => handleChange('dimensoes_cm', e.target.value)} 
-                  placeholder="30x20x15" 
+                <Input
+                  value={formData.dimensoes_cm}
+                  onChange={(e) => handleChange('dimensoes_cm', e.target.value)}
+                  placeholder="30x20x15"
                   className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
 
               <div>
                 <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Volume (L)</Label>
-                <Input 
+                <Input
                   value={formData.volume_cm3 ? formatarNumero(formData.volume_cm3 / 1000) : '0,00'}
                   disabled
                   placeholder="Calculado"
@@ -1291,11 +1413,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
               <div>
                 <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
-                <Input 
-                  type="number" 
+                <Input
+                  type="number"
                   step="0.001"
-                  value={formData.peso_kg} 
-                  onChange={e => handleChange('peso_kg', parseFloat(e.target.value) || 0)} 
+                  value={formData.peso_kg}
+                  onChange={(e) => handleChange('peso_kg', parseFloat(e.target.value) || 0)}
                   placeholder="0,000"
                   className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
@@ -1303,155 +1425,162 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
               <div>
                 <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Tempo Reposição (dias)</Label>
-                <Input 
+                <Input
                   type="number"
-                  value={formData.tempo_reposicao_dias} 
-                  onChange={e => handleChange('tempo_reposicao_dias', parseInt(e.target.value) || 0)} 
+                  value={formData.tempo_reposicao_dias}
+                  onChange={(e) => handleChange('tempo_reposicao_dias', parseInt(e.target.value, 10) || 0)}
                   placeholder="0"
                   className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
+
+              <div className="md:col-span-2">
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade base (fator 1)</Label>
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                  <Input
+                    value={formData.unidade_principal}
+                    onChange={(e) => handleChange('unidade_principal', e.target.value.toUpperCase())}
+                    placeholder="UN, M2, KG…"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200 flex-1 min-w-0"
+                  />
+                  <div className="flex items-center gap-2 shrink-0 pb-1 rounded-full bg-gray-100/90 dark:bg-gray-900/50 px-3 py-1.5 border border-gray-200/80 dark:border-gray-600/80">
+                    <Switch
+                      id="catalogo-unidade-principal"
+                      className="scale-90"
+                      checked={catalogoNaBase}
+                      disabled={formData.unidade_show_ativa === false}
+                      title="Vitrine na unidade base (fator 1). Desligue para passar a vitrine à primeira embalagem com interruptor «Vitrine»."
+                      onCheckedChange={(checked) => {
+                        const p = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
+                        if (checked) {
+                          applyCommercialUnitSelection(p);
+                          return;
+                        }
+                        const alts = normalizeAlternativas(formData.unidades_alternativas || []);
+                        const first = alts.find((u) => String(u?.unidade || '').trim());
+                        if (first?.unidade) applyCommercialUnitSelection(first.unidade);
+                      }}
+                    />
+                    <Label
+                      htmlFor="catalogo-unidade-principal"
+                      className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer whitespace-nowrap select-none"
+                    >
+                      Vitrine
+                    </Label>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
+                  Coluna <code className="text-[10px] rounded bg-gray-100 dark:bg-gray-900 px-1 py-0.5">unidade_principal</code>
+                  {' '}— custo, preço padrão e stock contabilizados na base (eixo fator&nbsp;1).
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40 p-4 md:p-6 space-y-8">
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5 space-y-4">
               <div>
-                <div className="flex flex-wrap items-center gap-2 gap-y-1 mb-1">
-                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
-                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Embalagem e unidades</h3>
-                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
-                    Modelo híbrido VarejoSync
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 pl-6 md:pl-6 max-w-3xl leading-relaxed">
-                  Parte dos dados fica em <span className="font-medium text-gray-700 dark:text-gray-300">colunas do cadastro do produto</span>
-                  {' '}(ex.: unidade base, vitrine). Outra parte fica no{' '}
-                  <span className="font-medium text-gray-700 dark:text-gray-300">array</span>{' '}
-                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidades_alternativas</code>
-                  . Ao salvar, o sistema ainda monta o espelho canónico <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidades[]</code> para validação — sem mudar a sua estratégia de BD.
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Embalagens e unidades de venda</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
+                  Alterações ficam no formulário até guardar o produto (ícone de disquete no topo).
+                  «Vitrine» define a sigla de exibição em listagens e fluxos de venda (uma de cada vez: base ou embalagem).
+                  Ao salvar, o espelho canónico <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidades[]</code> valida o pacote sem alterar os nomes de colunas enviados ao Base44.
                 </p>
               </div>
 
-              <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Box className="w-4 h-4 text-gray-500 shrink-0" />
-                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Unidade base (fator 1)</h4>
-                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
-                    Coluna: unidade_principal
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed">
-                  É a unidade em que <span className="font-medium text-gray-700 dark:text-gray-300">custo</span>,{' '}
-                  <span className="font-medium text-gray-700 dark:text-gray-300">preço padrão</span> e{' '}
-                  <span className="font-medium text-gray-700 dark:text-gray-300">estoque</span> são contabilizados internamente (eixo fator&nbsp;1).
-                </p>
-                <Input 
-                  value={formData.unidade_principal} 
-                  onChange={e => handleChange('unidade_principal', e.target.value.toUpperCase())} 
-                  placeholder="UN, M2, KG…" 
-                  className="bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl max-w-md h-11 text-sm text-gray-800 dark:text-gray-200"
+              <div className="flex items-start gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+                <Checkbox
+                  id="unidade_show_ativa"
+                  checked={formData.unidade_show_ativa !== false}
+                  onCheckedChange={(v) => handleChange('unidade_show_ativa', v !== false)}
+                  className="mt-0.5"
                 />
-              </div>
-
-              <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Layers className="w-4 h-4 text-gray-500 shrink-0" />
-                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Outras embalagens / unidades de venda</h4>
-                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
-                    Array: unidades_alternativas
-                  </Badge>
-                </div>
-                <UnidadesAlternativasEditor
-                  unidades={formData.unidades_alternativas || []}
-                  unidadePrincipal={formData.unidade_principal || 'UN'}
-                  onChange={(value) => handleChange('unidades_alternativas', value)}
-                />
-              </div>
-
-              <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Warehouse className="w-4 h-4 text-gray-500 shrink-0" />
-                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Vitrine no PDV e telas</h4>
-                  <Badge variant="outline" className="text-[10px] font-medium border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
-                    Colunas no Produto
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed">
-                  A escolha abaixo grava em{' '}
-                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_apresentacao_default</code>,{' '}
-                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_show_comercial</code>,{' '}
-                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_comercial_id</code>
-                  {' '}e espelha logística em{' '}
-                  <code className="rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5 text-[10px]">unidade_show_logistica</code>.
-                </p>
-
-                <div className="rounded-xl bg-white dark:bg-gray-900/80 p-4 shadow-sm space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="unidade_show_ativa"
-                      checked={formData.unidade_show_ativa !== false}
-                      onCheckedChange={(v) => handleChange('unidade_show_ativa', v !== false)}
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
-                        Usar unidade comercial no sistema
-                      </Label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Coluna <code className="text-[10px]">unidade_show_ativa</code>. Desligado: listagens e fluxos usam só a base (fator&nbsp;1), sem converter para a unidade de vitrine.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Unidade comercial (sigla)</Label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      Deve ser a sigla da base ou de uma linha do array de alternativas. Ao salvar, o id estável correspondente vai para{' '}
-                      <code className="text-[10px]">unidade_comercial_id</code>.
-                    </p>
-                    <Select
-                      value={comercialSelectValue}
-                      onValueChange={(v) => handleChange('unidade_apresentacao_default', v)}
-                    >
-                      <SelectTrigger className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl max-w-md h-11" disabled={formData.unidade_show_ativa === false}>
-                        <SelectValue placeholder="Selecione a unidade comercial" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {unitOptions.map((sigla) => <SelectItem key={`com-${sigla}`} value={sigla}>{sigla}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    {formData.unidade_show_ativa !== false && (
-                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                        <p>
-                          Pré-visualização (listagens / estoque em show comercial): base{' '}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.base}</span>
-                          {catalogUnitsPreview.base !== catalogUnitsPreview.comercial && (
-                            <>
-                              {' · '}
-                              comercial{' '}
-                              <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.comercial}</span>
-                            </>
-                          )}
-                        </p>
-                        {catalogUnitsPreview.base !== catalogUnitsPreview.comercial &&
-                          catalogUnitsPreview.display?.fator_conversao > 1 && (
-                          <p className="text-[11px]">
-                            Com estoque {formatarNumero(Number(formData.estoque_atual) || 0)} na base, o sistema pode mostrar ~{' '}
-                            {formatarNumero(catalogUnitsPreview.display.quantidade)} {catalogUnitsPreview.display.unidade}.
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-900/40 px-4 py-3">
-                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Unidade logística</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                    No VarejoSync fica <span className="font-medium text-gray-700 dark:text-gray-300">alinhada à comercial</span> ao gravar (coluna{' '}
-                    <code className="text-[10px]">unidade_show_logistica</code>). Não há segundo seletor — evita duas “verdades” divergentes.
+                <div>
+                  <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
+                    Usar unidade de vitrine no catálogo
+                  </Label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Coluna <code className="text-[10px]">unidade_show_ativa</code>. Desligado: listagens usam só a base (fator&nbsp;1), sem converter para a vitrine.
                   </p>
                 </div>
               </div>
+
+              <UnidadesAlternativasEditor
+                unidades={formData.unidades_alternativas || []}
+                unidadePrincipal={formData.unidade_principal || 'UN'}
+                commercialUnitId={formData.unidade_comercial_id}
+                catalogControlsDisabled={formData.unidade_show_ativa === false}
+                onChange={(value) => handleChange('unidades_alternativas', value)}
+                onPickCatalogPrincipal={() =>
+                  applyCommercialUnitSelection(formData.unidade_principal || 'UN')
+                }
+                onPickCatalogRow={(index) => {
+                  const rows = normalizeAlternativas(formData.unidades_alternativas || []);
+                  const row = rows[index];
+                  if (row?.unidade) applyCommercialUnitSelection(row.unidade);
+                }}
+              />
+
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+                <div>
+                  <Label className="text-sm text-gray-700 dark:text-gray-300">Unidade de vitrine (lista)</Label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
+                    Alternativa aos interruptores «Vitrine»; grava{' '}
+                    <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidade_apresentacao_default</code>,{' '}
+                    <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidade_show_comercial</code>,{' '}
+                    <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidade_comercial_id</code>
+                    {' '}e espelha <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidade_show_logistica</code>.
+                    No Postgres do A29 o campo equivalente de negócio é <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidade_exibicao_sigla</code>.
+                  </p>
+                </div>
+                <Select
+                  value={comercialSelectValue}
+                  onValueChange={(v) => applyCommercialUnitSelection(v)}
+                >
+                  <SelectTrigger
+                    className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl max-w-md h-11"
+                    disabled={formData.unidade_show_ativa === false}
+                  >
+                    <SelectValue placeholder="Selecione a sigla da vitrine" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {commercialSelectOptions.map((sigla) => (
+                      <SelectItem key={`com-${sigla}`} value={sigla}>
+                        {sigla}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {commercialSelectWarning ? (
+                  <p className="text-xs text-amber-800 dark:text-amber-200 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 px-3 py-2">
+                    {commercialSelectWarning}
+                  </p>
+                ) : null}
+                {formData.unidade_show_ativa !== false && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                    <p>
+                      Pré-visualização: base{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.base}</span>
+                      {catalogUnitsPreview.base !== catalogUnitsPreview.comercial && (
+                        <>
+                          {' · '}
+                          vitrine{' '}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.comercial}</span>
+                        </>
+                      )}
+                    </p>
+                    {catalogUnitsPreview.base !== catalogUnitsPreview.comercial &&
+                      catalogUnitsPreview.display?.fator_conversao > 1 && (
+                        <p className="text-[11px]">
+                          Com estoque {formatarNumero(Number(formData.estoque_atual) || 0)} na base, o sistema pode mostrar ~{' '}
+                          {formatarNumero(catalogUnitsPreview.display.quantidade)} {catalogUnitsPreview.display.unidade}.
+                        </p>
+                      )}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 px-1 border-t border-gray-200 dark:border-gray-700 pt-3">
+                Sem embalagem extra no catálogo: o sistema usa a unidade base. A lista de siglas é a base + embalagens com sigla preenchida.
+              </p>
             </div>
 
             <div className="border-t pt-6 dark:border-gray-700">
@@ -1459,42 +1588,42 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Mínimo</Label>
-                  <Input 
-                    type="number" 
-                    step="0.0001" 
-                    value={formData.estoque_minimo} 
-                    onChange={e => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)} 
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={formData.estoque_minimo}
+                    onChange={(e) => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
                     className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
                 <div>
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Ideal</Label>
-                  <Input 
-                    type="number" 
-                    step="0.0001" 
-                    value={formData.estoque_ideal} 
-                    onChange={e => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)} 
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={formData.estoque_ideal}
+                    onChange={(e) => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
                     className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
                 <div>
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Máximo</Label>
-                  <Input 
-                    type="number" 
-                    step="0.0001" 
-                    value={formData.estoque_maximo} 
-                    onChange={e => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)} 
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={formData.estoque_maximo}
+                    onChange={(e) => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
                     className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
                 <div>
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Atual (sistema)</Label>
-                  <Input 
-                    type="number" 
-                    value={formData.estoque_atual} 
+                  <Input
+                    type="number"
+                    value={formData.estoque_atual}
                     disabled
                     className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
                   />
@@ -1514,7 +1643,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             />
           </TabsContent>
 
-          {/* ABA SISTEMA */}
+          {/* ABA AVANÇADO — tipo, PDV, rastreio */}
           <TabsContent value="sistema" className="space-y-6 mt-0">
             <div>
               <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Tipo de Produto *</Label>
