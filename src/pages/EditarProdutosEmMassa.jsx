@@ -91,10 +91,13 @@ export default function EditarProdutosEmMassa() {
           const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
           validFields.forEach(field => {
             const valor = dados[field];
-            if (valor === null || valor === undefined) return;
             if (field === 'unidade_vitrine') {
-              dadosAtualizacao[field] = String(valor).trim();
-            } else if (String(valor).trim() !== '') {
+              if (!Object.prototype.hasOwnProperty.call(dados, field)) return;
+              dadosAtualizacao[field] = valor == null ? '' : String(valor).trim();
+              return;
+            }
+            if (valor === null || valor === undefined) return;
+            if (String(valor).trim() !== '') {
               dadosAtualizacao[field] = valor;
             }
           });
@@ -137,15 +140,18 @@ export default function EditarProdutosEmMassa() {
       for (const { id, dados } of parsedEmbalagens.alterados) {
         const dadosAtualizacao = {};
         camposEmb.forEach((field) => {
+          if (!Object.prototype.hasOwnProperty.call(dados, field)) return;
           const valor = dados[field];
-          if (valor === null || valor === undefined) return;
-          if (field === 'unidades_alternativas' && Array.isArray(valor)) {
-            dadosAtualizacao[field] = valor;
-          } else if (field === 'unidade_vitrine') {
-            dadosAtualizacao[field] = String(valor).trim();
-          } else if (field !== 'unidades_alternativas' && String(valor).trim() !== '') {
-            dadosAtualizacao[field] = valor;
+          if (field === 'unidades_alternativas') {
+            if (Array.isArray(valor)) dadosAtualizacao[field] = valor;
+            return;
           }
+          if (field === 'unidade_vitrine') {
+            dadosAtualizacao[field] = valor == null ? '' : String(valor).trim();
+            return;
+          }
+          if (valor === null || valor === undefined) return;
+          if (String(valor).trim() !== '') dadosAtualizacao[field] = valor;
         });
         if (Object.keys(dadosAtualizacao).length > 0) {
           await base44.entities.Produto.update(id, dadosAtualizacao);

@@ -223,6 +223,9 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
 
         const atualPrincipal = normalizeSigla(produto.unidade_principal || 'UN') || 'UN';
+        /** Antes do parse: `emb{2,3}_sigla` são removidos de `dadosExtraidos`; vitrine 0/1 refere-se às colunas Alt.1/Alt.2, não ao array «comprimido» de alternativas (ex.: Alt.1 vazia + Alt.2 preenchida). */
+        const emb2SiglaPlanilha = normalizeSigla(dadosExtraidos.emb2_sigla || '');
+        const emb3SiglaPlanilha = normalizeSigla(dadosExtraidos.emb3_sigla || '');
         const parsed = parseEmbalagensPlanilhaImport(dadosExtraidos, { fallbackPrincipal: atualPrincipal });
         if (parsed.error) {
           erros.push({
@@ -262,8 +265,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         let novoVitrineArmazenada = atualVitrineArmazenada;
 
         if (colVitrineFlagsPresente) {
-          const alt1Sig = novoAlt[0]?.unidade ?? '';
-          const alt2Sig = novoAlt[1]?.unidade ?? '';
+          const alt1Sig = parsed.hadSlotPayload ? emb2SiglaPlanilha : novoAlt[0]?.unidade ?? '';
+          const alt2Sig = parsed.hadSlotPayload ? emb3SiglaPlanilha : novoAlt[1]?.unidade ?? '';
           const vsf = vitrineStoredFromSlotFlags(vitrineFlagSummary.v, principalResolvida, alt1Sig, alt2Sig);
           if (vsf.error) {
             erros.push({
@@ -293,7 +296,13 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const mirrorDiffersFromCadastro = JSON.stringify(syncedAlts) !== JSON.stringify(atualAlt);
         const vitrineArmazenadaMudou =
           colVitrineFlagsPresente && atualVitrineArmazenada !== novoVitrineArmazenada;
-        if (embStructuralChange || mirrorDiffersFromCadastro || vitrineArmazenadaMudou) {
+        /** Valor canónico a gravar (já em forma «armazenada»); evita ignorar linha quando o cadastro tem texto cru redundante (ex.: «UN» na vitrine com base UN) ou sigla não normalizada. */
+        const novoVitrineParaPersistir = colVitrineFlagsPresente ? String(novoVitrineArmazenada ?? '').trim() : '';
+        const rawVitrineCadastro =
+          produto.unidade_vitrine == null ? '' : String(produto.unidade_vitrine).trim();
+        const vitrineRawNecessitaAlinhar =
+          colVitrineFlagsPresente && rawVitrineCadastro !== novoVitrineParaPersistir;
+        if (embStructuralChange || mirrorDiffersFromCadastro || vitrineArmazenadaMudou || vitrineRawNecessitaAlinhar) {
           dados.unidades_alternativas = syncedAlts;
         }
 
@@ -301,7 +310,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const semMudanca =
           atualPrincipal === novoPrincipal
           && atualVitrineArmazenada === novoVitrineArmazenada
-          && JSON.stringify(atualAlt) === JSON.stringify(novoAltFinal);
+          && JSON.stringify(atualAlt) === JSON.stringify(novoAltFinal)
+          && !vitrineRawNecessitaAlinhar;
 
         if (semMudanca) {
           linhasIgnoradasSemMudanca += 1;
@@ -329,7 +339,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       if (alterados.length > 0 || linhasIgnoradasSemMudanca > 0) {
         const partes = [];
         if (alterados.length > 0) partes.push(`${alterados.length} produto(s) com alterações prontas — clique em Confirmar embalagens para gravar no Base44`);
-        if (linhasIgnoradasSemMudanca > 0) partes.push(`${linhasIgnoradasSemMudanca} linha(s) inalteradas ignoradas`);
+        if (linhasIgnoradasSemMudanca > 0) {
+          partes.push(
+            `${linhasIgnoradasSemMudanca} linha(s) ignoradas (cadastro já igual à planilha: unidades, vitrine 0/1 e espelho is_comercial)`,
+          );
+        }
         toast.success(partes.join(' · '));
       } else if (erros.length === 0) {
         toast.info('Nenhuma diferença em relação ao cadastro atual.');
