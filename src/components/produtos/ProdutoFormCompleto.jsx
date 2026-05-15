@@ -71,15 +71,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     let showLogistica = normalizeSigla(produtoData?.unidade_show_logistica) || '';
     let comercialId = String(produtoData?.unidade_comercial_id ?? '').trim();
 
+    // Só preenche lacunas a partir de `unidades[]`: não sobrescrever colunas legadas já
+    // preenchidas — a lista do Base44 por vezes devolve `unidades` com `is_comercial`
+    // desatualizado e isso revertia a vitrine ao reidratar o form.
     if (canonLegacy) {
       const ca = normalizeSigla(canonLegacy.unidade_apresentacao_default);
       const cs = normalizeSigla(canonLegacy.unidade_show_comercial);
       const cl = normalizeSigla(canonLegacy.unidade_show_logistica);
       const cc = String(canonLegacy.unidade_comercial_id ?? '').trim();
-      if (ca) apresentacao = ca;
-      if (cs) showComercial = cs;
-      if (cl) showLogistica = cl;
-      if (cc) comercialId = cc;
+      if (!apresentacao && ca) apresentacao = ca;
+      if (!showComercial && cs) showComercial = cs;
+      if (!showLogistica && cl) showLogistica = cl;
+      if (!comercialId && cc) comercialId = cc;
     }
 
     const comIdNorm = comercialId;
@@ -822,6 +825,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         if (produtoId) {
           const fresh = await base44.entities.Produto.get(produtoId);
           if (fresh) {
+            if (import.meta.env?.DEV) {
+              console.debug('[ProdutoFormCompleto] GET pós-save — vitrine (servidor):', {
+                unidade_apresentacao_default: fresh.unidade_apresentacao_default,
+                unidade_show_comercial: fresh.unidade_show_comercial,
+                unidade_show_logistica: fresh.unidade_show_logistica,
+                unidade_comercial_id: fresh.unidade_comercial_id,
+                unidade_show_ativa: fresh.unidade_show_ativa,
+              });
+            }
             const driftSigKeys = [
               'unidade_apresentacao_default',
               'unidade_show_comercial',
@@ -836,6 +848,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               'unidade_show_comercial',
               'unidade_show_logistica',
               'unidade_comercial_id',
+              'unidade_show_ativa',
             ];
             const drift = driftSigKeys.filter(
               (k) => normalizeSigla(fresh[k]) !== normalizeSigla(produtoData[k]),

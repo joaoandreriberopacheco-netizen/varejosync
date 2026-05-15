@@ -100,9 +100,17 @@ function ProdutosPageContent() {
     setProdutos(safeProdutos);
     setFornecedores(safeFornecedores);
     if (isFormOpen && selectedProduto?.id) {
-      const produtoAtualizado = safeProdutos.find((item) => item?.id === selectedProduto.id);
-      if (produtoAtualizado) {
-        setSelectedProduto(produtoAtualizado);
+      const fromList = safeProdutos.find((item) => item?.id === selectedProduto.id);
+      try {
+        const full = await base44.entities.Produto.get(selectedProduto.id);
+        if (full && typeof full === 'object') {
+          setSelectedProduto(fromList ? { ...fromList, ...full } : full);
+        } else if (fromList) {
+          setSelectedProduto(fromList);
+        }
+      } catch (e) {
+        console.warn('[Produtos] Produto.get ao refrescar edição falhou; usando linha da lista.', e);
+        if (fromList) setSelectedProduto(fromList);
       }
     }
 
@@ -133,6 +141,17 @@ function ProdutosPageContent() {
     setProdutoSimilarBase(null);
     setSelectedProduto(produto);
     setIsFormOpen(true);
+    const id = produto?.id;
+    if (!id) return;
+    base44.entities.Produto.get(id)
+      .then((full) => {
+        if (full && typeof full === 'object') {
+          setSelectedProduto((prev) => (prev?.id === id ? { ...prev, ...full } : prev));
+        }
+      })
+      .catch((e) => {
+        console.warn('[Produtos] Produto.get ao abrir edição falhou.', e);
+      });
   }, []);
 
   const handleAddNew = React.useCallback(() => {
