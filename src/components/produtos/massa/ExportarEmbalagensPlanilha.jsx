@@ -5,8 +5,25 @@ import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
 import { MAX_ALTERNATIVAS_PLANILHA, vitrineArmazenadaDoProduto } from './embalagensPlanilhaUtils';
-import { normalizeAlternativeUnits, normalizeUnitCode } from '@/lib/productUnits';
+import { normalizeUnitCode } from '@/lib/productUnits';
 import { dataHoje } from '@/components/utils/dateUtils';
+
+/**
+ * Lista até N alternativas para a planilha, **incluindo inativas**.
+ * `normalizeAlternativeUnits` filtra `ativo === false`, o que gerava export sem a sigla
+ * ainda referenciada em `unidade_vitrine` — o import rejeitava na validação.
+ */
+function alternativasParaPlanilhaEmbalagens(produto) {
+  const raw = Array.isArray(produto?.unidades_alternativas) ? produto.unidades_alternativas : [];
+  const out = [];
+  for (const item of raw) {
+    const u = normalizeUnitCode(item?.unidade);
+    if (!u) continue;
+    out.push(item);
+    if (out.length >= MAX_ALTERNATIVAS_PLANILHA) break;
+  }
+  return out;
+}
 
 function produtoParaLinhaEmbalagens(p) {
   const principal = normalizeUnitCode(p.unidade_principal) || 'UN';
@@ -18,7 +35,7 @@ function produtoParaLinhaEmbalagens(p) {
     emb1_fator: 1,
     emb1_ajuste: 1,
   };
-  const alts = normalizeAlternativeUnits(p).slice(0, MAX_ALTERNATIVAS_PLANILHA);
+  const alts = alternativasParaPlanilhaEmbalagens(p);
   for (let i = 0; i < MAX_ALTERNATIVAS_PLANILHA; i++) {
     const a = alts[i];
     const n = i + 2;

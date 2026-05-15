@@ -206,9 +206,13 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
         const novoAlt = parsed.hadSlotPayload ? normalizarUnidadesAlternativas(parsed.alternativas) : atualAlt;
 
+        /** Inclui siglas já presentes no cadastro (incl. linhas alternativas inativas): evita falsos positivos quando a planilha antiga omitia-as e `unidade_vitrine` ainda as referenciava. */
+        const siglasExtrasCadastro = (produto.unidades_alternativas || []).map((u) => normalizarTexto(u?.unidade)).filter(Boolean);
+
         const unidadesValidas = new Set([
           principalResolvida,
           ...novoAlt.map((u) => normalizarTexto(u.unidade)),
+          ...siglasExtrasCadastro,
         ].filter(Boolean));
 
         const atualVitrineArmazenada = vitrineArmazenadaDoProduto(produto, atualPrincipal);
