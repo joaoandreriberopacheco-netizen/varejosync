@@ -306,8 +306,8 @@ export function migrateLegacyToUnidades(produto = {}) {
         fator_preco: asNumber(a.fator_preco, 1) || 1,
         ajuste_percentual: asNumber(a.ajuste_percentual, 0),
         preco_venda: asNumber(a.preco_venda, 0),
-        is_principal: false,
-        is_comercial: false,
+        is_principal: a.is_principal === true,
+        is_comercial: a.is_comercial === true,
         ativo: a.ativo !== false,
       };
       if (
@@ -330,26 +330,36 @@ export function migrateLegacyToUnidades(produto = {}) {
     principalSigla
   );
 
+  const markComercial = (target) => {
+    if (!target) return false;
+    unidades.forEach((u) => {
+      u.is_comercial = u.id === target.id;
+    });
+    return true;
+  };
+
   let comercialAplicado = false;
   if (comercialIdLegacy === "primary" || comercialIdLegacy === "principal") {
-    unidades[0].is_comercial = true;
-    comercialAplicado = true;
+    comercialAplicado = markComercial(unidades[0]);
   } else if (comercialIdLegacy) {
-    const byId = unidades.find((u) => u.id === comercialIdLegacy);
-    if (byId) {
-      byId.is_comercial = true;
-      comercialAplicado = true;
-    }
+    comercialAplicado = markComercial(unidades.find((u) => u.id === comercialIdLegacy));
   }
   if (!comercialAplicado && comercialSiglaLegacy) {
-    const bySigla = unidades.find((u) => normalizeSigla(u.sigla) === comercialSiglaLegacy);
-    if (bySigla) {
-      bySigla.is_comercial = true;
-      comercialAplicado = true;
+    comercialAplicado = markComercial(
+      unidades.find((u) => normalizeSigla(u.sigla) === comercialSiglaLegacy),
+    );
+  }
+  if (!comercialAplicado) {
+    const comercialFromJsonAlt = alternativas.find((u) => u?.is_comercial === true);
+    if (comercialFromJsonAlt) {
+      comercialAplicado = markComercial(comercialFromJsonAlt);
+      if (comercialAplicado) {
+        fixes.push("is_comercial recuperado de unidades_alternativas[].is_comercial");
+      }
     }
   }
   if (!comercialAplicado) {
-    unidades[0].is_comercial = true;
+    markComercial(unidades[0]);
     fixes.push("is_comercial fallback para a unidade principal (sem match nos campos legados)");
   }
 
@@ -418,6 +428,8 @@ export function unidadesToLegacyMirror(unidades) {
         preco_venda: asNumber(u.preco_venda, 0),
         rotulo: typeof u.nome === "string" && u.nome.trim() ? u.nome.trim() : normalizeSigla(u.sigla) || "",
         ativo: u.ativo !== false,
+        is_principal: false,
+        is_comercial: u.id === comercial.id,
       };
       if (
         Object.prototype.hasOwnProperty.call(u, "percentual_preco_vs_principal") &&
@@ -440,6 +452,7 @@ export function unidadesToLegacyMirror(unidades) {
     unidades_alternativas: alternativasLegacy,
     unidade_apresentacao_default: comercialSigla,
     unidade_show_comercial: comercialSigla,
+    unidade_show_logistica: comercialSigla,
     unidade_comercial_id: comercialId,
   };
 }

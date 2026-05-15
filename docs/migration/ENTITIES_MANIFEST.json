@@ -590,7 +590,8 @@
           "name": "unidade_principal",
           "type": "string",
           "default": "UN",
-          "pg_type": "TEXT DEFAULT 'UN'"
+          "pg_type": "TEXT DEFAULT 'UN'",
+          "note": "Unidade base (fator 1). Comercial na base: unidade_comercial_id = primary."
         },
         {
           "name": "unidades_por_pacote",
@@ -599,15 +600,51 @@
           "pg_type": "NUMERIC(10,4) DEFAULT 1"
         },
         {
+          "name": "unidades",
+          "type": "array<object>",
+          "pg_type": "JSONB DEFAULT '[]'",
+          "note": "Fonte canónica (opcional no Base44): id, sigla, fator_conversao, is_principal, is_comercial, ativo. O app recompõe unidades_alternativas no save."
+        },
+        {
           "name": "unidades_alternativas",
           "type": "array<object>",
-          "pg_type": "JSONB DEFAULT '[]'"
+          "pg_type": "JSONB DEFAULT '[]'",
+          "note": "Embalagens além da base. Cada item: id (string), unidade (sigla), fator_conversao (number), is_comercial (boolean, exatamente uma true no produto ou vitrine na base via unidade_comercial_id=primary), is_principal (boolean, false nas linhas do array). Opcionais: nome, rotulo, fator_preco, ajuste_percentual, preco_venda, percentual_preco_vs_principal, ativo."
+        },
+        {
+          "name": "unidade_comercial_id",
+          "type": "string",
+          "default": "",
+          "pg_type": "TEXT DEFAULT ''",
+          "note": "ID estável da vitrine: primary (unidade base) ou id de uma linha em unidades_alternativas[]. Gravar sempre com unidade_apresentacao_default."
         },
         {
           "name": "unidade_apresentacao_default",
           "type": "string",
           "default": "",
-          "pg_type": "TEXT DEFAULT ''"
+          "pg_type": "TEXT DEFAULT ''",
+          "note": "Sigla da vitrine (UN, CX, M2…). Espelho desnormalizado; gravar sempre com unidade_comercial_id."
+        },
+        {
+          "name": "unidade_show_comercial",
+          "type": "string",
+          "default": "",
+          "pg_type": "TEXT DEFAULT ''",
+          "note": "Sigla comercial legada (espelho de unidade_apresentacao_default no save)."
+        },
+        {
+          "name": "unidade_show_logistica",
+          "type": "string",
+          "default": "",
+          "pg_type": "TEXT DEFAULT ''",
+          "note": "Sigla para logística/embarques; pode coincidir com a comercial."
+        },
+        {
+          "name": "unidade_show_ativa",
+          "type": "boolean",
+          "default": true,
+          "pg_type": "BOOLEAN DEFAULT TRUE",
+          "note": "false = catálogo/PDV usam só unidade base (fator 1), sem converter para vitrine."
         },
         {
           "name": "controla_serial",

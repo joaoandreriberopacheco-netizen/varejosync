@@ -1,5 +1,7 @@
 # ProdutoEmbalagem (Base44) — opção B
 
+Unidade de vitrine e JSON em `Produto`: [PRODUTO_UNIDADE_EXIBICAO.md](./PRODUTO_UNIDADE_EXIBICAO.md).
+
 Entidade auxiliar **`ProdutoEmbalagem`** ligada ao produto por **`produto_id`** (texto = `Produto.id`). No máximo **3 linhas ativas** por produto: **1 base** (`is_principal`, fator de conversão **1**) + **até 2 adicionais**; entre as ativas, **exatamente uma** com **`is_comercial: true`**.
 
 O código em `varejosync` só usa esta entidade quando a variável de ambiente **`VITE_USE_PRODUTO_EMBALAGEM_ENTITY=true`**. Caso contrário, ou se a entidade ainda não existir no SDK, o fluxo **não altera** o comportamento atual (campos legados em `Produto`).

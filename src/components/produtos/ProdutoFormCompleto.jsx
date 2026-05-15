@@ -60,6 +60,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         unidade: siglaCanon,
         fator_conversao: Number(u?.fator_conversao) || 1,
         fator_preco: fatorPreco > 0 ? fatorPreco : (1 + (ajuste / 100)),
+        is_comercial: u?.is_comercial === true,
+        is_principal: u?.is_principal === true,
       };
     });
 
@@ -92,6 +94,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       if (!comercialId && cc) comercialId = cc;
     }
 
+    const colunasVitrineVazias = !comercialId && !apresentacao && !showComercial;
+    if (colunasVitrineVazias) {
+      const comercialFromJson = normalizedAlts.find((u) => u?.is_comercial === true);
+      if (comercialFromJson?.unidade) {
+        const sig = normalizeSigla(comercialFromJson.unidade) || String(comercialFromJson.unidade || '').trim().toUpperCase();
+        apresentacao = sig;
+        showComercial = sig;
+        if (!showLogistica) showLogistica = sig;
+        comercialId = String(comercialFromJson.id || '').trim();
+      }
+    }
+
     const comIdNorm = comercialId;
     if (comIdNorm && comIdNorm !== 'primary' && comIdNorm !== 'principal') {
       const row = normalizedAlts.find((u) => String(u?.id || '').trim() === comIdNorm);
@@ -103,7 +117,20 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       }
     }
 
-    if (!apresentacao && !showComercial && (comIdNorm === 'primary' || comIdNorm === 'principal' || !comIdNorm)) {
+    // Siglas gravadas apontam alternativa: alinhar id (não fingir vitrine na base só porque id veio "primary").
+    const siglaDasColunas = apresentacao || showComercial;
+    if (siglaDasColunas && siglaDasColunas !== principalFinal) {
+      const altRow = normalizedAlts.find((u) => normalizeSigla(u?.unidade) === siglaDasColunas);
+      if (altRow?.id) {
+        comercialId = String(altRow.id).trim();
+      }
+    }
+
+    if (
+      !apresentacao &&
+      !showComercial &&
+      (comercialId === 'primary' || comercialId === 'principal' || !comercialId)
+    ) {
       apresentacao = principalFinal;
       showComercial = principalFinal;
       if (!showLogistica) showLogistica = principalFinal;
@@ -122,10 +149,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       }
     }
 
+    const vitrineNaBase = comercialId === 'primary' || comercialId === 'principal' || !comercialId;
+    const altsComIsComercial = normalizedAlts.map((u) => ({
+      ...u,
+      is_comercial: !vitrineNaBase && String(u?.id || '').trim() === String(comercialId).trim(),
+    }));
+
     return {
       ...produtoData,
       tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
-      unidades_alternativas: normalizedAlts,
+      unidades_alternativas: altsComIsComercial,
       tipo: produtoData?.tipo || 'Produto',
       valor_compra: produtoData?.valor_compra || 0,
       preco_venda_padrao: produtoData?.preco_venda_padrao || 0,
@@ -327,7 +360,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       };
 
       let siglaFinal = resolverUnidadeValida(siglaOuRotuloRaw);
-      if (!siglaFinal) siglaFinal = principal;
+      if (!siglaFinal) {
+        const prevSigla = normalizeSigla(prev.unidade_apresentacao_default || prev.unidade_show_comercial);
+        if (prevSigla && validSet.has(prevSigla)) return prev;
+        siglaFinal = principal;
+      }
 
       let comercialId = 'primary';
       if (siglaFinal !== principal) {
@@ -338,12 +375,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         comercialId = chosen?.id ? String(chosen.id).trim() : 'primary';
       }
 
+      const vitrineNaBase = comercialId === 'primary' || comercialId === 'principal';
+      const altsAtualizadas = alts.map((u) => ({
+        ...u,
+        is_comercial: !vitrineNaBase && String(u?.id || '').trim() === comercialId,
+      }));
+
       const updated = {
         ...prev,
         unidade_apresentacao_default: siglaFinal,
         unidade_show_comercial: siglaFinal,
         unidade_show_logistica: siglaFinal,
         unidade_comercial_id: comercialId,
+        unidades_alternativas: altsAtualizadas,
       };
       saveToHistory(prev);
       return updated;
@@ -422,6 +466,65 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     return siglaOk && idOk;
   }, [formData.unidade_principal, formData.unidade_comercial_id, comercialSelectValue]);
 
+  /** Dados do servidor (prop) divergem entre colunas e JSON — só informativo ao abrir. */
+  const vitrineHydrateWarning = useMemo(() => {
+    if (!produto?.id) return '';
+    const principal = normalizeSigla(produto.unidade_principal) || 'UN';
+    const rawCid = String(produto.unidade_comercial_id || '').trim();
+    const rawAp = normalizeSigla(produto.unidade_apresentacao_default || produto.unidade_show_comercial);
+    const alts = normalizeAlternativas(produto.unidades_alternativas);
+    const jsonCom = alts.find((u) => u?.is_comercial === true);
+    const jsonSigla = jsonCom ? normalizeSigla(jsonCom.unidade) : '';
+    const cidPrimary = !rawCid || rawCid === 'primary' || rawCid === 'principal';
+
+    if (jsonSigla && jsonSigla !== principal && cidPrimary && rawAp === principal) {
+      return `No cadastro gravado, o JSON marca «${jsonSigla}» como vitrine, mas as colunas apontam para a base (${principal}). O formulário segue as colunas; ajuste a vitrine e salve para alinhar tudo.`;
+    }
+    if (rawCid && rawCid !== 'primary' && rawCid !== 'principal' && !alts.some((u) => String(u?.id || '').trim() === rawCid)) {
+      return 'O cadastro gravado referencia um id de embalagem que já não existe. Escolha a vitrine de novo e salve.';
+    }
+    return '';
+  }, [produto?.id, produto?.unidade_principal, produto?.unidade_comercial_id, produto?.unidade_apresentacao_default, produto?.unidade_show_comercial, produto?.unidades_alternativas]);
+
+  /** `resolveUnidadeExibicao` cairia na base apesar da escolha explícita no form — não esconder fallback. */
+  const vitrineResolveFallbackWarning = useMemo(() => {
+    if (formData.unidade_show_ativa === false) return '';
+    const principal = normalizeSigla(formData.unidade_principal || 'UN') || 'UN';
+    const cid = String(formData.unidade_comercial_id || '').trim();
+    const rows = normalizeAlternativas(formData.unidades_alternativas || []);
+    const explicitSigla =
+      normalizeSigla(formData.unidade_apresentacao_default || formData.unidade_show_comercial) || '';
+    const snapshot = {
+      unidade_principal: formData.unidade_principal,
+      unidades_alternativas: rows.map((u) => ({ ...u, ativo: u.ativo !== false })),
+      unidade_apresentacao_default: formData.unidade_apresentacao_default,
+      unidade_show_comercial: formData.unidade_show_comercial,
+      unidade_show_ativa: formData.unidade_show_ativa,
+      unidade_comercial_id: formData.unidade_comercial_id,
+    };
+    const resolved = resolveUnidadeExibicao(snapshot, principal).sigla;
+
+    if (cid && cid !== 'primary' && cid !== 'principal') {
+      const row = rows.find((u) => String(u?.id || '').trim() === cid);
+      const rowSigla = row ? normalizeSigla(row.unidade) : '';
+      if (rowSigla && resolved !== rowSigla) {
+        return `O catálogo usaria «${resolved}», mas o id gravado no formulário aponta para «${rowSigla}». Corrija embalagens ou salve de novo.`;
+      }
+    }
+
+    if (explicitSigla && explicitSigla !== principal && resolved === principal) {
+      return `Com os dados atuais, listagens cairiam na base (${principal}), não em «${explicitSigla}» que você escolheu. Confira se a sigla existe nas embalagens ativas e salve.`;
+    }
+    return '';
+  }, [
+    formData.unidade_principal,
+    formData.unidades_alternativas,
+    formData.unidade_apresentacao_default,
+    formData.unidade_show_comercial,
+    formData.unidade_show_ativa,
+    formData.unidade_comercial_id,
+  ]);
+
   const commercialSelectWarning = useMemo(() => {
     const cid = String(formData.unidade_comercial_id || '').trim();
     if (!cid || cid === 'primary' || cid === 'principal') {
@@ -496,7 +599,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       const fromFields = normalizeSigla(prev.unidade_apresentacao_default || prev.unidade_show_comercial) || '';
       const fieldResolved = resolverUnidadeValida(fromFields);
 
-      let showComercialValido = fieldResolved || resolverUnidadeValida(idResolvedSigla) || principal;
+      const cidOrfao =
+        cid && cid !== 'primary' && cid !== 'principal' && !rawAlts.some((u) => String(u?.id || '').trim() === cid);
+
+      if (cidOrfao && !fieldResolved && !idResolvedSigla) {
+        return prev;
+      }
+
+      let showComercialValido = fieldResolved || resolverUnidadeValida(idResolvedSigla);
+      if (!showComercialValido) showComercialValido = principal;
       if (!validSet.has(showComercialValido)) showComercialValido = principal;
 
       let comercialId = 'primary';
@@ -1554,6 +1665,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
             <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5 space-y-4">
               <div>
+                {/* Princípio vitrine (truth only): formulário = tradução da escolha gravada; fallbacks visíveis. */}
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Embalagens e unidades de venda</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
                   Alterações ficam no formulário até guardar o produto (ícone de disquete no topo).
@@ -1628,6 +1740,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 {commercialSelectWarning ? (
                   <p className="text-xs text-amber-800 dark:text-amber-200 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 px-3 py-2">
                     {commercialSelectWarning}
+                  </p>
+                ) : null}
+                {vitrineHydrateWarning ? (
+                  <p className="text-xs text-amber-800 dark:text-amber-200 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 px-3 py-2">
+                    {vitrineHydrateWarning}
+                  </p>
+                ) : null}
+                {vitrineResolveFallbackWarning ? (
+                  <p className="text-xs text-amber-800 dark:text-amber-200 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 px-3 py-2">
+                    {vitrineResolveFallbackWarning}
                   </p>
                 ) : null}
                 {formData.unidade_show_ativa !== false && (
