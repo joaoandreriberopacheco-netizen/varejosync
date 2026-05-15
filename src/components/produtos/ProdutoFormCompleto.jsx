@@ -16,7 +16,7 @@ import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla, tryLegacyMirrorFromCanonicalUnidades } from '@/lib/productUnitsCrud';
-import { resolvePrimaryFromFactorOne, resolveCommercialUnit, resolveCommercialDisplay } from '@/lib/productUnits';
+import { resolvePrimaryFromFactorOne, resolveUnidadeExibicao, resolveCommercialDisplay } from '@/lib/productUnits';
 import {
   fetchEmbalagensByProdutoId,
   isProdutoEmbalagemEntityFlagOn,
@@ -995,7 +995,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       estoque_atual: formData.estoque_atual,
     };
     const base = resolvePrimaryFromFactorOne(snapshot, formData.unidade_principal || 'UN');
-    const comercial = resolveCommercialUnit(snapshot, base);
+    const comercial = resolveUnidadeExibicao(snapshot, base).sigla;
     const estoqueBase = Number(formData.estoque_atual) || 0;
     const display = resolveCommercialDisplay(snapshot, estoqueBase, base);
     return { base, comercial, display };

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Edit3, Image as ImageIcon } from 'lucide-react';
 import ProductDetailDialog from './ProductDetailDialog';
 import { useToast } from '@/components/ui/use-toast';
-import { pickDefaultSaleUnit, resolveCommercialUnit } from '@/lib/productUnits';
+import { pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 
 export default function AutoShop({ 
   produtos, 
@@ -24,7 +24,7 @@ export default function AutoShop({
   onProceed, 
   onBack 
 }) {
-  const getDisplayUnit = (produto) => pickDefaultSaleUnit(produto, 1) || { unidade: resolveCommercialUnit(produto), valor_unitario: produto?.preco_venda_padrao || 0 };
+  const getDisplayUnit = (produto) => pickDefaultSaleUnit(produto, 1) || { unidade: getUnidadeExibicaoSigla(produto), valor_unitario: produto?.preco_venda_padrao || 0 };
   const [search, setSearch] = useState('');
   
   // Filtros Hierárquicos e Avançados

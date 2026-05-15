@@ -4,41 +4,12 @@ import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCo
 import { gerarRelatorioPedidosComprav2 } from '@/functions/gerarRelatorioPedidosComprav2';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { buildPurchaseUnitOptions, resolveCommercialDisplay } from '@/lib/productUnits';
+import {
+  resolveCommercialDisplay,
+  resolveUnidadeExibicaoParaCompras,
+  buildSnapshotExibicaoComercial,
+} from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
-
-function resolverUnidadePdvParaRelatorio(produtoSnapshot = {}, item = {}, fallback = 'UN') {
-  const opcoes = buildPurchaseUnitOptions(produtoSnapshot);
-  const unidadePrincipal = String(produtoSnapshot?.unidade_principal || fallback || 'UN').trim().toUpperCase();
-  const candidatosRaw = [
-    produtoSnapshot?.unidade_apresentacao_default,
-    item?.unidade_apresentacao_default,
-    produtoSnapshot?.unidade_show_comercial,
-    item?.unidade_show_comercial,
-    item?.unidade_medida,
-    fallback,
-  ]
-    .map((v) => String(v || '').trim().toUpperCase())
-    .filter(Boolean);
-
-  const mapAlias = (raw) => {
-    if (raw === 'CAIXA' || raw === 'CAIXAS') return 'CX';
-    if (raw === 'METRO QUADRADO' || raw === 'M2' || raw === 'M²') return 'M2';
-    if (raw === 'UNIDADE' || raw === 'UNIDADES') return 'UN';
-    return raw;
-  };
-
-  for (const candidato of candidatosRaw) {
-    const alias = mapAlias(candidato);
-    const matchSigla = opcoes.find((opt) => String(opt?.unidade || '').trim().toUpperCase() === alias);
-    if (matchSigla) return matchSigla.unidade;
-    const matchRotulo = opcoes.find((opt) => String(opt?.rotulo || '').trim().toUpperCase() === candidato);
-    if (matchRotulo) return matchRotulo.unidade;
-  }
-
-  const opcaoNaoPrincipal = opcoes.find((opt) => String(opt?.unidade || '').trim().toUpperCase() !== unidadePrincipal);
-  return opcaoNaoPrincipal?.unidade || unidadePrincipal;
-}
 
 function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
   const fonteItens = Array.isArray(pedido?._display_itens)
@@ -50,13 +21,8 @@ function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
     const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
     const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || item?.unidade_principal || 'UN';
     const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || item || {};
-    const pdvResolvido = resolverUnidadePdvParaRelatorio(produtoSnapshot, item, fallback);
-
-    const snapshotForcandoPdv = {
-      ...produtoSnapshot,
-      unidade_show_ativa: true,
-      unidade_apresentacao_default: pdvResolvido,
-    };
+    const pdvResolvido = resolveUnidadeExibicaoParaCompras(produtoSnapshot, item, fallback);
+    const snapshotForcandoPdv = buildSnapshotExibicaoComercial(produtoSnapshot, pdvResolvido);
     const resolvido = resolveCommercialDisplay(snapshotForcandoPdv, quantidadeBase, fallback);
     const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
     const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;

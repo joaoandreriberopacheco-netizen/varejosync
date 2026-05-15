@@ -1,38 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { TrendingUp, TrendingDown, Package, Loader2 } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
-import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-
-function normalizarItemCompra(item, produto = null) {
-  const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
-  const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
-  const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
-  const snapshot = produto || item?._produto || item || {};
-  const unidadeFallback = item?.unidade_medida || snapshot?.unidade_principal || 'UN';
-  const resolvido = resolveCommercialDisplay(snapshot, quantidadeBase, unidadeFallback);
-  const quantidadeShow = Number(resolvido?.quantidade ?? 0) || 0;
-  const divisor = quantidadeShow > 0 ? quantidadeShow : quantidadeAtual > 0 ? quantidadeAtual : 1;
-  const custoTotal = Number(item?.custo_calculado_total ?? ((Number(item?.custo_calculado ?? 0) || 0) * quantidadeAtual)) || 0;
-  const freteTotal = Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? item?.valor_frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
-  const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
-  const totalItem = Number(item?.valor_total_item ?? item?.total ?? ((Number(item?.valor_unitario_compra ?? 0) || 0) * quantidadeAtual)) || 0;
-
-  return {
-    ...item,
-    unidade_medida: resolvido?.unidade || unidadeFallback,
-    quantidade: quantidadeShow || quantidadeAtual,
-    valor_unitario_compra: totalItem / divisor,
-    frete_unitario: freteTotal / divisor,
-    custo_outros: outrosTotal / divisor,
-    custo_calculado: custoTotal / divisor,
-    valor_total_item: totalItem,
-    custo_total_item: custoTotal,
-  };
-}
 
 const VariacaoIndicador = ({ valor }) => {
   if (valor === 0 || valor === null || valor === undefined) return null;
@@ -114,7 +87,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
       {/* Itens — cards mobile-first, sem tabela horizontal */}
       <div className="space-y-2">
         {itens_consolidados.map((rawItem, idx) => {
-          const item = normalizarItemCompra(rawItem, produtosMap[rawItem?.produto_id]);
+          const item = normalizeItemCompraParaExibicao(rawItem, produtosMap[rawItem?.produto_id]);
           return (
           <div key={idx} className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
             {/* Nome do produto */}

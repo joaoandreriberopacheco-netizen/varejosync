@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
-import { normalizeAlternativeUnits, normalizeUnitCode } from '@/lib/productUnits';
+import { normalizeAlternativeUnits, normalizeUnitCode, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 function getAlternativasRaw(produto) {
@@ -65,8 +65,7 @@ function produtoParaLinhaEmbalagens(p) {
     row[`emb${n}_fator`] = a?.fator_conversao ?? '';
     row[`emb${n}_ajuste`] = a?.ajuste_percentual ?? '';
   }
-  const unidadeComercial = normalizeUnitCode(p.unidade_apresentacao_default || p.unidade_show_comercial || principal) || principal;
-  row.unidade_apresentacao_default = unidadeComercial;
+  row.unidade_apresentacao_default = getUnidadeExibicaoSigla(p, principal);
   row.embalagens_alternativas_contexto = montarContextoAlternativas(p, principal, alts);
   return row;
 }

@@ -180,50 +180,96 @@ export function buildSaleUnitOptions(product, priceMultiplier = 1) {
   return dedupeUnits([principal, ...alternatives]);
 }
 
-export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
-  const options = buildSaleUnitOptions(product, priceMultiplier);
-  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
-  if (!isShowUnitEnabled(product)) {
-    return options.find((o) => o.unidade === principalResolvida) || options[0] || null;
-  }
-  const prioridades = [
-    product?.unidade_apresentacao_default,
-    product?.unidade_show_comercial,
-    principalResolvida,
-  ];
-  for (const pref of prioridades) {
-    const normalized = String(pref || "").trim().toUpperCase();
-    if (!normalized) continue;
-    const match = options.find((o) => o.unidade === normalized);
-    if (match) return match;
-  }
-  return options[0] || null;
-}
-
-export function resolveCommercialUnit(product, fallbackUnit = "UN") {
+/**
+ * Fonte única: qual embalagem o catálogo, PDV e relatórios exibem.
+ * Prioridade: `unidade_comercial_id` → siglas de vitrine → unidade principal (fator-1).
+ */
+export function resolveUnidadeExibicao(product, fallbackUnit = "UN") {
   const options = buildSaleUnitOptions(product);
-  if (!options.length) return normalizeUnitCode(fallbackUnit) || "UN";
   const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || fallbackUnit);
-  if (!isShowUnitEnabled(product)) {
-    return principalResolvida || normalizeUnitCode(fallbackUnit) || "UN";
+  const fallbackSigla = normalizeUnitCode(fallbackUnit) || "UN";
+
+  if (!options.length) {
+    return {
+      sigla: principalResolvida || fallbackSigla,
+      id: "primary",
+      option: null,
+      vitrineAtiva: isShowUnitEnabled(product),
+    };
   }
-  const validUnits = new Set(options.map((option) => option.unidade));
+
+  if (!isShowUnitEnabled(product)) {
+    const principalOpt =
+      options.find((o) => o.unidade === principalResolvida) ||
+      options.find((o) => o.is_primary) ||
+      options[0];
+    return {
+      sigla: principalResolvida || principalOpt?.unidade || fallbackSigla,
+      id: principalOpt?.id || "primary",
+      option: principalOpt || null,
+      vitrineAtiva: false,
+    };
+  }
+
+  const validBySigla = new Map(options.map((o) => [o.unidade, o]));
   const comercialId = String(product?.unidade_comercial_id || "").trim();
   if (comercialId) {
-    const byId = options.find((option) => String(option.id || "") === comercialId);
-    if (byId?.unidade) return byId.unidade;
+    const byId = options.find((o) => String(o.id || "") === comercialId);
+    if (byId?.unidade) {
+      return {
+        sigla: byId.unidade,
+        id: byId.id || comercialId,
+        option: byId,
+        vitrineAtiva: true,
+      };
+    }
   }
-  const priorities = [
-    product?.unidade_apresentacao_default,
-    product?.unidade_show_comercial,
-    principalResolvida,
-    fallbackUnit,
-  ];
-  for (const priority of priorities) {
-    const normalized = normalizeUnitCode(priority);
-    if (normalized && validUnits.has(normalized)) return normalized;
+
+  for (const pref of [product?.unidade_apresentacao_default, product?.unidade_show_comercial]) {
+    const normalized = normalizeUnitCode(pref);
+    if (!normalized || !validBySigla.has(normalized)) continue;
+    const opt = validBySigla.get(normalized);
+    return {
+      sigla: normalized,
+      id: opt?.id || (opt?.is_primary ? "primary" : normalized),
+      option: opt,
+      vitrineAtiva: true,
+    };
   }
-  return options[0]?.unidade || normalizeUnitCode(fallbackUnit) || "UN";
+
+  const principalNorm = normalizeUnitCode(principalResolvida);
+  const principalOpt =
+    validBySigla.get(principalNorm) ||
+    options.find((o) => o.is_primary) ||
+    options[0];
+  return {
+    sigla: principalOpt?.unidade || principalNorm || fallbackSigla,
+    id: principalOpt?.id || "primary",
+    option: principalOpt || null,
+    vitrineAtiva: true,
+  };
+}
+
+export function getUnidadeExibicaoSigla(product, fallbackUnit = "UN") {
+  return resolveUnidadeExibicao(product, fallbackUnit).sigla;
+}
+
+export function getUnidadeExibicaoId(product, fallbackUnit = "UN") {
+  return resolveUnidadeExibicao(product, fallbackUnit).id;
+}
+
+export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
+  const options = buildSaleUnitOptions(product, priceMultiplier);
+  if (!options.length) return null;
+  const exib = resolveUnidadeExibicao(product, options[0]?.unidade || "UN");
+  const match = options.find((o) => o.unidade === exib.sigla);
+  if (match) return match;
+  return options.find((o) => o.is_primary) || options[0] || null;
+}
+
+/** @deprecated Prefer `getUnidadeExibicaoSigla` — mantido como alias estável. */
+export function resolveCommercialUnit(product, fallbackUnit = "UN") {
+  return getUnidadeExibicaoSigla(product, fallbackUnit);
 }
 
 export function buildPurchaseUnitOptions(product) {
@@ -276,22 +322,11 @@ export function buildPurchaseUnitOptions(product) {
 
 export function pickDefaultPurchaseUnit(product) {
   const options = buildPurchaseUnitOptions(product);
-  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
-  if (!isShowUnitEnabled(product)) {
-    return options.find((o) => o.unidade === principalResolvida) || options[0] || null;
-  }
-  const prioridades = [
-    product?.unidade_apresentacao_default,
-    product?.unidade_show_comercial,
-    principalResolvida,
-  ];
-  for (const pref of prioridades) {
-    const normalized = String(pref || "").trim().toUpperCase();
-    if (!normalized) continue;
-    const match = options.find((o) => o.unidade === normalized);
-    if (match) return match;
-  }
-  return options[0] || null;
+  if (!options.length) return null;
+  const exib = resolveUnidadeExibicao(product, options[0]?.unidade || "UN");
+  const match = options.find((o) => o.unidade === exib.sigla);
+  if (match) return match;
+  return options.find((o) => o.is_primary) || options[0] || null;
 }
 
 /** Custo total por unidade base (catálogo / TreeGrid). */
@@ -331,8 +366,9 @@ export function custoDisplayScale(product) {
  * Preço de venda, custo e margens na embalagem comercial (alinha catálogo ao A29 / PDV).
  */
 export function getCatalogoComercialView(produto) {
+  const exib = resolveUnidadeExibicao(produto);
   const sale = pickDefaultSaleUnit(produto, 1);
-  const siglaComercial = normalizeUnitCode(sale?.unidade || produto?.unidade_principal || "UN");
+  const siglaComercial = normalizeUnitCode(sale?.unidade || exib.sigla || produto?.unidade_principal || "UN");
   const precoVenda = normalizeNumber(sale?.valor_unitario, normalizeNumber(produto?.preco_venda_padrao, 0));
 
   const custoUnitBase = resolveCustoTotalUnitBaseProduto(produto);
@@ -643,8 +679,92 @@ export function getUnidadeBySiglaCanonical(produto = {}, sigla = "") {
   };
 }
 
+/**
+ * Unidade comercial para relatórios/cards de compras (vitrine + hints da linha do pedido).
+ * Usa `resolveUnidadeExibicao` quando o produto tem embalagens; senão casa siglas nas opções de compra.
+ */
+export function resolveUnidadeExibicaoParaCompras(produto = {}, item = {}, fallbackUnit = "UN") {
+  const opcoes = buildPurchaseUnitOptions(produto);
+  const principal = resolvePrimaryFromFactorOne(produto, fallbackUnit);
+  const fb = normalizeUnitCode(
+    item?.unidade_apresentacao_default ||
+      item?.unidade_medida ||
+      produto?.unidade_apresentacao_default ||
+      fallbackUnit ||
+      principal
+  );
+
+  if (produto && Object.keys(produto).length > 0) {
+    const canon = getUnidadeExibicaoSigla(produto, fb);
+    if (!opcoes.length || opcoes.some((o) => o.unidade === canon)) return canon;
+  }
+
+  const candidatos = [
+    produto?.unidade_apresentacao_default,
+    item?.unidade_apresentacao_default,
+    produto?.unidade_show_comercial,
+    item?.unidade_show_comercial,
+    item?.unidade_medida,
+    fb,
+  ];
+  for (const raw of candidatos) {
+    const u = normalizeUnitCode(raw);
+    if (u && opcoes.some((o) => o.unidade === u)) return u;
+  }
+  const nonPrimary = opcoes.find((o) => o.unidade !== normalizeUnitCode(principal));
+  return nonPrimary?.unidade || principal || fb || "UN";
+}
+
+/** Snapshot com vitrine ativa para `resolveCommercialDisplay` em relatórios de compra. */
+export function buildSnapshotExibicaoComercial(produto = {}, siglaOverride = null) {
+  const sigla =
+    normalizeUnitCode(siglaOverride) ||
+    resolveUnidadeExibicaoParaCompras(produto, {}, produto?.unidade_principal || "UN");
+  return {
+    ...produto,
+    unidade_show_ativa: true,
+    unidade_apresentacao_default: sigla,
+    unidade_show_comercial: sigla,
+  };
+}
+
+/** Normaliza quantidade/unidade de linha de pedido para exibição em relatórios consolidados. */
+export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
+  const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
+  const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
+  const quantidadeBase = Number(item?.quantidade_base ?? quantidadeAtual * fatorAtual) || 0;
+  const snapshot = produto || item?._produto || item || {};
+  const fallback = item?.unidade_medida || snapshot?.unidade_principal || "UN";
+  const snap = buildSnapshotExibicaoComercial(
+    snapshot,
+    produto ? resolveUnidadeExibicaoParaCompras(snapshot, item, fallback) : null
+  );
+  const resolvido = resolveCommercialDisplay(snap, quantidadeBase, fallback);
+  const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
+  const divisor = quantidadeShow > 0 ? quantidadeShow : quantidadeAtual > 0 ? quantidadeAtual : 1;
+  const custoTotal =
+    Number(item?.custo_calculado_total ?? (Number(item?.custo_calculado ?? 0) * quantidadeAtual)) || 0;
+  const freteTotal =
+    Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? item?.valor_frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
+  const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
+  const totalItem =
+    Number(item?.valor_total_item ?? item?.total ?? (Number(item?.valor_unitario_compra ?? 0) * quantidadeAtual)) || 0;
+
+  return {
+    ...item,
+    unidade_medida: resolvido?.unidade || fallback,
+    quantidade: quantidadeShow || quantidadeAtual,
+    valor_unitario_compra: totalItem / divisor,
+    frete_unitario: freteTotal / divisor,
+    custo_outros: outrosTotal / divisor,
+    custo_calculado: custoTotal / divisor,
+    valor_total_item: totalItem,
+    custo_total_item: custoTotal,
+  };
+}
+
 export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
-  const options = buildSaleUnitOptions(product);
+  const options = buildPurchaseUnitOptions(product);
   if (!options.length) {
     return normalizeUnitCode(fallbackUnit) || "UN";
   }
@@ -652,6 +772,8 @@ export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
 
   const validUnits = new Set(options.map((option) => option.unidade));
   const priorities = [
+    product?.unidade_show_logistica,
+    getUnidadeExibicaoSigla(product, fallbackUnit),
     product?.unidade_apresentacao_default,
     product?.unidade_show_comercial,
     principalResolvida,

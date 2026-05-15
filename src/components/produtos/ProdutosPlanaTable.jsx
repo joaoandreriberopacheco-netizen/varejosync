@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
-import { formatEstoqueApresentacao, resolveCommercialUnit, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
+import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 
 const headMap = {
   status: 'Status',
@@ -196,12 +196,12 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 })()}
                 {visibleColumns.includes('show_comercial') && (
                   <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    {resolveCommercialUnit(produto, produto.unidade_principal || 'UN')}
+                    {getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN')}
                   </TableCell>
                 )}
                 {visibleColumns.includes('show_logistica') && (
                   <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    {(produto.unidade_exibicao_sigla || resolveCommercialUnit(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}
+                    {(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}
                   </TableCell>
                 )}
               </TableRow>

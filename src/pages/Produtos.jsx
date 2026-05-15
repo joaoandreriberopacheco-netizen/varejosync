@@ -192,8 +192,14 @@ function ProdutosPageContent() {
   };
 
   const handleSave = async (unitSnapshot) => {
-    if (unitSnapshot && unitSnapshot.id) {
+    if (unitSnapshot?.id) {
       justSavedUnitSnapshotRef.current = unitSnapshot;
+      const patchRow = (row) =>
+        row?.id === unitSnapshot.id ? applyJustSavedUnitSnapshot(row, unitSnapshot) : row;
+      setProdutos((prev) => prev.map(patchRow));
+      setSelectedProduto((prev) =>
+        prev?.id === unitSnapshot.id ? applyJustSavedUnitSnapshot(prev, unitSnapshot) : prev
+      );
     }
     try {
       await loadData();

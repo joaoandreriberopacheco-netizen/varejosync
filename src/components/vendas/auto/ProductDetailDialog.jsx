@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, ShoppingCart, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pickDefaultSaleUnit, resolveCommercialUnit } from '@/lib/productUnits';
+import { pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 
 export default function ProductDetailDialog({ isOpen, onClose, product, onConfirm }) {
   const [quantity, setQuantity] = useState(1);
@@ -13,7 +13,7 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
   }, [isOpen]);
 
   if (!product) return null;
-  const displayUnit = pickDefaultSaleUnit(product, 1) || { unidade: resolveCommercialUnit(product), valor_unitario: product.preco_venda_padrao || 0 };
+  const displayUnit = pickDefaultSaleUnit(product, 1) || { unidade: getUnidadeExibicaoSigla(product), valor_unitario: product.preco_venda_padrao || 0 };
 
   const handleIncrement = () => setQuantity(q => q + 1);
   const handleDecrement = () => setQuantity(q => Math.max(1, q - 1));

@@ -16,7 +16,7 @@ import BarcodeScanner from './BarcodeScanner';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWarning';
-import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, resolveCommercialUnit } from '@/lib/productUnits';
+import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -176,7 +176,7 @@ export default function PDVSupermercado() {
 
     const quantidade = parseInt(quantidadeAtual) || 1;
     const defaultOpt = pickDefaultSaleUnit(produtoSelecionado, tabelaPreco?.fator_ajuste || 1) || {
-      unidade: resolveCommercialUnit(produtoSelecionado),
+      unidade: getUnidadeExibicaoSigla(produtoSelecionado),
       fator_conversao: 1,
       valor_unitario: (produtoSelecionado.preco_venda_padrao || 0) * (tabelaPreco?.fator_ajuste || 1)
     };

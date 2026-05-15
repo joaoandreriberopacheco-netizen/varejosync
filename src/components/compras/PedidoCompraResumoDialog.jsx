@@ -1,9 +1,8 @@
-import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Receipt, Truck, FileText, User, CalendarDays, Package } from 'lucide-react';
-import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const formatDate = (value) => {
@@ -17,18 +16,12 @@ const formatDate = (value) => {
 const formatNumber = (value) => (Number(value || 0)).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 function normalizarItemResumo(item) {
-  const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
-  const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
-  const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
-  const fallback = item?.unidade_medida || item?.unidade_principal || 'UN';
-  const resolvido = resolveCommercialDisplay(item?._produto || item || {}, quantidadeBase, fallback);
-  const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
-  const total = Number(item?.total ?? 0) || 0;
-  const unit = quantidadeShow > 0 ? total / quantidadeShow : Number(item?.custo_unitario ?? 0) || 0;
+  const norm = normalizeItemCompraParaExibicao(item, item?._produto || null);
+  const total = Number(item?.total ?? norm.valor_total_item ?? 0) || 0;
+  const q = Number(norm.quantidade ?? 0) || 0;
+  const unit = q > 0 ? total / q : Number(item?.custo_unitario ?? norm.valor_unitario_compra ?? 0) || 0;
   return {
-    ...item,
-    unidade_medida: resolvido?.unidade || fallback,
-    quantidade: quantidadeShow,
+    ...norm,
     custo_unitario: unit,
     total,
   };
