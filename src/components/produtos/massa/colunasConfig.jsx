@@ -130,7 +130,7 @@ for (let n = 1; n <= MAX_EMBALAGENS_PLANILHA; n++) {
 
 
 
-/** ID, referência, base + Alt.1–2 (sigla, fator de conversão, ajuste preço ×) e unidade vitrine. */
+/** ID, referência, base + Alt.1–2 (sigla, fator de conversão, ajuste preço ×) e vitrine 0/1 por slot. */
 
 export const COLUNAS_SOMENTE_EMBALAGENS = [
 
@@ -144,17 +144,49 @@ export const COLUNAS_SOMENTE_EMBALAGENS = [
 
   {
 
-    key: 'unidade_vitrine',
+    key: 'emb1_vitrine',
 
-    label: 'Unidade vitrine',
+    label: 'Base vitrine (0/1)',
 
-    altLabels: ['Unidade comercial (sigla)', 'Unidade Vitrine', 'Unidade vitrine (sigla)'],
+    altLabels: ['Base vitrine'],
 
     editavel: true,
 
-    width: 22,
+    width: 18,
 
-    tipo: 'string',
+    tipo: 'numero',
+
+  },
+
+  {
+
+    key: 'emb2_vitrine',
+
+    label: 'Alt.1 vitrine (0/1)',
+
+    altLabels: ['Alt.1 vitrine'],
+
+    editavel: true,
+
+    width: 18,
+
+    tipo: 'numero',
+
+  },
+
+  {
+
+    key: 'emb3_vitrine',
+
+    label: 'Alt.2 vitrine (0/1)',
+
+    altLabels: ['Alt.2 vitrine'],
+
+    editavel: true,
+
+    width: 18,
+
+    tipo: 'numero',
 
   },
 

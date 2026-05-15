@@ -383,7 +383,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Colunas: <strong>ID</strong>, <strong>Cód. Interno</strong>, <strong>Nome (referência)</strong>; para a <strong>base</strong> e até <strong>Alt.1</strong> e <strong>Alt.2</strong> — <strong>sigla</strong>, <strong>fator de conversão</strong> e <strong>ajuste preço (×)</strong> (multiplicador sobre o preço daquela embalagem; em branco conta como 1). Por fim, <strong>Unidade vitrine</strong>: sigla tal como fica gravada; célula vazia (com embalagens preenchidas) corresponde à base (<code className="text-xs">unidade_principal</code>).
+              Colunas: <strong>ID</strong>, <strong>Cód. Interno</strong>, <strong>Nome (referência)</strong>; para a <strong>base</strong> e até <strong>Alt.1</strong> e <strong>Alt.2</strong> — <strong>sigla</strong>, <strong>fator de conversão</strong> e <strong>ajuste preço (×)</strong> (multiplicador sobre o preço daquela embalagem; em branco conta como 1). Por fim, três colunas numéricas <strong>Base vitrine (0/1)</strong>, <strong>Alt.1 vitrine (0/1)</strong> e <strong>Alt.2 vitrine (0/1)</strong>: em cada linha deve haver exatamente um <strong>1</strong> (vitrine nesse slot) e dois <strong>0</strong>; na exportação, vitrine na base aparece como <code className="text-xs">1</code> só na coluna da base.
             </p>
             <ExportarEmbalagensPlanilha />
           </div>
@@ -391,7 +391,7 @@ export default function EditarProdutosEmMassa() {
           <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
             <StepLabel number={2} label="Subir planilha editada" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Prefira o arquivo gerado no passo anterior. Cada linha é reconhecida pelo <strong>ID</strong> ou pelo <strong>Cód. Interno</strong> (colunas bloqueadas). Alguns <strong>cabeçalhos antigos</strong> ainda são aceites automaticamente onde o importador reconhece o padrão.
+              Prefira o arquivo gerado no passo anterior. Cada linha é reconhecida pelo <strong>ID</strong> ou pelo <strong>Cód. Interno</strong> (colunas bloqueadas). Cabeçalhos antigos de colunas de embalagem ainda podem ser reconhecidos quando o padrão for compatível; o modelo antigo com coluna única «Unidade vitrine» não é mais aceite nesta aba — use as três colunas 0/1 por slot.
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
               O envio só <strong>prepara</strong> as alterações (leitura e validação). Nada é gravado no Base44 até você clicar em <strong>Confirmar embalagens</strong>, quando <code className="text-xs">unidade_principal</code>, <code className="text-xs">unidades_alternativas</code> e <code className="text-xs">unidade_vitrine</code> são atualizados no cadastro.

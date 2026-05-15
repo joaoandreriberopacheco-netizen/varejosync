@@ -10,8 +10,8 @@ import { dataHoje } from '@/components/utils/dateUtils';
 
 /**
  * Lista até N alternativas para a planilha, **incluindo inativas**.
- * `normalizeAlternativeUnits` filtra `ativo === false`, o que gerava export sem a sigla
- * ainda referenciada em `unidade_vitrine` — o import rejeitava na validação.
+ * `normalizeAlternativeUnits` filtra `ativo === false`, o que geraria export sem a sigla
+ * ainda referenciada em `unidade_vitrine` — colunas de vitrine 0/1 por slot precisam dessas siglas.
  */
 function alternativasParaPlanilhaEmbalagens(produto) {
   const raw = Array.isArray(produto?.unidades_alternativas) ? produto.unidades_alternativas : [];
@@ -50,7 +50,21 @@ function produtoParaLinhaEmbalagens(p) {
       row[`emb${n}_ajuste`] = fp;
     }
   }
-  row.unidade_vitrine = vitrineArmazenadaDoProduto(p, principal);
+  const storedArm = vitrineArmazenadaDoProduto(p, principal);
+  const vitrineSiglaNorm =
+    storedArm === '' ? principal : normalizeUnitCode(storedArm) || String(storedArm).trim().toUpperCase();
+  row.emb1_vitrine = 0;
+  row.emb2_vitrine = 0;
+  row.emb3_vitrine = 0;
+  if (vitrineSiglaNorm === principal) {
+    row.emb1_vitrine = 1;
+  } else if (alts[0] && normalizeUnitCode(alts[0].unidade) === vitrineSiglaNorm) {
+    row.emb2_vitrine = 1;
+  } else if (alts[1] && normalizeUnitCode(alts[1].unidade) === vitrineSiglaNorm) {
+    row.emb3_vitrine = 1;
+  } else {
+    row.emb1_vitrine = 1;
+  }
   return row;
 }
 
@@ -103,7 +117,7 @@ export default function ExportarEmbalagensPlanilha() {
           const locked = colConfig && !colConfig.editavel;
           cell.protection = { locked: !!locked };
           if (colConfig?.tipo === 'numero' && cell.value !== '' && cell.value != null) {
-            cell.numFmt = '#,##0.00';
+            cell.numFmt = String(colConfig.key || '').endsWith('_vitrine') ? '0' : '#,##0.00';
           }
         });
       });

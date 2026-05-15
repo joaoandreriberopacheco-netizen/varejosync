@@ -7,9 +7,12 @@ import {
   parseEmbalagensPlanilhaImport,
   mapLegacyVitrineColumn,
   findColunaByHeader,
-  parseVitrineFromRow,
   vitrineArmazenadaDoProduto,
   syncIsComercialOnAlternativas,
+  isLegacyUnidadeVitrinePlanilhaHeader,
+  EMB_VITRINE_FLAG_KEYS,
+  summarizeVitrineSlotFlagsFromRow,
+  vitrineStoredFromSlotFlags,
 } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
@@ -110,10 +113,32 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
       });
 
+      let legacyVitrineColuna = false;
+      headerRow.eachCell((cell) => {
+        const lab = (getCellValue(cell) || '').toString().trim();
+        if (isLegacyUnidadeVitrinePlanilhaHeader(lab)) legacyVitrineColuna = true;
+      });
+      if (legacyVitrineColuna) {
+        const mensagem =
+          'Foi detectada a coluna antiga «Unidade vitrine». Exporte novamente o modelo nesta aba: use as três colunas «Base vitrine (0/1)», «Alt.1 vitrine (0/1)» e «Alt.2 vitrine (0/1)».';
+        toast.error('Modelo de planilha desatualizado', { description: mensagem });
+        onParsed({ alterados: [], erros: [{ linha: 0, mensagem }] });
+        return;
+      }
+
+      const vitrineFlagMappedCount = EMB_VITRINE_FLAG_KEYS.filter((k) => colIndexMap[k]).length;
+      if (vitrineFlagMappedCount > 0 && vitrineFlagMappedCount < EMB_VITRINE_FLAG_KEYS.length) {
+        const mensagem =
+          'Faltam colunas de vitrine no modelo atual: inclua as três colunas «Base vitrine (0/1)», «Alt.1 vitrine (0/1)» e «Alt.2 vitrine (0/1)» (baixe o arquivo modelo novamente nesta aba).';
+        toast.error('Planilha incompleta', { description: mensagem });
+        onParsed({ alterados: [], erros: [{ linha: 0, mensagem }] });
+        return;
+      }
+      const colVitrineFlagsPresente = vitrineFlagMappedCount === EMB_VITRINE_FLAG_KEYS.length;
+
       const alterados = [];
       const erros = [];
       let linhasIgnoradasSemMudanca = 0;
-      const colVitrinePresente = Boolean(colIndexMap.unidade_vitrine);
 
       for (let i = 2; i <= ws.rowCount; i++) {
         const row = ws.getRow(i);
@@ -136,24 +161,41 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           const colNum = colIndexMap[col.key];
           if (!colNum) continue;
           const valorBruto = getCellValue(row.getCell(colNum));
+          /** emb*_vitrine: valor bruto para `summarizeVitrineSlotFlagsFromRow` (vazio = 0); evita parseFloat genérico. */
+          if (EMB_VITRINE_FLAG_KEYS.includes(col.key)) {
+            if (valorBruto !== null && valorBruto !== undefined) {
+              dadosExtraidos[col.key] = valorBruto;
+            }
+            continue;
+          }
           if (!col.editavel) {
             if (valorBruto !== null && valorBruto !== undefined) {
               dadosExtraidos[col.key] = String(valorBruto).trim();
             }
           } else if (col.tipo === 'numero') {
-            const num = parseFloat(valorBruto);
-            if (!Number.isNaN(num)) dadosExtraidos[col.key] = num;
-            else if (valorBruto !== null && valorBruto !== undefined && String(valorBruto).trim() !== '') {
-              erros.push({ linha: i, mensagem: `Linha ${i}: "${col.label}" deve ser numérico.` });
-              erroNaLinha = true;
+            if (valorBruto === true) dadosExtraidos[col.key] = 1;
+            else if (valorBruto === false) dadosExtraidos[col.key] = 0;
+            else {
+              const num = parseFloat(valorBruto);
+              if (!Number.isNaN(num)) dadosExtraidos[col.key] = num;
+              else if (valorBruto !== null && valorBruto !== undefined && String(valorBruto).trim() !== '') {
+                erros.push({ linha: i, mensagem: `Linha ${i}: "${col.label}" deve ser numérico.` });
+                erroNaLinha = true;
+              }
             }
-          } else if (col.key === 'unidade_vitrine' && colVitrinePresente) {
-            dadosExtraidos[col.key] =
-              valorBruto !== null && valorBruto !== undefined ? String(valorBruto).trim() : '';
           } else if (valorBruto !== null && valorBruto !== undefined) {
             dadosExtraidos[col.key] = String(valorBruto).trim();
           }
         }
+
+        const vitrineFlagSummary = summarizeVitrineSlotFlagsFromRow(dadosExtraidos);
+        if (vitrineFlagSummary.error) {
+          erros.push({ linha: i, mensagem: `Linha ${i}: ${vitrineFlagSummary.error}` });
+          erroNaLinha = true;
+        }
+        delete dadosExtraidos.emb1_vitrine;
+        delete dadosExtraidos.emb2_vitrine;
+        delete dadosExtraidos.emb3_vitrine;
 
         mapLegacyVitrineColumn(dadosExtraidos);
 
@@ -185,12 +227,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const temEmb = parsed.hadSlotPayload;
 
         const principalResolvida = parsed.hadSlotPayload ? parsed.principalSigla : atualPrincipal;
-        const vitrineParsed = parseVitrineFromRow(dadosExtraidos, {
-          colPresent: colVitrinePresente,
-          principalSigla: principalResolvida,
-        });
 
-        if (!temEmb && !colVitrinePresente) {
+        if (!temEmb && !colVitrineFlagsPresente) {
           linhasIgnoradasSemMudanca += 1;
           continue;
         }
@@ -215,18 +253,27 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const atualVitrineArmazenada = vitrineArmazenadaDoProduto(produto, atualPrincipal);
         let novoVitrineArmazenada = atualVitrineArmazenada;
 
-        if (colVitrinePresente) {
-          const vitrineExib = vitrineParsed.rawExibicao
-            ? normalizarTexto(vitrineParsed.rawExibicao)
-            : principalResolvida;
-          if (!unidadesValidas.has(vitrineExib)) {
+        if (colVitrineFlagsPresente) {
+          const alt1Sig = novoAlt[0]?.unidade ?? '';
+          const alt2Sig = novoAlt[1]?.unidade ?? '';
+          const vsf = vitrineStoredFromSlotFlags(vitrineFlagSummary.v, principalResolvida, alt1Sig, alt2Sig);
+          if (vsf.error) {
             erros.push({
               linha: i,
-              mensagem: `Linha ${i}: Unidade vitrine "${vitrineExib}" não existe nesta linha (base ou Alt.1/Alt.2).`,
+              mensagem: `Linha ${i}: ${vsf.error}`,
             });
             continue;
           }
-          novoVitrineArmazenada = vitrineParsed.stored ?? '';
+          novoVitrineArmazenada = vsf.stored;
+          const vitrineExib =
+            novoVitrineArmazenada === '' ? principalResolvida : normalizarTexto(novoVitrineArmazenada);
+          if (!unidadesValidas.has(vitrineExib)) {
+            erros.push({
+              linha: i,
+              mensagem: `Linha ${i}: vitrine «${vitrineExib}» não existe nesta linha (base ou Alt.1/Alt.2).`,
+            });
+            continue;
+          }
           dados.unidade_vitrine = novoVitrineArmazenada;
         }
 
@@ -283,7 +330,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
       const msg = mensagemErroLeitura(error);
       toast.error(`Erro ao ler a planilha: ${msg}`, {
         description:
-          'Use um .xlsx exportado na aba Embalagens (primeira planilha com cabeçalhos atuais). Cabeçalhos antigos ainda podem ser reconhecidos quando o formato for compatível.',
+          'Use um .xlsx exportado nesta aba Embalagens (primeira planilha com cabeçalhos atuais: inclui as três colunas de vitrine 0/1 por slot).',
       });
       onParsed({ alterados: [], erros: [{ linha: 0, mensagem: msg }] });
     } finally {
@@ -327,7 +374,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
                   Arraste o .xlsx aqui ou clique para selecionar
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Modele pela exportação desta aba: base + Alt.1–2 (sigla, fator de conversão, ajuste preço × sobre o preço da embalagem; em branco = 1) e coluna Unidade vitrine. Isto só prepara o resumo — a gravação é no botão Confirmar embalagens.
+                  Modele pela exportação desta aba: base + Alt.1–2 (sigla, fator de conversão, ajuste preço × sobre o preço da embalagem; em branco = 1) e três colunas de vitrine 0/1 (Base, Alt.1, Alt.2) — exatamente uma com «1» por linha. Isto só prepara o resumo — a gravação é no botão Confirmar embalagens.
                 </p>
               </>
             )}

@@ -60,23 +60,109 @@ export function findColunaByHeader(label, colunas = []) {
   );
 }
 
+/** Cabeçalhos da coluna única de vitrine (planilha antiga) — não aceitos no modelo só-embalagens. */
+export const LEGACY_PLANILHA_UNIDADE_VITRINE_LABELS = [
+  'Unidade vitrine',
+  'Unidade comercial (sigla)',
+  'Unidade Vitrine',
+  'Unidade vitrine (sigla)',
+];
+
+export function isLegacyUnidadeVitrinePlanilhaHeader(label) {
+  const norm = normalizeHeaderLabel(label);
+  if (!norm) return false;
+  return LEGACY_PLANILHA_UNIDADE_VITRINE_LABELS.some((l) => normalizeHeaderLabel(l) === norm);
+}
+
+export const EMB_VITRINE_FLAG_KEYS = ['emb1_vitrine', 'emb2_vitrine', 'emb3_vitrine'];
+
+const VITRINE_FLAG_LABELS_PT = ['Base vitrine (0/1)', 'Alt.1 vitrine (0/1)', 'Alt.2 vitrine (0/1)'];
+
+const VITRINE_FLAG_INVALID_PT =
+  'Valor inválido em «{label}»: use apenas 0 ou 1 (célula vazia conta como 0).';
+
 /**
- * Lê vitrine da linha já extraída; distingue coluna ausente vs célula vazia.
- * @returns {{ rawExibicao: string, colPresent: boolean, cellPresent: boolean, stored: string|null }}
+ * Normaliza uma célula emb*_vitrine: vazio = 0; só `true` ou número 1 contam como 1.
+ * @returns {{ ok: true, value: 0 | 1 } | { ok: false }}
  */
-export function parseVitrineFromRow(dados = {}, options = {}) {
-  const { colPresent = false, principalSigla = 'UN' } = options;
-  const principal = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
-  if (!colPresent) {
-    return { rawExibicao: '', colPresent: false, cellPresent: false, stored: null };
+function normalizeVitrineSlotFlagCell(raw) {
+  if (raw === true) return { ok: true, value: 1 };
+  if (raw === false) return { ok: true, value: 0 };
+  if (raw == null) return { ok: true, value: 0 };
+
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (t === '') return { ok: true, value: 0 };
   }
-  const hasKey = Object.prototype.hasOwnProperty.call(dados, 'unidade_vitrine');
-  const raw = resolveVitrineColunaPlanilha(dados);
-  const cellPresent = hasKey || raw !== '';
-  const rawExibicao = raw ? String(raw).trim().toUpperCase() : '';
-  const siglaParaArmazenar = rawExibicao || principal;
-  const stored = vitrineExibicaoParaArmazenada(siglaParaArmazenar, principal);
-  return { rawExibicao: raw || '', colPresent: true, cellPresent, stored };
+
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return { ok: false };
+  if (n === 0) return { ok: true, value: 0 };
+  if (n === 1) return { ok: true, value: 1 };
+  return { ok: false };
+}
+
+/**
+ * Lê 0/1 das colunas de vitrine por slot (vazio → 0).
+ * @returns {{ v: [number, number, number], error: string|null }}
+ */
+export function summarizeVitrineSlotFlagsFromRow(dados = {}) {
+  const v = /** @type {[number, number, number]} */ ([0, 0, 0]);
+  for (let i = 0; i < EMB_VITRINE_FLAG_KEYS.length; i++) {
+    const key = EMB_VITRINE_FLAG_KEYS[i];
+    if (!Object.prototype.hasOwnProperty.call(dados, key)) continue;
+    const raw = dados[key];
+    const norm = normalizeVitrineSlotFlagCell(raw);
+    if (!norm.ok) {
+      const label = VITRINE_FLAG_LABELS_PT[i];
+      return {
+        v,
+        error: VITRINE_FLAG_INVALID_PT.replace('{label}', label),
+      };
+    }
+    v[i] = norm.value;
+  }
+  return { v, error: null };
+}
+
+/**
+ * Converte flags de vitrine + siglas resolvidas em `unidade_vitrine` armazenada ('' = base).
+ * @returns {{ stored: string, error: string|null }}
+ */
+export function vitrineStoredFromSlotFlags(v, principalSigla, alt1Sigla, alt2Sigla) {
+  const p = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  const a1 = alt1Sigla != null && String(alt1Sigla).trim() !== '' ? String(alt1Sigla).trim().toUpperCase() : '';
+  const a2 = alt2Sigla != null && String(alt2Sigla).trim() !== '' ? String(alt2Sigla).trim().toUpperCase() : '';
+  const sum = v[0] + v[1] + v[2];
+  if (sum !== 1) {
+    return {
+      stored: '',
+      error:
+        'Nas colunas «Base vitrine (0/1)», «Alt.1 vitrine (0/1)» e «Alt.2 vitrine (0/1)» deve haver exatamente um «1» e dois «0» (células vazias contam como 0).',
+    };
+  }
+  if (v[0]) return { stored: '', error: null };
+  if (v[1]) {
+    if (!a1) {
+      return {
+        stored: '',
+        error:
+          '«Alt.1 vitrine (0/1)» está como 1, mas não há sigla em Alt.1 nesta linha. Preencha Alt.1 ou marque a vitrine na base.',
+      };
+    }
+    return { stored: vitrineExibicaoParaArmazenada(a1, p), error: null };
+  }
+  if (v[2]) {
+    if (!a2) {
+      return {
+        stored: '',
+        error:
+          '«Alt.2 vitrine (0/1)» está como 1, mas não há sigla em Alt.2 nesta linha. Preencha Alt.2 ou escolha outro slot de vitrine.',
+      };
+    }
+    return { stored: vitrineExibicaoParaArmazenada(a2, p), error: null };
+  }
+  return { stored: '', error: 'Erro ao interpretar colunas de vitrine.' };
 }
 
 /** Valor canónico gravado em `unidade_vitrine` (não mistura legado de exibição). */
@@ -107,6 +193,7 @@ function stripEmbSlotKeys(dados) {
     delete dados[`emb${n}_sigla`];
     delete dados[`emb${n}_fator`];
     delete dados[`emb${n}_ajuste`];
+    delete dados[`emb${n}_vitrine`];
   }
 }
 
