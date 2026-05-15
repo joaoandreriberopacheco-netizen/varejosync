@@ -13,6 +13,7 @@ import {
   EMB_VITRINE_FLAG_KEYS,
   summarizeVitrineSlotFlagsFromRow,
   vitrineStoredFromSlotFlags,
+  ensureEmbVitrineFlagKeysFromMappedColumns,
 } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
@@ -28,6 +29,17 @@ function getCellValue(cell) {
     return cell.value.result ?? null;
   }
   return cell.value ?? null;
+}
+
+/** Vitrine 0/1: `cell.value` pode vir como rich text / objeto; usa `cell.text` quando necessário. */
+function valorCelulaVitrineFlag(cell) {
+  if (!cell) return null;
+  const raw = getCellValue(cell);
+  if (raw !== null && typeof raw === 'object') {
+    const txt = cell.text != null ? String(cell.text).trim() : '';
+    return txt === '' ? null : txt;
+  }
+  return raw;
 }
 
 function normalizarTexto(v) {
@@ -160,14 +172,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         for (const col of COLUNAS_SOMENTE_EMBALAGENS) {
           const colNum = colIndexMap[col.key];
           if (!colNum) continue;
-          const valorBruto = getCellValue(row.getCell(colNum));
-          /** emb*_vitrine: valor bruto para `summarizeVitrineSlotFlagsFromRow` (vazio = 0); evita parseFloat genérico. */
           if (EMB_VITRINE_FLAG_KEYS.includes(col.key)) {
-            if (valorBruto !== null && valorBruto !== undefined) {
-              dadosExtraidos[col.key] = valorBruto;
-            }
+            dadosExtraidos[col.key] = valorCelulaVitrineFlag(row.getCell(colNum)) ?? null;
             continue;
           }
+          const valorBruto = getCellValue(row.getCell(colNum));
           if (!col.editavel) {
             if (valorBruto !== null && valorBruto !== undefined) {
               dadosExtraidos[col.key] = String(valorBruto).trim();
@@ -188,6 +197,9 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
         }
 
+        if (colVitrineFlagsPresente) {
+          ensureEmbVitrineFlagKeysFromMappedColumns(dadosExtraidos, colIndexMap);
+        }
         const vitrineFlagSummary = summarizeVitrineSlotFlagsFromRow(dadosExtraidos);
         if (vitrineFlagSummary.error) {
           erros.push({ linha: i, mensagem: `Linha ${i}: ${vitrineFlagSummary.error}` });
@@ -283,7 +295,9 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const syncedAlts = syncIsComercialOnAlternativas(novoAlt, novoVitrineArmazenada, principalResolvida);
         const embStructuralChange = parsed.hadSlotPayload;
         const mirrorDiffersFromCadastro = JSON.stringify(syncedAlts) !== JSON.stringify(atualAlt);
-        if (embStructuralChange || mirrorDiffersFromCadastro) {
+        const vitrineArmazenadaMudou =
+          colVitrineFlagsPresente && atualVitrineArmazenada !== novoVitrineArmazenada;
+        if (embStructuralChange || mirrorDiffersFromCadastro || vitrineArmazenadaMudou) {
           dados.unidades_alternativas = syncedAlts;
         }
 

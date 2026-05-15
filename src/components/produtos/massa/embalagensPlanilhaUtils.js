@@ -93,6 +93,9 @@ function normalizeVitrineSlotFlagCell(raw) {
   if (typeof raw === 'string') {
     const t = raw.trim();
     if (t === '') return { ok: true, value: 0 };
+    const u = t.toUpperCase();
+    if (u === 'TRUE' || u === 'VERDADEIRO') return { ok: true, value: 1 };
+    if (u === 'FALSE' || u === 'FALSO') return { ok: true, value: 0 };
   }
 
   const n = Number(raw);
@@ -100,6 +103,21 @@ function normalizeVitrineSlotFlagCell(raw) {
   if (n === 0) return { ok: true, value: 0 };
   if (n === 1) return { ok: true, value: 1 };
   return { ok: false };
+}
+
+/**
+ * Com os três cabeçalhos mapeados, garante chaves explícitas em `dados` (célula vazia → `null`)
+ * para `summarizeVitrineSlotFlagsFromRow` não depender só de `hasOwnProperty` omitindo slots.
+ */
+export function ensureEmbVitrineFlagKeysFromMappedColumns(dados, colIndexMap) {
+  if (!dados || !colIndexMap) return dados;
+  for (const k of EMB_VITRINE_FLAG_KEYS) {
+    if (!colIndexMap[k]) continue;
+    if (!Object.prototype.hasOwnProperty.call(dados, k)) {
+      dados[k] = null;
+    }
+  }
+  return dados;
 }
 
 /**
