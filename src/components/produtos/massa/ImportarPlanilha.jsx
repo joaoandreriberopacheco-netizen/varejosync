@@ -14,10 +14,17 @@ import { toast } from 'sonner';
 
 function getCellValue(cell) {
   if (!cell) return null;
-  if (cell.value !== null && typeof cell.value === 'object' && 'result' in cell.value) {
-    return cell.value.result ?? null;
+  const v = cell.value;
+  if (v !== null && typeof v === 'object') {
+    if ('result' in v && v.result !== undefined) return v.result ?? null;
+    if (Array.isArray(v.richText)) {
+      return v.richText.map((t) => (typeof t === 'string' ? t : t?.text ?? '')).join('');
+    }
+    if (typeof v.text === 'string' && Object.prototype.hasOwnProperty.call(v, 'hyperlink')) {
+      return v.text;
+    }
   }
-  return cell.value ?? null;
+  return v ?? null;
 }
 
 function concatHierarquia(h1, h2, h3, h4, h5) {
@@ -110,7 +117,9 @@ export default function ImportarPlanilha({ onParsed }) {
         // 5. Extrair valores e validar tipos
         for (const col of COLUNAS_CONFIG) {
           if (col.editavel && !col.calculado) {
-            const cell = row.getCell(colIndexMap[col.key]);
+            const colNum = colIndexMap[col.key];
+            if (!colNum) continue;
+            const cell = row.getCell(colNum);
             const valorBruto = getCellValue(cell);
             
             if (col.tipo === 'numero') {

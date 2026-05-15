@@ -57,6 +57,7 @@ export function findColunaByHeader(label, colunas = []) {
   return (
     colunas.find((c) => {
       if (normalizeHeaderLabel(c.label) === norm) return true;
+      if (c.key && normalizeHeaderLabel(c.key) === norm) return true;
       return (c.altLabels || []).some((alt) => normalizeHeaderLabel(alt) === norm);
     }) || null
   );
