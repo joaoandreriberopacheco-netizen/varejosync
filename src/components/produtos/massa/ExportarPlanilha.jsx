@@ -5,7 +5,8 @@ import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
 import { buildExcelCanonConcatExpr, computeProdutoLinhaChecksum, produtoLinhaCanonico } from './produtoMassaChecksum';
-import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
+import { normalizeUnitCode } from '@/lib/productUnits';
+import { vitrineArmazenadaDoProduto } from './embalagensPlanilhaUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 // Índice (1-based) de colunas especiais
@@ -168,7 +169,8 @@ export default function ExportarPlanilha() {
           } else if (col.tipo === 'boolean') {
             rowData[col.key] = normalizeBooleanCell(p[col.key]);
           } else if (col.key === 'unidade_vitrine') {
-            rowData[col.key] = getUnidadeExibicaoSigla(p, p.unidade_principal || 'UN');
+            const principal = normalizeUnitCode(p.unidade_principal) || 'UN';
+            rowData[col.key] = vitrineArmazenadaDoProduto(p, principal);
           } else {
             rowData[col.key] = p[col.key] ?? '';
           }

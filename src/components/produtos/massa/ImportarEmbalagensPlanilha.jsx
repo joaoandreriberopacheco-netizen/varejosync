@@ -196,11 +196,8 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
 
         const dados = {};
-        if (parsed.hadSlotPayload) {
-          dados.unidades_alternativas = parsed.alternativas;
-          if (parsed.emb1Explicit) {
-            dados.unidade_principal = parsed.principalSigla;
-          }
+        if (parsed.hadSlotPayload && parsed.emb1Explicit) {
+          dados.unidade_principal = parsed.principalSigla;
         }
 
         const atualAlt = normalizarUnidadesAlternativas(produto.unidades_alternativas || []);
@@ -234,15 +231,13 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         }
 
         const novoPrincipal = normalizarTexto(dados.unidade_principal || atualPrincipal);
-        const vitrineMudou = colVitrinePresente && atualVitrineArmazenada !== novoVitrineArmazenada;
 
-        const altsParaSync = dados.unidades_alternativas ?? novoAlt;
-        if (colVitrinePresente && (vitrineMudou || dados.unidades_alternativas)) {
-          dados.unidades_alternativas = syncIsComercialOnAlternativas(
-            altsParaSync,
-            novoVitrineArmazenada,
-            principalResolvida,
-          );
+        /** Espelho sempre a partir das alternativas normalizadas (evita gravar payload cru da planilha). */
+        const syncedAlts = syncIsComercialOnAlternativas(novoAlt, novoVitrineArmazenada, principalResolvida);
+        const embStructuralChange = parsed.hadSlotPayload;
+        const mirrorDiffersFromCadastro = JSON.stringify(syncedAlts) !== JSON.stringify(atualAlt);
+        if (embStructuralChange || mirrorDiffersFromCadastro) {
+          dados.unidades_alternativas = syncedAlts;
         }
 
         const novoAltFinal = dados.unidades_alternativas ?? novoAlt;

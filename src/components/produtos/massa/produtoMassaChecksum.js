@@ -3,7 +3,8 @@
  * Ordem dos segmentos = fonte única para hash, import e fórmula visual no Excel.
  */
 
-import { getUnidadeExibicaoSigla, normalizeUnitCode } from '@/lib/productUnits';
+import { normalizeUnitCode } from '@/lib/productUnits';
+import { vitrineArmazenadaDoProduto } from './embalagensPlanilhaUtils';
 
 function normNum(value) {
   if (value === null || value === undefined || value === '') return '0';
@@ -57,7 +58,8 @@ export const PRODUTO_CANON_SEGMENTS = [
 
 function vitrineCanonSegment(produto) {
   const principal = normalizeUnitCode(produto?.unidade_principal) || 'UN';
-  return normStr(getUnidadeExibicaoSigla(produto, principal));
+  /** Mesmo contrato da coluna exportada / formulário: só `unidade_vitrine` persistida (vazio = vitrine na base). */
+  return normStr(vitrineArmazenadaDoProduto(produto, principal));
 }
 
 function segmentValue(produto, seg) {
