@@ -1,3 +1,5 @@
+import { normalizeSigla } from '@/lib/productUnitsCrud';
+
 /** 1 base + 2 alternativas; alinhado a `MAX_EMBALAGENS` em produtoEmbalagensEntity. */
 export const MAX_EMBALAGENS_PLANILHA = 3;
 export const MAX_ALTERNATIVAS_PLANILHA = MAX_EMBALAGENS_PLANILHA - 1;
@@ -31,8 +33,8 @@ export function mapLegacyVitrineColumn(dados) {
 
 /** Sigla exibida na planilha → valor gravado (`''` = vitrine na unidade base). */
 export function vitrineExibicaoParaArmazenada(siglaExibicao, principalSigla) {
-  const s = String(siglaExibicao ?? '').trim().toUpperCase();
-  const p = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  const s = normalizeSigla(siglaExibicao);
+  const p = normalizeSigla(principalSigla || 'UN') || 'UN';
   if (!s) return '';
   return s === p ? '' : s;
 }
@@ -148,9 +150,9 @@ export function summarizeVitrineSlotFlagsFromRow(dados = {}) {
  * @returns {{ stored: string, error: string|null }}
  */
 export function vitrineStoredFromSlotFlags(v, principalSigla, alt1Sigla, alt2Sigla) {
-  const p = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
-  const a1 = alt1Sigla != null && String(alt1Sigla).trim() !== '' ? String(alt1Sigla).trim().toUpperCase() : '';
-  const a2 = alt2Sigla != null && String(alt2Sigla).trim() !== '' ? String(alt2Sigla).trim().toUpperCase() : '';
+  const p = normalizeSigla(principalSigla || 'UN') || 'UN';
+  const a1 = alt1Sigla != null && String(alt1Sigla).trim() !== '' ? normalizeSigla(alt1Sigla) : '';
+  const a2 = alt2Sigla != null && String(alt2Sigla).trim() !== '' ? normalizeSigla(alt2Sigla) : '';
   const sum = v[0] + v[1] + v[2];
   if (sum !== 1) {
     return {
@@ -185,21 +187,22 @@ export function vitrineStoredFromSlotFlags(v, principalSigla, alt1Sigla, alt2Sig
 
 /** Valor canónico gravado em `unidade_vitrine` (não mistura legado de exibição). */
 export function vitrineArmazenadaDoProduto(produto, principalSigla) {
-  const principal = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
+  const principal = normalizeSigla(principalSigla || 'UN') || 'UN';
   const raw = produto?.unidade_vitrine;
   if (raw == null || String(raw).trim() === '') return '';
-  return vitrineExibicaoParaArmazenada(String(raw).trim(), principal);
+  return vitrineExibicaoParaArmazenada(raw, principal);
 }
 
 /** Espelha `is_comercial` nas alternativas conforme `unidade_vitrine` gravada. */
 export function syncIsComercialOnAlternativas(alternativas = [], vitrineStored, principalSigla) {
-  const principal = String(principalSigla || 'UN').trim().toUpperCase() || 'UN';
-  const vitrineSigla = vitrineStored ? String(vitrineStored).trim().toUpperCase() : principal;
+  const principal = normalizeSigla(principalSigla || 'UN') || 'UN';
+  const storedCanon = normalizeSigla(vitrineStored);
+  const vitrineSigla = storedCanon || principal;
   return alternativas.map((u) => {
-    const unidade = String(u?.unidade ?? '').trim().toUpperCase();
+    const unidade = normalizeSigla(u?.unidade);
     return {
       ...u,
-      is_comercial: vitrineStored !== '' && unidade === vitrineSigla,
+      is_comercial: storedCanon !== '' && Boolean(unidade) && unidade === vitrineSigla,
     };
   });
 }
@@ -258,7 +261,7 @@ function parseNum(v) {
  * }} `hadSlotPayload` — houve conteúdo em slots ou regra de erro/warning por causa deles.
  */
 export function parseEmbalagensPlanilhaImport(dados, options = {}) {
-  const fallbackPrincipal = String(options.fallbackPrincipal || 'UN').trim().toUpperCase() || 'UN';
+  const fallbackPrincipal = normalizeSigla(options.fallbackPrincipal || 'UN') || 'UN';
   const warnings = [];
 
   const overflowError = detectLegacyOverflowSlots(dados);
@@ -282,7 +285,7 @@ export function parseEmbalagensPlanilhaImport(dados, options = {}) {
     slots.push({
       n,
       rotulo: '',
-      sigla: s != null ? String(s).trim().toUpperCase() : '',
+      sigla: s != null ? normalizeSigla(s) : '',
       fator: parseNum(f),
       fatorPreco: parseNum(adj),
     });

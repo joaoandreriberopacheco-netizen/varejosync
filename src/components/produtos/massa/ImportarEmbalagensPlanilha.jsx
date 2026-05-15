@@ -16,6 +16,7 @@ import {
   ensureEmbVitrineFlagKeysFromMappedColumns,
 } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
+import { normalizeSigla } from '@/lib/productUnitsCrud';
 
 function mensagemErroLeitura(error) {
   if (error instanceof Error) return error.message;
@@ -42,11 +43,6 @@ function valorCelulaVitrineFlag(cell) {
   return raw;
 }
 
-function normalizarTexto(v) {
-  if (v === null || v === undefined) return '';
-  return String(v).trim().toUpperCase();
-}
-
 function normalizarUnidadesAlternativas(unidades = []) {
   if (!Array.isArray(unidades)) return [];
   return unidades.map((u) => {
@@ -54,7 +50,7 @@ function normalizarUnidadesAlternativas(unidades = []) {
     const fatorPrecoRaw = Number(u?.fator_preco) || 0;
     const fatorPreco = fatorPrecoRaw > 0 ? fatorPrecoRaw : 1 + ajustePercentual / 100;
     return {
-      unidade: normalizarTexto(u?.unidade),
+      unidade: normalizeSigla(u?.unidade),
       fator_conversao: Number(u?.fator_conversao) || 0,
       rotulo: u?.rotulo != null ? String(u.rotulo).trim() : '',
       ajuste_percentual: ajustePercentual,
@@ -226,7 +222,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           continue;
         }
 
-        const atualPrincipal = normalizarTexto(produto.unidade_principal || 'UN');
+        const atualPrincipal = normalizeSigla(produto.unidade_principal || 'UN') || 'UN';
         const parsed = parseEmbalagensPlanilhaImport(dadosExtraidos, { fallbackPrincipal: atualPrincipal });
         if (parsed.error) {
           erros.push({
@@ -254,11 +250,11 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
         const novoAlt = parsed.hadSlotPayload ? normalizarUnidadesAlternativas(parsed.alternativas) : atualAlt;
 
         /** Inclui siglas já presentes no cadastro (incl. linhas alternativas inativas): evita falsos positivos quando a planilha antiga omitia-as e `unidade_vitrine` ainda as referenciava. */
-        const siglasExtrasCadastro = (produto.unidades_alternativas || []).map((u) => normalizarTexto(u?.unidade)).filter(Boolean);
+        const siglasExtrasCadastro = (produto.unidades_alternativas || []).map((u) => normalizeSigla(u?.unidade)).filter(Boolean);
 
         const unidadesValidas = new Set([
           principalResolvida,
-          ...novoAlt.map((u) => normalizarTexto(u.unidade)),
+          ...novoAlt.map((u) => normalizeSigla(u.unidade)),
           ...siglasExtrasCadastro,
         ].filter(Boolean));
 
@@ -278,7 +274,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           }
           novoVitrineArmazenada = vsf.stored;
           const vitrineExib =
-            novoVitrineArmazenada === '' ? principalResolvida : normalizarTexto(novoVitrineArmazenada);
+            novoVitrineArmazenada === '' ? principalResolvida : normalizeSigla(novoVitrineArmazenada) || principalResolvida;
           if (!unidadesValidas.has(vitrineExib)) {
             erros.push({
               linha: i,
@@ -289,7 +285,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           dados.unidade_vitrine = novoVitrineArmazenada;
         }
 
-        const novoPrincipal = normalizarTexto(dados.unidade_principal || atualPrincipal);
+        const novoPrincipal = normalizeSigla(dados.unidade_principal || atualPrincipal) || atualPrincipal;
 
         /** Espelho sempre a partir das alternativas normalizadas (evita gravar payload cru da planilha). */
         const syncedAlts = syncIsComercialOnAlternativas(novoAlt, novoVitrineArmazenada, principalResolvida);

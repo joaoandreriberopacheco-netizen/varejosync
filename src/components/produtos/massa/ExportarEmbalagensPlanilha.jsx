@@ -5,7 +5,7 @@ import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_SOMENTE_EMBALAGENS } from './colunasConfig';
 import { MAX_ALTERNATIVAS_PLANILHA, vitrineArmazenadaDoProduto } from './embalagensPlanilhaUtils';
-import { normalizeUnitCode } from '@/lib/productUnits';
+import { normalizeSigla } from '@/lib/productUnitsCrud';
 import { dataHoje } from '@/components/utils/dateUtils';
 
 /**
@@ -17,7 +17,7 @@ function alternativasParaPlanilhaEmbalagens(produto) {
   const raw = Array.isArray(produto?.unidades_alternativas) ? produto.unidades_alternativas : [];
   const out = [];
   for (const item of raw) {
-    const u = normalizeUnitCode(item?.unidade);
+    const u = normalizeSigla(item?.unidade);
     if (!u) continue;
     out.push(item);
     if (out.length >= MAX_ALTERNATIVAS_PLANILHA) break;
@@ -26,7 +26,7 @@ function alternativasParaPlanilhaEmbalagens(produto) {
 }
 
 function produtoParaLinhaEmbalagens(p) {
-  const principal = normalizeUnitCode(p.unidade_principal) || 'UN';
+  const principal = normalizeSigla(p.unidade_principal) || 'UN';
   const row = {
     id: p.id,
     codigo_interno: p.codigo_interno || '',
@@ -52,15 +52,15 @@ function produtoParaLinhaEmbalagens(p) {
   }
   const storedArm = vitrineArmazenadaDoProduto(p, principal);
   const vitrineSiglaNorm =
-    storedArm === '' ? principal : normalizeUnitCode(storedArm) || String(storedArm).trim().toUpperCase();
+    storedArm === '' ? principal : normalizeSigla(storedArm) || principal;
   row.emb1_vitrine = 0;
   row.emb2_vitrine = 0;
   row.emb3_vitrine = 0;
   if (vitrineSiglaNorm === principal) {
     row.emb1_vitrine = 1;
-  } else if (alts[0] && normalizeUnitCode(alts[0].unidade) === vitrineSiglaNorm) {
+  } else if (alts[0] && normalizeSigla(alts[0].unidade) === vitrineSiglaNorm) {
     row.emb2_vitrine = 1;
-  } else if (alts[1] && normalizeUnitCode(alts[1].unidade) === vitrineSiglaNorm) {
+  } else if (alts[1] && normalizeSigla(alts[1].unidade) === vitrineSiglaNorm) {
     row.emb3_vitrine = 1;
   } else {
     row.emb1_vitrine = 1;
