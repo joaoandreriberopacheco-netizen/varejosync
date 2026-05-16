@@ -9,7 +9,8 @@ import {
   mapLegacyVitrineColumn,
   vitrineExibicaoParaArmazenada,
   findColunaByHeader,
-  syncIsComercialOnAlternativas,
+  buildVitrineIsComercialPatch,
+  espelhoIsComercialDivergeDoCadastro,
 } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
@@ -212,35 +213,19 @@ export default function ImportarPlanilha({ onParsed }) {
           );
         }
 
-        // Sincroniza alternativas + matriz canónica `unidades` com a vitrine lida da planilha
-        // (evita payload só com string solta quando o consumidor cruza com `is_comercial` / híbrido).
+        // Espelha `is_comercial` nas arrays a partir da vitrine (Excel não precisa da coluna).
+        let vitrineEspelhoPatch = {};
         if (id && mapaAtual[id] && Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
           const principalBaseSync =
             normalizeSigla(
               dadosExtraidos.unidade_principal || mapaAtual[id]?.unidade_principal || 'UN',
             ) || 'UN';
-          const vitrineNorm =
-            normalizeSigla(dadosExtraidos.unidade_vitrine) || principalBaseSync;
-
-          // 1. Atualiza alternativas (se existirem)
-          const altsAtuais = mapaAtual[id].unidades_alternativas || [];
-          if (altsAtuais.length > 0) {
-            dadosExtraidos.unidades_alternativas = syncIsComercialOnAlternativas(
-              altsAtuais,
-              dadosExtraidos.unidade_vitrine,
-              principalBaseSync,
-            );
-          }
-
-          // 2. Atualiza a fonte canónica (SEMPRE independente das alternativas)
-          const unidadesAtuais = mapaAtual[id].unidades || [];
-          if (unidadesAtuais.length > 0) {
-            dadosExtraidos.unidades = unidadesAtuais.map((u) => ({
-              ...u,
-              is_comercial:
-                (normalizeSigla(u.sigla) || normalizeSigla(u.unidade)) === vitrineNorm,
-            }));
-          }
+          vitrineEspelhoPatch = buildVitrineIsComercialPatch(
+            mapaAtual[id],
+            dadosExtraidos.unidade_vitrine,
+            principalBaseSync,
+          );
+          Object.assign(dadosExtraidos, vitrineEspelhoPatch);
         }
 
         // 8. Construir nome completo
@@ -264,7 +249,12 @@ export default function ImportarPlanilha({ onParsed }) {
 
             if (/^[0-9A-F]{4}$/.test(hashArquivo) || /^[0-9A-F]{8}$/.test(hashArquivo)) {
               const merged = { ...mapaAtual[id], ...dadosExtraidos };
-              if (produtoCombinaHashArmazenado(merged, hashArquivo)) {
+              const hashIgual = produtoCombinaHashArmazenado(merged, hashArquivo);
+              const espelhoDesalinhado = espelhoIsComercialDivergeDoCadastro(
+                mapaAtual[id],
+                vitrineEspelhoPatch,
+              );
+              if (hashIgual && !espelhoDesalinhado) {
                 linhasIgnoradasSemMudanca += 1;
                 continue;
               }

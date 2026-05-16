@@ -208,6 +208,55 @@ export function syncIsComercialOnAlternativas(alternativas = [], vitrineStored, 
   });
 }
 
+/**
+ * Patch de `unidades_alternativas` / `unidades[]` alinhado à vitrine (planilha em massa / confirmar).
+ * Excel só precisa da coluna vitrine; `is_comercial` é derivado aqui.
+ */
+export function buildVitrineIsComercialPatch(produto, vitrineStored, principalSigla) {
+  const principal =
+    normalizeSigla(principalSigla || produto?.unidade_principal) || 'UN';
+  const vitrineNorm = normalizeSigla(vitrineStored) || principal;
+  const patch = {};
+
+  const alts = produto?.unidades_alternativas || [];
+  if (alts.length > 0) {
+    patch.unidades_alternativas = syncIsComercialOnAlternativas(
+      alts,
+      vitrineStored,
+      principal,
+    );
+  }
+
+  const unidades = produto?.unidades || [];
+  if (unidades.length > 0) {
+    patch.unidades = unidades.map((u) => ({
+      ...u,
+      is_comercial:
+        (normalizeSigla(u?.sigla) || normalizeSigla(u?.unidade)) === vitrineNorm,
+    }));
+  }
+
+  return patch;
+}
+
+/** Cadastro ainda tem espelho `is_comercial` diferente do que a vitrine exige. */
+export function espelhoIsComercialDivergeDoCadastro(produto, patch = {}) {
+  if (
+    patch.unidades_alternativas
+    && JSON.stringify(patch.unidades_alternativas)
+      !== JSON.stringify(produto?.unidades_alternativas || [])
+  ) {
+    return true;
+  }
+  if (
+    patch.unidades
+    && JSON.stringify(patch.unidades) !== JSON.stringify(produto?.unidades || [])
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /** Remove chaves emb1…emb5 do objeto linha (mutação). */
 function stripEmbSlotKeys(dados) {
   for (let n = 1; n <= LEGACY_EMB_SLOTS; n++) {

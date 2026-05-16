@@ -12,7 +12,7 @@ import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque.jsx';
 import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao.jsx';
 import { buildLegacyUnitBackfillPatch } from '@/lib/productUnits';
 import { normalizeSigla } from '@/lib/productUnitsCrud';
-import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
+import { buildVitrineIsComercialPatch } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
@@ -123,15 +123,16 @@ export default function EditarProdutosEmMassa() {
 
           if (Object.prototype.hasOwnProperty.call(dadosAtualizacao, 'unidade_vitrine')) {
             const anterior = produtoAntigoPorId.get(id);
-            const altsAnt =
-              anterior && Array.isArray(anterior.unidades_alternativas) ? anterior.unidades_alternativas : [];
-            if (anterior && altsAnt.length > 0) {
+            if (anterior) {
               const principal =
-                normalizeSigla(dadosAtualizacao.unidade_principal || anterior.unidade_principal) || 'UN';
-              dadosAtualizacao.unidades_alternativas = syncIsComercialOnAlternativas(
-                altsAnt,
-                dadosAtualizacao.unidade_vitrine,
-                principal,
+                normalizeSigla(dadosAtualizacao.unidade_principal || anterior?.unidade_principal) || 'UN';
+              Object.assign(
+                dadosAtualizacao,
+                buildVitrineIsComercialPatch(
+                  anterior,
+                  dadosAtualizacao.unidade_vitrine,
+                  principal,
+                ),
               );
             }
           }

@@ -225,131 +225,270 @@ export default function RelatorioMargemVendas() {
       alert('Selecione um período antes de exportar');
       return;
     }
-    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 10;
+    const margin = 14;
+    const contentWidth = pageWidth - margin * 2;
+    const footerY = pageHeight - 10;
+    const rowMinHeight = 5.5;
+    const lineHeight = 3.4;
+
+    const colors = {
+      text: [31, 41, 55],
+      muted: [107, 114, 128],
+      border: [229, 231, 235],
+      headerBg: [243, 244, 246],
+      zebra: [249, 250, 251],
+      profit: [22, 163, 74],
+      profitBg: [236, 253, 245],
+      categoryBg: [241, 245, 249],
+    };
+
+    const formatNumPdf = (val) =>
+      (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const formatPctPdf = (val) => `${(val ?? 0).toFixed(1).replace('.', ',')}%`;
+
+    const flatRows = groupByCategory
+      ? processedData.flatMap((group) => [
+          { isCategoryHeader: true, nome: group.category },
+          ...group.items,
+          {
+            ...group.totals,
+            nome: `Subtotal — ${group.category}`,
+            isSubtotal: true,
+            margem_percentual:
+              group.totals.total_recebido > 0
+                ? (group.totals.lucro_total / group.totals.total_recebido) * 100
+                : 0,
+          },
+        ])
+      : processedData;
+
+    const dataRows = flatRows.filter((r) => !r.isCategoryHeader);
+    const showCodigo = dataRows.some(
+      (r) => !r.isSubtotal && String(r.codigo_interno || '').trim().length > 0
+    );
+
+    const colWidths = showCodigo
+      ? { codigo: 14, desc: 58, qtd: 16, receita: 22, custo: 22, lucro: 22, margem: 14 }
+      : { desc: 72, qtd: 16, receita: 22, custo: 22, lucro: 22, margem: 14 };
+
+    const colKeys = showCodigo
+      ? ['codigo', 'desc', 'qtd', 'receita', 'custo', 'lucro', 'margem']
+      : ['desc', 'qtd', 'receita', 'custo', 'lucro', 'margem'];
+
+    const colX = {};
+    let xAcc = margin;
+    colKeys.forEach((key) => {
+      colX[key] = xAcc;
+      xAcc += colWidths[key];
+    });
+    const colRight = (key) => colX[key] + colWidths[key];
+
+    let pageNumber = 1;
     let yPos = margin;
-    
-    // Header
-    pdf.setFontSize(14);
-    pdf.setFont(undefined, 'bold');
-    pdf.text('Relatório de Margem de Vendas', margin, yPos);
-    yPos += 4;
-    
-    pdf.setFontSize(8);
-    pdf.setFont(undefined, 'normal');
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, margin, yPos);
-    yPos += 5;
-    
-    // Summary Box
-    pdf.setFillColor(250, 252, 250);
-    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 10, 1, 1, 'F');
-    
-    pdf.setFont(undefined, 'normal');
-     pdf.setFontSize(7.5);
-     pdf.setTextColor(100, 100, 100);
-     pdf.text(`Receita Líquida: R$ ${(totals.receita_liquida || 0).toFixed(2).replace('.', ',')}  |  Custo: R$ ${(totals.custo_total || 0).toFixed(2).replace('.', ',')}`, margin + 1.5, yPos + 2.5);
-    
-    pdf.setTextColor(34, 139, 34);
-    pdf.setFont(undefined, 'bold');
-    pdf.text(`Lucro: R$ ${(totals.lucro_total || 0).toFixed(2).replace('.', ',')}  |  Margem: ${totalMargem.toFixed(1)}%`, margin + 1.5, yPos + 5.5);
-    pdf.setTextColor(0, 0, 0);
-    
-    yPos += 12;
-    
-    // Table Header
-    pdf.setFont(undefined, 'bold');
-    pdf.setFontSize(7);
-    pdf.setTextColor(50, 50, 50);
-    
-    const colWidths = [12, 45, 12, 18, 20, 20, 18];
-      const headers = ['CÓDIGO', 'DESCRIÇÃO', 'QTD', 'RECEITA', 'CUSTO', 'LUCRO', 'MARGEM %'];
-    let xPos = margin;
-    
-    headers.forEach((h, i) => {
-      pdf.text(h, xPos + 0.5, yPos + 2.5);
-      xPos += colWidths[i];
-    });
-    
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(margin, yPos + 4, pageWidth - margin, yPos + 4);
-    yPos += 5;
-    
-    // Data rows
-    pdf.setFont(undefined, 'normal');
-    pdf.setTextColor(40, 40, 40);
-    
-    const rows = groupByCategory ? 
-      processedData.flatMap(group => [
-        ...group.items,
-        { ...group.totals, nome: 'SUBTOTAL', isSubtotal: true, codigo_interno: '' }
-      ]) : 
-      processedData;
-    
-    rows.forEach((row) => {
-      if (yPos > pageHeight - margin - 6) {
-        pdf.addPage();
-        yPos = margin;
+    let zebraIndex = 0;
+
+    const setColor = (rgb) => pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
+    const setFill = (rgb) => pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
+    const setDraw = (rgb) => pdf.setDrawColor(rgb[0], rgb[1], rgb[2]);
+
+    const drawFooter = () => {
+      const itemCount = groupByCategory
+        ? processedData.reduce((n, g) => n + g.items.length, 0)
+        : processedData.length;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      setColor(colors.muted);
+      pdf.text(
+        `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} · ${itemCount} produto(s)`,
+        margin,
+        footerY
+      );
+      pdf.text(`Página ${pageNumber}`, pageWidth - margin, footerY, { align: 'right' });
+    };
+
+    const drawReportHeader = () => {
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      setColor(colors.text);
+      pdf.text('Relatório de Margem de Vendas', margin, yPos);
+      yPos += 7;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      setColor(colors.muted);
+      pdf.text(
+        `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`,
+        margin,
+        yPos
+      );
+      yPos += 10;
+    };
+
+    const drawSummaryKpis = () => {
+      const kpis = [
+        { label: 'Receita líquida', value: formatNumPdf(totals.receita_liquida), highlight: false },
+        { label: 'Custo total', value: formatNumPdf(totals.custo_total), highlight: false },
+        { label: 'Lucro', value: formatNumPdf(totals.lucro_total), highlight: true },
+        { label: 'Margem', value: formatPctPdf(totalMargem), highlight: true },
+      ];
+      const gap = 3;
+      const boxW = (contentWidth - gap * (kpis.length - 1)) / kpis.length;
+      const boxH = 16;
+
+      kpis.forEach((kpi, i) => {
+        const x = margin + i * (boxW + gap);
+        const fill = kpi.highlight ? colors.profitBg : [255, 255, 255];
+        setFill(fill);
+        setDraw(colors.border);
+        pdf.setLineWidth(0.2);
+        pdf.roundedRect(x, yPos, boxW, boxH, 1.5, 1.5, 'FD');
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        setColor(colors.muted);
+        pdf.text(kpi.label.toUpperCase(), x + 3, yPos + 5);
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(10);
+        setColor(kpi.highlight ? colors.profit : colors.text);
+        pdf.text(kpi.value, x + 3, yPos + 11);
+      });
+
+      yPos += boxH + 3;
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(6.5);
+      setColor(colors.muted);
+      pdf.text('Valores monetários em reais (R$).', margin, yPos);
+      yPos += 8;
+    };
+
+    const drawTableHeader = () => {
+      const headerH = 7;
+      setFill(colors.headerBg);
+      setDraw(colors.border);
+      pdf.rect(margin, yPos, contentWidth, headerH, 'FD');
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      setColor(colors.muted);
+      const headerY = yPos + 4.6;
+
+      if (showCodigo) {
+        pdf.text('CÓD.', colX.codigo + 1, headerY);
       }
-      
-      if (row.isSubtotal) {
-        pdf.setFont(undefined, 'bold');
-        pdf.setTextColor(34, 139, 34);
-        pdf.setFillColor(245, 252, 245);
-        pdf.rect(margin, yPos - 1.5, pageWidth - 2 * margin, 4, 'F');
-      } else {
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(40, 40, 40);
+      pdf.text('DESCRIÇÃO', colX.desc + 1, headerY);
+      pdf.text('QTD', colRight.qtd - 1, headerY, { align: 'right' });
+      pdf.text('RECEITA', colRight.receita - 1, headerY, { align: 'right' });
+      pdf.text('CUSTO', colRight.custo - 1, headerY, { align: 'right' });
+      pdf.text('LUCRO', colRight.lucro - 1, headerY, { align: 'right' });
+      pdf.text('MARGEM', colRight.margem - 1, headerY, { align: 'right' });
+
+      yPos += headerH;
+    };
+
+    const ensureSpace = (neededHeight) => {
+      if (yPos + neededHeight <= footerY - 4) return;
+      drawFooter();
+      pdf.addPage();
+      pageNumber += 1;
+      yPos = margin;
+      drawTableHeader();
+    };
+
+    const getRowMargem = (row) => {
+      if (row.margem_percentual != null && !Number.isNaN(row.margem_percentual)) {
+        return row.margem_percentual;
       }
-      
-      xPos = margin;
-      
-      // Código
-      pdf.text(row.codigo_interno || '', xPos + 0.5, yPos + 1);
-      xPos += colWidths[0];
-      
-      // Descrição (esquerda)
-      const desc = row.nome ? row.nome.substring(0, 25) : '';
-      pdf.text(desc, xPos + 0.5, yPos + 1);
-      xPos += colWidths[1];
-      
-      // Qtd (centro)
-      pdf.text(`${(row.quantidade_vendida || 0).toFixed(2)} ${(row.unidade_exibicao || 'UN')}`.substring(0, 14), xPos + 3, yPos + 1, { align: 'right' });
-      xPos += colWidths[2];
-      
-      // Receita (direita)
-      pdf.text(`R$ ${(row.total_recebido || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[3] - 0.5, yPos + 1, { align: 'right' });
-      xPos += colWidths[3];
-      
-      // Custo (direita)
-      pdf.text(`R$ ${(row.custo_total || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[4] - 0.5, yPos + 1, { align: 'right' });
-      xPos += colWidths[4];
-      
-      // Lucro (direita)
-      if (row.isSubtotal) {
-        pdf.text(`R$ ${(row.lucro_total || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[5] - 0.5, yPos + 1, { align: 'right' });
-      } else {
-        pdf.setTextColor(34, 139, 34);
-        pdf.text(`R$ ${(row.lucro_total || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[5] - 0.5, yPos + 1, { align: 'right' });
-        pdf.setTextColor(40, 40, 40);
+      const receita = row.receita_liquida ?? row.total_recebido ?? 0;
+      return receita > 0 ? ((row.lucro_total || 0) / receita) * 100 : 0;
+    };
+
+    const drawDataRow = (row) => {
+      if (row.isCategoryHeader) {
+        const catH = 6;
+        ensureSpace(catH);
+        setFill(colors.categoryBg);
+        setDraw(colors.border);
+        pdf.rect(margin, yPos, contentWidth, catH, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        setColor(colors.text);
+        pdf.text(String(row.nome || 'Sem categoria'), colX.desc + 1, yPos + 4.2);
+        yPos += catH;
+        return;
       }
-      xPos += colWidths[5];
-      
-      // Margem % (centro)
-      const margem = `${((row.lucro_total || 0) / (row.total_recebido || 1) * 100).toFixed(1)}%`;
-      pdf.text(margem, xPos + 6, yPos + 1, { align: 'center' });
-      
-      yPos += 4;
-    });
-    
-    // Footer
-    pdf.setFontSize(6);
-    pdf.setTextColor(150, 150, 150);
-    const dataAtual = new Date();
-    pdf.text(`Gerado em ${format(dataAtual, 'dd/MM/yyyy HH:mm')} | ${processedData.length} itens`, margin, pageHeight - 4);
-    
+
+      const descPad = 2;
+      const descLines = pdf.splitTextToSize(
+        row.isSubtotal ? String(row.nome || 'Subtotal') : String(row.nome || '—'),
+        colWidths.desc - descPad
+      );
+      const rowHeight = Math.max(rowMinHeight, descLines.length * lineHeight + 2);
+      ensureSpace(rowHeight);
+
+      const isSubtotal = Boolean(row.isSubtotal);
+      const isZebra = !isSubtotal && zebraIndex % 2 === 1;
+      zebraIndex += isSubtotal ? 0 : 1;
+
+      if (isSubtotal) {
+        setFill(colors.profitBg);
+        pdf.rect(margin, yPos, contentWidth, rowHeight, 'F');
+      } else if (isZebra) {
+        setFill(colors.zebra);
+        pdf.rect(margin, yPos, contentWidth, rowHeight, 'F');
+      }
+
+      setDraw(colors.border);
+      pdf.setLineWidth(0.1);
+      pdf.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
+
+      const textY = yPos + 3.8;
+      pdf.setFont('helvetica', isSubtotal ? 'bold' : 'normal');
+      pdf.setFontSize(7.5);
+      setColor(colors.text);
+
+      if (showCodigo && !isSubtotal) {
+        const codigo = String(row.codigo_interno || '').trim();
+        if (codigo) {
+          pdf.text(codigo, colX.codigo + 1, textY, { maxWidth: colWidths.codigo - 2 });
+        }
+      }
+
+      descLines.forEach((line, idx) => {
+        pdf.text(line, colX.desc + 1, textY + idx * lineHeight);
+      });
+
+      const qtdStr = isSubtotal
+        ? formatNumPdf(row.quantidade_vendida || 0)
+        : `${formatNumPdf(row.quantidade_vendida || 0)} ${row.unidade_exibicao || 'UN'}`;
+      pdf.text(qtdStr, colRight.qtd - 1, textY, { align: 'right' });
+
+      pdf.text(formatNumPdf(row.total_recebido || 0), colRight.receita - 1, textY, { align: 'right' });
+      pdf.setFont('helvetica', 'normal');
+      setColor(colors.muted);
+      pdf.text(formatNumPdf(row.custo_total || 0), colRight.custo - 1, textY, { align: 'right' });
+
+      pdf.setFont('helvetica', isSubtotal ? 'bold' : 'normal');
+      setColor(colors.profit);
+      pdf.text(formatNumPdf(row.lucro_total || 0), colRight.lucro - 1, textY, { align: 'right' });
+
+      setColor(isSubtotal ? colors.profit : colors.text);
+      pdf.text(formatPctPdf(getRowMargem(row)), colRight.margem - 1, textY, { align: 'right' });
+
+      yPos += rowHeight;
+    };
+
+    drawReportHeader();
+    drawSummaryKpis();
+    drawTableHeader();
+    flatRows.forEach(drawDataRow);
+    drawFooter();
+
     pdf.save('relatorio_margem.pdf');
   };
 

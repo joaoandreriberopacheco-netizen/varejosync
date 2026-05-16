@@ -70,6 +70,76 @@ const validateUnidadesPayload = (dados: any): { ok: boolean; errors: string[] } 
   return errors.length === 0 ? { ok: true, errors: [] } : { ok: false, errors };
 };
 
+/** Espelha `syncIsComercialOnAlternativas` (embalagensPlanilhaUtils) — runtime Deno sem import do Vite. */
+const syncIsComercialOnAlternativas = (
+  alternativas: any[] = [],
+  vitrineStored: any,
+  principalSigla: string,
+) => {
+  const principal = normalizeSigla(principalSigla || 'UN') || 'UN';
+  const storedCanon = normalizeSigla(vitrineStored);
+  const vitrineSigla = storedCanon || principal;
+  return alternativas.map((u) => {
+    const unidade = normalizeSigla(u?.unidade);
+    return {
+      ...u,
+      is_comercial: storedCanon !== '' && Boolean(unidade) && unidade === vitrineSigla,
+    };
+  });
+};
+
+const applyVitrineToPayload = (
+  dadosAtualizacao: Record<string, unknown>,
+  dadosLinha: Record<string, unknown>,
+  anterior: Record<string, unknown> | undefined,
+) => {
+  if (!Object.prototype.hasOwnProperty.call(dadosAtualizacao, 'unidade_vitrine')) return;
+  const principal =
+    normalizeSigla(dadosAtualizacao.unidade_principal || dadosLinha?.unidade_principal || anterior?.unidade_principal) ||
+    'UN';
+  const vitrineNorm =
+    normalizeSigla(dadosAtualizacao.unidade_vitrine) || principal;
+
+  const altsAnt = Array.isArray(anterior?.unidades_alternativas) ? anterior.unidades_alternativas : [];
+  if (anterior && altsAnt.length > 0) {
+    dadosAtualizacao.unidades_alternativas = syncIsComercialOnAlternativas(
+      altsAnt,
+      dadosAtualizacao.unidade_vitrine,
+      principal,
+    );
+  }
+
+  const unidadesAtuais = Array.isArray(anterior?.unidades) ? anterior.unidades : [];
+  if (anterior && unidadesAtuais.length > 0) {
+    dadosAtualizacao.unidades = unidadesAtuais.map((u: any) => ({
+      ...u,
+      is_comercial: (normalizeSigla(u?.sigla) || normalizeSigla(u?.unidade)) === vitrineNorm,
+    }));
+  }
+};
+
+const copyValidField = (
+  target: Record<string, unknown>,
+  dados: Record<string, unknown>,
+  field: string,
+) => {
+  if (field === 'unidade_vitrine') {
+    if (!Object.prototype.hasOwnProperty.call(dados, field)) return;
+    const v = dados[field];
+    target[field] = v == null ? '' : String(v).trim();
+    return;
+  }
+  if ((field === 'unidades_alternativas' || field === 'unidades') && Array.isArray(dados[field])) {
+    target[field] = dados[field];
+    return;
+  }
+  const valor = dados[field];
+  if (valor === null || valor === undefined) return;
+  if (String(valor).trim() !== '') {
+    target[field] = valor;
+  }
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -97,12 +167,14 @@ Deno.serve(async (req) => {
 
     // Tirar snapshot dos produtos que serão atualizados (busca individual com delay)
     const produtosAtualizadosSnapshot = [];
+    const produtoAntigoPorId = new Map<string, Record<string, unknown>>();
     for (const item of atualizados) {
       if (!item.id) continue;
       try {
         const prods = await withRetry(() => base44.asServiceRole.entities.Produto.filter({ id: item.id }, null, 1));
         if (prods && prods.length > 0) {
           produtosAtualizadosSnapshot.push({ id: prods[0].id, dados_anteriores: prods[0] });
+          produtoAntigoPorId.set(String(prods[0].id), prods[0]);
         }
         await sleep(150);
       } catch (e) {
@@ -154,7 +226,7 @@ Deno.serve(async (req) => {
       'codigo_barras', 'marca', 'categoria_nome', 'area_codigo',
       'valor_compra', 'desconto_perc', 'custo_frete_padrao', 'custo_imposto1_padrao',
       'custo_imposto2_padrao', 'custo_outros_padrao', 'preco_venda_percentual',
-      'preco_custo_calculado', 'unidade_principal', 'unidade_apresentacao_default', 'unidades_alternativas', 'unidades_por_pacote',
+      'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades', 'unidades_alternativas', 'unidades_por_pacote',
       'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias',
       'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome',
     ];
@@ -186,21 +258,13 @@ Deno.serve(async (req) => {
               ? dados.campo_hierarquico_1
               : 'Sem categoria',
           };
-          validFields.forEach(field => {
-            const valor = dados[field];
-            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
-              novoProduto[field] = valor;
-            }
-          });
+          validFields.forEach((field) => copyValidField(novoProduto, dados || {}, field));
           await withRetry(() => base44.asServiceRole.entities.Produto.create(novoProduto));
         } else {
-           const dadosAtualizacao = {};
-           validFields.forEach(field => {
-             const valor = dados[field];
-             if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
-               dadosAtualizacao[field] = valor;
-             }
-           });
+           const dadosAtualizacao: Record<string, unknown> = {};
+           validFields.forEach((field) => copyValidField(dadosAtualizacao, dados || {}, field));
+           const anterior = produtoAntigoPorId.get(String(id));
+           applyVitrineToPayload(dadosAtualizacao, dados || {}, anterior);
            if (Object.keys(dadosAtualizacao).length > 0) {
              await withRetry(() => base44.asServiceRole.entities.Produto.update(id, dadosAtualizacao));
              console.log(`✓ Produto ${id} atualizado:`, Object.keys(dadosAtualizacao).join(', '));
