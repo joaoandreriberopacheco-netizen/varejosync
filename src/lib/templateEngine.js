@@ -1,3 +1,5 @@
+import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
+
 /**
  * ──────────────────────────────────────────────────────────────────
  * MOTOR DE TEMPLATES — ComprovanteTemplate
@@ -87,7 +89,7 @@ export function prepararDadosVenda(pedido, dadosEmpresa) {
     num: String(idx + 1).padStart(2, '0'),
     nome: (item.produto_nome || '').toUpperCase(),
     quantidade: parseFloat(item.quantidade) || 0,
-    unidade: item.unidade_principal || item.unidade || 'UN',
+    unidade: getUnidadeMedidaItemPedidoVenda(item),
     preco_unitario: `R$ ${fmtV(item.preco_unitario_praticado)}`,
     total: `R$ ${fmtV(item.total)}`,
     // valores numéricos brutos também disponíveis
@@ -208,7 +210,7 @@ export function prepararDadosEntrega(pedido, protocolo, dadosEmpresa) {
     num: String(idx + 1).padStart(2, '0'),
     nome: item.produto_nome || '',
     quantidade: parseFloat(item.quantidade) || 0,
-    unidade: item.unidade || 'UN',
+    unidade: getUnidadeMedidaItemPedidoVenda(item),
   }));
 
   return {

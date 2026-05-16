@@ -263,6 +263,20 @@ export function resolveUnidadeExibicao(product, fallbackUnit = "UN") {
   };
 }
 
+/**
+ * Sigla da unidade em que a venda foi registrada (linha do pedido), para cupom/comprovante.
+ * Prioriza a unidade comercial da linha; `unidade_principal` só como último recurso (legado).
+ */
+export function getUnidadeMedidaItemPedidoVenda(item = {}, fallbackUnit = "UN") {
+  const raw =
+    item?.unidade_medida ||
+    item?.unidade_apresentacao ||
+    item?.unidade_sigla ||
+    item?.unidade ||
+    item?.unidade_principal;
+  return normalizeUnitCode(raw) || normalizeUnitCode(fallbackUnit) || "UN";
+}
+
 export function getUnidadeExibicaoSigla(product, fallbackUnit = "UN") {
   return resolveUnidadeExibicao(product, fallbackUnit).sigla;
 }

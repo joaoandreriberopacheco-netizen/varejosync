@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 
 const fmtV = (v) => (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

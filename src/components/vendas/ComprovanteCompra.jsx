@@ -9,6 +9,7 @@ import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { renderTemplate, prepararDadosVenda } from '@/lib/templateEngine';
+import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 
@@ -119,7 +120,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         const preco = fmtV(item.preco_unitario_praticado);
         const total = fmtV(item.total);
         const num = String(idx + 1).padStart(2, '0');
-        const unidade = (item.unidade_principal || 'UN').substring(0, 4);
+        const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
         return (
           <div key={idx} style={{ display: 'flex', gap: '2px', fontSize: F + 2, lineHeight: 1.45, marginBottom: '3px' }}>
@@ -316,7 +317,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
             <tr key={i} style={{ borderBottom: '0.5px solid #e5e5e5', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
               <td style={{ padding: '2.5mm 2mm', fontSize: '12px' }}>{item.produto_nome}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '12px' }}>{item.quantidade}</td>
-              <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '11px', color: '#777' }}>{item.unidade_principal || 'UN'}</td>
+              <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '11px', color: '#777' }}>{getUnidadeMedidaItemPedidoVenda(item)}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px' }}>R$ {fmtV(item.preco_unitario_praticado)}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '500' }}>R$ {fmtV(item.total)}</td>
             </tr>
