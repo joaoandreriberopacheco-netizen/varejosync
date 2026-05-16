@@ -81,11 +81,15 @@ export default function EditarProdutosEmMassa() {
            };
 
            // Adicionar apenas campos válidos do schema (excluir 'numero' e outros inválidos)
-           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
+           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
            validFields.forEach(field => {
              if (field === 'unidade_vitrine') {
                if (!Object.prototype.hasOwnProperty.call(dados, field)) return;
                novosProduto[field] = dados[field] == null ? '' : String(dados[field]).trim();
+               return;
+             }
+             if ((field === 'unidades_alternativas' || field === 'unidades') && Array.isArray(dados[field])) {
+               novosProduto[field] = dados[field];
                return;
              }
              const valor = dados[field];
@@ -99,12 +103,16 @@ export default function EditarProdutosEmMassa() {
         } else {
           // Produto existente: atualizar apenas campos alterados
           const dadosAtualizacao = {};
-          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
+          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades', 'unidades_alternativas', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
           validFields.forEach(field => {
             const valor = dados[field];
             if (field === 'unidade_vitrine') {
               if (!Object.prototype.hasOwnProperty.call(dados, field)) return;
               dadosAtualizacao[field] = valor == null ? '' : String(valor).trim();
+              return;
+            }
+            if ((field === 'unidades_alternativas' || field === 'unidades') && Array.isArray(valor)) {
+              dadosAtualizacao[field] = valor;
               return;
             }
             if (valor === null || valor === undefined) return;

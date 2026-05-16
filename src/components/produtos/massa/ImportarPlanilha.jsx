@@ -180,7 +180,7 @@ export default function ImportarPlanilha({ onParsed }) {
         mapLegacyVitrineColumn(dadosExtraidos);
 
         // 7. Remover campos não mapeados (que não existem na entidade Produto)
-        const camposValidos = ['campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'tipo', 'preco_venda_padrao', 'valor_compra', 'desconto_perc', 'desconto_compra_padrao', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades_por_pacote', 'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome', 'marca', 'categoria_nome', 'area_codigo'];
+        const camposValidos = ['campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'tipo', 'preco_venda_padrao', 'valor_compra', 'desconto_perc', 'desconto_compra_padrao', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidade_vitrine', 'unidades', 'unidades_alternativas', 'unidades_por_pacote', 'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome', 'marca', 'categoria_nome', 'area_codigo'];
         Object.keys(dadosExtraidos).forEach(key => {
           if (!camposValidos.includes(key)) {
             delete dadosExtraidos[key];
@@ -212,14 +212,17 @@ export default function ImportarPlanilha({ onParsed }) {
           );
         }
 
-        // Sincroniza o array de alternativas para refletir a nova unidade_vitrine extraída da planilha
-        // (evita payload só com string solta quando o consumidor usa is_comercial no JSON).
+        // Sincroniza alternativas + matriz canónica `unidades` com a vitrine lida da planilha
+        // (evita payload só com string solta quando o consumidor cruza com `is_comercial` / híbrido).
         if (id && mapaAtual[id] && Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
           const principalBaseSync =
             normalizeSigla(
               dadosExtraidos.unidade_principal || mapaAtual[id]?.unidade_principal || 'UN',
             ) || 'UN';
+          const vitrineNorm =
+            normalizeSigla(dadosExtraidos.unidade_vitrine) || principalBaseSync;
 
+          // 1. Atualiza alternativas (se existirem)
           const altsAtuais = mapaAtual[id].unidades_alternativas || [];
           if (altsAtuais.length > 0) {
             dadosExtraidos.unidades_alternativas = syncIsComercialOnAlternativas(
@@ -227,6 +230,16 @@ export default function ImportarPlanilha({ onParsed }) {
               dadosExtraidos.unidade_vitrine,
               principalBaseSync,
             );
+          }
+
+          // 2. Atualiza a fonte canónica (SEMPRE independente das alternativas)
+          const unidadesAtuais = mapaAtual[id].unidades || [];
+          if (unidadesAtuais.length > 0) {
+            dadosExtraidos.unidades = unidadesAtuais.map((u) => ({
+              ...u,
+              is_comercial:
+                (normalizeSigla(u.sigla) || normalizeSigla(u.unidade)) === vitrineNorm,
+            }));
           }
         }
 
