@@ -3,14 +3,13 @@ import { base44 } from '@/api/base44Client';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
-import { produtoCombinaHashArmazenado } from './produtoMassaChecksum';
+import { produtoMassaImportLinhaTemAlteracao } from './produtoMassaChecksum';
 import { normalizeSigla } from '@/lib/productUnitsCrud';
 import {
   mapLegacyVitrineColumn,
   vitrineExibicaoParaArmazenada,
   findColunaByHeader,
   buildVitrineIsComercialPatch,
-  espelhoIsComercialDivergeDoCadastro,
 } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
@@ -213,14 +212,15 @@ export default function ImportarPlanilha({ onParsed }) {
           );
         }
 
+        const dadosPlanilha = { ...dadosExtraidos };
+
         // Espelha `is_comercial` nas arrays a partir da vitrine (Excel não precisa da coluna).
-        let vitrineEspelhoPatch = {};
         if (id && mapaAtual[id] && Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
           const principalBaseSync =
             normalizeSigla(
               dadosExtraidos.unidade_principal || mapaAtual[id]?.unidade_principal || 'UN',
             ) || 'UN';
-          vitrineEspelhoPatch = buildVitrineIsComercialPatch(
+          const vitrineEspelhoPatch = buildVitrineIsComercialPatch(
             mapaAtual[id],
             dadosExtraidos.unidade_vitrine,
             principalBaseSync,
@@ -238,26 +238,11 @@ export default function ImportarPlanilha({ onParsed }) {
         );
         dadosExtraidos.nome = nome;
 
-        // 9. Classificar como novo ou existente (produtos existentes: ignorar linha se hash = dados mesclados)
+        // 9. Classificar como novo ou existente (ignorar se canónico da planilha = cadastro)
           if (id && mapaAtual[id]) {
-            const hashCol = colIndexMap['_hash_orig'];
-            const hashBruto = hashCol ? getCellValue(row.getCell(hashCol)) : null;
-            const hashArquivo =
-              hashBruto !== null && hashBruto !== undefined
-                ? String(hashBruto).trim().toUpperCase()
-                : '';
-
-            if (/^[0-9A-F]{4}$/.test(hashArquivo) || /^[0-9A-F]{8}$/.test(hashArquivo)) {
-              const merged = { ...mapaAtual[id], ...dadosExtraidos };
-              const hashIgual = produtoCombinaHashArmazenado(merged, hashArquivo);
-              const espelhoDesalinhado = espelhoIsComercialDivergeDoCadastro(
-                mapaAtual[id],
-                vitrineEspelhoPatch,
-              );
-              if (hashIgual && !espelhoDesalinhado) {
-                linhasIgnoradasSemMudanca += 1;
-                continue;
-              }
+            if (!produtoMassaImportLinhaTemAlteracao(mapaAtual[id], dadosPlanilha)) {
+              linhasIgnoradasSemMudanca += 1;
+              continue;
             }
 
             alterados.push({ id, dados: dadosExtraidos, nome, isNew: false });

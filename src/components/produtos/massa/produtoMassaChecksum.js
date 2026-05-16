@@ -130,3 +130,19 @@ export function produtoCombinaHashArmazenado(produto, hashArquivoNormalizado) {
   if (/^[0-9A-F]{4}$/.test(h) && computeLegacyCRC16Checksum(produto) === h) return true;
   return false;
 }
+
+/**
+ * Linha da planilha de produtos tem alteração real vs cadastro (só chaves presentes em `dadosPlanilha`).
+ * Ignora espelho `is_comercial` em `unidades`/`unidades_alternativas` — só entra no canónico via `unidade_vitrine`.
+ */
+export function produtoMassaImportLinhaTemAlteracao(cadastro, dadosPlanilha) {
+  if (!cadastro || !dadosPlanilha) return false;
+  const merged = { ...cadastro, ...dadosPlanilha };
+  for (const seg of PRODUTO_CANON_SEGMENTS) {
+    if (!Object.prototype.hasOwnProperty.call(dadosPlanilha, seg.key)) continue;
+    const cadVal = segmentValue(cadastro, seg);
+    const linVal = segmentValue(merged, seg);
+    if (cadVal !== linVal) return true;
+  }
+  return false;
+}
