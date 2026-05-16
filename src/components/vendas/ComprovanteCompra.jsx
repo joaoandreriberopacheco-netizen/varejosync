@@ -134,7 +134,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <Sep />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '6px 0 4px' }}>
+      <div style={{ padding: '4px 0 2px' }}>
         {itens.map((item, idx) => {
           const nome = item.produto_nome || '';
           const qtd = String(parseFloat(item.quantidade) || 0);
@@ -149,7 +149,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
                 ...estiloGridLinha,
                 fontSize: F,
                 color: preto,
-                paddingBottom: idx < itens.length - 1 ? '12px' : 0,
+                padding: '8px 0',
+                marginBottom: idx < itens.length - 1 ? '4px' : 0,
                 borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
               }}
             >
