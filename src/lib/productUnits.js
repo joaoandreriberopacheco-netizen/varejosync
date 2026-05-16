@@ -285,9 +285,37 @@ export function getUnidadeExibicaoId(product, fallbackUnit = "UN") {
   return resolveUnidadeExibicao(product, fallbackUnit).id;
 }
 
+/**
+ * Sigla da «estação de venda» no formulário (`unidade_exibicao_sigla`).
+ * Vazio = unidade principal (fator 1). Independente de `unidade_vitrine` (catálogo/PDV).
+ */
+export function resolvePricingDisplaySigla(product, fallbackUnit = "UN") {
+  const principal = resolvePrimaryFromFactorOne(product, fallbackUnit);
+  const principalNorm = normalizeUnitCode(principal) || "UN";
+  if (product && Object.prototype.hasOwnProperty.call(product, "unidade_exibicao_sigla")) {
+    const ex = normalizeUnitCode(product.unidade_exibicao_sigla);
+    return ex && ex !== principalNorm ? ex : principalNorm;
+  }
+  if (!isShowUnitEnabled(product)) return principalNorm;
+  return normalizeUnitCode(resolveVitrineSigla(product, principalNorm)) || principalNorm;
+}
+
 export function pickDefaultSaleUnit(product, priceMultiplier = 1) {
   const options = buildSaleUnitOptions(product, priceMultiplier);
   if (!options.length) return null;
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || "UN");
+
+  if (product && Object.prototype.hasOwnProperty.call(product, "unidade_exibicao_sigla")) {
+    const exibicao = normalizeUnitCode(product.unidade_exibicao_sigla);
+    if (exibicao) {
+      const match = options.find((o) => normalizeUnitCode(o.unidade) === exibicao);
+      if (match) return match;
+    }
+    const principal = options.find((o) => o.unidade === principalResolvida);
+    if (principal) return principal;
+    return options[0] || null;
+  }
+
   const exib = resolveUnidadeExibicao(product, options[0]?.unidade || "UN");
   const match = options.find((o) => o.unidade === exib.sigla);
   if (match) return match;
@@ -303,9 +331,8 @@ export function buildProductSnapshotForPricing(formData, precoVendaBaseEfectivo)
   return {
     preco_venda_padrao: normalizeNumber(precoVendaBaseEfectivo, 0),
     unidade_principal: principal,
-    unidade_vitrine: formData?.unidade_vitrine || "",
+    unidade_exibicao_sigla: formData?.unidade_exibicao_sigla ?? "",
     unidades_alternativas: Array.isArray(formData?.unidades_alternativas) ? formData.unidades_alternativas : [],
-    unidade_show_ativa: formData?.unidade_show_ativa,
   };
 }
 
@@ -335,7 +362,10 @@ export function getPrecoVendaNaUnidadeCatalogo(product, priceMultiplier = 1) {
  */
 export function precoVendaPadraoFromPrecoCatalogo(precoDisplay, product, priceMultiplier = 1) {
   const principal = resolvePrimaryFromFactorOne(product);
-  const exib = resolveVitrineSigla(product, principal);
+  const exib =
+    product && Object.prototype.hasOwnProperty.call(product, "unidade_exibicao_sigla")
+      ? normalizeUnitCode(product.unidade_exibicao_sigla)
+      : normalizeUnitCode(resolveVitrineSigla(product, principal));
   const v = normalizeNumber(precoDisplay, 0);
   const mult = normalizeNumber(priceMultiplier, 1);
 
@@ -378,6 +408,12 @@ export function precoVendaPadraoFromPrecoCatalogo(precoDisplay, product, priceMu
 
 /** @deprecated Prefer `getUnidadeExibicaoSigla` — mantido como alias estável. */
 export function resolveCommercialUnit(product, fallbackUnit = "UN") {
+  const options = buildSaleUnitOptions(product);
+  if (!options.length) return normalizeUnitCode(fallbackUnit) || "UN";
+  const principalResolvida = resolvePrimaryFromFactorOne(product, options[0]?.unidade || fallbackUnit);
+  const validUnits = new Set(options.map((option) => option.unidade));
+  const exibicaoCatalogo = normalizeUnitCode(product?.unidade_exibicao_sigla);
+  if (exibicaoCatalogo && validUnits.has(exibicaoCatalogo)) return exibicaoCatalogo;
   return getUnidadeExibicaoSigla(product, fallbackUnit);
 }
 
@@ -453,22 +489,26 @@ export function resolveCustoTotalUnitBaseProduto(p) {
 }
 
 /**
- * Escala de custo/preço para a unidade comercial de exibição (mesma ideia que A29 `custoDisplayScale`).
+ * Escala de custo na unidade da estação de precificação (`unidade_exibicao_sigla`)
+ * ou, fora do formulário, na vitrine activa — mesma base que `buildPurchaseUnitOptions`.
  */
 export function custoDisplayScale(product) {
   const principal = resolvePrimaryFromFactorOne(product);
-  const exib = resolveCommercialUnit(product, principal);
-  if (!exib || exib === normalizeUnitCode(principal)) return 1;
-  const alt = normalizeAlternativeUnits(product).find((u) => normalizeUnitCode(u.unidade) === exib);
-  if (!alt) return 1;
-  const f = normalizeNumber(alt.fator_conversao, 1);
-  const pct =
-    Object.prototype.hasOwnProperty.call(alt, "percentual_preco_vs_principal") &&
-    alt.percentual_preco_vs_principal != null &&
-    alt.percentual_preco_vs_principal !== ""
-      ? normalizeNumber(alt.percentual_preco_vs_principal, 0)
-      : 0;
-  return f * (1 + pct / 100);
+  const exibNorm = normalizeUnitCode(resolvePricingDisplaySigla(product, principal));
+  const principalNorm = normalizeUnitCode(principal);
+  if (!exibNorm || exibNorm === principalNorm) return 1;
+
+  const options = buildPurchaseUnitOptions(product);
+  const base = options.find((o) => o.is_primary) || options[0];
+  const pack = options.find((o) => normalizeUnitCode(o.unidade) === exibNorm);
+  if (!pack || pack.is_primary || !base) return 1;
+
+  const custoBase = normalizeNumber(base.valor_unitario, 0);
+  const custoPack = normalizeNumber(pack.valor_unitario, 0);
+  if (custoBase > 0) return custoPack / custoBase;
+
+  const f = normalizeNumber(pack.fator_conversao, 1);
+  return f > 0 ? f : 1;
 }
 
 /**
