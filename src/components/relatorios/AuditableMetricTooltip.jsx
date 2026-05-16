@@ -1,38 +1,75 @@
 import React, { useState } from 'react';
 import { HelpCircle } from 'lucide-react';
 
-export default function AuditableMetricTooltip({ label, value, auditData, formatMoney }) {
+const cardBase =
+  'rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/40 shadow-sm transition-shadow hover:shadow-md';
+
+const cardProfit =
+  'rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/90 dark:bg-emerald-950/25 shadow-sm';
+
+export default function AuditableMetricTooltip({
+  label,
+  value,
+  auditData,
+  icon: Icon,
+  variant = 'default',
+  className = '',
+}) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const surface = variant === 'profit' ? cardProfit : cardBase;
 
   if (!auditData) {
     return (
-      <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-        <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">{label}</p>
-        <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{value}</p>
+      <div className={`${surface} p-3 md:p-4 ${className}`}>
+        <div className="flex items-start gap-2 mb-1">
+          {Icon ? (
+            <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+          ) : null}
+          <p className="text-[9px] md:text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
+            {label}
+          </p>
+        </div>
+        <p
+          className={`text-sm md:text-lg font-semibold tabular-nums truncate ${
+            variant === 'profit'
+              ? 'text-green-700 dark:text-green-400'
+              : 'text-gray-900 dark:text-white'
+          }`}
+        >
+          {value}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       <div
-        className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 cursor-help hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
+        className={`${surface} p-3 md:p-4 cursor-help`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={() => setShowTooltip(!showTooltip)}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">{label}</p>
-            <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white truncate">{value}</p>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              {Icon ? (
+                <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              ) : null}
+              <p className="text-[9px] md:text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
+                {label}
+              </p>
+            </div>
+            <p className="text-sm md:text-lg font-semibold text-gray-900 dark:text-white tabular-nums truncate">
+              {value}
+            </p>
           </div>
-          <div className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0 rounded-full border border-gray-300 dark:border-gray-600 mt-0.5" />
+          <HelpCircle className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-gray-300 dark:text-gray-600 mt-0.5" />
         </div>
       </div>
 
-      {/* Tooltip / Popover */}
       {showTooltip && (
-        <div className="absolute bottom-full right-0 mb-2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 w-64 text-xs">
+        <div className="absolute bottom-full left-0 right-0 sm:left-auto sm:right-0 sm:w-64 mb-2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 text-xs">
           <p className="font-semibold text-gray-900 dark:text-white mb-2">{label} — Detalhes</p>
           <div className="space-y-1.5 text-gray-700 dark:text-gray-300">
             {Object.entries(auditData).map(([key, val]) => (

@@ -1,3 +1,11 @@
+import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
+
+function sortedMarginItems(items) {
+  return [...(items || [])].sort((a, b) =>
+    compareTreeLabels(a?.nome || '', b?.nome || '')
+  );
+}
+
 /** Folhas do nó (catálogo usa skus; margem usa items). */
 function nodeLeafItems(node) {
   if (!node) return [];
@@ -48,8 +56,7 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
   const keys = new Set();
   if (!treeNode || typeof treeNode !== 'object' || visualLevel >= targetLevel) return keys;
 
-  for (const [key, node] of Object.entries(treeNode)) {
-    if (key === '_rootItems' || key === '_rootSkus') continue;
+  for (const [key, node] of sortedTreeChildEntries(treeNode)) {
     if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
 
     const rawKey = parentKey ? `${parentKey}||${key}` : key;
@@ -177,15 +184,65 @@ export function collectAllMarginLeaves(tree) {
   const leaves = [...(tree._rootItems || [])];
   function walk(nodeMap) {
     if (!nodeMap || typeof nodeMap !== 'object') return;
-    for (const [key, node] of Object.entries(nodeMap)) {
-      if (key === '_rootItems' || key === '_rootSkus') continue;
+    for (const [, node] of sortedTreeChildEntries(nodeMap)) {
       if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
       leaves.push(...nodeLeafItems(node));
       walk(nodeChildren(node));
     }
   }
   walk(tree);
-  return leaves;
+  return sortedMarginItems(leaves);
+}
+
+function makeMarginProductRow(item, level) {
+  return {
+    type: 'produto',
+    key: item.produto_id || item.codigo_interno || item.nome,
+    item,
+    level,
+  };
+}
+
+function flattenMarginGroupBranch(key, node, expanded, parentKey, visualLevel) {
+  const rows = [];
+  if (!node || typeof node !== 'object' || Array.isArray(node)) return rows;
+
+  const rawKey = parentKey ? `${parentKey}||${key}` : key;
+  const { label: collapsedLabel, node: finalNode } = deepCollapseMargin(node);
+  const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
+  const agg = finalNode._agg || aggregateMarginItems(collectMarginItems(finalNode));
+  const rowLevel = visualLevel + 1;
+  const children = nodeChildren(finalNode);
+  const leafItems = sortedMarginItems(nodeLeafItems(finalNode));
+  const isLeafGroup = Object.keys(children).length === 0;
+  const isRoot = visualLevel === 0;
+
+  if (!isRoot && isLeafGroup) {
+    for (const item of leafItems) {
+      rows.push(makeMarginProductRow(item, rowLevel));
+    }
+    return rows;
+  }
+
+  rows.push({
+    type: 'group',
+    key: nodeKey,
+    label: collapsedLabel,
+    level: rowLevel,
+    isLeafGroup,
+    ...agg,
+  });
+
+  if (isLeafGroup || expanded.has(nodeKey)) {
+    if (Object.keys(children).length > 0) {
+      rows.push(...flattenMarginTree(children, expanded, nodeKey, rowLevel));
+    }
+    for (const item of leafItems) {
+      rows.push(makeMarginProductRow(item, rowLevel + 1));
+    }
+  }
+
+  return rows;
 }
 
 /**
@@ -196,65 +253,29 @@ export function flattenMarginTree(treeNode, expandedKeys, parentKey = '', visual
   const expanded = expandedKeys ?? new Set();
   const root = treeNode && typeof treeNode === 'object' ? treeNode : {};
 
-  if (visualLevel === 0 && Array.isArray(root._rootItems)) {
-    for (const item of root._rootItems) {
-      rows.push({
-        type: 'produto',
-        key: item.produto_id || item.codigo_interno || item.nome,
-        item,
-        level: 1,
-      });
+  if (visualLevel === 0) {
+    const rootEntries = [];
+    for (const item of sortedMarginItems(root._rootItems)) {
+      rootEntries.push({ sortLabel: item.nome || '', kind: 'orphan', item });
     }
+    for (const [key, node] of sortedTreeChildEntries(root)) {
+      rootEntries.push({ sortLabel: key, kind: 'group', key, node });
+    }
+    rootEntries.sort((a, b) => compareTreeLabels(a.sortLabel, b.sortLabel));
+    for (const entry of rootEntries) {
+      if (entry.kind === 'orphan') {
+        rows.push(makeMarginProductRow(entry.item, 1));
+      } else {
+        rows.push(
+          ...flattenMarginGroupBranch(entry.key, entry.node, expanded, parentKey, visualLevel)
+        );
+      }
+    }
+    return rows;
   }
 
-  for (const [key, node] of Object.entries(root)) {
-    if (key === '_rootItems' || key === '_rootSkus') continue;
-    if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
-
-    const rawKey = parentKey ? `${parentKey}||${key}` : key;
-    const { label: collapsedLabel, node: finalNode } = deepCollapseMargin(node);
-    const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
-    const agg = finalNode._agg || aggregateMarginItems(collectMarginItems(finalNode));
-    const rowLevel = visualLevel + 1;
-    const children = nodeChildren(finalNode);
-    const leafItems = nodeLeafItems(finalNode);
-    const isLeafGroup = Object.keys(children).length === 0;
-    const isRoot = visualLevel === 0;
-
-    if (!isRoot && isLeafGroup) {
-      for (const item of leafItems) {
-        rows.push({
-          type: 'produto',
-          key: item.produto_id || item.codigo_interno || item.nome,
-          item,
-          level: rowLevel,
-        });
-      }
-      continue;
-    }
-
-    rows.push({
-      type: 'group',
-      key: nodeKey,
-      label: collapsedLabel,
-      level: rowLevel,
-      isLeafGroup,
-      ...agg,
-    });
-
-    if (isLeafGroup || expanded.has(nodeKey)) {
-      if (Object.keys(children).length > 0) {
-        rows.push(...flattenMarginTree(children, expanded, nodeKey, rowLevel));
-      }
-      for (const item of leafItems) {
-        rows.push({
-          type: 'produto',
-          key: item.produto_id || item.codigo_interno || item.nome,
-          item,
-          level: rowLevel + 1,
-        });
-      }
-    }
+  for (const [key, node] of sortedTreeChildEntries(root)) {
+    rows.push(...flattenMarginGroupBranch(key, node, expanded, parentKey, visualLevel));
   }
 
   return rows;

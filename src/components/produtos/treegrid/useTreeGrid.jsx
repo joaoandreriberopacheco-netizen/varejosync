@@ -1,5 +1,12 @@
 import { useMemo } from 'react';
 import { getCatalogoComercialView, formatEstoqueApresentacao } from '@/lib/productUnits';
+import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
+
+function sortedSkus(skus) {
+  return [...(skus || [])].sort((a, b) =>
+    compareTreeLabels(a?.nome || '', b?.nome || '')
+  );
+}
 
 // ── IQR Mean: remove outliers e retorna média do miolo ───────────────────────
 export function iqrMean(values) {
@@ -251,89 +258,86 @@ function resolveCollapsedKey(baseKey, startNode, targetNode) {
   );
 }
 
+function makeSkuRow(sku, level) {
+  const custo = calcCusto(sku);
+  const cat = getCatalogoComercialView(sku);
+  return {
+    type: 'sku',
+    key: sku.id,
+    produto: sku,
+    level,
+    lastro: custo * (sku.estoque_atual || 0),
+    margem: cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
+    markup: calcMarkup(sku),
+  };
+}
+
+function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel) {
+  const rows = [];
+  const rawKey = parentKey ? `${parentKey}||${key}` : key;
+  const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
+  const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
+  const agg = finalNode._agg || aggregateSkus(collectSkus(finalNode));
+  const rowLevel = visualLevel + 1;
+
+  const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
+  const isRoot = visualLevel === 0;
+
+  if (!isRoot && isLeafGroup) {
+    for (const sku of sortedSkus(finalNode.skus)) {
+      rows.push(makeSkuRow(sku, rowLevel));
+    }
+    return rows;
+  }
+
+  rows.push({
+    type: 'group',
+    key: nodeKey,
+    label: collapsedLabel,
+    level: rowLevel,
+    node: finalNode,
+    isLeafGroup,
+    ...agg,
+  });
+
+  if (isLeafGroup || expandedKeys.has(nodeKey)) {
+    const childMap = finalNode.children || {};
+    if (Object.keys(childMap).length > 0) {
+      rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel));
+    }
+    for (const sku of sortedSkus(finalNode.skus)) {
+      rows.push(makeSkuRow(sku, rowLevel + 1));
+    }
+  }
+
+  return rows;
+}
+
 // ── Flatten recursivo com deep collapsing ─────────────────────────────────────
 export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0) {
   const rows = [];
 
-  // Se estamos na raiz e há SKUs diretos (sem grupo), adiciona-os primeiro
-  if (visualLevel === 0 && treeNode._rootSkus) {
-    for (const sku of treeNode._rootSkus) {
-      const custo = calcCusto(sku);
-      const cat = getCatalogoComercialView(sku);
-      rows.push({
-        type:    'sku',
-        key:     sku.id,
-        produto: sku,
-        level:   1,
-        lastro:  custo * (sku.estoque_atual || 0),
-        margem:  cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
-        markup:  calcMarkup(sku),
-      });
+  if (visualLevel === 0) {
+    const rootEntries = [];
+    for (const sku of sortedSkus(treeNode._rootSkus)) {
+      rootEntries.push({ sortLabel: sku.nome || '', kind: 'orphan', sku });
     }
+    for (const [key, node] of sortedTreeChildEntries(treeNode)) {
+      rootEntries.push({ sortLabel: key, kind: 'group', key, node });
+    }
+    rootEntries.sort((a, b) => compareTreeLabels(a.sortLabel, b.sortLabel));
+    for (const entry of rootEntries) {
+      if (entry.kind === 'orphan') {
+        rows.push(makeSkuRow(entry.sku, 1));
+      } else {
+        rows.push(...flattenGroupBranch(entry.key, entry.node, expandedKeys, parentKey, visualLevel));
+      }
+    }
+    return rows;
   }
 
-  for (const [key, node] of Object.entries(treeNode)) {
-    // Pula a propriedade _rootSkus
-    if (key === '_rootSkus') continue;
-    const rawKey   = parentKey ? `${parentKey}||${key}` : key;
-    const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
-    const nodeKey  = resolveCollapsedKey(rawKey, node, finalNode);
-    // Usa a agregação pré-computada no buildTree — evita recalcular collectSkus/aggregateSkus
-    const agg      = finalNode._agg || aggregateSkus(collectSkus(finalNode));
-    const rowLevel = visualLevel + 1;
-
-    const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
-    const isRoot      = visualLevel === 0;
-
-    // Achatamento Agressivo: sub-grupos leaf (não raiz) omitem cabeçalho —
-    // função só é chamada recursivamente quando o pai está expandido, logo
-    // não precisamos revalidar expandedKeys aqui.
-    if (!isRoot && isLeafGroup) {
-      for (const sku of finalNode.skus || []) {
-        const custo = calcCusto(sku);
-        const cat = getCatalogoComercialView(sku);
-        rows.push({
-          type:    'sku',
-          key:     sku.id,
-          produto: sku,
-          level:   rowLevel,
-          lastro:  custo * (sku.estoque_atual || 0),
-          margem:  cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
-          markup:  calcMarkup(sku),
-        });
-      }
-      continue;
-    }
-
-    rows.push({
-      type: 'group',
-      key:  nodeKey,
-      label: collapsedLabel,
-      level: rowLevel,
-      node: finalNode,
-      isLeafGroup,
-      ...agg,
-    });
-
-    if (isLeafGroup || expandedKeys.has(nodeKey)) {
-      const childMap = finalNode.children || {};
-      if (Object.keys(childMap).length > 0) {
-        rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel));
-      }
-      for (const sku of finalNode.skus || []) {
-        const custo = calcCusto(sku);
-        const cat = getCatalogoComercialView(sku);
-        rows.push({
-          type:    'sku',
-          key:     sku.id,
-          produto: sku,
-          level:   rowLevel + 1,
-          lastro:  custo * (sku.estoque_atual || 0),
-          margem:  cat.precoVenda > 0 ? cat.margemContribuicaoPct : 0,
-          markup:  calcMarkup(sku),
-        });
-      }
-    }
+  for (const [key, node] of sortedTreeChildEntries(treeNode)) {
+    rows.push(...flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel));
   }
 
   return rows;
@@ -344,8 +348,7 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
   const keys = new Set();
   if (!treeNode || typeof treeNode !== 'object' || visualLevel >= targetLevel) return keys;
 
-  for (const [key, node] of Object.entries(treeNode)) {
-    if (key === '_rootSkus') continue;
+  for (const [key, node] of sortedTreeChildEntries(treeNode)) {
     if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
 
     const rawKey  = parentKey ? `${parentKey}||${key}` : key;

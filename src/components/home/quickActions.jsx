@@ -1,8 +1,7 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
-  Ship, BarChart3, Users,
-  FileText, QrCode, Tag, Settings, Upload, MonitorCheck,
-  Tablet, ClipboardPenLine, ReceiptText
+  Ship, BarChart3, Users, QrCode, Tag, Settings, Upload, MonitorCheck,
+  Tablet, ClipboardPenLine, ReceiptText, Percent,
 } from 'lucide-react';
 
 /**
@@ -95,6 +94,14 @@ export const ALL_QUICK_ACTIONS = [
     label: 'Relatórios',
     page: 'Relatorios',
     permissaoCheck: (p) => p?.relatorios?.acesso,
+  },
+  {
+    id: 'relatorio_margem',
+    icon: Percent,
+    label: 'Margem',
+    page: 'RelatorioMargem',
+    permissaoCheck: (p) =>
+      p?.relatorios?.relatorio_margem === true || p?.relatorios?.acesso === true,
   },
   {
     id: 'terceiros',
