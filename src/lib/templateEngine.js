@@ -63,6 +63,13 @@ function getValor(dados, chave) {
   return dados[chave];
 }
 
+/** Itens do comprovante em ordem alfabética por descrição (pt-BR). */
+export function ordenarItensComprovante(itens = []) {
+  return [...itens].sort((a, b) =>
+    String(a?.produto_nome || '').localeCompare(String(b?.produto_nome || ''), 'pt-BR', { sensitivity: 'base' })
+  );
+}
+
 /**
  * Prepara o objeto de dados para um PedidoVenda
  * para uso no motor de template.
@@ -85,12 +92,13 @@ export function prepararDadosVenda(pedido, dadosEmpresa) {
     } catch { return ''; }
   };
 
-  const itens = (pedido.itens || []).map((item, idx) => ({
-    num: String(idx + 1).padStart(2, '0'),
+  const itens = ordenarItensComprovante(pedido.itens || []).map((item) => ({
     nome: (item.produto_nome || '').toUpperCase(),
+    descricao: (item.produto_nome || '').toUpperCase(),
     quantidade: parseFloat(item.quantidade) || 0,
     unidade: getUnidadeMedidaItemPedidoVenda(item),
     preco_unitario: `R$ ${fmtV(item.preco_unitario_praticado)}`,
+    preco: `R$ ${fmtV(item.preco_unitario_praticado)}`,
     total: `R$ ${fmtV(item.total)}`,
     // valores numéricos brutos também disponíveis
     quantidade_raw: parseFloat(item.quantidade) || 0,

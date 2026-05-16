@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { renderTemplate, prepararDadosVenda } from '@/lib/templateEngine';
+import { renderTemplate, prepararDadosVenda, ordenarItensComprovante } from '@/lib/templateEngine';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
@@ -28,7 +28,7 @@ const F = 14; // base font size px (aumentado 50%)
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
-  const itens = pedido.itens || [];
+  const itens = ordenarItensComprovante(pedido.itens || []);
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const F = 14;
 
@@ -103,39 +103,32 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Cabeçalho colunas ── */}
       <div style={{ display: 'flex', alignItems: 'baseline', fontSize: F - 1, color: '#666', lineHeight: 1.4, whiteSpace: 'nowrap', gap: '2px' }}>
-        <span style={{ width: '28px', flexShrink: 0 }}>NO.</span>
-        <span style={{ flex: 1 }}>PRODUTO</span>
-        <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>QTD</span>
+        <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>QUANT</span>
         <span style={{ width: '28px', textAlign: 'right', flexShrink: 0 }}>UN</span>
+        <span style={{ flex: 1, minWidth: 0, paddingLeft: '2px' }}>DESCRIÇÃO</span>
         <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>PREÇO</span>
         <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>TOTAL</span>
       </div>
 
       <Sep />
 
-      {/* ── Itens estilo VinCommerce ── */}
       {itens.map((item, idx) => {
         const nome = (item.produto_nome || '').toUpperCase();
         const qtd = String(parseFloat(item.quantidade) || 0);
         const preco = fmtV(item.preco_unitario_praticado);
         const total = fmtV(item.total);
-        const num = String(idx + 1).padStart(2, '0');
         const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
         return (
-          <div key={idx} style={{ display: 'flex', gap: '2px', fontSize: F + 2, lineHeight: 1.45, marginBottom: '3px' }}>
-            {/* Número do item */}
-            <span style={{ width: '28px', flexShrink: 0 }}>{num}</span>
-            {/* Bloco do nome: valores flutuam à direita, texto envolve naturalmente */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ float: 'right', display: 'inline-flex', gap: '2px', marginLeft: '4px' }}>
-                <span style={{ width: '36px', textAlign: 'right' }}>{qtd}</span>
-                <span style={{ width: '28px', textAlign: 'right', color: '#666' }}>{unidade}</span>
-                <span style={{ width: '46px', textAlign: 'right' }}>{preco}</span>
-                <span style={{ width: '46px', textAlign: 'right' }}>{total}</span>
-              </span>
-              {nome}
-            </div>
+          <div
+            key={item.pedido_venda_item_id || item.produto_id || idx}
+            style={{ display: 'flex', gap: '2px', fontSize: F + 2, lineHeight: 1.45, marginBottom: '3px', alignItems: 'flex-start' }}
+          >
+            <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
+            <span style={{ width: '28px', textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
+            <span style={{ flex: 1, minWidth: 0, paddingLeft: '2px', wordBreak: 'break-word' }}>{nome}</span>
+            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
+            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
           </div>
         );
       })}
@@ -227,7 +220,7 @@ function PreviewScaled({ children }) {
 
 // ── Cupom A4 ─────────────────────────────────────────────────────────────────────
 function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
-  const itens = pedido.itens || [];
+  const itens = ordenarItensComprovante(pedido.itens || []);
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
   const razaoSocial = (dadosEmpresa?.nome_fantasia && dadosEmpresa?.razao_social)
@@ -305,19 +298,19 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6mm' }}>
         <thead>
           <tr style={{ background: '#eeeeee' }}>
-            <th style={{ textAlign: 'left', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Produto / Serviço</th>
-            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '14mm' }}>Qtd</th>
-            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '12mm' }}>Un</th>
-            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>Preço Unit.</th>
-            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '32mm' }}>Total</th>
+            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '14mm' }}>QUANT</th>
+            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '12mm' }}>UN</th>
+            <th style={{ textAlign: 'left', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DESCRIÇÃO</th>
+            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>PREÇO</th>
+            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '32mm' }}>TOTAL</th>
           </tr>
         </thead>
         <tbody>
           {itens.map((item, i) => (
-            <tr key={i} style={{ borderBottom: '0.5px solid #e5e5e5', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-              <td style={{ padding: '2.5mm 2mm', fontSize: '12px' }}>{item.produto_nome}</td>
+            <tr key={item.pedido_venda_item_id || item.produto_id || i} style={{ borderBottom: '0.5px solid #e5e5e5', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '12px' }}>{item.quantidade}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '11px', color: '#777' }}>{getUnidadeMedidaItemPedidoVenda(item)}</td>
+              <td style={{ padding: '2.5mm 2mm', fontSize: '12px', textTransform: 'uppercase' }}>{item.produto_nome}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px' }}>R$ {fmtV(item.preco_unitario_praticado)}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '500' }}>R$ {fmtV(item.total)}</td>
             </tr>
