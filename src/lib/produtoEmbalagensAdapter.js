@@ -80,8 +80,12 @@ export function embalagensRowsToLegacyProdutoPatch(rows) {
     normalizeSigla(legacyMirror.unidade_show_comercial) ||
     normalizeSigla(legacyMirror.unidade_apresentacao_default) ||
     "";
+  const principalSigla = normalizeSigla(legacyMirror.unidade_principal) || "UN";
+  const comercialSigla = siglaCom || principalSigla;
+  const unidadeVitrine = comercialSigla === principalSigla ? "" : comercialSigla;
   return {
     ...legacyMirror,
+    unidade_vitrine: unidadeVitrine,
     unidade_show_logistica: siglaCom || legacyMirror.unidade_show_comercial || "",
     unidades,
   };

@@ -55,7 +55,8 @@ function applyJustSavedUnitSnapshot(merged, snap) {
   if (!merged || !snap || merged.id !== snap.id) return merged;
   const out = { ...merged };
   for (const k of VITRINE_MERGE_KEYS) {
-    if (!isEmptyishVitrine(snap[k])) out[k] = snap[k];
+    // `''` significa vitrine na unidade base — tem de gravar no estado; não usar isEmptyish aqui.
+    if (Object.prototype.hasOwnProperty.call(snap, k)) out[k] = snap[k];
   }
   if (typeof snap.unidade_show_ativa === 'boolean') out.unidade_show_ativa = snap.unidade_show_ativa;
   if (Array.isArray(snap.unidades_alternativas)) out.unidades_alternativas = snap.unidades_alternativas;
