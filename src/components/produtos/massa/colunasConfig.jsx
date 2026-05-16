@@ -318,7 +318,13 @@ export const COLUNAS_CONFIG = [
 
     label: 'Unidade vitrine',
 
-    altLabels: ['Unidade comercial (sigla)', 'Unidade Vitrine', 'Unidade vitrine (sigla)'],
+    altLabels: [
+      'Unidade comercial (sigla)',
+      'Unidade Vitrine',
+      'Unidade vitrine (sigla)',
+      'Unidade de vitrine (lista)',
+      'Unidade de vitrine',
+    ],
 
     editavel: true,
 

@@ -34,6 +34,7 @@ import {
   replaceEmbalagensForProduto,
 } from '@/lib/produtoEmbalagensEntity';
 import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } from '@/lib/produtoEmbalagensAdapter';
+import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
@@ -84,7 +85,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const normalizedAlts = normalizeAlternativas(produtoData?.unidades_alternativas);
     const principalFinal = normalizeSigla(produtoData?.unidade_principal) || 'UN';
 
-    let vitrine = normalizeSigla(produtoData?.unidade_vitrine) || '';
+    /** Valor já persistido em `unidade_vitrine` (vazio = não usado para esta decisão). */
+    const vitrineReadFromColumn = normalizeSigla(produtoData?.unidade_vitrine) || '';
+    let vitrine = vitrineReadFromColumn;
     if (!vitrine) {
       vitrine =
         normalizeSigla(produtoData?.unidade_apresentacao_default || produtoData?.unidade_show_comercial) || '';
@@ -105,15 +108,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       principalFinal,
       ...normalizedAlts.map((u) => normalizeSigla(u?.unidade)).filter(Boolean),
     ]);
-    if (vitrine && !validSet.has(vitrine)) vitrine = '';
+    // List/get por vezes omitem alternativas; não apagar `unidade_vitrine` gravada (ex.: import em massa).
+    if (vitrine && !validSet.has(vitrine)) {
+      if (!vitrineReadFromColumn) vitrine = '';
+    }
     const vitrineStored = !vitrine || vitrine === principalFinal ? '' : vitrine;
-    const vitrineDisplay = vitrineStored || principalFinal;
 
-    const altsComIsComercial = normalizedAlts.map((u) => ({
-      ...u,
-      is_comercial:
-        vitrineDisplay !== principalFinal && normalizeSigla(u?.unidade) === vitrineDisplay,
-    }));
+    const altsComIsComercial = syncIsComercialOnAlternativas(normalizedAlts, vitrineStored, principalFinal);
 
     return {
       ...produtoData,

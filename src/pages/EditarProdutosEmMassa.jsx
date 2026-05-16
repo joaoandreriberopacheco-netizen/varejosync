@@ -11,6 +11,8 @@ import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque.jsx';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque.jsx';
 import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao.jsx';
 import { buildLegacyUnitBackfillPatch } from '@/lib/productUnits';
+import { normalizeSigla } from '@/lib/productUnitsCrud';
+import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
@@ -50,10 +52,14 @@ export default function EditarProdutosEmMassa() {
       // Criar snapshot antes de importar (para desfazer depois)
       const idsAfetados = parsedData.alterados.map(a => a.id).filter(Boolean);
       const snapshotDados = [];
-      
+      const produtoAntigoPorId = new Map();
+
       if (idsAfetados.length > 0) {
         const produtosAntigos = await base44.entities.Produto.filter({ id: idsAfetados });
         snapshotDados.push(...produtosAntigos);
+        for (const p of produtosAntigos || []) {
+          if (p?.id) produtoAntigoPorId.set(p.id, p);
+        }
       }
 
       // Registrar snapshot
@@ -106,6 +112,21 @@ export default function EditarProdutosEmMassa() {
               dadosAtualizacao[field] = valor;
             }
           });
+
+          if (Object.prototype.hasOwnProperty.call(dadosAtualizacao, 'unidade_vitrine')) {
+            const anterior = produtoAntigoPorId.get(id);
+            const altsAnt =
+              anterior && Array.isArray(anterior.unidades_alternativas) ? anterior.unidades_alternativas : [];
+            if (anterior && altsAnt.length > 0) {
+              const principal =
+                normalizeSigla(dadosAtualizacao.unidade_principal || anterior.unidade_principal) || 'UN';
+              dadosAtualizacao.unidades_alternativas = syncIsComercialOnAlternativas(
+                altsAnt,
+                dadosAtualizacao.unidade_vitrine,
+                principal,
+              );
+            }
+          }
 
           if (Object.keys(dadosAtualizacao).length > 0) {
             console.log('📦 Payload atualização:', dadosAtualizacao);

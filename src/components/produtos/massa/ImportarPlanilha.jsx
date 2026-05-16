@@ -4,7 +4,7 @@ import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
 import { produtoCombinaHashArmazenado } from './produtoMassaChecksum';
-import { normalizeUnitCode } from '@/lib/productUnits';
+import { normalizeSigla } from '@/lib/productUnitsCrud';
 import {
   mapLegacyVitrineColumn,
   vitrineExibicaoParaArmazenada,
@@ -192,7 +192,7 @@ export default function ImportarPlanilha({ onParsed }) {
           const raw = getCellValue(row.getCell(colIndexMap.unidade_vitrine));
           const rawStr = raw == null || raw === '' ? '' : String(raw).trim();
           const principalBase =
-            normalizeUnitCode(
+            normalizeSigla(
               dadosExtraidos.unidade_principal
                 || (id && mapaAtual[id]?.unidade_principal)
                 || 'UN',
@@ -200,7 +200,7 @@ export default function ImportarPlanilha({ onParsed }) {
           dadosExtraidos.unidade_vitrine = vitrineExibicaoParaArmazenada(rawStr, principalBase);
         } else if (Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
           const principalBase =
-            normalizeUnitCode(
+            normalizeSigla(
               dadosExtraidos.unidade_principal
                 || (id && mapaAtual[id]?.unidade_principal)
                 || 'UN',
