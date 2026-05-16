@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { X, Search } from 'lucide-react';
 
-export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags, onClose }) {
+export default function TagSearchPopup({
+  allTags,
+  selectedTags,
+  setSelectedTags,
+  onClose,
+  variant = 'popup',
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   
   const filtered = useMemo(() => {
@@ -10,9 +16,16 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
   }, [searchTerm, allTags]);
   
   const unselected = filtered.filter(tag => !selectedTags.includes(tag));
-  
+  const isInline = variant === 'inline';
+
   return (
-    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 z-50 border border-gray-200 dark:border-gray-700 w-64 max-h-72 overflow-hidden flex flex-col">
+    <div
+      className={
+        isInline
+          ? 'relative w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 p-3 max-h-56 overflow-hidden flex flex-col'
+          : 'absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 z-50 border border-gray-200 dark:border-gray-700 w-64 max-h-72 overflow-hidden flex flex-col'
+      }
+    >
       <div className="relative mb-3">
         <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
         <input autoComplete="off"
@@ -20,7 +33,7 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
           placeholder="Buscar..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          autoFocus
+          autoFocus={!isInline}
           className="w-full pl-7 pr-2 py-1.5 text-sm bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -61,12 +74,14 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
         )}
       </div>
       
-      <button
-        onClick={onClose}
-        className="w-full mt-2 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded hover:opacity-90 transition"
-      >
-        Fechar
-      </button>
+      {!isInline && (
+        <button
+          onClick={onClose}
+          className="w-full mt-2 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded hover:opacity-90 transition"
+        >
+          Fechar
+        </button>
+      )}
     </div>
   );
 }

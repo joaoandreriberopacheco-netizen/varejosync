@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Printer, Loader2, ArrowLeft, Search, FilterX, X, ChevronDown, Type, TrendingUp, DollarSign, Percent, Package } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
@@ -836,6 +837,7 @@ export default function RelatorioMargemVendas() {
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Tags</label>
                   <TagSearchPopup
+                    variant="inline"
                     allTags={allTags}
                     selectedTags={selectedTags}
                     setSelectedTags={setSelectedTags}
@@ -880,19 +882,34 @@ export default function RelatorioMargemVendas() {
           </DrawerContent>
         </Drawer>
 
-        {/* Calendar Popup Modal */}
-        {showCalendar && (
-          <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-black/40 p-3 md:p-4">
-            <div className="w-full max-w-[720px] rounded-[28px] bg-white dark:bg-gray-900 p-3 md:p-5 shadow-2xl">
-              <CalendarPopup
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                onClose={() => setShowCalendar(false)}
-                isModal={true}
+        {/* Calendário acima do Drawer (portal no body — drawer usa z-[310]) */}
+        {showCalendar &&
+          createPortal(
+            <>
+              <button
+                type="button"
+                aria-label="Fechar calendário"
+                className="fixed inset-0 z-[320] cursor-default bg-black/50"
+                onClick={() => setShowCalendar(false)}
               />
-            </div>
-          </div>
-        )}
+              <div className="fixed inset-0 z-[330] flex items-end md:items-center justify-center pointer-events-none p-3 md:p-4">
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Selecionar período"
+                  className="pointer-events-auto w-full max-w-[720px] rounded-[28px] bg-white dark:bg-gray-900 p-3 md:p-5 shadow-2xl"
+                >
+                  <CalendarPopup
+                    dateRange={dateRange}
+                    setDateRange={setDateRange}
+                    onClose={() => setShowCalendar(false)}
+                    isModal={true}
+                  />
+                </div>
+              </div>
+            </>,
+            document.body
+          )}
 
         {/* Resumo — mesma linguagem do PDF */}
          <div className="px-3 md:px-6 py-2.5 md:py-6">
