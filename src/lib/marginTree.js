@@ -75,6 +75,26 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
   return keys;
 }
 
+/**
+ * Unidade da coluna UN em linhas de grupo: mesma sigla só se todas as folhas coincidem.
+ * @returns {string|null} sigla normalizada ou null (mistura / sem folhas)
+ */
+export function resolveMarginGroupUnidadeExibicao(items) {
+  if (!items?.length) return null;
+  const units = new Set(
+    items
+      .map((r) => String(r.unidade_exibicao || 'UN').trim().toUpperCase())
+      .filter(Boolean)
+  );
+  if (units.size === 1) return [...units][0];
+  return null;
+}
+
+/** Coluna UN em linhas de grupo: sigla comum ou travessão se mistura. */
+export function formatMarginGroupUnidadeLabel(unidadeExibicao) {
+  return unidadeExibicao ? unidadeExibicao : '\u2014';
+}
+
 /** Soma métricas de vendas de linhas do relatório de margem. */
 export function aggregateMarginItems(items) {
   if (!items?.length) {
@@ -88,6 +108,7 @@ export function aggregateMarginItems(items) {
       valor_unitario_medio: 0,
       markup_percentual: 0,
       count: 0,
+      unidade_exibicao: null,
     };
   }
 
@@ -109,6 +130,7 @@ export function aggregateMarginItems(items) {
       quantidade_vendida > 0 ? total_recebido / quantidade_vendida : 0,
     markup_percentual: custo_total > 0 ? (lucro_total / custo_total) * 100 : 0,
     count: items.length,
+    unidade_exibicao: resolveMarginGroupUnidadeExibicao(items),
   };
 }
 
@@ -216,6 +238,12 @@ function flattenMarginGroupBranch(key, node, expanded, parentKey, visualLevel) {
   const leafItems = sortedMarginItems(nodeLeafItems(finalNode));
   const isLeafGroup = Object.keys(children).length === 0;
   const isRoot = visualLevel === 0;
+
+  /** Um único produto no grupo-folha: sem linha de grupo redundante (tela, mobile, PDF). */
+  if (isLeafGroup && leafItems.length === 1) {
+    rows.push(makeMarginProductRow(leafItems[0], rowLevel));
+    return rows;
+  }
 
   if (!isRoot && isLeafGroup) {
     for (const item of leafItems) {

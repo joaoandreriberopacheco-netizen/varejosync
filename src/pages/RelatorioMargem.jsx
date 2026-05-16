@@ -8,6 +8,7 @@ import {
   flattenMarginTree,
   buildExpandedForLevel,
   collectAllMarginLeaves,
+  formatMarginGroupUnidadeLabel,
 } from '@/lib/marginTree';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -93,6 +94,12 @@ function formatQuant(val) {
   return (val ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 }
 
+/** Coluna UN: folhas usam sigla; grupos só quando todas as folhas coincidem, senão ? */
+function formatMarginTreeUnidade(row, { isGroup = false } = {}) {
+  if (isGroup) return formatMarginGroupUnidadeLabel(row.unidade_exibicao);
+  return row.unidade_exibicao || 'UN';
+}
+
 const formatMoneyDisplay = (val) =>
   `R$ ${(val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -168,17 +175,28 @@ function MargemLinhaMobile({
           ) : (
             <span className="w-3.5 flex-shrink-0" />
           )}
-          <span
-            lang="pt-BR"
-            className="flex-1 min-w-0 text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 truncate"
-          >
-            {titulo}
-            {row.count != null ? (
-              <span className="ml-1 font-medium text-gray-500 dark:text-gray-400 normal-case">
-                ({row.count})
-              </span>
+          <div className="flex-1 min-w-0">
+            <span
+              lang="pt-BR"
+              className="block text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 truncate"
+            >
+              {titulo}
+              {row.count != null ? (
+                <span className="ml-1 font-medium text-gray-500 dark:text-gray-400 normal-case">
+                  ({row.count})
+                </span>
+              ) : null}
+            </span>
+            {isGroup ? (
+              <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums normal-case">
+                <span className="text-gray-700 dark:text-gray-300">
+                  {formatQuant(row.quantidade_vendida)}
+                </span>
+                {' \u00b7 '}
+                {formatMarginTreeUnidade(row, { isGroup: true })}
+              </p>
             ) : null}
-          </span>
+          </div>
         </div>
         <span className="flex-shrink-0 text-right pl-2">
           <span className="block text-[9px] uppercase text-gray-400 leading-none">Lucro</span>
@@ -671,7 +689,7 @@ export default function RelatorioMargemVendas() {
       });
     };
 
-    const drawMetricsRow = (dataRow, textY, { bold = false, hideUn = false } = {}) => {
+    const drawMetricsRow = (dataRow, textY, { bold = false, hideUn = false, isGroup = false } = {}) => {
       const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
       const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
@@ -682,7 +700,10 @@ export default function RelatorioMargemVendas() {
         align: 'center',
       });
       if (!hideUn) {
-        pdf.text(String(dataRow.unidade_exibicao || 'UN'), unCenter, textY, { align: 'center' });
+        const unLabel = isGroup
+          ? formatMarginTreeUnidade(dataRow, { isGroup: true })
+          : formatMarginTreeUnidade(dataRow, { isGroup: false });
+        pdf.text(String(unLabel), unCenter, textY, { align: 'center' });
       }
 
       pdf.text(formatNumPdf(getRowPrecoMedio(dataRow)), colRightAbs.precoMedio - 1, textY, {
@@ -747,7 +768,7 @@ export default function RelatorioMargemVendas() {
       pdf.setFontSize(isGroup ? 7 : 7.5);
       setColor(colors.text);
       drawDescColumn(descLines, descX, descMaxW, textY);
-      drawMetricsRow(dataRow, textY, { bold: isGroup, hideUn: isGroup });
+      drawMetricsRow(dataRow, textY, { bold: isGroup, hideUn: false, isGroup });
 
       yPos += rowHeight;
     };
@@ -1249,7 +1270,9 @@ export default function RelatorioMargemVendas() {
                             <td className="py-2.5 px-2 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white">
                               {formatQuant(treeRow.quantidade_vendida)}
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-center text-gray-400">???</td>
+                            <td className="py-2.5 px-2 text-sm text-center text-gray-600 dark:text-gray-400">
+                              {formatMarginTreeUnidade(treeRow, { isGroup: true })}
+                            </td>
                             <td
                               lang="pt-BR"
                               className="py-3 px-3 text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
