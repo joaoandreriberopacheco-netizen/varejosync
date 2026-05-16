@@ -65,6 +65,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+/** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
+const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem']);
+
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const { triggerTransition } = useNavigationTransition();
@@ -339,12 +342,12 @@ export default function Layout({ children, currentPageName }) {
         <div 
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? `ml-0 pt-12 ${currentPageName === 'Produtos' ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
+              ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
               : (isOpen ? 'ml-[300px]' : 'ml-16')
-          } ${currentPageName === 'Produtos' && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
+          } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
-          {currentPageName === 'Produtos' ? (
+          {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
             <div className="h-full min-h-0 overflow-hidden">
               {children}
             </div>

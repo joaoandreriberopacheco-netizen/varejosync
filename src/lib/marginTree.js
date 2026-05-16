@@ -237,6 +237,7 @@ function flattenMarginGroupBranch(key, node, expanded, parentKey, visualLevel) {
   const children = nodeChildren(finalNode);
   const leafItems = sortedMarginItems(nodeLeafItems(finalNode));
   const isLeafGroup = Object.keys(children).length === 0;
+  const isExpanded = expanded.has(nodeKey);
   const isRoot = visualLevel === 0;
 
   /** Um único produto no grupo-folha: sem linha de grupo redundante (tela, mobile, PDF). */
@@ -258,10 +259,12 @@ function flattenMarginGroupBranch(key, node, expanded, parentKey, visualLevel) {
     label: collapsedLabel,
     level: rowLevel,
     isLeafGroup,
+    /** Métricas só na linha de grupo quando está recolhido (evita duplicar totais ao expandir). */
+    showMetrics: !isExpanded,
     ...agg,
   });
 
-  if (isLeafGroup || expanded.has(nodeKey)) {
+  if (isLeafGroup || isExpanded) {
     if (Object.keys(children).length > 0) {
       rows.push(...flattenMarginTree(children, expanded, nodeKey, rowLevel));
     }
