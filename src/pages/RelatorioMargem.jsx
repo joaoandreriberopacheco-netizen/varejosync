@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, FilterX, X, ChevronDown, Type, TrendingUp, DollarSign, Percent, Package } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, FilterX, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package } from 'lucide-react';
+import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import {
+  buildMarginTree,
+  flattenMarginTree,
+  buildExpandedForLevel,
+  collectAllMarginLeaves,
+} from '@/lib/marginTree';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
@@ -110,9 +117,14 @@ function MargemCampo({ label, value, align = 'right', muted, profit, className =
   );
 }
 
-function MargemLinhaMobile({ row, variant = 'produto' }) {
+const MARGIN_INDENT_GROUP = 14;
+const MARGIN_INDENT_PRODUTO = 8;
+
+function MargemLinhaMobile({ row, variant = 'produto', level = 1 }) {
   const isSubtotal = variant === 'subtotal';
-  const titulo = isSubtotal ? row.nome || 'Subtotal' : row.nome;
+  const isGroup = variant === 'grupo';
+  const titulo = isSubtotal ? row.nome || 'Subtotal' : isGroup ? row.label : row.nome;
+  const indentPx = isGroup ? (level - 1) * MARGIN_INDENT_GROUP + 12 : (level - 1) * MARGIN_INDENT_GROUP + MARGIN_INDENT_PRODUTO;
   const precoMedio =
     row.valor_unitario_medio ??
     (row.quantidade_vendida > 0 ? (row.total_recebido || 0) / row.quantidade_vendida : 0);
@@ -125,22 +137,32 @@ function MargemLinhaMobile({ row, variant = 'produto' }) {
       className={`p-3 border-b border-gray-100 dark:border-gray-800 ${
         isSubtotal
           ? 'bg-emerald-50/80 dark:bg-emerald-950/20'
-          : 'bg-white dark:bg-gray-900/40'
+          : isGroup
+            ? 'bg-slate-50/90 dark:bg-slate-800/40'
+            : 'bg-white dark:bg-gray-900/40'
       }`}
     >
       <p
         lang="pt-BR"
+        style={{ paddingLeft: indentPx }}
         className={`text-sm break-words hyphens-auto text-justify ${
-          isSubtotal ? 'font-semibold text-gray-900 dark:text-white' : 'font-medium text-gray-900 dark:text-white'
+          isSubtotal || isGroup
+            ? 'font-semibold text-gray-900 dark:text-white uppercase tracking-wide'
+            : 'font-medium text-gray-900 dark:text-white'
         }`}
       >
         {titulo}
+        {isGroup && row.count != null ? (
+          <span className="ml-1.5 text-[10px] font-medium text-gray-500 dark:text-gray-400 normal-case">
+            ({row.count})
+          </span>
+        ) : null}
       </p>
       <div className="mt-2.5 grid grid-cols-4 gap-x-2 gap-y-2">
         <MargemCampo label="QUANT" value={formatQuant(row.quantidade_vendida)} align="center" />
         <MargemCampo
           label="UN"
-          value={isSubtotal ? '—' : row.unidade_exibicao || 'UN'}
+          value={isSubtotal || isGroup ? '—' : row.unidade_exibicao || 'UN'}
           align="center"
         />
         <MargemCampo
@@ -180,7 +202,8 @@ export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [groupByCategory, setGroupByCategory] = useState(false);
+  const [treeLevel, setTreeLevel] = useState(99);
+  const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -236,9 +259,15 @@ export default function RelatorioMargemVendas() {
          if (!reportMap[prodId]) {
           const unidadeInicial = resolveCommercialDisplay(product, 0, item.unidade_medida || product?.unidade_principal || 'UN');
            reportMap[prodId] = {
+             produto_id: prodId,
              codigo_interno: product.codigo_interno,
              nome: product.nome,
              categoria: product.categoria_nome,
+             tags: product.tags,
+             campo_hierarquico_1: product.campo_hierarquico_1,
+             campo_hierarquico_2: product.campo_hierarquico_2,
+             campo_hierarquico_3: product.campo_hierarquico_3,
+             campo_hierarquico_4: product.campo_hierarquico_4,
             unidade_exibicao: unidadeInicial.unidade || 'UN',
              vendas_count: 0,
              quantidade_vendida: 0,
@@ -312,66 +341,77 @@ export default function RelatorioMargemVendas() {
       });
     }
 
-    // Group by category
-    if (groupByCategory) {
-      const grouped = {};
-      sorted.forEach(item => {
-        const cat = item.categoria || 'Sem categoria';
-        if (!grouped[cat]) {
-          grouped[cat] = { category: cat, items: [], totals: { total_recebido: 0, custo_total: 0, lucro_total: 0, quantidade_vendida: 0 } };
-        }
-        grouped[cat].items.push(item);
-        grouped[cat].totals.total_recebido += (item.total_recebido || 0);
-        grouped[cat].totals.custo_total += (item.custo_total || 0);
-        grouped[cat].totals.lucro_total += (item.lucro_total || 0);
-        grouped[cat].totals.quantidade_vendida += (item.quantidade_vendida || 0);
-      });
-      return Object.values(grouped);
-    }
-
     return sorted;
-  }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
+  }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags]);
+
+  const marginTree = useMemo(() => buildMarginTree(processedData), [processedData]);
+
+  useEffect(() => {
+    setExpandedKeys(
+      treeLevel === 1 ? new Set() : buildExpandedForLevel(marginTree, treeLevel - 1)
+    );
+  }, [treeLevel, marginTree]);
+
+  const displayRows = useMemo(
+    () => flattenMarginTree(marginTree, expandedKeys),
+    [marginTree, expandedKeys]
+  );
+
+  const exportRows = useMemo(
+    () => (processedData.length ? collectAllMarginLeaves(marginTree) : []),
+    [marginTree, processedData.length]
+  );
+
+  const handleToggleGroup = useCallback((key) => {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   const totals = useMemo(() => {
-    if (!processedData.length) return { quantidade_vendida: 0, total_recebido: 0, total_desconto_venda: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 };
-
-    if (groupByCategory) {
-      return processedData.reduce((acc, group) => {
-        const desconto = group.items.reduce((d, item) => d + (item.total_desconto_venda || 0), 0);
-        return {
-          quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
-          total_recebido: acc.total_recebido + (group.totals?.total_recebido || 0),
-          total_desconto_venda: acc.total_desconto_venda + desconto,
-          receita_liquida: acc.receita_liquida + (group.totals?.receita_liquida || 0),
-          custo_total: acc.custo_total + (group.totals?.custo_total || 0),
-          lucro_total: acc.lucro_total + (group.totals?.lucro_total || 0)
-        };
-      }, { quantidade_vendida: 0, total_recebido: 0, total_desconto_venda: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
+    if (!processedData.length) {
+      return {
+        quantidade_vendida: 0,
+        total_recebido: 0,
+        total_desconto_venda: 0,
+        receita_liquida: 0,
+        custo_total: 0,
+        lucro_total: 0,
+      };
     }
     const desconto = processedData.reduce((d, item) => d + (item.total_desconto_venda || 0), 0);
-    return processedData.reduce((acc, item) => ({
-      quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
-      total_recebido: acc.total_recebido + (item.total_recebido || 0),
-      total_desconto_venda: desconto,
-      receita_liquida: acc.receita_liquida + (item.receita_liquida || 0),
-      custo_total: acc.custo_total + (item.custo_total || 0),
-      lucro_total: acc.lucro_total + (item.lucro_total || 0)
-    }), { quantidade_vendida: 0, total_recebido: 0, total_desconto_venda: desconto, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
-  }, [processedData, groupByCategory]);
+    return processedData.reduce(
+      (acc, item) => ({
+        quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
+        total_recebido: acc.total_recebido + (item.total_recebido || 0),
+        total_desconto_venda: desconto,
+        receita_liquida: acc.receita_liquida + (item.receita_liquida || 0),
+        custo_total: acc.custo_total + (item.custo_total || 0),
+        lucro_total: acc.lucro_total + (item.lucro_total || 0),
+      }),
+      {
+        quantidade_vendida: 0,
+        total_recebido: 0,
+        total_desconto_venda: desconto,
+        receita_liquida: 0,
+        custo_total: 0,
+        lucro_total: 0,
+      }
+    );
+  }, [processedData]);
 
   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
 
-  const productCount = groupByCategory
-    ? processedData.reduce((n, g) => n + (g.items?.length || 0), 0)
-    : processedData.length;
+  const productCount = processedData.length;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatPercent = (val) => `${val.toFixed(2)}%`;
 
   const exportToCSV = () => {
-    const flat = groupByCategory
-      ? processedData.flatMap((g) => g.items)
-      : processedData;
+    const flat = exportRows.length ? exportRows : processedData;
     const headers =
       'Produto;Categoria;Quant;Un;Preco Un Medio;Receita Total;Custo Total;Lucro;Markup %\n';
     const rows = flat
@@ -426,25 +466,7 @@ export default function RelatorioMargemVendas() {
 
     const formatPctPdf = (val) => `${(val ?? 0).toFixed(1).replace('.', ',')}%`;
 
-    const flatRows = groupByCategory
-      ? processedData.flatMap((group) => [
-          { isCategoryHeader: true, nome: group.category },
-          ...group.items,
-          {
-            ...group.totals,
-            nome: `Subtotal — ${group.category}`,
-            isSubtotal: true,
-            valor_unitario_medio:
-              group.totals.quantidade_vendida > 0
-                ? group.totals.total_recebido / group.totals.quantidade_vendida
-                : 0,
-            markup_percentual:
-              group.totals.custo_total > 0
-                ? (group.totals.lucro_total / group.totals.custo_total) * 100
-                : 0,
-          },
-        ])
-      : processedData;
+    const flatRows = exportRows.length ? exportRows : processedData;
 
     const { colWidths, colX, colRight } = buildPdfColumnLayout(contentWidth);
     const tableOriginX = margin;
@@ -464,9 +486,7 @@ export default function RelatorioMargemVendas() {
     const setDraw = (rgb) => pdf.setDrawColor(rgb[0], rgb[1], rgb[2]);
 
     const drawFooter = () => {
-      const itemCount = groupByCategory
-        ? processedData.reduce((n, g) => n + g.items.length, 0)
-        : processedData.length;
+      const itemCount = productCount;
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(7);
       setColor(colors.muted);
@@ -699,7 +719,7 @@ export default function RelatorioMargemVendas() {
   const handleClearFilters = () => {
     setSearchTerm('');
     setSelectedTags([]);
-    setGroupByCategory(false);
+    setTreeLevel(99);
     setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
   };
 
@@ -749,7 +769,7 @@ export default function RelatorioMargemVendas() {
               <FilterX className="w-4 h-4" />
               Filtros
             </button>
-            {(searchTerm || selectedTags.length > 0 || groupByCategory) && (
+            {(searchTerm || selectedTags.length > 0 || treeLevel !== 99) && (
               <button
                 onClick={handleClearFilters}
                 className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -848,21 +868,6 @@ export default function RelatorioMargemVendas() {
 
 
 
-              {/* Group Toggle */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Exibição</label>
-                <button
-                  onClick={() => setGroupByCategory(!groupByCategory)}
-                  className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium transition ${
-                    groupByCategory
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {groupByCategory ? '✓ Agrupar por Categoria' : 'Agrupar por Categoria'}
-                </button>
-              </div>
-
               {/* Actions */}
               <div className="flex gap-2 pt-2">
                 <button
@@ -956,8 +961,10 @@ export default function RelatorioMargemVendas() {
            </div>
            </div>
 
-           {/* Sort Control - Below KPIs */}
-           <div className="px-3 md:px-6 py-2.5 flex gap-2 items-center">
+           {/* Ordenação e níveis hierárquicos */}
+           <div className="px-3 md:px-6 py-2.5 flex flex-wrap gap-2 items-center">
+            <LevelControl level={treeLevel} onChange={setTreeLevel} />
+            <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
             {/* Critério Selecionado - Icon Only */}
             <div className="relative">
               <DropdownMenu>
@@ -1137,125 +1144,127 @@ export default function RelatorioMargemVendas() {
                       </tr>
                   </thead>
                   <tbody>
-                    {groupByCategory ? (
-                      processedData.map((group) => (
-                        <React.Fragment key={group.category}>
-                          {/* Category Header */}
-                          <tr className="bg-slate-100 dark:bg-slate-800/90 border-b border-gray-200 dark:border-gray-700">
-                            <td colSpan="8" className="py-2.5 px-3 text-sm font-semibold text-gray-900 dark:text-white">
-                              {group.category}
+                    {displayRows.map((treeRow, rowIdx) => {
+                      if (treeRow.type === 'group') {
+                        const indent = (treeRow.level - 1) * MARGIN_INDENT_GROUP;
+                        const isExpanded = expandedKeys.has(treeRow.key);
+                        const isLeaf = treeRow.isLeafGroup;
+                        return (
+                          <tr
+                            key={treeRow.key}
+                            onClick={isLeaf ? undefined : () => handleToggleGroup(treeRow.key)}
+                            className={`border-b border-gray-100 dark:border-gray-800 bg-slate-50/80 dark:bg-slate-800/30 ${
+                              isLeaf ? '' : 'cursor-pointer hover:bg-slate-100/90 dark:hover:bg-slate-800/50'
+                            }`}
+                          >
+                            <td className="py-2.5 px-2 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white">
+                              {formatQuant(treeRow.quantidade_vendida)}
+                            </td>
+                            <td className="py-2.5 px-2 text-sm text-center text-gray-400">—</td>
+                            <td
+                              lang="pt-BR"
+                              className="py-2.5 px-3 text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0"
+                              style={{ paddingLeft: 12 + indent }}
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {!isLeaf && (
+                                  <ChevronRight
+                                    className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform ${
+                                      isExpanded ? 'rotate-90' : ''
+                                    }`}
+                                  />
+                                )}
+                                {isLeaf && <span className="w-3.5 flex-shrink-0" />}
+                                <span className="truncate">{treeRow.label}</span>
+                                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 normal-case flex-shrink-0">
+                                  ({treeRow.count})
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                              {formatMoney(treeRow.valor_unitario_medio)}
+                            </td>
+                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                              {formatMoney(treeRow.total_recebido)}
+                            </td>
+                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">
+                              {formatMoney(treeRow.custo_total)}
+                            </td>
+                            <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                              {formatMoney(treeRow.lucro_total)}
+                            </td>
+                            <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                              {formatPercent(treeRow.markup_percentual)}
                             </td>
                           </tr>
-                          {/* Items */}
-                          {group.items.map((row, rowIdx) => (
-                            <tr
-                              key={row.codigo_interno || row.nome}
-                              className={`border-b border-gray-100 dark:border-gray-800 transition ${
-                                rowIdx % 2 === 1
-                                  ? 'bg-gray-50/90 dark:bg-gray-800/40'
-                                  : 'bg-white dark:bg-gray-900/20'
-                              } hover:bg-gray-100/80 dark:hover:bg-gray-800/60`}
-                            >
-                              <td className="py-2.5 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold">{formatQuant(row.quantidade_vendida)}</td>
-                              <td className="py-2.5 px-2 text-sm text-center text-gray-600 dark:text-gray-400">{row.unidade_exibicao || 'UN'}</td>
-                              <td lang="pt-BR" className="py-2.5 px-3 text-sm text-gray-900 dark:text-white font-medium hyphens-auto text-justify break-words min-w-0">{row.nome}</td>
-                              <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.valor_unitario_medio)}</td>
-                              <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
-                              <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
-                              <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
-                              <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
-                            </tr>
-                          ))}
-                          {/* Subtotal Row */}
-                          <tr className="bg-emerald-50/90 dark:bg-emerald-950/25 border-b-2 border-gray-200 dark:border-gray-700 font-semibold">
-                            <td className="py-2.5 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white">{formatQuant(group.totals.quantidade_vendida)}</td>
-                            <td />
-                            <td className="py-2.5 px-3 text-sm text-gray-900 dark:text-white">{`Subtotal — ${group.category}`}</td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
-                              {formatMoney(
-                                group.totals.quantidade_vendida > 0
-                                  ? group.totals.total_recebido / group.totals.quantidade_vendida
-                                  : 0
-                              )}
-                            </td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(group.totals.total_recebido)}</td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">{formatMoney(group.totals.custo_total)}</td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-green-600 dark:text-green-400">{formatMoney(group.totals.lucro_total)}</td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-green-600 dark:text-green-400">
-                              {formatPercent(
-                                group.totals.custo_total > 0
-                                  ? (group.totals.lucro_total / group.totals.custo_total) * 100
-                                  : 0
-                              )}
-                            </td>
-                            </tr>
-                        </React.Fragment>
-                      ))
-                    ) : (
-                      processedData.map((row, rowIdx) => (
+                        );
+                      }
+
+                      const row = treeRow.item;
+                      const descIndent =
+                        (treeRow.level - 1) * MARGIN_INDENT_GROUP + MARGIN_INDENT_PRODUTO;
+                      return (
                         <tr
-                          key={row.codigo_interno || row.nome}
+                          key={treeRow.key}
                           className={`border-b border-gray-100 dark:border-gray-800 transition ${
                             rowIdx % 2 === 1
                               ? 'bg-gray-50/90 dark:bg-gray-800/40'
                               : 'bg-white dark:bg-gray-900/20'
                           } hover:bg-gray-100/80 dark:hover:bg-gray-800/60`}
                         >
-                          <td className="py-2.5 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold">{formatQuant(row.quantidade_vendida)}</td>
-                          <td className="py-2.5 px-2 text-sm text-center text-gray-600 dark:text-gray-400">{row.unidade_exibicao || 'UN'}</td>
-                          <td lang="pt-BR" className="py-2.5 px-3 text-sm text-gray-900 dark:text-white font-medium hyphens-auto text-justify break-words min-w-0">{row.nome}</td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.valor_unitario_medio)}</td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
-                          </tr>
-                          ))
-                          )}
-                          </tbody>
+                          <td className="py-2.5 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold">
+                            {formatQuant(row.quantidade_vendida)}
+                          </td>
+                          <td className="py-2.5 px-2 text-sm text-center text-gray-600 dark:text-gray-400">
+                            {row.unidade_exibicao || 'UN'}
+                          </td>
+                          <td
+                            lang="pt-BR"
+                            className="py-2.5 px-3 text-sm text-gray-900 dark:text-white font-medium hyphens-auto text-justify break-words min-w-0"
+                            style={{ paddingLeft: descIndent }}
+                          >
+                            {row.nome}
+                          </td>
+                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                            {formatMoney(row.valor_unitario_medio)}
+                          </td>
+                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                            {formatMoney(row.total_recebido)}
+                          </td>
+                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">
+                            {formatMoney(row.custo_total)}
+                          </td>
+                          <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                            {formatMoney(row.lucro_total)}
+                          </td>
+                          <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                            {formatPercent(row.markup_percentual)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
                           </table>
               </div>
 
               {/* Mobile — mesmas colunas do PDF */}
               <div className="md:hidden rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-                {groupByCategory ? (
-                  processedData.map((group) => (
-                    <div key={group.category}>
-                      <div className="px-3 py-2 bg-slate-100 dark:bg-slate-800/90 text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">
-                        {group.category}
-                      </div>
-                      {group.items.map((row) => (
-                        <MargemLinhaMobile key={row.codigo_interno || row.nome} row={row} />
-                      ))}
-                      <MargemLinhaMobile
-                        variant="subtotal"
-                        row={{
-                          nome: `Subtotal — ${group.category}`,
-                          quantidade_vendida: group.totals.quantidade_vendida,
-                          valor_unitario_medio:
-                            group.totals.quantidade_vendida > 0
-                              ? group.totals.total_recebido / group.totals.quantidade_vendida
-                              : 0,
-                          total_recebido: group.totals.total_recebido,
-                          custo_total: group.totals.custo_total,
-                          lucro_total: group.totals.lucro_total,
-                          markup_percentual:
-                            group.totals.custo_total > 0
-                              ? (group.totals.lucro_total / group.totals.custo_total) * 100
-                              : 0,
-                        }}
-                      />
-                    </div>
-                  ))
-                ) : (
-                  processedData.map((row, rowIdx) => (
+                {displayRows.map((treeRow, rowIdx) =>
+                  treeRow.type === 'group' ? (
+                    <MargemLinhaMobile
+                      key={treeRow.key}
+                      variant="grupo"
+                      row={treeRow}
+                      level={treeRow.level}
+                    />
+                  ) : (
                     <div
-                      key={row.codigo_interno || row.nome}
+                      key={treeRow.key}
                       className={rowIdx % 2 === 1 ? 'bg-gray-50/50 dark:bg-gray-800/30' : ''}
                     >
-                      <MargemLinhaMobile row={row} />
+                      <MargemLinhaMobile row={treeRow.item} level={treeRow.level} />
                     </div>
-                  ))
+                  )
                 )}
               </div>
 
