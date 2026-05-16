@@ -223,9 +223,11 @@ export function buildTree(produtos) {
 // ── Deep Collapse: funde cadeia de filho-único sem SKUs diretos ───────────────
 // Retorna { label, node } onde label é o path fundido e node é o nó final diverso
 export function deepCollapse(node) {
-  if (!node || !node.children) return { label: node?.label || '', node };
+  if (!node || typeof node !== 'object' || Array.isArray(node) || !node.children) {
+    return { label: node?.label || '', node: node ?? {} };
+  }
   const childKeys = Object.keys(node.children);
-  if (childKeys.length === 1 && node.skus.length === 0) {
+  if (childKeys.length === 1 && (node.skus || []).length === 0) {
     const child = node.children[childKeys[0]];
     const inner = deepCollapse(child);
     return {
@@ -239,7 +241,9 @@ export function deepCollapse(node) {
 // Reconstrói a chave após deep collapse percorrendo o caminho fundido
 function resolveCollapsedKey(baseKey, startNode, targetNode) {
   if (startNode === targetNode) return baseKey;
-  const childKey = Object.keys(startNode.children)[0];
+  const children = startNode?.children;
+  const childKey = children ? Object.keys(children)[0] : undefined;
+  if (!childKey) return baseKey;
   return resolveCollapsedKey(
     `${baseKey}||${childKey}`,
     startNode.children[childKey],
@@ -278,14 +282,14 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     const agg      = finalNode._agg || aggregateSkus(collectSkus(finalNode));
     const rowLevel = visualLevel + 1;
 
-    const isLeafGroup = Object.keys(finalNode.children).length === 0;
+    const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
     const isRoot      = visualLevel === 0;
 
     // Achatamento Agressivo: sub-grupos leaf (não raiz) omitem cabeçalho —
     // função só é chamada recursivamente quando o pai está expandido, logo
     // não precisamos revalidar expandedKeys aqui.
     if (!isRoot && isLeafGroup) {
-      for (const sku of finalNode.skus) {
+      for (const sku of finalNode.skus || []) {
         const custo = calcCusto(sku);
         const cat = getCatalogoComercialView(sku);
         rows.push({
@@ -312,10 +316,11 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     });
 
     if (isLeafGroup || expandedKeys.has(nodeKey)) {
-      if (Object.keys(finalNode.children).length > 0) {
-        rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, rowLevel));
+      const childMap = finalNode.children || {};
+      if (Object.keys(childMap).length > 0) {
+        rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel));
       }
-      for (const sku of finalNode.skus) {
+      for (const sku of finalNode.skus || []) {
         const custo = calcCusto(sku);
         const cat = getCatalogoComercialView(sku);
         rows.push({
@@ -337,19 +342,23 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
 // ── Expande até nível visual alvo ────────────────────────────────────────────
 export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', visualLevel = 0) {
   const keys = new Set();
-  if (!treeNode || visualLevel >= targetLevel) return keys;
+  if (!treeNode || typeof treeNode !== 'object' || visualLevel >= targetLevel) return keys;
 
   for (const [key, node] of Object.entries(treeNode)) {
+    if (key === '_rootSkus') continue;
+    if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
+
     const rawKey  = parentKey ? `${parentKey}||${key}` : key;
     const { node: finalNode } = deepCollapse(node);
     const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
     const rowLevel = visualLevel + 1;
+    const children = finalNode.children || {};
 
     keys.add(nodeKey);
 
-    if (rowLevel < targetLevel && Object.keys(finalNode.children).length > 0) {
+    if (rowLevel < targetLevel && Object.keys(children).length > 0) {
       const childKeys = buildExpandedForLevel(
-        finalNode.children, targetLevel, nodeKey, rowLevel
+        children, targetLevel, nodeKey, rowLevel
       );
       childKeys.forEach(k => keys.add(k));
     }

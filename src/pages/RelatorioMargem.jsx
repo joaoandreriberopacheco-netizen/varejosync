@@ -344,16 +344,23 @@ export default function RelatorioMargemVendas() {
     return sorted;
   }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags]);
 
-  const marginTree = useMemo(() => buildMarginTree(processedData), [processedData]);
+  const marginTree = useMemo(
+    () => buildMarginTree(Array.isArray(processedData) ? processedData : []),
+    [processedData]
+  );
 
   useEffect(() => {
+    if (!processedData?.length) {
+      setExpandedKeys(new Set());
+      return;
+    }
     setExpandedKeys(
       treeLevel === 1 ? new Set() : buildExpandedForLevel(marginTree, treeLevel - 1)
     );
-  }, [treeLevel, marginTree]);
+  }, [treeLevel, marginTree, processedData?.length]);
 
   const displayRows = useMemo(
-    () => flattenMarginTree(marginTree, expandedKeys),
+    () => flattenMarginTree(marginTree, expandedKeys ?? new Set()),
     [marginTree, expandedKeys]
   );
 
