@@ -11,8 +11,10 @@ import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque.jsx';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque.jsx';
 import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao.jsx';
 import { buildLegacyUnitBackfillPatch } from '@/lib/productUnits';
-import { normalizeSigla } from '@/lib/productUnitsCrud';
-import { buildVitrineIsComercialPatch } from '@/components/produtos/massa/embalagensPlanilhaUtils';
+import {
+  normalizeSigla,
+  buildProdutoUnidadesPatchFromVitrine,
+} from '@/lib/productUnitsCrud';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
@@ -128,7 +130,7 @@ export default function EditarProdutosEmMassa() {
                 normalizeSigla(dadosAtualizacao.unidade_principal || anterior?.unidade_principal) || 'UN';
               Object.assign(
                 dadosAtualizacao,
-                buildVitrineIsComercialPatch(
+                buildProdutoUnidadesPatchFromVitrine(
                   anterior,
                   dadosAtualizacao.unidade_vitrine,
                   principal,

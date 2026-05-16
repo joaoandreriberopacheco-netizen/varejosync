@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X, HelpCircle, ChevronDown, Type, TrendingUp, DollarSign, Percent, Scale } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
+import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
@@ -222,10 +223,16 @@ export default function RelatorioMargemVendas() {
 
   const exportToPDF = () => {
     if (!dateRange.from || !dateRange.to) {
-      alert('Selecione um período antes de exportar');
+      toast.error('Selecione um período antes de exportar');
       return;
     }
 
+    if (!processedData.length) {
+      toast.error('Não há dados para exportar no período selecionado');
+      return;
+    }
+
+    try {
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -490,6 +497,10 @@ export default function RelatorioMargemVendas() {
     drawFooter();
 
     pdf.save('relatorio_margem.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF do relatório de margem', error);
+      toast.error('Não foi possível gerar o PDF. Tente novamente.');
+    }
   };
 
   const allTags = React.useMemo(() => {

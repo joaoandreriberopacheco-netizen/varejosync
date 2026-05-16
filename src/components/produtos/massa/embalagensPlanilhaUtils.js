@@ -1,4 +1,7 @@
-import { normalizeSigla } from '@/lib/productUnitsCrud';
+import {
+  normalizeSigla,
+  buildProdutoUnidadesPatchFromVitrine,
+} from '@/lib/productUnitsCrud';
 
 /** 1 base + 2 alternativas; alinhado a `MAX_EMBALAGENS` em produtoEmbalagensEntity. */
 export const MAX_EMBALAGENS_PLANILHA = 3;
@@ -209,34 +212,11 @@ export function syncIsComercialOnAlternativas(alternativas = [], vitrineStored, 
 }
 
 /**
- * Patch de `unidades_alternativas` / `unidades[]` alinhado à vitrine (planilha em massa / confirmar).
- * Excel só precisa da coluna vitrine; `is_comercial` é derivado aqui.
+ * Patch de unidades/vitrine idêntico ao save do formulário (`applyUnidadesToProduto`).
+ * Excel só precisa da coluna vitrine; `is_comercial` vem do pathway inverso em productUnitsCrud.
  */
 export function buildVitrineIsComercialPatch(produto, vitrineStored, principalSigla) {
-  const principal =
-    normalizeSigla(principalSigla || produto?.unidade_principal) || 'UN';
-  const vitrineNorm = normalizeSigla(vitrineStored) || principal;
-  const patch = {};
-
-  const alts = produto?.unidades_alternativas || [];
-  if (alts.length > 0) {
-    patch.unidades_alternativas = syncIsComercialOnAlternativas(
-      alts,
-      vitrineStored,
-      principal,
-    );
-  }
-
-  const unidades = produto?.unidades || [];
-  if (unidades.length > 0) {
-    patch.unidades = unidades.map((u) => ({
-      ...u,
-      is_comercial:
-        (normalizeSigla(u?.sigla) || normalizeSigla(u?.unidade)) === vitrineNorm,
-    }));
-  }
-
-  return patch;
+  return buildProdutoUnidadesPatchFromVitrine(produto, vitrineStored, principalSigla);
 }
 
 /** Cadastro ainda tem espelho `is_comercial` diferente do que a vitrine exige. */

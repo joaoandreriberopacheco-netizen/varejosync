@@ -489,3 +489,60 @@ export function applyUnidadesToProduto(produto = {}, unidades) {
     },
   };
 }
+
+/**
+ * Pathway inverso do save do formulário: dado o cadastro atual + `unidade_vitrine`
+ * armazenada ('' = vitrine na base), devolve o mesmo patch que `applyUnidadesToProduto`
+ * produziria no `ProdutoFormCompleto.handleSave` (unidades, espelho legado, vitrine).
+ */
+export function buildProdutoUnidadesPatchFromVitrine(
+  produto = {},
+  vitrineStored,
+  principalSiglaOverride,
+) {
+  const principalSigla =
+    normalizeSigla(principalSiglaOverride || produto?.unidade_principal) || "UN";
+  const storedCanon = normalizeSigla(
+    vitrineStored == null ? "" : String(vitrineStored).trim(),
+  );
+  const comercialSigla = storedCanon || principalSigla;
+
+  const { unidades: base } = migrateLegacyToUnidades(produto);
+  if (!Array.isArray(base) || base.length === 0) {
+    return {
+      unidade_vitrine:
+        storedCanon && storedCanon !== principalSigla ? storedCanon : "",
+    };
+  }
+
+  let unidades = base.map((u) => ({ ...u, is_comercial: false }));
+  const principal =
+    unidades.find((u) => u?.is_principal && u?.ativo !== false) || unidades[0];
+  const principalSiglaNorm = normalizeSigla(principal?.sigla) || principalSigla;
+
+  let target = principal;
+  if (comercialSigla !== principalSiglaNorm) {
+    const bySigla = unidades.find((u) => normalizeSigla(u.sigla) === comercialSigla);
+    if (bySigla) target = bySigla;
+  }
+
+  unidades = unidades.map((u) => ({
+    ...u,
+    is_comercial: u.id === target.id,
+  }));
+
+  const applied = applyUnidadesToProduto({}, unidades);
+  if (!applied.ok) {
+    return {
+      unidade_vitrine:
+        storedCanon && storedCanon !== principalSigla ? storedCanon : "",
+    };
+  }
+
+  return {
+    unidade_vitrine: applied.produto.unidade_vitrine,
+    unidade_principal: applied.produto.unidade_principal,
+    unidades_alternativas: applied.produto.unidades_alternativas,
+    unidades: applied.produto.unidades,
+  };
+}

@@ -70,22 +70,326 @@ const validateUnidadesPayload = (dados: any): { ok: boolean; errors: string[] } 
   return errors.length === 0 ? { ok: true, errors: [] } : { ok: false, errors };
 };
 
-/** Espelha `syncIsComercialOnAlternativas` (embalagensPlanilhaUtils) — runtime Deno sem import do Vite. */
-const syncIsComercialOnAlternativas = (
-  alternativas: any[] = [],
-  vitrineStored: any,
-  principalSigla: string,
-) => {
-  const principal = normalizeSigla(principalSigla || 'UN') || 'UN';
-  const storedCanon = normalizeSigla(vitrineStored);
-  const vitrineSigla = storedCanon || principal;
-  return alternativas.map((u) => {
-    const unidade = normalizeSigla(u?.unidade);
-    return {
-      ...u,
-      is_comercial: storedCanon !== '' && Boolean(unidade) && unidade === vitrineSigla,
-    };
+/* Pathway inverso vitrine — espelho de src/lib/productUnitsCrud.js (Deno não importa o bundle Vite). */
+
+const newId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `u_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const asNumber = (value: any, fallback = 0): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const makeUnidade = (input: any = {}) => {
+  const adj = asNumber(input.ajuste_percentual, 0);
+  const pctRaw = input.percentual_preco_vs_principal;
+  const hasPct =
+    Object.prototype.hasOwnProperty.call(input, 'percentual_preco_vs_principal') &&
+    pctRaw !== '' &&
+    pctRaw != null;
+  return {
+    id: String(input.id || '').trim() || newId(),
+    nome: typeof input.nome === 'string' ? input.nome.trim() : '',
+    sigla: normalizeSigla(input.sigla || input.unidade),
+    fator_conversao: asNumber(input.fator_conversao, 1) || 1,
+    fator_preco: asNumber(input.fator_preco, 1) || 1,
+    ajuste_percentual: adj,
+    preco_venda: asNumber(input.preco_venda, 0),
+    ...(hasPct ? { percentual_preco_vs_principal: asNumber(pctRaw, 0) } : {}),
+    is_principal: input.is_principal === true,
+    is_comercial: input.is_comercial === true,
+    ativo: input.ativo !== false,
+  };
+};
+
+const validateUnidadesCanonical = (unidades: any[]): { ok: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  if (!Array.isArray(unidades)) {
+    return { ok: false, errors: ['O campo de unidades deve ser uma lista (array).'] };
+  }
+  const ativas = unidades.filter((u) => u?.ativo !== false);
+  if (ativas.length === 0) {
+    return { ok: false, errors: ['É necessário pelo menos uma unidade ativa no produto.'] };
+  }
+  if (unidades.length > 5) {
+    errors.push(`No máximo 5 unidades por produto (atual: ${unidades.length}).`);
+  }
+  const ids = new Set<string>();
+  const siglas = new Set<string>();
+  let countPrincipal = 0;
+  let countComercial = 0;
+  let principalFator1 = false;
+  for (const u of unidades) {
+    if (!u || typeof u !== 'object') {
+      errors.push('Há uma entrada inválida na lista de unidades.');
+      continue;
+    }
+    const id = String(u.id || '').trim();
+    if (!id) errors.push('Cada unidade precisa de um id estável.');
+    else if (ids.has(id)) errors.push(`Id de unidade duplicado: ${id}.`);
+    else ids.add(id);
+    const sigla = normalizeSigla(u.sigla);
+    if (!sigla) errors.push(`Unidade ${id || '(sem id)'}: informe a sigla.`);
+    else if (u.ativo !== false) {
+      if (siglas.has(sigla)) errors.push(`Sigla duplicada entre unidades ativas: ${sigla}.`);
+      else siglas.add(sigla);
+    }
+    const fator = asNumber(u.fator_conversao, NaN);
+    if (!Number.isFinite(fator) || fator <= 0) {
+      errors.push(`Unidade ${sigla || id || '(?)'}: o fator de conversão deve ser maior que zero.`);
+    }
+    if (u.is_principal === true && u.ativo !== false) {
+      countPrincipal++;
+      if (fator === 1) principalFator1 = true;
+    }
+    if (u.is_comercial === true && u.ativo !== false) countComercial++;
+  }
+  if (countPrincipal !== 1) {
+    errors.push(`Deve existir exatamente uma unidade base ativa (encontradas: ${countPrincipal}).`);
+  } else if (!principalFator1) {
+    errors.push('A unidade base deve ter fator de conversão igual a 1.');
+  }
+  if (countComercial !== 1) {
+    errors.push(
+      countComercial === 0
+        ? 'Marque uma unidade comercial ativa (a de vitrine não pode estar inativa ou sem correspondência).'
+        : `Deve existir exatamente uma unidade comercial ativa (encontradas: ${countComercial}).`,
+    );
+  }
+  return errors.length === 0 ? { ok: true, errors: [] } : { ok: false, errors };
+};
+
+const extractFatorFromName = (...nomes: any[]): number | null => {
+  for (const raw of nomes) {
+    if (!raw) continue;
+    const s = String(raw)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace('METRO QUADRADO', 'M2').replace('M²', 'M2')
+      .replace(/CAIXAS?/g, 'CX');
+    const padroes = [
+      /(\d+(?:[.,]\d+)?)\s*M2\s*[\/xX\s]*\s*CX/i,
+      /CX\s*(\d+(?:[.,]\d+)?)\s*M2/i,
+      /\(\s*(\d+(?:[.,]\d+)?)\s*M2\s*\)/i,
+    ];
+    for (const re of padroes) {
+      const m = re.exec(s);
+      if (m) {
+        const v = Number(String(m[1]).replace(',', '.'));
+        if (Number.isFinite(v) && v > 1 && v < 100) {
+          return Math.round(v * 10000) / 10000;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+const migrateLegacyToUnidades = (produto: any = {}) => {
+  if (Array.isArray(produto?.unidades) && produto.unidades.length > 0) {
+    return { unidades: produto.unidades };
+  }
+  const principalSigla = normalizeSigla(produto?.unidade_principal || 'UN') || 'UN';
+  const fatorNome = extractFatorFromName(
+    produto?.nome,
+    produto?.descricao,
+    produto?.campo_hierarquico_1,
+    produto?.campo_hierarquico_2,
+    produto?.campo_hierarquico_3,
+  );
+  const principal = makeUnidade({
+    id: 'principal',
+    nome: 'Unidade base',
+    sigla: principalSigla,
+    fator_conversao: 1,
+    fator_preco: 1,
+    is_principal: true,
+    is_comercial: false,
+    ativo: true,
   });
+  const alternativasInput = Array.isArray(produto?.unidades_alternativas) ? produto.unidades_alternativas : [];
+  const alternativas = alternativasInput
+    .filter((a: any) => a?.unidade)
+    .map((a: any) => {
+      const sigla = normalizeSigla(a.unidade);
+      let fator = asNumber(a.fator_conversao, 1) || 1;
+      if (fatorNome && sigla === 'CX' && Math.abs(fator - fatorNome) > 0.01) fator = fatorNome;
+      const mu: any = {
+        id: a.id || newId(),
+        nome: a.nome || a.rotulo || sigla,
+        sigla,
+        fator_conversao: fator,
+        fator_preco: asNumber(a.fator_preco, 1) || 1,
+        ajuste_percentual: asNumber(a.ajuste_percentual, 0),
+        preco_venda: asNumber(a.preco_venda, 0),
+        is_principal: a.is_principal === true,
+        is_comercial: a.is_comercial === true,
+        ativo: a.ativo !== false,
+      };
+      if (
+        Object.prototype.hasOwnProperty.call(a, 'percentual_preco_vs_principal') &&
+        a.percentual_preco_vs_principal != null &&
+        a.percentual_preco_vs_principal !== ''
+      ) {
+        mu.percentual_preco_vs_principal = asNumber(a.percentual_preco_vs_principal, 0);
+      }
+      return makeUnidade(mu);
+    });
+  const unidades = [principal, ...alternativas];
+  const comercialIdLegacy = String(produto?.unidade_comercial_id || '').trim();
+  const comercialSiglaLegacy = normalizeSigla(
+    produto?.unidade_vitrine ||
+    produto?.unidade_apresentacao_default ||
+    produto?.unidade_show_comercial ||
+    principalSigla,
+  );
+  const markComercial = (target: any) => {
+    if (!target) return false;
+    unidades.forEach((u) => { u.is_comercial = u.id === target.id; });
+    return true;
+  };
+  let comercialAplicado = false;
+  if (comercialIdLegacy === 'primary' || comercialIdLegacy === 'principal') {
+    comercialAplicado = markComercial(unidades[0]);
+  } else if (comercialIdLegacy) {
+    comercialAplicado = markComercial(unidades.find((u) => u.id === comercialIdLegacy));
+  }
+  if (!comercialAplicado && comercialSiglaLegacy) {
+    comercialAplicado = markComercial(unidades.find((u) => normalizeSigla(u.sigla) === comercialSiglaLegacy));
+  }
+  if (!comercialAplicado) {
+    const comercialFromJsonAlt = alternativas.find((u: any) => u?.is_comercial === true);
+    if (comercialFromJsonAlt) comercialAplicado = markComercial(comercialFromJsonAlt);
+  }
+  if (!comercialAplicado) markComercial(unidades[0]);
+  const seen = new Set<string>();
+  const deduped: any[] = [];
+  for (const u of unidades) {
+    const key = normalizeSigla(u.sigla);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(u);
+  }
+  return { unidades: deduped };
+};
+
+const unidadesToLegacyMirror = (unidades: any[]) => {
+  if (!Array.isArray(unidades) || unidades.length === 0) {
+    return {
+      unidade_principal: 'UN',
+      unidades_alternativas: [],
+      unidade_apresentacao_default: '',
+      unidade_show_comercial: '',
+      unidade_comercial_id: '',
+    };
+  }
+  const principal = unidades.find((u) => u?.is_principal && u?.ativo !== false) || unidades[0];
+  const comercial = unidades.find((u) => u?.is_comercial && u?.ativo !== false) || principal;
+  const alternativasLegacy = unidades
+    .filter((u) => u && u.id !== principal.id)
+    .map((u) => {
+      const row: any = {
+        id: u.id,
+        nome: u.nome || '',
+        unidade: normalizeSigla(u.sigla),
+        fator_conversao: asNumber(u.fator_conversao, 1) || 1,
+        fator_preco: asNumber(u.fator_preco, 1) || 1,
+        ajuste_percentual: asNumber(u.ajuste_percentual, 0),
+        preco_venda: asNumber(u.preco_venda, 0),
+        rotulo: typeof u.nome === 'string' && u.nome.trim() ? u.nome.trim() : normalizeSigla(u.sigla) || '',
+        ativo: u.ativo !== false,
+        is_principal: false,
+        is_comercial: u.id === comercial.id,
+      };
+      if (
+        Object.prototype.hasOwnProperty.call(u, 'percentual_preco_vs_principal') &&
+        u.percentual_preco_vs_principal != null &&
+        u.percentual_preco_vs_principal !== ''
+      ) {
+        row.percentual_preco_vs_principal = asNumber(u.percentual_preco_vs_principal, 0);
+      }
+      return row;
+    });
+  const principalSigla = normalizeSigla(principal?.sigla) || 'UN';
+  const comercialSigla = normalizeSigla(comercial?.sigla) || principalSigla;
+  const comercialId = comercial && comercial.id !== principal.id ? comercial.id : 'primary';
+  return {
+    unidade_principal: principalSigla,
+    unidades_alternativas: alternativasLegacy,
+    unidade_apresentacao_default: comercialSigla,
+    unidade_show_comercial: comercialSigla,
+    unidade_comercial_id: comercialId,
+  };
+};
+
+const applyUnidadesToProduto = (produto: any, unidades: any[]) => {
+  const validation = validateUnidadesCanonical(unidades);
+  if (!validation.ok) return { ok: false, produto, errors: validation.errors };
+  const legacyMirror = unidadesToLegacyMirror(unidades);
+  const principalSigla = normalizeSigla(legacyMirror.unidade_principal) || 'UN';
+  const comercialSigla =
+    normalizeSigla(legacyMirror.unidade_apresentacao_default) ||
+    normalizeSigla(legacyMirror.unidade_show_comercial) ||
+    principalSigla;
+  const unidadeVitrine = comercialSigla === principalSigla ? '' : comercialSigla;
+  return {
+    ok: true,
+    errors: [] as string[],
+    produto: {
+      ...produto,
+      unidades,
+      unidade_principal: legacyMirror.unidade_principal,
+      unidades_alternativas: legacyMirror.unidades_alternativas,
+      unidade_vitrine: unidadeVitrine,
+    },
+  };
+};
+
+/** Espelho de buildProdutoUnidadesPatchFromVitrine (productUnitsCrud.js). */
+const buildProdutoUnidadesPatchFromVitrine = (
+  produto: any = {},
+  vitrineStored: any,
+  principalSiglaOverride?: string,
+) => {
+  const principalSigla =
+    normalizeSigla(principalSiglaOverride || produto?.unidade_principal) || 'UN';
+  const storedCanon = normalizeSigla(vitrineStored == null ? '' : String(vitrineStored).trim());
+  const comercialSigla = storedCanon || principalSigla;
+  const { unidades: base } = migrateLegacyToUnidades(produto);
+  if (!Array.isArray(base) || base.length === 0) {
+    return {
+      unidade_vitrine: storedCanon && storedCanon !== principalSigla ? storedCanon : '',
+    };
+  }
+  let unidades = base.map((u: any) => ({ ...u, is_comercial: false }));
+  const principal =
+    unidades.find((u: any) => u?.is_principal && u?.ativo !== false) || unidades[0];
+  const principalSiglaNorm = normalizeSigla(principal?.sigla) || principalSigla;
+  let target = principal;
+  if (comercialSigla !== principalSiglaNorm) {
+    const bySigla = unidades.find((u: any) => normalizeSigla(u.sigla) === comercialSigla);
+    if (bySigla) target = bySigla;
+  }
+  unidades = unidades.map((u: any) => ({
+    ...u,
+    is_comercial: u.id === target.id,
+  }));
+  const applied = applyUnidadesToProduto({}, unidades);
+  if (!applied.ok) {
+    return {
+      unidade_vitrine: storedCanon && storedCanon !== principalSigla ? storedCanon : '',
+    };
+  }
+  return {
+    unidade_vitrine: applied.produto.unidade_vitrine,
+    unidade_principal: applied.produto.unidade_principal,
+    unidades_alternativas: applied.produto.unidades_alternativas,
+    unidades: applied.produto.unidades,
+  };
 };
 
 const applyVitrineToPayload = (
@@ -94,28 +398,27 @@ const applyVitrineToPayload = (
   anterior: Record<string, unknown> | undefined,
 ) => {
   if (!Object.prototype.hasOwnProperty.call(dadosAtualizacao, 'unidade_vitrine')) return;
+  if (!anterior) return;
   const principal =
-    normalizeSigla(dadosAtualizacao.unidade_principal || dadosLinha?.unidade_principal || anterior?.unidade_principal) ||
-    'UN';
-  const vitrineNorm =
-    normalizeSigla(dadosAtualizacao.unidade_vitrine) || principal;
-
-  const altsAnt = Array.isArray(anterior?.unidades_alternativas) ? anterior.unidades_alternativas : [];
-  if (anterior && altsAnt.length > 0) {
-    dadosAtualizacao.unidades_alternativas = syncIsComercialOnAlternativas(
-      altsAnt,
-      dadosAtualizacao.unidade_vitrine,
-      principal,
-    );
+    normalizeSigla(
+      dadosAtualizacao.unidade_principal || dadosLinha?.unidade_principal || anterior?.unidade_principal,
+    ) || 'UN';
+  const produtoBase: Record<string, unknown> = { ...anterior };
+  if (dadosAtualizacao.unidade_principal) {
+    produtoBase.unidade_principal = dadosAtualizacao.unidade_principal;
   }
-
-  const unidadesAtuais = Array.isArray(anterior?.unidades) ? anterior.unidades : [];
-  if (anterior && unidadesAtuais.length > 0) {
-    dadosAtualizacao.unidades = unidadesAtuais.map((u: any) => ({
-      ...u,
-      is_comercial: (normalizeSigla(u?.sigla) || normalizeSigla(u?.unidade)) === vitrineNorm,
-    }));
+  if (Array.isArray(dadosAtualizacao.unidades_alternativas)) {
+    produtoBase.unidades_alternativas = dadosAtualizacao.unidades_alternativas;
   }
+  if (Array.isArray(dadosAtualizacao.unidades)) {
+    produtoBase.unidades = dadosAtualizacao.unidades;
+  }
+  const patch = buildProdutoUnidadesPatchFromVitrine(
+    produtoBase,
+    dadosAtualizacao.unidade_vitrine,
+    principal,
+  );
+  Object.assign(dadosAtualizacao, patch);
 };
 
 const copyValidField = (
