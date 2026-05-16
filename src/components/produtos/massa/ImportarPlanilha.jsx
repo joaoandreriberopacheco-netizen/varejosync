@@ -9,6 +9,7 @@ import {
   mapLegacyVitrineColumn,
   vitrineExibicaoParaArmazenada,
   findColunaByHeader,
+  syncIsComercialOnAlternativas,
 } from './embalagensPlanilhaUtils';
 import { toast } from 'sonner';
 
@@ -209,6 +210,24 @@ export default function ImportarPlanilha({ onParsed }) {
             dadosExtraidos.unidade_vitrine,
             principalBase,
           );
+        }
+
+        // Sincroniza o array de alternativas para refletir a nova unidade_vitrine extraída da planilha
+        // (evita payload só com string solta quando o consumidor usa is_comercial no JSON).
+        if (id && mapaAtual[id] && Object.prototype.hasOwnProperty.call(dadosExtraidos, 'unidade_vitrine')) {
+          const principalBaseSync =
+            normalizeSigla(
+              dadosExtraidos.unidade_principal || mapaAtual[id]?.unidade_principal || 'UN',
+            ) || 'UN';
+
+          const altsAtuais = mapaAtual[id].unidades_alternativas || [];
+          if (altsAtuais.length > 0) {
+            dadosExtraidos.unidades_alternativas = syncIsComercialOnAlternativas(
+              altsAtuais,
+              dadosExtraidos.unidade_vitrine,
+              principalBaseSync,
+            );
+          }
         }
 
         // 8. Construir nome completo
