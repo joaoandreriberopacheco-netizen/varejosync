@@ -24,6 +24,23 @@ import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricToolt
 
 const PDF_COL_GAP_MM = 2;
 
+/** Paleta alinhada a `gerarRelatorioPedidosComprav2` (relat?rio expandido de embarques). */
+const PDF_EMBARQUES_C = {
+  text: [31, 41, 55],
+  muted: [107, 114, 128],
+  mutedLight: [156, 163, 175],
+  panel: [248, 250, 252],
+  soft: [243, 244, 246],
+  rowAlt: [249, 250, 251],
+  dark: [17, 24, 39],
+  white: [255, 255, 255],
+  teal: [45, 212, 191],
+  tealDark: [15, 118, 110],
+  kpiBg: [250, 250, 250],
+  border: [229, 231, 235],
+  profit: [15, 118, 110],
+};
+
 /** Larguras fixas (mm); descri??o ocupa o restante de contentWidth menos os gaps. */
 function buildPdfColumnLayout(contentWidth) {
   const colWidths = {
@@ -94,7 +111,7 @@ function formatQuant(val) {
   return (val ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 }
 
-/** Coluna UN: folhas usam sigla; grupos só quando todas as folhas coincidem, senão ? */
+/** Coluna UN: folhas usam sigla; grupos s? quando todas as folhas coincidem, sen?o ? */
 function formatMarginTreeUnidade(row, { isGroup = false } = {}) {
   if (isGroup) return formatMarginGroupUnidadeLabel(row.unidade_exibicao);
   return row.unidade_exibicao || 'UN';
@@ -113,11 +130,11 @@ function MargemMetricChip({ label, value, muted, profit }) {
       : 'text-gray-900 dark:text-white font-medium';
 
   return (
-    <div className="flex-shrink-0 min-w-[4.25rem]">
-      <p className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none">
+    <div className="flex-shrink-0 min-w-[4.25rem] max-w-[5.75rem]">
+      <p className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none truncate">
         {label}
       </p>
-      <p className={`text-[11px] tabular-nums leading-tight mt-0.5 ${valueClass}`}>{value}</p>
+      <p className={`text-[11px] tabular-nums leading-tight mt-0.5 truncate ${valueClass}`}>{value}</p>
     </div>
   );
 }
@@ -157,7 +174,8 @@ function MargemLinhaMobile({
         ? 'border-l-gray-200 dark:border-l-gray-700'
         : 'border-l-transparent';
 
-  const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-2 pr-3 pl-0`;
+  const rowPadLeft = 16 + indentPx;
+  const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-3 pr-4 min-w-0 max-w-full`;
 
   if (isGroup || isSubtotal) {
     const bgClass = isSubtotal
@@ -213,8 +231,8 @@ function MargemLinhaMobile({
           type="button"
           onClick={onToggle}
           aria-expanded={isExpanded}
-          className={`w-full flex items-center gap-2 text-left min-h-[44px] active:bg-gray-100/80 dark:active:bg-gray-800/50 ${rowBase} ${bgClass}`}
-          style={{ paddingLeft: indentPx }}
+          className={`w-full max-w-full flex items-center gap-2 text-left min-h-[44px] active:bg-gray-100/80 dark:active:bg-gray-800/50 overflow-hidden ${rowBase} ${bgClass}`}
+          style={{ paddingLeft: rowPadLeft }}
         >
           {inner}
         </button>
@@ -223,8 +241,8 @@ function MargemLinhaMobile({
 
     return (
       <div
-        className={`flex items-center gap-2 min-h-[44px] ${rowBase} ${bgClass}`}
-        style={{ paddingLeft: indentPx }}
+        className={`flex items-center gap-2 min-h-[44px] min-w-0 max-w-full overflow-hidden ${rowBase} ${bgClass}`}
+        style={{ paddingLeft: rowPadLeft }}
       >
         {inner}
       </div>
@@ -235,21 +253,21 @@ function MargemLinhaMobile({
 
   return (
     <div
-      className={`${rowBase} ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
-      style={{ paddingLeft: indentPx }}
+      className={`${rowBase} overflow-hidden ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
+      style={{ paddingLeft: rowPadLeft }}
     >
-      <p lang="pt-BR" className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2">
+      <p lang="pt-BR" className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 break-words">
         {titulo}
       </p>
-      <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
+      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate">
         <span className="text-gray-700 dark:text-gray-300">{formatQuant(row.quantidade_vendida)}</span>
         {' \u00b7 '}
         {unidade}
         {' \u00b7 '}
         <span className="text-gray-600 dark:text-gray-400">{formatMoneyDisplay(precoMedio)}/un</span>
       </p>
-      <div className="mt-1.5 -mr-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-4 pr-3 pb-0.5">
+      <div className="mt-2 min-w-0 w-full max-w-full overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="inline-flex gap-3 py-0.5 pr-1">
           <MargemMetricChip label="Receita" value={formatMoneyDisplay(row.total_recebido)} />
           <MargemMetricChip label="Custo" value={formatMoneyDisplay(row.custo_total)} muted />
           <MargemMetricChip label="Lucro" value={formatMoneyDisplay(row.lucro_total)} profit />
@@ -517,23 +535,15 @@ export default function RelatorioMargemVendas() {
     const contentWidth = pageWidth - margin * 2;
     const footerY = pageHeight - 10;
     const rowMinHeightProduct = 4;
-    const rowMinHeightGroup = 4.6;
+    const rowMinHeightGroup = 5.2;
     const lineHeight = 2.9;
     const rowPadV = 0.8;
     const textBaseline = 3.1;
     const pdfIndentGroupMm = 3;
     const pdfIndentProdutoMm = 1.6;
+    const groupCardInset = 1.5;
 
-    const colors = {
-      text: [31, 41, 55],
-      muted: [107, 114, 128],
-      border: [229, 231, 235],
-      headerBg: [243, 244, 246],
-      zebra: [249, 250, 251],
-      profit: [22, 163, 74],
-      profitBg: [236, 253, 245],
-      groupBg: [241, 245, 249],
-    };
+    const C = PDF_EMBARQUES_C;
 
     const formatNumPdf = (val) =>
       (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -563,7 +573,7 @@ export default function RelatorioMargemVendas() {
       const itemCount = productCount;
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(7);
-      setColor(colors.muted);
+      setColor(C.muted);
       pdf.text(
         `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} ? ${itemCount} produto(s)`,
         margin,
@@ -573,84 +583,96 @@ export default function RelatorioMargemVendas() {
     };
 
     const drawReportHeader = () => {
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(16);
-      setColor(colors.text);
-      pdf.text('Relat?rio de Margem de Vendas', margin, yPos);
-      yPos += 7;
+      const headerH = 22;
+      setFill(C.panel);
+      pdf.roundedRect(margin, yPos, contentWidth, headerH, 4, 4, 'F');
+      setFill(C.teal);
+      pdf.roundedRect(margin + 5, yPos + 5, 2.4, 10, 1.2, 1.2, 'F');
 
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(9);
-      setColor(colors.muted);
+      pdf.setFontSize(15);
+      setColor(C.text);
+      pdf.text('Relat?rio de Margem de Vendas', margin + 11, yPos + 9);
+
+      pdf.setFontSize(8.5);
+      setColor(C.muted);
       pdf.text(
         `Per?odo: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`,
-        margin,
-        yPos
+        margin + 11,
+        yPos + 15
       );
-      yPos += 10;
+      yPos += headerH + 4;
+    };
+
+    const drawSegmentAccent = () => {
+      const segs = 4;
+      const segGap = 1.2;
+      const segW = (contentWidth - (segs - 1) * segGap) / segs;
+      const barH = 1.5;
+      for (let s = 0; s < segs; s++) {
+        const sx = margin + s * (segW + segGap);
+        setFill(s < 3 ? C.teal : [220, 225, 230]);
+        pdf.roundedRect(sx, yPos, segW, barH, 0.75, 0.75, 'F');
+      }
+      yPos += barH + 4;
     };
 
     const drawSummaryKpis = () => {
       const kpis = [
-        { label: 'Receita l?quida', value: formatNumPdf(totals.receita_liquida), highlight: false },
-        { label: 'Custo total', value: formatNumPdf(totals.custo_total), highlight: false },
-        { label: 'Lucro', value: formatNumPdf(totals.lucro_total), highlight: true },
-        { label: 'Markup', value: formatPctPdf(totalMarkup), highlight: true },
+        { label: 'Receita l?quida', value: formatNumPdf(totals.receita_liquida), accent: false },
+        { label: 'Custo total', value: formatNumPdf(totals.custo_total), accent: false },
+        { label: 'Lucro', value: formatNumPdf(totals.lucro_total), accent: true },
+        { label: 'Markup', value: formatPctPdf(totalMarkup), accent: true },
       ];
-      const gap = 3;
+      const gap = 4;
       const boxW = (contentWidth - gap * (kpis.length - 1)) / kpis.length;
-      const boxH = 16;
+      const boxH = 18;
 
       kpis.forEach((kpi, i) => {
         const x = margin + i * (boxW + gap);
-        const fill = kpi.highlight ? colors.profitBg : [255, 255, 255];
-        setFill(fill);
-        setDraw(colors.border);
-        pdf.setLineWidth(0.2);
-        pdf.roundedRect(x, yPos, boxW, boxH, 1.5, 1.5, 'FD');
+        setFill(C.kpiBg);
+        pdf.roundedRect(x, yPos, boxW, boxH, 3, 3, 'F');
 
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(7);
-        setColor(colors.muted);
-        pdf.text(kpi.label.toUpperCase(), x + 3, yPos + 5);
+        pdf.setFontSize(7.5);
+        setColor(C.muted);
+        pdf.text(kpi.label, x + 4, yPos + 6);
 
-        pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(10);
-        setColor(kpi.highlight ? colors.profit : colors.text);
-        pdf.text(kpi.value, x + 3, yPos + 11);
+        setColor(kpi.accent ? C.profit : C.dark);
+        pdf.text(kpi.value, x + 4, yPos + 13);
       });
 
-      yPos += boxH + 3;
-      pdf.setFont('helvetica', 'italic');
+      yPos += boxH + 4;
+      pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(6.5);
-      setColor(colors.muted);
+      setColor(C.mutedLight);
       pdf.text('Valores monet?rios em reais (R$).', margin, yPos);
       yPos += 6;
     };
 
     const drawTableHeader = () => {
-      const headerH = 7;
-      setFill(colors.headerBg);
-      setDraw(colors.border);
-      pdf.rect(margin, yPos, contentWidth, headerH, 'FD');
+      const headerH = 7.5;
+      setFill(C.dark);
+      pdf.roundedRect(margin, yPos, contentWidth, headerH, 2, 2, 'F');
 
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(6.5);
-      setColor(colors.muted);
-      const headerY = yPos + 4.6;
+      setColor(C.white);
+      const headerY = yPos + 4.8;
       const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
       const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
       pdf.text('QUANT', quantCenter, headerY, { align: 'center' });
       pdf.text('UN', unCenter, headerY, { align: 'center' });
-      pdf.text('DESCRI????O', colXAbs.desc + 1, headerY);
-      pdf.text('PRE??O UN', colRightAbs.precoMedio - 1, headerY, { align: 'right' });
+      pdf.text('DESCRI??O', colXAbs.desc + 1, headerY);
+      pdf.text('PRE?O UN', colRightAbs.precoMedio - 1, headerY, { align: 'right' });
       pdf.text('RECEITA', colRightAbs.receita - 1, headerY, { align: 'right' });
       pdf.text('CUSTO', colRightAbs.custo - 1, headerY, { align: 'right' });
       pdf.text('LUCRO', colRightAbs.lucro - 1, headerY, { align: 'right' });
       pdf.text('MARKUP', colRightAbs.markup - 1, headerY, { align: 'right' });
 
-      yPos += headerH;
+      yPos += headerH + 1;
     };
 
     const ensureSpace = (neededHeight) => {
@@ -689,22 +711,20 @@ export default function RelatorioMargemVendas() {
       });
     };
 
-    const drawMetricsRow = (dataRow, textY, { bold = false, hideUn = false, isGroup = false } = {}) => {
+    const drawMetricsRow = (dataRow, textY, { isGroup = false } = {}) => {
       const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
       const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
-      pdf.setFont('helvetica', bold ? 'bold' : 'normal');
-      pdf.setFontSize(7.5);
-      setColor(colors.text);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(isGroup ? 7 : 7.5);
+      setColor(C.text);
       pdf.text(formatNumPdf(dataRow.quantidade_vendida || 0), quantCenter, textY, {
         align: 'center',
       });
-      if (!hideUn) {
-        const unLabel = isGroup
-          ? formatMarginTreeUnidade(dataRow, { isGroup: true })
-          : formatMarginTreeUnidade(dataRow, { isGroup: false });
-        pdf.text(String(unLabel), unCenter, textY, { align: 'center' });
-      }
+      const unLabel = isGroup
+        ? formatMarginTreeUnidade(dataRow, { isGroup: true })
+        : formatMarginTreeUnidade(dataRow, { isGroup: false });
+      pdf.text(String(unLabel), unCenter, textY, { align: 'center' });
 
       pdf.text(formatNumPdf(getRowPrecoMedio(dataRow)), colRightAbs.precoMedio - 1, textY, {
         align: 'right',
@@ -712,18 +732,16 @@ export default function RelatorioMargemVendas() {
       pdf.text(formatNumPdf(dataRow.total_recebido || 0), colRightAbs.receita - 1, textY, {
         align: 'right',
       });
-      pdf.setFont('helvetica', 'normal');
-      setColor(colors.muted);
+      setColor(C.muted);
       pdf.text(formatNumPdf(dataRow.custo_total || 0), colRightAbs.custo - 1, textY, {
         align: 'right',
       });
 
-      pdf.setFont('helvetica', bold ? 'bold' : 'normal');
-      setColor(colors.profit);
+      setColor(C.profit);
       pdf.text(formatNumPdf(dataRow.lucro_total || 0), colRightAbs.lucro - 1, textY, {
         align: 'right',
       });
-      setColor(bold ? colors.profit : colors.text);
+      setColor(C.text);
       pdf.text(formatPctPdf(getRowMarkup(dataRow)), colRightAbs.markup - 1, textY, {
         align: 'right',
       });
@@ -744,36 +762,45 @@ export default function RelatorioMargemVendas() {
       const descLines = wrapDescLinesPdf(pdf, descText, descMaxW);
       const rowMinHeight = isGroup ? rowMinHeightGroup : rowMinHeightProduct;
       const rowHeight = Math.max(rowMinHeight, descLines.length * lineHeight + rowPadV);
+      const rowGap = isGroup ? 1.2 : 0;
 
-      ensureSpace(rowHeight);
+      ensureSpace(rowHeight + rowGap);
+
+      const rowX = margin + (isGroup ? groupCardInset : 0);
+      const rowW = contentWidth - (isGroup ? groupCardInset * 2 : 0);
 
       if (isGroup) {
-        setFill(colors.groupBg);
-        pdf.rect(margin, yPos, contentWidth, rowHeight, 'F');
+        setFill(C.panel);
+        pdf.roundedRect(rowX, yPos, rowW, rowHeight, 3, 3, 'F');
+        setFill(C.teal);
+        pdf.roundedRect(rowX + 3, yPos + 2.2, 1.2, Math.min(rowHeight - 4, 6), 0.6, 0.6, 'F');
+        setDraw(C.border);
+        pdf.setLineWidth(0.15);
+        pdf.line(rowX, yPos + rowHeight + 0.4, rowX + rowW, yPos + rowHeight + 0.4);
       } else {
         const isZebra = zebraIndex % 2 === 1;
         zebraIndex += 1;
         if (isZebra) {
-          setFill(colors.zebra);
-          pdf.rect(margin, yPos, contentWidth, rowHeight, 'F');
+          setFill(C.rowAlt);
+          pdf.roundedRect(rowX, yPos, rowW, rowHeight, 1.5, 1.5, 'F');
         }
+        setDraw(C.border);
+        pdf.setLineWidth(0.1);
+        pdf.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
       }
 
-      setDraw(colors.border);
-      pdf.setLineWidth(0.1);
-      pdf.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
-
       const textY = yPos + textBaseline;
-      pdf.setFont('helvetica', isGroup ? 'bold' : 'normal');
-      pdf.setFontSize(isGroup ? 7 : 7.5);
-      setColor(colors.text);
-      drawDescColumn(descLines, descX, descMaxW, textY);
-      drawMetricsRow(dataRow, textY, { bold: isGroup, hideUn: false, isGroup });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7.5);
+      setColor(C.text);
+      drawDescColumn(descLines, descX + (isGroup ? 2 : 0), descMaxW, textY);
+      drawMetricsRow(dataRow, textY, { isGroup });
 
-      yPos += rowHeight;
+      yPos += rowHeight + rowGap;
     };
 
     drawReportHeader();
+    drawSegmentAccent();
     drawSummaryKpis();
     drawTableHeader();
     flatRows.forEach(drawTreeRow);
@@ -810,8 +837,8 @@ export default function RelatorioMargemVendas() {
       : null;
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-      <div className="max-w-full mx-auto">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950 overflow-x-hidden">
+      <div className="max-w-full mx-auto min-w-0 overflow-x-hidden">
         {/* Header */}
         <div className="p-3 md:px-6 md:py-4 sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm">
           <div className="flex items-center justify-between gap-2 md:gap-4">
@@ -1019,13 +1046,13 @@ export default function RelatorioMargemVendas() {
           )}
 
         {/* Resumo ??? mesma linguagem do PDF */}
-         <div className="px-3 md:px-6 py-2 md:py-5">
+         <div className="px-3 md:px-6 py-2.5 md:py-5 min-w-0 max-w-full overflow-x-hidden">
            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 md:mb-3 italic">
              Valores monet?rios em reais (R$).
            </p>
            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
              <AuditableMetricTooltip
-               className="!p-2.5 md:!p-4"
+               className="!p-3 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={TrendingUp}
                label="RECEITA L?QUIDA"
                value={formatMoney(totals.receita_liquida)}
@@ -1036,7 +1063,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
-               className="!p-2.5 md:!p-4"
+               className="!p-3 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={Wallet}
                label="CUSTO TOTAL"
                value={formatMoney(totals.custo_total)}
@@ -1045,7 +1072,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
-               className="!p-2.5 md:!p-4"
+               className="!p-3 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={DollarSign}
                label="LUCRO"
                value={formatMoney(totals.lucro_total)}
@@ -1056,7 +1083,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
-               className="!p-2.5 md:!p-4"
+               className="!p-3 md:!p-4 !bg-emerald-50/80 dark:!bg-emerald-950/20 !border-emerald-100 [&_p:last-child]:!font-normal"
                icon={Percent}
                variant="profit"
                label="MARKUP"
@@ -1066,8 +1093,8 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Toolbar */}
-           <div className="mx-3 md:mx-6 mb-1.5 md:mb-2 rounded-xl md:rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm px-2.5 py-2 md:px-3 md:py-2.5">
-            <div className="overflow-x-auto -mx-1 px-1">
+           <div className="mx-3 md:mx-6 mb-1.5 md:mb-2 rounded-xl md:rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm px-2.5 py-2 md:px-3 md:py-2.5 min-w-0 max-w-full overflow-hidden">
+            <div className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain px-0.5">
              <div className="flex items-center gap-2 min-w-max md:min-w-0 md:flex-wrap [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
@@ -1133,7 +1160,7 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Table - Desktop Table / Mobile Cards */}
-        <div className="p-3 md:p-6" id="relatorio-table">
+        <div className="p-3 md:p-6 min-w-0 max-w-full overflow-x-hidden" id="relatorio-table">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40">
               <Loader2 className="w-9 h-9 animate-spin text-gray-400 mb-4" />
@@ -1155,8 +1182,8 @@ export default function RelatorioMargemVendas() {
                     <col className="w-[100px]" />
                     <col className="w-[80px]" />
                   </colgroup>
-                  <thead className="sticky top-0 z-[1] bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm">
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <thead className="sticky top-0 z-[1] bg-gray-800 dark:bg-gray-900 backdrop-blur-sm">
+                    <tr className="border-b border-gray-700 dark:border-gray-600">
                       <th
                         onClick={() => {
                           if (sortField === 'quantidade_vendida') {
@@ -1166,11 +1193,11 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-center py-3 px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
-                      <th className="text-center py-3 px-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                      <th className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200">
                         UN
                       </th>
                       <th
@@ -1182,7 +1209,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('asc');
                           }
                         }}
-                        className="text-left py-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-left py-3 px-3 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         DESCRI????O {sortField === 'nome' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
@@ -1195,7 +1222,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         PRE??O UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
@@ -1208,7 +1235,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
@@ -1221,7 +1248,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
@@ -1234,7 +1261,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
@@ -1247,7 +1274,7 @@ export default function RelatorioMargemVendas() {
                            setSortOrder('desc');
                          }
                        }}
-                       className="text-right py-3 px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                       className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                        MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
@@ -1362,7 +1389,7 @@ export default function RelatorioMargemVendas() {
               </div>
 
               {/* Mobile ??? mesmas colunas do PDF */}
-              <div className="md:hidden rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900/50">
+              <div className="md:hidden min-w-0 max-w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
                 {displayRows.map((treeRow, rowIdx) =>
                   treeRow.type === 'group' ? (
                     <MargemLinhaMobile
