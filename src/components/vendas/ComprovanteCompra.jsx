@@ -24,13 +24,24 @@ const fmtV = (v) => {
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // adiciona pontos nos milhares
   return parts.join(',');
 };
-const F = 14; // base font size px (aumentado 50%)
+const PRETO_CUPOM = '#000';
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
-  const F = 14;
+  const F = 12;
+  const preto = PRETO_CUPOM;
+  /** Grid fixo: quant | un | descrição | preço | total */
+  const gridItens = '30px 24px minmax(0, 1fr) 50px 50px';
+  const gapCol = '6px';
+  const estiloGridLinha = {
+    display: 'grid',
+    gridTemplateColumns: gridItens,
+    columnGap: gapCol,
+    alignItems: 'start',
+    width: '100%',
+  };
 
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
   const razaoSocial = (dadosEmpresa?.nome_fantasia && dadosEmpresa?.razao_social)
@@ -48,7 +59,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   };
 
   const Sep = () => (
-    <div style={{ margin: '4px 0', fontSize: F - 1, fontFamily: font, color: '#999', letterSpacing: '1px' }}>
+    <div style={{ margin: '4px 0', fontSize: F - 1, fontFamily: font, color: preto, letterSpacing: '1px' }}>
       {'- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'}
     </div>
   );
@@ -57,9 +68,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     <div
       id="cupom-print"
       style={{
-        width: '275px', background: '#fff', color: '#111',
-        fontFamily: font, fontSize: F + 3,
-        padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.45',
+        width: '275px', background: '#fff', color: preto,
+        fontFamily: font, fontSize: F,
+        padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.4',
       }}
     >
       {/* ── Cabeçalho ── */}
@@ -68,23 +79,23 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F + 10, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
+        <div style={{ fontSize: F + 7, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social */}
         {empresa.razaoSocial && (
-          <div style={{ fontSize: Math.round((F + 1) * 0.75), fontWeight: '400', color: '#333', lineHeight: 1.3 }}>
+          <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.3 }}>
             {empresa.razaoSocial}
           </div>
         )}
         {/* Dados da empresa — 25% menores */}
-        <div style={{ fontSize: Math.round(F * 0.75), fontWeight: '400', color: '#444', lineHeight: 1.4, marginTop: '2px' }}>
+        <div style={{ fontSize: F - 1, fontWeight: '400', color: preto, lineHeight: 1.35, marginTop: '2px' }}>
           {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
           {empresa.endereco && <div>{empresa.endereco}</div>}
           {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
           {empresa.telefone && <div>Fone: {empresa.telefone}</div>}
         </div>
-        <div style={{ fontSize: Math.round(F * 0.75), color: '#666', marginTop: '3px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
+        <div style={{ fontSize: F - 1, color: preto, marginTop: '3px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
       </div>
 
       <Sep />
@@ -102,12 +113,12 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ display: 'flex', alignItems: 'baseline', fontSize: F - 1, color: '#666', lineHeight: 1.4, whiteSpace: 'nowrap', gap: '2px' }}>
-        <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>QUANT</span>
-        <span style={{ width: '28px', textAlign: 'right', flexShrink: 0 }}>UN</span>
-        <span style={{ flex: 1, minWidth: 0, paddingLeft: '2px' }}>DESCRIÇÃO</span>
-        <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>PREÇO</span>
-        <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>TOTAL</span>
+      <div style={{ ...estiloGridLinha, fontSize: F - 1, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '2px' }}>
+        <span style={{ textAlign: 'right' }}>QUANT</span>
+        <span style={{ textAlign: 'center' }}>UN</span>
+        <span>DESCRIÇÃO</span>
+        <span style={{ textAlign: 'right' }}>PREÇO</span>
+        <span style={{ textAlign: 'right' }}>TOTAL</span>
       </div>
 
       <Sep />
@@ -115,20 +126,20 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {itens.map((item, idx) => {
         const nome = (item.produto_nome || '').toUpperCase();
         const qtd = String(parseFloat(item.quantidade) || 0);
-        const preco = fmtV(item.preco_unitario_praticado);
-        const total = fmtV(item.total);
+        const precoItem = fmtV(item.preco_unitario_praticado);
+        const totalItem = fmtV(item.total);
         const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
         return (
           <div
             key={item.pedido_venda_item_id || item.produto_id || idx}
-            style={{ display: 'flex', gap: '2px', fontSize: F + 2, lineHeight: 1.45, marginBottom: '3px', alignItems: 'flex-start' }}
+            style={{ ...estiloGridLinha, fontSize: F, lineHeight: 1.35, marginBottom: '4px', color: preto }}
           >
-            <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
-            <span style={{ width: '28px', textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
-            <span style={{ flex: 1, minWidth: 0, paddingLeft: '2px', wordBreak: 'break-word' }}>{nome}</span>
-            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
-            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
+            <span style={{ textAlign: 'right' }}>{qtd}</span>
+            <span style={{ textAlign: 'center' }}>{unidade}</span>
+            <span style={{ wordBreak: 'break-word', paddingRight: '2px' }}>{nome}</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{precoItem}</span>
+            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{totalItem}</span>
           </div>
         );
       })}
@@ -138,22 +149,22 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* ── Totais ── */}
       <div style={{ marginTop: '2px' }}>
         {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: '#555' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
             <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
           </div>
         )}
         {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: '#555' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
             <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
           </div>
         )}
         {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: '#555' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
             <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
         {/* TOTAL — hierarquia só por tamanho */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 10, fontWeight: '400', margin: '5px 0 3px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 6, fontWeight: '400', margin: '5px 0 3px', color: preto }}>
           <span>TOTAL</span>
           <span>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
@@ -163,7 +174,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <div style={{ marginTop: '2px' }}>
           {pedido.pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 5, fontWeight: '400' }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 3, fontWeight: '400', color: preto }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
             </div>
@@ -175,10 +186,10 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Rodapé ── */}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: F + 5, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 3px' }}>
+        <div style={{ fontSize: F + 3, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 3px', color: preto }}>
           {empresa.mensagem}
         </div>
-        <div style={{ fontSize: F - 1, color: '#666' }}>Este documento não possui validade fiscal.</div>
+        <div style={{ fontSize: F - 1, color: preto }}>Este documento não possui validade fiscal.</div>
       </div>
     </div>
   );
@@ -221,6 +232,7 @@ function PreviewScaled({ children }) {
 // ── Cupom A4 ─────────────────────────────────────────────────────────────────────
 function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
+  const preto = PRETO_CUPOM;
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
   const razaoSocial = (dadosEmpresa?.nome_fantasia && dadosEmpresa?.razao_social)
@@ -234,7 +246,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
       id="cupom-print"
       style={{
         width: '210mm', minHeight: '297mm',
-        fontFamily: font, fontSize: '12px', color: '#111',
+        fontFamily: font, fontSize: '12px', color: preto,
         padding: '16mm 18mm 20mm', background: '#fff', lineHeight: '1.6',
       }}
     >
@@ -248,9 +260,9 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
           )}
           <div style={{ fontSize: '22px', fontWeight: '600', letterSpacing: '-0.5px', lineHeight: 1.1 }}>{nomeFantasia}</div>
           {razaoSocial && (
-            <div style={{ fontSize: '10px', color: '#666', marginTop: '1mm' }}>{razaoSocial}</div>
+            <div style={{ fontSize: '10px', color: preto, marginTop: '1mm' }}>{razaoSocial}</div>
           )}
-          <div style={{ fontSize: '10px', color: '#777', marginTop: '2mm', lineHeight: 1.6 }}>
+          <div style={{ fontSize: '10px', color: preto, marginTop: '2mm', lineHeight: 1.6 }}>
             {dadosEmpresa?.cnpj && <div>CNPJ: {dadosEmpresa.cnpj}</div>}
             {empresaEndereco && <div>{empresaEndereco}</div>}
             {empresaCidade && <div>{empresaCidade}{dadosEmpresa?.cep ? '  CEP: ' + dadosEmpresa.cep : ''}</div>}
@@ -261,7 +273,7 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
         <div style={{ textAlign: 'right', minWidth: '60mm' }}>
           <div style={{ fontSize: '24px', fontWeight: '400', letterSpacing: '1px', lineHeight: 1 }}>PEDIDO DE VENDA</div>
           <div style={{ width: '100%', height: '1.5px', background: '#111', margin: '3mm 0' }}></div>
-          <div style={{ fontSize: '12px', color: '#333', lineHeight: 1.8 }}>
+          <div style={{ fontSize: '12px', color: preto, lineHeight: 1.8 }}>
             <div><b>Nº:</b> {pedido.numero || 'S/N'}</div>
             <div><b>Data:</b> {fmtDtTZ(pedido.created_date || new Date())}</div>
             {pedido.vendedor_nome && <div><b>Vendedor:</b> {pedido.vendedor_nome}</div>}
@@ -278,12 +290,12 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10mm' }}>
             <div>
               <div style={{ fontSize: '16px', fontWeight: '500', lineHeight: 1.2 }}>{pedido.cliente_nome || dadosCliente?.nome}</div>
-              {dadosCliente?.cpf_cnpj && <div style={{ fontSize: '11px', color: '#555', marginTop: '1mm' }}>CPF/CNPJ: {dadosCliente.cpf_cnpj}</div>}
-              {dadosCliente?.telefone && <div style={{ fontSize: '11px', color: '#555' }}>Tel: {dadosCliente.telefone}</div>}
-              {dadosCliente?.email && <div style={{ fontSize: '11px', color: '#555' }}>{dadosCliente.email}</div>}
+              {dadosCliente?.cpf_cnpj && <div style={{ fontSize: '11px', color: preto, marginTop: '1mm' }}>CPF/CNPJ: {dadosCliente.cpf_cnpj}</div>}
+              {dadosCliente?.telefone && <div style={{ fontSize: '11px', color: preto }}>Tel: {dadosCliente.telefone}</div>}
+              {dadosCliente?.email && <div style={{ fontSize: '11px', color: preto }}>{dadosCliente.email}</div>}
             </div>
             {(dadosCliente?.endereco || dadosCliente?.cidade) && (
-              <div style={{ textAlign: 'right', fontSize: '11px', color: '#555', lineHeight: 1.6 }}>
+              <div style={{ textAlign: 'right', fontSize: '11px', color: preto, lineHeight: 1.6 }}>
                 {dadosCliente?.endereco && <div>{dadosCliente.endereco}{dadosCliente.numero ? ', ' + dadosCliente.numero : ''}</div>}
                 {dadosCliente?.bairro && <div>{dadosCliente.bairro}</div>}
                 {dadosCliente?.cidade && <div>{[dadosCliente.cidade, dadosCliente.estado].filter(Boolean).join(' - ')}</div>}
@@ -298,18 +310,18 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6mm' }}>
         <thead>
           <tr style={{ background: '#eeeeee' }}>
-            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '14mm' }}>QUANT</th>
-            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '12mm' }}>UN</th>
-            <th style={{ textAlign: 'left', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DESCRIÇÃO</th>
-            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>PREÇO</th>
-            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '32mm' }}>TOTAL</th>
+            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: preto, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '14mm' }}>QUANT</th>
+            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: preto, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '12mm' }}>UN</th>
+            <th style={{ textAlign: 'left', padding: '2.5mm 2mm', fontSize: '10px', color: preto, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DESCRIÇÃO</th>
+            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: preto, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>PREÇO</th>
+            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: preto, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '32mm' }}>TOTAL</th>
           </tr>
         </thead>
         <tbody>
           {itens.map((item, i) => (
             <tr key={item.pedido_venda_item_id || item.produto_id || i} style={{ borderBottom: '0.5px solid #e5e5e5', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '12px' }}>{item.quantidade}</td>
-              <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '11px', color: '#777' }}>{getUnidadeMedidaItemPedidoVenda(item)}</td>
+              <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '11px', color: preto }}>{getUnidadeMedidaItemPedidoVenda(item)}</td>
               <td style={{ padding: '2.5mm 2mm', fontSize: '12px', textTransform: 'uppercase' }}>{item.produto_nome}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px' }}>R$ {fmtV(item.preco_unitario_praticado)}</td>
               <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '500' }}>R$ {fmtV(item.total)}</td>
@@ -341,17 +353,17 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
         </div>
         <div style={{ minWidth: '90mm' }}>
           {pedido.subtotal > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm', padding: '0 2mm' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: preto, marginBottom: '1.5mm', padding: '0 2mm' }}>
               <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
             </div>
           )}
           {pedido.valor_desconto > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm', padding: '0 2mm' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: preto, marginBottom: '1.5mm', padding: '0 2mm' }}>
               <span>Desconto</span><span style={{ color: '#059669' }}>-R$ {fmtV(pedido.valor_desconto)}</span>
             </div>
           )}
           {pedido.valor_frete > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm', padding: '0 2mm' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: preto, marginBottom: '1.5mm', padding: '0 2mm' }}>
               <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
             </div>
           )}
@@ -366,14 +378,14 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
       {pedido.observacoes && (
         <div style={{ marginBottom: '6mm', padding: '3mm 4mm', background: '#fffbeb', borderRadius: '2mm', borderLeft: '3px solid #d97706' }}>
           <div style={{ fontSize: '9px', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '1mm', fontWeight: '600' }}>Observações</div>
-          <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.5 }}>{pedido.observacoes}</div>
+          <div style={{ fontSize: '11px', color: preto, lineHeight: 1.5 }}>{pedido.observacoes}</div>
         </div>
       )}
 
       {/* ── Rodapé ── */}
-      <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '4mm', textAlign: 'center', fontSize: '10px', color: '#777' }}>
+      <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '4mm', textAlign: 'center', fontSize: '10px', color: preto }}>
         {dadosEmpresa?.mensagem_rodape && (
-          <div style={{ marginBottom: '2mm', color: '#444', fontWeight: '500', fontSize: '12px' }}>{dadosEmpresa.mensagem_rodape.toUpperCase()}</div>
+          <div style={{ marginBottom: '2mm', color: preto, fontWeight: '500', fontSize: '12px' }}>{dadosEmpresa.mensagem_rodape.toUpperCase()}</div>
         )}
         <div>Este documento não possui validade fiscal.</div>
       </div>
