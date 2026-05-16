@@ -61,7 +61,12 @@ Deno.serve(async (req) => {
         if (!product) return;
 
         const unitCost = product.preco_custo_calculado || 0;
-        const totalCost = unitCost * item.quantidade;
+        const fatorConversao = Number(item.fator_conversao) || 1;
+        const quantidadeBase =
+          Number(item.quantidade_base) > 0
+            ? Number(item.quantidade_base)
+            : (Number(item.quantidade) || 0) * fatorConversao;
+        const totalCost = unitCost * quantidadeBase;
         const profit = item.total - totalCost;
         const markup = totalCost > 0 ? (profit / totalCost) * 100 : 0;
         const margin = item.total > 0 ? (profit / item.total) * 100 : 0;

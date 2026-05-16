@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
-import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 
 import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
@@ -67,15 +67,8 @@ export default function RelatorioMargemVendas() {
          const product = prodMap[prodId];
          if (!product) return;
 
-         // IMPORTANTE: Usar SEMPRE o custo ATUAL do produto, nunca do momento da venda
-         const custoCalculado = product.preco_custo_calculado || (
-           (product.valor_compra || 0) +
-           (product.custo_frete_padrao || 0) +
-           (product.custo_imposto1_padrao || 0) +
-           (product.custo_imposto2_padrao || 0) +
-           (product.custo_outros_padrao || 0) -
-           (product.desconto_compra_padrao || 0)
-         );
+         // IMPORTANTE: Usar SEMPRE o custo ATUAL do produto (fator-1), nunca do momento da venda
+         const custoCalculado = resolveCustoTotalUnitBaseProduto(product);
 
          if (!reportMap[prodId]) {
           const unidadeInicial = resolveCommercialDisplay(product, 0, item.unidade_medida || product?.unidade_principal || 'UN');
@@ -86,6 +79,7 @@ export default function RelatorioMargemVendas() {
             unidade_exibicao: unidadeInicial.unidade || 'UN',
              vendas_count: 0,
              quantidade_vendida: 0,
+             quantidade_base_vendida: 0,
              total_recebido: 0,
              total_desconto_venda: 0,
              custo_unitario_cadastro: custoCalculado
@@ -96,6 +90,7 @@ export default function RelatorioMargemVendas() {
         const quantidadeBase = Number(item.quantidade_base ?? (item.quantidade * (item.fator_conversao || 1)) ?? item.quantidade ?? 0) || 0;
         const quantidadeResolvida = resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || 'UN');
          entry.vendas_count += 1;
+        entry.quantidade_base_vendida += quantidadeBase;
         entry.quantidade_vendida += quantidadeResolvida.quantidade;
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
          entry.total_recebido += item.total;
@@ -105,7 +100,7 @@ export default function RelatorioMargemVendas() {
      });
 
     let sorted = Object.values(reportMap).map(item => {
-       const custo_total = item.custo_unitario_cadastro * item.quantidade_vendida;
+       const custo_total = item.custo_unitario_cadastro * item.quantidade_base_vendida;
        const receita_liquida = item.total_recebido - item.total_desconto_venda;
        const lucro_total = receita_liquida - custo_total;
        const valor_unitario_medio = item.total_recebido / item.quantidade_vendida;
