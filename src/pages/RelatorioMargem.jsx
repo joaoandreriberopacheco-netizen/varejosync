@@ -284,11 +284,12 @@ export default function RelatorioMargemVendas() {
 
     const colX = {};
     let xAcc = margin;
+    const colRight = {};
     colKeys.forEach((key) => {
       colX[key] = xAcc;
+      colRight[key] = xAcc + colWidths[key];
       xAcc += colWidths[key];
     });
-    const colRight = (key) => colX[key] + colWidths[key];
 
     let pageNumber = 1;
     let yPos = margin;
@@ -494,7 +495,8 @@ export default function RelatorioMargemVendas() {
     pdf.save('relatorio_margem.pdf');
     } catch (error) {
       console.error('Erro ao gerar PDF do relatório de margem', error);
-      toast.error('Não foi possível gerar o PDF. Tente novamente.');
+      const devDetail = import.meta.env.DEV && error?.message ? ` (${error.message})` : '';
+      toast.error(`Não foi possível gerar o PDF. Tente novamente.${devDetail}`);
     }
   };
 
