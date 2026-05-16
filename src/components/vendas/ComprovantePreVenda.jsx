@@ -87,7 +87,7 @@ function CupomSenha({ preVenda }) {
               {(item.produto_nome || '').substring(0, 22)}
             </div>
             <div style={{ width: '28px', textAlign: 'right' }}>{item.quantidade}</div>
-            <div style={{ width: '38px', textAlign: 'right', fontSize: '7px' }}>{(item.unidade_medida || 'UN').substring(0, 4)}</div>
+            <div style={{ width: '38px', textAlign: 'right', fontSize: '7px' }}>{getUnidadeMedidaItemPedidoVenda(item).substring(0, 4)}</div>
             <div style={{ width: '38px', textAlign: 'right', fontSize: '7px' }}>R${fmtV(item.preco_unitario_praticado || 0)}</div>
             <div style={{ width: '38px', textAlign: 'right', fontWeight: 'bold', fontSize: '7px' }}>R${fmtV(item.total || 0)}</div>
           </div>
