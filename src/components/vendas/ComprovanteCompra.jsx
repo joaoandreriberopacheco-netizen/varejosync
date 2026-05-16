@@ -32,15 +32,26 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const F = 12;
   const preto = PRETO_CUPOM;
-  /** Grid fixo: quant | un | descrição | preço | total */
-  const gridItens = '30px 24px minmax(0, 1fr) 50px 50px';
-  const gapCol = '6px';
+  /** Grid: quant | un | descrição (flex) | preço | total — colunas numéricas estreitas */
+  const gridItens = '26px 22px minmax(0, 1fr) 42px 46px';
+  const gapCol = '4px';
   const estiloGridLinha = {
     display: 'grid',
     gridTemplateColumns: gridItens,
     columnGap: gapCol,
     alignItems: 'start',
     width: '100%',
+  };
+  const estiloCelulaCentro = { textAlign: 'center', alignSelf: 'center' };
+  const estiloDescricao = {
+    textAlign: 'justify',
+    hyphens: 'auto',
+    WebkitHyphens: 'auto',
+    msHyphens: 'auto',
+    wordBreak: 'break-word',
+    overflowWrap: 'break-word',
+    lineHeight: 1.32,
+    paddingRight: '2px',
   };
 
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
@@ -113,36 +124,44 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ ...estiloGridLinha, fontSize: F - 1, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '2px' }}>
-        <span style={{ textAlign: 'right' }}>QUANT</span>
-        <span style={{ textAlign: 'center' }}>UN</span>
-        <span>DESCRIÇÃO</span>
+      <div style={{ ...estiloGridLinha, fontSize: F - 1, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '4px' }}>
+        <span style={estiloCelulaCentro}>QUANT</span>
+        <span style={estiloCelulaCentro}>UN</span>
+        <span style={{ textAlign: 'left' }}>DESCRIÇÃO</span>
         <span style={{ textAlign: 'right' }}>PREÇO</span>
         <span style={{ textAlign: 'right' }}>TOTAL</span>
       </div>
 
       <Sep />
 
-      {itens.map((item, idx) => {
-        const nome = (item.produto_nome || '').toUpperCase();
-        const qtd = String(parseFloat(item.quantidade) || 0);
-        const precoItem = fmtV(item.preco_unitario_praticado);
-        const totalItem = fmtV(item.total);
-        const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '6px 0 4px' }}>
+        {itens.map((item, idx) => {
+          const nome = item.produto_nome || '';
+          const qtd = String(parseFloat(item.quantidade) || 0);
+          const precoItem = fmtV(item.preco_unitario_praticado);
+          const totalItem = fmtV(item.total);
+          const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
 
-        return (
-          <div
-            key={item.pedido_venda_item_id || item.produto_id || idx}
-            style={{ ...estiloGridLinha, fontSize: F, lineHeight: 1.35, marginBottom: '4px', color: preto }}
-          >
-            <span style={{ textAlign: 'right' }}>{qtd}</span>
-            <span style={{ textAlign: 'center' }}>{unidade}</span>
-            <span style={{ wordBreak: 'break-word', paddingRight: '2px' }}>{nome}</span>
-            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{precoItem}</span>
-            <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{totalItem}</span>
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={item.pedido_venda_item_id || item.produto_id || idx}
+              style={{
+                ...estiloGridLinha,
+                fontSize: F,
+                color: preto,
+                paddingBottom: idx < itens.length - 1 ? '12px' : 0,
+                borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
+              }}
+            >
+              <span style={estiloCelulaCentro}>{qtd}</span>
+              <span style={estiloCelulaCentro}>{unidade}</span>
+              <span lang="pt-BR" style={{ ...estiloDescricao, textTransform: 'uppercase' }}>{nome}</span>
+              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{precoItem}</span>
+              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{totalItem}</span>
+            </div>
+          );
+        })}
+      </div>
 
       <Sep />
 
