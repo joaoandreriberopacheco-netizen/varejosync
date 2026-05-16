@@ -13,6 +13,74 @@ import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto } from '@/li
 
 import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
+const PDF_COL_GAP_MM = 2;
+
+/** Larguras fixas (mm); descrição ocupa o restante de contentWidth menos os gaps. */
+function buildPdfColumnLayout(contentWidth) {
+  const colWidths = {
+    quant: 11,
+    un: 8,
+    precoMedio: 16,
+    receita: 16,
+    custo: 16,
+    lucro: 16,
+    markup: 12,
+  };
+  const colKeys = ['quant', 'un', 'desc', 'precoMedio', 'receita', 'custo', 'lucro', 'markup'];
+  const fixedSum = colKeys
+    .filter((k) => k !== 'desc')
+    .reduce((sum, k) => sum + colWidths[k], 0);
+  colWidths.desc = Math.max(
+    40,
+    contentWidth - fixedSum - PDF_COL_GAP_MM * (colKeys.length - 1)
+  );
+
+  const colX = {};
+  const colRight = {};
+  let xAcc = 0;
+  colKeys.forEach((key, idx) => {
+    colX[key] = xAcc;
+    colRight[key] = xAcc + colWidths[key];
+    xAcc += colWidths[key] + (idx < colKeys.length - 1 ? PDF_COL_GAP_MM : 0);
+  });
+
+  return { colKeys, colWidths, colX, colRight };
+}
+
+function drawJustifiedPdfLine(pdf, line, x, y, maxWidth) {
+  const trimmed = String(line || '').trim();
+  if (!trimmed) return;
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length <= 1) {
+    pdf.text(trimmed, x, y);
+    return;
+  }
+  const wordWidths = words.map((w) => pdf.getTextWidth(w));
+  const textWidth = wordWidths.reduce((a, b) => a + b, 0);
+  const extra = maxWidth - textWidth;
+  if (extra <= 0.5) {
+    pdf.text(trimmed, x, y);
+    return;
+  }
+  const space = extra / (words.length - 1);
+  let cursor = x;
+  words.forEach((word, i) => {
+    pdf.text(word, cursor, y);
+    cursor += wordWidths[i] + (i < words.length - 1 ? space : 0);
+  });
+}
+
+function wrapDescLinesPdf(pdf, text, maxWidth) {
+  const raw = String(text || '—').trim();
+  const lines = [];
+  raw.split(/\n/).forEach((paragraph) => {
+    const chunk = paragraph.trim();
+    if (!chunk) return;
+    lines.push(...pdf.splitTextToSize(chunk, maxWidth));
+  });
+  return lines.length ? lines : ['—'];
+}
+
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -103,7 +171,8 @@ export default function RelatorioMargemVendas() {
        const custo_total = item.custo_unitario_cadastro * item.quantidade_base_vendida;
        const receita_liquida = item.total_recebido - item.total_desconto_venda;
        const lucro_total = receita_liquida - custo_total;
-       const valor_unitario_medio = item.total_recebido / item.quantidade_vendida;
+       const valor_unitario_medio =
+         item.quantidade_vendida > 0 ? item.total_recebido / item.quantidade_vendida : 0;
        const margem_percentual = receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0;
        const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
        const lucro_marginal = lucro_total / item.quantidade_vendida;
@@ -203,10 +272,17 @@ export default function RelatorioMargemVendas() {
   const formatPercent = (val) => `${val.toFixed(2)}%`;
 
   const exportToCSV = () => {
-    const headers = "Codigo;Produto;Categoria;Qtd Vendida;Unidade;Valor Medio;Total Recebido;Custo Unit;Custo Total;Lucro Total;Margem %;Markup %\n";
-    const rows = processedData.map(row => 
-      `${row.codigo_interno};${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${row.valor_unitario_medio.toFixed(2)};${row.total_recebido.toFixed(2)};${row.custo_unitario_cadastro.toFixed(2)};${row.custo_total.toFixed(2)};${row.lucro_total.toFixed(2)};${row.margem_percentual.toFixed(2)};${row.markup_percentual.toFixed(2)}`
-    ).join("\n");
+    const flat = groupByCategory
+      ? processedData.flatMap((g) => g.items)
+      : processedData;
+    const headers =
+      'Produto;Categoria;Quant;Un;Preco Un Medio;Receita Total;Custo Total;Lucro;Markup %\n';
+    const rows = flat
+      .map(
+        (row) =>
+          `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${row.valor_unitario_medio.toFixed(2)};${row.total_recebido.toFixed(2)};${row.custo_total.toFixed(2)};${row.lucro_total.toFixed(2)};${row.markup_percentual.toFixed(2)}`
+      )
+      .join('\n');
     const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -261,34 +337,25 @@ export default function RelatorioMargemVendas() {
             ...group.totals,
             nome: `Subtotal — ${group.category}`,
             isSubtotal: true,
-            margem_percentual:
-              group.totals.total_recebido > 0
-                ? (group.totals.lucro_total / group.totals.total_recebido) * 100
+            valor_unitario_medio:
+              group.totals.quantidade_vendida > 0
+                ? group.totals.total_recebido / group.totals.quantidade_vendida
+                : 0,
+            markup_percentual:
+              group.totals.custo_total > 0
+                ? (group.totals.lucro_total / group.totals.custo_total) * 100
                 : 0,
           },
         ])
       : processedData;
 
-    const dataRows = flatRows.filter((r) => !r.isCategoryHeader);
-    const showCodigo = dataRows.some(
-      (r) => !r.isSubtotal && String(r.codigo_interno || '').trim().length > 0
-    );
-
-    const colWidths = showCodigo
-      ? { codigo: 14, desc: 58, qtd: 16, receita: 22, custo: 22, lucro: 22, margem: 14 }
-      : { desc: 72, qtd: 16, receita: 22, custo: 22, lucro: 22, margem: 14 };
-
-    const colKeys = showCodigo
-      ? ['codigo', 'desc', 'qtd', 'receita', 'custo', 'lucro', 'margem']
-      : ['desc', 'qtd', 'receita', 'custo', 'lucro', 'margem'];
-
-    const colX = {};
-    let xAcc = margin;
-    const colRight = {};
-    colKeys.forEach((key) => {
-      colX[key] = xAcc;
-      colRight[key] = xAcc + colWidths[key];
-      xAcc += colWidths[key];
+    const { colWidths, colX, colRight } = buildPdfColumnLayout(contentWidth);
+    const tableOriginX = margin;
+    const colXAbs = {};
+    const colRightAbs = {};
+    Object.keys(colX).forEach((key) => {
+      colXAbs[key] = tableOriginX + colX[key];
+      colRightAbs[key] = tableOriginX + colRight[key];
     });
 
     let pageNumber = 1;
@@ -337,7 +404,7 @@ export default function RelatorioMargemVendas() {
         { label: 'Receita líquida', value: formatNumPdf(totals.receita_liquida), highlight: false },
         { label: 'Custo total', value: formatNumPdf(totals.custo_total), highlight: false },
         { label: 'Lucro', value: formatNumPdf(totals.lucro_total), highlight: true },
-        { label: 'Margem', value: formatPctPdf(totalMargem), highlight: true },
+        { label: 'Markup', value: formatPctPdf(totalMarkup), highlight: true },
       ];
       const gap = 3;
       const boxW = (contentWidth - gap * (kpis.length - 1)) / kpis.length;
@@ -377,19 +444,20 @@ export default function RelatorioMargemVendas() {
       pdf.rect(margin, yPos, contentWidth, headerH, 'FD');
 
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(7);
+      pdf.setFontSize(6.5);
       setColor(colors.muted);
       const headerY = yPos + 4.6;
+      const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
+      const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
-      if (showCodigo) {
-        pdf.text('CÓD.', colX.codigo + 1, headerY);
-      }
-      pdf.text('DESCRIÇÃO', colX.desc + 1, headerY);
-      pdf.text('QTD', colRight.qtd - 1, headerY, { align: 'right' });
-      pdf.text('RECEITA', colRight.receita - 1, headerY, { align: 'right' });
-      pdf.text('CUSTO', colRight.custo - 1, headerY, { align: 'right' });
-      pdf.text('LUCRO', colRight.lucro - 1, headerY, { align: 'right' });
-      pdf.text('MARGEM', colRight.margem - 1, headerY, { align: 'right' });
+      pdf.text('QUANT', quantCenter, headerY, { align: 'center' });
+      pdf.text('UN', unCenter, headerY, { align: 'center' });
+      pdf.text('DESCRIÇÃO', colXAbs.desc + 1, headerY);
+      pdf.text('PREÇO UN', colRightAbs.precoMedio - 1, headerY, { align: 'right' });
+      pdf.text('RECEITA', colRightAbs.receita - 1, headerY, { align: 'right' });
+      pdf.text('CUSTO', colRightAbs.custo - 1, headerY, { align: 'right' });
+      pdf.text('LUCRO', colRightAbs.lucro - 1, headerY, { align: 'right' });
+      pdf.text('MARKUP', colRightAbs.markup - 1, headerY, { align: 'right' });
 
       yPos += headerH;
     };
@@ -403,12 +471,20 @@ export default function RelatorioMargemVendas() {
       drawTableHeader();
     };
 
-    const getRowMargem = (row) => {
-      if (row.margem_percentual != null && !Number.isNaN(row.margem_percentual)) {
-        return row.margem_percentual;
+    const getRowMarkup = (row) => {
+      if (row.markup_percentual != null && !Number.isNaN(row.markup_percentual)) {
+        return row.markup_percentual;
       }
-      const receita = row.receita_liquida ?? row.total_recebido ?? 0;
-      return receita > 0 ? ((row.lucro_total || 0) / receita) * 100 : 0;
+      const custo = row.custo_total ?? 0;
+      return custo > 0 ? ((row.lucro_total || 0) / custo) * 100 : 0;
+    };
+
+    const getRowPrecoMedio = (row) => {
+      if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
+        return row.valor_unitario_medio;
+      }
+      const qtd = row.quantidade_vendida || 0;
+      return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
     };
 
     const drawDataRow = (row) => {
@@ -421,15 +497,17 @@ export default function RelatorioMargemVendas() {
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(8);
         setColor(colors.text);
-        pdf.text(String(row.nome || 'Sem categoria'), colX.desc + 1, yPos + 4.2);
+        pdf.text(String(row.nome || 'Sem categoria'), colXAbs.desc + 1, yPos + 4.2);
         yPos += catH;
         return;
       }
 
       const descPad = 2;
-      const descLines = pdf.splitTextToSize(
+      const descMaxW = colWidths.desc - descPad;
+      const descLines = wrapDescLinesPdf(
+        pdf,
         row.isSubtotal ? String(row.nome || 'Subtotal') : String(row.nome || '—'),
-        colWidths.desc - descPad
+        descMaxW
       );
       const rowHeight = Math.max(rowMinHeight, descLines.length * lineHeight + 2);
       ensureSpace(rowHeight);
@@ -455,33 +533,44 @@ export default function RelatorioMargemVendas() {
       pdf.setFontSize(7.5);
       setColor(colors.text);
 
-      if (showCodigo && !isSubtotal) {
-        const codigo = String(row.codigo_interno || '').trim();
-        if (codigo) {
-          pdf.text(codigo, colX.codigo + 1, textY, { maxWidth: colWidths.codigo - 2 });
-        }
+      const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
+      const unCenter = (colXAbs.un + colRightAbs.un) / 2;
+
+      pdf.text(
+        formatNumPdf(row.quantidade_vendida || 0),
+        quantCenter,
+        textY,
+        { align: 'center' }
+      );
+      if (!isSubtotal) {
+        pdf.text(String(row.unidade_exibicao || 'UN'), unCenter, textY, { align: 'center' });
       }
 
       descLines.forEach((line, idx) => {
-        pdf.text(line, colX.desc + 1, textY + idx * lineHeight);
+        const lineY = textY + idx * lineHeight;
+        if (idx < descLines.length - 1) {
+          drawJustifiedPdfLine(pdf, line, colXAbs.desc + 1, lineY, descMaxW);
+        } else {
+          pdf.text(line, colXAbs.desc + 1, lineY);
+        }
       });
 
-      const qtdStr = isSubtotal
-        ? formatNumPdf(row.quantidade_vendida || 0)
-        : `${formatNumPdf(row.quantidade_vendida || 0)} ${row.unidade_exibicao || 'UN'}`;
-      pdf.text(qtdStr, colRight.qtd - 1, textY, { align: 'right' });
-
-      pdf.text(formatNumPdf(row.total_recebido || 0), colRight.receita - 1, textY, { align: 'right' });
+      pdf.text(formatNumPdf(getRowPrecoMedio(row)), colRightAbs.precoMedio - 1, textY, {
+        align: 'right',
+      });
+      pdf.text(formatNumPdf(row.total_recebido || 0), colRightAbs.receita - 1, textY, {
+        align: 'right',
+      });
       pdf.setFont('helvetica', 'normal');
       setColor(colors.muted);
-      pdf.text(formatNumPdf(row.custo_total || 0), colRight.custo - 1, textY, { align: 'right' });
+      pdf.text(formatNumPdf(row.custo_total || 0), colRightAbs.custo - 1, textY, { align: 'right' });
 
       pdf.setFont('helvetica', isSubtotal ? 'bold' : 'normal');
       setColor(colors.profit);
-      pdf.text(formatNumPdf(row.lucro_total || 0), colRight.lucro - 1, textY, { align: 'right' });
+      pdf.text(formatNumPdf(row.lucro_total || 0), colRightAbs.lucro - 1, textY, { align: 'right' });
 
       setColor(isSubtotal ? colors.profit : colors.text);
-      pdf.text(formatPctPdf(getRowMargem(row)), colRight.margem - 1, textY, { align: 'right' });
+      pdf.text(formatPctPdf(getRowMarkup(row)), colRightAbs.markup - 1, textY, { align: 'right' });
 
       yPos += rowHeight;
     };
@@ -816,24 +905,20 @@ export default function RelatorioMargemVendas() {
             <>
               {/* Desktop Table View */}
               <div className="hidden md:block min-w-0 overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm table-fixed">
+                  <colgroup>
+                    <col className="w-[72px]" />
+                    <col className="w-[52px]" />
+                    <col />
+                    <col className="w-[100px]" />
+                    <col className="w-[100px]" />
+                    <col className="w-[100px]" />
+                    <col className="w-[100px]" />
+                    <col className="w-[80px]" />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">CÓDIGO</th>
-                      <th 
-                        onClick={() => {
-                          if (sortField === 'nome') {
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                          } else {
-                            setSortField('nome');
-                            setSortOrder('asc');
-                          }
-                        }}
-                        className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
-                      >
-                        DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th 
+                      <th
                         onClick={() => {
                           if (sortField === 'quantidade_vendida') {
                             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -842,9 +927,39 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                        className="text-center py-3 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
                       >
-                        QUANTIDADE {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th className="text-center py-3 px-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                        UN
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (sortField === 'nome') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('nome');
+                            setSortOrder('asc');
+                          }
+                        }}
+                        className="text-left py-3 px-3 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (sortField === 'valor_unitario_medio') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('valor_unitario_medio');
+                            setSortOrder('desc');
+                          }
+                        }}
+                        className="text-right py-3 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        PREÇO UN MÉDIO{' '}
+                        {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
                       <th 
                         onClick={() => {
@@ -894,22 +1009,9 @@ export default function RelatorioMargemVendas() {
                            setSortOrder('desc');
                          }
                        }}
-                       className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                       className="text-right py-3 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
                       >
                        MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th 
-                       onClick={() => {
-                         if (sortField === 'margem_percentual') {
-                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                         } else {
-                           setSortField('margem_percentual');
-                           setSortOrder('desc');
-                         }
-                       }}
-                       className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
-                      >
-                       MARGEM {sortField === 'margem_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
                       </tr>
                   </thead>
@@ -919,46 +1021,59 @@ export default function RelatorioMargemVendas() {
                         <React.Fragment key={group.category}>
                           {/* Category Header */}
                           <tr className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <td colSpan="7" className="py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+                            <td colSpan="8" className="py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
                               {group.category}
                             </td>
                           </tr>
                           {/* Items */}
                           {group.items.map((row) => (
-                            <tr key={row.codigo_interno} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                              <td className="py-3 px-4 text-sm font-mono text-gray-900 dark:text-white">{row.codigo_interno}</td>
-                              <td className="py-3 px-4 text-sm text-gray-900 dark:text-white font-medium">{row.nome}</td>
-                              <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</td>
-                              <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
-                              <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
-                              <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
-                              <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.markup_percentual)}</td>
-                              <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
+                            <tr key={row.codigo_interno || row.nome} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                              <td className="py-3 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</td>
+                              <td className="py-3 px-2 text-sm text-center text-gray-600 dark:text-gray-400">{row.unidade_exibicao || 'UN'}</td>
+                              <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium hyphens-auto text-justify break-words">{row.nome}</td>
+                              <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.valor_unitario_medio)}</td>
+                              <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
+                              <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
+                              <td className="py-3 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
+                              <td className="py-3 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
                             </tr>
                           ))}
                           {/* Subtotal Row */}
                           <tr className="bg-gray-50 dark:bg-gray-800/30 border-b-2 border-gray-200 dark:border-gray-700 font-semibold">
-                            <td colSpan="2" className="py-3 px-4 text-sm text-gray-900 dark:text-white">SUBTOTAL</td>
-                            <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white">{group.totals.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</td>
-                            <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(group.totals.total_recebido)}</td>
-                            <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(group.totals.custo_total)}</td>
-                            <td className="py-3 px-4 text-sm text-right text-green-600 dark:text-green-400">{formatMoney(group.totals.lucro_total)}</td>
-                            <td className="py-3 px-4 text-sm text-center text-green-600 dark:text-green-400 font-semibold">{formatPercent((group.totals.lucro_total / group.totals.custo_total) * 100)}</td>
-                            <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white">{formatPercent((group.totals.lucro_total / group.totals.total_recebido) * 100)}</td>
+                            <td className="py-3 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white">{group.totals.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</td>
+                            <td />
+                            <td className="py-3 px-3 text-sm text-gray-900 dark:text-white">SUBTOTAL</td>
+                            <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                              {formatMoney(
+                                group.totals.quantidade_vendida > 0
+                                  ? group.totals.total_recebido / group.totals.quantidade_vendida
+                                  : 0
+                              )}
+                            </td>
+                            <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(group.totals.total_recebido)}</td>
+                            <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">{formatMoney(group.totals.custo_total)}</td>
+                            <td className="py-3 px-2 text-sm text-right tabular-nums text-green-600 dark:text-green-400">{formatMoney(group.totals.lucro_total)}</td>
+                            <td className="py-3 px-2 text-sm text-right tabular-nums text-green-600 dark:text-green-400">
+                              {formatPercent(
+                                group.totals.custo_total > 0
+                                  ? (group.totals.lucro_total / group.totals.custo_total) * 100
+                                  : 0
+                              )}
+                            </td>
                             </tr>
                         </React.Fragment>
                       ))
                     ) : (
                       processedData.map((row) => (
                         <tr key={row.codigo_interno || row.nome} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                          <td className="py-3 px-4 text-sm font-mono text-gray-900 dark:text-white">{row.codigo_interno}</td>
-                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-white font-medium">{row.nome}</td>
-                          <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
-                          <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
-                          <td className="py-3 px-4 text-sm text-center font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
-                          <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
+                          <td className="py-3 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2 text-sm text-center text-gray-600 dark:text-gray-400">{row.unidade_exibicao || 'UN'}</td>
+                          <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium hyphens-auto text-justify break-words">{row.nome}</td>
+                          <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.valor_unitario_medio)}</td>
+                          <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
+                          <td className="py-3 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
+                          <td className="py-3 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
+                          <td className="py-3 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
                           </tr>
                           ))
                           )}
@@ -976,7 +1091,7 @@ export default function RelatorioMargemVendas() {
                       </div>
                       {group.items.map((row) => (
                         <div key={row.codigo_interno} className="p-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium truncate">{row.codigo_interno} • {row.nome}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium break-words hyphens-auto">{row.nome}</p>
                           <div className="grid grid-cols-3 gap-1.5 text-xs">
                             <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</p></div>
                             <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
@@ -992,13 +1107,13 @@ export default function RelatorioMargemVendas() {
                 ) : (
                   processedData.map((row) => (
                     <div key={row.codigo_interno} className="p-2 bg-gray-50 dark:bg-gray-800/50">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-1.5 font-medium truncate">{row.codigo_interno} • {row.nome}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-1.5 font-medium break-words hyphens-auto">{row.nome}</p>
                       <div className="grid grid-cols-3 gap-1.5 text-xs">
                          <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {row.unidade_exibicao || 'UN'}</p></div>
                          <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
                          <div><p className="text-gray-500 dark:text-gray-400 text-[10px]">Lucro</p><p className="font-bold text-green-600 dark:text-green-400 truncate">{formatMoney(row.lucro_total)}</p></div>
                        </div>
-                       <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1">Margem: {formatPercent(row.margem_percentual)}</p>
+                       <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1">Receita: {formatMoney(row.total_recebido)} · Preço médio: {formatMoney(row.valor_unitario_medio)}</p>
                     </div>
                   ))
                 )}
