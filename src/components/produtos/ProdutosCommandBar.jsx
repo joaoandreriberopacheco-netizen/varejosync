@@ -17,15 +17,17 @@ export default function ProdutosCommandBar({
   setIsColumnSelectorOpen,
 }) {
   return (
-    <div className="flex items-center justify-between py-2 flex-none flex-wrap gap-2">
-      <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-3">
-        <span>{filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''}</span>
+    <div className="flex items-center justify-between py-2 flex-none flex-wrap gap-2 w-full min-w-0 max-w-full overflow-x-hidden px-3 md:px-0">
+      <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+        <span className="flex-shrink-0">{filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''}</span>
         {filteredProdutos.length > 0 && (
           <>
-            <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
+            <div className="hidden md:block min-w-0">
+              <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 flex-shrink-0">
                   {sortOrder === 'az' ? <TrendingUp className="w-3.5 h-3.5 rotate-90" /> : <TrendingUp className="w-3.5 h-3.5 -rotate-90" />}
                 </Button>
               </DropdownMenuTrigger>

@@ -98,27 +98,27 @@ const formatMoneyDisplay = (val) =>
 
 const formatPercentDisplay = (val) => `${(val ?? 0).toFixed(2)}%`;
 
-function MargemCampo({ label, value, align = 'right', muted, profit, className = '' }) {
-  const alignClass =
-    align === 'center' ? 'text-center' : align === 'left' ? 'text-left' : 'text-right';
+function MargemMetricChip({ label, value, muted, profit }) {
   const valueClass = profit
-    ? 'font-semibold text-green-600 dark:text-green-400'
+    ? 'text-green-600 dark:text-green-400 font-semibold'
     : muted
-      ? 'text-gray-600 dark:text-gray-400'
-      : 'font-medium text-gray-900 dark:text-white';
+      ? 'text-gray-500 dark:text-gray-400'
+      : 'text-gray-900 dark:text-white font-medium';
 
   return (
-    <div className={className}>
-      <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">
+    <div className="flex-shrink-0 min-w-[4.25rem]">
+      <p className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none">
         {label}
       </p>
-      <p className={`text-xs tabular-nums ${alignClass} ${valueClass}`}>{value}</p>
+      <p className={`text-[11px] tabular-nums leading-tight mt-0.5 ${valueClass}`}>{value}</p>
     </div>
   );
 }
 
 const MARGIN_INDENT_GROUP = 14;
 const MARGIN_INDENT_PRODUTO = 8;
+const MARGIN_INDENT_GROUP_MOBILE = 10;
+const MARGIN_INDENT_PRODUTO_MOBILE = 6;
 
 function MargemLinhaMobile({
   row,
@@ -127,11 +127,13 @@ function MargemLinhaMobile({
   isExpanded,
   isLeaf,
   onToggle,
+  striped = false,
 }) {
   const isSubtotal = variant === 'subtotal';
   const isGroup = variant === 'grupo';
   const titulo = isSubtotal ? row.nome || 'Subtotal' : isGroup ? row.label : row.nome;
-  const indentPx = isGroup ? (level - 1) * MARGIN_INDENT_GROUP + 12 : (level - 1) * MARGIN_INDENT_GROUP + MARGIN_INDENT_PRODUTO;
+  const indentPx =
+    (level - 1) * MARGIN_INDENT_GROUP_MOBILE + (isGroup ? 4 : MARGIN_INDENT_PRODUTO_MOBILE);
   const precoMedio =
     row.valor_unitario_medio ??
     (row.quantidade_vendida > 0 ? (row.total_recebido || 0) / row.quantidade_vendida : 0);
@@ -148,82 +150,94 @@ function MargemLinhaMobile({
         ? 'border-l-gray-200 dark:border-l-gray-700'
         : 'border-l-transparent';
 
-  const cardClass = `rounded-xl border border-gray-100 dark:border-gray-800 border-l-4 ${accentBorder} p-3.5 shadow-sm ${
-    isSubtotal
-      ? 'bg-emerald-50/90 dark:bg-emerald-950/25'
-      : isGroup
-        ? 'bg-slate-50/95 dark:bg-slate-800/50'
-        : 'bg-white dark:bg-gray-900/60'
-  } ${canExpand ? 'active:scale-[0.99] transition-transform' : ''}`;
+  const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-2 pr-3 pl-0`;
 
-  const titleBlock = (
-    <div className="flex items-start gap-2 min-w-0" style={{ paddingLeft: indentPx }}>
-      {isGroup ? (
-        <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5">
-          {!isLeaf ? (
+  if (isGroup || isSubtotal) {
+    const bgClass = isSubtotal
+      ? 'bg-emerald-50/70 dark:bg-emerald-950/20'
+      : 'bg-slate-50/80 dark:bg-slate-800/35';
+    const inner = (
+      <>
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          {!isLeaf && !isSubtotal ? (
             <ChevronRight
-              className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform ${
+                isExpanded ? 'rotate-90' : ''
+              }`}
             />
-          ) : null}
-        </span>
-      ) : null}
-      <p
-        lang="pt-BR"
-        className={`flex-1 text-sm break-words hyphens-auto leading-snug ${
-          isSubtotal || isGroup
-            ? 'font-semibold text-gray-900 dark:text-white uppercase tracking-wide'
-            : 'font-medium text-gray-900 dark:text-white'
-        }`}
-      >
-        {titulo}
-        {isGroup && row.count != null ? (
-          <span className="ml-1.5 text-[10px] font-medium text-gray-500 dark:text-gray-400 normal-case">
-            ({row.count})
+          ) : (
+            <span className="w-3.5 flex-shrink-0" />
+          )}
+          <span
+            lang="pt-BR"
+            className="flex-1 min-w-0 text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 truncate"
+          >
+            {titulo}
+            {row.count != null ? (
+              <span className="ml-1 font-medium text-gray-500 dark:text-gray-400 normal-case">
+                ({row.count})
+              </span>
+            ) : null}
           </span>
-        ) : null}
-      </p>
-    </div>
-  );
+        </div>
+        <span className="flex-shrink-0 text-right pl-2">
+          <span className="block text-[9px] uppercase text-gray-400 leading-none">Lucro</span>
+          <span className="text-xs tabular-nums font-semibold text-green-600 dark:text-green-400">
+            {formatMoneyDisplay(row.lucro_total)}
+          </span>
+        </span>
+      </>
+    );
 
-  const metrics = (
-    <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-3">
-      <MargemCampo label="QUANT" value={formatQuant(row.quantidade_vendida)} align="center" />
-      <MargemCampo
-        label="UN"
-        value={isSubtotal || isGroup ? '\u2014' : row.unidade_exibicao || 'UN'}
-        align="center"
-      />
-      <MargemCampo label={'PRE\u00C7O UN'} value={formatMoneyDisplay(precoMedio)} />
-      <MargemCampo label="RECEITA" value={formatMoneyDisplay(row.total_recebido)} />
-      <MargemCampo label="CUSTO" value={formatMoneyDisplay(row.custo_total)} muted />
-      <MargemCampo label="LUCRO" value={formatMoneyDisplay(row.lucro_total)} profit />
-      <MargemCampo
-        label="MARKUP"
-        value={formatPercentDisplay(markup)}
-        profit={!isSubtotal}
-        className="col-span-2"
-      />
-    </div>
-  );
+    if (canExpand) {
+      return (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={isExpanded}
+          className={`w-full flex items-center gap-2 text-left min-h-[44px] active:bg-gray-100/80 dark:active:bg-gray-800/50 ${rowBase} ${bgClass}`}
+          style={{ paddingLeft: indentPx }}
+        >
+          {inner}
+        </button>
+      );
+    }
 
-  if (canExpand) {
     return (
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`mx-2 my-1.5 w-[calc(100%-1rem)] text-left min-h-[44px] ${cardClass}`}
-        aria-expanded={isExpanded}
+      <div
+        className={`flex items-center gap-2 min-h-[44px] ${rowBase} ${bgClass}`}
+        style={{ paddingLeft: indentPx }}
       >
-        {titleBlock}
-        {metrics}
-      </button>
+        {inner}
+      </div>
     );
   }
 
+  const unidade = row.unidade_exibicao || 'UN';
+
   return (
-    <div className={`mx-2 my-1.5 ${cardClass}`}>
-      {titleBlock}
-      {metrics}
+    <div
+      className={`${rowBase} ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
+      style={{ paddingLeft: indentPx }}
+    >
+      <p lang="pt-BR" className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2">
+        {titulo}
+      </p>
+      <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
+        <span className="text-gray-700 dark:text-gray-300">{formatQuant(row.quantidade_vendida)}</span>
+        {' \u00b7 '}
+        {unidade}
+        {' \u00b7 '}
+        <span className="text-gray-600 dark:text-gray-400">{formatMoneyDisplay(precoMedio)}/un</span>
+      </p>
+      <div className="mt-1.5 -mr-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 pr-3 pb-0.5">
+          <MargemMetricChip label="Receita" value={formatMoneyDisplay(row.total_recebido)} />
+          <MargemMetricChip label="Custo" value={formatMoneyDisplay(row.custo_total)} muted />
+          <MargemMetricChip label="Lucro" value={formatMoneyDisplay(row.lucro_total)} profit />
+          <MargemMetricChip label="Markup" value={formatPercentDisplay(markup)} profit />
+        </div>
+      </div>
     </div>
   );
 }
@@ -984,12 +998,13 @@ export default function RelatorioMargemVendas() {
           )}
 
         {/* Resumo ??? mesma linguagem do PDF */}
-         <div className="px-3 md:px-6 py-3 md:py-5">
-           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-3 italic">
+         <div className="px-3 md:px-6 py-2 md:py-5">
+           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 md:mb-3 italic">
              Valores monet?rios em reais (R$).
            </p>
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
              <AuditableMetricTooltip
+               className="!p-2.5 md:!p-4"
                icon={TrendingUp}
                label="RECEITA L?QUIDA"
                value={formatMoney(totals.receita_liquida)}
@@ -1000,6 +1015,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
+               className="!p-2.5 md:!p-4"
                icon={Wallet}
                label="CUSTO TOTAL"
                value={formatMoney(totals.custo_total)}
@@ -1008,6 +1024,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
+               className="!p-2.5 md:!p-4"
                icon={DollarSign}
                label="LUCRO"
                value={formatMoney(totals.lucro_total)}
@@ -1018,6 +1035,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
+               className="!p-2.5 md:!p-4"
                icon={Percent}
                variant="profit"
                label="MARKUP"
@@ -1027,7 +1045,7 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Toolbar */}
-           <div className="mx-3 md:mx-6 mb-2 rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm px-3 py-2.5">
+           <div className="mx-3 md:mx-6 mb-1.5 md:mb-2 rounded-xl md:rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm px-2.5 py-2 md:px-3 md:py-2.5">
             <div className="overflow-x-auto -mx-1 px-1">
              <div className="flex items-center gap-2 min-w-max md:min-w-0 md:flex-wrap [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
@@ -1321,7 +1339,7 @@ export default function RelatorioMargemVendas() {
               </div>
 
               {/* Mobile ??? mesmas colunas do PDF */}
-              <div className="md:hidden py-1">
+              <div className="md:hidden rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900/50">
                 {displayRows.map((treeRow, rowIdx) =>
                   treeRow.type === 'group' ? (
                     <MargemLinhaMobile
@@ -1334,12 +1352,12 @@ export default function RelatorioMargemVendas() {
                       onToggle={() => handleToggleGroup(treeRow.key)}
                     />
                   ) : (
-                    <div
+                    <MargemLinhaMobile
                       key={treeRow.key}
-                      className={rowIdx % 2 === 1 ? 'bg-gray-50/50 dark:bg-gray-800/30' : ''}
-                    >
-                      <MargemLinhaMobile row={treeRow.item} level={treeRow.level} />
-                    </div>
+                      row={treeRow.item}
+                      level={treeRow.level}
+                      striped={rowIdx % 2 === 1}
+                    />
                   )
                 )}
               </div>

@@ -339,13 +339,13 @@ export default function Layout({ children, currentPageName }) {
         <div 
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? 'ml-0 pt-12 p38-layout-mobile-scroll-pad' 
+              ? `ml-0 pt-12 ${currentPageName === 'Produtos' ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
               : (isOpen ? 'ml-[300px]' : 'ml-16')
-          } ${(!isMobile && currentPageName === 'Produtos') ? 'h-screen overflow-hidden' : ''}`}
+          } ${currentPageName === 'Produtos' && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
-          {(!isMobile && currentPageName === 'Produtos') ? (
-            <div className="h-full overflow-hidden">
+          {currentPageName === 'Produtos' ? (
+            <div className="h-full min-h-0 overflow-hidden">
               {children}
             </div>
           ) : (

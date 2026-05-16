@@ -29,10 +29,10 @@ export default function ProdutosHeader({
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate font-glacial">Catálogo</h1>
-            <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
-              <span>{stats.total} produtos</span>
-              <span>R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}</span>
-              {stats.abaixoMinimo > 0 && <span className="text-red-500">{stats.abaixoMinimo} abaixo mín.</span>}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-gray-400 min-w-0">
+              <span className="truncate">{stats.total} produtos</span>
+              <span className="truncate">R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}</span>
+              {stats.abaixoMinimo > 0 && <span className="text-red-500 flex-shrink-0">{stats.abaixoMinimo} abaixo mín.</span>}
             </div>
           </div>
 

@@ -369,7 +369,29 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
   return keys;
 }
 
+/** Assinatura estável: evita rebuild da árvore quando o pai recria o array sem mudar catálogo. */
+function catalogTreeSignature(produtos) {
+  if (!produtos?.length) return '';
+  return produtos
+    .map((p) =>
+      [
+        p?.id,
+        (p?.campo_hierarquico_1 || '').trim(),
+        (p?.campo_hierarquico_2 || '').trim(),
+        (p?.campo_hierarquico_3 || '').trim(),
+        (p?.campo_hierarquico_4 || '').trim(),
+        p?.estoque_atual ?? '',
+        p?.preco_custo_calculado ?? '',
+        p?.preco_venda_padrao ?? '',
+        p?.ativo ? 1 : 0,
+      ].join('|')
+    )
+    .sort()
+    .join('\n');
+}
+
 // ── Hook principal ────────────────────────────────────────────────────────────
 export function useTreeGrid(produtos) {
-  return useMemo(() => buildTree(produtos), [produtos]);
+  const sig = useMemo(() => catalogTreeSignature(produtos), [produtos]);
+  return useMemo(() => buildTree(produtos), [sig, produtos]);
 }

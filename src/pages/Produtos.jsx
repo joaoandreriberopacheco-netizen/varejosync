@@ -28,6 +28,7 @@ import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
 function isEmptyishVitrine(v) {
@@ -114,6 +115,7 @@ function ProdutosPageContent() {
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
 
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
   const produtoDetailFetchGenRef = useRef(0);
@@ -1093,9 +1095,9 @@ function ProdutosPageContent() {
         formatarNumero={formatarNumero}
       />
 
-      <div className="flex-1 overflow-hidden w-full min-w-0">
-        <div className="h-full w-full min-w-0 px-3 md:px-4 pb-4">
-          <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
+        <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4 overflow-x-hidden">
+          <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
             <ProdutosCommandBar
               filteredProdutos={filteredProdutos}
               loadData={loadData}
@@ -1108,13 +1110,13 @@ function ProdutosPageContent() {
               setIsColumnSelectorOpen={setIsColumnSelectorOpen}
             />
 
-            <div className="flex-1 overflow-hidden w-full min-w-0">
-              <div className="md:hidden w-full h-full overflow-y-auto overflow-x-hidden">
-                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} formatarNumero={formatarNumero} />
+            <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
+              <div className="md:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]">
+                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
               </div>
 
-              {viewMode === 'dinamica' && (
-                <div className="hidden md:flex md:flex-col w-full h-full">
+              {!isMobile && viewMode === 'dinamica' && (
+                <div className="flex flex-col w-full h-full min-h-0">
                   <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} />
                 </div>
               )}

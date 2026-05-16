@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -328,19 +328,34 @@ export function LevelControl({ level, onChange }) {
 // independente do nível selecionado.
 export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = 1 }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
-  const [scrollTop, setScrollTop] = useState(0);
   const scrollContainerRef = useRef(null);
+  const treeRef = useRef(null);
+  const pendingScrollRestoreRef = useRef(null);
 
   const tree = useTreeGrid(produtos);
+  treeRef.current = tree;
 
-  // Quando o nível muda, recalcula quais grupos ficam expandidos
+  // Só recalcula expansão quando o nível muda — não quando a árvore é reconstruída (filtro/refresh).
   useEffect(() => {
+    const scrollEl = scrollContainerRef.current;
+    if (scrollEl) {
+      pendingScrollRestoreRef.current = scrollEl.scrollTop;
+    }
     setExpandedKeys(
-      masterLevel === 1 ? new Set() : buildExpandedForLevel(tree, masterLevel - 1)
+      masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [masterLevel, tree]);
+  }, [masterLevel]);
 
   const rows = useMemo(() => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys)), [tree, expandedKeys]);
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollContainerRef.current;
+    const top = pendingScrollRestoreRef.current;
+    if (scrollEl != null && top != null) {
+      scrollEl.scrollTop = top;
+      pendingScrollRestoreRef.current = null;
+    }
+  }, [expandedKeys, rows.length]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys(prev => {
@@ -358,27 +373,10 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     [visibleColumns]
   );
 
-  // ── Virtualização: renderiza apenas linhas visíveis ────────────────────────────
-  const ROW_HEIGHT = 32; // altura aproximada de cada linha (grupo ou SKU)
-  const BUFFER = 5;      // extra linhas acima/abaixo para smooth scrolling
-  
-  const visibleRange = useMemo(() => {
-    const startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
-    const endIdx = Math.min(rows.length, startIdx + Math.ceil(window.innerHeight / ROW_HEIGHT) + BUFFER * 2);
-    return { startIdx, endIdx };
-  }, [scrollTop, rows.length]);
-
-  const visibleRows = useMemo(() => rows.slice(visibleRange.startIdx, visibleRange.endIdx), [rows, visibleRange]);
-  const offsetY = visibleRange.startIdx * ROW_HEIGHT;
-
-  const handleScroll = (e) => {
-    setScrollTop(e.currentTarget.scrollTop);
-  };
-
   return (
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
-      <div className="flex-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch' }} ref={scrollContainerRef} onScroll={handleScroll}>
+      <div className="flex-1 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }} ref={scrollContainerRef}>
         <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
           {/* thead sticky no topo durante scroll vertical */}
           <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900">
@@ -411,34 +409,17 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                 </td>
               </tr>
             ) : (
-              <>
-                {/* Spacer de topo — para manter scroll position correto */}
-                {visibleRange.startIdx > 0 && (
-                  <tr style={{ height: offsetY }}>
-                    <td colSpan={activeCols.length + 2} style={{ padding: 0 }} />
-                  </tr>
-                )}
-                
-                {/* Linhas visíveis apenas */}
-                {visibleRows.map(row =>
-                  row.type === 'group'
-                    ? <GroupRow key={row.key} row={row}
-                        isExpanded={expandedKeys.has(row.key)}
-                        onToggle={handleToggle}
-                        activeCols={activeCols} />
-                    : <SkuRow key={row.key} row={row}
-                        onEdit={onEdit}
-                        onDelete={onDelete || noopDelete}
-                        activeCols={activeCols} />
-                )}
-                
-                {/* Spacer de baixo */}
-                {visibleRange.endIdx < rows.length && (
-                  <tr style={{ height: (rows.length - visibleRange.endIdx) * ROW_HEIGHT }}>
-                    <td colSpan={activeCols.length + 2} style={{ padding: 0 }} />
-                  </tr>
-                )}
-              </>
+              rows.map(row =>
+                row.type === 'group'
+                  ? <GroupRow key={row.key} row={row}
+                      isExpanded={expandedKeys.has(row.key)}
+                      onToggle={handleToggle}
+                      activeCols={activeCols} />
+                  : <SkuRow key={row.key} row={row}
+                      onEdit={onEdit}
+                      onDelete={onDelete || noopDelete}
+                      activeCols={activeCols} />
+              )
             )}
           </tbody>
         </table>

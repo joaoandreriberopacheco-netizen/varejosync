@@ -15,7 +15,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
   const e = p.estoque_atual  || 0;
   const m = p.estoque_minimo || 0;
   const dotCls = !p.ativo    ? 'bg-gray-400'
-    : e <= 0                 ? 'bg-red-500 animate-pulse'
+    : e <= 0                 ? 'bg-red-500 md:animate-pulse'
     : e <= m                 ? 'bg-orange-400'
     : 'bg-green-500';
 
@@ -24,37 +24,36 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
 
   return (
-    <div
-      className="flex items-start gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 w-full"
-      style={{ boxSizing: 'border-box' }}
-    >
-      {/* Thumbnail fixo */}
+    <div className="flex items-start gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 w-full min-w-0 max-w-full box-border">
       <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
           : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
       </div>
 
-      {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden" onClick={() => onEdit(p)}>
-        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words">
+        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-3">
           {p.nome}
         </p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 min-w-0 max-w-full">
+          <div className="flex items-center gap-1 min-w-0 max-w-full">
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
-            <span className="flex flex-col text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap leading-tight">
-              <span>{fmtN(estoqueExibicao)} {unidadeExibicao}</span>
-              {apresent && <span className="mt-0.5">{apresent.rotulo ? `(${apresent.rotulo})` : '(unidade de exibição)'}</span>}
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight min-w-0">
+              <span className="block truncate">{fmtN(estoqueExibicao)} {unidadeExibicao}</span>
+              {apresent && (
+                <span className="block truncate text-[10px] mt-0.5">
+                  {apresent.rotulo ? `(${apresent.rotulo})` : '(unidade de exibição)'}
+                </span>
+              )}
             </span>
           </div>
           {p.codigo_interno && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono whitespace-nowrap">
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate max-w-[40%]">
               #{p.codigo_interno}
             </span>
           )}
           {cat.precoVenda > 0 && (
-            <span className="text-[12px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums whitespace-nowrap">
+            <span className="text-[12px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums truncate max-w-full">
               R$ {fmtR(cat.precoVenda)}
               <span className="text-[10px] font-normal text-gray-400 ml-0.5">/{cat.sigla}</span>
             </span>
@@ -68,7 +67,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit }) {
             return (
               <span
                 title={label}
-                className={`text-[11px] font-medium tabular-nums whitespace-nowrap ${
+                className={`text-[11px] font-medium tabular-nums flex-shrink-0 ${
                   markup < 20 ? 'text-red-500' : markup < 40 ? 'text-orange-400' : 'text-green-500'
                 }`}
               >
@@ -88,16 +87,16 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
 
   return (
     <button
+      type="button"
       onClick={() => onToggle(row.key)}
-      className={`w-full flex items-center gap-2 py-2.5 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 ${
+      className={`w-full min-w-0 max-w-full flex items-center gap-2 py-2.5 text-left box-border transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 overflow-hidden ${
         isRoot
           ? 'px-4 bg-white dark:bg-gray-900'
           : 'pl-8 pr-4 bg-gray-50/70 dark:bg-gray-800/40'
       }`}
-      style={{ boxSizing: 'border-box' }}
     >
       <ChevronRight
-        className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+        className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
       />
       <span className={`flex-1 min-w-0 truncate ${
         isRoot
@@ -106,15 +105,15 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       }`}>
         {row.label}
       </span>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[45%]">
         {row.criticalCount > 0 && (
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400">
+          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400 truncate">
             {row.criticalCount} {row.criticalCount > 1 ? 'críticos' : 'crítico'}
           </Badge>
         )}
         <Badge
           variant="outline"
-          className={`h-5 px-1.5 text-[10px] font-medium ${
+          className={`h-5 px-1.5 text-[10px] font-medium flex-shrink-0 ${
             isRoot
               ? 'border-gray-700 text-gray-800 dark:border-gray-500 dark:text-gray-100'
               : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300'
@@ -132,14 +131,19 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
 
   const tree = useTreeGrid(produtos);
+  const produtosSig = useMemo(
+    () => produtos.map((p) => p?.id).filter(Boolean).join('\0'),
+    [produtos]
+  );
 
+  // Reinicia expansão só quando o conjunto de produtos filtrados muda — não a cada rebuild da árvore.
   useEffect(() => {
     setExpandedKeys(buildExpandedForLevel(tree, 1));
-  }, [tree]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tree é derivado de produtos via produtosSig
+  }, [produtosSig]);
 
   const rows = useMemo(() => {
     const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
-    // Filtra grupos fantasmas (count = 0) que aparecem quando busca filtra todos os SKUs do grupo
     return all.filter(r => !(r.type === 'group' && r.count === 0));
   }, [tree, expandedKeys]);
 
@@ -164,24 +168,24 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   }
 
   return (
-    <div className="w-full" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
-        {rows.map(row =>
-          row.type === 'group' ? (
-            <GroupHeader
-              key={row.key}
-              row={row}
-              isExpanded={expandedKeys.has(row.key)}
-              onToggle={handleToggle}
-            />
-          ) : (
-            <SkuCard
-              key={row.key}
-              row={row}
-              onEdit={onEdit}
-            />
-          )
-        )}
+        {rows.map(row => (
+          <div key={row.key} className="contain-layout">
+            {row.type === 'group' ? (
+              <GroupHeader
+                row={row}
+                isExpanded={expandedKeys.has(row.key)}
+                onToggle={handleToggle}
+              />
+            ) : (
+              <SkuCard
+                row={row}
+                onEdit={onEdit}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
