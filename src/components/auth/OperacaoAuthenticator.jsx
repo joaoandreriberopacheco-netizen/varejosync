@@ -6,9 +6,17 @@ import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { gerenciarPin } from '@/functions/gerenciarPin';
 import PinSetupDialog from './PinSetupDialog';
+import {
+    OPERACAO_AUTH_ENABLED,
+    OPERACAO_AUTH_PHOTO_ENABLED,
+    buildBypassAuthPayload,
+    makeOperationCode,
+} from './operacaoAuthFlags';
 
 export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, operationName = "Nova Operação" }) {
-    const [step, setStep] = useState('camera'); // camera | pin | need_setup
+    const bypassedForOpen = useRef(false);
+
+    const [step, setStep] = useState(OPERACAO_AUTH_PHOTO_ENABLED ? 'camera' : 'pin'); // camera | pin | need_setup
     const [stream, setStream] = useState(null);
     const [photoData, setPhotoData] = useState(null);
     const [pin, setPin] = useState('');
@@ -22,20 +30,55 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
     const canvasRef = useRef(null);
     const inputRef = useRef(null);
 
+    // adormecido — sem modal: sucesso imediato para o fluxo do pai continuar
     useEffect(() => {
-        if (isOpen) {
-            const code = `OP-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-            setOperationCode(code);
+        if (!isOpen) {
+            bypassedForOpen.current = false;
+            return;
+        }
+        if (OPERACAO_AUTH_ENABLED) return;
+        if (bypassedForOpen.current) return;
+        bypassedForOpen.current = true;
+
+        let cancelled = false;
+        (async () => {
+            const payload = await buildBypassAuthPayload(() => base44.auth.me());
+            if (cancelled) return;
+            onSuccess?.(payload);
+            onClose?.();
+        })();
+
+        return () => { cancelled = true; };
+    }, [isOpen, onSuccess, onClose]);
+
+    useEffect(() => {
+        if (!OPERACAO_AUTH_ENABLED || !isOpen) {
+            if (!isOpen) stopCamera();
+            return;
+        }
+
+        const code = makeOperationCode();
+        setOperationCode(code);
+        setPhotoData(null);
+        setPin('');
+        setError('');
+
+        base44.auth.me().then((u) => {
+            setCurrentUser(u);
+            if (!OPERACAO_AUTH_PHOTO_ENABLED) {
+                setStep(u?.pin_definido ? 'pin' : 'need_setup');
+            }
+        }).catch(() => {
+            if (!OPERACAO_AUTH_PHOTO_ENABLED) setStep('pin');
+        });
+
+        if (OPERACAO_AUTH_PHOTO_ENABLED) {
             setStep('camera');
-            setPhotoData(null);
-            setPin('');
-            setError('');
             startCamera();
-            // Carregar usuário atual
-            base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
         } else {
             stopCamera();
         }
+
         return () => stopCamera();
     }, [isOpen]);
 
@@ -127,18 +170,23 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                 throw new Error(res.data?.error || 'PIN incorreto.');
             }
 
-            // Upload foto como evidência
-            const blob = await (await fetch(photoData)).blob();
-            const file = new File([blob], `auth_${operationCode}.jpg`, { type: 'image/jpeg' });
-            const uploadResult = await base44.integrations.Core.UploadFile({ file });
+            let evidenceUrl = null;
+            if (OPERACAO_AUTH_PHOTO_ENABLED && photoData) {
+                const blob = await (await fetch(photoData)).blob();
+                const file = new File([blob], `auth_${operationCode}.jpg`, { type: 'image/jpeg' });
+                const uploadResult = await base44.integrations.Core.UploadFile({ file });
+                if (!uploadResult?.file_url) throw new Error('Erro ao salvar evidência fotográfica.');
+                evidenceUrl = uploadResult.file_url;
+            }
 
-            if (!uploadResult?.file_url) throw new Error('Erro ao salvar evidência fotográfica.');
-
+            const name = currentUser?.full_name;
             onSuccess({
                 operationCode,
                 userId: currentUser?.id,
-                userName: currentUser?.full_name,
-                evidenceUrl: uploadResult.file_url,
+                userName: name,
+                intervenienteName: name,
+                intervenienteId: currentUser?.id,
+                evidenceUrl,
                 timestamp: new Date().toISOString()
             });
             onClose();
@@ -153,14 +201,20 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
     };
 
     const reset = () => {
-        setStep('camera');
-        setPhotoData(null);
         setPin('');
         setError('');
-        startCamera();
+        if (OPERACAO_AUTH_PHOTO_ENABLED) {
+            setStep('camera');
+            setPhotoData(null);
+            startCamera();
+        } else {
+            setStep(currentUser?.pin_definido ? 'pin' : 'need_setup');
+        }
     };
 
     const dots = Array.from({ length: 6 }, (_, i) => i < pin.length);
+
+    if (!OPERACAO_AUTH_ENABLED) return null;
 
     return (
         <>
@@ -215,13 +269,16 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                 Configurar PIN agora
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
-                            <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600">Tirar nova foto</button>
+                            {OPERACAO_AUTH_PHOTO_ENABLED && (
+                                <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600">Tirar nova foto</button>
+                            )}
                         </div>
                     )}
 
                     {/* Step: PIN */}
                     {step === 'pin' && (
                         <div className="w-full space-y-4">
+                            {OPERACAO_AUTH_PHOTO_ENABLED && photoData && (
                             <div className="w-full h-24 rounded-xl overflow-hidden relative">
                                 <img src={photoData} alt="Evidência" className="w-full h-full object-cover opacity-70" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -229,6 +286,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                     <RefreshCw className="w-3 h-3" /> Nova foto
                                 </button>
                             </div>
+                            )}
 
                             <div className="flex justify-center gap-3 py-2">
                                 {dots.map((filled, i) => (

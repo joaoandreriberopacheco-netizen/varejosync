@@ -3,6 +3,7 @@ import { Shield, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { gerenciarPin } from '@/functions/gerenciarPin';
+import { OPERACAO_AUTH_ENABLED } from './operacaoAuthFlags';
 
 /**
  * PinValidationDialog — Solicita o PIN do usuário logado para autorizar ações críticas.
@@ -28,13 +29,24 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
   const [enviandoEmail, setEnviandoEmail] = useState(false);
   const [emailEnviado, setEmailEnviado] = useState(false);
   const inputRef = useRef(null);
+  const bypassedForOpen = useRef(false);
 
+  // adormecido — mesmo flag que OperacaoAuthenticator; lote PedidosCompra segue sem PIN
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
+      bypassedForOpen.current = false;
+      return;
+    }
+    if (OPERACAO_AUTH_ENABLED) {
       setPin(''); setErro(''); setEmailEnviado(false);
       setTimeout(() => inputRef.current?.focus(), 150);
+      return;
     }
-  }, [isOpen]);
+    if (bypassedForOpen.current) return;
+    bypassedForOpen.current = true;
+    onSuccess?.();
+    onClose?.();
+  }, [isOpen, onSuccess, onClose]);
 
   const handleValidar = async () => {
     if (pin.length < 6) return setErro('PIN deve ter 6 dígitos.');
@@ -70,6 +82,8 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
 
   // PIN numérico estilo teclado virtual — 4 dots
   const dots = Array.from({ length: 6 }, (_, i) => i < pin.length);
+
+  if (!OPERACAO_AUTH_ENABLED) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

@@ -25,7 +25,7 @@ import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricToolt
 
 const PDF_COL_GAP_MM = 2;
 
-/** Paleta alinhada a `gerarRelatorioPedidosComprav2` (relatório expandido de embarques). */
+/** Paleta alinhada a `gerarRelatorioPedidosComprav2` (relat?rio expandido de embarques). */
 const PDF_EMBARQUES_C = {
   text: [31, 41, 55],
   muted: [107, 114, 128],
@@ -42,7 +42,7 @@ const PDF_EMBARQUES_C = {
   profit: [15, 118, 110],
 };
 
-/** Larguras fixas (mm); descrição ocupa o restante de contentWidth menos os gaps. */
+/** Larguras fixas (mm); descri??o ocupa o restante de contentWidth menos os gaps. */
 function buildPdfColumnLayout(contentWidth) {
   const colWidths = {
     quant: 11,
@@ -112,7 +112,7 @@ function formatQuant(val) {
   return (val ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 }
 
-/** Coluna UN: folhas usam sigla; grupos só quando todas as folhas coincidem, senão — */
+/** Coluna UN: folhas usam sigla; grupos s? quando todas as folhas coincidem, sen?o ??? */
 function formatMarginTreeUnidade(row, { isGroup = false } = {}) {
   if (isGroup) return formatMarginGroupUnidadeLabel(row.unidade_exibicao);
   return row.unidade_exibicao || 'UN';
@@ -135,7 +135,12 @@ function MargemMetricChip({ label, value, muted, profit }) {
       <p className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none truncate">
         {label}
       </p>
-      <p className={`text-[11px] tabular-nums leading-tight mt-0.5 truncate ${valueClass}`}>{value}</p>
+      <p
+        className={`text-[11px] tabular-nums mt-0.5 truncate ${valueClass}`}
+        style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -144,6 +149,10 @@ const MARGIN_INDENT_GROUP = 14;
 const MARGIN_INDENT_PRODUTO = 8;
 const MARGIN_INDENT_GROUP_MOBILE = 10;
 const MARGIN_INDENT_PRODUTO_MOBILE = 6;
+
+/** Corpo: entrelinha +50% (?1,5) e padding +20% (?1,2) em rela??o ao layout compacto anterior. */
+const BODY_LINE_HEIGHT_MULT = 1.5;
+const BODY_PAD_MULT = 1.2;
 
 function MargemLinhaMobile({
   row,
@@ -175,8 +184,8 @@ function MargemLinhaMobile({
         ? 'border-l-gray-200 dark:border-l-gray-700'
         : 'border-l-transparent';
 
-  const rowPadLeft = 20 + indentPx;
-  const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-4 pr-5 min-w-0 max-w-full touch-pan-y`;
+  const rowPadLeft = 24 + indentPx;
+  const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-5 pr-6 min-w-0 max-w-full touch-pan-y`;
 
   if (isGroup || isSubtotal) {
     const bgClass = isSubtotal
@@ -207,7 +216,10 @@ function MargemLinhaMobile({
               ) : null}
             </span>
             {isGroup && row.showMetrics !== false ? (
-              <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums normal-case">
+              <p
+                className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums normal-case"
+                style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
+              >
                 <span className="text-gray-700 dark:text-gray-300">
                   {formatQuant(row.quantidade_vendida)}
                 </span>
@@ -259,10 +271,17 @@ function MargemLinhaMobile({
       className={`${rowBase} ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
       style={{ paddingLeft: rowPadLeft }}
     >
-      <p lang="pt-BR" className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 break-words">
+      <p
+        lang="pt-BR"
+        className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 break-words"
+        style={{ lineHeight: `${1.375 * BODY_LINE_HEIGHT_MULT}` }}
+      >
         {titulo}
       </p>
-      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate">
+      <p
+        className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate"
+        style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
+      >
         <span className="text-gray-700 dark:text-gray-300">{formatQuant(row.quantidade_vendida)}</span>
         {' \u00b7 '}
         {unidade}
@@ -369,7 +388,7 @@ export default function RelatorioMargemVendas() {
         entry.quantidade_vendida += quantidadeResolvida.quantidade;
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
          entry.total_recebido += item.total;
-         // Registrar o desconto do pedido (para cada venda, não proporcional por item neste cálculo)
+         // Registrar o desconto do pedido (para cada venda, n?o proporcional por item neste c?lculo)
          entry.total_desconto_venda += (sale.valor_desconto || 0) / (sale.itens?.length || 1);
        });
      });
@@ -521,12 +540,12 @@ export default function RelatorioMargemVendas() {
 
   const exportToPDF = async () => {
     if (!dateRange.from || !dateRange.to) {
-      toast.error('Selecione um período antes de exportar');
+      toast.error('Selecione um per?odo antes de exportar');
       return;
     }
 
     if (!processedData.length) {
-      toast.error('Não há dados para exportar no período selecionado');
+      toast.error('N?o h? dados para exportar no per?odo selecionado');
       return;
     }
 
@@ -539,14 +558,17 @@ export default function RelatorioMargemVendas() {
     const margin = 14;
     const contentWidth = pageWidth - margin * 2;
     const footerY = pageHeight - 10;
-    const rowMinHeightProduct = 4.6;
-    const rowMinHeightGroup = 6;
-    const lineHeight = 2.9;
-    const rowPadV = 1.2;
-    const textBaseline = 3.5;
+    const lineHeight = 2.9 * BODY_LINE_HEIGHT_MULT;
+    const rowMinHeightProduct = 4.6 * BODY_LINE_HEIGHT_MULT;
+    const rowMinHeightGroup = 6 * BODY_LINE_HEIGHT_MULT;
+    const rowPadV = 1.2 * BODY_PAD_MULT;
+    const textBaseline = 3.5 * BODY_PAD_MULT;
     const pdfIndentGroupMm = 3;
     const pdfIndentProdutoMm = 1.6;
-    const groupCardInset = 2;
+    const groupCardInset = 2 * BODY_PAD_MULT;
+    const descPad = 2 * BODY_PAD_MULT;
+    const rowGapGroup = 1.6 * BODY_PAD_MULT;
+    const descGroupOffset = 2.5 * BODY_PAD_MULT;
 
     const C = PDF_EMBARQUES_C;
 
@@ -581,12 +603,12 @@ export default function RelatorioMargemVendas() {
       setColor(C.muted);
       pdf.text(
         normalizePdfText(
-          `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} · ${itemCount} produto(s)`
+          `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} ? ${itemCount} produto(s)`
         ),
         margin,
         footerY
       );
-      pdf.text(normalizePdfText(`Página ${pageNumber}`), pageWidth - margin, footerY, {
+      pdf.text(normalizePdfText(`P?gina ${pageNumber}`), pageWidth - margin, footerY, {
         align: 'right',
       });
     };
@@ -601,13 +623,13 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(15);
       setColor(C.text);
-      pdf.text(normalizePdfText('Relatório de Margem de Vendas'), margin + 11, yPos + 9.5);
+      pdf.text(normalizePdfText('Relat?rio de Margem de Vendas'), margin + 11, yPos + 9.5);
 
       pdf.setFontSize(8.5);
       setColor(C.muted);
       pdf.text(
         normalizePdfText(
-          `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
+          `Per?odo: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
         ),
         margin + 11,
         yPos + 16
@@ -630,7 +652,7 @@ export default function RelatorioMargemVendas() {
 
     const drawSummaryKpis = () => {
       const kpis = [
-        { label: 'Receita líquida', value: formatNumPdf(totals.receita_liquida), accent: false },
+        { label: 'Receita l?quida', value: formatNumPdf(totals.receita_liquida), accent: false },
         { label: 'Custo total', value: formatNumPdf(totals.custo_total), accent: false },
         { label: 'Lucro', value: formatNumPdf(totals.lucro_total), accent: true },
         { label: 'Markup', value: formatPctPdf(totalMarkup), accent: true },
@@ -658,7 +680,7 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(6.5);
       setColor(C.mutedLight);
-      pdf.text(normalizePdfText('Valores monetários em reais (R$).'), margin, yPos);
+      pdf.text(normalizePdfText('Valores monet?rios em reais (R$).'), margin, yPos);
       yPos += 6;
     };
 
@@ -676,8 +698,8 @@ export default function RelatorioMargemVendas() {
 
       pdf.text('QUANT', quantCenter, headerY, { align: 'center' });
       pdf.text('UN', unCenter, headerY, { align: 'center' });
-      pdf.text(normalizePdfText('DESCRIÇÃO'), colXAbs.desc + 1, headerY);
-      pdf.text(normalizePdfText('PREÇO UN'), colRightAbs.precoMedio - 1, headerY, { align: 'right' });
+      pdf.text(normalizePdfText('DESCRI????O'), colXAbs.desc + 1, headerY);
+      pdf.text(normalizePdfText('PRE??O UN'), colRightAbs.precoMedio - 1, headerY, { align: 'right' });
       pdf.text('RECEITA', colRightAbs.receita - 1, headerY, { align: 'right' });
       pdf.text('CUSTO', colRightAbs.custo - 1, headerY, { align: 'right' });
       pdf.text('LUCRO', colRightAbs.lucro - 1, headerY, { align: 'right' });
@@ -759,7 +781,6 @@ export default function RelatorioMargemVendas() {
     };
 
     const drawTreeRow = (treeRow) => {
-      const descPad = 2;
       const isGroup = treeRow.type === 'group';
       const showMetrics = !isGroup || treeRow.showMetrics !== false;
       const dataRow = isGroup ? treeRow : treeRow.item;
@@ -774,7 +795,7 @@ export default function RelatorioMargemVendas() {
       const descLines = wrapDescLinesPdf(pdf, descText, descMaxW);
       const rowMinHeight = isGroup ? rowMinHeightGroup : rowMinHeightProduct;
       const rowHeight = Math.max(rowMinHeight, descLines.length * lineHeight + rowPadV);
-      const rowGap = isGroup ? 1.6 : 0;
+      const rowGap = isGroup ? rowGapGroup : 0;
 
       ensureSpace(rowHeight + rowGap);
 
@@ -785,7 +806,15 @@ export default function RelatorioMargemVendas() {
         setFill(C.panel);
         pdf.roundedRect(rowX, yPos, rowW, rowHeight, 3, 3, 'F');
         setFill(C.teal);
-        pdf.roundedRect(rowX + 3, yPos + 2.6, 1.2, Math.min(rowHeight - 4.8, 6.5), 0.6, 0.6, 'F');
+        pdf.roundedRect(
+          rowX + 3 * BODY_PAD_MULT,
+          yPos + 2.6 * BODY_PAD_MULT,
+          1.2,
+          Math.min(rowHeight - 4.8 * BODY_PAD_MULT, 6.5),
+          0.6,
+          0.6,
+          'F'
+        );
         setDraw(C.border);
         pdf.setLineWidth(0.15);
         pdf.line(rowX, yPos + rowHeight + 0.4, rowX + rowW, yPos + rowHeight + 0.4);
@@ -805,7 +834,7 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(7.5);
       setColor(C.text);
-      drawDescColumn(descLines, descX + (isGroup ? 2.5 : 0), descMaxW, textY);
+      drawDescColumn(descLines, descX + (isGroup ? descGroupOffset : 0), descMaxW, textY);
       if (showMetrics) {
         drawMetricsRow(dataRow, textY, { isGroup });
       }
@@ -822,9 +851,9 @@ export default function RelatorioMargemVendas() {
 
     pdf.save('relatorio_margem.pdf');
     } catch (error) {
-      console.error('Erro ao gerar PDF do relatório de margem', error);
+      console.error('Erro ao gerar PDF do relat?rio de margem', error);
       const devDetail = import.meta.env.DEV && error?.message ? ` (${error.message})` : '';
-      toast.error(`Não foi possível gerar o PDF. Tente novamente.${devDetail}`);
+      toast.error(`N?o foi poss?vel gerar o PDF. Tente novamente.${devDetail}`);
     }
   };
 
@@ -863,13 +892,13 @@ export default function RelatorioMargemVendas() {
                 </button>
               </Link>
               <div className="min-w-0">
-                <h1 className="text-base md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white truncate">Relatório de Margem</h1>
+                <h1 className="text-base md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white truncate">Relat?rio de Margem</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   Rentabilidade por produto
                   {periodLabel ? (
                     <span className="block sm:inline mt-0.5 sm:mt-0 text-gray-400 dark:text-gray-500 truncate">
-                      <span className="sm:hidden">Período: </span>
-                      <span className="hidden sm:inline"> · </span>
+                      <span className="sm:hidden">Per?odo: </span>
+                      <span className="hidden sm:inline"> ? </span>
                       {periodLabel}
                     </span>
                   ) : null}
@@ -879,7 +908,7 @@ export default function RelatorioMargemVendas() {
             <div className="flex items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200 flex-shrink-0" title="Opções de impressão">
+                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200 flex-shrink-0" title="Op??es de impress?o">
                     <Printer className="w-4 md:w-5 h-4 md:h-5" />
                   </button>
                 </DropdownMenuTrigger>
@@ -921,15 +950,15 @@ export default function RelatorioMargemVendas() {
         <Drawer open={showFilterDrawer} onOpenChange={setShowFilterDrawer}>
           <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-8 max-h-[85vh] flex flex-col">
             <DrawerHeader className="px-0 pb-3 text-left sticky top-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-200 dark:border-gray-800">
-              <DrawerTitle className="font-glacial text-gray-900 dark:text-white text-lg">Filtros e Configurações</DrawerTitle>
+              <DrawerTitle className="font-glacial text-gray-900 dark:text-white text-lg">Filtros e Configura??es</DrawerTitle>
             </DrawerHeader>
 
             <div className="space-y-5 overflow-y-auto pt-1">
-              {/* Período */}
+              {/* Per?odo */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Período</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Per?odo</label>
                 
-                {/* Atalhos Rápidos */}
+                {/* Atalhos R?pidos */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mb-3">
                   <button
                     onClick={() => {
@@ -957,18 +986,18 @@ export default function RelatorioMargemVendas() {
                     }}
                     className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                   >
-                    Mês atual
+                    M?s atual
                   </button>
                 </div>
 
-                {/* Calendário Personalizado */}
+                {/* Calend?rio Personalizado */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Customizado</label>
                   <button
                     onClick={() => setShowCalendar(true)}
                     className="w-full px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                   >
-                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
+                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar per?odo'}
                   </button>
                 </div>
               </div>
@@ -1004,7 +1033,7 @@ export default function RelatorioMargemVendas() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                  Nível da árvore
+                  N?vel da ?rvore
                 </label>
                 <div className="overflow-x-auto pb-1 [&_button]:!min-h-9 [&_button]:!min-w-9">
                   <LevelControl level={treeLevel} onChange={setTreeLevel} />
@@ -1030,13 +1059,13 @@ export default function RelatorioMargemVendas() {
           </DrawerContent>
         </Drawer>
 
-        {/* Calendário acima do Drawer (portal no body — drawer usa z-[310]) */}
+        {/* Calend?rio acima do Drawer (portal no body ??? drawer usa z-[310]) */}
         {showCalendar &&
           createPortal(
             <>
               <button
                 type="button"
-                aria-label="Fechar calendário"
+                aria-label="Fechar calend?rio"
                 className="fixed inset-0 z-[320] cursor-default bg-black/50"
                 onClick={() => setShowCalendar(false)}
               />
@@ -1044,7 +1073,7 @@ export default function RelatorioMargemVendas() {
                 <div
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Selecionar período"
+                  aria-label="Selecionar per?odo"
                   className="pointer-events-auto w-full max-w-[720px] rounded-[28px] bg-white dark:bg-gray-900 p-3 md:p-5 shadow-2xl"
                 >
                   <CalendarPopup
@@ -1063,18 +1092,18 @@ export default function RelatorioMargemVendas() {
                 {/* Resumo ? mesma linguagem do PDF */}
          <div className="px-3 md:px-6 py-2.5 md:py-5 min-w-0 max-w-full overflow-x-hidden">
            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 md:mb-3 italic">
-             Valores monetários em reais (R$).
+             Valores monet?rios em reais (R$).
            </p>
            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
              <AuditableMetricTooltip
                className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={TrendingUp}
-               label="RECEITA LÍQUIDA"
+               label="RECEITA L?QUIDA"
                value={formatMoney(totals.receita_liquida)}
                auditData={{
                  'Receita Bruta': formatMoney(totals.total_recebido),
                  'Menos Descontos': `- ${formatMoney(totals.total_desconto_venda)}`,
-                 'Receita Líquida': formatMoney(totals.receita_liquida)
+                 'Receita L?quida': formatMoney(totals.receita_liquida)
                }}
              />
              <AuditableMetricTooltip
@@ -1092,9 +1121,9 @@ export default function RelatorioMargemVendas() {
                label="LUCRO"
                value={formatMoney(totals.lucro_total)}
                auditData={{
-                 'Receita Líquida': formatMoney(totals.receita_liquida),
+                 'Receita L?quida': formatMoney(totals.receita_liquida),
                  'Menos Custos': `- ${formatMoney(totals.custo_total)}`,
-                 'Lucro Líquido': formatMoney(totals.lucro_total)
+                 'Lucro L?quido': formatMoney(totals.lucro_total)
                }}
              />
              <AuditableMetricTooltip
@@ -1114,11 +1143,11 @@ export default function RelatorioMargemVendas() {
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
             </div>
-            {/* Critério Selecionado - Icon Only */}
+            {/* Crit?rio Selecionado - Icon Only */}
             <div className="relative">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition" title="Critério de ordenação">
+                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition" title="Crit?rio de ordena??o">
                     {sortField === 'nome' && <Type className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
                     {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
                     {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
@@ -1131,7 +1160,7 @@ export default function RelatorioMargemVendas() {
                 <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700">
                   <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <Type className="w-4 h-4" />
-                    <span>Descrição</span>
+                    <span>Descri??o</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setSortField('quantidade_vendida'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <Package className="w-4 h-4" />
@@ -1139,7 +1168,7 @@ export default function RelatorioMargemVendas() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setSortField('valor_unitario_medio'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    <span>Preço un médio</span>
+                    <span>Pre?o un m?dio</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -1161,11 +1190,11 @@ export default function RelatorioMargemVendas() {
               </DropdownMenu>
             </div>
 
-            {/* Seta para direção */}
+            {/* Seta para dire??o */}
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
-              title="Alternar direção"
+              title="Alternar dire??o"
             >
               <ChevronDown className={`w-4 h-4 text-gray-700 dark:text-gray-300 transition ${
                 sortOrder === 'desc' ? 'rotate-180' : ''
@@ -1179,7 +1208,7 @@ export default function RelatorioMargemVendas() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40">
               <Loader2 className="w-9 h-9 animate-spin text-gray-400 mb-4" />
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carregando relatório…</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carregando relat?rio???</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Aguarde enquanto calculamos as margens</p>
             </div>
           ) : processedData.length > 0 ? (
@@ -1210,7 +1239,7 @@ export default function RelatorioMargemVendas() {
                         }}
                         className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200">
                         UN
@@ -1226,7 +1255,7 @@ export default function RelatorioMargemVendas() {
                         }}
                         className="text-left py-3 px-3 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        DESCRI????O {sortField === 'nome' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th
                         onClick={() => {
@@ -1239,7 +1268,7 @@ export default function RelatorioMargemVendas() {
                         }}
                         className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        PREÇO UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        PRE??O UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                         onClick={() => {
@@ -1252,7 +1281,7 @@ export default function RelatorioMargemVendas() {
                         }}
                         className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                         onClick={() => {
@@ -1265,7 +1294,7 @@ export default function RelatorioMargemVendas() {
                         }}
                         className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                         onClick={() => {
@@ -1278,7 +1307,7 @@ export default function RelatorioMargemVendas() {
                         }}
                         className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                        onClick={() => {
@@ -1291,7 +1320,7 @@ export default function RelatorioMargemVendas() {
                        }}
                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                       MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
+                       MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       </tr>
                   </thead>
@@ -1310,18 +1339,24 @@ export default function RelatorioMargemVendas() {
                               isLeaf ? '' : 'cursor-pointer hover:bg-slate-100/90 dark:hover:bg-slate-800/50'
                             }`}
                           >
-                            <td className="py-2.5 px-2 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white">
+                            <td
+                              className="py-3 px-2.5 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida) : ''}
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-center text-gray-600 dark:text-gray-400">
+                            <td
+                              className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics
                                 ? formatMarginTreeUnidade(treeRow, { isGroup: true })
                                 : ''}
                             </td>
                             <td
                               lang="pt-BR"
-                              className="py-3 px-3 text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
-                              style={{ paddingLeft: 12 + indent }}
+                              className="py-3.5 px-3.5 text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
+                              style={{ paddingLeft: 14.4 + indent, lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {!isLeaf && (
@@ -1338,19 +1373,34 @@ export default function RelatorioMargemVendas() {
                                 </span>
                               </div>
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                            <td
+                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics ? formatMoney(treeRow.valor_unitario_medio) : ''}
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                            <td
+                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics ? formatMoney(treeRow.total_recebido) : ''}
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">
+                            <td
+                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics ? formatMoney(treeRow.custo_total) : ''}
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                            <td
+                              className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics ? formatMoney(treeRow.lucro_total) : ''}
                             </td>
-                            <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                            <td
+                              className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            >
                               {showGroupMetrics ? formatPercent(treeRow.markup_percentual) : ''}
                             </td>
                           </tr>
@@ -1369,34 +1419,55 @@ export default function RelatorioMargemVendas() {
                               : 'bg-white dark:bg-gray-900/10'
                           } hover:bg-gray-100/70 dark:hover:bg-gray-800/50`}
                         >
-                          <td className="py-2.5 px-2 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold">
+                          <td
+                            className="py-3 px-2.5 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {formatQuant(row.quantidade_vendida)}
                           </td>
-                          <td className="py-2.5 px-2 text-sm text-center text-gray-600 dark:text-gray-400">
+                          <td
+                            className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {row.unidade_exibicao || 'UN'}
                           </td>
                           <td
                             lang="pt-BR"
-                            className={`py-3 px-3 text-sm text-gray-900 dark:text-white font-medium hyphens-auto break-words min-w-0 ${
+                            className={`py-3.5 px-3.5 text-sm text-gray-900 dark:text-white font-medium hyphens-auto break-words min-w-0 ${
                               treeRow.level > 1 ? 'border-l-2 border-gray-200 dark:border-gray-700' : ''
                             }`}
-                            style={{ paddingLeft: descIndent }}
+                            style={{ paddingLeft: descIndent, lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {row.nome}
                           </td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                          <td
+                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {formatMoney(row.valor_unitario_medio)}
                           </td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-900 dark:text-white">
+                          <td
+                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {formatMoney(row.total_recebido)}
                           </td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400">
+                          <td
+                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {formatMoney(row.custo_total)}
                           </td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                          <td
+                            className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {formatMoney(row.lucro_total)}
                           </td>
-                          <td className="py-2.5 px-2 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400">
+                          <td
+                            className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                          >
                             {formatPercent(row.markup_percentual)}
                           </td>
                         </tr>
@@ -1440,9 +1511,9 @@ export default function RelatorioMargemVendas() {
           ) : (
             <div className="py-16 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40">
               <BarChart3 className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="text-base font-medium text-gray-700 dark:text-gray-300">Nenhum dado no período</p>
+              <p className="text-base font-medium text-gray-700 dark:text-gray-300">Nenhum dado no per?odo</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
-                Ajuste o período ou os filtros para ver produtos com vendas e margem.
+                Ajuste o per?odo ou os filtros para ver produtos com vendas e margem.
               </p>
             </div>
           )}
