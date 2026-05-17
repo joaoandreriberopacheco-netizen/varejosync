@@ -9,7 +9,6 @@ import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, Plu
 import { toast } from 'sonner';
 import FluvialTripSelectorFullscreen from '@/components/compras/FluvialTripSelectorFullscreen';
 import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } from '@/components/utils/dateUtils';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
@@ -220,7 +219,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [selectedItems, setSelectedItems] = useState({});
   const [fornecedores, setFornecedores] = useState([]);
   const [fornecedorLocal, setFornecedorLocal] = useState({ id: '', nome: '' });
-  const [authFornecedorOpen, setAuthFornecedorOpen] = useState(false);
   const [podeEscolherFornecedor, setPodeEscolherFornecedor] = useState(false);
 
   const eventoSelecionado = useMemo(
@@ -350,14 +348,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
   const totalPesoKg = roundToTwoDecimals(volumes.reduce((s, v) => s + (v.peso_total_kg || 0), 0));
 
-  const bloquearFecharPorPortalAberto = showTripSelector || authFornecedorOpen;
+  const bloquearFecharPorPortalAberto = showTripSelector;
 
   useEffect(() => {
     if (!isOpen || !pedido) return;
     logDespachoAudit({
       action: 'state_snapshot',
       showTripSelector,
-      authFornecedorOpen,
       podeEscolherFornecedor,
       activeTab,
       eventoLogisticoId: eventoLogisticoId || null,
@@ -367,7 +364,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
     isOpen,
     pedido?.id,
     showTripSelector,
-    authFornecedorOpen,
     podeEscolherFornecedor,
     activeTab,
     eventoLogisticoId,
@@ -573,7 +569,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
             if (!bloquearFecharPorPortalAberto) return;
             e.preventDefault();
             if (showTripSelector) setShowTripSelector(false);
-            else if (authFornecedorOpen) setAuthFornecedorOpen(false);
             logDespachoAudit({ action: 'escape_fechou_portal' });
           }}
         >
@@ -604,10 +599,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAuthFornecedorOpen(true)}
+                      onClick={() => setPodeEscolherFornecedor(true)}
                       className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
                     >
-                      Alterar (senha)
+                      Alterar fornecedor
                     </button>
                   </div>
                   {podeEscolherFornecedor && (
@@ -840,16 +835,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           onSelect={handleSelectTrip}
         />
       ) : null}
-
-      <OperacaoAuthenticator
-        isOpen={authFornecedorOpen}
-        onClose={() => setAuthFornecedorOpen(false)}
-        onSuccess={() => {
-          setAuthFornecedorOpen(false);
-          setPodeEscolherFornecedor(true);
-        }}
-        operationName="Alterar fornecedor do pedido no despacho"
-      />
 
       <InformarDespachoAuditStrip isOpen={isOpen} />
     </>

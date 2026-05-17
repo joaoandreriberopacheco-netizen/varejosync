@@ -25,7 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
@@ -110,8 +110,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
   const [currentUser, setCurrentUser] = useState(null);
 
   const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isReopenAuthOpen, setIsReopenAuthOpen] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isSolicitarEdicaoOpen, setIsSolicitarEdicaoOpen] = useState(false);
@@ -652,7 +650,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       return;
     }
 
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
   const handleSolicitarEdicao = async () => {
@@ -701,7 +699,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
           description: 'Há parcelas já pagas neste pedido. Regularize no financeiro antes de reabrir.',
           variant: 'destructive',
         });
-        setIsReopenAuthOpen(false);
         return;
       }
       const refNote = `| Ref: ${authData.operationCode} | ${formatarLogTime()}`;
@@ -728,7 +725,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         variant: "destructive"
       });
     }
-    setIsReopenAuthOpen(false);
   };
 
   const isAprovado = pedido && pedido.status === 'Aprovado';
@@ -1435,20 +1431,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       </div>
 
 
-      
-      <OperacaoAuthenticator 
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onSuccess={handleAuthSuccess}
-        operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
-      />
-
-      <OperacaoAuthenticator 
-        isOpen={isReopenAuthOpen}
-        onClose={() => setIsReopenAuthOpen(false)}
-        onSuccess={handleReopenForEdit}
-        operationName={`Reabrir Pedido ${pedido?.numero} para Edição`}
-      />
 
       <AtualizarPrecosDialog
         isOpen={showAtualizarPrecos}

@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import {
   resolvePrimaryFromFactorOne,
   formatUnitConversion,
@@ -124,7 +124,6 @@ const sanitizeTwoDecimalInput = (value) => {
 export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos }) {
   const [selecionados, setSelecionados] = useState({});
   const [processando, setProcessando] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState(null);
   // Estado principal (valores numéricos)
   const [costs, setCosts] = useState({});
@@ -393,7 +392,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       return;
     }
     setPendingUpdate(sel);
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
   const handleAuthSuccess = async (authData) => {
@@ -858,17 +857,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           </Button>
           {qtdComDiferenca > 0 && (
             <Button onClick={handleInitiateUpdate} disabled={processando || numSel === 0} className="shadow-sm">
-              {processando ? 'Aplicando...' : `Autenticar e Aplicar ${numSel} Selecionado(s)`}
+              {processando ? 'Aplicando...' : `Aplicar ${numSel} Selecionado(s)`}
             </Button>
           )}
         </div>
 
-        <OperacaoAuthenticator
-          isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
-          onSuccess={handleAuthSuccess}
-          operationName="Atualizar Custos e Preços de Venda"
-        />
       </DialogContent>
     </Dialog>
   );

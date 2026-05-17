@@ -6,7 +6,7 @@ import { RefreshCw, ChevronDown, ChevronRight, Lock, Search, RotateCcw, AlertTri
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
@@ -317,7 +317,6 @@ export default function TurnosFechadosPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [turnoParaReabrir, setTurnoParaReabrir] = useState(null);
   const [reabrindo, setReabrindo] = useState(false);
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -357,23 +356,22 @@ export default function TurnosFechadosPage() {
 
   const handleReabrirTurno = async (turno) => {
     setTurnoParaReabrir(turno);
-    setShowAuthDialog(true);
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, turno));
   };
 
-  const handleAuthSuccess = async (authData) => {
-    if (!turnoParaReabrir) {
-      setShowAuthDialog(false);
+  const handleAuthSuccess = async (authData, turnoOverride) => {
+    const turno = turnoOverride ?? turnoParaReabrir;
+    if (!turno) {
       return;
     }
     
     setReabrindo(true);
-    setShowAuthDialog(false);
     
     try {
       console.log('Reabertura autenticada por:', authData.intervenienteName);
       // Verificar se existe outro turno aberto para o mesmo caixa
       const turnosAbertos = await base44.entities.TurnoCaixa.filter({ 
-        conta_caixa_pdv_id: turnoParaReabrir.conta_caixa_pdv_id,
+        conta_caixa_pdv_id: turno.conta_caixa_pdv_id,
         status: 'Aberto'
       });
 
@@ -387,10 +385,10 @@ export default function TurnosFechadosPage() {
 
       // Buscar contas financeiras para reverter transferência
       const todasContas = await base44.entities.ContasFinanceiras.list();
-      const caixaPDV = todasContas.find(c => c.id === turnoParaReabrir.conta_caixa_pdv_id);
+      const caixaPDV = todasContas.find(c => c.id === turno.conta_caixa_pdv_id);
       const caixaGeral = todasContas.find(c => c.is_caixa_geral === true);
 
-      const dinheiroConferido = turnoParaReabrir.dinheiro_conferido || 0;
+      const dinheiroConferido = turno.dinheiro_conferido || 0;
 
       // Reverter transferência do fechamento (se houve)
       if (caixaPDV && caixaGeral && dinheiroConferido > 0) {
@@ -407,29 +405,29 @@ export default function TurnosFechadosPage() {
           numero: `MCX-ESTORNO-${String(Date.now()).slice(-5)}`,
           tipo: 'Reforço',
           valor: dinheiroConferido,
-          observacao: `Estorno de fechamento - Reabertura do turno ${turnoParaReabrir.numero}`,
+          observacao: `Estorno de fechamento - Reabertura do turno ${turno.numero}`,
           conta_id: caixaPDV.id,
-          turno_caixa_id: turnoParaReabrir.id,
+          turno_caixa_id: turno.id,
           usuario_responsavel_id: currentUser?.id,
           usuario_responsavel_nome: currentUser?.full_name
         });
       }
 
       // Reabrir o turno (com dados de auditoria)
-      await base44.entities.TurnoCaixa.update(turnoParaReabrir.id, {
+      await base44.entities.TurnoCaixa.update(turno.id, {
         status: 'Aberto',
         data_fechamento: null,
         usuario_fechamento_id: null,
         usuario_fechamento_nome: null,
-        observacoes: (turnoParaReabrir.observacoes || '') + 
+        observacoes: (turno.observacoes || '') + 
           `\n[REABERTURA] ${format(new Date(), 'dd/MM/yyyy HH:mm')} - Autorizado por ${authData.intervenienteName} (${authData.operationCode})`
       });
 
       // Remover o turno da lista local imediatamente
-      setTurnos(prev => prev.filter(t => t.id !== turnoParaReabrir.id));
+      setTurnos(prev => prev.filter(t => t.id !== turno.id));
       
       toast.success('Turno reaberto com sucesso!', {
-        description: `Turno ${turnoParaReabrir.numero} reaberto. Autorizado por: ${authData.intervenienteName}`,
+        description: `Turno ${turno.numero} reaberto. Autorizado por: ${authData.intervenienteName}`,
       });
 
       // Recarregar dados do servidor em background
