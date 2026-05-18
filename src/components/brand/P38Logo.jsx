@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
+import { BRAND_ASSETS, brandLogoProps } from '@/lib/brandSurfaces';
 
 /** Raio PWA + menu — substituir o ficheiro em public/brand para rebrand. */
-const BRAND_APP_ICON_URL = '/brand/p38-app-icon.png';
+const BRAND_APP_ICON_URL = BRAND_ASSETS.icon;
 
-/** Coloque os PNGs oficiais em /public/brand/ — se ausentes, o componente volta ao vetor. */
-const OFFICIAL_PNG = {
-  horizontal: '/brand/p38-logo-full.png',
-  mobile: '/brand/p38-logo-mobile.png',
-  vertical: '/brand/p38-logo-mobile.png',
-  icon: BRAND_APP_ICON_URL,
+/** Raster oficial (modo claro). Escuro usa composição ícone + wordmark. */
+const OFFICIAL_RASTER = {
+  horizontal: BRAND_ASSETS.horizontal,
+  mobile: BRAND_ASSETS.vertical,
+  vertical: BRAND_ASSETS.vertical,
+  icon: BRAND_ASSETS.icon,
 };
 
 /** Sincroniza com a classe `dark` em <html> (Tailwind). */
@@ -85,13 +86,20 @@ function LightningIcon({ size = 32, color: _color, className = '' }) {
  * - mobile | compact — telas estreitas: raio + "P38" (sem "| ERP")
  * - vertical — stack central (splash, hero): raio, P38, "|", ERP
  * - icon-only — apenas o raio (sidebar recolhida, favicons internos)
+ *
+ * @param {keyof import('@/lib/brandSurfaces').BRAND_LOGO_SURFACES} [surface] — mapeamento em brandSurfaces.js
  */
 export default function P38Logo({
-  variant = 'horizontal',
-  size = 'md',
+  surface,
+  variant: variantProp,
+  size: sizeProp,
   className = '',
   useOfficialPng = true,
 }) {
+  const mapped = surface ? brandLogoProps(surface) : {};
+  const variant = variantProp ?? mapped.variant ?? 'horizontal';
+  const size = sizeProp ?? mapped.size ?? 'md';
+
   const isDark = useBrandDarkMode();
   const [pngMissing, setPngMissing] = useState(false);
   const fg = isDark ? '#ffffff' : '#000000';
@@ -142,19 +150,20 @@ export default function P38Logo({
 
   const pngKey =
     resolved === 'mobile' ? 'mobile' : resolved === 'vertical' ? 'vertical' : 'horizontal';
-  const pngSrc = OFFICIAL_PNG[pngKey];
+  const pngSrc = OFFICIAL_RASTER[pngKey];
   const pngHeight =
     resolved === 'vertical'
       ? Math.min(220, Math.round(cfg.icon + cfg.p38 + cfg.erp + cfg.vGap * 6))
       : Math.max(cfg.icon, Math.round(cfg.p38 * 1.25));
 
-  if (useOfficialPng && !pngMissing && pngSrc) {
+  /** Claro: raster oficial. Escuro: composição (ícone + P38 | ERP) — evita invert em JPEG com fundo branco. */
+  if (useOfficialPng && !isDark && !pngMissing && pngSrc) {
     return (
       <img
         src={pngSrc}
         alt="P38 ERP"
         role="img"
-        className={`block w-auto select-none object-contain object-left ${isDark ? 'brightness-0 invert' : ''} ${className}`}
+        className={`block w-auto select-none object-contain object-left ${className}`}
         style={{
           height: pngHeight,
           maxHeight:

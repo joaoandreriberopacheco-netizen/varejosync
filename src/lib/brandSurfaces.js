@@ -8,6 +8,36 @@
  *
  * Modo escuro alinhado à Home: `bg-background`, cartões `bg-card` + `border-border` para contraste estável.
  */
+
+/** Três assets oficiais em public/brand/ (modo claro: raster; escuro: composição em P38Logo). */
+export const BRAND_ASSETS = {
+  icon: '/brand/p38-app-icon.png',
+  horizontal: '/brand/p38-logo-full.png',
+  vertical: '/brand/p38-logo-mobile.png',
+};
+
+/**
+ * Variante P38Logo por superfície da app.
+ * Escuro: ícone PWA + tipografia (sem invert em JPEG/PNG com fundo branco).
+ * Claro: PNG/JPEG oficial quando existir.
+ */
+export const BRAND_LOGO_SURFACES = {
+  'sidebar.collapsed': { variant: 'icon-only', size: 'sm' },
+  'sidebar.expanded': { variant: 'horizontal', size: 'md' },
+  'sidebar.expandedMobile': { variant: 'mobile', size: 'md' },
+  'home.headerDesktop': { variant: 'vertical', size: 'sm' },
+  'home.headerMobile': { variant: 'vertical', size: 'xs' },
+  'dashboard.header': { variant: 'vertical', size: 'sm' },
+  'splash': { variant: 'vertical', size: 'xxl' },
+  'navigation.transition': { variant: 'horizontal', size: 'lg' },
+  'mobile.functionSelector': { variant: 'mobile', size: 'sm' },
+};
+
+/** @param {keyof typeof BRAND_LOGO_SURFACES} surface */
+export function brandLogoProps(surface) {
+  return BRAND_LOGO_SURFACES[surface] ?? { variant: 'horizontal', size: 'md' };
+}
+
 export const brandSurface = {
   page: 'bg-gray-50 dark:bg-background',
   pageScreen: 'min-h-screen bg-gray-50 dark:bg-background',

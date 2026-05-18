@@ -41,7 +41,7 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 dark:text-gray-500">Visão geral do negócio</p>
         </div>
         <div className="hidden md:block">
-          <P38Logo variant="vertical" size="sm" />
+          <P38Logo surface="dashboard.header" />
         </div>
       </div>
 

@@ -81,7 +81,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
       <div style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }} className="px-4 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            <P38Logo variant="mobile" size="sm" className="flex-none" />
+            <P38Logo surface="mobile.functionSelector" className="flex-none" />
             <div className="min-w-0 text-right flex-1">
               <p className="text-sm" style={{ color: c.textMuted }}>
                 Olá{currentUser?.full_name ? `, ${currentUser.full_name.split(' ')[0]}` : ''}

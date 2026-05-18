@@ -63,7 +63,7 @@ export default function SplashScreen({ onFinish }) {
           opacity: phase === 'visible' ? 1 : 0,
         }}
       >
-        <P38Logo variant="vertical" size="xxl" />
+        <P38Logo surface="splash" />
       </div>
 
       {/* Barra de progresso */}

@@ -51,7 +51,7 @@ export default function NavigationTransitionOverlay() {
           opacity: phase === 'visible' ? 1 : 0,
         }}
       >
-        <P38Logo variant="horizontal" size="lg" />
+        <P38Logo surface="navigation.transition" />
       </div>
 
       {/* Efeito de chamas/fogo */}

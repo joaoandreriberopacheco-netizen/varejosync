@@ -153,10 +153,10 @@ export default function GlacialSidebar({
           }}
         >
           {isOpen ? (
-            <P38Logo variant={isMobile ? 'mobile' : 'horizontal'} size="md" />
+            <P38Logo surface={isMobile ? 'sidebar.expandedMobile' : 'sidebar.expanded'} />
           ) : (
             <div className="mx-auto">
-              <P38Logo variant="icon-only" size="sm" />
+              <P38Logo surface="sidebar.collapsed" />
             </div>
           )}
         </div>
