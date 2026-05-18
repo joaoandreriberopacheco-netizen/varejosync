@@ -1,6 +1,6 @@
 import React from 'react'
 import './App.css'
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/sonner"
 import SplashScreen from '@/components/SplashScreen'
 import NavigationTransitionOverlay from '@/components/NavigationTransitionOverlay'
 import { QueryClientProvider } from '@tanstack/react-query'

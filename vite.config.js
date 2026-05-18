@@ -20,6 +20,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      sonner: path.resolve(__dirname, './src/lib/sonner-shim.js'),
+      'sonner-original': path.resolve(__dirname, 'node_modules/sonner'),
     },
   },
 })

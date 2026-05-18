@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes app-toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 
 /* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -223,4 +232,18 @@ button:focus-visible {
   .p38-layout-mobile-scroll-pad {
     padding-bottom: 0;
   }
+}
+
+@keyframes app-toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+[data-sonner-toaster] {
+  --width: 420px;
+  z-index: 99999;
 }

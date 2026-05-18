@@ -5,7 +5,6 @@ import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44 } from '@/api/base44Client';
-import { Toaster } from "@/components/ui/sonner";
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
@@ -382,7 +381,6 @@ export default function Layout({ children, currentPageName }) {
         )}
       </div>
       <QuickBudgetLauncher />
-      <Toaster />
       {showPinSetup && (
         <PinSetupDialog
           isOpen={showPinSetup}
