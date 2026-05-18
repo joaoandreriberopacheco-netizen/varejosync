@@ -15,8 +15,13 @@ import {
   applyPurchaseUnitOptionToItem,
   getCustoApresentacaoItem,
   getDescontoApresentacaoItem,
+  getCustoFinalApresentacaoItem,
+  getDescontoPctApresentacaoItem,
+  isItemAcrescimoCompra,
+  applyItemDescontoPctApresentacao,
+  applyItemDescontoValorApresentacao,
+  calcTotalItemCompraPedido,
   custoApresentacaoParaFator1,
-  custoFator1ParaApresentacao,
   normalizeItemToCanonicalFactorOne,
 } from '@/lib/productUnits';
 
@@ -79,18 +84,47 @@ export default function MobileProductSelector({
     ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 50);
   }, [products, search]);
 
-  const parseBR = (s) => roundToTwoDecimals(parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0);
+  /** pt-BR: "1.234,56" ou decimal com ponto "15.49". */
+  const parsePtBr = (s) => {
+    const str = String(s ?? '').trim();
+    if (!str) return 0;
+    if (str.includes(',')) {
+      return roundToTwoDecimals(parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0);
+    }
+    return roundToTwoDecimals(parseFloat(str) || 0);
+  };
   const fmtBR = (n) => roundToTwoDecimals(parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const hydrateEditInputs = (item) => {
     const custoApres = roundToTwoDecimals(getCustoApresentacaoItem(item));
     const descApres = Math.abs(roundToTwoDecimals(getDescontoApresentacaoItem(item)));
-    const custoF1 = parseFloat(item.custo_unitario) || 0;
-    const pct = item.desconto_pct_item || (custoF1 > 0 ? (Math.abs(item.valor_desconto_item || 0) / custoF1) * 100 : 0);
+    const pct = getDescontoPctApresentacaoItem(item);
     setQuantidadeInput((parseFloat(item.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     setCustoInput(custoApres.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
     setDescontoValorInput(descApres > 0 ? descApres.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+  };
+
+  const syncDescontoFromPct = (item, custoApres, pctRaw) => {
+    const pct = roundToTwoDecimals(parsePtBr(pctRaw));
+    return applyItemDescontoPctApresentacao(item, custoApres, pct, isItemAcrescimoCompra(item));
+  };
+
+  const syncDescontoFromValor = (item, custoApres, valorRaw) => {
+    const absDesc = roundToTwoDecimals(parsePtBr(valorRaw));
+    return applyItemDescontoValorApresentacao(item, custoApres, absDesc, isItemAcrescimoCompra(item));
+  };
+
+  const syncCustoFromInput = (item, custoApresRaw) => {
+    const custoApres = roundToTwoDecimals(parsePtBr(custoApresRaw));
+    const fator = parseFloat(item.fator_conversao) || 1;
+    const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fator));
+    const pct = getDescontoPctApresentacaoItem(item);
+    let next = { ...item, custo_unitario: custoF1 };
+    if (pct > 0) {
+      next = applyItemDescontoPctApresentacao(next, custoApres, pct, isItemAcrescimoCompra(item));
+    }
+    return next;
   };
 
   const startEditingProductWithUnit = (product, selectedUnit) => {
@@ -131,7 +165,9 @@ export default function MobileProductSelector({
     setEditingItem(newItem);
     setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     setCustoInput(custoApres.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    const pctNum = descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : (custoF1 > 0 ? (product.desconto_compra_padrao || 0) / custoF1 * 100 : 0);
+    const pctNum = descontoGlobalPct !== 0
+      ? Math.abs(descontoGlobalPct)
+      : getDescontoPctApresentacaoItem({ ...newItem, valor_desconto_item: descontoValor, custo_unitario: custoF1 });
     setDescontoPctInput(pctNum > 0 ? String(Math.round(pctNum * 100) / 100) : '');
     setDescontoValorInput(Math.abs(descontoApres) > 0 ? Math.abs(descontoApres).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
     setEditingIndex(-1);
@@ -169,22 +205,32 @@ export default function MobileProductSelector({
 
     const quantidade = parseFloat(editingItem.quantidade) || 0;
     const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
-    const custoApres = roundToTwoDecimals(parseBR(custoInput));
+    const custoApres = roundToTwoDecimals(parsePtBr(custoInput));
     const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fatorConversao));
-    const descApres = roundToTwoDecimals(parseBR(descontoValorInput));
-    const sign = (editingItem.valor_desconto_item || 0) < 0 ? -1 : 1;
-    const descontoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(sign * descApres, fatorConversao));
+    const isAcrescimo = isItemAcrescimoCompra(editingItem);
+    const descApres = roundToTwoDecimals(parsePtBr(descontoValorInput));
+    const descontoF1 = roundToTwoDecimals(
+      custoApresentacaoParaFator1((isAcrescimo ? -1 : 1) * descApres, fatorConversao),
+    );
     const quantidadeBase = calculateBaseQuantity(quantidade, fatorConversao);
     const custoFinalF1 = roundToTwoDecimals(custoF1 - descontoF1);
+    const pctItem = custoApres > 0 ? roundToTwoDecimals((descApres / custoApres) * 100) : 0;
 
     let itemAtualizado = normalizeItemToCanonicalFactorOne({
       ...editingItem,
       custo_unitario: custoF1,
       valor_desconto_item: descontoF1,
+      desconto_pct_item: pctItem,
       quantidade_base: quantidadeBase,
       subtotal: roundToTwoDecimals(quantidadeBase * custoF1),
       custo_final_unitario: custoFinalF1,
-      total: roundToTwoDecimals(quantidadeBase * custoFinalF1),
+      total: calcTotalItemCompraPedido({
+        ...editingItem,
+        quantidade,
+        fator_conversao: fatorConversao,
+        custo_unitario: custoF1,
+        valor_desconto_item: descontoF1,
+      }),
     }, 'custo');
 
     if (editingIndex >= 0) {
@@ -206,14 +252,7 @@ export default function MobileProductSelector({
     }, 100);
   };
 
-  const calculateTotal = (item) => {
-    const qty = parseFloat(item.quantidade) || 0;
-    const fator = parseFloat(item.fator_conversao) || 1;
-    const costApres = getCustoApresentacaoItem(item);
-    const discountApres = getDescontoApresentacaoItem(item);
-    const unitFinalApres = roundToTwoDecimals(costApres - discountApres);
-    return roundToTwoDecimals(unitFinalApres * qty);
-  };
+  const calculateTotal = (item) => calcTotalItemCompraPedido(item);
 
   // Sincroniza ao entrar na tela de desconto
   useEffect(() => {
@@ -553,34 +592,23 @@ export default function MobileProductSelector({
                 const val = e.target.value;
                 if (/^[\d.,]*$/.test(val)) {
                   setCustoInput(val);
-                  const numVal = parseFloat(val.replace(',', '.'));
-                  if (!isNaN(numVal)) {
-                    setEditingItem(prev => {
-                      const fator = parseFloat(prev.fator_conversao) || 1;
-                      const custoF1 = custoApresentacaoParaFator1(numVal, fator);
-                      const sign = (prev.valor_desconto_item || 0) < 0 ? -1 : 1;
-                      const pct = parseFloat(descontoPctInput) || 0;
-                      const absDescApres = parseFloat((numVal * pct / 100).toFixed(2));
-                      const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
-                      setDescontoValorInput(absDescApres > 0 ? fmtBR(absDescApres) : '');
-                      return { ...prev, custo_unitario: roundToTwoDecimals(custoF1), valor_desconto_item: roundToTwoDecimals(descontoF1) };
-                    });
-                  }
+                  setEditingItem(prev => {
+                    const next = syncCustoFromInput(prev, val);
+                    const descApres = Math.abs(getDescontoApresentacaoItem(next));
+                    setDescontoValorInput(descApres > 0 ? fmtBR(descApres) : '');
+                    return next;
+                  });
                 }
               }}
               onFocus={e => e.target.select()}
               onBlur={() => {
-                const num = parseBR(custoInput);
+                const num = parsePtBr(custoInput);
                 setCustoInput(fmtBR(num));
                 setEditingItem(prev => {
-                  const fator = parseFloat(prev.fator_conversao) || 1;
-                  const custoF1 = custoApresentacaoParaFator1(num, fator);
-                  const sign = (prev.valor_desconto_item || 0) < 0 ? -1 : 1;
-                  const pct = parseFloat(descontoPctInput) || 0;
-                  const absDescApres = parseFloat((num * pct / 100).toFixed(2));
-                  const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
-                  setDescontoValorInput(absDescApres > 0 ? fmtBR(absDescApres) : '');
-                  return { ...prev, custo_unitario: roundToTwoDecimals(custoF1), valor_desconto_item: roundToTwoDecimals(descontoF1) };
+                  const next = syncCustoFromInput(prev, num);
+                  const descApres = Math.abs(getDescontoApresentacaoItem(next));
+                  setDescontoValorInput(descApres > 0 ? fmtBR(descApres) : '');
+                  return next;
                 });
               }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descontoPctInputRef.current?.focus(); descontoPctInputRef.current?.select(); } }}
@@ -591,10 +619,43 @@ export default function MobileProductSelector({
 
           {/* Desconto/Acréscimo - campos interdependentes */}
           {(() => {
-            const isAcrescimo = (editingItem?.valor_desconto_item || 0) < 0;
+            const isAcrescimo = isItemAcrescimoCompra(editingItem);
             const labelPct = isAcrescimo ? 'Acréscimo %' : 'Desconto %';
             const labelVal = isAcrescimo ? 'Acréscimo R$' : 'Desconto R$';
+            const flipDescontoAcrescimo = () => {
+              setEditingItem(prev => {
+                const v = parseFloat(prev.valor_desconto_item) || 0;
+                const flipped = v === 0 ? (isAcrescimo ? 0.01 : -0.01) : -v;
+                const next = { ...prev, valor_desconto_item: roundToTwoDecimals(flipped) };
+                const custoApres = parsePtBr(custoInput) || getCustoApresentacaoItem(next);
+                const pct = getDescontoPctApresentacaoItem(next);
+                const synced = pct > 0
+                  ? applyItemDescontoPctApresentacao(next, custoApres, pct, isItemAcrescimoCompra(next))
+                  : next;
+                const descApres = Math.abs(getDescontoApresentacaoItem(synced));
+                setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
+                setDescontoValorInput(descApres > 0 ? fmtBR(descApres) : '');
+                return synced;
+              });
+            };
             return (
+              <div className="space-y-2">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={flipDescontoAcrescimo}
+                    disabled={isLocked}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors ${
+                      isAcrescimo
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                    }`}
+                  >
+                    {isAcrescimo
+                      ? <><TrendingUp className="w-3 h-3" /> Acréscimo</>
+                      : <><TrendingDown className="w-3 h-3" /> Desconto</>}
+                  </button>
+                </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelPct}</Label>
@@ -607,20 +668,21 @@ export default function MobileProductSelector({
                     onChange={e => {  const v = e.target.value;
                       if (/^[\d.,]*$/.test(v)) {
                         setDescontoPctInput(v);
-                        const pct = parseBR(v);
-                        const custoApres = parseBR(custoInput);
-                        const fator = parseFloat(editingItem?.fator_conversao) || 1;
-                        const absDescApres = parseFloat((custoApres * pct / 100).toFixed(2));
-                        const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
-                        const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
-                        setDescontoValorInput(absDescApres > 0 ? fmtBR(absDescApres) : '');
-                        setEditingItem(prev => ({ ...prev, valor_desconto_item: roundToTwoDecimals(descontoF1), desconto_pct_item: pct }));
+                        const custoApres = parsePtBr(custoInput);
+                        setEditingItem(prev => {
+                          const next = syncDescontoFromPct(prev, custoApres, v);
+                          const descApres = Math.abs(getDescontoApresentacaoItem(next));
+                          setDescontoValorInput(descApres > 0 ? fmtBR(descApres) : '');
+                          return next;
+                        });
                       }
                     }}
                     onFocus={e => e.target.select()}
                     onBlur={() => {
-                      const pct = parseBR(descontoPctInput);
+                      const pct = parsePtBr(descontoPctInput);
                       setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
+                      const custoApres = parsePtBr(custoInput);
+                      setEditingItem(prev => syncDescontoFromPct(prev, custoApres, pct));
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descontoValorInputRef.current?.focus(); descontoValorInputRef.current?.select(); } }}
                     className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
@@ -639,20 +701,21 @@ export default function MobileProductSelector({
                       const v = e.target.value;
                       if (/^[\d.,]*$/.test(v)) {
                         setDescontoValorInput(v);
-                        const absDescApres = parseBR(v);
-                        const custoApres = parseBR(custoInput);
-                        const fator = parseFloat(editingItem?.fator_conversao) || 1;
-                        const novoPct = custoApres > 0 ? parseFloat(((absDescApres / custoApres) * 100).toFixed(4)) : 0;
-                        const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
-                        const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
-                        setDescontoPctInput(novoPct > 0 ? String(Math.round(novoPct * 100) / 100) : '');
-                        setEditingItem(prev => ({ ...prev, valor_desconto_item: roundToTwoDecimals(descontoF1), desconto_pct_item: novoPct }));
+                        const custoApres = parsePtBr(custoInput);
+                        setEditingItem(prev => {
+                          const next = syncDescontoFromValor(prev, custoApres, v);
+                          const novoPct = getDescontoPctApresentacaoItem(next);
+                          setDescontoPctInput(novoPct > 0 ? String(Math.round(novoPct * 100) / 100) : '');
+                          return next;
+                        });
                       }
                     }}
                     onFocus={e => e.target.select()}
                     onBlur={() => {
-                      const desc = parseBR(descontoValorInput);
+                      const desc = parsePtBr(descontoValorInput);
                       setDescontoValorInput(desc > 0 ? fmtBR(desc) : '');
+                      const custoApres = parsePtBr(custoInput);
+                      setEditingItem(prev => syncDescontoFromValor(prev, custoApres, desc));
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(); } }}
                     className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
@@ -660,16 +723,15 @@ export default function MobileProductSelector({
                   />
                 </div>
               </div>
+              </div>
             );
           })()}
 
           {/* Custo líquido + total */}
           {(() => {
-            const custo = getCustoApresentacaoItem(editingItem);
-            const desc = getDescontoApresentacaoItem(editingItem);
-            const liquido = custo - desc;
-            const isAcrescimo = desc < 0;
-            return desc !== 0 ? (
+            const liquido = getCustoFinalApresentacaoItem(editingItem);
+            const isAcrescimo = isItemAcrescimoCompra(editingItem);
+            return (parseFloat(editingItem?.valor_desconto_item) || 0) !== 0 ? (
               <div className="flex justify-between items-center text-sm px-1">
                 <span className="text-gray-500 dark:text-gray-400">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
                 <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>

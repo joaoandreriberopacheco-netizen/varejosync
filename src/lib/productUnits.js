@@ -1,4 +1,6 @@
-﻿export function hasAlternativeUnits(product) {
+﻿import { roundToTwoDecimals } from "@/lib/financialUtils";
+
+export function hasAlternativeUnits(product) {
   return Array.isArray(product?.unidades_alternativas) && product.unidades_alternativas.some((item) => item?.unidade && item.ativo !== false);
 }
 
@@ -585,6 +587,70 @@ export function getDescontoApresentacaoItem(item = {}) {
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
   return custoFator1ParaApresentacao(descF1, fator);
+}
+
+/** `valor_desconto_item` negativo = acréscimo (aumenta o custo). */
+export function isItemAcrescimoCompra(item = {}) {
+  return normalizeNumber(item?.valor_desconto_item, 0) < 0;
+}
+
+/** Custo unitário na unidade de exibição após desconto/acréscimo (desconto negativo soma). */
+export function getCustoFinalApresentacaoItem(item = {}) {
+  return roundToTwoDecimals(
+    getCustoApresentacaoItem(item) - getDescontoApresentacaoItem(item),
+  );
+}
+
+/** Percentual absoluto sobre o custo na unidade de exibição (sempre ≥ 0). */
+export function getDescontoPctApresentacaoItem(item = {}) {
+  const custoApres = getCustoApresentacaoItem(item);
+  const descApres = getDescontoApresentacaoItem(item);
+  if (custoApres <= 0) return 0;
+  return roundToTwoDecimals((Math.abs(descApres) / custoApres) * 100);
+}
+
+/**
+ * Atualiza `valor_desconto_item` (fator-1) a partir de % e custo na unidade comercial.
+ * `pctAbs` é sempre positivo; `isAcrescimo` define o sinal (acréscimo → valor negativo).
+ */
+export function applyItemDescontoPctApresentacao(item = {}, custoApres, pctAbs, isAcrescimo = false) {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const custo = roundToTwoDecimals(custoApres);
+  const pct = Math.max(0, roundToTwoDecimals(pctAbs));
+  const absDescApres = roundToTwoDecimals((custo * pct) / 100);
+  const sign = isAcrescimo ? -1 : 1;
+  const descontoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(sign * absDescApres, fator));
+  return {
+    ...item,
+    valor_desconto_item: descontoF1,
+    desconto_pct_item: pct,
+  };
+}
+
+/**
+ * Atualiza `valor_desconto_item` a partir do valor absoluto na unidade comercial (R$ da embalagem).
+ */
+export function applyItemDescontoValorApresentacao(item = {}, custoApres, absDescApres, isAcrescimo = false) {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const custo = roundToTwoDecimals(custoApres);
+  const absDesc = Math.max(0, roundToTwoDecimals(absDescApres));
+  const sign = isAcrescimo ? -1 : 1;
+  const descontoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(sign * absDesc, fator));
+  const pct = custo > 0 ? roundToTwoDecimals((absDesc / custo) * 100) : 0;
+  return {
+    ...item,
+    valor_desconto_item: descontoF1,
+    desconto_pct_item: pct,
+  };
+}
+
+/** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
+export function calcTotalItemCompraPedido(item = {}) {
+  const qty = normalizeNumber(item?.quantidade, 0);
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const custoF1 = normalizeNumber(item?.custo_unitario, 0);
+  const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
+  return roundToTwoDecimals(qty * fator * (custoF1 - descF1));
 }
 
 /**
