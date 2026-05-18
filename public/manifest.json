@@ -12,15 +12,15 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/brand/p38-icon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
+      "src": "/brand/p38-app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/brand/p38-icon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
+      "src": "/brand/p38-app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
@@ -32,9 +32,9 @@
       "url": "/AnexoCompartilhado?destino=torre&clipboard=1",
       "icons": [
         {
-          "src": "/brand/p38-icon.svg",
-          "sizes": "512x512",
-          "type": "image/svg+xml"
+          "src": "/brand/p38-app-icon.png",
+          "sizes": "1024x1024",
+          "type": "image/png"
         }
       ]
     }
