@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Boxes } from 'lucide-react';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
@@ -13,6 +14,7 @@ import {
   formatUnitConversion,
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
+  hasAlternativeUnits,
 } from '@/lib/productUnits';
 
 // Formata número para string BR
@@ -132,6 +134,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const [isMobile, setIsMobile] = useState(false);
   /** Padrão: valores na unidade de compra configurada; alternativa é só unidade base do cadastro. */
   const [unidadeVisualizacao, setUnidadeVisualizacao] = useState('comercial');
+  /** Sobrescreve fator/sigla de exibição por produto (como «Outra unidade» no pedido). */
+  const [unidadeExibicaoLinha, setUnidadeExibicaoLinha] = useState({});
+  const [unitSelectorPreco, setUnitSelectorPreco] = useState({ open: false, product: null, produtoId: null });
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -145,6 +150,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     if (!isOpen || !itens.length) return;
     const modoInicial = 'comercial';
     setUnidadeVisualizacao(modoInicial);
+    setUnidadeExibicaoLinha({});
 
     const initialCosts = {};
     const initialInputs = {};
@@ -181,7 +187,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       }
       initialCosts[item.produto_id] = c;
 
-      const mult = multiplicadorVisual(modoInicial, resolveFatorExibicaoComercial(item, p));
+      const mult = multiplicadorVisual(modoInicial, resolveFatorLinha(item, p));
       COST_FIELDS.forEach(field => {
         initialInputs[`${item.produto_id}_${field}`] = fmt((c[field] || 0) * mult);
       });
@@ -201,6 +207,48 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     return pct < 0 ? -absVal : absVal;
   };
 
+  const resolveFatorLinha = (item, produto) => {
+    const ov = unidadeExibicaoLinha[item?.produto_id];
+    if (ov?.fator > 0) return ov.fator;
+    return resolveFatorExibicaoComercial(item, produto);
+  };
+
+  const resolveSiglaLinha = (item, produto, fallbackLegenda) => {
+    const ov = unidadeExibicaoLinha[item?.produto_id];
+    if (ov?.unidade) return normalizarSiglaUnidade(ov.unidade);
+    return fallbackLegenda;
+  };
+
+  const refreshInputsProduto = (produtoId, fatorExibicao) => {
+    const c = costs[produtoId];
+    if (!c) return;
+    const item = itens.find((i) => i.produto_id === produtoId);
+    const mult = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
+    setInputs((prev) => {
+      const next = { ...prev };
+      COST_FIELDS.forEach((field) => {
+        next[`${produtoId}_${field}`] = fmt((c[field] || 0) * mult);
+      });
+      next[`${produtoId}_desconto_pct`] = String(Math.round((c.desconto_pct || 0) * 100) / 100);
+      next[`${produtoId}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
+      next[`${produtoId}_preco`] = fmt((c.preco_venda_padrao || 0) * mult);
+      return next;
+    });
+    void item;
+  };
+
+  const handleConfirmUnidadeLinha = (unitOption) => {
+    const produtoId = unitSelectorPreco.produtoId;
+    if (!produtoId || !unitOption) return;
+    const fator = Number(unitOption.fator_conversao) > 0 ? Number(unitOption.fator_conversao) : 1;
+    setUnidadeExibicaoLinha((prev) => ({
+      ...prev,
+      [produtoId]: { unidade: unitOption.unidade, fator },
+    }));
+    refreshInputsProduto(produtoId, fator);
+    setUnitSelectorPreco({ open: false, product: null, produtoId: null });
+  };
+
   const alternarUnidadeVisualizacao = (modo) => {
     if (modo === unidadeVisualizacao) return;
     setUnidadeVisualizacao(modo);
@@ -211,7 +259,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         const c = costs[id];
         if (!c) return;
         const pRow = produtos.find((x) => x.id === id);
-        const mult = multiplicadorVisual(modo, resolveFatorExibicaoComercial(item, pRow));
+        const mult = multiplicadorVisual(modo, resolveFatorLinha(item, pRow));
         COST_FIELDS.forEach((field) => {
           next[`${id}_${field}`] = fmt((c[field] || 0) * mult);
         });
@@ -228,7 +276,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const raw = inputs[`${produtoId}_${field}`];
     const item = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
+    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
     const val = parse(raw) / m;
     setCosts(prev => {
       const c = { ...prev[produtoId], [field]: val };
@@ -240,7 +288,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       const markup = c.preco_venda_percentual || 0;
       const novoPreco = calcPreco(custo, markup);
       const next = { ...c, preco_venda_padrao: novoPreco };
-      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
+      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_${field}`]: fmt(val * dm),
@@ -262,7 +310,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const handleDescontoPctBlurDirect = (produtoId, pct) => {
     const linha = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(linha || {}, prodRow));
+    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
     setCosts(prev => {
       const c = { ...prev[produtoId], desconto_pct: pct };
       c.desconto_compra_padrao = recalcDesconto(c);
@@ -285,7 +333,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const markup = parseFloat(raw) || 0;
     const linha = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(linha || {}, prodRow));
+    const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
     setCosts(prev => {
       const c = { ...prev[produtoId], preco_venda_percentual: markup };
       const custo = calcCusto(c);
@@ -305,14 +353,14 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const raw = inputs[`${produtoId}_preco`];
     const item = itens.find((i) => i.produto_id === produtoId);
     const prodRow = produtos.find((x) => x.id === produtoId);
-    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
+    const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
     const preco = parse(raw) / m;
     setCosts(prev => {
       const c = prev[produtoId];
       const custo = calcCusto(c);
       const novoMarkup = Math.max(0, calcMarkup(custo, preco));
       const next = { ...c, preco_venda_padrao: preco, preco_venda_percentual: novoMarkup };
-      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorExibicaoComercial(item || {}, prodRow));
+      const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_preco`]: fmt(preco * dm),
@@ -334,7 +382,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const principal = resolvePrimaryFromFactorOne(p, 'UN');
     const unidadeCompraPadrao = pickDefaultPurchaseUnit(p);
     const fatorPedido = resolveFatorPedidoParaBase(item, p);
-    const fatorExibicao = resolveFatorExibicaoComercial(item, p);
+    const fatorExibicao = resolveFatorLinha(item, p);
     const multDisplay = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
     const unidadeBase = principal;
     const linhaSigla = normalizarSiglaUnidade(item?.unidade_medida || '');
@@ -357,6 +405,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     } else if (siglaPadraoCompra) {
       unidadeComercialLegenda = siglaPadraoCompra;
     }
+    unidadeComercialLegenda = resolveSiglaLinha(item, p, unidadeComercialLegenda);
     return {
       ...item,
       produto: p,
@@ -492,7 +541,19 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               {itensCalc.map(item => (
                 <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 space-y-4">
                   <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Referência dos valores</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Referência dos valores</div>
+                      {hasAlternativeUnits(item.produto) && buildPurchaseUnitOptions(item.produto).length > 1 && (
+                        <button
+                          type="button"
+                          className="text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                          onClick={() => setUnitSelectorPreco({ open: true, product: item.produto, produtoId: item.produto_id })}
+                        >
+                          <Boxes className="w-3 h-3" aria-hidden />
+                          Outra unidade
+                        </button>
+                      )}
+                    </div>
                     {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                       <div className="mt-1">
                         <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{item.unidadeComercialLegenda}</span>
@@ -730,6 +791,15 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         )}
                       </td>
                       <td className="p-2 align-top bg-gray-50/90 dark:bg-gray-900/35 border-r border-gray-200 dark:border-gray-700">
+                        {hasAlternativeUnits(item.produto) && buildPurchaseUnitOptions(item.produto).length > 1 && (
+                          <button
+                            type="button"
+                            className="text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline mb-1 block"
+                            onClick={() => setUnitSelectorPreco({ open: true, product: item.produto, produtoId: item.produto_id })}
+                          >
+                            Outra unidade
+                          </button>
+                        )}
                         {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                           <div>
                             <div className="text-xs font-bold text-gray-900 dark:text-gray-100">{item.unidadeComercialLegenda}</div>
@@ -863,6 +933,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         </div>
 
       </DialogContent>
+      <ProductUnitSelectorDialog
+        open={unitSelectorPreco.open}
+        product={unitSelectorPreco.product}
+        mode="purchase"
+        onClose={() => setUnitSelectorPreco({ open: false, product: null, produtoId: null })}
+        onConfirm={handleConfirmUnidadeLinha}
+      />
     </Dialog>
   );
 }

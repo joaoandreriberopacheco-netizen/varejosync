@@ -561,6 +561,72 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/** Custo/preço na unidade comercial (vitrine ou embalagem escolhida). */
+export function custoFator1ParaApresentacao(valorFator1, fatorConversao = 1) {
+  return normalizeNumber(valorFator1, 0) * (normalizeNumber(fatorConversao, 1) || 1);
+}
+
+/** Converte valor digitado na unidade comercial para persistência fator-1. */
+export function custoApresentacaoParaFator1(valorApresentacao, fatorConversao = 1) {
+  const f = normalizeNumber(fatorConversao, 1) || 1;
+  return f > 0 ? normalizeNumber(valorApresentacao, 0) / f : normalizeNumber(valorApresentacao, 0);
+}
+
+/** Lê custo de apresentação da linha (snapshot ou fator-1 × fator). */
+export function getCustoApresentacaoItem(item = {}) {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const snap = normalizeNumber(item?.custo_unitario_apresentacao, NaN);
+  if (Number.isFinite(snap)) return snap;
+  return custoFator1ParaApresentacao(item?.custo_unitario, fator);
+}
+
+/** Lê desconto unitário na unidade comercial da linha. */
+export function getDescontoApresentacaoItem(item = {}) {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
+  return custoFator1ParaApresentacao(descF1, fator);
+}
+
+/**
+ * Aplica embalagem de compra à linha: quantidade/custo na UI na unidade escolhida;
+ * `custo_unitario` e `quantidade_base` permanecem no eixo fator-1 (contrato PedidoCompra).
+ */
+export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = null, options = {}) {
+  if (!option) return { ...item };
+  const { preserveQuantidadeBase = true, usarCustoSugerido = false } = options;
+  const fator = normalizeNumber(option.fator_conversao, 1) || 1;
+  const oldFator = normalizeNumber(item.fator_conversao, 1) || 1;
+  const qbInformada = normalizeNumber(item.quantidade_base, NaN);
+  const quantidadeBase = Number.isFinite(qbInformada)
+    ? qbInformada
+    : calculateBaseQuantity(normalizeNumber(item.quantidade, 0), oldFator);
+
+  let custoF1 = normalizeNumber(item.custo_unitario, NaN);
+  if (!Number.isFinite(custoF1) || usarCustoSugerido) {
+    custoF1 = custoApresentacaoParaFator1(option.valor_unitario, fator);
+  }
+
+  const quantidade =
+    preserveQuantidadeBase && fator > 0
+      ? quantidadeBase / fator
+      : normalizeNumber(item.quantidade, 1) || 1;
+
+  const canon = getUnidadeBySiglaCanonical(product, option.unidade);
+  const produtoId = product?.id || item.produto_id || "";
+  const patched = {
+    ...item,
+    produto_unidade_id: canon?.id || option.id || item.produto_unidade_id || "",
+    unidade_medida: option.unidade,
+    fator_conversao: fator,
+    quantidade,
+    quantidade_base: quantidadeBase,
+    custo_unitario: custoF1,
+    item_key: getItemUnitKey(produtoId, option.unidade),
+    unidade_apresentacao: option.unidade,
+  };
+  return normalizeItemToCanonicalFactorOne(patched, "custo");
+}
+
 /**
  * Marca o item como canônico fator-1 e popula os snapshots auxiliares.
  *

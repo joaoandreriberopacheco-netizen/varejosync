@@ -7,7 +7,18 @@ import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
+import {
+  buildPurchaseUnitOptions,
+  pickDefaultPurchaseUnit,
+  calculateBaseQuantity,
+  getItemUnitKey,
+  applyPurchaseUnitOptionToItem,
+  getCustoApresentacaoItem,
+  getDescontoApresentacaoItem,
+  custoApresentacaoParaFator1,
+  custoFator1ParaApresentacao,
+  normalizeItemToCanonicalFactorOne,
+} from '@/lib/productUnits';
 
 export default function MobileProductSelector({ 
   items, 
@@ -30,6 +41,7 @@ export default function MobileProductSelector({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const [unitSelector, setUnitSelector] = useState({ open: false, product: null });
+  const [editUnitSelector, setEditUnitSelector] = useState({ open: false });
   // Desconto global sobre preços de compra
   const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
   const [descontoGlobalPctInput, setDescontoGlobalPctInput] = useState('');
@@ -67,6 +79,20 @@ export default function MobileProductSelector({
     ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 50);
   }, [products, search]);
 
+  const parseBR = (s) => roundToTwoDecimals(parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0);
+  const fmtBR = (n) => roundToTwoDecimals(parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const hydrateEditInputs = (item) => {
+    const custoApres = roundToTwoDecimals(getCustoApresentacaoItem(item));
+    const descApres = Math.abs(roundToTwoDecimals(getDescontoApresentacaoItem(item)));
+    const custoF1 = parseFloat(item.custo_unitario) || 0;
+    const pct = item.desconto_pct_item || (custoF1 > 0 ? (Math.abs(item.valor_desconto_item || 0) / custoF1) * 100 : 0);
+    setQuantidadeInput((parseFloat(item.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    setCustoInput(custoApres.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
+    setDescontoValorInput(descApres > 0 ? descApres.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+  };
+
   const startEditingProductWithUnit = (product, selectedUnit) => {
     if (!product || !selectedUnit) return;
 
@@ -77,31 +103,37 @@ export default function MobileProductSelector({
       return;
     }
 
-    const custo = roundToTwoDecimals(selectedUnit.valor_unitario || 0);
+    const fator = parseFloat(selectedUnit.fator_conversao) || 1;
+    const custoApres = roundToTwoDecimals(selectedUnit.valor_unitario || 0);
+    const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fator));
     const descontoValorBase = descontoGlobalPct !== 0
-      ? roundToTwoDecimals(custo * Math.abs(descontoGlobalPct) / 100)
+      ? roundToTwoDecimals(custoF1 * Math.abs(descontoGlobalPct) / 100)
       : roundToTwoDecimals(product.desconto_compra_padrao || 0);
     const descontoValor = descontoGlobalPct < 0 ? -descontoValorBase : descontoValorBase;
-    const newItem = {
-      produto_id: product.id,
-      produto_nome: product.nome,
-      codigo_produto: product.codigo_interno || product.codigo_barras || '',
-      unidade_medida: selectedUnit.unidade,
-      fator_conversao: selectedUnit.fator_conversao || 1,
-      item_key: unitKey,
-      quantidade: 1,
-      quantidade_base: calculateBaseQuantity(1, selectedUnit.fator_conversao || 1),
-      custo_unitario: custo,
-      valor_desconto_item: descontoValor,
-      desconto_pct_item: descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : 0,
-    };
+    const descontoApres = custoFator1ParaApresentacao(descontoValor, fator);
+
+    let newItem = applyPurchaseUnitOptionToItem(
+      {
+        produto_id: product.id,
+        produto_nome: product.nome,
+        codigo_produto: product.codigo_interno || product.codigo_barras || '',
+        item_key: unitKey,
+        quantidade: 1,
+        custo_unitario: custoF1,
+        valor_desconto_item: descontoValor,
+        desconto_pct_item: descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : 0,
+      },
+      product,
+      selectedUnit,
+      { preserveQuantidadeBase: false, usarCustoSugerido: true },
+    );
 
     setEditingItem(newItem);
     setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    setCustoInput(custo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    const pctNum = descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : (custo > 0 ? (product.desconto_compra_padrao || 0) / custo * 100 : 0);
+    setCustoInput(custoApres.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    const pctNum = descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : (custoF1 > 0 ? (product.desconto_compra_padrao || 0) / custoF1 * 100 : 0);
     setDescontoPctInput(pctNum > 0 ? String(Math.round(pctNum * 100) / 100) : '');
-    setDescontoValorInput(Math.abs(descontoValor) > 0 ? Math.abs(descontoValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+    setDescontoValorInput(Math.abs(descontoApres) > 0 ? Math.abs(descontoApres).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
     setEditingIndex(-1);
     setView('edit');
   };
@@ -115,39 +147,50 @@ export default function MobileProductSelector({
   const handleEditItem = (index) => {
     const item = items[index];
     setEditingItem({ ...item });
-    setQuantidadeInput((item.quantidade || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    setCustoInput((item.custo_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    const custo = item.custo_unitario || 0;
-    const desc = item.valor_desconto_item || 0; // pode ser negativo (acréscimo)
-    const absDesc = Math.abs(desc);
-    const pct = item.desconto_pct_item || (custo > 0 ? (absDesc / custo) * 100 : 0);
-    setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
-    setDescontoValorInput(absDesc > 0 ? absDesc.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+    hydrateEditInputs(item);
     setEditingIndex(index);
     setView('edit');
+  };
+
+  const handleConfirmUnitInEdit = (unitOption) => {
+    if (!editingItem || !unitOption) return;
+    const product = products.find((p) => p.id === editingItem.produto_id);
+    if (!product) return;
+    const updated = applyPurchaseUnitOptionToItem(editingItem, product, unitOption, {
+      preserveQuantidadeBase: true,
+    });
+    setEditingItem(updated);
+    hydrateEditInputs(updated);
+    setEditUnitSelector({ open: false });
   };
 
   const handleSaveEdit = () => {
     if (!editingItem) return;
 
     const quantidade = parseFloat(editingItem.quantidade) || 0;
-    const custo = roundToTwoDecimals(parseFloat(editingItem.custo_unitario) || 0);
-    const desconto = roundToTwoDecimals(parseFloat(editingItem.valor_desconto_item) || 0);
     const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
-    const itemAtualizado = {
+    const custoApres = roundToTwoDecimals(parseBR(custoInput));
+    const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fatorConversao));
+    const descApres = roundToTwoDecimals(parseBR(descontoValorInput));
+    const sign = (editingItem.valor_desconto_item || 0) < 0 ? -1 : 1;
+    const descontoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(sign * descApres, fatorConversao));
+    const quantidadeBase = calculateBaseQuantity(quantidade, fatorConversao);
+    const custoFinalF1 = roundToTwoDecimals(custoF1 - descontoF1);
+
+    let itemAtualizado = normalizeItemToCanonicalFactorOne({
       ...editingItem,
-      custo_unitario: custo,
-      valor_desconto_item: desconto,
-      quantidade_base: calculateBaseQuantity(quantidade, fatorConversao),
-      subtotal: roundToTwoDecimals(quantidade * custo),
-      custo_final_unitario: roundToTwoDecimals(custo - desconto),
-      total: roundToTwoDecimals((custo - desconto) * quantidade),
-    };
+      custo_unitario: custoF1,
+      valor_desconto_item: descontoF1,
+      quantidade_base: quantidadeBase,
+      subtotal: roundToTwoDecimals(quantidadeBase * custoF1),
+      custo_final_unitario: custoFinalF1,
+      total: roundToTwoDecimals(quantidadeBase * custoFinalF1),
+    }, 'custo');
 
     if (editingIndex >= 0) {
       onUpdateItem(editingIndex, itemAtualizado);
     } else {
-      onAddItem(itemAtualizado); 
+      onAddItem(itemAtualizado);
     }
     
     // Reset form and return to catalog for quick next product
@@ -165,16 +208,12 @@ export default function MobileProductSelector({
 
   const calculateTotal = (item) => {
     const qty = parseFloat(item.quantidade) || 0;
-    const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
-    const discountUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
-    
-    const unitFinalCost = roundToTwoDecimals(cost - discountUnit);
-    return roundToTwoDecimals(unitFinalCost * qty);
+    const fator = parseFloat(item.fator_conversao) || 1;
+    const costApres = getCustoApresentacaoItem(item);
+    const discountApres = getDescontoApresentacaoItem(item);
+    const unitFinalApres = roundToTwoDecimals(costApres - discountApres);
+    return roundToTwoDecimals(unitFinalApres * qty);
   };
-
-  // Helpers de parse BR
-  const parseBR = (s) => roundToTwoDecimals(parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0);
-  const fmtBR = (n) => roundToTwoDecimals(parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // Sincroniza ao entrar na tela de desconto
   useEffect(() => {
@@ -394,9 +433,12 @@ export default function MobileProductSelector({
 
   if (view === 'edit' && editingItem) {
     const total = calculateTotal(editingItem);
+    const editProduct = products.find((p) => p.id === editingItem.produto_id);
+    const editHasAltUnits = editProduct && buildPurchaseUnitOptions(editProduct).length > 1;
     return (
+      <>
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
-        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => {
             setEditingItem(null);
             setEditingIndex(-1);
@@ -405,9 +447,23 @@ export default function MobileProductSelector({
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="ml-2 font-medium truncate flex-1 text-gray-900 dark:text-white">{editingItem.produto_nome}</div>
-          <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border-0 shadow-sm">
-            {editingItem.unidade_medida || 'UN'}
-          </Badge>
+          {editHasAltUnits ? (
+            <button
+              type="button"
+              disabled={isLocked}
+              onClick={() => setEditUnitSelector({ open: true })}
+              className="flex items-center gap-1 shrink-0"
+            >
+              <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border-0 shadow-sm">
+                {editingItem.unidade_medida || 'UN'}
+              </Badge>
+              <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400">trocar</span>
+            </button>
+          ) : (
+            <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border-0 shadow-sm shrink-0">
+              {editingItem.unidade_medida || 'UN'}
+            </Badge>
+          )}
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-5">
@@ -484,7 +540,9 @@ export default function MobileProductSelector({
 
           {/* Pricing Field */}
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 block">Preço de Compra (R$)</Label>
+            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 block">
+              Preço de Compra (R$ / {editingItem.unidade_medida || 'UN'})
+            </Label>
             <Input 
               ref={custoInputRef}
               type="text"
@@ -498,27 +556,31 @@ export default function MobileProductSelector({
                   const numVal = parseFloat(val.replace(',', '.'));
                   if (!isNaN(numVal)) {
                     setEditingItem(prev => {
+                      const fator = parseFloat(prev.fator_conversao) || 1;
+                      const custoF1 = custoApresentacaoParaFator1(numVal, fator);
                       const sign = (prev.valor_desconto_item || 0) < 0 ? -1 : 1;
                       const pct = parseFloat(descontoPctInput) || 0;
-                      const absDesc = parseFloat((numVal * pct / 100).toFixed(2));
-                      const novoDesc = sign * absDesc;
-                      setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
-                      return { ...prev, custo_unitario: numVal, valor_desconto_item: novoDesc };
+                      const absDescApres = parseFloat((numVal * pct / 100).toFixed(2));
+                      const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
+                      setDescontoValorInput(absDescApres > 0 ? fmtBR(absDescApres) : '');
+                      return { ...prev, custo_unitario: roundToTwoDecimals(custoF1), valor_desconto_item: roundToTwoDecimals(descontoF1) };
                     });
                   }
                 }
               }}
               onFocus={e => e.target.select()}
               onBlur={() => {
-                const num = parseFloat(custoInput.replace(',', '.')) || 0;
+                const num = parseBR(custoInput);
                 setCustoInput(fmtBR(num));
                 setEditingItem(prev => {
+                  const fator = parseFloat(prev.fator_conversao) || 1;
+                  const custoF1 = custoApresentacaoParaFator1(num, fator);
                   const sign = (prev.valor_desconto_item || 0) < 0 ? -1 : 1;
                   const pct = parseFloat(descontoPctInput) || 0;
-                  const absDesc = parseFloat((num * pct / 100).toFixed(2));
-                  const novoDesc = sign * absDesc;
-                  setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
-                  return { ...prev, custo_unitario: num, valor_desconto_item: novoDesc };
+                  const absDescApres = parseFloat((num * pct / 100).toFixed(2));
+                  const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
+                  setDescontoValorInput(absDescApres > 0 ? fmtBR(absDescApres) : '');
+                  return { ...prev, custo_unitario: roundToTwoDecimals(custoF1), valor_desconto_item: roundToTwoDecimals(descontoF1) };
                 });
               }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descontoPctInputRef.current?.focus(); descontoPctInputRef.current?.select(); } }}
@@ -546,12 +608,13 @@ export default function MobileProductSelector({
                       if (/^[\d.,]*$/.test(v)) {
                         setDescontoPctInput(v);
                         const pct = parseBR(v);
-                        const custo = parseFloat(editingItem?.custo_unitario) || 0;
-                        const absDesc = parseFloat((custo * pct / 100).toFixed(2));
+                        const custoApres = parseBR(custoInput);
+                        const fator = parseFloat(editingItem?.fator_conversao) || 1;
+                        const absDescApres = parseFloat((custoApres * pct / 100).toFixed(2));
                         const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
-                        const novoDesc = sign * absDesc;
-                        setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
-                        setEditingItem(prev => ({ ...prev, valor_desconto_item: novoDesc, desconto_pct_item: pct }));
+                        const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
+                        setDescontoValorInput(absDescApres > 0 ? fmtBR(absDescApres) : '');
+                        setEditingItem(prev => ({ ...prev, valor_desconto_item: roundToTwoDecimals(descontoF1), desconto_pct_item: pct }));
                       }
                     }}
                     onFocus={e => e.target.select()}
@@ -576,13 +639,14 @@ export default function MobileProductSelector({
                       const v = e.target.value;
                       if (/^[\d.,]*$/.test(v)) {
                         setDescontoValorInput(v);
-                        const absDesc = parseBR(v);
-                        const custo = parseFloat(editingItem?.custo_unitario) || 0;
-                        const novoPct = custo > 0 ? parseFloat(((absDesc / custo) * 100).toFixed(4)) : 0;
+                        const absDescApres = parseBR(v);
+                        const custoApres = parseBR(custoInput);
+                        const fator = parseFloat(editingItem?.fator_conversao) || 1;
+                        const novoPct = custoApres > 0 ? parseFloat(((absDescApres / custoApres) * 100).toFixed(4)) : 0;
                         const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
-                        const novoDesc = sign * absDesc;
+                        const descontoF1 = custoApresentacaoParaFator1(sign * absDescApres, fator);
                         setDescontoPctInput(novoPct > 0 ? String(Math.round(novoPct * 100) / 100) : '');
-                        setEditingItem(prev => ({ ...prev, valor_desconto_item: novoDesc, desconto_pct_item: novoPct }));
+                        setEditingItem(prev => ({ ...prev, valor_desconto_item: roundToTwoDecimals(descontoF1), desconto_pct_item: novoPct }));
                       }
                     }}
                     onFocus={e => e.target.select()}
@@ -601,8 +665,8 @@ export default function MobileProductSelector({
 
           {/* Custo líquido + total */}
           {(() => {
-            const custo = parseFloat(editingItem?.custo_unitario) || 0;
-            const desc = parseFloat(editingItem?.valor_desconto_item) || 0; // negativo = acréscimo
+            const custo = getCustoApresentacaoItem(editingItem);
+            const desc = getDescontoApresentacaoItem(editingItem);
             const liquido = custo - desc;
             const isAcrescimo = desc < 0;
             return desc !== 0 ? (
@@ -681,6 +745,14 @@ export default function MobileProductSelector({
           )}
         </div>
       </div>
+      <ProductUnitSelectorDialog
+        open={editUnitSelector.open}
+        product={editProduct}
+        mode="purchase"
+        onClose={() => setEditUnitSelector({ open: false })}
+        onConfirm={handleConfirmUnitInEdit}
+      />
+      </>
     );
   }
 
@@ -907,7 +979,7 @@ export default function MobileProductSelector({
                       {item.produto_nome || "Produto"}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                      {item.quantidade} {item.unidade_medida} × {formatCurrency(item.custo_unitario)}
+                      {item.quantidade} {item.unidade_medida} × {formatCurrency(getCustoApresentacaoItem(item))}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-400 dark:text-gray-500">Total</span>

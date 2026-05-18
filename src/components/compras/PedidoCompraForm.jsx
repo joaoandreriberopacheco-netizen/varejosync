@@ -631,7 +631,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     onClose();
   };
 
-  const handleInitiateSave = () => {
+  const handleInitiateSave = (saveOptions = {}) => {
     if (!formData.fornecedor_id) {
       toast({
         title: "Fornecedor obrigatório",
@@ -650,7 +650,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       return;
     }
 
-    void runOperacaoAuthBypass(handleAuthSuccess);
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, saveOptions));
   };
 
   const handleSolicitarEdicao = async () => {
@@ -805,17 +805,19 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     }
   };
 
-  const handleAuthSuccess = async (authData) => {
+  const handleAuthSuccess = async (authData, saveOptions = {}) => {
     setIsSaving(true);
     
     try {
       const authNote = `\n[Autenticado: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${formatarLogTime()}]`;
       
       const statusAnterior = pedido?.status || 'Rascunho';
-      const statusNovo = formData.status; // já foi setado pelo botão antes de chamar handleInitiateSave
+      // Com auth imediata (sem modal PIN), o status do formData pode ainda ser o anterior — saveOptions.status vem do FAB "Financeiro".
+      const statusNovo = saveOptions.status ?? formData.status;
 
       const dataToSave = { 
-        ...formData, 
+        ...formData,
+        ...(saveOptions.status ? { status: saveOptions.status } : {}),
         valor_itens: valorItens,
         valor_total: valorTotal,
         historico: (formData.historico || '') + authNote,
@@ -1493,8 +1495,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
            isDisabled={!formData.fornecedor_id || formData.itens.length === 0}
            mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
            onEnviarFinanceiro={() => {
-             handleChange('status', 'Aguardando Aprovação Financeira');
-             setTimeout(() => handleInitiateSave(), 100);
+             handleInitiateSave({ status: 'Aguardando Aprovação Financeira' });
            }}
            mostrarSolicitarEdicao={false}
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
