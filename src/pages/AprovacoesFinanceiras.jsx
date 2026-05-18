@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PedidoCompraResumoDialog from '@/components/compras/PedidoCompraResumoDialog';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -19,7 +19,6 @@ export default function AprovacoesFinanceirasPage() {
   const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [showPedidoDetails, setShowPedidoDetails] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
   const [showHistorico, setShowHistorico] = useState(false);
@@ -91,7 +90,7 @@ export default function AprovacoesFinanceirasPage() {
       return;
     }
     setActionType('approve');
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
   const handleInitiateBatchApproval = () => {
@@ -104,7 +103,7 @@ export default function AprovacoesFinanceirasPage() {
       return;
     }
     setActionType('approve_batch');
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
   const handleAuthSuccess = async (authData) => {
@@ -190,7 +189,6 @@ export default function AprovacoesFinanceirasPage() {
       setSelectedTransaction(null);
       setSelectedPedidosIds([]);
       setModoSelecaoLote(false);
-      setIsAuthOpen(false);
     } finally {
       setIsProcessingApproval(false);
     }
@@ -326,7 +324,7 @@ export default function AprovacoesFinanceirasPage() {
         )}
 
         {/* Modal de aprovação */}
-        {selectedTransaction && !isAuthOpen && (
+        {selectedTransaction && (
           <Dialog open={!!selectedTransaction} onOpenChange={() => { setSelectedTransaction(null); }}>
             <DialogContent className="dark:bg-gray-800">
               <DialogHeader>
@@ -363,13 +361,6 @@ export default function AprovacoesFinanceirasPage() {
             pedido={selectedPedido}
           />
         )}
-
-        <OperacaoAuthenticator
-          isOpen={isAuthOpen}
-          onClose={() => !isProcessingApproval && setIsAuthOpen(false)}
-          onSuccess={handleAuthSuccess}
-          operationType={actionType === 'approve_batch' ? 'Aprovação em lote' : actionType === 'approve' ? 'Aprovação de Pagamento' : 'Rejeição de Pagamento'}
-        />
 
         {isProcessingApproval && (
           <div className="fixed inset-0 z-[70] bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center px-6">

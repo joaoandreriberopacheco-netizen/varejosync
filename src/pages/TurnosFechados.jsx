@@ -499,16 +499,6 @@ export default function TurnosFechadosPage() {
       </div>
 
       {/* Modal de Autenticação */}
-      <OperacaoAuthenticator
-        isOpen={showAuthDialog}
-        onClose={() => {
-          setShowAuthDialog(false);
-          setTurnoParaReabrir(null);
-          setReabrindo(false);
-        }}
-        onSuccess={handleAuthSuccess}
-        operationName={`Reabertura de Turno ${turnoParaReabrir?.numero || ''}`}
-      />
     </div>
   );
 }

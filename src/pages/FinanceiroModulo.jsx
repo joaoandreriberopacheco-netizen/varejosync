@@ -15,7 +15,6 @@ import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Set
 
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import ConciliacaoBancaria from '../components/financeiro/ConciliacaoBancaria';
@@ -24,18 +23,12 @@ import ExecucaoOrcamentaria from '../components/financeiro/ExecucaoOrcamentaria'
 export default function FinanceiroModuloPage() {
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [pendingTransactions, setPendingTransactions] = useState([]);
-  const [contas, setContas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [conciliacaoConta, setConciliacaoConta] = useState(null); // conta selecionada para conciliar
   const [pendenciasConciliacao, setPendenciasConciliacao] = useState({}); // { contaId: count }
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedPedido, setSelectedPedido] = useState(null);
-  const [contaSelecionada, setContaSelecionada] = useState('');
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [actionType, setActionType] = useState(null);
   const [showPedidoDetails, setShowPedidoDetails] = useState(false);
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -55,17 +48,13 @@ export default function FinanceiroModuloPage() {
 
   const loadInitialData = async () => {
     setIsLoading(true);
-    const [accountsData, transactionsData, contasData, pendingData, pendConciliacao] = await Promise.all([
+    const [accountsData, transactionsData, pendConciliacao] = await Promise.all([
       base44.entities.ContasFinanceiras.list(),
       base44.entities.LancamentoFinanceiro.list(),
-      base44.entities.ContasFinanceiras.filter({ ativo: true }),
-      base44.entities.LancamentoFinanceiro.filter({ status: 'Aguardando Aprovação Financeira' }),
       base44.entities.LancamentoFinanceiro.filter({ status_conciliacao: 'Pendente' })
     ]);
     setAccounts(accountsData);
     setTransactions(transactionsData);
-    setContas(contasData);
-    setPendingTransactions(pendingData);
 
     // Agrupa pendências de conciliação por conta
     const mapa = {};
@@ -153,12 +142,6 @@ export default function FinanceiroModuloPage() {
     return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
-  // Handlers para Aprovações
-  const handleOpenDialog = (transaction) => {
-    setSelectedTransaction(transaction);
-    setContaSelecionada('');
-  };
-
   const handleViewPedido = async (transaction) => {
     if (transaction.referencia_tipo === 'PedidoCompra' && transaction.referencia_id) {
       const pedidos = await base44.entities.PedidoCompra.filter({ id: transaction.referencia_id });
@@ -168,108 +151,6 @@ export default function FinanceiroModuloPage() {
       }
     }
   };
-
-  const handleInitiateApproval = () => {
-    if (!contaSelecionada) {
-      toast({
-        title: "Conta obrigatória",
-        description: "Selecione uma conta para realizar o pagamento.",
-        variant: "destructive"
-      });
-      return;
-    }
-    setActionType('approve');
-    setIsAuthOpen(true);
-  };
-
-  const handleAuthSuccess = async (authData) => {
-    try {
-      if (actionType === 'approve') {
-        const allTransactions = pendingTransactions.filter(
-          t => t.referencia_id === selectedTransaction.referencia_id
-        );
-
-        for (const trans of allTransactions) {
-          await base44.entities.LancamentoFinanceiro.update(trans.id, {
-            status: 'Em Aberto',
-            observacoes: (trans.observacoes || '') + 
-              `\n[Aprovado por: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-          });
-        }
-
-        if (selectedTransaction.referencia_tipo === 'PedidoCompra') {
-          const pedidos = await base44.entities.PedidoCompra.filter({ id: selectedTransaction.referencia_id });
-          if (pedidos.length > 0) {
-            const pedido = pedidos[0];
-            await base44.entities.PedidoCompra.update(pedido.id, {
-              status: 'Aguardando Recepção',
-              status_aprovacao_financeira: 'Aprovado Financeiramente',
-              conta_pagamento_id: contaSelecionada,
-              historico: (pedido.historico || '') + 
-                `\n[Aprovação Financeira: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-            });
-          }
-        }
-
-        toast({
-          title: "Pagamento aprovado",
-          description: "O pedido foi aprovado financeiramente e está liberado.",
-          className: "bg-gray-100 text-gray-800"
-        });
-      } else if (actionType === 'reject') {
-        const allTransactions = pendingTransactions.filter(
-          t => t.referencia_id === selectedTransaction.referencia_id
-        );
-
-        for (const trans of allTransactions) {
-          await base44.entities.LancamentoFinanceiro.update(trans.id, {
-            status: 'Cancelado',
-            observacoes: (trans.observacoes || '') + 
-              `\n[Rejeitado por: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-          });
-        }
-
-        if (selectedTransaction.referencia_tipo === 'PedidoCompra') {
-          const pedidos = await base44.entities.PedidoCompra.filter({ id: selectedTransaction.referencia_id });
-          if (pedidos.length > 0) {
-            const pedido = pedidos[0];
-            await base44.entities.PedidoCompra.update(pedido.id, {
-              status_aprovacao_financeira: 'Rejeitado Financeiramente',
-              historico: (pedido.historico || '') + 
-                `\n[Rejeição Financeira: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-            });
-          }
-        }
-
-        toast({
-          title: "Pagamento rejeitado",
-          description: "O pedido foi rejeitado pelo financeiro.",
-          variant: "destructive"
-        });
-      }
-
-      loadInitialData();
-      setSelectedTransaction(null);
-      setIsAuthOpen(false);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const groupedTransactions = pendingTransactions.reduce((acc, t) => {
-    const key = t.referencia_numero || t.id;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(t);
-    return acc;
-  }, {});
-
-  const totalPendente = pendingTransactions.reduce((sum, t) => sum + (t.valor || 0), 0);
 
   return (
     <div className="w-full min-w-0 overflow-x-hidden" style={{ maxWidth: '100%' }}>

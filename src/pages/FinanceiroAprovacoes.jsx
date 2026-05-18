@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { CheckCircle, XCircle, Clock, AlertCircle, FileText, Eye, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import AprovacaoPedidoMobile from '@/components/compras/AprovacaoPedidoMobile';
 import {
@@ -30,7 +30,6 @@ export default function FinanceiroAprovacoesPage() {
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [showPedidoDetails, setShowPedidoDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('pendentes');
@@ -39,7 +38,6 @@ export default function FinanceiroAprovacoesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [solicitacoesEdicao, setSolicitacoesEdicao] = useState([]);
   const [selectedSolicitacao, setSelectedSolicitacao] = useState(null);
-  const [isAprovacaoEdicaoAuthOpen, setIsAprovacaoEdicaoAuthOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -118,7 +116,7 @@ export default function FinanceiroAprovacoesPage() {
       return;
     }
     setActionType('approve');
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
 
@@ -134,7 +132,7 @@ export default function FinanceiroAprovacoesPage() {
     }
     setIsRejectDialogOpen(false);
     setActionType('reject');
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
   const handleAuthSuccess = async (authData) => {
@@ -207,9 +205,50 @@ export default function FinanceiroAprovacoesPage() {
 
       loadData();
       setSelectedTransaction(null);
-      setIsAuthOpen(false);
       setMotivoRejeicao('');
       setContaSelecionada('');
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLiberarEdicao = async (authData, pedidoAlvo) => {
+    const pedido = pedidoAlvo ?? selectedSolicitacao;
+    if (!pedido) return;
+    try {
+      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
+      if (temLancamentoPagoParaPedido(lancs)) {
+        toast({
+          title: 'Não é possível liberar edição',
+          description:
+            'Existem parcelas já pagas neste pedido. Ajuste ou estorne no financeiro antes de liberar a edição do pedido.',
+          variant: 'destructive',
+        });
+        setSelectedSolicitacao(null);
+        return;
+      }
+      const nota = `| Liberar edição | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
+      await cancelarLancamentosNaoPagosPedidoCompra(base44, pedido.id, nota);
+
+      await base44.entities.PedidoCompra.update(pedido.id, {
+        status_aprovacao_financeira: 'Pendente',
+        status: 'Rascunho',
+        historico: (pedido.historico || '') +
+          `\n[Liberado para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+      });
+
+      toast({
+        title: "Edição liberada",
+        description: "Parcelas em aberto foram canceladas. Compras pode corrigir o pedido e reenviar ao financeiro.",
+        className: "bg-gray-100 text-gray-800"
+      });
+
+      loadData();
+      setSelectedSolicitacao(null);
     } catch (error) {
       toast({
         title: "Erro",
@@ -476,7 +515,7 @@ export default function FinanceiroAprovacoesPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!selectedTransaction && !isAuthOpen && !isRejectDialogOpen} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
+      <Dialog open={!!selectedTransaction && !isRejectDialogOpen} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
         <DialogContent className="dark:bg-gray-800 border-0 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-gray-800 dark:text-gray-200">
@@ -625,13 +664,6 @@ export default function FinanceiroAprovacoesPage() {
         </DialogContent>
       </Dialog>
 
-      <OperacaoAuthenticator 
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onSuccess={handleAuthSuccess}
-        operationName={`${actionType === 'approve' ? 'Aprovar' : 'Rejeitar'} Pagamento ${selectedTransaction?.numero || ''}`}
-      />
-
       {isMobile && selectedPedido && showPedidoDetails && activeTab === 'pendentes' ? (
         <AprovacaoPedidoMobile
           pedido={selectedPedido}
@@ -641,14 +673,14 @@ export default function FinanceiroAprovacoesPage() {
             setContaSelecionada(contaId);
             setShowPedidoDetails(false);
             setActionType('approve');
-            setIsAuthOpen(true);
+            void runOperacaoAuthBypass(handleAuthSuccess);
           }}
           onReject={(pedido, motivo) => {
             setSelectedTransaction(pedido);
             setMotivoRejeicao(motivo);
             setShowPedidoDetails(false);
             setActionType('reject');
-            setIsAuthOpen(true);
+            void runOperacaoAuthBypass(handleAuthSuccess);
           }}
           onClose={() => {
             setShowPedidoDetails(false);
@@ -718,7 +750,7 @@ export default function FinanceiroAprovacoesPage() {
                       size="sm"
                       onClick={() => {
                         setSelectedSolicitacao(pedido);
-                        setIsAprovacaoEdicaoAuthOpen(true);
+                        void runOperacaoAuthBypass((authData) => handleLiberarEdicao(authData, pedido));
                       }}
                       className="bg-gray-700 text-white hover:bg-gray-600 border-0"
                     >
@@ -734,52 +766,6 @@ export default function FinanceiroAprovacoesPage() {
       )}
 
       {/* Dialog de Autenticação para Liberar Edição */}
-      <OperacaoAuthenticator 
-        isOpen={isAprovacaoEdicaoAuthOpen}
-        onClose={() => setIsAprovacaoEdicaoAuthOpen(false)}
-        onSuccess={async (authData) => {
-          try {
-            const lancs = await listarLancamentosPedidoCompra(base44, selectedSolicitacao.id);
-            if (temLancamentoPagoParaPedido(lancs)) {
-              toast({
-                title: 'Não é possível liberar edição',
-                description:
-                  'Existem parcelas já pagas neste pedido. Ajuste ou estorne no financeiro antes de liberar a edição do pedido.',
-                variant: 'destructive',
-              });
-              setIsAprovacaoEdicaoAuthOpen(false);
-              setSelectedSolicitacao(null);
-              return;
-            }
-            const nota = `| Liberar edição | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
-            await cancelarLancamentosNaoPagosPedidoCompra(base44, selectedSolicitacao.id, nota);
-
-            await base44.entities.PedidoCompra.update(selectedSolicitacao.id, {
-              status_aprovacao_financeira: 'Pendente',
-              status: 'Rascunho',
-              historico: (selectedSolicitacao.historico || '') + 
-                `\n[Liberado para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-            });
-
-            toast({
-              title: "Edição liberada",
-              description: "Parcelas em aberto foram canceladas. Compras pode corrigir o pedido e reenviar ao financeiro.",
-              className: "bg-gray-100 text-gray-800"
-            });
-
-            loadData();
-            setIsAprovacaoEdicaoAuthOpen(false);
-            setSelectedSolicitacao(null);
-          } catch (error) {
-            toast({
-              title: "Erro",
-              description: error.message,
-              variant: "destructive"
-            });
-          }
-        }}
-        operationName={`Liberar Edição - ${selectedSolicitacao?.numero}`}
-      />
     </div>
   );
 }

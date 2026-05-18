@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
-import PinValidationDialog from '@/components/auth/PinValidationDialog';
 
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -336,7 +335,6 @@ export default function PedidosCompraPage() {
   const [enviandoLote, setEnviandoLote] = useState(false);
   const [modoSelecao, setModoSelecao] = useState(false);
   const [showEnvioDialog, setShowEnvioDialog] = useState(false);
-  const [showPinDialog, setShowPinDialog] = useState(false);
   const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
   const [groupBy, setGroupBy] = useState('eta_transportadora');
@@ -559,7 +557,6 @@ export default function PedidosCompraPage() {
       setSelecionadosIds([]);
       setModoSelecao(false);
       setShowEnvioDialog(false);
-      setShowPinDialog(false);
       toast.success(`${pedidosSelecionados.length} pedido(s) enviados ao financeiro`);
       await loadData();
     } catch (error) {
@@ -568,17 +565,6 @@ export default function PedidosCompraPage() {
     } finally {
       setEnviandoLote(false);
     }
-  };
-
-  const handleEnviarFinanceiroLote = async () => {
-    const pedidosSelecionados = filtrados.filter((p) => selecionadosIds.includes(p.id));
-
-    if (!pedidosSelecionados.length) {
-      toast.error('Selecione ao menos um pedido');
-      return;
-    }
-
-    setShowPinDialog(true);
   };
 
   const todasTags = useMemo(() => {
@@ -841,16 +827,10 @@ export default function PedidosCompraPage() {
         dataPrimeiroVencimento={dataPrimeiroVencimentoLote}
         onDataPrimeiroVencimentoChange={setDataPrimeiroVencimentoLote}
         quantidadeSelecionados={selecionadosIds.length}
-        onConfirm={handleEnviarFinanceiroLote}
+        onConfirm={confirmarEnvioFinanceiroLote}
         loading={enviandoLote}
       />
 
-      <PinValidationDialog
-        isOpen={showPinDialog}
-        onClose={() => setShowPinDialog(false)}
-        onSuccess={confirmarEnvioFinanceiroLote}
-        operationName="Enviar pedidos em lote ao financeiro"
-      />
     </div>
   );
 }

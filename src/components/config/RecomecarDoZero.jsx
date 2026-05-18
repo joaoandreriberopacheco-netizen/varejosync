@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { zerarEntidade } from '@/functions/zerarEntidade';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 
 // Ordem respeita dependências: registros filhos antes dos pais
 const ENTITIES = [
@@ -65,7 +65,6 @@ const GRUPOS = [
 export default function RecomecarDoZero() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedEntities, setSelectedEntities] = useState([]);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, entity: '', recordsDeleted: 0, currentRecords: 0 });
   const [result, setResult] = useState(null);
@@ -95,7 +94,7 @@ export default function RecomecarDoZero() {
 
   const handleInitiateDelete = () => {
     if (selectedEntities.length === 0) return;
-    setIsAuthOpen(true);
+    void runOperacaoAuthBypass(handleAuthSuccess);
   };
 
   const deleteAllRecords = async (entityId, onProgressUpdate) => {
@@ -163,7 +162,6 @@ export default function RecomecarDoZero() {
     }
 
     setIsProcessing(false);
-    setIsAuthOpen(false);
     setSelectedEntities([]);
     setResult({ totalDeleted, successCount, errorCount, errors });
 
@@ -198,7 +196,7 @@ export default function RecomecarDoZero() {
         </Button>
       </div>
 
-      <Dialog open={isOpen && !isAuthOpen} onOpenChange={(v) => { if (!isProcessing) setIsOpen(v); }}>
+      <Dialog open={isOpen} onOpenChange={(v) => { if (!isProcessing) setIsOpen(v); }}>
         <DialogContent className="max-w-2xl h-[90vh] flex flex-col bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
           <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
             <DialogTitle className="text-gray-800 dark:text-gray-200 flex items-center gap-2">
@@ -357,7 +355,7 @@ export default function RecomecarDoZero() {
                   className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 rounded-xl"
                   disabled={selectedEntities.length === 0 || isProcessing}
                 >
-                  {isProcessing ? 'Processando...' : 'Autenticar e Zerar'}
+                  {isProcessing ? 'Processando...' : 'Zerar selecionados'}
                 </Button>
               </div>
             </div>
@@ -365,12 +363,6 @@ export default function RecomecarDoZero() {
         </DialogContent>
       </Dialog>
 
-      <OperacaoAuthenticator
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onSuccess={handleAuthSuccess}
-        operationName={`Zerar ${selectedEntities.length} Entidade(s)`}
-      />
     </>
   );
 }
