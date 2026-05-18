@@ -22,6 +22,7 @@ import {
   applyItemDescontoValorApresentacao,
   calcTotalItemCompraPedido,
   custoApresentacaoParaFator1,
+  custoFator1ParaApresentacao,
   normalizeItemToCanonicalFactorOne,
 } from '@/lib/productUnits';
 
