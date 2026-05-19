@@ -97,62 +97,76 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   };
 
   const confirmarConciliacao = async () => {
+    const idsSnapshot = [...selecionados];
+    const itensSnapshot = lancamentos.filter((l) => idsSnapshot.includes(l.id));
+    if (itensSnapshot.length === 0) return;
+
     setProcessing(true);
-    const valorReal = parseFloat(valorConfirmado);
-    const grupoId = `CONC-${Date.now()}`;
-    const dataEfetivaISO = dataEfetiva;
+    try {
+      const valorReal = parseFloat(valorConfirmado);
+      const grupoId = `CONC-${Date.now()}`;
+      const dataEfetivaISO = dataEfetiva;
 
-    const atualizacoes = selecionadosData.map(l => {
-      const status = Math.abs((l.valor_liquido || l.valor) - valorReal / selecionadosData.length) > 0.01
-        ? 'Ajustado' : 'Conciliado';
-      return base44.entities.LancamentoFinanceiro.update(l.id, {
-        status_conciliacao: status,
-        data_liquidacao_efetiva: dataEfetivaISO,
-        status: 'Pago',
-        conciliacao_grupo_id: grupoId
-      });
-    });
-
-    await Promise.all(atualizacoes);
-
-    if (contaBancariaDestino) {
-      const contaDestino = contas.find(c => c.id === contaBancariaDestino);
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Receita',
-        descricao: `Conciliação ${grupoId} - ${contaNome} (${selecionados.length} lançamentos)`,
-        valor: valorReal,
-        valor_liquido: valorReal,
-        conta_financeira_id: contaBancariaDestino,
-        conta_financeira_nome: contaDestino?.nome,
-        categoria: 'Transferência entre Contas',
-        status: 'Pago',
-        status_conciliacao: 'N/A',
-        data_vencimento: dataEfetivaISO,
-        data_pagamento: dataEfetivaISO,
-        referencia_tipo: 'Conciliacao',
-        referencia_numero: grupoId,
-        conciliacao_grupo_id: grupoId,
-        observacoes: `Consolidação de ${selecionados.length} lançamentos de ${contaNome}`
-      });
-
-      if (contaDestino) {
-        await base44.entities.ContasFinanceiras.update(contaBancariaDestino, {
-          saldo_atual: (contaDestino.saldo_atual || 0) + valorReal
+      const atualizacoes = itensSnapshot.map(l => {
+        const status = Math.abs((l.valor_liquido || l.valor) - valorReal / itensSnapshot.length) > 0.01
+          ? 'Ajustado' : 'Conciliado';
+        return base44.entities.LancamentoFinanceiro.update(l.id, {
+          status_conciliacao: status,
+          data_liquidacao_efetiva: dataEfetivaISO,
+          status: 'Pago',
+          conciliacao_grupo_id: grupoId
         });
+      });
+
+      await Promise.all(atualizacoes);
+
+      if (contaBancariaDestino) {
+        const contaDestino = contas.find(c => c.id === contaBancariaDestino);
+        await base44.entities.LancamentoFinanceiro.create({
+          tipo: 'Receita',
+          descricao: `Conciliação ${grupoId} - ${contaNome} (${itensSnapshot.length} lançamentos)`,
+          valor: valorReal,
+          valor_liquido: valorReal,
+          conta_financeira_id: contaBancariaDestino,
+          conta_financeira_nome: contaDestino?.nome,
+          categoria: 'Transferência entre Contas',
+          status: 'Pago',
+          status_conciliacao: 'N/A',
+          data_vencimento: dataEfetivaISO,
+          data_pagamento: dataEfetivaISO,
+          referencia_tipo: 'Conciliacao',
+          referencia_numero: grupoId,
+          conciliacao_grupo_id: grupoId,
+          observacoes: `Consolidação de ${itensSnapshot.length} lançamentos de ${contaNome}`
+        });
+
+        if (contaDestino) {
+          await base44.entities.ContasFinanceiras.update(contaBancariaDestino, {
+            saldo_atual: (contaDestino.saldo_atual || 0) + valorReal
+          });
+        }
       }
+
+      toast({
+        title: 'Conciliação realizada',
+        description: `${itensSnapshot.length} lançamento(s) conciliado(s) — ${fmt(valorReal)}`,
+        className: 'bg-green-50 text-green-800'
+      });
+
+      setDialogConfirm(false);
+      setSelecionados([]);
+      await loadPendentes();
+      onConciliado?.();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Erro na conciliação',
+        description: error?.message || 'Não foi possível concluir a operação.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessing(false);
     }
-
-    toast({
-      title: 'Conciliação realizada',
-      description: `${selecionados.length} lançamento(s) conciliado(s) — ${fmt(valorReal)}`,
-      className: 'bg-green-50 text-green-800'
-    });
-
-    setDialogConfirm(false);
-    setSelecionados([]);
-    await loadPendentes();
-    onConciliado?.();
-    setProcessing(false);
   };
 
   const getStatusData = (dataStr) => {

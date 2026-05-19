@@ -17,6 +17,7 @@ import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
+import { useToast } from '@/components/ui/use-toast';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -308,6 +309,7 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
 const ContasAbertasCtx = createContext(null);
 
 function useContasAbertasModel(onOpenImportador) {
+  const { toast } = useToast();
   const [lancs, setLancs]         = useState([]);
   const [contas, setContas]       = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -441,15 +443,20 @@ function useContasAbertasModel(onOpenImportador) {
 
   const handleConfirmarPagamentoLote = async () => {
     const conta = contas.find((c) => c.id === contaLoteId);
-    if (!conta || !dataPagamentoLote || lancamentosSelecionados.length === 0) return;
+    const idsSnapshot = [...selectedIds];
+    const itensLote = filtrados.filter(
+      (l) => idsSnapshot.includes(l.id) && !isLancamentoPago(l)
+    );
+    if (!conta || !dataPagamentoLote || itensLote.length === 0) return;
 
     setProcessingLote(true);
     try {
       let deltaConta = 0;
+      const contasMutaveis = contas.map((c) => ({ ...c }));
 
-      for (const lancamento of lancamentosSelecionados) {
+      for (const lancamento of itensLote) {
         const contaAnteriorId = lancamento.conta_financeira_id;
-        const contaAnterior = contas.find((c) => c.id === contaAnteriorId);
+        const contaAnterior = contasMutaveis.find((c) => c.id === contaAnteriorId);
         const valor = lancamento.valor || 0;
 
         await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
@@ -473,8 +480,16 @@ function useContasAbertasModel(onOpenImportador) {
           : -valor;
       }
 
+      const contaDestino = contasMutaveis.find((c) => c.id === conta.id) || conta;
       await base44.entities.ContasFinanceiras.update(conta.id, {
-        saldo_atual: (conta.saldo_atual || 0) + deltaConta,
+        saldo_atual: (contaDestino.saldo_atual || 0) + deltaConta,
+      });
+
+      const qtd = itensLote.length;
+      toast({
+        title: qtd > 1 ? 'Pagamentos confirmados' : 'Pagamento confirmado',
+        description: `${qtd} lançamento(s) marcado(s) como pago(s).`,
+        className: 'bg-gray-100 text-gray-800',
       });
 
       setShowPagamentoLote(false);
@@ -483,6 +498,13 @@ function useContasAbertasModel(onOpenImportador) {
       setContaLoteId('');
       setDataPagamentoLote(dataHoje());
       await load();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Erro no pagamento em lote',
+        description: error?.message || 'Não foi possível concluir todos os lançamentos.',
+        variant: 'destructive',
+      });
     } finally {
       setProcessingLote(false);
     }

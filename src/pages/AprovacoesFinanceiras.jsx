@@ -10,6 +10,7 @@ import PedidoCompraResumoDialog from '@/components/compras/PedidoCompraResumoDia
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function AprovacoesFinanceirasPage() {
   const [pendingTransactions, setPendingTransactions] = useState([]);
@@ -24,6 +25,7 @@ export default function AprovacoesFinanceirasPage() {
   const [historico, setHistorico] = useState([]);
   const [loadingHistorico, setLoadingHistorico] = useState(false);
   const [isProcessingApproval, setIsProcessingApproval] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadData();
@@ -88,7 +90,19 @@ export default function AprovacoesFinanceirasPage() {
       alert('Selecione uma conta para realizar o pagamento.');
       return;
     }
-    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, 'approve'));
+    if (!selectedTransaction?._pedido) {
+      toast({
+        title: 'Erro',
+        description: 'Pedido não encontrado para aprovar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const pedidoSnapshot = selectedTransaction._pedido;
+    const contaSnapshot = contaSelecionada;
+    void runOperacaoAuthBypass((authData) =>
+      handleAuthSuccess(authData, 'approve', { pedidos: [pedidoSnapshot], contaId: contaSnapshot })
+    );
   };
 
   const handleInitiateBatchApproval = () => {
@@ -100,29 +114,50 @@ export default function AprovacoesFinanceirasPage() {
       alert('Selecione uma conta para realizar o pagamento.');
       return;
     }
-    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, 'approve_batch'));
+    const idsSnapshot = [...selectedPedidosIds];
+    const pedidosSnapshot = pendingTransactions
+      .filter((item) => idsSnapshot.includes(item.id))
+      .map((item) => item._pedido)
+      .filter(Boolean);
+    const contaSnapshot = contaSelecionada;
+    void runOperacaoAuthBypass((authData) =>
+      handleAuthSuccess(authData, 'approve_batch', { pedidos: pedidosSnapshot, contaId: contaSnapshot })
+    );
   };
 
-  const handleAuthSuccess = async (authData, tipoAcao) => {
+  const handleAuthSuccess = async (authData, tipoAcao, opts = {}) => {
+    const { pedidos: pedidosOverride, contaId: contaIdOverride } = opts;
     setIsProcessingApproval(true);
 
-    const pedidosParaAprovar = tipoAcao === 'approve_batch'
-      ? pendingTransactions.filter((item) => selectedPedidosIds.includes(item.id)).map((item) => item._pedido)
-      : selectedTransaction ? [selectedTransaction._pedido] : [];
+    const pedidosParaAprovar = Array.isArray(pedidosOverride) && pedidosOverride.length > 0
+      ? pedidosOverride
+      : [];
+
+    const contaId = contaIdOverride ?? contaSelecionada;
 
     try {
       if (tipoAcao === 'approve' || tipoAcao === 'approve_batch') {
+        if (!contaId || pedidosParaAprovar.length === 0) {
+          toast({
+            title: 'Erro',
+            description: 'Dados incompletos para concluir a aprovação.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         const agora = new Date().toISOString();
         const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
-        const contaSelecionadaNome = contas.find(c => c.id === contaSelecionada)?.nome || '';
+        const contaSelecionadaNome = contas.find(c => c.id === contaId)?.nome || '';
 
         for (const pedido of pedidosParaAprovar) {
           const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+          const statusAnterior = pedido.status || 'Aguardando Liberação';
 
           await base44.entities.PedidoCompra.update(pedido.id, {
             status: 'Aprovado',
             status_aprovacao_financeira: 'Aprovado Financeiramente',
-            conta_pagamento_id: contaSelecionada,
+            conta_pagamento_id: contaId,
             conta_pagamento_nome: contaSelecionadaNome,
             data_aprovacao_financeira: agora,
           });
@@ -130,12 +165,12 @@ export default function AprovacoesFinanceirasPage() {
           await registrarTransicao({
             pedidoId: pedido.id,
             pedidoNumero: pedido.numero,
-            statusAnterior: 'Aguardando Liberação',
+            statusAnterior,
             statusNovo: 'Aprovado',
             responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
             tipoAutenticacao: 'Interveniente',
             codigoOperacao: authData.codigoOperacao || '',
-            observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaSelecionada}`,
+            observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaId}`,
           });
 
           const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
@@ -151,7 +186,7 @@ export default function AprovacoesFinanceirasPage() {
               data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
               status: 'Em Aberto',
               status_conciliacao: 'N/A',
-              conta_financeira_id: contaSelecionada,
+              conta_financeira_id: contaId,
               conta_financeira_nome: contaSelecionadaNome,
               referencia_id: pedido.id,
               referencia_tipo: 'PedidoCompra',
@@ -168,7 +203,7 @@ export default function AprovacoesFinanceirasPage() {
               await base44.entities.LancamentoFinanceiro.update(l.id, {
                 tipo: 'Despesa',
                 status: 'Em Aberto',
-                conta_financeira_id: contaSelecionada,
+                conta_financeira_id: contaId,
                 conta_financeira_nome: contaSelecionadaNome,
                 is_custo_mercadoria: true,
                 pedido_compra_vinculado_id: pedido.id,
@@ -180,12 +215,28 @@ export default function AprovacoesFinanceirasPage() {
             }
           }
         }
+
+        const qtd = pedidosParaAprovar.length;
+        toast({
+          title: qtd > 1 ? 'Pedidos aprovados' : 'Pedido aprovado',
+          description: qtd > 1
+            ? `${qtd} pedidos aprovados com sucesso.`
+            : 'Aprovação financeira concluída.',
+          className: 'bg-gray-100 text-gray-800',
+        });
       }
 
       await loadData();
       setSelectedTransaction(null);
       setSelectedPedidosIds([]);
       setModoSelecaoLote(false);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Erro na aprovação',
+        description: error?.message || 'Não foi possível concluir. Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       setIsProcessingApproval(false);
     }
