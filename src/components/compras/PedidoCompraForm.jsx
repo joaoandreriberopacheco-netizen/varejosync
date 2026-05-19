@@ -41,7 +41,14 @@ import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
-import { pickDefaultPurchaseUnit, normalizePurchaseItemToCommercial, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
+import {
+  pickDefaultPurchaseUnit,
+  normalizePurchaseItemToCommercial,
+  normalizeItemToCanonicalFactorOne,
+  custoApresentacaoParaFator1,
+  resolveValorDescontoCompraPadraoFator1,
+  resolveDescontoPctCompraProduto,
+} from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImporter = false }) {
@@ -371,9 +378,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                 item.produto_nome = produto.nome;
                 item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
                 item.unidade_medida = opt?.unidade || produto.unidade_principal || 'UN';
-                item.fator_conversao = opt?.fator_conversao ?? 1;
-                item.custo_unitario = (opt?.valor_unitario ?? produto.valor_compra) || 0;
-                item.valor_desconto_item = produto.desconto_compra_padrao || 0; 
+                const fatorOpt = opt?.fator_conversao ?? 1;
+                item.fator_conversao = fatorOpt;
+                item.custo_unitario = opt
+                  ? custoApresentacaoParaFator1(opt.valor_unitario ?? 0, fatorOpt)
+                  : (produto.valor_compra || 0);
+                item.valor_desconto_item = resolveValorDescontoCompraPadraoFator1(
+                  produto,
+                  item.custo_unitario,
+                );
+                item.desconto_pct_item = resolveDescontoPctCompraProduto(produto, item.custo_unitario);
             }
         }
     }
@@ -439,15 +453,24 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         newItem = calculateItemTotals(product);
     } else {
         const pu = product?.id ? pickDefaultPurchaseUnit(product) : null;
+        const fatorPu = pu?.fator_conversao ?? 1;
+        const custoF1 = pu
+          ? custoApresentacaoParaFator1(pu.valor_unitario ?? 0, fatorPu)
+          : (product?.valor_compra || 0);
         newItem = { 
             produto_id: product?.id || '', 
             produto_nome: product?.nome || '', 
             codigo_produto: product?.codigo_interno || product?.codigo_barras || '',
             quantidade: 1, 
             unidade_medida: pu?.unidade || product?.unidade_compra || 'UN',
-            fator_conversao: pu?.fator_conversao ?? 1,
-            custo_unitario: (pu?.valor_unitario ?? product?.valor_compra) || 0,
-            valor_desconto_item: product?.desconto_compra_padrao || 0,
+            fator_conversao: fatorPu,
+            custo_unitario: custoF1,
+            valor_desconto_item: product
+              ? resolveValorDescontoCompraPadraoFator1(product, custoF1)
+              : 0,
+            desconto_pct_item: product
+              ? resolveDescontoPctCompraProduto(product, custoF1)
+              : 0,
             observacao_item: ''
         };
         newItem = calculateItemTotals(newItem);

@@ -584,6 +584,14 @@ export function getCustoApresentacaoItem(item = {}) {
 
 /** Lê desconto unitário na unidade comercial da linha. */
 export function getDescontoApresentacaoItem(item = {}) {
+  const storedPct = normalizeNumber(item?.desconto_pct_item, NaN);
+  if (Number.isFinite(storedPct) && storedPct > 0) {
+    const custoApres = getCustoApresentacaoItem(item);
+    if (custoApres > 0) {
+      const absApres = roundToTwoDecimals((custoApres * storedPct) / 100);
+      return isItemAcrescimoCompra(item) ? -absApres : absApres;
+    }
+  }
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
   return custoFator1ParaApresentacao(descF1, fator);
@@ -592,6 +600,34 @@ export function getDescontoApresentacaoItem(item = {}) {
 /** `valor_desconto_item` negativo = acréscimo (aumenta o custo). */
 export function isItemAcrescimoCompra(item = {}) {
   return normalizeNumber(item?.valor_desconto_item, 0) < 0;
+}
+
+/**
+ * `valor_desconto_item` (fator-1) a partir do cadastro do produto.
+ * Prioriza `desconto_perc` (%; negativo = acréscimo); senão `desconto_compra_padrao` (R$ fator-1).
+ */
+export function resolveValorDescontoCompraPadraoFator1(product = {}, custoFator1 = 0) {
+  const base =
+    normalizeNumber(custoFator1, 0) ||
+    normalizeNumber(product?.valor_compra, 0);
+  const pct = normalizeNumber(product?.desconto_perc, 0);
+  if (pct !== 0 && base > 0) {
+    const absVal = roundToTwoDecimals((base * Math.abs(pct)) / 100);
+    return pct < 0 ? -absVal : absVal;
+  }
+  return roundToTwoDecimals(normalizeNumber(product?.desconto_compra_padrao, 0));
+}
+
+/** Percentual absoluto do desconto/acréscimo padrão do produto (≥ 0). */
+export function resolveDescontoPctCompraProduto(product = {}, custoFator1 = 0) {
+  const pct = normalizeNumber(product?.desconto_perc, 0);
+  if (pct !== 0) return roundToTwoDecimals(Math.abs(pct));
+  const valor = resolveValorDescontoCompraPadraoFator1(product, custoFator1);
+  const base =
+    normalizeNumber(custoFator1, 0) ||
+    normalizeNumber(product?.valor_compra, 0);
+  if (base <= 0 || valor === 0) return 0;
+  return roundToTwoDecimals((Math.abs(valor) / base) * 100);
 }
 
 /** Custo unitário na unidade de exibição após desconto/acréscimo (desconto negativo soma). */
@@ -603,10 +639,34 @@ export function getCustoFinalApresentacaoItem(item = {}) {
 
 /** Percentual absoluto sobre o custo na unidade de exibição (sempre ≥ 0). */
 export function getDescontoPctApresentacaoItem(item = {}) {
+  const storedPct = normalizeNumber(item?.desconto_pct_item, NaN);
+  if (Number.isFinite(storedPct) && storedPct > 0) return roundToTwoDecimals(storedPct);
   const custoApres = getCustoApresentacaoItem(item);
-  const descApres = getDescontoApresentacaoItem(item);
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const descApres = custoFator1ParaApresentacao(normalizeNumber(item?.valor_desconto_item, 0), fator);
   if (custoApres <= 0) return 0;
   return roundToTwoDecimals((Math.abs(descApres) / custoApres) * 100);
+}
+
+/**
+ * Reaplica desconto/acréscimo na unidade de exibição (corrige `valor_desconto_item` fator-1
+ * quando o % está em `desconto_pct_item` mas o fator da linha estava inconsistente).
+ */
+export function syncItemDescontoApresentacao(item = {}, custoApresOverride = null) {
+  const custoApres = roundToTwoDecimals(
+    custoApresOverride != null && Number.isFinite(Number(custoApresOverride))
+      ? custoApresOverride
+      : getCustoApresentacaoItem(item),
+  );
+  const storedPct = normalizeNumber(item?.desconto_pct_item, NaN);
+  if (Number.isFinite(storedPct) && storedPct > 0 && custoApres > 0) {
+    return applyItemDescontoPctApresentacao(item, custoApres, storedPct, isItemAcrescimoCompra(item));
+  }
+  const descApres = Math.abs(getDescontoApresentacaoItem(item));
+  if (descApres > 0 && custoApres > 0) {
+    return applyItemDescontoValorApresentacao(item, custoApres, descApres, isItemAcrescimoCompra(item));
+  }
+  return { ...item };
 }
 
 /**
