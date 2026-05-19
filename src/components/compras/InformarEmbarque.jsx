@@ -12,6 +12,7 @@ import { agora, dataHoje, meioDiaSistemaISO, toLocalDateKey, formatarLogTime } f
 import { logDespachoAudit, InformarDespachoAuditStrip } from '@/components/compras/informarEmbarqueAudit.jsx';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
+import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -505,8 +506,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         }
       }
 
-      // Cloud (Base44): deve recalcular só com base em recebido/movimentos — ver nota em embarqueFilters.js
-      await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
+      // Cloud opcional: falha não deve invalidar despacho já gravado (mesmo padrão que RecepcionarEmbarque)
+      await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
 
       const msgOk = isEdicao ? 'Despacho atualizado com sucesso.' : 'Despacho registrado com sucesso.';
       const resumoItens =
