@@ -30,7 +30,6 @@ export default function FinanceiroAprovacoesPage() {
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [actionType, setActionType] = useState(null);
   const [showPedidoDetails, setShowPedidoDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('pendentes');
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
@@ -115,8 +114,7 @@ export default function FinanceiroAprovacoesPage() {
       });
       return;
     }
-    setActionType('approve');
-    void runOperacaoAuthBypass(handleAuthSuccess);
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, 'approve'));
   };
 
 
@@ -131,14 +129,24 @@ export default function FinanceiroAprovacoesPage() {
       return;
     }
     setIsRejectDialogOpen(false);
-    setActionType('reject');
-    void runOperacaoAuthBypass(handleAuthSuccess);
+    const motivo = motivoRejeicao;
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, 'reject', { motivo }));
   };
 
-  const handleAuthSuccess = async (authData) => {
+  const handleAuthSuccess = async (authData, tipoAcao, opts = {}) => {
+    const { pedido: pedidoOverride, contaId: contaIdOverride, motivo: motivoOverride } = opts;
     try {
-      if (actionType === 'approve') {
-        const pedido = selectedTransaction;
+      if (tipoAcao === 'approve') {
+        const pedido = pedidoOverride ?? selectedTransaction;
+        const contaId = contaIdOverride ?? contaSelecionada;
+        if (!pedido?.id || !contaId) {
+          toast({
+            title: 'Erro',
+            description: 'Dados incompletos para aprovar o pedido.',
+            variant: 'destructive',
+          });
+          return;
+        }
         const authNote = `\n[Aprovado Financeiramente: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
         
         // Atualizar pedido
@@ -146,7 +154,7 @@ export default function FinanceiroAprovacoesPage() {
           status: 'Aguardando Recepção',
           status_aprovacao_financeira: 'Aprovado Financeiramente',
           data_aprovacao_financeira: new Date().toISOString(),
-          conta_pagamento_id: contaSelecionada,
+          conta_pagamento_id: contaId,
           historico: (pedido.historico || '') + authNote
         });
 
@@ -160,7 +168,7 @@ export default function FinanceiroAprovacoesPage() {
           lancamentos.map(lancamento =>
             base44.entities.LancamentoFinanceiro.update(lancamento.id, {
               status: 'Em Aberto',
-              conta_pagamento_id: contaSelecionada
+              conta_pagamento_id: contaId
             })
           )
         );
@@ -170,16 +178,25 @@ export default function FinanceiroAprovacoesPage() {
           description: "Pedido aprovado. Logística liberada.",
           className: "bg-gray-100 text-gray-800"
         });
-      } else if (actionType === 'reject') {
-        const pedido = selectedTransaction;
+      } else if (tipoAcao === 'reject') {
+        const pedido = pedidoOverride ?? selectedTransaction;
+        const motivo = motivoOverride ?? motivoRejeicao;
+        if (!pedido?.id || !motivo?.trim()) {
+          toast({
+            title: 'Erro',
+            description: 'Dados incompletos para rejeitar o pedido.',
+            variant: 'destructive',
+          });
+          return;
+        }
 
         // Atualizar pedido
         await base44.entities.PedidoCompra.update(pedido.id, {
           status: 'Cancelado',
           status_aprovacao_financeira: 'Rejeitado Financeiramente',
-          motivo_rejeicao_financeira: motivoRejeicao,
+          motivo_rejeicao_financeira: motivo,
           data_rejeicao_financeira: new Date().toISOString(),
-          historico: (pedido.historico || '') + `\n[Rejeitado Financeiramente: ${motivoRejeicao} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+          historico: (pedido.historico || '') + `\n[Rejeitado Financeiramente: ${motivo} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
         });
 
         // Cancelar todos os lançamentos financeiros associados
@@ -669,18 +686,18 @@ export default function FinanceiroAprovacoesPage() {
           pedido={selectedPedido}
           contas={contas}
           onApprove={(pedido, contaId) => {
-            setSelectedTransaction(pedido);
-            setContaSelecionada(contaId);
             setShowPedidoDetails(false);
-            setActionType('approve');
-            void runOperacaoAuthBypass(handleAuthSuccess);
+            setSelectedPedido(null);
+            void runOperacaoAuthBypass((authData) =>
+              handleAuthSuccess(authData, 'approve', { pedido, contaId })
+            );
           }}
           onReject={(pedido, motivo) => {
-            setSelectedTransaction(pedido);
-            setMotivoRejeicao(motivo);
             setShowPedidoDetails(false);
-            setActionType('reject');
-            void runOperacaoAuthBypass(handleAuthSuccess);
+            setSelectedPedido(null);
+            void runOperacaoAuthBypass((authData) =>
+              handleAuthSuccess(authData, 'reject', { pedido, motivo })
+            );
           }}
           onClose={() => {
             setShowPedidoDetails(false);

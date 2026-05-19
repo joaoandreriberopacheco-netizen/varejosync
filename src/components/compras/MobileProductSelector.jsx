@@ -99,15 +99,19 @@ export default function MobileProductSelector({
   };
   const fmtBR = (n) => roundToTwoDecimals(parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const hydrateEditInputs = (item) => {
-    const synced = syncItemDescontoApresentacao(item);
-    const custoApres = roundToTwoDecimals(getCustoApresentacaoItem(synced));
-    const descApres = Math.abs(roundToTwoDecimals(getDescontoApresentacaoItem(synced)));
-    const pct = getDescontoPctApresentacaoItem(synced);
-    setQuantidadeInput((parseFloat(synced.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const applyDescontoInputsFromItem = (item) => {
+    const custoApres = roundToTwoDecimals(getCustoApresentacaoItem(item));
+    const descApres = Math.abs(roundToTwoDecimals(getDescontoApresentacaoItem(item)));
+    const pct = getDescontoPctApresentacaoItem(item);
     setCustoInput(custoApres.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
     setDescontoValorInput(descApres > 0 ? descApres.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+  };
+
+  const hydrateEditInputs = (item) => {
+    const synced = syncItemDescontoApresentacao(item);
+    setQuantidadeInput((parseFloat(synced.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    applyDescontoInputsFromItem(synced);
     return synced;
   };
 
@@ -123,11 +127,9 @@ export default function MobileProductSelector({
 
   const syncCustoFromInput = (item, custoApresRaw) => {
     const custoApres = roundToTwoDecimals(parsePtBr(custoApresRaw));
-    const fator = parseFloat(item.fator_conversao) || 1;
-    const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fator));
     const pctStored = parseFloat(item?.desconto_pct_item);
     const pct = pctStored > 0 ? pctStored : getDescontoPctApresentacaoItem(item);
-    let next = { ...item, custo_unitario: custoF1 };
+    let next = syncItemDescontoApresentacao(item, custoApres);
     if (pct > 0) {
       next = applyItemDescontoPctApresentacao(next, custoApres, pct, isItemAcrescimoCompra(item));
     }
@@ -152,7 +154,6 @@ export default function MobileProductSelector({
           (descontoGlobalPct < 0 ? -1 : 1) * custoF1 * Math.abs(descontoGlobalPct) / 100,
         )
       : resolveValorDescontoCompraPadraoFator1(product, custoF1);
-    const descontoApres = custoFator1ParaApresentacao(descontoValor, fator);
 
     let newItem = applyPurchaseUnitOptionToItem(
       {
@@ -175,12 +176,7 @@ export default function MobileProductSelector({
 
     setEditingItem(newItem);
     setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    setCustoInput(custoApres.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    const pctNum = descontoGlobalPct !== 0
-      ? Math.abs(descontoGlobalPct)
-      : getDescontoPctApresentacaoItem({ ...newItem, valor_desconto_item: descontoValor, custo_unitario: custoF1 });
-    setDescontoPctInput(pctNum > 0 ? String(Math.round(pctNum * 100) / 100) : '');
-    setDescontoValorInput(Math.abs(descontoApres) > 0 ? Math.abs(descontoApres).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+    applyDescontoInputsFromItem(newItem);
     setEditingIndex(-1);
     setView('edit');
   };
@@ -219,31 +215,33 @@ export default function MobileProductSelector({
     const quantidade = parseFloat(editingItem.quantidade) || 0;
     const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
     const custoApres = roundToTwoDecimals(parsePtBr(custoInput));
-    const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fatorConversao));
     const isAcrescimo = isItemAcrescimoCompra(editingItem);
     const descApres = roundToTwoDecimals(parsePtBr(descontoValorInput));
-    const descontoF1 = roundToTwoDecimals(
-      custoApresentacaoParaFator1((isAcrescimo ? -1 : 1) * descApres, fatorConversao),
-    );
-    const quantidadeBase = calculateBaseQuantity(quantidade, fatorConversao);
+    const pctItem = roundToTwoDecimals(parsePtBr(descontoPctInput));
+
+    let itemDraft = {
+      ...editingItem,
+      quantidade,
+      quantidade_base: calculateBaseQuantity(quantidade, fatorConversao),
+    };
+    itemDraft = syncItemDescontoApresentacao(itemDraft, custoApres);
+    if (pctItem > 0) {
+      itemDraft = applyItemDescontoPctApresentacao(itemDraft, custoApres, pctItem, isAcrescimo);
+    } else if (descApres > 0) {
+      itemDraft = applyItemDescontoValorApresentacao(itemDraft, custoApres, descApres, isAcrescimo);
+    }
+
+    const custoF1 = roundToTwoDecimals(itemDraft.custo_unitario);
+    const descontoF1 = roundToTwoDecimals(itemDraft.valor_desconto_item);
+    const quantidadeBase = itemDraft.quantidade_base;
     const custoFinalF1 = roundToTwoDecimals(custoF1 - descontoF1);
-    const pctItem = custoApres > 0 ? roundToTwoDecimals((descApres / custoApres) * 100) : 0;
 
     let itemAtualizado = normalizeItemToCanonicalFactorOne({
-      ...editingItem,
-      custo_unitario: custoF1,
-      valor_desconto_item: descontoF1,
-      desconto_pct_item: pctItem,
+      ...itemDraft,
       quantidade_base: quantidadeBase,
       subtotal: roundToTwoDecimals(quantidadeBase * custoF1),
       custo_final_unitario: custoFinalF1,
-      total: calcTotalItemCompraPedido({
-        ...editingItem,
-        quantidade,
-        fator_conversao: fatorConversao,
-        custo_unitario: custoF1,
-        valor_desconto_item: descontoF1,
-      }),
+      total: calcTotalItemCompraPedido(itemDraft),
     }, 'custo');
 
     if (editingIndex >= 0) {

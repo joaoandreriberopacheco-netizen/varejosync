@@ -574,12 +574,31 @@ export function custoApresentacaoParaFator1(valorApresentacao, fatorConversao = 
   return f > 0 ? normalizeNumber(valorApresentacao, 0) / f : normalizeNumber(valorApresentacao, 0);
 }
 
-/** Lê custo de apresentação da linha (snapshot ou fator-1 × fator). */
+/**
+ * Custo na unidade comercial da linha: sempre `custo_unitario` (fator-1) × `fator_conversao`.
+ * Não usa snapshot sozinho — após troca de embalagem o snapshot pode ficar desatualizado.
+ */
 export function getCustoApresentacaoItem(item = {}) {
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
-  const snap = normalizeNumber(item?.custo_unitario_apresentacao, NaN);
-  if (Number.isFinite(snap)) return snap;
   return custoFator1ParaApresentacao(item?.custo_unitario, fator);
+}
+
+/** Alinha custo fator-1 e snapshots de apresentação ao custo visível na embalagem. */
+export function reconcileItemCustoCompra(item = {}, custoApresExplicit = null) {
+  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const custoApres = roundToTwoDecimals(
+    custoApresExplicit != null && Number.isFinite(Number(custoApresExplicit))
+      ? custoApresExplicit
+      : getCustoApresentacaoItem(item),
+  );
+  const custoF1 = roundToTwoDecimals(custoApresentacaoParaFator1(custoApres, fator));
+  const patched = {
+    ...item,
+    custo_unitario: custoF1,
+    custo_unitario_base: custoF1,
+    custo_unitario_apresentacao: custoApres,
+  };
+  return normalizeItemToCanonicalFactorOne(patched, 'custo');
 }
 
 /** Lê desconto unitário na unidade comercial da linha. */
@@ -653,20 +672,30 @@ export function getDescontoPctApresentacaoItem(item = {}) {
  * quando o % está em `desconto_pct_item` mas o fator da linha estava inconsistente).
  */
 export function syncItemDescontoApresentacao(item = {}, custoApresOverride = null) {
-  const custoApres = roundToTwoDecimals(
-    custoApresOverride != null && Number.isFinite(Number(custoApresOverride))
-      ? custoApresOverride
-      : getCustoApresentacaoItem(item),
-  );
-  const storedPct = normalizeNumber(item?.desconto_pct_item, NaN);
-  if (Number.isFinite(storedPct) && storedPct > 0 && custoApres > 0) {
-    return applyItemDescontoPctApresentacao(item, custoApres, storedPct, isItemAcrescimoCompra(item));
+  const reconciled = reconcileItemCustoCompra(item, custoApresOverride);
+  const custoApres = getCustoApresentacaoItem(reconciled);
+  if (custoApres <= 0) return reconciled;
+
+  const storedPct = normalizeNumber(reconciled?.desconto_pct_item, NaN);
+  if (Number.isFinite(storedPct) && storedPct > 0) {
+    return applyItemDescontoPctApresentacao(
+      reconciled,
+      custoApres,
+      storedPct,
+      isItemAcrescimoCompra(reconciled),
+    );
   }
-  const descApres = Math.abs(getDescontoApresentacaoItem(item));
-  if (descApres > 0 && custoApres > 0) {
-    return applyItemDescontoValorApresentacao(item, custoApres, descApres, isItemAcrescimoCompra(item));
+
+  const descApres = Math.abs(getDescontoApresentacaoItem(reconciled));
+  if (descApres > 0) {
+    return applyItemDescontoValorApresentacao(
+      reconciled,
+      custoApres,
+      descApres,
+      isItemAcrescimoCompra(reconciled),
+    );
   }
-  return { ...item };
+  return reconciled;
 }
 
 /**
@@ -727,8 +756,12 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
     ? qbInformada
     : calculateBaseQuantity(normalizeNumber(item.quantidade, 0), oldFator);
 
+  const unidadeAnterior = normalizeUnitCode(item.unidade_medida);
+  const unidadeNova = normalizeUnitCode(option.unidade);
+  const unidadeMudou = unidadeAnterior && unidadeNova && unidadeAnterior !== unidadeNova;
+
   let custoF1 = normalizeNumber(item.custo_unitario, NaN);
-  if (!Number.isFinite(custoF1) || usarCustoSugerido) {
+  if (!Number.isFinite(custoF1) || usarCustoSugerido || unidadeMudou) {
     custoF1 = custoApresentacaoParaFator1(option.valor_unitario, fator);
   }
 
@@ -750,7 +783,9 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
     item_key: getItemUnitKey(produtoId, option.unidade),
     unidade_apresentacao: option.unidade,
   };
-  return normalizeItemToCanonicalFactorOne(patched, "custo");
+  const normalized = normalizeItemToCanonicalFactorOne(patched, "custo");
+  const custoApresOpcao = roundToTwoDecimals(normalizeNumber(option.valor_unitario, 0));
+  return syncItemDescontoApresentacao(normalized, custoApresOpcao > 0 ? custoApresOpcao : null);
 }
 
 /**

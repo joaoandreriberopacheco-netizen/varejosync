@@ -19,7 +19,6 @@ export default function AprovacoesFinanceirasPage() {
   const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [showPedidoDetails, setShowPedidoDetails] = useState(false);
-  const [actionType, setActionType] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
   const [showHistorico, setShowHistorico] = useState(false);
   const [historico, setHistorico] = useState([]);
@@ -89,8 +88,7 @@ export default function AprovacoesFinanceirasPage() {
       alert('Selecione uma conta para realizar o pagamento.');
       return;
     }
-    setActionType('approve');
-    void runOperacaoAuthBypass(handleAuthSuccess);
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, 'approve'));
   };
 
   const handleInitiateBatchApproval = () => {
@@ -102,19 +100,18 @@ export default function AprovacoesFinanceirasPage() {
       alert('Selecione uma conta para realizar o pagamento.');
       return;
     }
-    setActionType('approve_batch');
-    void runOperacaoAuthBypass(handleAuthSuccess);
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, 'approve_batch'));
   };
 
-  const handleAuthSuccess = async (authData) => {
+  const handleAuthSuccess = async (authData, tipoAcao) => {
     setIsProcessingApproval(true);
 
-    const pedidosParaAprovar = actionType === 'approve_batch'
+    const pedidosParaAprovar = tipoAcao === 'approve_batch'
       ? pendingTransactions.filter((item) => selectedPedidosIds.includes(item.id)).map((item) => item._pedido)
       : selectedTransaction ? [selectedTransaction._pedido] : [];
 
     try {
-      if (actionType === 'approve' || actionType === 'approve_batch') {
+      if (tipoAcao === 'approve' || tipoAcao === 'approve_batch') {
         const agora = new Date().toISOString();
         const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
         const contaSelecionadaNome = contas.find(c => c.id === contaSelecionada)?.nome || '';

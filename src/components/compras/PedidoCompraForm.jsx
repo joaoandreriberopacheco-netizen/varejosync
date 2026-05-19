@@ -48,6 +48,8 @@ import {
   custoApresentacaoParaFator1,
   resolveValorDescontoCompraPadraoFator1,
   resolveDescontoPctCompraProduto,
+  syncItemDescontoApresentacao,
+  calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
@@ -401,19 +403,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     }
 
     const qty = parseFloat(item.quantidade) || 0;
+    const fatorConversao = parseFloat(item.fator_conversao) || 1;
+    item.quantidade_base = qty * fatorConversao;
+    Object.assign(item, syncItemDescontoApresentacao(item));
     const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
     const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
-    const fatorConversao = parseFloat(item.fator_conversao) || 1;
-
     const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
-    item.quantidade_base = qty * fatorConversao;
-    item.custo_unitario = cost;
-    item.valor_desconto_item = descUnit;
     item.custo_final_unitario = custoFinalUnitario;
-    // Total em R$: quantidade_base (fator-1) × custo_unitario (R$/fator-1).
     item.subtotal = roundToTwoDecimals(qty * fatorConversao * cost);
-    item.total = roundToTwoDecimals(qty * fatorConversao * custoFinalUnitario);
-    // Contrato canónico: back-end sempre no eixo fator-1.
+    item.total = calcTotalItemCompraPedido(item);
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 
     const newData = { ...formData, itens: newItems };
@@ -426,24 +424,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     
     const calculateItemTotals = (item) => {
         const qty = parseFloat(item.quantidade) || 0;
-        const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
-        const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
         const fatorConversao = parseFloat(item.fator_conversao) || 1;
-
+        const synced = syncItemDescontoApresentacao({
+          ...item,
+          quantidade_base: qty * fatorConversao,
+        });
+        const cost = roundToTwoDecimals(parseFloat(synced.custo_unitario) || 0);
+        const descUnit = roundToTwoDecimals(parseFloat(synced.valor_desconto_item) || 0);
         const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
-        // Total em R$: quantidade_base (= qty × fator) × custo_unitario (R$/fator-1).
-        const total = roundToTwoDecimals(qty * fatorConversao * custoFinalUnitario);
 
         return {
-            ...item,
-            custo_unitario: cost,
-            valor_desconto_item: descUnit,
+            ...synced,
             subtotal: roundToTwoDecimals(qty * fatorConversao * cost),
-            total: total,
+            total: calcTotalItemCompraPedido(synced),
             custo_final_unitario: custoFinalUnitario,
             ...normalizeItemToCanonicalFactorOne({
-              ...item,
-              custo_unitario: cost,
+              ...synced,
               custo_final_unitario: custoFinalUnitario,
             }, 'custo'),
         };
