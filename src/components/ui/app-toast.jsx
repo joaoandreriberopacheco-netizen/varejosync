@@ -8,32 +8,36 @@ export const APP_TOAST_DURATION = TOAST_DURATION_MS;
 
 const VARIANTS = {
   success: {
-    shell: "bg-[#d4f5e9] text-slate-900 dark:bg-emerald-950/55 dark:text-emerald-50",
+    shell: "bg-[#d4f5e9] text-slate-900 border border-emerald-200/80 dark:bg-emerald-950 dark:text-emerald-50 dark:border-emerald-800",
     circles: ["bg-emerald-400/30", "bg-emerald-500/22", "bg-emerald-300/28"],
     progress: "bg-emerald-500/70 dark:bg-emerald-400/80",
     Icon: Check,
     iconClass: "text-emerald-600 dark:text-emerald-500",
+    bodyClass: "text-slate-700 dark:text-emerald-100/90",
   },
   error: {
-    shell: "bg-[#fce4ec] text-slate-900 dark:bg-rose-950/50 dark:text-rose-50",
+    shell: "bg-[#fce4ec] text-slate-900 border border-rose-200/80 dark:bg-rose-950 dark:text-rose-50 dark:border-rose-800",
     circles: ["bg-rose-400/30", "bg-rose-500/22", "bg-rose-300/28"],
     progress: "bg-rose-500/70 dark:bg-rose-400/80",
     Icon: AlertCircle,
     iconClass: "text-rose-600 dark:text-rose-400",
+    bodyClass: "text-slate-700 dark:text-rose-100/90",
   },
   warning: {
-    shell: "bg-amber-50 text-amber-950 dark:bg-amber-950/45 dark:text-amber-50",
+    shell: "bg-amber-50 text-amber-950 border border-amber-200/80 dark:bg-amber-950 dark:text-amber-50 dark:border-amber-800",
     circles: ["bg-amber-400/30", "bg-amber-500/22", "bg-amber-300/28"],
     progress: "bg-amber-500/70 dark:bg-amber-400/80",
     Icon: TriangleAlert,
     iconClass: "text-amber-600 dark:text-amber-400",
+    bodyClass: "text-amber-900/80 dark:text-amber-100/90",
   },
   info: {
-    shell: "bg-sky-50 text-slate-900 dark:bg-sky-950/45 dark:text-sky-50",
+    shell: "bg-sky-50 text-slate-900 border border-sky-200/80 dark:bg-sky-950 dark:text-sky-50 dark:border-sky-800",
     circles: ["bg-sky-400/30", "bg-sky-500/22", "bg-sky-300/28"],
     progress: "bg-sky-500/70 dark:bg-sky-400/80",
     Icon: Info,
     iconClass: "text-sky-600 dark:text-sky-400",
+    bodyClass: "text-slate-700 dark:text-sky-100/90",
   },
 };
 
@@ -45,7 +49,7 @@ export function AppToastContent({
   duration = TOAST_DURATION_MS,
 }) {
   const config = VARIANTS[variant] ?? VARIANTS.success;
-  const { Icon, shell, circles, progress, iconClass } = config;
+  const { Icon, shell, circles, progress, iconClass, bodyClass } = config;
   const label = title ?? description ?? "";
   const body = title && description ? description : null;
 
@@ -54,7 +58,7 @@ export function AppToastContent({
       role="status"
       aria-live="polite"
       className={cn(
-        "relative flex w-full min-w-[280px] max-w-[420px] items-start gap-3 overflow-hidden rounded-2xl p-4 pr-11 shadow-lg",
+        "relative flex w-full min-w-[280px] max-w-[420px] items-start gap-3 overflow-hidden rounded-2xl p-4 pr-11 shadow-lg backdrop-blur-0",
         shell
       )}
     >
@@ -73,7 +77,7 @@ export function AppToastContent({
           </p>
         ) : null}
         {body ? (
-          <p className="mt-0.5 text-xs leading-snug text-slate-600 dark:text-inherit/75">
+          <p className={cn("mt-0.5 text-xs leading-snug", bodyClass)}>
             {body}
           </p>
         ) : null}

@@ -149,81 +149,102 @@ export default function AprovacoesFinanceirasPage() {
         const agora = new Date().toISOString();
         const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
         const contaSelecionadaNome = contas.find(c => c.id === contaId)?.nome || '';
+        let aprovadosOk = 0;
+        let aprovadosErro = 0;
+        let ultimoErro = null;
 
         for (const pedido of pedidosParaAprovar) {
-          const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
-          const statusAnterior = pedido.status || 'Aguardando Liberação';
+          try {
+            const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+            const statusAnterior = pedido.status || 'Aguardando Liberação';
+            const historicoAtualizado = (pedido.historico || '') + notaAprovacao;
 
-          await base44.entities.PedidoCompra.update(pedido.id, {
-            status: 'Aprovado',
-            status_aprovacao_financeira: 'Aprovado Financeiramente',
-            conta_pagamento_id: contaId,
-            conta_pagamento_nome: contaSelecionadaNome,
-            data_aprovacao_financeira: agora,
-          });
-
-          await registrarTransicao({
-            pedidoId: pedido.id,
-            pedidoNumero: pedido.numero,
-            statusAnterior,
-            statusNovo: 'Aprovado',
-            responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
-            tipoAutenticacao: 'Interveniente',
-            codigoOperacao: authData.codigoOperacao || '',
-            observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaId}`,
-          });
-
-          const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
-
-          if (lancamentos.length === 0) {
-            await base44.entities.LancamentoFinanceiro.create({
-              tipo: 'Despesa',
-              descricao: `Compra - ${pedido.fornecedor_nome || pedido.numero}`,
-              terceiro_id: pedido.fornecedor_id,
-              terceiro_nome: pedido.fornecedor_nome,
-              valor: pedido.valor_total || 0,
-              valor_liquido: pedido.valor_total || 0,
-              data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
-              status: 'Em Aberto',
-              status_conciliacao: 'N/A',
-              conta_financeira_id: contaId,
-              conta_financeira_nome: contaSelecionadaNome,
-              referencia_id: pedido.id,
-              referencia_tipo: 'PedidoCompra',
-              referencia_numero: pedido.numero,
-              observacoes: notaAprovacao.trim(),
-              is_custo_mercadoria: true,
-              pedido_compra_vinculado_id: pedido.id,
-              pedido_compra_vinculado_numero: pedido.numero,
-              forma_pagamento_tipo: pedido.forma_pagamento_compra || undefined,
-              forma_pagamento_compra: pedido.forma_pagamento_compra || undefined,
+            await base44.entities.PedidoCompra.update(pedido.id, {
+              status: 'Aprovado',
+              status_aprovacao_financeira: 'Aprovado Financeiramente',
+              conta_pagamento_id: contaId,
+              conta_pagamento_nome: contaSelecionadaNome,
+              data_aprovacao_financeira: agora,
+              historico: historicoAtualizado,
             });
-          } else {
-            for (const l of lancamentos) {
-              await base44.entities.LancamentoFinanceiro.update(l.id, {
+
+            await registrarTransicao({
+              pedidoId: pedido.id,
+              pedidoNumero: pedido.numero,
+              statusAnterior,
+              statusNovo: 'Aprovado',
+              responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
+              tipoAutenticacao: 'Interveniente',
+              codigoOperacao: authData.codigoOperacao || authData.operationCode || '',
+              observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaId}`,
+              historicoAtual: historicoAtualizado,
+            });
+
+            const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
+
+            if (lancamentos.length === 0) {
+              await base44.entities.LancamentoFinanceiro.create({
                 tipo: 'Despesa',
+                descricao: `Compra - ${pedido.fornecedor_nome || pedido.numero}`,
+                terceiro_id: pedido.fornecedor_id,
+                terceiro_nome: pedido.fornecedor_nome,
+                valor: pedido.valor_total || 0,
+                valor_liquido: pedido.valor_total || 0,
+                data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
                 status: 'Em Aberto',
+                status_conciliacao: 'N/A',
                 conta_financeira_id: contaId,
                 conta_financeira_nome: contaSelecionadaNome,
+                referencia_id: pedido.id,
+                referencia_tipo: 'PedidoCompra',
+                referencia_numero: pedido.numero,
+                observacoes: notaAprovacao.trim(),
                 is_custo_mercadoria: true,
                 pedido_compra_vinculado_id: pedido.id,
                 pedido_compra_vinculado_numero: pedido.numero,
-                observacoes: (l.observacoes || '') + notaAprovacao,
-                forma_pagamento_tipo: l.forma_pagamento_tipo || pedido.forma_pagamento_compra || undefined,
-                forma_pagamento_compra: l.forma_pagamento_compra || pedido.forma_pagamento_compra || undefined,
+                forma_pagamento_tipo: pedido.forma_pagamento_compra || undefined,
+                forma_pagamento_compra: pedido.forma_pagamento_compra || undefined,
               });
+            } else {
+              for (const l of lancamentos) {
+                await base44.entities.LancamentoFinanceiro.update(l.id, {
+                  tipo: 'Despesa',
+                  status: 'Em Aberto',
+                  conta_financeira_id: contaId,
+                  conta_financeira_nome: contaSelecionadaNome,
+                  is_custo_mercadoria: true,
+                  pedido_compra_vinculado_id: pedido.id,
+                  pedido_compra_vinculado_numero: pedido.numero,
+                  observacoes: (l.observacoes || '') + notaAprovacao,
+                  forma_pagamento_tipo: l.forma_pagamento_tipo || pedido.forma_pagamento_compra || undefined,
+                  forma_pagamento_compra: l.forma_pagamento_compra || pedido.forma_pagamento_compra || undefined,
+                });
+              }
             }
+            aprovadosOk += 1;
+          } catch (itemError) {
+            console.error('[AprovacoesFinanceiras] falha no pedido', pedido?.numero || pedido?.id, itemError);
+            aprovadosErro += 1;
+            ultimoErro = itemError;
           }
         }
 
-        const qtd = pedidosParaAprovar.length;
-        toast({
-          title: qtd > 1 ? 'Pedidos aprovados' : 'Pedido aprovado',
-          description: qtd > 1
-            ? `${qtd} pedidos aprovados com sucesso.`
-            : 'Aprovação financeira concluída.',
-          className: 'bg-gray-100 text-gray-800',
-        });
+        if (aprovadosErro === 0) {
+          toast({
+            title: aprovadosOk > 1 ? 'Pedidos aprovados' : 'Pedido aprovado',
+            description: aprovadosOk > 1
+              ? `${aprovadosOk} pedidos aprovados com sucesso.`
+              : 'Aprovação financeira concluída.',
+          });
+        } else if (aprovadosOk === 0) {
+          throw ultimoErro || new Error('Nenhum pedido foi aprovado.');
+        } else {
+          toast({
+            title: 'Aprovação parcial',
+            description: `${aprovadosOk} aprovado(s), ${aprovadosErro} com erro. ${ultimoErro?.message || 'Verifique os pedidos pendentes.'}`,
+            variant: 'destructive',
+          });
+        }
       }
 
       await loadData();
