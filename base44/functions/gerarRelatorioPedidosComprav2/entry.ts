@@ -174,6 +174,22 @@ const PDF_RESOLVE_COMMERCIAL = (p, fallbackUnit = 'UN') => {
   }
   return opts[0]?.unidade || PDF_NORM_CODE(fallbackUnit) || 'UN';
 };
+const PDF_DISCRETE_UNITS = new Set(['PAC', 'CX', 'CT', 'FD', 'SC', 'PCT', 'PT', 'DZ', 'GL', 'RL', 'BAL', 'FAR', 'TAM']);
+const PDF_IS_EFFECTIVELY_INT = (v: number) => Number.isFinite(v) && Math.abs(v - Math.round(v)) < 1e-9;
+const PDF_ROUND2 = (v: number) => Math.round(v * 100) / 100;
+/** Espelho de `commercialQuantityFromBase` em @/lib/productUnits (PAC/CX: divisão inteira exata). */
+const PDF_COMMERCIAL_QTY_FROM_BASE = (quantityBase: number, fatorConversao = 1, unitCode = '') => {
+  const base = PDF_NN(quantityBase, 0);
+  const fator = PDF_NN(fatorConversao, 1) || 1;
+  if (!(fator > 0)) return PDF_ROUND2(base);
+  const u = PDF_NORM_CODE(unitCode);
+  if (PDF_DISCRETE_UNITS.has(u) && PDF_IS_EFFECTIVELY_INT(base) && PDF_IS_EFFECTIVELY_INT(fator)) {
+    const bi = Math.round(base);
+    const fi = Math.round(fator);
+    if (fi > 0 && bi % fi === 0) return bi / fi;
+  }
+  return PDF_ROUND2(base / fator);
+};
 const PDF_RESOLVE_COMMERCIAL_DISPLAY = (product, quantityBase, fallbackUnit = 'UN') => {
   if (!PDF_IS_SHOW(product)) {
     const u = PDF_RESOLVE_PRIMARY(product, fallbackUnit);
@@ -184,7 +200,7 @@ const PDF_RESOLVE_COMMERCIAL_DISPLAY = (product, quantityBase, fallbackUnit = 'U
   const option = opts.find((o) => o.unidade === u) || opts[0] || null;
   const f = PDF_NN(option?.fator_conversao, 1) || 1;
   const qb = PDF_NN(quantityBase, 0);
-  const quantidade = f > 0 ? qb / f : qb;
+  const quantidade = f > 0 ? PDF_COMMERCIAL_QTY_FROM_BASE(qb, f, u) : qb;
   return { unidade: u, fator_conversao: f, quantidade };
 };
 const PDF_PDV_PREFERIDO = (produto, item) => {
@@ -850,32 +866,13 @@ const calcularLinhav2 = (item: any = {}, prod: any = {}, _pedido: any = {}) => {
   const fator = v2ResolveFatorComercial(item, prod);
   const un = v2ResolveSiglaComercial(item, prod, fator);
 
-  // QTD comercial coerente com a fatia do embarque, robusta a `quantidade_base` legado-bugado.
+  // QTD comercial: `quantidade_base` é fonte da verdade (espelho de commercialQuantityFromBase).
   const qLinha = Number(item._qtdEfetiva ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
   const qbLinha = Number(item.quantidade_base) || 0;
-  const siglaLinha = v2NormalizarSigla(item?.unidade_medida);
-  const siglaPrincipal = v2NormalizarSigla(prod?.unidade_principal);
-
-  let qtd: number;
-  if (fator <= 1 || qLinha <= 0) {
-    qtd = qLinha;
-  } else if (qbLinha > 0) {
-    const ratio = qbLinha / qLinha;
-    const tolFator = Math.max(0.05 * fator, 1e-3);
-    if (Math.abs(ratio - fator) <= tolFator) {
-      // q já é a quantidade comercial (qb = q × fator, contrato ideal).
-      qtd = qLinha;
-    } else if (Math.abs(ratio - 1) <= 0.05) {
-      // q == qb → linha em fator-1. Converter para comercial.
-      qtd = qbLinha / fator;
-    } else {
-      // qb incoerente (provável legado bug q × fator²). Decide pela sigla da linha.
-      qtd = siglaLinha && siglaLinha === siglaPrincipal ? qLinha / fator : qLinha;
-    }
-  } else {
-    // Sem qb: usa só a sigla.
-    qtd = siglaLinha && siglaLinha === siglaPrincipal ? qLinha / fator : qLinha;
-  }
+  const qtd =
+    qbLinha > 0 && fator > 1
+      ? PDF_COMMERCIAL_QTY_FROM_BASE(qbLinha, fator, un)
+      : qLinha;
 
   const custoFator1 = Number(item.custo_unitario);
   const vlrUnit = Number.isFinite(custoFator1) && custoFator1 > 0 ? custoFator1 * fator : NaN;
@@ -1308,15 +1305,23 @@ Deno.serve(async (req) => {
     const drawExpandido = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const stPedido = pedido._display_status || pedido.status;
-      // V2: confiar 100% na linha do pedido. Sem reescrita de fator/unidade/quantidade pelo produto.
       const itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
-        const fatorLinha = Number(item.fator_conversao) || 1;
-        const qtdLinha = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
-        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdLinha * fatorLinha;
+        const prod = produtosMap[item.produto_id] || {};
+        const fatorItem = Number(item.fator_conversao) || 1;
+        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
+        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
+        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
+        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
         return {
           ...item,
+          quantidade: res.quantidade,
+          quantidade_embarcada: res.quantidade,
+          quantidade_pedida: res.quantidade,
+          unidade_medida: res.unidade,
+          fator_conversao: res.fator_conversao,
           quantidade_base: qBase,
-          _qtdEfetiva: qtdLinha,
+          _qtdEfetiva: res.quantidade,
         };
       });
 
@@ -1554,16 +1559,22 @@ Deno.serve(async (req) => {
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const sc = getStatusColors(statusRelatorio);
 
-      // V2: confiar 100% na linha do pedido. Sem reescrita de fator/unidade/quantidade pelo produto.
       let itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
-        const fatorLinha = Number(item.fator_conversao) || 1;
-        const qtdLinha = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
-        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdLinha * fatorLinha;
+        const prod = produtosMap[item.produto_id] || {};
+        const fatorItem = Number(item.fator_conversao) || 1;
+        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
+        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
+        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
+        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
         return {
           ...item,
+          quantidade: res.quantidade,
+          unidade_medida: res.unidade,
+          fator_conversao: res.fator_conversao,
           quantidade_base: qBase,
-          _qtdMostrada: qtdLinha,
-          _qtdEfetiva: qtdLinha,
+          _qtdMostrada: res.quantidade,
+          _qtdEfetiva: res.quantidade,
         };
       });
 

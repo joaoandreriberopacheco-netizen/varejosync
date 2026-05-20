@@ -1,72 +1,65 @@
 import { useState } from 'react';
-import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, Sparkles } from 'lucide-react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
-import { gerarRelatorioPedidosComprav2 } from '@/functions/gerarRelatorioPedidosComprav2';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
-import {
-  resolveCommercialDisplay,
-  resolveUnidadeExibicaoParaCompras,
-  buildSnapshotExibicaoComercial,
-} from '@/lib/productUnits';
+import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
+
+function normalizarItemRelatorio(item, produtosMap = {}) {
+  const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || null;
+  const norm = normalizeItemCompraParaExibicao(item, produtoSnapshot);
+  const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
+  const quantidadeShow = Number(norm.quantidade ?? 0) || quantidadeAtual;
+  const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;
+  const divisorShow = quantidadeShow > 0 ? quantidadeShow : 1;
+  const quantidadeBase = Number(norm.quantidade_base ?? 0) || 0;
+
+  const totalBruto =
+    item?.total ??
+    item?.valor_total_item ??
+    item?.valor_total ??
+    item?.subtotal;
+  let total = Number(totalBruto);
+  if (!Number.isFinite(total) || total <= 0) {
+    const cu =
+      Number(item?.custo_final_unitario) ||
+      Number(item?.custo_unitario) ||
+      Number(item?.valor_unitario_compra) ||
+      0;
+    const q = Number(quantidadeShow || quantidadeAtual) || 0;
+    total = cu > 0 && q > 0 ? cu * q : 0;
+  }
+  const freteTotal = Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
+  const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
+  const custoTotal = Number(item?.custo_total_item ?? ((Number(item?.custo_calculado ?? 0) || 0) * quantidadeAtual)) || 0;
+  const imposto1Total = (Number(item?.custo_imposto1 ?? 0) || 0) * divisorAtual;
+  const imposto2Total = (Number(item?.custo_imposto2 ?? 0) || 0) * divisorAtual;
+
+  return {
+    ...item,
+    ...norm,
+    quantidade_embarcada: quantidadeShow,
+    quantidade_pedida: quantidadeShow,
+    quantidade_base: quantidadeBase,
+    fator_conversao: Number(norm.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
+    custo_unitario: total / divisorShow,
+    valor_unitario_compra: total / divisorShow,
+    frete_unitario: freteTotal / divisorShow,
+    custo_outros: outrosTotal / divisorShow,
+    custo_calculado: custoTotal / divisorShow,
+    custo_imposto1: imposto1Total / divisorShow,
+    custo_imposto2: imposto2Total / divisorShow,
+    total,
+    valor_total_item: total,
+  };
+}
 
 function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
   const fonteItens = Array.isArray(pedido?._display_itens)
     ? pedido._display_itens
     : (Array.isArray(pedido?.itens) ? pedido.itens : []);
-  const itensNormalizados = fonteItens.map((item) => {
-    const quantidadeAtual = Number(item?.quantidade ?? 0) || 0;
-    const fatorAtual = Number(item?.fator_conversao ?? 1) || 1;
-    const quantidadeBase = Number(item?.quantidade_base ?? (quantidadeAtual * fatorAtual)) || 0;
-    const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || item?.unidade_principal || 'UN';
-    const produtoSnapshot = produtosMap[item?.produto_id] || item?._produto || item || {};
-    const pdvResolvido = resolveUnidadeExibicaoParaCompras(produtoSnapshot, item, fallback);
-    const snapshotForcandoPdv = buildSnapshotExibicaoComercial(produtoSnapshot, pdvResolvido);
-    const resolvido = resolveCommercialDisplay(snapshotForcandoPdv, quantidadeBase, fallback);
-    const quantidadeShow = Number(resolvido?.quantidade ?? 0) || quantidadeAtual;
-    const divisorAtual = quantidadeAtual > 0 ? quantidadeAtual : 1;
-    const divisorShow = quantidadeShow > 0 ? quantidadeShow : 1;
-    const totalBruto =
-      item?.total ??
-      item?.valor_total_item ??
-      item?.valor_total ??
-      item?.subtotal;
-    let total = Number(totalBruto);
-    if (!Number.isFinite(total) || total <= 0) {
-      const cu =
-        Number(item?.custo_final_unitario) ||
-        Number(item?.custo_unitario) ||
-        Number(item?.valor_unitario_compra) ||
-        0;
-      const q = Number(quantidadeShow || quantidadeAtual) || 0;
-      total = cu > 0 && q > 0 ? cu * q : 0;
-    }
-    const freteTotal = Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
-    const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
-    const custoTotal = Number(item?.custo_total_item ?? ((Number(item?.custo_calculado ?? 0) || 0) * quantidadeAtual)) || 0;
-    const imposto1Total = (Number(item?.custo_imposto1 ?? 0) || 0) * divisorAtual;
-    const imposto2Total = (Number(item?.custo_imposto2 ?? 0) || 0) * divisorAtual;
-
-    return {
-      ...item,
-      unidade_medida: resolvido?.unidade || fallback,
-      quantidade: quantidadeShow,
-      quantidade_embarcada: quantidadeShow,
-      quantidade_pedida: quantidadeShow,
-      quantidade_base: quantidadeBase,
-      fator_conversao: Number(resolvido?.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
-      custo_unitario: total / divisorShow,
-      valor_unitario_compra: total / divisorShow,
-      frete_unitario: freteTotal / divisorShow,
-      custo_outros: outrosTotal / divisorShow,
-      custo_calculado: custoTotal / divisorShow,
-      custo_imposto1: imposto1Total / divisorShow,
-      custo_imposto2: imposto2Total / divisorShow,
-      total,
-      valor_total_item: total,
-    };
-  });
+  const itensNormalizados = fonteItens.map((item) => normalizarItemRelatorio(item, produtosMap));
 
   return {
     ...pedido,
@@ -125,63 +118,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   const getActionVersion = (label) => {
     if (label === 'PDF expandido') return 'expandida';
     if (label === 'PDF mobile') return 'expandida_mobile';
-    if (label === 'PDF expandido v2') return 'expandida_v2';
-    if (label === 'PDF mobile v2') return 'expandida_mobile_v2';
-    return '';
-  };
-
-  /** V2: chama o endpoint novo (`gerarRelatorioPedidosComprav2`) sem aplicar o normalizador antigo
-   *  do frontend (que sobrescreve fator/unidade/quantidade pelo produto). Os pedidos são enviados como vieram. */
-  const handleGerarRelatoriov2 = async (versionInterna /* 'expandida' | 'expandida_mobile' */) => {
-    const tag = `${versionInterna}_v2`;
-    setGerando(tag);
-    toast.loading('Gerando relatório (v2)...', { id: 'gerando-relatorio' });
-    try {
-      const ids = coletarProdutoIds([pedidos, grupos]);
-      const produtosMap = {};
-      if (ids.length > 0) {
-        try {
-          const rows = await base44.entities.Produto.filter({ id: ids });
-          (rows || []).forEach((p) => { if (p?.id) produtosMap[p.id] = p; });
-        } catch {
-          const chunkSize = 25;
-          for (let i = 0; i < ids.length; i += chunkSize) {
-            const slice = ids.slice(i, i + chunkSize);
-            const batch = await Promise.all(slice.map((id) => base44.entities.Produto.get(id).catch(() => null)));
-            batch.filter(Boolean).forEach((p) => { produtosMap[p.id] = p; });
-          }
-        }
-      }
-
-      const resposta = await gerarRelatorioPedidosComprav2({
-        pedidos,
-        version: versionInterna,
-        filtros_desc: filtrosDesc,
-        kpis,
-        grupos,
-        produtos_map: produtosMap,
-      });
-
-      const blob = new Blob([resposta.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `RelatorioCompras_v2_${versionInterna}_${dataHoje()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      toast.success('Relatório v2 gerado com sucesso', { id: 'gerando-relatorio' });
-      setIsExpanded(false);
-    } catch (error) {
-      const msg = error?.message || String(error);
-      toast.error('Erro ao gerar relatório v2', {
-        id: 'gerando-relatorio',
-        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
-      });
-      console.error(error);
-    } finally {
-      setGerando('');
-    }
+    return null;
   };
 
   const handleGerarRelatorio = async (version) => {
@@ -286,20 +223,6 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
       disabled: !!gerando,
     },
-    {
-      icon: <Sparkles className="w-5 h-5" />,
-      label: 'PDF expandido v2',
-      onClick: () => handleGerarRelatoriov2('expandida'),
-      color: 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800',
-      disabled: !!gerando,
-    },
-    {
-      icon: <Sparkles className="w-5 h-5" />,
-      label: 'PDF mobile v2',
-      onClick: () => handleGerarRelatoriov2('expandida_mobile'),
-      color: 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800',
-      disabled: !!gerando,
-    },
   ];
 
   return (
@@ -338,7 +261,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
               animationDelay: `${idx * 30}ms`,
             }}
           >
-            {gerando === getActionVersion(action.label)
+            {gerando && gerando === getActionVersion(action.label)
               ? <Loader2 className="w-5 h-5 animate-spin" />
               : action.icon}
             {action.label}

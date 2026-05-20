@@ -14,6 +14,7 @@ import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
   resolveCommercialDisplay,
+  commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
   resolveUnidadeExibicaoParaCompras,
   buildSnapshotExibicaoComercial,
@@ -204,8 +205,12 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
     : { unidade: pedidoItem?.unidade_medida || item?.unidade_medida || '', fator_conversao: Number(pedidoItem?.fator_conversao) || 1, quantidade: qtdRaw };
 
   const fatorComercial = Number(commercial?.fator_conversao) || 1;
-  const quantidadeComercial = Number(commercial?.quantidade) || (fatorComercial > 0 ? (quantidadeBase / fatorComercial) : qtdRaw);
   const unidadeComercial = commercial?.unidade || pedidoItem?.unidade_medida || item?.unidade_medida || '';
+  const quantidadeComercial =
+    Number(commercial?.quantidade) ||
+    (fatorComercial > 0
+      ? commercialQuantityFromBase(quantidadeBase, fatorComercial, unidadeComercial)
+      : qtdRaw);
 
   const custoBase = getValorUnitarioEfetivoItemPedido(pedidoItem || item, pedido);
   const custoUnitarioComercial = custoBase * fatorComercial;

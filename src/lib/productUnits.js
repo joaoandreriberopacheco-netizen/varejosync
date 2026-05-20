@@ -1183,7 +1183,9 @@ export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
   return {
     ...item,
     unidade_medida: resolvido?.unidade || fallback,
+    fator_conversao: Number(resolvido?.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
     quantidade: quantidadeShow || quantidadeAtual,
+    quantidade_base: quantidadeBase,
     valor_unitario_compra: totalItem / divisor,
     frete_unitario: freteTotal / divisor,
     custo_outros: outrosTotal / divisor,

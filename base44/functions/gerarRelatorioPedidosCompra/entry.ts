@@ -174,6 +174,22 @@ const PDF_RESOLVE_COMMERCIAL = (p, fallbackUnit = 'UN') => {
   }
   return opts[0]?.unidade || PDF_NORM_CODE(fallbackUnit) || 'UN';
 };
+const PDF_DISCRETE_UNITS = new Set(['PAC', 'CX', 'CT', 'FD', 'SC', 'PCT', 'PT', 'DZ', 'GL', 'RL', 'BAL', 'FAR', 'TAM']);
+const PDF_IS_EFFECTIVELY_INT = (v: number) => Number.isFinite(v) && Math.abs(v - Math.round(v)) < 1e-9;
+const PDF_ROUND2 = (v: number) => Math.round(v * 100) / 100;
+/** Espelho de `commercialQuantityFromBase` em @/lib/productUnits (PAC/CX: divisão inteira exata). */
+const PDF_COMMERCIAL_QTY_FROM_BASE = (quantityBase: number, fatorConversao = 1, unitCode = '') => {
+  const base = PDF_NN(quantityBase, 0);
+  const fator = PDF_NN(fatorConversao, 1) || 1;
+  if (!(fator > 0)) return PDF_ROUND2(base);
+  const u = PDF_NORM_CODE(unitCode);
+  if (PDF_DISCRETE_UNITS.has(u) && PDF_IS_EFFECTIVELY_INT(base) && PDF_IS_EFFECTIVELY_INT(fator)) {
+    const bi = Math.round(base);
+    const fi = Math.round(fator);
+    if (fi > 0 && bi % fi === 0) return bi / fi;
+  }
+  return PDF_ROUND2(base / fator);
+};
 const PDF_RESOLVE_COMMERCIAL_DISPLAY = (product, quantityBase, fallbackUnit = 'UN') => {
   if (!PDF_IS_SHOW(product)) {
     const u = PDF_RESOLVE_PRIMARY(product, fallbackUnit);
@@ -184,7 +200,7 @@ const PDF_RESOLVE_COMMERCIAL_DISPLAY = (product, quantityBase, fallbackUnit = 'U
   const option = opts.find((o) => o.unidade === u) || opts[0] || null;
   const f = PDF_NN(option?.fator_conversao, 1) || 1;
   const qb = PDF_NN(quantityBase, 0);
-  const quantidade = f > 0 ? qb / f : qb;
+  const quantidade = f > 0 ? PDF_COMMERCIAL_QTY_FROM_BASE(qb, f, u) : qb;
   return { unidade: u, fator_conversao: f, quantidade };
 };
 const PDF_PDV_PREFERIDO = (produto, item) => {
