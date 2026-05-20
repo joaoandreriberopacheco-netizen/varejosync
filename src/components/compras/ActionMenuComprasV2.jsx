@@ -114,7 +114,7 @@ function normalizarGruposParaRelatorio(grupos = [], produtosMap = {}) {
 
 export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [gerando, setGerando] = useState('');
+  const [gerando, setGerando] = useState(null);
   const getActionVersion = (label) => {
     if (label === 'PDF expandido') return 'expandida';
     if (label === 'PDF mobile') return 'expandida_mobile';
@@ -173,7 +173,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       });
       console.error(error);
     } finally {
-      setGerando('');
+      setGerando(null);
     }
   };
 
