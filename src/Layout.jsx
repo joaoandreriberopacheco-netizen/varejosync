@@ -65,7 +65,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
-const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem']);
+const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem', 'RelatorioCatalogoEstoque']);
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();

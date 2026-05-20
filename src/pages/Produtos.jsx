@@ -28,6 +28,7 @@ import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
+import { filterProdutos } from '@/lib/filterProdutos';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
@@ -1009,42 +1010,8 @@ function ProdutosPageContent() {
   };
 
   const filteredProdutos = useMemo(() => {
-    if (!Array.isArray(produtos)) return [];
-    let filtered = produtos.filter(p => {
-      if (!p || typeof p !== 'object') return false;
-      const nome = p.nome || '';
-      const codigo = p.codigo_interno || '';
-      
-      const searchTermMatch = nome.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-                              codigo.toLowerCase().includes(filters.searchTerm.toLowerCase());
-      const categoriaMatch = filters.categoria === 'all' || p.categoria_nome === filters.categoria;
-      const tagMatch = !filters.tag || (Array.isArray(p.tags) && p.tags.some(t => t && t.toLowerCase().includes(filters.tag.toLowerCase())));
-      const fornecedorMatch = filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
+    let filtered = filterProdutos(produtos, filters);
 
-      const statusMatch = () => {
-        if (filters.statusEstoque === 'all') return true;
-        const estoque = p.estoque_atual || 0;
-        const minimo = p.estoque_minimo || 0;
-
-        if (filters.statusEstoque === 'inativo' && !p.ativo) return true;
-        if (filters.statusEstoque === 'ok' && p.ativo && estoque > minimo) return true;
-        if (filters.statusEstoque === 'baixo' && p.ativo && estoque > 0 && estoque <= minimo) return true;
-        if (filters.statusEstoque === 'critico' && p.ativo && (estoque <= 0 || estoque <= minimo/2)) return true;
-        return false;
-      };
-
-      const cadastroMatch = () => {
-        if (filters.cadastroIncompleto === 'all') return true;
-        const { incompleto } = isCadastroIncompleto(p);
-        if (filters.cadastroIncompleto === 'incompleto') return incompleto;
-        if (filters.cadastroIncompleto === 'completo') return !incompleto;
-        return false;
-      };
-
-      return searchTermMatch && categoriaMatch && tagMatch && fornecedorMatch && statusMatch() && cadastroMatch();
-    });
-
-    // Sort by creation date (newest first) by default, then alphabetically if sortOrder specified
     filtered = [...filtered].sort((a, b) => {
       // Default: sort by created_date descending (newest first)
       if (!sortOrder || sortOrder === 'default') {

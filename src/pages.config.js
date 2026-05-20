@@ -99,6 +99,7 @@ import PainelGerente from './pages/PainelGerente';
 import ProdutosPage from './pages/Produtos';
 import ReimpressaoDocumentos from './pages/ReimpressaoDocumentos';
 import RelatorioMargem from './pages/RelatorioMargem';
+import RelatorioCatalogoEstoque from './pages/RelatorioCatalogoEstoque';
 import RelatorioPerformance from './pages/RelatorioPerformance';
 import Relatorios from './pages/Relatorios';
 import TabelasPreco from './pages/TabelasPreco';
@@ -164,6 +165,7 @@ export const PAGES = {
     "Produtos": ProdutosPage,
     "ReimpressaoDocumentos": ReimpressaoDocumentos,
     "RelatorioMargem": RelatorioMargem,
+    "RelatorioCatalogoEstoque": RelatorioCatalogoEstoque,
     "RelatorioPerformance": RelatorioPerformance,
     "Relatorios": Relatorios,
     "TabelasPreco": TabelasPreco,

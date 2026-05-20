@@ -295,7 +295,9 @@ export default function RelatoriosPage() {
                   key={rel.id} 
                   relatorio={rel}
                   onClickAbrir={(id) => {
-                    if (id === 'performance-produto') {
+                    if (id === 'inventario-valorizado') {
+                      window.location.href = '/RelatorioCatalogoEstoque';
+                    } else if (id === 'performance-produto') {
                       setShowSeletor(true);
                     }
                   }}

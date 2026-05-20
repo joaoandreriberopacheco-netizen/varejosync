@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon } from 'lucide-react';
+import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3 } from 'lucide-react';
 
 export default function ProdutosHeader({
   stats,
@@ -36,7 +36,20 @@ export default function ProdutosHeader({
             </div>
           </div>
 
-          <div className="flex items-center gap-0.5 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 px-2.5 flex-shrink-0 border-blue-200 bg-blue-50/80 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/40 dark:hover:bg-blue-900/50"
+              asChild
+              title="Relatório de estoque (Tree Grid)"
+            >
+              <Link to={createPageUrl('RelatorioCatalogoEstoque')}>
+                <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-medium text-blue-700 dark:text-blue-300 whitespace-nowrap">Relatório</span>
+              </Link>
+            </Button>
+            <div className="flex items-center gap-0.5 flex-shrink-0">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleExportarCatalogo} title="Exportar">
               <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </Button>
@@ -82,6 +95,7 @@ export default function ProdutosHeader({
             <Button onClick={handleAddNew} variant="ghost" size="icon" className="h-9 w-9" title="Novo produto">
               <PlusCircle className="h-4 w-4 text-gray-700 dark:text-gray-300" />
             </Button>
+            </div>
           </div>
         </div>
 

@@ -210,7 +210,8 @@ function groupCellValue(colId, row) {
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols }) {
+const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, readOnly }) {
+  const editOffset = readOnly ? 0 : W_EDIT;
   const indent = (row.level - 1) * INDENT_GROUP;
   const isLeaf = row.isLeafGroup;
 
@@ -219,13 +220,13 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       className={`border-b border-gray-100 dark:border-gray-800 ${isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'} select-none`}
       onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
-      {/* Célula de edit vazia para grupos */}
-      <td className="sticky left-0 bg-white dark:bg-gray-900 z-20"
-        style={{ width: W_EDIT, minWidth: W_EDIT }} />
-      {/* Célula de nome do grupo */}
+      {!readOnly && (
+        <td className="sticky left-0 bg-white dark:bg-gray-900 z-20"
+          style={{ width: W_EDIT, minWidth: W_EDIT }} />
+      )}
       <td
         className="py-2 sticky bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
-        style={{ left: W_EDIT, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
+        style={{ left: editOffset, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
           {!isLeaf && (
@@ -253,31 +254,32 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 });
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, readOnly }) {
   const p = row.produto;
+  const editOffset = readOnly ? 0 : W_EDIT;
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
-      {/* Botão editar + excluir — sticky, congelado à esquerda */}
-      <td className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 text-center"
-        style={{ width: W_EDIT, minWidth: W_EDIT }}>
-        <div className="flex items-center gap-0.5 justify-center">
-          <Button variant="ghost" size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
-            <Edit className="w-3 h-3 text-gray-500" />
-          </Button>
-          <Button variant="ghost" size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => { e.stopPropagation(); onDelete(p); }}>
-            <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
-          </Button>
-        </div>
-      </td>
-      {/* Coluna Produto — sticky logo após o botão de editar */}
+      {!readOnly && (
+        <td className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 text-center"
+          style={{ width: W_EDIT, minWidth: W_EDIT }}>
+          <div className="flex items-center gap-0.5 justify-center">
+            <Button variant="ghost" size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+              <Edit className="w-3 h-3 text-gray-500" />
+            </Button>
+            <Button variant="ghost" size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); onDelete(p); }}>
+              <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
+            </Button>
+          </div>
+        </td>
+      )}
       <td
         className="py-1.5 sticky bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
-        style={{ left: W_EDIT, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
+        style={{ left: editOffset, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
@@ -326,7 +328,7 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = 1 }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = 1, readOnly = false }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
@@ -373,6 +375,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     [visibleColumns]
   );
 
+  const nameColLeft = readOnly ? 0 : W_EDIT;
+  const headerColSpan = activeCols.length + (readOnly ? 1 : 2);
+
   return (
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
@@ -381,13 +386,13 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           {/* thead sticky no topo durante scroll vertical */}
           <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900">
             <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-              {/* Cabeçalho coluna edit */}
-              <th className="sticky left-0 bg-white dark:bg-gray-900 z-40"
-                style={{ width: W_EDIT, minWidth: W_EDIT }} />
-              {/* Cabeçalho coluna Produto — sticky após o edit */}
+              {!readOnly && (
+                <th className="sticky left-0 bg-white dark:bg-gray-900 z-40"
+                  style={{ width: W_EDIT, minWidth: W_EDIT }} />
+              )}
               <th
                 className="text-left py-2 sticky bg-white dark:bg-gray-900 z-40 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                style={{ left: W_EDIT, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
+                style={{ left: nameColLeft, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>
@@ -404,7 +409,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={activeCols.length + 2} className="py-12 text-center text-sm text-gray-400">
+                <td colSpan={headerColSpan} className="py-12 text-center text-sm text-gray-400">
                   Nenhum produto encontrado.
                 </td>
               </tr>
@@ -414,11 +419,13 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                   ? <GroupRow key={row.key} row={row}
                       isExpanded={expandedKeys.has(row.key)}
                       onToggle={handleToggle}
-                      activeCols={activeCols} />
+                      activeCols={activeCols}
+                      readOnly={readOnly} />
                   : <SkuRow key={row.key} row={row}
                       onEdit={onEdit}
                       onDelete={onDelete || noopDelete}
-                      activeCols={activeCols} />
+                      activeCols={activeCols}
+                      readOnly={readOnly} />
               )
             )}
           </tbody>
