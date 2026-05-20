@@ -44,6 +44,7 @@ import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra,
 import {
   pickDefaultPurchaseUnit,
   normalizePurchaseItemToCommercial,
+  commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
   custoApresentacaoParaFator1,
   resolveValorDescontoCompraPadraoFator1,
@@ -394,6 +395,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         }
     }
 
+    const quantidadeBaseAntes = parseFloat(item.quantidade_base);
+    const tinhaBaseExplicita = Number.isFinite(quantidadeBaseAntes) && quantidadeBaseAntes > 0;
+
     const produtoItem = produtos.find((p) => p.id === item.produto_id);
     if (produtoItem) {
       // `custo_unitario` é fator-1 (R$/[unidade base]); o total em R$ é qty_base × custo_unitario.
@@ -402,15 +406,27 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       Object.assign(item, normalizePurchaseItemToCommercial(produtoItem, { ...item, total: totalBase }));
     }
 
-    const qty = parseFloat(item.quantidade) || 0;
     const fatorConversao = parseFloat(item.fator_conversao) || 1;
-    item.quantidade_base = qty * fatorConversao;
+    if (tinhaBaseExplicita && fatorConversao > 0) {
+      item.quantidade_base = quantidadeBaseAntes;
+      item.quantidade = commercialQuantityFromBase(
+        quantidadeBaseAntes,
+        fatorConversao,
+        item.unidade_medida || item.unidade_apresentacao,
+      );
+    } else {
+      const qty = parseFloat(item.quantidade) || 0;
+      item.quantidade_base = qty * fatorConversao;
+    }
+
+    const qty = parseFloat(item.quantidade) || 0;
+    const qBaseLinha = parseFloat(item.quantidade_base) || qty * fatorConversao;
     Object.assign(item, syncItemDescontoApresentacao(item));
     const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
     const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
     const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
     item.custo_final_unitario = custoFinalUnitario;
-    item.subtotal = roundToTwoDecimals(qty * fatorConversao * cost);
+    item.subtotal = roundToTwoDecimals(qBaseLinha * cost);
     item.total = calcTotalItemCompraPedido(item);
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 

@@ -563,6 +563,52 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/** Embalagens discretas (pacote, caixa, etc.) — quantidade comercial costuma ser inteira. */
+const DISCRETE_PACKAGING_UNITS = new Set([
+  "PAC",
+  "CX",
+  "CT",
+  "FD",
+  "SC",
+  "PCT",
+  "PT",
+  "DZ",
+  "GL",
+  "RL",
+  "BAL",
+  "FAR",
+  "TAM",
+]);
+
+export function isDiscretePackagingUnit(unitCode) {
+  return DISCRETE_PACKAGING_UNITS.has(normalizeUnitCode(unitCode));
+}
+
+/** Valor numérico sem parte fracionária relevante (ex.: 360, 18 — não 359,82). */
+function isEffectivelyInteger(value) {
+  const n = normalizeNumber(value, NaN);
+  return Number.isFinite(n) && Math.abs(n - Math.round(n)) < 1e-9;
+}
+
+/**
+ * Converte quantidade_base (fator-1) → quantidade comercial.
+ * A base é a fonte da verdade; esta função só lê, nunca “corrige” a base.
+ * PAC/CX: se base e fator são inteiros e a divisão é exata (360÷18), devolve o inteiro 20.
+ */
+export function commercialQuantityFromBase(quantityBase, fatorConversao = 1, unitCode = "") {
+  const base = normalizeNumber(quantityBase, 0);
+  const fator = normalizeNumber(fatorConversao, 1) || 1;
+  if (!(fator > 0)) return roundToTwoDecimals(base);
+
+  if (isDiscretePackagingUnit(unitCode) && isEffectivelyInteger(base) && isEffectivelyInteger(fator)) {
+    const bi = Math.round(base);
+    const fi = Math.round(fator);
+    if (fi > 0 && bi % fi === 0) return bi / fi;
+  }
+
+  return roundToTwoDecimals(base / fator);
+}
+
 /** Custo/preço na unidade comercial (vitrine ou embalagem escolhida). */
 export function custoFator1ParaApresentacao(valorFator1, fatorConversao = 1) {
   return normalizeNumber(valorFator1, 0) * (normalizeNumber(fatorConversao, 1) || 1);
@@ -735,11 +781,13 @@ export function applyItemDescontoValorApresentacao(item = {}, custoApres, absDes
 
 /** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
 export function calcTotalItemCompraPedido(item = {}) {
+  const qb = normalizeNumber(item?.quantidade_base, NaN);
   const qty = normalizeNumber(item?.quantidade, 0);
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
+  const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
-  return roundToTwoDecimals(qty * fator * (custoF1 - descF1));
+  return roundToTwoDecimals(qBase * (custoF1 - descF1));
 }
 
 /**
@@ -767,7 +815,7 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
 
   const quantidade =
     preserveQuantidadeBase && fator > 0
-      ? quantidadeBase / fator
+      ? commercialQuantityFromBase(quantidadeBase, fator, option.unidade)
       : normalizeNumber(item.quantidade, 1) || 1;
 
   const canon = getUnidadeBySiglaCanonical(product, option.unidade);
@@ -858,7 +906,7 @@ export function formatEstoqueApresentacao(produto) {
   if (!alt || !alt.fator_conversao) return null;
   const fator = normalizeNumber(alt.fator_conversao, 1);
   if (fator <= 0) return null;
-  const qtd = estoque / fator;
+  const qtd = commercialQuantityFromBase(estoque, fator, pref);
   return { sigla: pref, quantidade: qtd, rotulo: alt.rotulo };
 }
 
@@ -871,7 +919,10 @@ export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit
   const purchaseOptions = buildPurchaseUnitOptions(product);
   const option = purchaseOptions.find((item) => item.unidade === unidade) || purchaseOptions[0] || null;
   const fator = normalizeNumber(option?.fator_conversao, 1) || 1;
-  const quantidade = fator > 0 ? normalizeNumber(quantityBase, 0) / fator : normalizeNumber(quantityBase, 0);
+  const quantidade =
+    fator > 0
+      ? commercialQuantityFromBase(quantityBase, fator, unidade)
+      : normalizeNumber(quantityBase, 0);
   return { unidade, fator_conversao: fator, quantidade, option };
 }
 
