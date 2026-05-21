@@ -1,105 +1,89 @@
 /**
- * Bobina 80 mm, área útil ~72 mm, impressoras térmicas de baixa qualidade.
- * Sem cinza claro, sem fontes finas, contraste máximo.
+ * Cupom térmico 80 mm — bobina 80 mm, área útil ~72 mm.
+ * Padding assimétrico (esquerda > direita) compensa desvio comum à esquerda na impressora.
  */
 
 export const CUPOM_PAPEL_MM = 80;
 export const CUPOM_LARGURA_UTIL_MM = 72;
-/** Margem extra à esquerda no papel (compensa “puxar” para a esquerda na impressão). */
-export const CUPOM_MARGEM_ESQ_MM = 5;
-export const CUPOM_MARGEM_DIR_MM = 3;
 
-const MM_TO_PX = 96 / 25.4;
+const MM_TO_PX_96 = 96 / 25.4;
+export const CUPOM_LARGURA_UTIL_PX = Math.round(CUPOM_LARGURA_UTIL_MM * MM_TO_PX_96);
 
-export const CUPOM_LARGURA_UTIL_PX = Math.round(CUPOM_LARGURA_UTIL_MM * MM_TO_PX);
-export const CUPOM_PAPEL_PX = Math.round(CUPOM_PAPEL_MM * MM_TO_PX);
+/** top right bottom left — esquerda maior que direita */
+export const CUPOM_PADDING_TERMICO = '2.5mm 1.8mm 3mm 2.8mm';
 
-/** Arial/Helvetica — traços grossos, legível em 203 dpi. */
+/** Estica só na vertical — largura útil 72 mm inalterada; melhora legibilidade em térmica. */
+export const CUPOM_SCALE_Y = 1.08;
+
+export const CUPOM_LINE_HEIGHT_TERMICO = 1.42;
+
 export const FONT_TERMICA =
-  'Arial, Helvetica, "Helvetica Neue", "Liberation Sans", sans-serif';
+  "'Arial Narrow', 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans Narrow', system-ui, sans-serif";
 
-/** padding: top right bottom left — mais à esquerda empurra conteúdo para a direita no papel. */
-export const CUPOM_PADDING_TERMICO = `3mm ${CUPOM_MARGEM_DIR_MM}mm 4mm ${CUPOM_MARGEM_ESQ_MM}mm`;
+/** scaleY no #cupom-print (térmico); não usar em variant A4. */
+export const estiloEscalaVerticalCupomTermico = {
+  transform: `scaleY(${CUPOM_SCALE_Y})`,
+  transformOrigin: 'top center',
+};
 
 export const HTML2CANVAS_TERMICO = {
   scale: 2,
   useCORS: true,
   backgroundColor: '#ffffff',
   logging: false,
-  imageTimeout: 15000,
-  onclone: (doc) => {
-    const root = doc.getElementById('cupom-print');
-    if (root) {
-      root.style.width = `${CUPOM_LARGURA_UTIL_MM}mm`;
-      root.style.maxWidth = `${CUPOM_LARGURA_UTIL_MM}mm`;
-      root.style.padding = CUPOM_PADDING_TERMICO;
-      root.style.color = '#000000';
-      root.style.background = '#ffffff';
-      root.style.fontFamily = FONT_TERMICA;
-      root.style.fontWeight = '600';
-      root.style.boxSizing = 'border-box';
-    }
-  },
 };
 
-/** CSS injetado no iframe de impressão do navegador. */
-export function buildCupom80PrintStyles() {
-  return `
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: ${CUPOM_PAPEL_MM}mm;
-      margin: 0;
-      padding: 0;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-    @page {
-      size: ${CUPOM_PAPEL_MM}mm auto;
-      margin: 0;
-    }
-    #cupom-print {
-      width: ${CUPOM_LARGURA_UTIL_MM}mm !important;
-      max-width: ${CUPOM_LARGURA_UTIL_MM}mm !important;
-      margin: 0 auto !important;
-      padding: ${CUPOM_PADDING_TERMICO} !important;
-      background: #fff !important;
-      color: #000 !important;
-      font-family: ${FONT_TERMICA} !important;
-      font-weight: 600 !important;
-      font-size: 13px !important;
-      line-height: 1.35 !important;
-      -webkit-font-smoothing: auto !important;
-    }
-    #cupom-print * {
-      color: #000 !important;
-      border-color: #000 !important;
-      text-shadow: none !important;
-      box-shadow: none !important;
-    }
-    #cupom-print img {
-      filter: grayscale(100%) contrast(200%) !important;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-    }
-  `;
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-/** HTML completo para impressão 80 mm (sem Google Fonts). */
-export function wrapCupomHtmlForPrint(innerHtml, title = 'Cupom') {
-  return `<!DOCTYPE html><html><head>
-    <meta charset="UTF-8">
-    <title>${title}</title>
-    <style>${buildCupom80PrintStyles()}</style>
-  </head><body>${innerHtml}</body></html>`;
+export function wrapCupomHtmlForPrint(bodyHtml, title = 'Cupom') {
+  const safeTitle = escapeHtml(title);
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${safeTitle}</title>
+<style>
+  * { box-sizing: border-box; }
+  @page { size: ${CUPOM_PAPEL_MM}mm auto; margin: 0; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #fff !important;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #cupom-print {
+    width: ${CUPOM_LARGURA_UTIL_MM}mm;
+    max-width: ${CUPOM_LARGURA_UTIL_MM}mm;
+    margin: 0 auto;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: ${FONT_TERMICA};
+    line-height: ${CUPOM_LINE_HEIGHT_TERMICO};
+    transform: scaleY(${CUPOM_SCALE_Y});
+    transform-origin: top center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #cupom-print, #cupom-print * {
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #cupom-print img {
+    filter: grayscale(100%) contrast(200%) !important;
+    max-width: 58mm;
+  }
+</style></head><body>${bodyHtml}</body></html>`;
 }
 
-/** PDF rasterizado: imagem 72 mm de largura, deslocada à direita no papel 80 mm. */
+/** Centraliza imagem do cupom na bobina 80 mm (conteúdo 72 mm). */
 export function addCupomImageToPdf80(pdf, imgData, canvas) {
-  const papelMm = CUPOM_PAPEL_MM;
   const conteudoMm = CUPOM_LARGURA_UTIL_MM;
-  const offsetXMm = (papelMm - conteudoMm) / 2 + (CUPOM_MARGEM_ESQ_MM - CUPOM_MARGEM_DIR_MM) / 2;
   const heightMm = (canvas.height / canvas.width) * conteudoMm;
-  pdf.addImage(imgData, 'PNG', Math.max(0, offsetXMm), 0, conteudoMm, heightMm);
-  return heightMm;
+  const xOffset = (CUPOM_PAPEL_MM - conteudoMm) / 2;
+  pdf.addImage(imgData, 'PNG', xOffset, 4, conteudoMm, heightMm);
 }

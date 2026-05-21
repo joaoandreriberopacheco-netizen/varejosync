@@ -15,9 +15,12 @@ import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
 import {
   CUPOM_PAPEL_MM,
   CUPOM_LARGURA_UTIL_MM,
+  FONT_TERMICA,
+  CUPOM_LINE_HEIGHT_TERMICO,
   HTML2CANVAS_TERMICO,
   wrapCupomHtmlForPrint,
   addCupomImageToPdf80,
+  estiloEscalaVerticalCupomTermico,
 } from '@/lib/cupomTermico80';
 
 function PreviewScaled({ children, docWidthPx = CUPOM_LARGURA_UTIL_PX }) {
@@ -60,8 +63,12 @@ function TemplateRenderer({ htmlContent }) {
         maxWidth: '100%',
         background: '#fff',
         color: '#000',
-        fontFamily: 'Arial, Helvetica, sans-serif',
-        fontWeight: 600,
+        fontFamily: FONT_TERMICA,
+        fontWeight: 400,
+        lineHeight: CUPOM_LINE_HEIGHT_TERMICO,
+        printColorAdjust: 'exact',
+        WebkitPrintColorAdjust: 'exact',
+        ...estiloEscalaVerticalCupomTermico,
       }}
     />
   );

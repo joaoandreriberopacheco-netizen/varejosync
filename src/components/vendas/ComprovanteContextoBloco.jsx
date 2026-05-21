@@ -1,6 +1,7 @@
 import React from 'react';
 import { getContextoPedido } from '@/lib/contextoVendaIntegrado';
 import { TIPO_EVENTO } from '@/lib/eventosVenda';
+import { CUPOM_LINE_HEIGHT_TERMICO } from '@/lib/cupomTermico80';
 
 /**
  * Bloco de contexto integrado — preto sólido para térmica (sem vermelho/cinza claro).
@@ -23,7 +24,7 @@ export default function ComprovanteContextoBloco({
       style={{
         margin: '6px 0',
         fontSize: fontSize,
-        fontWeight: 700,
+        fontWeight: 600,
         color: '#000',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
@@ -33,12 +34,19 @@ export default function ComprovanteContextoBloco({
     </div>
   );
 
-  const bold = { fontWeight: 800, color: '#000' };
+  const bold = { fontWeight: 700, color: '#000' };
 
   return (
     <>
       <Sep />
-      <div style={{ fontSize: fontSize, lineHeight: 1.4, color: '#000', fontWeight: 600 }}>
+      <div
+        style={{
+          fontSize: fontSize,
+          lineHeight: variant === 'termico' ? CUPOM_LINE_HEIGHT_TERMICO : 1.4,
+          color: '#000',
+          fontWeight: 400,
+        }}
+      >
         {cancelado && (
           <div
             style={{
@@ -82,12 +90,12 @@ export default function ComprovanteContextoBloco({
             );
           }
           return (
-            <div key={i} style={{ marginBottom: '4px', fontWeight: 700 }}>
+            <div key={i} style={{ marginBottom: '4px', fontWeight: 600 }}>
               * {d.rotulo}
             </div>
           );
         })}
-        <div style={{ fontSize: fontSize - 1, fontWeight: 600, marginTop: '4px' }}>
+        <div style={{ fontSize: fontSize - 1, fontWeight: 500, marginTop: '4px' }}>
           Estado atual do pedido
         </div>
       </div>
