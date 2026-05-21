@@ -17,7 +17,7 @@ export default function ComprovanteContextoBloco({
 
   if (!destaques.length && !cancelado) return null;
 
-  const sepLen = variant === 'a4' ? 38 : 32;
+  const sepLen = variant === 'a4' ? 36 : 30;
   const Sep = () => (
     <div
       style={{
@@ -46,8 +46,8 @@ export default function ComprovanteContextoBloco({
               ...bold,
               fontSize: fontSize + 2,
               marginBottom: '6px',
-              border: '2px solid #000',
-              padding: '4px 2px',
+              border: '3px solid #000',
+              padding: '6px 4px',
             }}
           >
             *** VENDA CANCELADA ***

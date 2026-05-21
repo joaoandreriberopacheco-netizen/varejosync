@@ -3,11 +3,16 @@ import { ordenarItensComprovante } from '@/lib/templateEngine';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import ComprovanteContextoBloco from '@/components/vendas/ComprovanteContextoBloco';
+import {
+  CUPOM_LARGURA_UTIL_MM,
+  CUPOM_PAPEL_MM,
+  CUPOM_LARGURA_UTIL_PX,
+  CUPOM_PADDING_TERMICO,
+  FONT_TERMICA,
+} from '@/lib/cupomTermico80';
 
-/** Largura útil em bobina 80mm (área de impressão ~72mm). */
-export const CUPOM_LARGURA_UTIL_MM = 72;
-export const CUPOM_LARGURA_PAPEL_MM = 80;
-export const CUPOM_LARGURA_UTIL_PX = Math.round(CUPOM_LARGURA_UTIL_MM * 3.7795275591);
+export { CUPOM_LARGURA_UTIL_MM, CUPOM_LARGURA_UTIL_PX };
+export const CUPOM_LARGURA_PAPEL_MM = CUPOM_PAPEL_MM;
 
 const fmtDtTZ = (d) =>
   d
@@ -29,25 +34,21 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 
-/** Fontes que imprimem bem em térmica (sem traços finos). */
-const FONT_TERMICA =
-  '"Arial", "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif';
-
 const TOKENS = {
   termico: {
     widthPx: CUPOM_LARGURA_UTIL_PX,
     widthCss: `${CUPOM_LARGURA_UTIL_MM}mm`,
-    padding: '2mm 0',
+    padding: CUPOM_PADDING_TERMICO,
     font: FONT_TERMICA,
     base: 13,
-    small: 11,
+    small: 12,
     header: 15,
-    empresaTitulo: 17,
-    total: 18,
+    empresaTitulo: 18,
+    total: 19,
     pagamento: 14,
     lineHeight: 1.35,
     sepChar: '=',
-    sepLen: 32,
+    sepLen: 30,
   },
   a4: {
     widthPx: Math.round(CUPOM_LARGURA_UTIL_MM * 1.45 * 3.7795275591),
