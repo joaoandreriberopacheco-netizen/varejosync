@@ -394,6 +394,7 @@ export const ENTITY_TO_TABLE = {
       'cliente_id',
       'cliente_nome',
       'codigo',
+      'historico_uso',
       'origem_tipo',
       'pedido_origem_id',
       'pedido_origem_numero',
