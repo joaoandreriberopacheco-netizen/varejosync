@@ -297,7 +297,6 @@ const roundTo2 = (n) => (Number.isFinite(n) ? Math.round(n * 100) / 100 : n);
 const unitarioSalvoParaPrecoComercialPdf = (unit, o, item, f, eixoF1) => {
   if (!(Number.isFinite(unit) && unit > 0)) return NaN;
   if (!(f > 1)) return unit;
-  if (eixoF1) return unit * f;
 
   const qb = Number(o.quantidade_base) || Number(item.quantidade_base) || 0;
   const qv = Number(o.quantidade) || Number(item.quantidade) || 0;
@@ -305,14 +304,27 @@ const unitarioSalvoParaPrecoComercialPdf = (unit, o, item, f, eixoF1) => {
     Number(
       o.total ?? item.total ?? o.valor_total_item ?? item.valor_total_item ?? o.valor_total ?? item.valor_total ?? 0,
     ) || 0;
-  if (qb > 0 && qv > 0 && t > 0) {
-    const perB = t / qb;
-    const perCx = t / qv;
-    const tol = (x) => Math.max(0.025 * x, 0.35);
-    if (Math.abs(unit - perB) <= tol(perB) && Math.abs(unit * f - perCx) <= tol(perCx)) return unit * f;
-    if (Math.abs(unit - perCx) <= tol(perCx)) return unit;
+  const tol = (x) => Math.max(0.025 * x, 0.35);
+  const perCx = qv > 0 && t > 0 ? t / qv : NaN;
+  const perB = qb > 0 && t > 0 ? t / qb : NaN;
+
+  if (Number.isFinite(perCx) && perCx > 0 && Math.abs(unit - perCx) <= tol(perCx)) {
+    return unit;
   }
-  return unit;
+
+  if (eixoF1) {
+    if (Number.isFinite(perCx) && perCx > 0 && Math.abs(unit * f - perCx) <= tol(perCx)) {
+      return unit * f;
+    }
+    return unit * f;
+  }
+
+  if (qb > 0 && qv > 0 && t > 0) {
+    if (Number.isFinite(perB) && Math.abs(unit - perB) <= tol(perB) && Math.abs(unit * f - perCx) <= tol(perCx)) {
+      return unit * f;
+    }
+  }
+  return unit * f;
 };
 
 /**
@@ -738,13 +750,7 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
   const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
   const fatorComercial = Number(item.fator_conversao) || 1;
 
-  // Regra operacional fechada: preço informado no pedido está em fator-1.
-  // Portanto, o unitário comercial é sempre preço_base_fator1 × fator_comercial.
-  const precoBaseFator1 = getPrecoBaseFator1Pedido(item, pedido);
-  const vlrUnit =
-    Number.isFinite(precoBaseFator1) && precoBaseFator1 > 0
-      ? (precoBaseFator1 * fatorComercial)
-      : NaN;
+  const vlrUnit = getValorUnitarioComercialItem(item, prod, pedido);
   const freteUnit = getFreteUnitarioConvertido(prod, fatorComercial);
   const outrosUnit = getOutrosUnitarioConvertido(prod, fatorComercial);
   const custoUnit = vlrUnit + freteUnit + outrosUnit;

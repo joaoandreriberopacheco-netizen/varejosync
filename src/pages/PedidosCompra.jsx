@@ -18,6 +18,7 @@ import {
   normalizeItemToCanonicalFactorOne,
   resolveUnidadeExibicaoParaCompras,
   buildSnapshotExibicaoComercial,
+  resolveCustoUnitarioComercialLinha,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -163,11 +164,22 @@ const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
     return temAjusteManualItem ? custoFinalUnitario : (baseUnit * multiplicadorPedido);
   }
 
-  const qtd = Number(item.quantidade_base || item.quantidade) || 0;
+  const qtdBase = Number(item.quantidade_base) || 0;
+  const qtdComm = Number(item.quantidade) || 0;
+  const fator = Number(item.fator_conversao) || 1;
   const totalItem = Number(item.total);
-  if (Number.isFinite(totalItem) && qtd > 0) {
-    const unitFromTotal = totalItem / qtd;
-    return temAjusteManualItem ? unitFromTotal : (baseUnit * multiplicadorPedido);
+  if (Number.isFinite(totalItem) && totalItem > 0) {
+    const eixoF1 = linhaPrecoNoEixoFatorUm(item);
+    const divisor =
+      eixoF1 && qtdBase > 0
+        ? qtdBase
+        : qtdComm > 0
+          ? qtdComm
+          : qtdBase || qtdComm;
+    if (divisor > 0) {
+      const unitFromTotal = totalItem / divisor;
+      return temAjusteManualItem ? unitFromTotal : baseUnit * multiplicadorPedido;
+    }
   }
 
   const descontoOuAcrescimo = Number(item.valor_desconto_item);
@@ -212,10 +224,19 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
       ? commercialQuantityFromBase(quantidadeBase, fatorComercial, unidadeComercial)
       : qtdRaw);
 
-  const custoBase = getValorUnitarioEfetivoItemPedido(pedidoItem || item, pedido);
-  const custoUnitarioComercial = custoBase * fatorComercial;
-
   const linhaPedido = pedidoItem || item;
+  const linhaCusto = {
+    ...linhaPedido,
+    quantidade: quantidadeComercial,
+    quantidade_base: quantidadeBase,
+    fator_conversao: fatorComercial,
+    unidade_medida: unidadeComercial,
+  };
+  let custoUnitarioComercial = resolveCustoUnitarioComercialLinha(linhaCusto, 'final');
+  if (!(custoUnitarioComercial > 0)) {
+    custoUnitarioComercial = resolveCustoUnitarioComercialLinha(linhaCusto, 'custo');
+  }
+
   const qLinhaPedido = Number(linhaPedido?.quantidade) || 0;
   const totalOrig =
     Number(linhaPedido?.total) ||

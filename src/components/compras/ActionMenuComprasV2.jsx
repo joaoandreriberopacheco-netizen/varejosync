@@ -3,7 +3,7 @@ import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartp
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
+import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
 
 function normalizarItemRelatorio(item, produtosMap = {}) {
@@ -36,15 +36,23 @@ function normalizarItemRelatorio(item, produtosMap = {}) {
   const imposto1Total = (Number(item?.custo_imposto1 ?? 0) || 0) * divisorAtual;
   const imposto2Total = (Number(item?.custo_imposto2 ?? 0) || 0) * divisorAtual;
 
+  const fator = Number(norm.fator_conversao ?? item?.fator_conversao ?? 1) || 1;
+  const unitComercial = divisorShow > 0 ? total / divisorShow : 0;
+  const custoF1Salvo = Number(item?.custo_unitario);
+  const custoF1 =
+    Number.isFinite(custoF1Salvo) && custoF1Salvo > 0
+      ? custoF1Salvo
+      : custoApresentacaoParaFator1(unitComercial, fator);
+
   return {
     ...item,
     ...norm,
     quantidade_embarcada: quantidadeShow,
     quantidade_pedida: quantidadeShow,
     quantidade_base: quantidadeBase,
-    fator_conversao: Number(norm.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
-    custo_unitario: total / divisorShow,
-    valor_unitario_compra: total / divisorShow,
+    fator_conversao: fator,
+    custo_unitario: custoF1,
+    valor_unitario_compra: unitComercial,
     frete_unitario: freteTotal / divisorShow,
     custo_outros: outrosTotal / divisorShow,
     custo_calculado: custoTotal / divisorShow,

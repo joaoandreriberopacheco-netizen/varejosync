@@ -637,6 +637,20 @@ export function formatCommercialQuantity(value, unitCode = "") {
   });
 }
 
+/**
+ * `true` = custo na linha está no eixo fator-1 (ex. R$/m²); `false` = já na UM comercial (ex. PAC).
+ * Usado para não multiplicar o fator de conversão duas vezes em relatório/cards.
+ */
+export function linhaPrecoNoEixoFatorUm(linha = {}) {
+  const qb = Number(linha.quantidade_base) || 0;
+  const qv = Number(linha.quantidade) || 0;
+  const f = Number(linha.fator_conversao) || 1;
+  if (!(qb > 0 && qv > 0)) return false;
+  if (Math.abs(qv - qb) < 1e-5) return true;
+  if (f > 1 && Math.abs(qv * f - qb) < Math.max(0.015 * qb, 0.05)) return false;
+  return false;
+}
+
 /** Custo/preço na unidade comercial (vitrine ou embalagem escolhida). */
 export function custoFator1ParaApresentacao(valorFator1, fatorConversao = 1) {
   return normalizeNumber(valorFator1, 0) * (normalizeNumber(fatorConversao, 1) || 1);
@@ -649,12 +663,52 @@ export function custoApresentacaoParaFator1(valorApresentacao, fatorConversao = 
 }
 
 /**
- * Custo na unidade comercial da linha: sempre `custo_unitario` (fator-1) × `fator_conversao`.
- * Não usa snapshot sozinho — após troca de embalagem o snapshot pode ficar desatualizado.
+ * Preço unitário na UM comercial da linha (PAC, CX, etc.), sem aplicar o fator duas vezes.
+ * Linhas legadas podem ter `custo_unitario` já em comercial; linhas canônicas guardam fator-1.
+ */
+export function resolveCustoUnitarioComercialLinha(linha = {}, axis = "custo") {
+  const f = normalizeNumber(linha.fator_conversao, 1) || 1;
+  const apres =
+    axis === "final"
+      ? normalizeNumber(linha.custo_final_unitario_apresentacao, NaN)
+      : normalizeNumber(linha.custo_unitario_apresentacao, NaN);
+  const unitF1 =
+    axis === "final"
+      ? normalizeNumber(linha.custo_final_unitario ?? linha.custo_unitario, NaN)
+      : normalizeNumber(linha.custo_unitario, NaN);
+
+  if (Number.isFinite(apres) && apres > 0) {
+    return roundToTwoDecimals(apres);
+  }
+
+  if (!(Number.isFinite(unitF1) && unitF1 > 0)) return 0;
+
+  const qv = Number(linha.quantidade) || 0;
+  const totalLinha = Number(linha.total ?? linha.valor_total_item ?? linha.valor_total ?? 0);
+  const perCx = qv > 0 && totalLinha > 0 ? totalLinha / qv : NaN;
+  const tol = (x) => Math.max(0.025 * x, 0.35);
+  if (Number.isFinite(perCx) && perCx > 0 && Math.abs(unitF1 - perCx) <= tol(perCx)) {
+    return roundToTwoDecimals(unitF1);
+  }
+
+  if (linhaPrecoNoEixoFatorUm(linha)) {
+    const comercial = custoFator1ParaApresentacao(unitF1, f);
+    if (Number.isFinite(perCx) && perCx > 0 && Math.abs(comercial - perCx) <= tol(perCx)) {
+      return roundToTwoDecimals(comercial);
+    }
+    if (Number.isFinite(perCx) && perCx > 0 && Math.abs(unitF1 - perCx) <= tol(perCx)) {
+      return roundToTwoDecimals(unitF1);
+    }
+    return roundToTwoDecimals(comercial);
+  }
+  return roundToTwoDecimals(unitF1);
+}
+
+/**
+ * Custo na unidade comercial da linha (exibição em carrinho, cards, relatórios).
  */
 export function getCustoApresentacaoItem(item = {}) {
-  const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
-  return custoFator1ParaApresentacao(item?.custo_unitario, fator);
+  return resolveCustoUnitarioComercialLinha(item, "custo");
 }
 
 /** Alinha custo fator-1 e snapshots de apresentação ao custo visível na embalagem. */
@@ -725,9 +779,10 @@ export function resolveDescontoPctCompraProduto(product = {}, custoFator1 = 0) {
 
 /** Custo unitário na unidade de exibição após desconto/acréscimo (desconto negativo soma). */
 export function getCustoFinalApresentacaoItem(item = {}) {
-  return roundToTwoDecimals(
-    getCustoApresentacaoItem(item) - getDescontoApresentacaoItem(item),
-  );
+  const base =
+    resolveCustoUnitarioComercialLinha(item, "final") ||
+    resolveCustoUnitarioComercialLinha(item, "custo");
+  return roundToTwoDecimals(base - getDescontoApresentacaoItem(item));
 }
 
 /** Percentual absoluto sobre o custo na unidade de exibição (sempre ≥ 0). */
@@ -1212,16 +1267,27 @@ export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
   const freteTotal =
     Number(item?.frete_total ?? ((Number(item?.frete_unitario ?? item?.valor_frete_unitario ?? 0) || 0) * quantidadeAtual)) || 0;
   const outrosTotal = Number(item?.outros_total ?? ((Number(item?.custo_outros ?? 0) || 0) * quantidadeAtual)) || 0;
-  const totalItem =
-    Number(item?.valor_total_item ?? item?.total ?? (Number(item?.valor_unitario_compra ?? 0) * quantidadeAtual)) || 0;
-
-  return {
+  const linhaExibicao = {
     ...item,
     unidade_medida: resolvido?.unidade || fallback,
     fator_conversao: Number(resolvido?.fator_conversao ?? item?.fator_conversao ?? 1) || 1,
     quantidade: quantidadeShow || quantidadeAtual,
     quantidade_base: quantidadeBase,
-    valor_unitario_compra: totalItem / divisor,
+  };
+  const valorUnitarioComercial = resolveCustoUnitarioComercialLinha(linhaExibicao, "custo");
+  const qShow = quantidadeShow || quantidadeAtual;
+  const totalItem =
+    Number(item?.valor_total_item ?? item?.total) ||
+    (valorUnitarioComercial > 0 && qShow > 0 ? roundToTwoDecimals(valorUnitarioComercial * qShow) : 0) ||
+    0;
+
+  return {
+    ...item,
+    unidade_medida: linhaExibicao.unidade_medida,
+    fator_conversao: linhaExibicao.fator_conversao,
+    quantidade: linhaExibicao.quantidade,
+    quantidade_base: quantidadeBase,
+    valor_unitario_compra: qShow > 0 ? totalItem / qShow : valorUnitarioComercial,
     frete_unitario: freteTotal / divisor,
     custo_outros: outrosTotal / divisor,
     custo_calculado: custoTotal / divisor,

@@ -297,7 +297,6 @@ const roundTo2 = (n) => (Number.isFinite(n) ? Math.round(n * 100) / 100 : n);
 const unitarioSalvoParaPrecoComercialPdf = (unit, o, item, f, eixoF1) => {
   if (!(Number.isFinite(unit) && unit > 0)) return NaN;
   if (!(f > 1)) return unit;
-  if (eixoF1) return unit * f;
 
   const qb = Number(o.quantidade_base) || Number(item.quantidade_base) || 0;
   const qv = Number(o.quantidade) || Number(item.quantidade) || 0;
@@ -305,14 +304,27 @@ const unitarioSalvoParaPrecoComercialPdf = (unit, o, item, f, eixoF1) => {
     Number(
       o.total ?? item.total ?? o.valor_total_item ?? item.valor_total_item ?? o.valor_total ?? item.valor_total ?? 0,
     ) || 0;
-  if (qb > 0 && qv > 0 && t > 0) {
-    const perB = t / qb;
-    const perCx = t / qv;
-    const tol = (x) => Math.max(0.025 * x, 0.35);
-    if (Math.abs(unit - perB) <= tol(perB) && Math.abs(unit * f - perCx) <= tol(perCx)) return unit * f;
-    if (Math.abs(unit - perCx) <= tol(perCx)) return unit;
+  const tol = (x) => Math.max(0.025 * x, 0.35);
+  const perCx = qv > 0 && t > 0 ? t / qv : NaN;
+  const perB = qb > 0 && t > 0 ? t / qb : NaN;
+
+  if (Number.isFinite(perCx) && perCx > 0 && Math.abs(unit - perCx) <= tol(perCx)) {
+    return unit;
   }
-  return unit;
+
+  if (eixoF1) {
+    if (Number.isFinite(perCx) && perCx > 0 && Math.abs(unit * f - perCx) <= tol(perCx)) {
+      return unit * f;
+    }
+    return unit * f;
+  }
+
+  if (qb > 0 && qv > 0 && t > 0) {
+    if (Number.isFinite(perB) && Math.abs(unit - perB) <= tol(perB) && Math.abs(unit * f - perCx) <= tol(perCx)) {
+      return unit * f;
+    }
+  }
+  return unit * f;
 };
 
 /**
@@ -553,14 +565,13 @@ const getValorUnitarioComercialItem = (item = {}, produto = {}, pedido = {}) => 
 
 // V2: total dos itens calculado pelo mesmo engine limpo (qtd × custo_unitario × fator),
 // inline para evitar forward reference. Sem heurística.
-const getTotalItensAjustadoPedido = (pedido, _produtosMap = {}) => {
+const getTotalItensAjustadoPedido = (pedido, produtosMap = {}) => {
   const itens = getItensRelatorio(pedido);
   return itens.reduce((acc, item) => {
-    const fator = Number(item.fator_conversao) || 1;
     const qtd = Number(item._qtdEfetiva ?? item.quantidade ?? item.quantidade_embarcada ?? item.quantidade_pedida) || 0;
-    const custoFator1 = Number(item.custo_unitario);
-    const vlrUnit = Number.isFinite(custoFator1) && custoFator1 > 0 ? custoFator1 * fator : 0;
-    return acc + qtd * vlrUnit;
+    const prod = produtosMap[item.produto_id] || {};
+    const vlrUnit = getValorUnitarioComercialItem(item, prod, pedido);
+    return acc + qtd * (Number.isFinite(vlrUnit) && vlrUnit > 0 ? vlrUnit : 0);
   }, 0);
 };
 
@@ -878,8 +889,15 @@ const calcularLinhav2 = (item: any = {}, prod: any = {}, _pedido: any = {}) => {
       ? PDF_COMMERCIAL_QTY_FROM_BASE(qbLinha, fator, un)
       : qLinha;
 
-  const custoFator1 = Number(item.custo_unitario);
-  const vlrUnit = Number.isFinite(custoFator1) && custoFator1 > 0 ? custoFator1 * fator : NaN;
+  const linhaRef = {
+    ...item,
+    _qtdEfetiva: qtd,
+    quantidade: qtd,
+    quantidade_base: qbLinha > 0 ? qbLinha : item.quantidade_base,
+    fator_conversao: fator,
+    unidade_medida: un,
+  };
+  const vlrUnit = getValorUnitarioComercialItem(linhaRef, prod, _pedido);
 
   const freteFator1 = Number(prod.custo_frete_padrao) || 0;
   const freteUnit = freteFator1 * fator;
