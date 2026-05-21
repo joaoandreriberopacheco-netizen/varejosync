@@ -1150,15 +1150,20 @@ Deno.serve(async (req) => {
 
     const getCleanItemLayout = (layout) => {
       if (layout === 'wide') {
-        const itemMl = TM + 14;
-        const lineX = TM + 11.5;
-        const qtdColRight = TM + 10.5;
+        const descX = TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao;
+        const descMaxW = Math.max(
+          18,
+          EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit -
+            EXPANDED_ITEMS_TABLE_COLUMNS.descricao -
+            EXPANDED_DESC_TO_VLR_GAP_MM,
+        );
         return {
           layout: 'wide',
-          itemMl,
-          lineX,
-          qtdColRight,
-          nomeMaxW: TM + TW - itemMl - 3,
+          descX,
+          descMaxW,
+          cols: EXPANDED_ITEMS_TABLE_COLUMNS,
+          lineX: TM + 11.5,
+          qtdColRight: TM + 10.5,
           contentRight: TM + TW,
           vs: 1.12,
           fontScale: 1,
@@ -1166,6 +1171,8 @@ Deno.serve(async (req) => {
           useZebra: true,
           zebraX: TM,
           zebraW: TW,
+          nomeFontSize: 7,
+          valuesFontSize: EXPANDED_ITEMS_TABLE_FONT_SIZE,
         };
       }
       const itemMl = M + 14.8;
@@ -1220,22 +1227,48 @@ Deno.serve(async (req) => {
       const cfg = getCleanItemLayout(layout);
       const prod = produtosMap[item.produto_id] || {};
       const met = resolveMetricasItemPdf(item, prod, pedido);
-      const det = buildExpandedItemDetailText(layout, item, prod, met);
       const vs = cfg.vs;
       const nomeLineStep = 3.85 * vs;
-      const auxDetailStep = 2.95 * vs;
-      const gapNomeDetalhe = 2.4 * vs;
       const margemLinhaInferiorItem = 1.3 * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7 * cfg.fontScale);
+      doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
+      const nomeMaxW = layout === 'wide' ? cfg.descMaxW : cfg.nomeMaxW;
+      const nomeX = layout === 'wide' ? cfg.descX : cfg.itemMl;
       const nomeLinhas = doc.splitTextToSize(
         toTitleCase(safe(item.produto_nome || prod.nome || '-')),
-        cfg.nomeMaxW,
+        nomeMaxW,
       );
       const nomeTop = y0 + 3.4 * vs;
       const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
+      if (layout === 'wide') {
+        const gapNomeValores = 2.5 * vs;
+        const valoresRowH = scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 0.8);
+        const valoresY = lastNomeBaseline + gapNomeValores;
+        let detEnd = valoresY + valoresRowH;
+        if (met.warningText) {
+          doc.setFontSize(5.5 * cfg.fontScale);
+          const warnLinhas = doc.splitTextToSize(met.warningText, cfg.descMaxW);
+          detEnd = valoresY + valoresRowH + 1.2 * vs + warnLinhas.length * 2.8 * vs;
+        }
+        return {
+          rowBlockH: detEnd + margemLinhaInferiorItem - y0,
+          met,
+          nomeLinhas,
+          nomeX,
+          cfg,
+          vs,
+          nomeLineStep,
+          nomeTop,
+          valoresY,
+          margemLinhaInferiorItem,
+        };
+      }
+
+      const det = buildExpandedItemDetailText(layout, item, prod, met);
+      const auxDetailStep = 2.95 * vs;
+      const gapNomeDetalhe = 2.4 * vs;
       doc.setFontSize(5.65 * cfg.fontScale);
       const auxValoresLinhas = doc.splitTextToSize(det.linha1, cfg.nomeMaxW);
       const detAux1 = lastNomeBaseline + gapNomeDetalhe;
@@ -1249,6 +1282,7 @@ Deno.serve(async (req) => {
         rowBlockH: detEnd + margemLinhaInferiorItem - y0,
         met,
         nomeLinhas,
+        nomeX: cfg.itemMl,
         auxValoresLinhas,
         det,
         cfg,
@@ -1257,27 +1291,14 @@ Deno.serve(async (req) => {
         auxDetailStep,
         gapNomeDetalhe,
         margemLinhaInferiorItem,
+        nomeTop,
       };
     };
 
     const drawExpandedItemRowClean = (pedido, item, layout, y0, idx = 0) => {
       const measured = measureExpandedItemRow(pedido, item, layout, y0);
-      const {
-        rowBlockH,
-        met,
-        nomeLinhas,
-        auxValoresLinhas,
-        det,
-        cfg,
-        vs,
-        nomeLineStep,
-        auxDetailStep,
-      } = measured;
-
-      const nomeTop = y0 + 3.4 * vs;
-      const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
-      const detAux1 = lastNomeBaseline + measured.gapNomeDetalhe;
-      const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+      const { rowBlockH, met, nomeLinhas, cfg, vs, nomeLineStep, nomeTop } = measured;
+      const nomeX = measured.nomeX ?? cfg.itemMl;
       const branchY = y0 + 2.8 * vs;
 
       if (cfg.useZebra && idx % 2 === 0) {
@@ -1299,28 +1320,56 @@ Deno.serve(async (req) => {
       doc.text(met.un, cfg.qtdColRight, nomeTop + 4.6, { align: 'right' });
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7 * cfg.fontScale);
+      doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
       doc.setTextColor(...SLATE700);
       nomeLinhas.forEach((line, li) => {
-        doc.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
+        doc.text(line, nomeX, nomeTop + li * nomeLineStep);
       });
 
-      doc.setFontSize(5.65 * cfg.fontScale);
-      doc.setTextColor(...SLATE500);
-      auxValoresLinhas.forEach((line, ai) => {
-        doc.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
-      });
-      doc.text(det.linha2, cfg.itemMl, detAux2);
-      if (det.warning) {
-        const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
-        warnLinhas.forEach((line, wi) => {
-          doc.text(line, cfg.itemMl, detAux2 + auxDetailStep + wi * auxDetailStep);
+      if (layout === 'wide') {
+        const valoresY = measured.valoresY;
+        const cols = cfg.cols;
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(cfg.valuesFontSize * cfg.fontScale);
+        doc.setTextColor(...C.text);
+        doc.text(moedaSemSimboloOuTraco(met.vlrUnit), TM + cols.vlrUnit, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.freteUnit), TM + cols.frete, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.outrosUnit), TM + cols.outros, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.custoUnit), TM + cols.custo, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.totalLinha), TM + cols.total, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.vendaUnit), TM + cols.venda, valoresY, { align: 'right' });
+        doc.text(percentualOuTraco(met.markup), TM + cols.markup, valoresY, { align: 'right' });
+        if (met.warningText) {
+          doc.setFontSize(5.5 * cfg.fontScale);
+          doc.setTextColor(...SLATE500);
+          const warnLinhas = doc.splitTextToSize(met.warningText, cfg.descMaxW);
+          warnLinhas.forEach((line, wi) => {
+            doc.text(line, cfg.descX, valoresY + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 1.2) + wi * 2.8 * vs);
+          });
+        }
+      } else {
+        const { auxValoresLinhas, det, auxDetailStep, gapNomeDetalhe } = measured;
+        const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+        const detAux1 = lastNomeBaseline + gapNomeDetalhe;
+        const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+        doc.setFontSize(5.65 * cfg.fontScale);
+        doc.setTextColor(...SLATE500);
+        auxValoresLinhas.forEach((line, ai) => {
+          doc.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
         });
+        doc.text(det.linha2, cfg.itemMl, detAux2);
+        if (det.warning) {
+          const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
+          warnLinhas.forEach((line, wi) => {
+            doc.text(line, cfg.itemMl, detAux2 + auxDetailStep + wi * auxDetailStep);
+          });
+        }
       }
 
+      const sepX = layout === 'wide' ? cfg.descX : cfg.itemMl;
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.15);
-      doc.line(cfg.itemMl, y0 + rowBlockH, cfg.contentRight, y0 + rowBlockH);
+      doc.line(sepX, y0 + rowBlockH, cfg.contentRight, y0 + rowBlockH);
 
       const qtd = Number(met.qtd) || 0;
       const totCustoAdd = qtd * (Number(met.custoUnit) || 0);
