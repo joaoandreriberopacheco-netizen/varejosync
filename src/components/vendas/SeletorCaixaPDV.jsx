@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
-import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
   const navigate = useNavigate();
@@ -85,7 +85,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
               incluirRetrocompatSemTurno: !turnoAberto.data_fechamento,
             })
           );
-          const subCtx = buildSubstituicoesVendaCaixa({
+          const subCtx = criarIndiceSubstituicoes({
             vendas: vendasTurno,
             vales: todosVales,
             devolucoes: todasDevolucoes,

@@ -69,7 +69,8 @@ import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
-import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
+import { formatDestaquesVendaHtmlLinha } from '@/lib/formatDestaquesVendaHtml';
 
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
 const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
@@ -475,10 +476,11 @@ export default function PDVCaixa() {
           incluirRetrocompatSemTurno: !turno.data_fechamento,
         })
       );
-      const subCtx = buildSubstituicoesVendaCaixa({
+      const subCtx = criarIndiceContextoVenda({
         vendas: vendasTurno,
         vales: todosVales,
         devolucoes: todasDevolucoes,
+        turnos: turno ? [turno] : [],
       });
       setSubstituicoesCtx(subCtx);
       setVendasTurnoTodos(vendasTurno);
@@ -493,6 +495,7 @@ export default function PDVCaixa() {
 
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0, totalFiado = 0;
       vendasTurno.forEach((venda) => {
+        if (subCtx.metaPorPedidoId?.[venda.id]?.contaNoTotal === false) return;
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
           venda.pagamentos.forEach((pag) => {
             const fp = (pag.forma_pagamento || '').toLowerCase();
@@ -1616,9 +1619,7 @@ export default function PDVCaixa() {
                            ? pagamentos.map(p => `<div style="display:flex;justify-content:space-between;padding:2px 0 2px 16px;font-size:10px;color:#6b7280"><span>${p.forma_pagamento}</span><span>R$ ${(p.valor||0).toFixed(2)}</span></div>`).join('')
                            : '';
                          const formasSingle = pagamentos.length === 1 ? ` · ${pagamentos[0].forma_pagamento} R$ ${(pagamentos[0].valor||0).toFixed(2)}` : '';
-                         const linhaSub = meta?.papel === 'substituto' && meta.origem
-                           ? `<div style="font-size:10px;color:#b45309;padding-top:2px">↔ Substitui ${meta.origem.numero} (R$ ${(meta.origem.valor_total||0).toFixed(2)})</div>`
-                           : '';
+                         const linhaSub = formatDestaquesVendaHtmlLinha(v, substituicoesCtx, formatValor);
                          return `<div style="border-bottom:1px solid #f3f4f6;padding:5px 0">
                            <div style="display:flex;justify-content:space-between;font-size:11px">
                              <span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${formasSingle}</span>
@@ -2052,11 +2053,16 @@ export default function PDVCaixa() {
           vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo}
           caixaData={caixaData} formatValor={formatValor}
           metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
+          indiceContexto={substituicoesCtx}
           onVerDetalhes={setVendaDetalhada}
         />
         <VendaDetalheDialog
           venda={vendaDetalhada} onClose={() => setVendaDetalhada(null)}
           formatValor={formatValor}
+          indiceContexto={substituicoesCtx}
+          turno={turnoAtivo}
+          operadorNome={currentUser?.full_name}
+          onVendaCancelada={loadData}
         />
         <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={loadData} />
         <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={loadData} />

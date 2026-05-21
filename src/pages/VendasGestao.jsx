@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,14 @@ import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
+import VendaContextoLinha from '@/components/vendas/VendaContextoLinha';
+import {
+  carregarFonteContextoVendas,
+  criarIndiceContextoVenda,
+  calcularTotaisUtilPedidos,
+  mapPedidosParaListaGestao,
+} from '@/lib/contextoVendaIntegrado';
+import { invalidateKpisVendasCache } from '@/hooks/useKPIsCache';
 import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
@@ -58,6 +66,7 @@ export default function VendasGestaoPage() {
     finalizados: 0,
     totalMes: 0
   });
+  const [indiceContexto, setIndiceContexto] = useState(null);
 
   useEffect(() => {
     loadPedidos();
@@ -65,23 +74,28 @@ export default function VendasGestaoPage() {
 
   const loadPedidos = async () => {
     setIsLoading(true);
-    const data = await base44.entities.PedidoVenda.list('-created_date');
-    setPedidos(data);
-    
+    const fonte = await carregarFonteContextoVendas(base44);
+    const indice = criarIndiceContextoVenda(fonte);
+    setIndiceContexto(indice);
+    setPedidos(fonte.pedidos);
+
     const rascData = await base44.entities.RascunhoPedidoVenda.list('-created_date');
     setRascunhos(rascData);
-    
-    // Calcular estatísticas
-    const stats = {
-      orcamentos: data.filter(p => p.status === 'Orçamento').length,
-      aprovados: data.filter(p => p.status === 'Aprovado').length,
-      finalizados: data.filter(p => p.status === 'Finalizado').length,
-      totalMes: data.filter(p => 
+
+    const pedidosMes = fonte.pedidos.filter(
+      (p) =>
         p.status === 'Finalizado' &&
         toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
-      ).reduce((acc, p) => acc + (p.valor_total || 0), 0)
-    };
-    setStats(stats);
+    );
+    const totaisMes = calcularTotaisUtilPedidos(pedidosMes, indice);
+
+    setStats({
+      orcamentos: fonte.pedidos.filter((p) => p.status === 'Orçamento').length,
+      aprovados: fonte.pedidos.filter((p) => p.status === 'Aprovado').length,
+      finalizados: fonte.pedidos.filter((p) => p.status === 'Finalizado').length,
+      totalMes: totaisMes.valorUtil,
+    });
+    invalidateKpisVendasCache();
     setIsLoading(false);
   };
 
@@ -128,11 +142,22 @@ export default function VendasGestaoPage() {
     setRascunhosFiltrados(currentFiltered);
   }, [rascunhos, searchTerm, statusFiltro, dataInicio, dataFim]);
 
-  // Calcular subtotal dos pedidos filtrados
-  const subtotalFiltrado = activeTab === 'pedidos' 
-    ? pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0)
-    : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
-  const quantidadeFiltrada = activeTab === 'pedidos' ? pedidosFiltrados.length : rascunhosFiltrados.length;
+  const pedidosListaGestao = useMemo(
+    () => mapPedidosParaListaGestao(pedidosFiltrados, indiceContexto),
+    [pedidosFiltrados, indiceContexto]
+  );
+
+  const totaisFiltradosPedidos = useMemo(
+    () => calcularTotaisUtilPedidos(pedidosFiltrados, indiceContexto),
+    [pedidosFiltrados, indiceContexto]
+  );
+
+  const subtotalFiltrado =
+    activeTab === 'pedidos'
+      ? totaisFiltradosPedidos.valorUtil
+      : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
+  const quantidadeFiltrada =
+    activeTab === 'pedidos' ? totaisFiltradosPedidos.quantidade : rascunhosFiltrados.length;
 
   const handleEdit = (pedido) => {
     // Navegar para edição ou abrir modal conforme necessário
@@ -466,7 +491,14 @@ export default function VendasGestaoPage() {
         <div className="space-y-4 min-w-0">
           {/* Total no topo */}
           <div className="flex items-start justify-between gap-3 text-sm min-w-0">
-            <span className="text-gray-500 dark:text-gray-400 min-w-0">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-gray-500 dark:text-gray-400 min-w-0">
+              {quantidadeFiltrada} pedido(s)
+              {totaisFiltradosPedidos.qtdSubstituicoes > 0 && (
+                <span className="block text-[11px] text-amber-600 dark:text-amber-400">
+                  {totaisFiltradosPedidos.qtdSubstituicoes} troca(s) — total útil
+                </span>
+              )}
+            </span>
             <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
           </div>
 
@@ -476,7 +508,7 @@ export default function VendasGestaoPage() {
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
           </div>
-        ) : pedidosFiltrados.length === 0 ? (
+        ) : pedidosListaGestao.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p className="text-sm text-gray-600 dark:text-gray-300">Nenhum pedido encontrado</p>
@@ -485,14 +517,25 @@ export default function VendasGestaoPage() {
           <>
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
-              {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm overflow-hidden">
+              {pedidosListaGestao.map(pedido => (
+                <div
+                  key={pedido.id}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm overflow-hidden ${
+                    pedido.contexto?.destaques?.some((d) => d.tipo === 'substituicao') ? 'ring-1 ring-amber-200/70 dark:ring-amber-800/50' : ''
+                    } ${pedido.contexto?.cancelado ? 'opacity-75' : ''}
+                  }`}
+                >
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-800 dark:text-gray-200 break-words leading-tight">
                         {pedido.cliente_nome || 'Cliente não informado'}
                       </div>
                       <div className="text-xs text-blue-600 dark:text-blue-400 break-all">{pedido.numero}</div>
+                      <VendaContextoLinha
+                        contexto={pedido.contexto}
+                        formatValor={(v) => `R$ ${formatValor(v)}`}
+                        compact
+                      />
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 min-w-0">
                         <span className="text-xs text-green-600 break-words">● {pedido.status}</span>
                         <span className="text-xs text-gray-400 break-words">{pedido.vendedor_nome}</span>
@@ -543,8 +586,13 @@ export default function VendasGestaoPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pedidosFiltrados.map(pedido => (
-                    <TableRow key={pedido.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  {pedidosListaGestao.map(pedido => (
+                    <TableRow
+                      key={pedido.id}
+                      className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                        pedido.contexto?.destaques?.some((d) => d.tipo === 'substituicao') ? 'bg-amber-50/30 dark:bg-amber-950/10' : ''
+                      } ${pedido.contexto?.cancelado ? 'opacity-60' : ''}`}
+                    >
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -568,6 +616,10 @@ export default function VendasGestaoPage() {
                       <TableCell>
                         <div className="font-medium text-gray-800 dark:text-gray-200">{pedido.cliente_nome || '-'}</div>
                         <div className="text-xs text-blue-600 dark:text-blue-400">{pedido.numero}</div>
+                        <VendaContextoLinha
+                          contexto={pedido.contexto}
+                          formatValor={(v) => `R$ ${formatValor(v)}`}
+                        />
                       </TableCell>
                       <TableCell>
                         <span className="text-xs text-green-600">● {pedido.status}</span>
@@ -604,16 +656,24 @@ export default function VendasGestaoPage() {
       </div>
 
       {/* Dialogs de operações */}
-      <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+      <AlterarPagamentoDialog
+        open={showAlterarPagamento}
+        onClose={() => {
+          setShowAlterarPagamento(false);
+          loadPedidos();
+        }}
+      />
 
       {/* Dialog de Detalhes */}
       <DetalhesPedidoVenda
         pedido={pedidoDetalhes}
+        indiceContexto={indiceContexto}
         isOpen={showDetalhes}
         onClose={() => {
           setShowDetalhes(false);
           setPedidoDetalhes(null);
         }}
+        onRecarregar={loadPedidos}
       />
 
       {/* Dialog de Reimpressão */}
@@ -627,6 +687,7 @@ export default function VendasGestaoPage() {
         ) : (
           <ComprovanteCompra
             pedido={pedidoParaImprimir}
+            indiceContexto={indiceContexto}
             open={showComprovante}
             onClose={() => setShowComprovante(false)}
           />

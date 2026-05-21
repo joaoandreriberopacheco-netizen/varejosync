@@ -21,7 +21,7 @@ import {
   Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
 
 export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
         v.created_date.startsWith(hoje) &&
         (v.status === 'Financeiro OK' || v.status === 'Finalizado' || v.status === 'Pedido Concluído')
       );
-      const subCtx = buildSubstituicoesVendaCaixa({
+      const subCtx = criarIndiceContextoVenda({
         vendas: vendasHoje,
         vales: todosVales,
         devolucoes: todasDevolucoes,

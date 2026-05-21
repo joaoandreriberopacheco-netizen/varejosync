@@ -21,23 +21,33 @@ import {
   Banknote,
   ArrowLeft,
   MoreVertical,
-  Share2
+  Share2,
+  Ban
 } from 'lucide-react';
+import CancelarVendaCaixaDialog from '@/components/vendas/caixa/CancelarVendaCaixaDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
+import VendaContextoLinha from '@/components/vendas/VendaContextoLinha';
+import VendaHistoricoIntegrado from '@/components/vendas/VendaHistoricoIntegrado';
+import { getContextoPedido } from '@/lib/contextoVendaIntegrado';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
 const fmtData = (d) => d ? formatarSoData(d) : '-';
 
-export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
+const STATUS_PODE_CANCELAR = ['Financeiro OK', 'Finalizado', 'Pedido Concluído'];
+
+export default function DetalhesPedidoVenda({ pedido, indiceContexto, isOpen, onClose, onRecarregar }) {
   const [lancamentosFinanceiros, setLancamentosFinanceiros] = useState([]);
   const [movimentosEstoque, setMovimentosEstoque] = useState([]);
   const [showComprovante, setShowComprovante] = useState(false);
+  const [showCancelar, setShowCancelar] = useState(false);
+  const [operadorNome, setOperadorNome] = useState('');
 
   useEffect(() => {
     if (pedido && isOpen) {
       loadDadosAdicionais();
+      base44.auth.me().then((u) => setOperadorNome(u?.full_name || '')).catch(() => {});
     }
   }, [pedido, isOpen]);
 
@@ -84,6 +94,12 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
     setShowComprovante(true);
   };
 
+  const ctxPedido = getContextoPedido(indiceContexto, pedido?.id);
+  const podeCancelar =
+    STATUS_PODE_CANCELAR.includes(pedido.status) &&
+    !ctxPedido.cancelado &&
+    (pedido.status || '').toLowerCase() !== 'cancelado';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-50 dark:bg-gray-900 border-0 p-0">
@@ -101,6 +117,16 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {podeCancelar && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelar(true)}
+                    className="text-xs px-3 py-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300"
+                  >
+                    <Ban className="w-4 h-4 inline mr-1" />
+                    Cancelar
+                  </button>
+                )}
                 {pedido.status === 'Pedido Concluído' && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -163,6 +189,13 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
               <div className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-200">{formatValor(pedido.valor_total)}</div>
             </div>
           </div>
+
+          {indiceContexto && (
+            <VendaContextoLinha
+              contexto={getContextoPedido(indiceContexto, pedido.id)}
+              formatValor={formatValor}
+            />
+          )}
 
           {/* Segunda linha de info */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -334,20 +367,14 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 </div>
               )}
 
+              <VendaHistoricoIntegrado pedido={pedido} indiceContexto={indiceContexto} />
               {pedido.historico && String(pedido.historico).trim() !== '' && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                      Histórico do pedido
-                    </h3>
-                  </div>
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-xl max-h-48 overflow-y-auto">
-                    <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-sans">
-                      {pedido.historico}
-                    </pre>
-                  </div>
-                </div>
+                <details className="text-xs text-gray-500">
+                  <summary className="cursor-pointer mb-2">Ver texto bruto do histórico</summary>
+                  <pre className="bg-white dark:bg-gray-800 p-3 rounded-xl whitespace-pre-wrap font-sans max-h-32 overflow-y-auto">
+                    {pedido.historico}
+                  </pre>
+                </details>
               )}
             </TabsContent>
 
@@ -520,11 +547,24 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
         ) : (
           <ComprovanteCompra
             pedido={pedido}
+            indiceContexto={indiceContexto}
             open={showComprovante}
             onClose={() => setShowComprovante(false)}
           />
         )
       )}
+
+      <CancelarVendaCaixaDialog
+        open={showCancelar}
+        onOpenChange={setShowCancelar}
+        pedido={pedido}
+        operadorNome={operadorNome}
+        formatValor={formatValor}
+        onSuccess={() => {
+          onClose?.();
+          onRecarregar?.();
+        }}
+      />
     </Dialog>
   );
 }

@@ -5,7 +5,9 @@ import { ArrowLeft, Printer, Receipt, Eye, ArrowDownUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
-import { formatarDiferencaSubstituicao } from '@/lib/substituicoesVendaCaixa';
+import VendaContextoLinha from '@/components/vendas/VendaContextoLinha';
+import { formatDestaquesVendaHtmlLinha } from '@/lib/formatDestaquesVendaHtml';
+import { getContextoPedido } from '@/lib/contextoVendaIntegrado';
 
 const fmtHora = (d) => {
   const dataHora = formatarDataHora(d);
@@ -13,28 +15,9 @@ const fmtHora = (d) => {
 };
 const fmtDtHora = (d) => formatarDataHora(d);
 
-function BlocoSubstituicao({ meta, formatValor }) {
-  if (meta?.papel !== 'substituto' || !meta.origem) return null;
-  const origem = meta.origem;
-  return (
-    <div className="mt-2 pt-2 border-t border-dashed border-amber-200/80 dark:border-amber-800/50 flex items-start gap-2">
-      <ArrowDownUp className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-      <div className="flex-1 min-w-0 text-xs text-gray-500 dark:text-gray-400">
-        <span>Substitui </span>
-        <span className="font-medium text-gray-600 dark:text-gray-300">{origem.numero}</span>
-        <span> (</span>
-        <span className="line-through">{formatValor(origem.valor_total)}</span>
-        <span>)</span>
-      </div>
-      <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 whitespace-nowrap">
-        {formatarDiferencaSubstituicao(meta.diferenca, formatValor)}
-      </span>
-    </div>
-  );
-}
-
-function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
-  const isSubstituto = meta?.papel === 'substituto';
+function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact, indiceContexto }) {
+  const ctx = meta?.contexto || getContextoPedido(indiceContexto, venda.id);
+  const isSubstituto = ctx?.substituicao?.papel === 'substituto' || meta?.papel === 'substituto';
   const padding = compact ? 'p-4' : 'p-5';
 
   if (compact) {
@@ -66,7 +49,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
         </div>
         <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">{venda.cliente_nome}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{venda.vendedor_nome}</div>
-        <BlocoSubstituicao meta={meta} formatValor={formatValor} />
+        <VendaContextoLinha contexto={ctx} formatValor={formatValor} compact />
         <div className="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
           <span className="text-xs text-gray-600 dark:text-gray-400">{venda.itens?.length || 0} itens</span>
           <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(venda.valor_total)}</span>
@@ -94,7 +77,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
           </div>
           <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">{venda.cliente_nome}</div>
           <div className="text-xs text-gray-500 dark:text-gray-400">{venda.vendedor_nome}</div>
-          <BlocoSubstituicao meta={meta} formatValor={formatValor} />
+          <VendaContextoLinha contexto={ctx} formatValor={formatValor} compact />
         </div>
         <div className="text-right flex-shrink-0">
           <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-1">{formatValor(venda.valor_total)}</div>
@@ -112,13 +95,9 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
   );
 }
 
-function htmlLinhaVenda(v, meta, formatValor) {
+function htmlLinhaVenda(v, meta, formatValor, indiceContexto) {
   const pags = (v.pagamentos || []).map((p) => `${p.forma_pagamento} R$ ${(p.valor || 0).toFixed(2)}`).join(' | ');
-  let sub = '';
-  if (meta?.papel === 'substituto' && meta.origem) {
-    const diff = formatarDiferencaSubstituicao(meta.diferenca, (n) => `R$ ${Number(n).toFixed(2)}`);
-    sub = `<div style="font-size:10px;color:#b45309;margin-top:2px">↔ Substitui ${meta.origem.numero} (<s>R$ ${(meta.origem.valor_total || 0).toFixed(2)}</s>) · ${diff}</div>`;
-  }
+  const sub = formatDestaquesVendaHtmlLinha(v, indiceContexto || { metaPorPedidoId: meta ? { [v.id]: meta } : {} }, formatValor);
   return `<div style="border-bottom:1px solid #f3f4f6;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${v.numero} · ${v.cliente_nome || ''} · ${fmtHora(v.created_date)}</span><span style="color:#059669;font-weight:600">+R$ ${(v.valor_total || 0).toFixed(2)}</span></div>${sub}<div style="font-size:10px;color:#9ca3af">${pags}</div></div>`;
 }
 
@@ -130,6 +109,7 @@ export default function VendasTurnoDialog({
   caixaData,
   formatValor,
   metaPorPedidoId = {},
+  indiceContexto = null,
   onVerDetalhes,
 }) {
   const qtdSub = caixaData?.qtdSubstituicoes || 0;
@@ -152,7 +132,7 @@ export default function VendasTurnoDialog({
           <button
             onClick={async () => {
               const linhas = vendasFinalizadas
-                .map((v) => htmlLinhaVenda(v, metaPorPedidoId[v.id], formatValor))
+                .map((v) => htmlLinhaVenda(v, metaPorPedidoId[v.id], formatValor, indiceContexto))
                 .join('');
               const cancelamentos = turnoAtivo?.cancelamentos_rastro || [];
               const linhasCancelamentos =
@@ -252,6 +232,7 @@ export default function VendasTurnoDialog({
                       key={venda.id}
                       venda={venda}
                       meta={metaPorPedidoId[venda.id]}
+                      indiceContexto={indiceContexto}
                       formatValor={formatValor}
                       onVerDetalhes={onVerDetalhes}
                       compact={false}
@@ -265,6 +246,7 @@ export default function VendasTurnoDialog({
                       key={venda.id}
                       venda={venda}
                       meta={metaPorPedidoId[venda.id]}
+                      indiceContexto={indiceContexto}
                       formatValor={formatValor}
                       onVerDetalhes={onVerDetalhes}
                       compact

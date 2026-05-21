@@ -12,6 +12,8 @@ import { renderTemplate, prepararDadosVenda, ordenarItensComprovante } from '@/l
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import ComprovanteContextoBloco from '@/components/vendas/ComprovanteContextoBloco';
+import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -27,7 +29,7 @@ const fmtV = (v) => {
 const PRETO_CUPOM = '#000';
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
-function CupomTermico({ pedido, dadosEmpresa }) {
+function CupomTermico({ pedido, dadosEmpresa, indiceContexto }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const F = 12;
@@ -120,6 +122,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
         {pedido.vendedor_nome && <div>Vendedor: {pedido.vendedor_nome}</div>}
       </div>
+
+      <ComprovanteContextoBloco pedido={pedido} indiceContexto={indiceContexto} fontSize={F} />
 
       <Sep />
 
@@ -250,7 +254,7 @@ function PreviewScaled({ children }) {
 }
 
 // ── Cupom A4 ─────────────────────────────────────────────────────────────────────
-function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
+function CupomA4({ pedido, dadosEmpresa, dadosCliente, indiceContexto }) {
   const itens = ordenarItensComprovante(pedido.itens || []);
   const preto = PRETO_CUPOM;
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
@@ -325,6 +329,10 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
           </div>
         </div>
       )}
+
+      <div style={{ marginBottom: '4mm' }}>
+        <ComprovanteContextoBloco pedido={pedido} indiceContexto={indiceContexto} fontSize={10} />
+      </div>
 
       {/* ── Tabela de itens ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6mm' }}>
@@ -425,7 +433,12 @@ function TemplateRenderer({ htmlContent }) {
   );
 }
 
-export default function ComprovanteCompra({ pedido, open, onClose }) {
+export default function ComprovanteCompra({ pedido, indiceContexto: indiceContextoProp, open, onClose }) {
+  const indiceContexto = React.useMemo(() => {
+    if (indiceContextoProp) return indiceContextoProp;
+    if (!pedido) return null;
+    return criarIndiceContextoVenda({ pedidos: [pedido] });
+  }, [indiceContextoProp, pedido]);
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [dadosCliente, setDadosCliente] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
@@ -669,7 +682,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               {templates['80mm'] && dadosEmpresa !== undefined ? (
                 <TemplateRenderer htmlContent={renderTemplate(templates['80mm'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
               ) : (
-                <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
+                <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} indiceContexto={indiceContexto} />
               )}
             </div>
           </div>
@@ -679,7 +692,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               {templates['a4'] && dadosEmpresa !== undefined ? (
                 <TemplateRenderer htmlContent={renderTemplate(templates['a4'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
               ) : (
-                <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} dadosCliente={dadosCliente} />
+                <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} dadosCliente={dadosCliente} indiceContexto={indiceContexto} />
               )}
             </div>
           </div>

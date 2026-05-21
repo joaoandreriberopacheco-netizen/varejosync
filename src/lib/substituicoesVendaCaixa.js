@@ -286,3 +286,123 @@ export function formatarDiferencaSubstituicao(diferenca, formatValor) {
   const sign = d > 0 ? '+' : '-';
   return `${sign}${formatValor(Math.abs(d))}`;
 }
+
+/** Status que contam como venda concluída para totais operacionais. */
+export const STATUS_VENDA_CONCLUIDA = [
+  'Financeiro OK',
+  'Finalizado',
+  'Pedido Concluído',
+  'Em Separação',
+  'Em Rota de Entrega',
+];
+
+/**
+ * Carrega a fonte única (pedidos + vales + devoluções) para índice de substituições.
+ */
+export async function carregarFonteSubstituicoesVendas(api) {
+  const [pedidos, vales, devolucoes] = await Promise.all([
+    api.entities.PedidoVenda.list(),
+    api.entities.ValeCompra.list(),
+    api.entities.DevolucaoTroca.list(),
+  ]);
+  return { pedidos, vales, devolucoes };
+}
+
+/** Índice global de pares — mesma regra em caixa, home, gestão e dashboard. */
+export function criarIndiceSubstituicoes({ pedidos = [], vendas, vales = [], devolucoes = [] } = {}) {
+  const lista = pedidos.length > 0 ? pedidos : vendas || [];
+  return buildSubstituicoesVendaCaixa({ vendas: lista, vales, devolucoes });
+}
+
+export function getMetaSubstituicao(ctx, pedidoId) {
+  return ctx?.metaPorPedidoId?.[pedidoId] || { papel: 'normal' };
+}
+
+/** Totais úteis só sobre o subconjunto de pedidos passado (ex.: filtro do dia). */
+export function calcularTotaisUtilPedidos(pedidos, ctx) {
+  if (!ctx) {
+    const valor = round2(pedidos.reduce((s, p) => s + valorPedido(p), 0));
+    return { quantidade: pedidos.length, valorUtil: valor, valorBruto: valor, qtdSubstituicoes: 0 };
+  }
+  if (ctx.idsCancelados && ctx.metaPorPedidoId) {
+    const idsNoConjunto = new Set(pedidos.map((p) => p.id));
+    let valorUtil = 0;
+    let quantidade = 0;
+    for (const p of pedidos) {
+      const meta = ctx.metaPorPedidoId[p.id];
+      if (meta?.contaNoTotal === false || ctx.idsSubstituidos.has(p.id)) continue;
+      quantidade += 1;
+      valorUtil += valorPedido(p);
+    }
+    const valorBruto = round2(pedidos.reduce((s, p) => s + valorPedido(p), 0));
+    const paresNoConjunto = (ctx.pares || []).filter(
+      (par) => idsNoConjunto.has(par.origem.id) && idsNoConjunto.has(par.substituto.id)
+    ).length;
+    return {
+      quantidade,
+      valorUtil: round2(valorUtil),
+      valorBruto,
+      qtdSubstituicoes: paresNoConjunto,
+      valorSubstituidoNaoSoma: round2(valorBruto - valorUtil),
+    };
+  }
+  const idsNoConjunto = new Set(pedidos.map((p) => p.id));
+  let valorUtil = 0;
+  let quantidade = 0;
+  for (const p of pedidos) {
+    if (ctx.idsSubstituidos.has(p.id)) continue;
+    quantidade += 1;
+    valorUtil += valorPedido(p);
+  }
+  const valorBruto = round2(pedidos.reduce((s, p) => s + valorPedido(p), 0));
+  const paresNoConjunto = (ctx.pares || []).filter(
+    (par) => idsNoConjunto.has(par.origem.id) && idsNoConjunto.has(par.substituto.id)
+  ).length;
+  return {
+    quantidade,
+    valorUtil: round2(valorUtil),
+    valorBruto,
+    qtdSubstituicoes: paresNoConjunto,
+    valorSubstituidoNaoSoma: round2(valorBruto - valorUtil),
+  };
+}
+
+/**
+ * Lista para UI: esconde substituídas; se filtro trouxer só a substituída, mostra o substituto.
+ */
+export function mapPedidosParaListaGestao(pedidos, ctx) {
+  if (!ctx) return pedidos.map((p) => ({ ...p, substituicao: { papel: 'normal' } }));
+  const seen = new Set();
+  const lista = [];
+  for (const p of pedidos) {
+    if (ctx.idsSubstituidos.has(p.id)) {
+      const substituto = ctx.metaPorPedidoId[p.id]?.par?.substituto;
+      if (substituto && !seen.has(substituto.id)) {
+        seen.add(substituto.id);
+        lista.push({
+          ...substituto,
+          substituicao: getMetaSubstituicao(ctx, substituto.id),
+        });
+      }
+      continue;
+    }
+    if (!seen.has(p.id)) {
+      seen.add(p.id);
+      lista.push({
+        ...p,
+        substituicao: getMetaSubstituicao(ctx, p.id),
+      });
+    }
+  }
+  return lista;
+}
+
+/** Pedidos do turno/dia com metadados — alias para caixa. */
+export function aplicarSubstituicoesEmVendas(vendas, ctx) {
+  if (!ctx) return { vendasExibicao: vendas, totalVendasUtil: vendas.reduce((s, v) => s + valorPedido(v), 0), ctx: null };
+  return {
+    vendasExibicao: ctx.vendasParaExibicao,
+    totalVendasUtil: ctx.totalVendasUtil,
+    ctx,
+  };
+}

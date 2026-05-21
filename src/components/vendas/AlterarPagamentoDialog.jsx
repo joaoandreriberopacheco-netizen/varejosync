@@ -14,6 +14,8 @@ import {
   isCartaoForma,
   rebuildReceitasLancamentosPedidoVenda,
 } from '@/lib/pagamentoPedidoVendaFinanceiro';
+import { prepararUpdateComEvento, criarEventoPagamentoAlterado } from '@/lib/eventosVenda';
+import { invalidateKpisVendasCache } from '@/hooks/useKPIsCache';
 
 const FORMAS_PAGAMENTO = [
   'Dinheiro',
@@ -383,11 +385,16 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
       const antesStr = JSON.stringify(pedido.pagamentos || []);
       const depoisStr = JSON.stringify(novosPagamentos);
       const agora = new Date().toISOString();
-      const linhaHistorico = `\n[Alteração de pagamento | ${agora}${user?.full_name ? ` | Por: ${user.full_name}` : ''}]\nAntes: ${antesStr}\nDepois: ${depoisStr}`;
+      const evento = criarEventoPagamentoAlterado({
+        antes: pedido.pagamentos || [],
+        depois: novosPagamentos,
+        operador_nome: user?.full_name,
+      });
+      const patchEvento = prepararUpdateComEvento(pedido, evento);
 
       await base44.entities.PedidoVenda.update(pedido.id, {
         pagamentos: novosPagamentos,
-        historico: (pedido.historico || '') + linhaHistorico,
+        ...patchEvento,
       });
 
       await rebuildReceitasLancamentosPedidoVenda(
@@ -397,6 +404,7 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
         formasDePagamento
       );
 
+      invalidateKpisVendasCache();
       toast({
         title: '✓ Pagamento atualizado!',
         description: `Formas de pagamento do ${pedido.numero} foram alteradas.`,

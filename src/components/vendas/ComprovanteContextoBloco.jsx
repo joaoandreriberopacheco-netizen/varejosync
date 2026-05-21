@@ -1,0 +1,97 @@
+import React from 'react';
+import { getContextoPedido } from '@/lib/contextoVendaIntegrado';
+import { TIPO_EVENTO } from '@/lib/eventosVenda';
+
+/**
+ * Bloco de contexto integrado — preto sólido para térmica (sem vermelho/cinza claro).
+ */
+export default function ComprovanteContextoBloco({
+  pedido,
+  indiceContexto,
+  fontSize = 11,
+  variant = 'termico',
+}) {
+  const ctx = getContextoPedido(indiceContexto, pedido?.id);
+  const destaques = ctx.destaques || [];
+  const cancelado = ctx.cancelado || (pedido?.status || '').toLowerCase() === 'cancelado';
+
+  if (!destaques.length && !cancelado) return null;
+
+  const sepLen = variant === 'a4' ? 38 : 32;
+  const Sep = () => (
+    <div
+      style={{
+        margin: '6px 0',
+        fontSize: fontSize,
+        fontWeight: 700,
+        color: '#000',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {'='.repeat(sepLen)}
+    </div>
+  );
+
+  const bold = { fontWeight: 800, color: '#000' };
+
+  return (
+    <>
+      <Sep />
+      <div style={{ fontSize: fontSize, lineHeight: 1.4, color: '#000', fontWeight: 600 }}>
+        {cancelado && (
+          <div
+            style={{
+              textAlign: 'center',
+              ...bold,
+              fontSize: fontSize + 2,
+              marginBottom: '6px',
+              border: '2px solid #000',
+              padding: '4px 2px',
+            }}
+          >
+            *** VENDA CANCELADA ***
+          </div>
+        )}
+        {destaques.map((d, i) => {
+          if (d.tipo === TIPO_EVENTO.SUBSTITUICAO && d.origem) {
+            return (
+              <div key={i} style={{ marginBottom: '4px', ...bold }}>
+                Substitui pedido {d.origem.numero}
+                {d.diferenca != null && d.diferenca !== 0 && (
+                  <span>
+                    {' '}
+                    (dif. R$ {Math.abs(d.diferenca).toFixed(2).replace('.', ',')})
+                  </span>
+                )}
+              </div>
+            );
+          }
+          if (d.tipo === TIPO_EVENTO.PAGAMENTO_ALTERADO) {
+            return (
+              <div key={i} style={{ marginBottom: '4px', ...bold }}>
+                Pagamento atualizado (ver abaixo)
+              </div>
+            );
+          }
+          if (d.tipo === TIPO_EVENTO.CANCELAMENTO) {
+            return (
+              <div key={i} style={{ marginBottom: '4px', ...bold }}>
+                Cancelada{d.motivo ? `: ${d.motivo}` : ''}
+              </div>
+            );
+          }
+          return (
+            <div key={i} style={{ marginBottom: '4px', fontWeight: 700 }}>
+              * {d.rotulo}
+            </div>
+          );
+        })}
+        <div style={{ fontSize: fontSize - 1, fontWeight: 600, marginTop: '4px' }}>
+          Estado atual do pedido
+        </div>
+      </div>
+      <Sep />
+    </>
+  );
+}

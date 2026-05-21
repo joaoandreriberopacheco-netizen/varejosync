@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
 
 export default function GestaoCaixa() {
   const [fluxoCaixa, setFluxoCaixa] = useState({
@@ -48,7 +48,7 @@ export default function GestaoCaixa() {
       (v.status === 'Finalizado' || v.status === 'Financeiro OK' || v.status === 'Pedido Concluído') &&
       new Date(v.created_date) >= inicioDia
     );
-    const subCtx = buildSubstituicoesVendaCaixa({
+    const subCtx = criarIndiceContextoVenda({
       vendas: vendasDia,
       vales: todosVales,
       devolucoes: todasDevolucoes,
