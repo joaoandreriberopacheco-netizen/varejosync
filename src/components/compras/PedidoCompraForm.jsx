@@ -868,27 +868,41 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       // bloqueiam o save legado — apenas geram um aviso pra o usuario.
       if (pedidoId && Array.isArray(dataToSave?.itens)) {
         try {
-          const itensCanonicos = dataToSave.itens.map((it, idx) => ({
-            id: it?.pedido_compra_item_id || it?.id || undefined,
-            produto_id: it?.produto_id || '',
-            produto_unidade_id: it?.produto_unidade_id || '',
-            unidade_sigla: it?.unidade_medida || it?.unidade_apresentacao || '',
-            quantidade_comercial: Number(it?.quantidade) || 0,
-            custo_unitario_fator1: Number(it?.custo_unitario) || 0,
-            frete_unitario_fator1: Number(it?.custo_frete_unitario) || 0,
-            outros_unitario_fator1: Number(it?.custo_outros_unitario) || 0,
-            desconto_unitario_fator1: Number(it?.desconto_unitario ?? it?.valor_desconto_item) || 0,
-            quantidade_vinculada: Number(it?.quantidade_vinculada) || 0,
-            ordem: idx,
-            observacoes: typeof it?.observacoes === 'string' ? it.observacoes : '',
-            status_recebimento: it?.status_recebimento || 'Pendente',
-          })).filter((it) => it.produto_id && it.quantidade_comercial > 0);
+          const itensCanonicos = dataToSave.itens.map((it, idx) => {
+            const synced = syncItemDescontoApresentacao(it);
+            const totalLinha = calcTotalItemCompraPedido(synced);
+            const descontoF1 =
+              Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0;
+            return {
+              id: synced?.pedido_compra_item_id || synced?.id || undefined,
+              produto_id: synced?.produto_id || '',
+              produto_unidade_id: synced?.produto_unidade_id || '',
+              unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
+              quantidade_comercial: Number(synced?.quantidade) || 0,
+              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
+              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
+              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
+              desconto_unitario_fator1: descontoF1,
+              valor_desconto_item: descontoF1,
+              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+              quantidade_vinculada: Number(synced?.quantidade_vinculada) || 0,
+              ordem: idx,
+              observacoes: typeof synced?.observacoes === 'string' ? synced.observacoes : '',
+              status_recebimento: synced?.status_recebimento || 'Pendente',
+            };
+          }).filter((it) => it.produto_id && it.quantidade_comercial > 0);
 
           if (itensCanonicos.length > 0) {
             await savePedidoCompraItem({
               action: 'replaceAll',
               pedido_compra_id: pedidoId,
               items: itensCanonicos,
+            });
+            // replaceAll/recomporPedido pode recalcular totais sem desconto de linha — reafirmar o do formulário.
+            await base44.entities.PedidoCompra.update(pedidoId, {
+              valor_itens: valorItens,
+              valor_total: valorTotal,
+              valor_desconto: roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0),
             });
           }
         } catch (canonicalErr) {

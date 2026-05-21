@@ -2,19 +2,29 @@
  * Consistência entre PedidoCompra e LancamentoFinanceiro na reabertura / reenvio ao financeiro.
  */
 
+import { calcTotalItemCompraPedido } from '@/lib/productUnits';
+
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-/** Soma dos totais de linha (ou `valor_itens` persistido). */
+const totalLinhaPedidoCompra = (item = {}) => {
+  const totalDireto = Number(item?.total ?? item?.valor_total_item ?? item?.subtotal);
+  if (Number.isFinite(totalDireto) && totalDireto > 0) return totalDireto;
+  return calcTotalItemCompraPedido(item);
+};
+
+/** Soma dos totais de linha; `valor_itens` só entra se não houver itens no espelho. */
 export function calcValorItensPedidoCompra(pedido = {}) {
+  const itens = pedido.itens || [];
+  if (itens.length > 0) {
+    return roundToTwoDecimals(
+      itens.reduce((acc, item) => acc + totalLinhaPedidoCompra(item), 0),
+    );
+  }
   const valorItensDireto = Number(pedido.valor_itens);
   if (Number.isFinite(valorItensDireto) && valorItensDireto > 0) {
     return roundToTwoDecimals(valorItensDireto);
   }
-  const soma = (pedido.itens || []).reduce(
-    (acc, item) => acc + (Number(item?.total) || 0),
-    0,
-  );
-  return roundToTwoDecimals(soma);
+  return 0;
 }
 
 /** Total do pedido: itens + frete − desconto global (mesma regra do formulário). */

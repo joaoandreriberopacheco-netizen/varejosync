@@ -486,7 +486,7 @@ export default function AprovacoesFinanceirasPage() {
                   </div>
                   <div className="text-right flex-shrink-0 ml-3">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      R$ {(p.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {calcValorTotalPedidoCompra(p).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                       p.status === 'Aprovado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'

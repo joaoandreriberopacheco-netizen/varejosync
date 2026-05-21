@@ -17,17 +17,24 @@ const addDaysToDateString = (dateString, days) => {
 
 const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 
+const totalLinha = (item: Record<string, unknown>) => {
+  const direto = Number(item?.total ?? item?.valor_total_item ?? item?.subtotal);
+  if (Number.isFinite(direto) && direto > 0) return direto;
+  const qb =
+    Number(item?.quantidade_base) ||
+    (Number(item?.quantidade) || 0) * (Number(item?.fator_conversao) || 1);
+  const custo = Number(item?.custo_unitario) || 0;
+  const desc = Number(item?.valor_desconto_item ?? item?.desconto_unitario) || 0;
+  return qb * (custo - desc);
+};
+
 /** Itens + frete − desconto global (mesma regra do PedidoCompraForm). */
 const calcValorTotalPedido = (pedido: Record<string, unknown>) => {
-  const valorItensDireto = Number(pedido?.valor_itens);
-  const somaItens = Array.isArray(pedido?.itens)
-    ? (pedido.itens as Array<Record<string, unknown>>).reduce(
-        (acc, item) => acc + (Number(item?.total) || 0),
-        0,
-      )
-    : 0;
+  const itens = Array.isArray(pedido?.itens) ? pedido.itens as Array<Record<string, unknown>> : [];
   const valorItens =
-    Number.isFinite(valorItensDireto) && valorItensDireto > 0 ? valorItensDireto : somaItens;
+    itens.length > 0
+      ? itens.reduce((acc, item) => acc + totalLinha(item), 0)
+      : Number(pedido?.valor_itens) || 0;
   const frete = Number(pedido?.valor_frete) || 0;
   const desconto = Number(pedido?.valor_desconto) || 0;
   return round2(valorItens + frete - desconto);

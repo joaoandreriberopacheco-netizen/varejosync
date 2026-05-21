@@ -118,13 +118,22 @@ const derivePedidoCompraItem = (pedido: any, produto: any, input: any) => {
 
   const frete = asNumber(input?.frete_unitario_fator1 ?? input?.custo_frete_unitario, 0);
   const outros = asNumber(input?.outros_unitario_fator1 ?? input?.custo_outros_unitario, 0);
-  const desconto = asNumber(
-    input?.desconto_unitario_fator1 ?? input?.desconto_unitario ?? input?.valor_desconto_item,
+  let desconto = asNumber(
+    input?.valor_desconto_item ?? input?.desconto_unitario_fator1 ?? input?.desconto_unitario,
     0,
   );
 
-  const custoTotal = round6(custoFator1 + frete + outros - desconto);
-  const total = round6(qBase * custoTotal);
+  let custoTotalUnit = round6(custoFator1 + frete + outros - desconto);
+  const totalCalculado = round6(qBase * custoTotalUnit);
+  const totalExplicito = asNumber(input?.total ?? input?.valor_total_item ?? input?.subtotal, 0);
+  let total = totalCalculado;
+  if (totalExplicito > 0) {
+    total = round6(totalExplicito);
+    if (qBase > 0) {
+      custoTotalUnit = round6(total / qBase);
+      desconto = round6(custoFator1 + frete + outros - custoTotalUnit);
+    }
+  }
 
   return {
     valid: errors.length === 0,
@@ -145,7 +154,7 @@ const derivePedidoCompraItem = (pedido: any, produto: any, input: any) => {
       frete_unitario_fator1: round6(frete),
       outros_unitario_fator1: round6(outros),
       desconto_unitario_fator1: round6(desconto),
-      custo_total_unitario_fator1: custoTotal,
+      custo_total_unitario_fator1: custoTotalUnit,
       total,
       quantidade_vinculada: asNumber(input?.quantidade_vinculada, 0),
       ordem: asNumber(input?.ordem, 0),
