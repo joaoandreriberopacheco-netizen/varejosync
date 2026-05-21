@@ -1317,17 +1317,15 @@ Deno.serve(async (req) => {
 
     const getCleanItemLayout = (layout) => {
       if (layout === 'wide') {
-        const descX = TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao;
-        const descMaxW = Math.max(
+        const itemMl = TM + 14;
+        const nomeMaxW = Math.max(
           18,
-          EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit -
-            EXPANDED_ITEMS_TABLE_COLUMNS.descricao -
-            EXPANDED_DESC_TO_VLR_GAP_MM,
+          TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit - itemMl - EXPANDED_DESC_TO_VLR_GAP_MM,
         );
         return {
           layout: 'wide',
-          descX,
-          descMaxW,
+          itemMl,
+          nomeMaxW,
           cols: EXPANDED_ITEMS_TABLE_COLUMNS,
           lineX: TM + 11.5,
           qtdColRight: TM + 10.5,
@@ -1400,8 +1398,8 @@ Deno.serve(async (req) => {
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
-      const nomeMaxW = layout === 'wide' ? cfg.descMaxW : cfg.nomeMaxW;
-      const nomeX = layout === 'wide' ? cfg.descX : cfg.itemMl;
+      const nomeMaxW = cfg.nomeMaxW;
+      const nomeX = cfg.itemMl;
       const nomeLinhas = doc.splitTextToSize(
         toTitleCase(safe(item.produto_nome || prod.nome || '-')),
         nomeMaxW,
@@ -1416,14 +1414,14 @@ Deno.serve(async (req) => {
         let detEnd = valoresY + valoresRowH;
         if (met.warningText) {
           doc.setFontSize(5.5 * cfg.fontScale);
-          const warnLinhas = doc.splitTextToSize(met.warningText, cfg.descMaxW);
+          const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
           detEnd = valoresY + valoresRowH + 1.2 * vs + warnLinhas.length * 2.8 * vs;
         }
         return {
           rowBlockH: detEnd + margemLinhaInferiorItem - y0,
           met,
           nomeLinhas,
-          nomeX,
+          nomeX: cfg.itemMl,
           cfg,
           vs,
           nomeLineStep,
@@ -1509,9 +1507,9 @@ Deno.serve(async (req) => {
         if (met.warningText) {
           doc.setFontSize(5.5 * cfg.fontScale);
           doc.setTextColor(...SLATE500);
-          const warnLinhas = doc.splitTextToSize(met.warningText, cfg.descMaxW);
+          const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
           warnLinhas.forEach((line, wi) => {
-            doc.text(line, cfg.descX, valoresY + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 1.2) + wi * 2.8 * vs);
+            doc.text(line, cfg.itemMl, valoresY + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 1.2) + wi * 2.8 * vs);
           });
         }
       } else {
@@ -1533,7 +1531,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const sepX = layout === 'wide' ? cfg.descX : cfg.itemMl;
+      const sepX = cfg.itemMl;
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.15);
       doc.line(sepX, y0 + rowBlockH, cfg.contentRight, y0 + rowBlockH);
