@@ -5,7 +5,7 @@ import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
-import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -89,7 +89,7 @@ export default function CaixasAtivosPage() {
               incluirRetrocompatSemTurno: !turno.data_fechamento,
             })
           );
-          const subCtx = criarIndiceContextoVenda({
+          const subCtx = buildSubstituicoesVendaCaixa({
             vendas: vendasTurno,
             vales: todosVales,
             devolucoes: todasDevolucoes,

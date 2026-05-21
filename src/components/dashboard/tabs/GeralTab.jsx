@@ -3,11 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, Package, Calendar } from 'lucide-react';
 import { startOfMonth, endOfMonth, subDays } from 'date-fns';
-import {
-  carregarFonteContextoVendas,
-  criarIndiceContextoVenda,
-  calcularTotaisUtilPedidos,
-} from '@/lib/contextoVendaIntegrado';
 
 export default function GeralTab() {
   const [data, setData] = useState(null);
@@ -25,25 +20,20 @@ export default function GeralTab() {
     const fimMes = endOfMonth(hoje);
     const inicio30Dias = subDays(hoje, 30);
 
-    const [fonte, compras, produtos, lancamentos] = await Promise.all([
-      carregarFonteContextoVendas(base44),
+    const [vendas, compras, produtos, lancamentos] = await Promise.all([
+      base44.entities.PedidoVenda.list(),
       base44.entities.PedidoCompra.list(),
       base44.entities.Produto.list(),
-      base44.entities.LancamentoFinanceiro.list(),
+      base44.entities.LancamentoFinanceiro.list()
     ]);
-    const indice = criarIndiceContextoVenda(fonte);
 
-    const vendasMes = fonte.pedidos.filter(
-      (v) =>
-        v &&
-        v.status === 'Finalizado' &&
-        v.created_date &&
-        new Date(v.created_date) >= inicioMes &&
-        new Date(v.created_date) <= fimMes
+    const vendasMes = vendas.filter(v => 
+      v && v.status === 'Finalizado' && v.created_date &&
+      new Date(v.created_date) >= inicioMes &&
+      new Date(v.created_date) <= fimMes
     );
 
-    const totaisMes = calcularTotaisUtilPedidos(vendasMes, indice);
-    const receitaMes = totaisMes.valorUtil;
+    const receitaMes = vendasMes.reduce((acc, v) => acc + (v.valor_total || 0), 0);
     const custoMes = vendasMes.reduce((acc, v) => {
       const custoItens = (v.itens || []).reduce((sum, item) => 
         sum + ((item.custo_unitario_momento || 0) * (item.quantidade || 0)), 0
@@ -51,18 +41,18 @@ export default function GeralTab() {
       return acc + custoItens;
     }, 0);
     const margemBruta = receitaMes > 0 ? ((receitaMes - custoMes) / receitaMes) * 100 : 0;
-    const ticketMedio = totaisMes.quantidade > 0 ? receitaMes / totaisMes.quantidade : 0;
+    const ticketMedio = vendasMes.length > 0 ? receitaMes / vendasMes.length : 0;
 
     const compras30Dias = compras.filter(c => 
       new Date(c.created_date) >= inicio30Dias
     );
     const valorCompras30Dias = compras30Dias.reduce((acc, c) => acc + (c.valor_total || 0), 0);
 
-    const vendas30Dias = fonte.pedidos.filter(
-      (v) => v.status === 'Finalizado' && new Date(v.created_date) >= inicio30Dias
+    const vendas30Dias = vendas.filter(v => 
+      v.status === 'Finalizado' &&
+      new Date(v.created_date) >= inicio30Dias
     );
     const lucro30Dias = vendas30Dias.reduce((acc, v) => {
-      if (indice.idsSubstituidos.has(v.id)) return acc;
       const receita = v.valor_total || 0;
       const custoItens = (v.itens || []).reduce((sum, item) => 
         sum + ((item.custo_unitario_momento || 0) * (item.quantidade || 0)), 0

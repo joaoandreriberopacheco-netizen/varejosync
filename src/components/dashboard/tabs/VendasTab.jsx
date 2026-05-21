@@ -3,11 +3,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag } from 'lucide-react';
 import { dataHoje, inicioDiaSistemaISO, inicioSemanaCivilDesdeYmd } from '@/components/utils/dateUtils';
-import {
-  carregarFonteContextoVendas,
-  criarIndiceContextoVenda,
-  calcularTotaisUtilPedidos,
-} from '@/lib/contextoVendaIntegrado';
 
 export default function VendasTab() {
   const [data, setData] = useState({
@@ -25,28 +20,19 @@ export default function VendasTab() {
         const hoje = inicioDiaSistemaISO(dataHoje());
         const inicioSemana = inicioDiaSistemaISO(inicioSemanaCivilDesdeYmd(dataHoje()));
 
-        const [fonte, orcamentos, aguardandoPagamento] = await Promise.all([
-          carregarFonteContextoVendas(base44),
+        const [vendasHoje, vendasSemana, orcamentos, aguardandoPagamento] = await Promise.all([
+          base44.entities.PedidoVenda.filter({ status: 'Finalizado', created_date: { $gte: hoje } }),
+          base44.entities.PedidoVenda.filter({ status: 'Finalizado', created_date: { $gte: inicioSemana } }),
           base44.entities.PedidoVenda.filter({ status: 'Orçamento' }),
-          base44.entities.PedidoVenda.filter({ status: 'Aguardando Pagamento' }),
+          base44.entities.PedidoVenda.filter({ status: 'Aguardando Pagamento' })
         ]);
-        const indice = criarIndiceContextoVenda(fonte);
 
-        const vendasHoje = fonte.pedidos.filter(
-          (v) => v.status === 'Finalizado' && v.created_date && new Date(v.created_date) >= new Date(hoje)
-        );
-        const vendasSemana = fonte.pedidos.filter(
-          (v) => v.status === 'Finalizado' && v.created_date && new Date(v.created_date) >= new Date(inicioSemana)
-        );
-
-        const totaisHoje = calcularTotaisUtilPedidos(vendasHoje, indice);
-        const faturamentoHoje = totaisHoje.valorUtil;
-        const pedidosHoje = totaisHoje.quantidade;
+        const faturamentoHoje = vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+        const pedidosHoje = vendasHoje.length;
         const ticketMedioHoje = pedidosHoje > 0 ? faturamentoHoje / pedidosHoje : 0;
         const taxaConversao = orcamentos.length > 0 ? (vendasHoje.length / orcamentos.length) * 100 : 0;
 
         const vendedoresPorFaturamento = vendasSemana.reduce((acc, venda) => {
-          if (indice.idsSubstituidos.has(venda.id)) return acc;
           const vendedor = venda.vendedor_nome || 'Sem vendedor';
           if (!acc[vendedor]) acc[vendedor] = 0;
           acc[vendedor] += venda.valor_total || 0;
@@ -80,7 +66,7 @@ export default function VendasTab() {
           funnelVendas: { 
             orcamentos: orcamentos.length, 
             aguardandoPagamento: aguardandoPagamento.length, 
-            finalizados: pedidosHoje
+            finalizados: vendasHoje.length 
           }
         });
 

@@ -13,7 +13,6 @@ import AnaliseEntrega from './AnaliseEntrega';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { buildSaleUnitOptions, pickDefaultSaleUnit, hasAlternativeUnits, normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { savePedidoVendaItem } from '@/functions/savePedidoVendaItem';
-import { detectarAlteracoesPedido, aplicarEventosAoPayload } from '@/lib/eventosVenda';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -203,12 +202,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
 
     setIsSaving(true);
     try {
-      const payload = { ...formData, subtotal, valor_total: valorTotal };
-      if (pedido?.id) {
-        const novosEventos = detectarAlteracoesPedido(pedido, payload);
-        Object.assign(payload, aplicarEventosAoPayload(pedido, novosEventos));
-      }
-      const pedidoSalvo = await onSave(payload);
+      const pedidoSalvo = await onSave({ ...formData, subtotal, valor_total: valorTotal });
       const pedidoId = pedidoSalvo?.id || pedido?.id;
 
       // Sincronia canonica com PedidoVendaItem (espelho recomposto pelo backend).

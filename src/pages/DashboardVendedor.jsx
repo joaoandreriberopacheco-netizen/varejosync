@@ -16,11 +16,6 @@ import {
 } from 'lucide-react';
 
 import moment from 'moment';
-import {
-  carregarFonteContextoVendas,
-  criarIndiceContextoVenda,
-  calcularTotaisUtilPedidos,
-} from '@/lib/contextoVendaIntegrado';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function DashboardVendedor() {
@@ -31,7 +26,6 @@ export default function DashboardVendedor() {
   const [agendamentos, setAgendamentos] = useState([]);
   const [avisos, setAvisos] = useState([]);
   const [metaMensal, setMetaMensal] = useState(50000); // Mock - deve vir de configuração
-  const [indiceContexto, setIndiceContexto] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -44,20 +38,20 @@ export default function DashboardVendedor() {
       const user = await base44.auth.me();
       setUserData(user);
 
-      const fonte = await carregarFonteContextoVendas(base44);
-      const indice = criarIndiceContextoVenda(fonte);
-      setIndiceContexto(indice);
-
+      // Vendas de hoje
       const hoje = moment().startOf('day').format('YYYY-MM-DD');
-      const vendasHj = fonte.pedidos.filter(
-        (v) => v.vendedor_id === user.id && v.created_date && moment(v.created_date).format('YYYY-MM-DD') >= hoje
-      );
+      const vendasHj = await base44.entities.PedidoVenda.filter({
+        vendedor_id: user.id,
+        created_date: { $gte: hoje }
+      });
       setVendasHoje(vendasHj);
 
+      // Vendas do mês
       const inicioMes = moment().startOf('month').format('YYYY-MM-DD');
-      const vendasM = fonte.pedidos.filter(
-        (v) => v.vendedor_id === user.id && v.created_date && moment(v.created_date).format('YYYY-MM-DD') >= inicioMes
-      );
+      const vendasM = await base44.entities.PedidoVenda.filter({
+        vendedor_id: user.id,
+        created_date: { $gte: inicioMes }
+      });
       setVendasMes(vendasM);
 
       // Tabela de preço (buscar a configurada para este vendedor)
@@ -83,8 +77,8 @@ export default function DashboardVendedor() {
     }
   };
 
-  const totalVendasHoje = calcularTotaisUtilPedidos(vendasHoje, indiceContexto).valorUtil;
-  const totalVendasMes = calcularTotaisUtilPedidos(vendasMes, indiceContexto).valorUtil;
+  const totalVendasHoje = vendasHoje.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+  const totalVendasMes = vendasMes.reduce((acc, v) => acc + (v.valor_total || 0), 0);
   const percentualMeta = (totalVendasMes / metaMensal) * 100;
 
   // Dados para gráfico mensal
@@ -96,14 +90,14 @@ export default function DashboardVendedor() {
       const vendasDia = vendasMes.filter(v => 
         moment(v.created_date).format('YYYY-MM-DD') === dia.format('YYYY-MM-DD')
       );
-      const total = calcularTotaisUtilPedidos(vendasDia, indiceContexto).valorUtil;
+      const total = vendasDia.reduce((acc, v) => acc + (v.valor_total || 0), 0);
       dias.push({
         dia: dia.format('DD/MM'),
         valor: total
       });
     }
     return dias;
-  }, [vendasMes, indiceContexto]);
+  }, [vendasMes]);
 
   if (isLoading) {
     return (

@@ -11,7 +11,7 @@ import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
-import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
@@ -105,7 +105,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const movimentosTurno = todasMovimentacoes.filter((m) => sameTurno(m) && sameConta(m));
 
-      const subCtx = criarIndiceContextoVenda({
+      const subCtx = buildSubstituicoesVendaCaixa({
         vendas,
         vales: todosVales,
         devolucoes: todasDevolucoes,

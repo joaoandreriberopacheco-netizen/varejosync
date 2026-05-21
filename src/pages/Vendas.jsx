@@ -13,7 +13,6 @@ import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import PDVVendedor from '@/components/vendas/PDVVendedor';
 import PDVCaixa from '@/components/vendas/PDVCaixa';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
-import { invalidateKpisVendasCache } from '@/hooks/useKPIsCache';
 
 const PedidosTab = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -35,7 +34,6 @@ const PedidosTab = () => {
   const handleSave = async (data) => {
     if (data.id) {
       await base44.entities.PedidoVenda.update(data.id, data);
-      invalidateKpisVendasCache();
     } else {
       const allPOs = await base44.entities.PedidoVenda.list();
       const nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;

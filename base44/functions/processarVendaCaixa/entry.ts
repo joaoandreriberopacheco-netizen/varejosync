@@ -95,22 +95,6 @@ Deno.serve(async (req) => {
   // ── PASSO 3: Criar PedidoVenda ───────────────────────────────────────────────
   let pedidoVenda;
   try {
-    const historicoSubst =
-      substituiId && substituiNumero
-        ? `\n[Substituição | ${new Date().toISOString()} | Por: ${user.full_name || 'Sistema'} | Substitui ${substituiNumero}]`
-        : '';
-    const eventosSubst =
-      substituiId && substituiNumero
-        ? [
-            {
-              tipo: 'substituicao',
-              data: new Date().toISOString(),
-              operador_nome: user.full_name || null,
-              payload: { pedido_origem_id: substituiId, pedido_origem_numero: substituiNumero },
-            },
-          ]
-        : [];
-
     pedidoVenda = await svc.entities.PedidoVenda.create({
       numero: numeroPedido,
       senha_atendimento: rascunho.senha_atendimento,
@@ -131,7 +115,6 @@ Deno.serve(async (req) => {
       pagamentos: pagamentos,
       observacoes: rascunho.observacoes,
       ...(substituiId ? { substitui_pedido_id: substituiId, substitui_pedido_numero: substituiNumero } : {}),
-      ...(eventosSubst.length ? { eventos_venda: eventosSubst, historico: historicoSubst } : {}),
     });
   } catch (err) {
     await svc.entities.RascunhoPedidoVenda.update(rascunho_id, { status: 'Aguardando Caixa' });

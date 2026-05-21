@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
-import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function ControleCaixasAtivos() {
   const [caixas, setCaixas] = useState([]);
@@ -89,7 +89,7 @@ export default function ControleCaixasAtivos() {
         v.created_date.startsWith(hoje) &&
         (v.status === 'Financeiro OK' || v.status === 'Finalizado' || v.status === 'Pedido Concluído')
       );
-      const subCtx = criarIndiceContextoVenda({
+      const subCtx = buildSubstituicoesVendaCaixa({
         vendas: vendasHoje,
         vales: todosVales,
         devolucoes: todasDevolucoes,

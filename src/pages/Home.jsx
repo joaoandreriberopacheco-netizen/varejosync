@@ -177,7 +177,7 @@ export default function HomePage() {
                   R$ {formatValor(kpis.valorVendasHoje)}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda útil' : 'vendas úteis'} (trocas do dia já descontadas)
+                  {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
                 </p>
               </>
             ) : (
