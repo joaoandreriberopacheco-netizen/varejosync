@@ -416,7 +416,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       );
     } else {
       const qty = parseFloat(item.quantidade) || 0;
-      item.quantidade_base = qty * fatorConversao;
+      item.quantidade_base = roundToTwoDecimals(qty * fatorConversao);
     }
 
     const qty = parseFloat(item.quantidade) || 0;
@@ -877,7 +877,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             custo_unitario_fator1: Number(it?.custo_unitario) || 0,
             frete_unitario_fator1: Number(it?.custo_frete_unitario) || 0,
             outros_unitario_fator1: Number(it?.custo_outros_unitario) || 0,
-            desconto_unitario_fator1: Number(it?.desconto_unitario) || 0,
+            desconto_unitario_fator1: Number(it?.desconto_unitario ?? it?.valor_desconto_item) || 0,
             quantidade_vinculada: Number(it?.quantidade_vinculada) || 0,
             ordem: idx,
             observacoes: typeof it?.observacoes === 'string' ? it.observacoes : '',

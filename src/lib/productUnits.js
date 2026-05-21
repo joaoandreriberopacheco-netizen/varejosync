@@ -563,6 +563,9 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/** Tolerância para tratar 19,99 como 20 pacotes (ruído de float ou base×fator impreciso). */
+const DISCRETE_QTY_SNAP_EPSILON = 0.02;
+
 /** Embalagens discretas (pacote, caixa, etc.) — quantidade comercial costuma ser inteira. */
 const DISCRETE_PACKAGING_UNITS = new Set([
   "PAC",
@@ -600,13 +603,38 @@ export function commercialQuantityFromBase(quantityBase, fatorConversao = 1, uni
   const fator = normalizeNumber(fatorConversao, 1) || 1;
   if (!(fator > 0)) return roundToTwoDecimals(base);
 
-  if (isDiscretePackagingUnit(unitCode) && isEffectivelyInteger(base) && isEffectivelyInteger(fator)) {
+  const unit = normalizeUnitCode(unitCode);
+  if (isDiscretePackagingUnit(unit)) {
     const bi = Math.round(base);
     const fi = Math.round(fator);
     if (fi > 0 && bi % fi === 0) return bi / fi;
+    const raw = base / fator;
+    const nearest = Math.round(raw);
+    if (nearest > 0 && Math.abs(raw - nearest) <= DISCRETE_QTY_SNAP_EPSILON) {
+      return nearest;
+    }
   }
 
   return roundToTwoDecimals(base / fator);
+}
+
+/** Exibição de quantidade comercial: PAC/CX etc. sem casas quando o valor é (quase) inteiro. */
+export function formatCommercialQuantity(value, unitCode = "") {
+  const n = normalizeNumber(value, 0);
+  const unit = normalizeUnitCode(unitCode);
+  if (isDiscretePackagingUnit(unit)) {
+    const nearest = Math.round(n);
+    if (nearest > 0 && Math.abs(n - nearest) <= DISCRETE_QTY_SNAP_EPSILON) {
+      return nearest.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+    }
+    if (isEffectivelyInteger(n)) {
+      return Math.round(n).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+    }
+  }
+  return roundToTwoDecimals(n).toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
 }
 
 /** Custo/preço na unidade comercial (vitrine ou embalagem escolhida). */
@@ -845,9 +873,15 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
  */
 export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo") {
   const fator = normalizeNumber(item?.fator_conversao, 1) || 1;
-  const quantidade = normalizeNumber(item?.quantidade, 0);
+  let quantidade = normalizeNumber(item?.quantidade, 0);
   const quantidadeBase = normalizeNumber(item?.quantidade_base, NaN);
-  const quantidadeBaseFinal = Number.isFinite(quantidadeBase) ? quantidadeBase : (quantidade * fator);
+  const unitCode = normalizeUnitCode(item?.unidade_medida || item?.unidade_apresentacao);
+  let quantidadeBaseFinal = Number.isFinite(quantidadeBase) ? quantidadeBase : quantidade * fator;
+  if (isDiscretePackagingUnit(unitCode) && fator > 0) {
+    const qComm = commercialQuantityFromBase(quantidadeBaseFinal, fator, unitCode);
+    quantidade = qComm;
+    quantidadeBaseFinal = roundToTwoDecimals(qComm * fator);
+  }
 
   const unitField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_unitario";
   const finalField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_final_unitario";
@@ -861,6 +895,7 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
     ...item,
     preco_eixo: "FATOR_1",
     unidade_apresentacao: item?.unidade_apresentacao || item?.unidade_medida || "UN",
+    quantidade,
     quantidade_base: quantidadeBaseFinal,
   };
 

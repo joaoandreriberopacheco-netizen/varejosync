@@ -21,10 +21,12 @@ import {
   Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   const [loading, setLoading] = useState(true);
   const [vendas, setVendas] = useState([]);
+  const [substituicoesCtx, setSubstituicoesCtx] = useState(null);
   const [movimentos, setMovimentos] = useState([]);
   const [despesas, setDespesas] = useState([]);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
@@ -41,14 +43,23 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
       setLoading(true);
       const hoje = format(new Date(), 'yyyy-MM-dd');
 
-      // Carregar vendas do dia
-      const todasVendas = await base44.entities.PedidoVenda.list();
+      const [todasVendas, todosVales, todasDevolucoes] = await Promise.all([
+        base44.entities.PedidoVenda.list(),
+        base44.entities.ValeCompra.list(),
+        base44.entities.DevolucaoTroca.list(),
+      ]);
       const vendasHoje = todasVendas.filter(v =>
         v.created_date &&
         v.created_date.startsWith(hoje) &&
         (v.status === 'Financeiro OK' || v.status === 'Finalizado' || v.status === 'Pedido Concluído')
       );
-      setVendas(vendasHoje);
+      const subCtx = buildSubstituicoesVendaCaixa({
+        vendas: vendasHoje,
+        vales: todosVales,
+        devolucoes: todasDevolucoes,
+      });
+      setSubstituicoesCtx(subCtx);
+      setVendas(subCtx.vendasParaExibicao);
 
       // Carregar movimentos de caixa (reforços e sangrias)
       const todosMovimentos = await base44.entities.MovimentosCaixa.list();
@@ -120,6 +131,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   };
 
   const calcularTotalVendas = () => {
+    if (substituicoesCtx) return substituicoesCtx.totalVendasUtil;
     return vendas.reduce((sum, v) => sum + (v.valor_total || 0), 0);
   };
 

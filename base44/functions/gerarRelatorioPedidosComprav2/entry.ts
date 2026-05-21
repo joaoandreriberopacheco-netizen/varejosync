@@ -175,18 +175,22 @@ const PDF_RESOLVE_COMMERCIAL = (p, fallbackUnit = 'UN') => {
   return opts[0]?.unidade || PDF_NORM_CODE(fallbackUnit) || 'UN';
 };
 const PDF_DISCRETE_UNITS = new Set(['PAC', 'CX', 'CT', 'FD', 'SC', 'PCT', 'PT', 'DZ', 'GL', 'RL', 'BAL', 'FAR', 'TAM']);
+const PDF_DISCRETE_QTY_SNAP_EPSILON = 0.02;
 const PDF_IS_EFFECTIVELY_INT = (v: number) => Number.isFinite(v) && Math.abs(v - Math.round(v)) < 1e-9;
 const PDF_ROUND2 = (v: number) => Math.round(v * 100) / 100;
-/** Espelho de `commercialQuantityFromBase` em @/lib/productUnits (PAC/CX: divisão inteira exata). */
+/** Espelho de `commercialQuantityFromBase` em @/lib/productUnits (PAC/CX: inteiro + snap perto de inteiro). */
 const PDF_COMMERCIAL_QTY_FROM_BASE = (quantityBase: number, fatorConversao = 1, unitCode = '') => {
   const base = PDF_NN(quantityBase, 0);
   const fator = PDF_NN(fatorConversao, 1) || 1;
   if (!(fator > 0)) return PDF_ROUND2(base);
   const u = PDF_NORM_CODE(unitCode);
-  if (PDF_DISCRETE_UNITS.has(u) && PDF_IS_EFFECTIVELY_INT(base) && PDF_IS_EFFECTIVELY_INT(fator)) {
+  if (PDF_DISCRETE_UNITS.has(u)) {
     const bi = Math.round(base);
     const fi = Math.round(fator);
     if (fi > 0 && bi % fi === 0) return bi / fi;
+    const raw = base / fator;
+    const nearest = Math.round(raw);
+    if (nearest > 0 && Math.abs(raw - nearest) <= PDF_DISCRETE_QTY_SNAP_EPSILON) return nearest;
   }
   return PDF_ROUND2(base / fator);
 };

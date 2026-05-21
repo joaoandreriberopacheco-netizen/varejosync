@@ -5,6 +5,7 @@ import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -29,7 +30,7 @@ export default function CaixasAtivosPage() {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      const [turnos, contas, vendas, movs, despesas, consumos, rascunhos] = await Promise.all([
+      const [turnos, contas, vendas, movs, despesas, consumos, rascunhos, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
         base44.entities.ContasFinanceiras.list(),
         base44.entities.PedidoVenda.list(),
@@ -37,6 +38,8 @@ export default function CaixasAtivosPage() {
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
         base44.entities.ConsumoInterno.list('-created_date'),
         base44.entities.RascunhoPedidoVenda.list(),
+        base44.entities.ValeCompra.list(),
+        base44.entities.DevolucaoTroca.list(),
       ]);
 
       const turnosUnicos = turnos.filter((turno, index, array) =>
@@ -86,7 +89,12 @@ export default function CaixasAtivosPage() {
               incluirRetrocompatSemTurno: !turno.data_fechamento,
             })
           );
-          const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
+          const subCtx = buildSubstituicoesVendaCaixa({
+            vendas: vendasTurno,
+            vales: todosVales,
+            devolucoes: todasDevolucoes,
+          });
+          const totalVendas = subCtx.totalVendasUtil;
           let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
           vendasTurno.forEach(v => {
             (v.pagamentos || []).forEach(p => {

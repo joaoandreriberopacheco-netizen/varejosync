@@ -11,6 +11,7 @@ import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 
 export default function AprovacoesFinanceirasPage() {
   const [pendingTransactions, setPendingTransactions] = useState([]);
@@ -45,7 +46,7 @@ export default function AprovacoesFinanceirasPage() {
       referencia_tipo: 'PedidoCompra',
       referencia_numero: p.numero,
       descricao: `Compra - ${p.fornecedor_nome}`,
-      valor: p.valor_total,
+      valor: calcValorTotalPedidoCompra(p),
       status: p.status,
       _pedido: p,
     }));
@@ -188,8 +189,8 @@ export default function AprovacoesFinanceirasPage() {
                 descricao: `Compra - ${pedido.fornecedor_nome || pedido.numero}`,
                 terceiro_id: pedido.fornecedor_id,
                 terceiro_nome: pedido.fornecedor_nome,
-                valor: pedido.valor_total || 0,
-                valor_liquido: pedido.valor_total || 0,
+                valor: calcValorTotalPedidoCompra(pedido),
+                valor_liquido: calcValorTotalPedidoCompra(pedido),
                 data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
                 status: 'Em Aberto',
                 status_conciliacao: 'N/A',

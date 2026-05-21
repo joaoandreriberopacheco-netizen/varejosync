@@ -69,6 +69,7 @@ import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
 const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
@@ -92,6 +93,8 @@ export default function PDVCaixa() {
   const [pedidosAguardando, setPedidosAguardando] = useState([]);
   const [rascunhosAguardando, setRascunhosAguardando] = useState([]);
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
+  const [vendasTurnoTodos, setVendasTurnoTodos] = useState([]);
+  const [substituicoesCtx, setSubstituicoesCtx] = useState(null);
   const [movimentos, setMovimentos] = useState([]);
   const [contaCaixaPDV, setContaCaixaPDV] = useState(null);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
@@ -431,12 +434,14 @@ export default function PDVCaixa() {
       const caixaAtual = contaAtualizada || caixa;
       setContaCaixaPDV(caixaAtual);
 
-      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw, receitasTurno] = await Promise.all([
+      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw, receitasTurno, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.PedidoVenda.list(),
         base44.entities.RascunhoPedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Receita' }),
+        base44.entities.ValeCompra.list(),
+        base44.entities.DevolucaoTroca.list(),
       ]);
 
       // Filtrar despesas: excluir as que foram geradas automaticamente para sangrias/recolhimentos
@@ -470,7 +475,14 @@ export default function PDVCaixa() {
           incluirRetrocompatSemTurno: !turno.data_fechamento,
         })
       );
-      setVendasFinalizadas(vendasTurno);
+      const subCtx = buildSubstituicoesVendaCaixa({
+        vendas: vendasTurno,
+        vales: todosVales,
+        devolucoes: todasDevolucoes,
+      });
+      setSubstituicoesCtx(subCtx);
+      setVendasTurnoTodos(vendasTurno);
+      setVendasFinalizadas(subCtx.vendasParaExibicao);
 
       // Filtrar movimentos do turno ativo
       const movimentosTurno = todasMovimentacoes.filter((m) =>
@@ -496,7 +508,7 @@ export default function PDVCaixa() {
 
       // Fiado NÃO entra na liquidez do caixa (é a receber, não está na gaveta)
       const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
-      const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      const totalVendas = subCtx.totalVendasUtil;
 
       const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + (m.valor || 0), 0);
       const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + (m.valor || 0), 0);
@@ -517,6 +529,8 @@ export default function PDVCaixa() {
         saldoAtual: saldoCaixaCalculado,
         liquidez: liquidezTurno,
         totalVendas: roundToTwoDecimals(totalVendas),
+        qtdSubstituicoes: subCtx.qtdSubstituicoes,
+        valorSubstituidoNaoSoma: subCtx.valorSubstituidoNaoSoma,
         recebimentos: {
           dinheiro: roundToTwoDecimals(totalDinheiro),
           pix: roundToTwoDecimals(totalPix),
@@ -726,6 +740,26 @@ export default function PDVCaixa() {
          pagamentosArray.push({ forma_pagamento: 'Conta a Pagar', valor: pagamentosContaPagar, parcelas: 1 });
        }
 
+      let substituiPedidoId = null;
+      let substituiPedidoNumero = null;
+      if (valeEncontrado?.pedido_origem_id) {
+        substituiPedidoId = valeEncontrado.pedido_origem_id;
+        substituiPedidoNumero = valeEncontrado.pedido_origem_numero;
+      } else if (pedidoSelecionado.cliente_id) {
+        const todasDevolucoes = await base44.entities.DevolucaoTroca.list();
+        const pendente = todasDevolucoes.find(
+          (d) =>
+            d.aguarda_substituto &&
+            !d.pedido_substituto_id &&
+            d.pedido_origem_id &&
+            d.cliente_id === pedidoSelecionado.cliente_id
+        );
+        if (pendente) {
+          substituiPedidoId = pendente.pedido_origem_id;
+          substituiPedidoNumero = pendente.pedido_origem_numero;
+        }
+      }
+
       // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
       const { data } = await processarVendaCaixa({
         rascunho_id: pedidoSelecionado.id,
@@ -734,6 +768,8 @@ export default function PDVCaixa() {
         conta_caixa_id: contaCaixaPDV?.id,
         saldo_atual_caixa: contaCaixaPDV?.saldo_atual,
         config_venda: configVenda ? { fluxo_venda_padrao: configVenda.fluxo_venda_padrao, auto_delivery_balcao: configVenda.auto_delivery_balcao } : null,
+        substitui_pedido_id: substituiPedidoId,
+        substitui_pedido_numero: substituiPedidoNumero,
       });
 
       if (!data?.success) {
@@ -1208,7 +1244,7 @@ export default function PDVCaixa() {
         recebimentos_vale_troca: caixaData.recebimentos.vale || 0,
         dinheiro_conferido: dinheiroContado,
         diferenca,
-        vendas_ids: vendasFinalizadas.map(v => v.id),
+        vendas_ids: vendasTurnoTodos.map(v => v.id),
         movimentos_ids: movimentos.map(m => m.id),
         despesas_ids: (caixaData.despesasLista || []).map(d => d.id)
       });
@@ -1575,15 +1611,19 @@ export default function PDVCaixa() {
                         // Vendas: linha principal + sub-linhas por forma de pagamento
                       const linhasVendas = vendasFinalizadas.map(v => {
                          const pagamentos = (v.pagamentos || []);
+                         const meta = substituicoesCtx?.metaPorPedidoId?.[v.id];
                          const subLinhas = pagamentos.length > 1
                            ? pagamentos.map(p => `<div style="display:flex;justify-content:space-between;padding:2px 0 2px 16px;font-size:10px;color:#6b7280"><span>${p.forma_pagamento}</span><span>R$ ${(p.valor||0).toFixed(2)}</span></div>`).join('')
                            : '';
                          const formasSingle = pagamentos.length === 1 ? ` · ${pagamentos[0].forma_pagamento} R$ ${(pagamentos[0].valor||0).toFixed(2)}` : '';
+                         const linhaSub = meta?.papel === 'substituto' && meta.origem
+                           ? `<div style="font-size:10px;color:#b45309;padding-top:2px">↔ Substitui ${meta.origem.numero} (R$ ${(meta.origem.valor_total||0).toFixed(2)})</div>`
+                           : '';
                          return `<div style="border-bottom:1px solid #f3f4f6;padding:5px 0">
                            <div style="display:flex;justify-content:space-between;font-size:11px">
                              <span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${formasSingle}</span>
                              <span style="font-weight:600;color:#059669;white-space:nowrap;margin-left:8px">+R$ ${(v.valor_total||0).toFixed(2)}</span>
-                           </div>${subLinhas}</div>`;
+                           </div>${linhaSub}${subLinhas}</div>`;
                        }).join('');
                        // Reforços
                        const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço').map(m =>
@@ -2011,6 +2051,7 @@ export default function PDVCaixa() {
           open={showVendasDialog} onOpenChange={setShowVendasDialog}
           vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo}
           caixaData={caixaData} formatValor={formatValor}
+          metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
           onVerDetalhes={setVendaDetalhada}
         />
         <VendaDetalheDialog

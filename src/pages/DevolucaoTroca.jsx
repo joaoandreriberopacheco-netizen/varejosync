@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
@@ -66,6 +67,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
   );
   const [focusedKey, setFocusedKey] = useState(null);
   const [formaReembolso, setFormaReembolso] = useState('Vale Troca');
+  const [aguardaSubstituto, setAguardaSubstituto] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [fotos, setFotos] = useState([]); // { file, previewUrl, uploading, url }
   const [uploadingFotos, setUploadingFotos] = useState(false);
@@ -121,7 +123,15 @@ function SelecionarItensStep({ pedido, onConfirm }) {
       return;
     }
     const fotosUrls = fotos.filter(f => f.url).map(f => f.url);
-    onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido, fotosUrls });
+    onConfirm({
+      itensSelecionados,
+      qtds,
+      formaReembolso,
+      motivo,
+      totalDevolvido,
+      fotosUrls,
+      aguardaSubstituto: formaReembolso !== 'Vale Troca' && aguardaSubstituto,
+    });
   };
 
   return (
@@ -192,7 +202,14 @@ function SelecionarItensStep({ pedido, onConfirm }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-5 shadow-sm space-y-4">
         <div>
           <label className="text-sm text-gray-500 dark:text-gray-400 block mb-2">Forma de reembolso</label>
-          <Select value={formaReembolso} onValueChange={setFormaReembolso}>
+          <Select
+            value={formaReembolso}
+            onValueChange={(v) => {
+              setFormaReembolso(v);
+              if (v === 'Vale Troca') setAguardaSubstituto(false);
+              else if (v === 'Dinheiro' || v === 'PIX') setAguardaSubstituto(true);
+            }}
+          >
             <SelectTrigger className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl h-12 text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -204,6 +221,18 @@ function SelecionarItensStep({ pedido, onConfirm }) {
             </SelectContent>
           </Select>
         </div>
+        {(formaReembolso === 'Dinheiro' || formaReembolso === 'PIX') && (
+          <label className="flex items-start gap-3 cursor-pointer rounded-xl bg-gray-50 dark:bg-gray-700/50 p-3">
+            <Checkbox
+              checked={aguardaSubstituto}
+              onCheckedChange={(c) => setAguardaSubstituto(!!c)}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
+              Cliente vai levar outro produto agora (troca no caixa)
+            </span>
+          </label>
+        )}
         <div>
           <label className="text-sm text-gray-500 dark:text-gray-400 block mb-2">Motivo</label>
           <Input
@@ -398,7 +427,15 @@ export default function DevolucaoTrocaPage() {
     window.location.href = createPageUrl('VendasGestao');
   };
 
-  const handleConfirm = async ({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido, fotosUrls }) => {
+  const handleConfirm = async ({
+    itensSelecionados,
+    qtds,
+    formaReembolso,
+    motivo,
+    totalDevolvido,
+    fotosUrls,
+    aguardaSubstituto,
+  }) => {
     setProcessando(true);
     const user = await base44.auth.me();
     const todos = await base44.entities.DevolucaoTroca.list();
@@ -448,6 +485,7 @@ export default function DevolucaoTrocaPage() {
       forma_reembolso: formaReembolso,
       vale_compra_id: valeId,
       vale_compra_codigo: valeCodigo,
+      aguarda_substituto: !!aguardaSubstituto,
       motivo,
       fotos_mercadoria: fotosUrls || [],
       operador_id: user?.id,

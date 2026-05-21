@@ -2,6 +2,29 @@
  * Consistência entre PedidoCompra e LancamentoFinanceiro na reabertura / reenvio ao financeiro.
  */
 
+const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+/** Soma dos totais de linha (ou `valor_itens` persistido). */
+export function calcValorItensPedidoCompra(pedido = {}) {
+  const valorItensDireto = Number(pedido.valor_itens);
+  if (Number.isFinite(valorItensDireto) && valorItensDireto > 0) {
+    return roundToTwoDecimals(valorItensDireto);
+  }
+  const soma = (pedido.itens || []).reduce(
+    (acc, item) => acc + (Number(item?.total) || 0),
+    0,
+  );
+  return roundToTwoDecimals(soma);
+}
+
+/** Total do pedido: itens + frete − desconto global (mesma regra do formulário). */
+export function calcValorTotalPedidoCompra(pedido = {}) {
+  const itens = calcValorItensPedidoCompra(pedido);
+  const frete = Number(pedido.valor_frete) || 0;
+  const desconto = Number(pedido.valor_desconto) || 0;
+  return roundToTwoDecimals(itens + frete - desconto);
+}
+
 const isLancamentoPago = (l) =>
   l?.status === 'Pago' || Boolean(l?.data_pagamento);
 

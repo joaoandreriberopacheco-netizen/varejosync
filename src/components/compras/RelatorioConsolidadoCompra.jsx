@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { TrendingUp, TrendingDown, Package, Loader2 } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
-import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
+import { normalizeItemCompraParaExibicao, formatCommercialQuantity } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+const fmtQtd = (n, unidade) => formatCommercialQuantity(n, unidade);
 
 const VariacaoIndicador = ({ valor }) => {
   if (valor === 0 || valor === null || valor === undefined) return null;
@@ -102,7 +102,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
             <div className="grid grid-cols-3 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 px-0">
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Qtd</p>
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">{fmtN(item.quantidade)} {item.unidade_medida || 'UN'}</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">{fmtQtd(item.quantidade, item.unidade_medida)} {item.unidade_medida || 'UN'}</p>
               </div>
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">V. Unit.</p>

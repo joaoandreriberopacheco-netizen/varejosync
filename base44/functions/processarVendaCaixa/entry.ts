@@ -18,6 +18,8 @@ Deno.serve(async (req) => {
     conta_caixa_id,
     saldo_atual_caixa,
     config_venda,
+    substitui_pedido_id,
+    substitui_pedido_numero,
   } = await req.json();
 
   if (!rascunho_id || !pagamentos || !turno_id) {
@@ -74,6 +76,22 @@ Deno.serve(async (req) => {
     return Response.json({ error: `Erro ao gerar número do pedido: ${err.message}` }, { status: 500 });
   }
 
+  // Vínculo de troca (vale ou devolução com substituto pendente)
+  let substituiId = substitui_pedido_id || null;
+  let substituiNumero = substitui_pedido_numero || null;
+  const pagValeRef = pagamentos.find((p: { forma_pagamento?: string; vale_id?: string }) =>
+    p.forma_pagamento === 'Vale Troca' && p.vale_id
+  );
+  if (pagValeRef?.vale_id && !substituiId) {
+    try {
+      const valeOrigem = await svc.entities.ValeCompra.get(pagValeRef.vale_id);
+      if (valeOrigem?.pedido_origem_id) {
+        substituiId = valeOrigem.pedido_origem_id;
+        substituiNumero = valeOrigem.pedido_origem_numero || substituiNumero;
+      }
+    } catch (_) { /* não bloqueia venda */ }
+  }
+
   // ── PASSO 3: Criar PedidoVenda ───────────────────────────────────────────────
   let pedidoVenda;
   try {
@@ -96,6 +114,7 @@ Deno.serve(async (req) => {
       valor_total: rascunho.valor_total,
       pagamentos: pagamentos,
       observacoes: rascunho.observacoes,
+      ...(substituiId ? { substitui_pedido_id: substituiId, substitui_pedido_numero: substituiNumero } : {}),
     });
   } catch (err) {
     await svc.entities.RascunhoPedidoVenda.update(rascunho_id, { status: 'Aguardando Caixa' });
@@ -254,6 +273,28 @@ Deno.serve(async (req) => {
         if (novoSaldo > 0.01) saldoResidualVale = { codigo: vale.codigo, saldo: novoSaldo, vale_id: pagVale.vale_id };
       }
     } catch (err) { erros.push(`Vale troca: ${err.message}`); }
+  }
+
+  // 4e-bis. Atualizar devolução que aguardava substituto (fluxo dinheiro/PIX)
+  if (substituiId && pedidoVenda?.id) {
+    try {
+      const devolucoes = await svc.entities.DevolucaoTroca.list();
+      const pendente = devolucoes.find((d: {
+        aguarda_substituto?: boolean;
+        pedido_substituto_id?: string;
+        pedido_origem_id?: string;
+      }) =>
+        d.aguarda_substituto &&
+        !d.pedido_substituto_id &&
+        d.pedido_origem_id === substituiId
+      );
+      if (pendente) {
+        await svc.entities.DevolucaoTroca.update(pendente.id, {
+          pedido_substituto_id: pedidoVenda.id,
+          pedido_substituto_numero: numeroPedido,
+        });
+      }
+    } catch (err) { erros.push(`Vínculo troca: ${err.message}`); }
   }
 
   // 4f. Lançamentos financeiros por forma de pagamento

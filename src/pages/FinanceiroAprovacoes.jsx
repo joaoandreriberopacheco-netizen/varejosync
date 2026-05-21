@@ -20,6 +20,7 @@ import {
   cancelarLancamentosNaoPagosPedidoCompra,
   listarLancamentosPedidoCompra,
   temLancamentoPagoParaPedido,
+  calcValorTotalPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
 
 export default function FinanceiroAprovacoesPage() {
@@ -291,7 +292,10 @@ export default function FinanceiroAprovacoesPage() {
     );
   });
 
-  const totalPendente = pendingTransactions.reduce((sum, p) => sum + (p.valor_total || 0), 0);
+  const totalPendente = pendingTransactions.reduce(
+    (sum, p) => sum + calcValorTotalPedidoCompra(p),
+    0,
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -398,7 +402,7 @@ export default function FinanceiroAprovacoesPage() {
                             {pedido.itens?.length || 0}
                           </TableCell>
                           <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200">
-                            {formatCurrency(pedido.valor_total)}
+                            {formatCurrency(calcValorTotalPedidoCompra(pedido))}
                           </TableCell>
                           {activeTab === 'aprovados' && (
                             <TableCell className="text-gray-600 dark:text-gray-400 text-xs">
@@ -486,7 +490,7 @@ export default function FinanceiroAprovacoesPage() {
                         </div>
                         <div className="text-right">
                           <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
-                          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(pedido.valor_total)}</div>
+                          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(calcValorTotalPedidoCompra(pedido))}</div>
                         </div>
                       </div>
 
@@ -574,7 +578,7 @@ export default function FinanceiroAprovacoesPage() {
               <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
                 <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-                  {formatCurrency(selectedTransaction.valor_total)}
+                  {formatCurrency(calcValorTotalPedidoCompra(selectedTransaction))}
                 </div>
               </div>
 

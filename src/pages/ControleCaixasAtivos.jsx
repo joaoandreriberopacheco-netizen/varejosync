@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function ControleCaixasAtivos() {
   const [caixas, setCaixas] = useState([]);
@@ -78,14 +79,22 @@ export default function ControleCaixasAtivos() {
       );
       setMovimentosCaixa(movimentosHoje);
 
-      // Carregar vendas do dia
-      const todasVendas = await base44.entities.PedidoVenda.list();
+      const [todasVendas, todosVales, todasDevolucoes] = await Promise.all([
+        base44.entities.PedidoVenda.list(),
+        base44.entities.ValeCompra.list(),
+        base44.entities.DevolucaoTroca.list(),
+      ]);
       const vendasHoje = todasVendas.filter(v =>
         v.created_date &&
         v.created_date.startsWith(hoje) &&
         (v.status === 'Financeiro OK' || v.status === 'Finalizado' || v.status === 'Pedido Concluído')
       );
-      setVendas(vendasHoje);
+      const subCtx = buildSubstituicoesVendaCaixa({
+        vendas: vendasHoje,
+        vales: todosVales,
+        devolucoes: todasDevolucoes,
+      });
+      setVendas(subCtx.vendasParaExibicao);
     } catch (error) {
       console.error('Erro ao carregar movimentos:', error);
     } finally {

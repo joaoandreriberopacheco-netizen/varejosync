@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function GestaoCaixa() {
   const [fluxoCaixa, setFluxoCaixa] = useState({
@@ -38,13 +39,21 @@ export default function GestaoCaixa() {
     const hoje = new Date();
     const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
-    // Buscar vendas do dia
-    const todasVendas = await base44.entities.PedidoVenda.list();
-    const vendasDia = todasVendas.filter(v => 
-      v.status === 'Finalizado' && 
+    const [todasVendas, todosVales, todasDevolucoes] = await Promise.all([
+      base44.entities.PedidoVenda.list(),
+      base44.entities.ValeCompra.list(),
+      base44.entities.DevolucaoTroca.list(),
+    ]);
+    const vendasDia = todasVendas.filter(v =>
+      (v.status === 'Finalizado' || v.status === 'Financeiro OK' || v.status === 'Pedido Concluído') &&
       new Date(v.created_date) >= inicioDia
     );
-    const totalVendas = vendasDia.reduce((acc, v) => acc + (v.valor_total || 0), 0);
+    const subCtx = buildSubstituicoesVendaCaixa({
+      vendas: vendasDia,
+      vales: todosVales,
+      devolucoes: todasDevolucoes,
+    });
+    const totalVendas = subCtx.totalVendasUtil;
 
     // Buscar movimentos de caixa do dia
     const todosMovimentos = await base44.entities.MovimentosCaixa.list();

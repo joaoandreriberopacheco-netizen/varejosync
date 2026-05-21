@@ -118,7 +118,10 @@ const derivePedidoCompraItem = (pedido: any, produto: any, input: any) => {
 
   const frete = asNumber(input?.frete_unitario_fator1 ?? input?.custo_frete_unitario, 0);
   const outros = asNumber(input?.outros_unitario_fator1 ?? input?.custo_outros_unitario, 0);
-  const desconto = asNumber(input?.desconto_unitario_fator1 ?? input?.desconto_unitario, 0);
+  const desconto = asNumber(
+    input?.desconto_unitario_fator1 ?? input?.desconto_unitario ?? input?.valor_desconto_item,
+    0,
+  );
 
   const custoTotal = round6(custoFator1 + frete + outros - desconto);
   const total = round6(qBase * custoTotal);
@@ -172,6 +175,7 @@ const itemToLegacyMirror = (item: any) => {
     custo_frete_unitario: asNumber(item?.frete_unitario_fator1, 0),
     custo_outros_unitario: asNumber(item?.outros_unitario_fator1, 0),
     desconto_unitario: asNumber(item?.desconto_unitario_fator1, 0),
+    valor_desconto_item: asNumber(item?.desconto_unitario_fator1, 0),
     total: asNumber(item?.total, 0),
     preco_eixo: 'FATOR_1',
     unidade_apresentacao: item?.unidade_sigla || 'UN',
@@ -179,17 +183,22 @@ const itemToLegacyMirror = (item: any) => {
   };
 };
 
-/** Recompoe `PedidoCompra.itens[]` (espelho) e `valor_total` a partir das linhas canonicas. */
+/** Recompoe `PedidoCompra.itens[]` (espelho) e totais a partir das linhas canonicas. */
 const recomporPedido = async (base44: any, pedidoId: string) => {
+  const pedido = await fetchPedido(base44, pedidoId);
   const linhas = await base44.asServiceRole.entities.PedidoCompraItem.filter({ pedido_compra_id: pedidoId });
   const ordenadas = (linhas || []).slice().sort((a: any, b: any) => asNumber(a.ordem, 0) - asNumber(b.ordem, 0));
   const itensEspelho = ordenadas.map(itemToLegacyMirror);
-  const valorTotal = round6(itensEspelho.reduce((acc: number, it: any) => acc + asNumber(it.total, 0), 0));
+  const valorItens = round6(itensEspelho.reduce((acc: number, it: any) => acc + asNumber(it.total, 0), 0));
+  const frete = asNumber(pedido?.valor_frete, 0);
+  const desconto = asNumber(pedido?.valor_desconto, 0);
+  const valorTotal = round6(valorItens + frete - desconto);
   await base44.asServiceRole.entities.PedidoCompra.update(pedidoId, {
     itens: itensEspelho,
+    valor_itens: valorItens,
     valor_total: valorTotal,
   });
-  return { itens_count: itensEspelho.length, valor_total: valorTotal };
+  return { itens_count: itensEspelho.length, valor_itens: valorItens, valor_total: valorTotal };
 };
 
 const fetchProduto = async (base44: any, produtoId: string) => {

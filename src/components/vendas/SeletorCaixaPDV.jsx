@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
   const navigate = useNavigate();
@@ -44,12 +45,14 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
 
   const loadCaixas = async () => {
     try {
-      const [todasContas, todosTurnos, todasVendas, todosMovimentos, todasDespesas] = await Promise.all([
+      const [todasContas, todosTurnos, todasVendas, todosMovimentos, todasDespesas, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
+        base44.entities.ValeCompra.list(),
+        base44.entities.DevolucaoTroca.list(),
       ]);
 
       const receitasByTurnoId = {};
@@ -82,7 +85,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
               incluirRetrocompatSemTurno: !turnoAberto.data_fechamento,
             })
           );
-          const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+          const subCtx = buildSubstituicoesVendaCaixa({
+            vendas: vendasTurno,
+            vales: todosVales,
+            devolucoes: todasDevolucoes,
+          });
+          const totalVendas = subCtx.totalVendasUtil;
           
           // Somar reforços
           const reforcos = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço');

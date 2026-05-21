@@ -18,7 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
-import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
+import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { registerJsPdfNotoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
 import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
@@ -108,8 +108,8 @@ function wrapDescLinesPdf(pdf, text, maxWidth) {
   return lines.length ? lines : ['?'];
 }
 
-function formatQuant(val) {
-  return (val ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+function formatQuant(val, unitCode) {
+  return formatCommercialQuantity(val, unitCode);
 }
 
 /** Coluna UN: folhas usam sigla; grupos s? quando todas as folhas coincidem, sen?o ??? */
@@ -221,7 +221,7 @@ function MargemLinhaMobile({
                 style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
               >
                 <span className="text-gray-700 dark:text-gray-300">
-                  {formatQuant(row.quantidade_vendida)}
+                  {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
                 </span>
                 {' \u00b7 '}
                 {formatMarginTreeUnidade(row, { isGroup: true })}
@@ -282,7 +282,7 @@ function MargemLinhaMobile({
         className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate"
         style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
       >
-        <span className="text-gray-700 dark:text-gray-300">{formatQuant(row.quantidade_vendida)}</span>
+        <span className="text-gray-700 dark:text-gray-300">{formatQuant(row.quantidade_vendida, unidade)}</span>
         {' \u00b7 '}
         {unidade}
         {' \u00b7 '}
@@ -751,9 +751,12 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(isGroup ? 7 : 7.5);
       setColor(C.text);
-      pdf.text(formatNumPdf(dataRow.quantidade_vendida || 0), quantCenter, textY, {
-        align: 'center',
-      });
+      pdf.text(
+        formatCommercialQuantity(dataRow.quantidade_vendida || 0, dataRow.unidade_exibicao),
+        quantCenter,
+        textY,
+        { align: 'center' },
+      );
       const unLabel = isGroup
         ? formatMarginTreeUnidade(dataRow, { isGroup: true })
         : formatMarginTreeUnidade(dataRow, { isGroup: false });
@@ -1343,7 +1346,7 @@ export default function RelatorioMargemVendas() {
                               className="py-3 px-2.5 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white"
                               style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
-                              {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida) : ''}
+                              {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida, treeRow.unidade_exibicao) : ''}
                             </td>
                             <td
                               className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
@@ -1423,7 +1426,7 @@ export default function RelatorioMargemVendas() {
                             className="py-3 px-2.5 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold"
                             style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
-                            {formatQuant(row.quantidade_vendida)}
+                            {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
                           </td>
                           <td
                             className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"

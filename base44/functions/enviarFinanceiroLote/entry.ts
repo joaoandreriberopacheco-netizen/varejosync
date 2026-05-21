@@ -15,6 +15,24 @@ const addDaysToDateString = (dateString, days) => {
   return base.toISOString().slice(0, 10);
 };
 
+const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+
+/** Itens + frete − desconto global (mesma regra do PedidoCompraForm). */
+const calcValorTotalPedido = (pedido: Record<string, unknown>) => {
+  const valorItensDireto = Number(pedido?.valor_itens);
+  const somaItens = Array.isArray(pedido?.itens)
+    ? (pedido.itens as Array<Record<string, unknown>>).reduce(
+        (acc, item) => acc + (Number(item?.total) || 0),
+        0,
+      )
+    : 0;
+  const valorItens =
+    Number.isFinite(valorItensDireto) && valorItensDireto > 0 ? valorItensDireto : somaItens;
+  const frete = Number(pedido?.valor_frete) || 0;
+  const desconto = Number(pedido?.valor_desconto) || 0;
+  return round2(valorItens + frete - desconto);
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -31,11 +49,12 @@ Deno.serve(async (req) => {
     }
 
     for (const pedido of pedidos) {
-      const valorTotal = Number(pedido.valor_total) || 0;
+      const valorTotal = calcValorTotalPedido(pedido);
 
       await base44.entities.PedidoCompra.update(pedido.id, {
         status: 'Aguardando Liberação',
         status_aprovacao_financeira: 'Aguardando Aprovação Financeira',
+        valor_total: valorTotal,
       });
 
       await base44.entities.Tarefa.create({

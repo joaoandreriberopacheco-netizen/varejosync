@@ -11,6 +11,7 @@ import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
+import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
@@ -27,6 +28,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     fiadoLista: [],
   });
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
+  const [substituicoesCtx, setSubstituicoesCtx] = useState(null);
   const [movimentos, setMovimentos] = useState([]);
   const [activeTab, setActiveTab] = useState('balanco');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
@@ -68,13 +70,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
     if (showSpinner) setLoading(true);
     try {
-      const [turnoFresh, caixaFresh, todosPedidos, todasMovimentacoes, todasDespesasRaw, receitasTurno] = await Promise.all([
+      const [turnoFresh, caixaFresh, todosPedidos, todasMovimentacoes, todasDespesasRaw, receitasTurno, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
         base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita' }),
+        base44.entities.ValeCompra.list(),
+        base44.entities.DevolucaoTroca.list(),
       ]);
 
       const turnoBase = turnoFresh || turnoAtivo;
@@ -101,7 +105,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const movimentosTurno = todasMovimentacoes.filter((m) => sameTurno(m) && sameConta(m));
 
-      const totalVendas = roundToTwoDecimals(vendas.reduce((s, v) => s + (v.valor_total ?? v.total ?? 0), 0));
+      const subCtx = buildSubstituicoesVendaCaixa({
+        vendas,
+        vales: todosVales,
+        devolucoes: todasDevolucoes,
+      });
+      setSubstituicoesCtx(subCtx);
+      setVendasFinalizadas(subCtx.vendasParaExibicao);
+
+      const totalVendas = roundToTwoDecimals(subCtx.totalVendasUtil);
 
       let totalDinheiro = 0;
       let totalPix = 0;
@@ -141,6 +153,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         saldoInicial,
         liquidez,
         totalVendas,
+        qtdSubstituicoes: subCtx.qtdSubstituicoes,
+        valorSubstituidoNaoSoma: subCtx.valorSubstituidoNaoSoma,
         recebimentos: {
           dinheiro: roundToTwoDecimals(totalDinheiro),
           pix: roundToTwoDecimals(totalPix),
@@ -156,7 +170,6 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         fiado: roundToTwoDecimals(totalFiado),
         fiadoLista: fiados,
       });
-      setVendasFinalizadas(vendas);
       setMovimentos(movimentosTurno);
 
       const dinheiroNaGaveta = roundToTwoDecimals(
@@ -585,7 +598,16 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       </div>
 
       {/* Dialogs */}
-      <VendasTurnoDialog open={showVendasDialog} onOpenChange={setShowVendasDialog} vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo} caixaData={caixaData} formatValor={formatValor} onVerDetalhes={setVendaDetalhada} />
+      <VendasTurnoDialog
+        open={showVendasDialog}
+        onOpenChange={setShowVendasDialog}
+        vendasFinalizadas={vendasFinalizadas}
+        turnoAtivo={turnoAtivo}
+        caixaData={caixaData}
+        formatValor={formatValor}
+        metaPorPedidoId={substituicoesCtx?.metaPorPedidoId}
+        onVerDetalhes={setVendaDetalhada}
+      />
       <VendaDetalheDialog venda={vendaDetalhada} onClose={() => setVendaDetalhada(null)} formatValor={formatValor} />
       <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
       <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
