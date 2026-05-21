@@ -850,11 +850,6 @@ Deno.serve(async (req) => {
     const normalizedVersion = normalizeReportVersion(version);
 
     const isMobile = normalizedVersion === 'expandida_mobile';
-    /** Visual expandida_mobile (slate, cards, header) — também no PDF expandido A4. */
-    const useAlmaDesign = true;
-    const SLATE900 = [15, 23, 42];
-    const SLATE700 = [51, 65, 85];
-    const SLATE500 = [100, 116, 139];
 
     // Carregar apenas produtos realmente usados no relatório
     const produtoIds = [...new Set(
@@ -925,35 +920,57 @@ Deno.serve(async (req) => {
     //  HEADER
     // ════════════════════════════════════════════════════════════════════════
     const drawHeader = () => {
-      if (!useAlmaDesign) return;
-      let hy = isMobile ? 12 : 14;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(isMobile ? 12 : 14);
-      doc.setTextColor(...SLATE900);
-      doc.text('Embarques', M, hy);
-      hy += isMobile ? 5 : 5.5;
+      if (isMobile) {
+        // Header mobile: hierarquia clara, filtros em até 3 linhas, tipografia legível no celular
+        let hy = 12;
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(12);
+        doc.setTextColor(...C.text);
+        doc.text('Embarques', M, hy);
+        hy += 5;
 
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(isMobile ? 6.5 : 7);
-      doc.setTextColor(...SLATE500);
-      doc.text(isMobile ? 'Relatório para celular' : 'Relatório expandido', M, hy);
-      hy += isMobile ? 4.2 : 4.5;
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(6.5);
+        doc.setTextColor(...C.muted);
+        doc.text('Relatório para celular', M, hy);
+        hy += 4.2;
 
-      const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
-      const maxFiltroLinhas = Math.min(3, filtrosLinhas.length);
-      for (let fi = 0; fi < maxFiltroLinhas; fi++) {
-        doc.text(filtrosLinhas[fi], M, hy);
-        hy += isMobile ? 3.9 : 4;
+        const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
+        const maxFiltroLinhas = Math.min(3, filtrosLinhas.length);
+        for (let fi = 0; fi < maxFiltroLinhas; fi++) {
+          doc.text(filtrosLinhas[fi], M, hy);
+          hy += 3.9;
+        }
+        hy += 1;
+        doc.setFontSize(6.2);
+        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, hy);
+        hy += 4.5;
+
+        doc.setFillColor(...C.soft);
+        doc.rect(M, hy, CW, 0.5, 'F');
+        hy += 2.5;
+        y = hy;
+        return;
       }
-      hy += 1;
-      doc.setFontSize(isMobile ? 6.2 : 6.5);
-      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, hy);
-      hy += isMobile ? 4.5 : 5;
 
-      doc.setFillColor(...C.soft);
-      doc.rect(M, hy, CW, 0.5, 'F');
-      hy += 2.5;
-      y = hy;
+      // Desktop header
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, y, CW, 26, 4, 4, 'F');
+      doc.setFillColor(...C.teal);
+      doc.roundedRect(M + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
+      doc.setTextColor(...C.text);
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(16);
+      const titulo = normalizedVersion === 'expandida_mobile'
+        ? 'Relatorio mobile de embarques'
+        : 'Relatorio expandido de embarques';
+      doc.text(safe(titulo), M + 11, y + 9);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(9);
+      doc.setTextColor(...C.muted);
+      doc.text(safe(filtros_desc), M + 11, y + 15);
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M + 11, y + 21);
+      y += 32;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -967,40 +984,48 @@ Deno.serve(async (req) => {
         { label: 'Pago / nao entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
       ];
 
-      if (useAlmaDesign) {
-        const drawKpiCard = (card, cx, cw, cardH) => {
-          if (!card) return;
-          doc.setFillColor(...C.soft);
-          doc.roundedRect(cx, y, cw, cardH, 2, 2, 'F');
-          doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-          doc.setFontSize(isMobile ? 6 : 6.5);
-          doc.setTextColor(...SLATE500);
-          doc.text(safe(card.label), cx + 3, y + 5);
-          doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-          doc.setFontSize(isMobile ? 8.5 : 9);
-          doc.setTextColor(...SLATE900);
-          doc.text(safe(String(card.value)), cx + 3, y + (isMobile ? 11.5 : 12));
-        };
-
-        if (isMobile) {
-          const colW = (CW - 3) / 2;
-          const cardH = 14.5;
-          for (let i = 0; i < cards.length; i += 2) {
-            ensureSpace(18);
-            [0, 1].forEach((col) => drawKpiCard(cards[i + col], M + col * (colW + 3), colW, cardH));
-            y += 16.5;
-          }
-        } else {
-          const gap = 3;
-          const cw = (CW - gap * 3) / 4;
-          const cardH = 15;
-          ensureSpace(cardH + 4);
-          cards.forEach((card, i) => drawKpiCard(card, M + (cw + gap) * i, cw, cardH));
-          y += cardH + 4;
+      if (isMobile) {
+        const colW = (CW - 3) / 2;
+        const cardH = 14.5;
+        for (let i = 0; i < cards.length; i += 2) {
+          ensureSpace(18);
+          [0, 1].forEach((col) => {
+            const card = cards[i + col];
+            if (!card) return;
+            const cx = M + col * (colW + 3);
+            doc.setFillColor(...C.soft);
+            doc.roundedRect(cx, y, colW, cardH, 2, 2, 'F');
+            doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+            doc.setFontSize(6);
+            doc.setTextColor(...C.muted);
+            doc.text(safe(card.label), cx + 3, y + 5);
+            doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+            doc.setFontSize(8.5);
+            doc.setTextColor(...C.dark);
+            doc.text(safe(String(card.value)), cx + 3, y + 11.5);
+          });
+          y += 16.5;
         }
         y += 2;
         return;
       }
+
+      const gap = 4;
+      const cw = (CW - gap * 3) / 4;
+      cards.forEach((card, i) => {
+        const x = M + (cw + gap) * i;
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(x, y, cw, 18, 3, 3, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.muted);
+        doc.text(card.label, x + 4, y + 6);
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(10);
+        doc.setTextColor(...C.dark);
+        doc.text(safe(String(card.value)), x + 4, y + 13);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      });
+      y += 24;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1010,27 +1035,26 @@ Deno.serve(async (req) => {
       if (isMobile || !Array.isArray(grupos) || grupos.length === 0) return;
       ensureSpace(20);
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(8);
-      doc.setTextColor(...SLATE500);
+      doc.setFontSize(9);
+      doc.setTextColor(...C.muted);
       doc.text('Agrupamento aplicado na tela', M, y);
       y += 5;
-      grupos.forEach((grupo) => {
+      grupos.forEach((grupo, idx) => {
         const total = (grupo.pedidos || []).reduce((a, p) => a + getValorRelatorio(p, produtosMap), 0);
-        const bandH = 8;
-        ensureSpace(bandH + 2);
-        doc.setFillColor(241, 245, 249);
-        doc.roundedRect(M, y, CW, bandH, 2, 2, 'F');
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(7);
-        doc.setTextColor(...SLATE900);
-        doc.text(safe(grupo.label || '-'), M + 3, y + 5);
+        ensureSpace(8);
+        if (idx % 2 === 0) {
+          doc.setFillColor(250, 250, 250);
+          doc.roundedRect(M, y - 1.5, CW, 6.5, 2, 2, 'F');
+        }
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(6.5);
-        doc.setTextColor(...SLATE500);
-        doc.text(`${(grupo.pedidos || []).length} pedido(s) · ${moeda(total)}`, M + CW - 3, y + 5, { align: 'right' });
-        y += bandH + 2;
+        doc.setFontSize(7.5);
+        doc.setTextColor(...C.text);
+        doc.text(safe(grupo.label || '-'), M + 3, y + 2.5);
+        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + 122, y + 2.5);
+        doc.text(moeda(total), M + CW - 3, y + 2.5, { align: 'right' });
+        y += 7;
       });
-      y += 2;
+      y += 4;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1117,100 +1141,6 @@ Deno.serve(async (req) => {
       y = addWrappedText(doc, pedido.observacoes || pedido.historico || '-', M + 2, y, CW - 4, 4) + 4;
     };
 
-    /**
-     * Cabeçalho do pedido (card expandida_mobile) — reutilizado no PDF expandido A4 e no mobile.
-     * @returns altura total ocupada (card + espaço inferior)
-     */
-    const drawPedidoHeaderAlma = (pedido, itens) => {
-      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-      const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
-      const sc = getStatusColors(statusRelatorio);
-
-      const valorHeader = isPendencia
-        ? moeda(itens.reduce((a, i) => {
-            const prod = produtosMap[i.produto_id] || {};
-            const met = resolveMetricasItemPdf(i, prod, pedido);
-            return a + met.totalLinha;
-          }, 0))
-        : moeda(getValorRelatorio(pedido, produtosMap));
-
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.5);
-      const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 34).slice(0, 2);
-      const codigoLineStep = 3.8;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(9);
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 3);
-      const countLabel = isNecessidadeRelatorio(pedido)
-        ? `${itens.length} item(ns) pendente(s)`
-        : `${itens.length} item(ns)`;
-      const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
-      const metaLines = doc.splitTextToSize(metaTexto, CW - 6).slice(0, 2);
-
-      const fornLineStep = 4;
-      const fornBlock = fornLines.length * fornLineStep;
-      const totalRowH = 5.5;
-      const metaLineStep = 3.6;
-      const metaBlock = metaLines.length * metaLineStep;
-      const progH = 4;
-      const cardPadBottom = 3;
-      const codeY0 = 6.5;
-      const codeBlockH = codigoLinhas.length * codigoLineStep;
-      const gapCodeForn = 3;
-      const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
-
-      const cardTop = y;
-      doc.setFillColor(...C.panel);
-      doc.roundedRect(M, cardTop, CW, cardHeight, 2.5, 2.5, 'F');
-
-      doc.setFillColor(...sc.dot);
-      doc.circle(M + 4.5, cardTop + 6, 2, 'F');
-
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.5);
-      doc.setTextColor(...SLATE500);
-      codigoLinhas.forEach((line, ci) => {
-        doc.text(line, M + 10, cardTop + codeY0 + ci * codigoLineStep);
-      });
-
-      doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M + CW - 30, cardTop + 2, 28, 7, 3.5, 3.5, 'F');
-      doc.setFontSize(6);
-      doc.setTextColor(...sc.pillText);
-      doc.text(safe(statusRelatorio), M + CW - 16, cardTop + 6.8, { align: 'center' });
-
-      let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(9);
-      doc.setTextColor(...SLATE900);
-      fornLines.forEach((line, fl) => {
-        doc.text(line, M + 3, cy + fl * fornLineStep);
-      });
-      cy += fornBlock + 1;
-
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6);
-      doc.setTextColor(...SLATE500);
-      doc.text('Total', M + 3, cy);
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(9);
-      doc.setTextColor(...SLATE900);
-      doc.text(valorHeader, M + CW - 3, cy, { align: 'right' });
-      cy += totalRowH;
-
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6);
-      doc.setTextColor(...SLATE500);
-      metaLines.forEach((line, ml) => {
-        doc.text(line, M + 3, cy + ml * metaLineStep);
-      });
-      cy += metaBlock + 1;
-
-      drawProgressBar(pedido._display_status || pedido.status, cy);
-      y = cardTop + cardHeight + 3;
-      return cardHeight + 3;
-    };
-
     // ════════════════════════════════════════════════════════════════════════
     //  DESKTOP: layout expandido
     // ════════════════════════════════════════════════════════════════════════
@@ -1228,6 +1158,8 @@ Deno.serve(async (req) => {
      * Toda essa lógica está concentrada em `resolveMetricasItemPdf`.
      */
     const drawExpandido = (pedido) => {
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      const stPedido = pedido._display_status || pedido.status;
       // Ordem alfabética + quantidade/sigla na unidade comercial (alinhado a embalagens / productUnits)
       const itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
         const prod = produtosMap[item.produto_id] || {};
@@ -1249,20 +1181,64 @@ Deno.serve(async (req) => {
         };
       });
 
-      const minPrimeiroItemH = itens.length > 0
-        ? scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2) + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 2)
-        : 0;
-      ensureSpace(48 + minPrimeiroItemH + 14);
-      drawPedidoHeaderAlma(pedido, itens);
+      // Cabeçalho + barra de progresso + 1ª linha da tabela na mesma página
+      const minPedidoH =
+        32 +
+        4.5 +
+        scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2) +
+        scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 2) +
+        14;
+      if (y + minPedidoH > pageH - 12) {
+        doc.addPage();
+        y = 14;
+      }
+
+      const sc = getStatusColors(normalizarStatusRelatorio(stPedido));
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, y, CW, 28, 4, 4, 'F');
+      doc.setFillColor(...sc.dot);
+      doc.circle(M + 5, y + 6.5, 1.3, 'F');
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(11);
+      doc.setTextColor(...C.text);
+      doc.text(getPedidoNumeroRelatorio(pedido), M + 9, y + 8);
+      doc.setFontSize(9.5);
+      doc.text(getFornecedorRelatorio(pedido), M + 9, y + 14);
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + 9, y + 17, 33, 6.2, 3, 3, 'F');
+      doc.setFontSize(7.1);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(normalizarStatusRelatorio(stPedido)), M + 12, y + 21.2);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(7.5);
+      doc.setTextColor(...C.muted);
+      doc.text(`Data ${dataFmt(getDataRelatorio(pedido))}`, M + 48, y + 20);
+      doc.text(`ETA ${dataFmt(getEtaRelatorio(pedido))}`, M + 92, y + 20);
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(10);
+      doc.setTextColor(...C.text);
+      // Total do pedido no relatório expandido: valor unitário x quantidade.
+      // Custo permanece apenas como informação para análise de margem/markup.
+      const valorExp = getValorRelatorio(pedido, produtosMap);
+      doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
+      const totalQtdExp = itens.reduce((a, i) => a + i._qtdEfetiva, 0);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(7.5);
+      doc.setTextColor(...C.muted);
+      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${fmtQuantidadePdf(totalQtdExp)} (un. comerc.)`, M + CW - 4, y + 16, { align: 'right' });
+      y += 32;
+
+      drawProgressBar(stPedido, y);
+      y += 4.5;
 
       let totCusto = 0, totVenda = 0;
 
       ensureSpace(scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2));
-      doc.setFillColor(241, 245, 249);
+      doc.setFillColor(...C.soft);
       doc.roundedRect(TM, y, TW, scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT), 2, 2, 'F');
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE);
-      doc.setTextColor(...SLATE900);
+      doc.setTextColor(...C.text);
       doc.text('QTD', TM + EXPANDED_ITEMS_TABLE_COLUMNS.qtd, y + scaledHeight(7));
       doc.text('UN', TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(7));
       doc.text('DESCRICAO', TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, y + scaledHeight(7));
@@ -1300,7 +1276,7 @@ Deno.serve(async (req) => {
             EXPANDED_DESC_TO_VLR_GAP_MM
         );
         const nomeLinhas = doc.splitTextToSize(
-          toTitleCase(safe(item.produto_nome || prod.nome || '-')),
+          safe(item.produto_nome || prod.nome || '-'),
           descMaxW,
         );
         const descLineStep = scaledHeight(3.85);
@@ -1336,13 +1312,9 @@ Deno.serve(async (req) => {
           doc.setFillColor(...C.rowAlt);
           doc.roundedRect(TM, y - 1.25, TW, rowAdvance + scaledHeight(0.6), 1.5, 1.5, 'F');
         }
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setTextColor(...SLATE900);
+        doc.setTextColor(...C.text);
         doc.text(fmtQuantidadePdf(Number(qtd) || 0), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setTextColor(...SLATE700);
         doc.text(met.un, TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.setTextColor(...SLATE700);
         nomeLinhas.forEach((line, li) => {
           doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
         });
@@ -1353,25 +1325,22 @@ Deno.serve(async (req) => {
         doc.text(moedaSemSimboloOuTraco(totalLiq), TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(moedaSemSimboloOuTraco(venda),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
         doc.text(percentualOuTraco(mk),            TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.setDrawColor(226, 232, 240);
-        doc.setLineWidth(0.15);
-        doc.line(TM, y + rowAdvance - scaledHeight(0.3), TM + TW, y + rowAdvance - scaledHeight(0.3));
         y += rowAdvance;
       });
 
       ensureSpace(scaledHeight(22));
-      doc.setDrawColor(226, 232, 240);
+      doc.setDrawColor(229, 231, 235);
       doc.setLineWidth(0.2);
       doc.line(M, y + scaledHeight(1), M + CW, y + scaledHeight(1));
       y += scaledHeight(4);
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
-      doc.setTextColor(...SLATE700);
+      doc.setTextColor(...C.text);
       doc.text(`Custo total (itens): ${moedaOuTraco(totCusto)}`, M + 2, y + scaledHeight(3.5));
       doc.text(`Valor de venda total (referência): ${moeda(totVenda)}`, M + 2, y + scaledHeight(9));
       y += scaledHeight(12);
       doc.setFontSize(6.2);
-      doc.setTextColor(...SLATE500);
+      doc.setTextColor(...C.mutedLight);
       doc.text('Relatório gerado pelo VarejoSync.', M + 2, y + scaledHeight(2.5));
       y += scaledHeight(8);
     };
@@ -1382,6 +1351,9 @@ Deno.serve(async (req) => {
     const ITEM_ML = M + 14.8; // texto do item (à direita da qtd + linha)
     const LINE_X = M + 12.5;  // linha vertical — quantidade à esquerda
     const QTD_COL_RIGHT = M + 11.5; // fim da coluna numérica (antes da linha)
+    const SLATE900 = [15, 23, 42];
+    const SLATE700 = [51, 65, 85];
+    const SLATE500 = [100, 116, 139];
     const MOBILE_ITEMS_FONT_SCALE = 1.05;
     const MOBILE_ITEMS_VERTICAL_SCALE = 1.35;
 
@@ -1439,6 +1411,10 @@ Deno.serve(async (req) => {
     };
 
     const drawMobileCard = (pedido) => {
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
+      const sc = getStatusColors(statusRelatorio);
+
       let itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
         const prod = produtosMap[item.produto_id] || {};
         const fatorItem = Number(item.fator_conversao) || 1;
@@ -1457,9 +1433,95 @@ Deno.serve(async (req) => {
         };
       });
 
+      const valorHeader = isPendencia
+        ? moeda(itens.reduce((a, i) => {
+            const prod = produtosMap[i.produto_id] || {};
+            const met = resolveMetricasItemPdf(i, prod, pedido);
+            return a + met.totalLinha;
+          }, 0))
+        : moeda(getValorRelatorio(pedido, produtosMap));
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6.5);
+      const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 34).slice(0, 2);
+      const codigoLineStep = 3.8;
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 3);
+      const countLabel = isNecessidadeRelatorio(pedido)
+        ? `${itens.length} item(ns) pendente(s)`
+        : `${itens.length} item(ns)`;
+      const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
+      const metaLines = doc.splitTextToSize(metaTexto, CW - 6).slice(0, 2);
+
+      const fornLineStep = 4;
+      const fornBlock = fornLines.length * fornLineStep;
+      const totalRowH = 5.5;
+      const metaLineStep = 3.6;
+      const metaBlock = metaLines.length * metaLineStep;
+      const progH = 4;
+      const cardPadBottom = 3;
+      const codeY0 = 6.5;
+      const codeBlockH = codigoLinhas.length * codigoLineStep;
+      const gapCodeForn = 3;
+      const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
+
+      // Mesma ideia do desktop (minPedidoH): cabeçalho do pedido + 1.ª linha de itens na mesma página
       const minPrimeiroItemH = itens.length > 0 ? computeMobileItemRowBlockH(pedido, itens[0], 0) : 0;
-      ensureSpace(48 + minPrimeiroItemH + 6);
-      drawPedidoHeaderAlma(pedido, itens);
+      ensureSpace(cardHeight + 3 + minPrimeiroItemH + 6);
+
+      const cardTop = y;
+
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, cardTop, CW, cardHeight, 2.5, 2.5, 'F');
+
+      doc.setFillColor(...sc.dot);
+      doc.circle(M + 4.5, cardTop + 6, 2, 'F');
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6.5);
+      doc.setTextColor(...SLATE500);
+      codigoLinhas.forEach((line, ci) => {
+        doc.text(line, M + 10, cardTop + codeY0 + ci * codigoLineStep);
+      });
+
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + CW - 30, cardTop + 2, 28, 7, 3.5, 3.5, 'F');
+      doc.setFontSize(6);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(statusRelatorio), M + CW - 16, cardTop + 6.8, { align: 'center' });
+
+      let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      doc.setTextColor(...SLATE900);
+      fornLines.forEach((line, fl) => {
+        doc.text(line, M + 3, cy + fl * fornLineStep);
+      });
+      cy += fornBlock + 1;
+
+      // Total com rótulo explícito
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
+      doc.text('Total', M + 3, cy);
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      doc.setTextColor(...SLATE900);
+      doc.text(valorHeader, M + CW - 3, cy, { align: 'right' });
+      cy += totalRowH;
+
+      // Metadados (até 2 linhas)
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
+      metaLines.forEach((line, ml) => {
+        doc.text(line, M + 3, cy + ml * metaLineStep);
+      });
+      cy += metaBlock + 1;
+
+      drawProgressBar(pedido._display_status || pedido.status, cy);
+      y = cardTop + cardHeight + 3;
 
       // ── Itens ─────────────────────────────────────────────────────
       itens.forEach((item) => {
@@ -1588,19 +1650,11 @@ Deno.serve(async (req) => {
         doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
         y += bandH + 3;
       } else {
-        const bandH = 9;
-        ensureSpace(bandH + 4);
-        doc.setFillColor(241, 245, 249);
-        doc.roundedRect(M, y, CW, bandH, 2, 2, 'F');
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(6.5);
-        doc.setTextColor(...SLATE900);
-        doc.text(safe(grupo.label || '-'), M + 3, y + 5.5);
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(5.8);
-        doc.setTextColor(...SLATE500);
-        doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
-        y += bandH + 3;
+        doc.setFontSize(8.5);
+        doc.setTextColor(...C.muted);
+        doc.text(safe(grupo.label || '-'), M, y);
+        y += 4;
       }
       (grupo.pedidos || []).forEach(renderPedido);
     };

@@ -11,6 +11,7 @@ import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
   calculateBaseQuantity,
+  syncItemQuantidadeBaseComercial,
   getItemUnitKey,
   applyPurchaseUnitOptionToItem,
   getCustoApresentacaoItem,
@@ -172,7 +173,7 @@ export default function MobileProductSelector({
       selectedUnit,
       { preserveQuantidadeBase: false, usarCustoSugerido: true },
     );
-    newItem = syncItemDescontoApresentacao(newItem, custoApres);
+    newItem = syncItemDescontoApresentacao(syncItemQuantidadeBaseComercial(newItem), custoApres);
 
     setEditingItem(newItem);
     setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
@@ -263,7 +264,14 @@ export default function MobileProductSelector({
     }, 100);
   };
 
-  const calculateTotal = (item) => calcTotalItemCompraPedido(item);
+  const calculateTotal = (item) => calcTotalItemCompraPedido(syncItemQuantidadeBaseComercial(item));
+
+  const patchEditingQuantidade = (quantidade) => {
+    setEditingItem((prev) => {
+      if (!prev) return prev;
+      return syncItemQuantidadeBaseComercial({ ...prev, quantidade });
+    });
+  };
 
   // Sincroniza ao entrar na tela de desconto
   useEffect(() => {
@@ -535,7 +543,7 @@ export default function MobileProductSelector({
                  variant="outline" size="icon" className="h-11 w-11 rounded-full border-gray-300 dark:border-gray-600"
                  onClick={() => {
                    const newVal = Math.max(1, (parseFloat(editingItem.quantidade) || 0) - 1);
-                   setEditingItem(prev => ({ ...prev, quantidade: newVal }));
+                   patchEditingQuantidade(newVal);
                    setQuantidadeInput(newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                  }}
                  disabled={isLocked}
@@ -554,7 +562,7 @@ export default function MobileProductSelector({
                     setQuantidadeInput(val);
                     const numVal = parseFloat(val.replace(',', '.'));
                     if (!isNaN(numVal)) {
-                      setEditingItem(prev => ({ ...prev, quantidade: numVal }));
+                      patchEditingQuantidade(numVal);
                     }
                   }
                 }}
@@ -562,7 +570,7 @@ export default function MobileProductSelector({
                 onBlur={() => {
                   const num = parseFloat(quantidadeInput.replace(',', '.')) || 1;
                   setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                  setEditingItem(prev => ({ ...prev, quantidade: num }));
+                  patchEditingQuantidade(num);
                 }}
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
@@ -578,7 +586,7 @@ export default function MobileProductSelector({
                  variant="default" size="icon" className="h-11 w-11 rounded-full"
                  onClick={() => {
                    const newVal = (parseFloat(editingItem.quantidade) || 0) + 1;
-                   setEditingItem(prev => ({ ...prev, quantidade: newVal }));
+                   patchEditingQuantidade(newVal);
                    setQuantidadeInput(newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                  }}
                  disabled={isLocked}
