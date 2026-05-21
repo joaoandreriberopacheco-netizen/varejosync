@@ -27,7 +27,7 @@ export default function CupomVendaA4Shell(props) {
           maxWidth: '100%',
         }}
       >
-        <CupomVendaLayout {...props} variant="a4" id={undefined} />
+        <CupomVendaLayout {...props} variant="a4" cupomId={undefined} />
       </div>
     </div>
   );

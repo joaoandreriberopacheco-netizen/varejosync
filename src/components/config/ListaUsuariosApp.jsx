@@ -41,12 +41,16 @@ export default function ListaUsuariosApp() {
     const [users, perfis, contas, tabelas] = await Promise.all([
       base44.entities.User.list(),
       base44.entities.PerfilDeAcesso.list(),
-      base44.entities.ContasFinanceiras.filter({ tipo: 'Caixa Físico', ativo: true }),
+      base44.entities.ContasFinanceiras.list(),
       base44.entities.TabelaPreco.filter({ ativo: true })
     ]);
     setUsuarios(users || []);
     setPerfisAcesso(perfis || []);
-    setContasCaixa(contas || []);
+    setContasCaixa(
+      (contas || []).filter(
+        (c) => c.ativo && (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
+      )
+    );
     setTabelasPreco(tabelas || []);
     setOrfaos((users || []).filter(u => !u.perfil_acesso_id));
     setIsLoading(false);

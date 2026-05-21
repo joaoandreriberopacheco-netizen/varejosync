@@ -65,6 +65,7 @@ import LiberacaoEntrega from './LiberacaoEntrega';
 import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
+import { mensagemErroProcessarVenda } from '@/lib/pdvCaixaAutorizacao';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -927,7 +928,8 @@ export default function PDVCaixa() {
 
       loadData();
     } catch (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      const { title, description } = mensagemErroProcessarVenda(error);
+      toast({ title, description, variant: 'destructive', duration: title.includes('Base44') ? 8000 : 4000 });
     } finally {
       setProcessandoVenda(false);
     }

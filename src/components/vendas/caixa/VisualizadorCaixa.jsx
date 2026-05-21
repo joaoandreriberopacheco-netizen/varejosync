@@ -105,7 +105,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const movimentosTurno = todasMovimentacoes.filter((m) => sameTurno(m) && sameConta(m));
 
-      const subCtx = criarIndiceSubstituicoes({
+      const subCtx = criarIndiceContextoVenda({
         vendas,
         vales: todosVales,
         devolucoes: todasDevolucoes,

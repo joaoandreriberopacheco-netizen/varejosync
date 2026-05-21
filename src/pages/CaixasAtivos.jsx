@@ -89,7 +89,7 @@ export default function CaixasAtivosPage() {
               incluirRetrocompatSemTurno: !turno.data_fechamento,
             })
           );
-          const subCtx = criarIndiceSubstituicoes({
+          const subCtx = criarIndiceContextoVenda({
             vendas: vendasTurno,
             vales: todosVales,
             devolucoes: todasDevolucoes,

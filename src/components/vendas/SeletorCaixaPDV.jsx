@@ -9,6 +9,10 @@ import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { criarIndiceContextoVenda } from '@/lib/contextoVendaIntegrado';
+import {
+  enriquecerUsuarioOperacional,
+  filtrarCaixasPdvParaUsuario,
+} from '@/lib/pdvCaixaAutorizacao';
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
   const navigate = useNavigate();
@@ -45,6 +49,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
 
   const loadCaixas = async () => {
     try {
+      const userOperacional = await enriquecerUsuarioOperacional(base44, currentUser);
       const [todasContas, todosTurnos, todasVendas, todosMovimentos, todasDespesas, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
@@ -85,7 +90,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
               incluirRetrocompatSemTurno: !turnoAberto.data_fechamento,
             })
           );
-          const subCtx = criarIndiceSubstituicoes({
+          const subCtx = criarIndiceContextoVenda({
             vendas: vendasTurno,
             vales: todosVales,
             devolucoes: todasDevolucoes,
@@ -119,18 +124,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
       });
       setLiquidezPorCaixa(liquidez);
 
-      // Filtrar por permissão — PROTEÇÃO TOTAL
-      // Usuário só vê caixas explicitamente autorizados (mesmo admin)
-      const caixasAutorizados = currentUser.caixas_pdv_autorizados_ids || currentUser.caixas_vinculados || [];
-      
-      let caixasFiltrados;
-      if (caixasAutorizados.length === 0) {
-        // Se não tem nenhum caixa autorizado, não pode operar (proteção)
-        caixasFiltrados = [];
-      } else {
-        // Vê APENAS os caixas autorizados (independente de admin ou não)
-        caixasFiltrados = caixasPDV.filter(c => caixasAutorizados.includes(c.id));
-      }
+      const caixasFiltrados = filtrarCaixasPdvParaUsuario(caixasPDV, userOperacional);
 
       setCaixasDisponiveis(caixasFiltrados);
       setLoading(false);

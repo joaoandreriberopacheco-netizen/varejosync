@@ -141,7 +141,7 @@ export default function CupomVendaLayout({
   dadosEmpresa,
   indiceContexto,
   variant = 'termico',
-  id = 'cupom-print',
+  cupomId = 'cupom-print',
 }) {
   const t = TOKENS[variant] || TOKENS.termico;
   const itens = ordenarItensComprovante(pedido?.itens || []);
@@ -186,7 +186,7 @@ export default function CupomVendaLayout({
   };
 
   return (
-    <div id={id} style={estiloRoot}>
+    <div id={cupomId} style={estiloRoot}>
       {/* Cabeçalho empresa */}
       <div style={{ textAlign: 'center', marginBottom: '6px' }}>
         {dadosEmpresa?.logo_url && (
