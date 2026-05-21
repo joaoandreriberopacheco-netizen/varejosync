@@ -19,6 +19,7 @@ import {
   resolveUnidadeExibicaoParaCompras,
   buildSnapshotExibicaoComercial,
   resolveCustoUnitarioComercialLinha,
+  linhaPrecoNoEixoFatorUm,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
