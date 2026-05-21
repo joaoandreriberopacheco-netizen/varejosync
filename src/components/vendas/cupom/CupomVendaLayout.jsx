@@ -36,6 +36,14 @@ const fmtV = (v) => {
   return parts.join(',');
 };
 
+/** Padrão térmico referência: = - - = - - … */
+function buildLinhaSepDash(len) {
+  const unit = '= - - ';
+  let s = '';
+  while (s.length < len) s += unit;
+  return s.trimEnd().slice(0, len);
+}
+
 const TOKENS = {
   termico: {
     widthPx: CUPOM_LARGURA_UTIL_PX,
@@ -43,14 +51,14 @@ const TOKENS = {
     padding: CUPOM_PADDING_TERMICO,
     font: FONT_TERMICA,
     base: 13,
-    small: 12,
+    small: 11,
     header: 15,
     empresaTitulo: 18,
     total: 19,
     pagamento: 14,
     lineHeight: CUPOM_LINE_HEIGHT_TERMICO,
-    sepChar: '=',
-    sepLen: 30,
+    sepLen: 28,
+    gridCols: '26px 22px minmax(0, 1fr) 46px 50px',
   },
   a4: {
     widthPx: Math.round(CUPOM_LARGURA_UTIL_MM * 1.45 * 3.7795275591),
@@ -64,20 +72,20 @@ const TOKENS = {
     total: 22,
     pagamento: 16,
     lineHeight: 1.4,
-    sepChar: '=',
-    sepLen: 38,
+    sepLen: 36,
+    gridCols: '30px 26px minmax(0, 1fr) 54px 58px',
   },
 };
 
-function LinhaSep({ t }) {
-  const linha = t.sepChar.repeat(t.sepLen);
+function LinhaSep({ t, margin }) {
+  const linha = buildLinhaSepDash(t.sepLen);
   return (
     <div
       style={{
-        margin: '6px 0',
+        margin: margin || '5px 0',
         fontSize: t.small,
         fontFamily: t.font,
-        fontWeight: 600,
+        fontWeight: 400,
         color: '#000',
         letterSpacing: 0,
         lineHeight: 1,
@@ -98,15 +106,30 @@ function LinhaTotal({ label, valor, t, destaque }) {
         justifyContent: 'space-between',
         gap: '8px',
         fontSize: destaque ? t.total : t.base,
-        fontWeight: destaque ? 700 : 500,
+        fontWeight: destaque ? 700 : 400,
         color: '#000',
         margin: destaque ? '6px 0 4px' : '2px 0',
         lineHeight: t.lineHeight,
       }}
     >
       <span>{label}</span>
-      <span style={{ whiteSpace: 'nowrap', fontWeight: destaque ? 700 : 600 }}>{valor}</span>
+      <span style={{ whiteSpace: 'nowrap', fontWeight: destaque ? 700 : 500 }}>{valor}</span>
     </div>
+  );
+}
+
+function CelulaGrid({ children, align = 'left', style }) {
+  return (
+    <span
+      style={{
+        textAlign: align,
+        minWidth: 0,
+        overflow: 'hidden',
+        ...style,
+      }}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -122,6 +145,7 @@ export default function CupomVendaLayout({
 }) {
   const t = TOKENS[variant] || TOKENS.termico;
   const itens = ordenarItensComprovante(pedido?.itens || []);
+  const numeroPedido = pedido?.numero || 'S/N';
 
   const nomeFantasia = (
     dadosEmpresa?.nome_fantasia ||
@@ -135,6 +159,13 @@ export default function CupomVendaLayout({
   const mensagem = (
     dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERENCIA!'
   ).toUpperCase();
+
+  const estiloGrid = {
+    display: 'grid',
+    gridTemplateColumns: t.gridCols,
+    columnGap: '3px',
+    alignItems: 'start',
+  };
 
   const estiloRoot = {
     width: t.widthCss,
@@ -157,7 +188,7 @@ export default function CupomVendaLayout({
   return (
     <div id={id} style={estiloRoot}>
       {/* Cabeçalho empresa */}
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '6px' }}>
         {dadosEmpresa?.logo_url && (
           <img
             src={dadosEmpresa.logo_url}
@@ -176,18 +207,18 @@ export default function CupomVendaLayout({
           style={{
             fontSize: t.empresaTitulo,
             fontWeight: 700,
-            lineHeight: 1.15,
+            lineHeight: 1.12,
             letterSpacing: '0.02em',
           }}
         >
           {nomeFantasia}
         </div>
         {razaoSocial && (
-          <div style={{ fontSize: t.small, fontWeight: 500, marginTop: '2px' }}>
+          <div style={{ fontSize: t.small, fontWeight: 400, marginTop: '2px' }}>
             {razaoSocial}
           </div>
         )}
-        <div style={{ fontSize: t.small, fontWeight: 500, marginTop: '4px', lineHeight: 1.3 }}>
+        <div style={{ fontSize: t.small, fontWeight: 400, marginTop: '3px', lineHeight: 1.28 }}>
           {dadosEmpresa?.cnpj && <div>CNPJ: {dadosEmpresa.cnpj}</div>}
           {[dadosEmpresa?.endereco, dadosEmpresa?.numero].filter(Boolean).join(', ') && (
             <div>
@@ -205,6 +236,9 @@ export default function CupomVendaLayout({
           )}
           {dadosEmpresa?.telefone && <div>Fone: {dadosEmpresa.telefone}</div>}
         </div>
+        <div style={{ fontSize: t.base, fontWeight: 600, marginTop: '5px' }}>
+          Cupom nº {numeroPedido}
+        </div>
       </div>
 
       <LinhaSep t={t} />
@@ -213,15 +247,15 @@ export default function CupomVendaLayout({
       <div style={{ fontSize: t.base, fontWeight: 400 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '6px' }}>
           <span>{fmtDtTZ(pedido?.created_date || new Date())}</span>
-          <span style={{ fontWeight: 700 }}>N {pedido?.numero || 'S/N'}</span>
+          <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Nº {numeroPedido}</span>
         </div>
         {pedido?.cliente_nome && (
-          <div style={{ marginTop: '3px', fontWeight: 600 }}>
+          <div style={{ marginTop: '3px', fontWeight: 400 }}>
             Cliente: {pedido.cliente_nome}
           </div>
         )}
         {pedido?.vendedor_nome && (
-          <div style={{ marginTop: '2px', fontWeight: 500 }}>Vendedor: {pedido.vendedor_nome}</div>
+          <div style={{ marginTop: '2px', fontWeight: 400 }}>Vendedor: {pedido.vendedor_nome}</div>
         )}
       </div>
 
@@ -234,10 +268,26 @@ export default function CupomVendaLayout({
 
       <LinhaSep t={t} />
 
-      {/* Itens — layout em bloco (melhor em 72mm) */}
-      <div style={{ fontSize: t.small, fontWeight: 600, marginBottom: '4px' }}>
-        ITENS
+      {/* Cabeçalho colunas */}
+      <div
+        style={{
+          ...estiloGrid,
+          fontSize: t.small,
+          fontWeight: 600,
+          marginBottom: '2px',
+          textTransform: 'uppercase',
+        }}
+      >
+        <CelulaGrid align="right">QUANT</CelulaGrid>
+        <CelulaGrid>UN</CelulaGrid>
+        <CelulaGrid>DESCRIÇÃO</CelulaGrid>
+        <CelulaGrid align="right">PREÇO</CelulaGrid>
+        <CelulaGrid align="right">TOTAL</CelulaGrid>
       </div>
+
+      <LinhaSep t={t} margin="3px 0 5px" />
+
+      {/* Itens — grelha 5 colunas */}
       {itens.map((item, idx) => {
         const nome = item.produto_nome || '';
         const qtd = String(parseFloat(item.quantidade) || 0);
@@ -248,27 +298,28 @@ export default function CupomVendaLayout({
           <div
             key={item.pedido_venda_item_id || item.produto_id || idx}
             style={{
-              marginBottom: idx < itens.length - 1 ? '8px' : '4px',
-              paddingBottom: idx < itens.length - 1 ? '6px' : 0,
-              borderBottom:
-                idx < itens.length - 1 ? '2px solid #000' : 'none',
+              ...estiloGrid,
+              fontSize: t.small,
+              fontWeight: 400,
+              lineHeight: 1.22,
+              paddingBottom: '4px',
+              marginBottom: '4px',
+              borderBottom: idx < itens.length - 1 ? '1px solid #000' : 'none',
             }}
           >
-            <div style={{ fontWeight: 600, lineHeight: 1.25, wordBreak: 'break-word' }}>
-              {qtd} {un} — {nome}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '3px',
-                fontSize: t.base,
-                fontWeight: 500,
-              }}
-            >
-              <span>{preco} un.</span>
-              <span style={{ fontWeight: 700 }}>R$ {total}</span>
-            </div>
+            <CelulaGrid align="right" style={{ fontWeight: 500 }}>
+              {qtd}
+            </CelulaGrid>
+            <CelulaGrid style={{ fontWeight: 400 }}>{un}</CelulaGrid>
+            <CelulaGrid style={{ wordBreak: 'break-word', lineHeight: 1.2 }}>
+              {nome}
+            </CelulaGrid>
+            <CelulaGrid align="right" style={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+              {preco}
+            </CelulaGrid>
+            <CelulaGrid align="right" style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+              {total}
+            </CelulaGrid>
           </div>
         );
       })}
@@ -292,39 +343,32 @@ export default function CupomVendaLayout({
         destaque
       />
 
-      {pedido?.pagamentos?.length > 0 && (
-        <>
-          <LinhaSep t={t} />
-          <div style={{ fontSize: t.small, fontWeight: 600, marginBottom: '4px' }}>
-            PAGAMENTO
+      {pedido?.pagamentos?.length > 0 &&
+        pedido.pagamentos.map((pag, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '6px',
+              fontSize: t.pagamento,
+              fontWeight: 500,
+              marginTop: i === 0 ? '4px' : '2px',
+            }}
+          >
+            <span>
+              {(pag.forma_pagamento || '').toUpperCase()}
+              {pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}
+            </span>
+            <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>R$ {fmtV(pag.valor)}</span>
           </div>
-          {pedido.pagamentos.map((pag, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '6px',
-                fontSize: t.pagamento,
-                fontWeight: 600,
-                marginBottom: '3px',
-              }}
-            >
-              <span>
-                {(pag.forma_pagamento || '').toUpperCase()}
-                {pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}
-              </span>
-              <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>R$ {fmtV(pag.valor)}</span>
-            </div>
-          ))}
-        </>
-      )}
+        ))}
 
       <LinhaSep t={t} />
 
-      <div style={{ textAlign: 'center', fontWeight: 500 }}>
+      <div style={{ textAlign: 'center', fontWeight: 400 }}>
         <div style={{ fontSize: t.header, fontWeight: 700, margin: '4px 0' }}>{mensagem}</div>
-        <div style={{ fontSize: t.small, fontWeight: 500 }}>
+        <div style={{ fontSize: t.small, fontWeight: 400 }}>
           Documento sem validade fiscal
         </div>
       </div>
