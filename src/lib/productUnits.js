@@ -563,6 +563,16 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/** Mantém `quantidade_base` alinhada à quantidade comercial × fator (UI mobile compras). */
+export function syncItemQuantidadeBaseComercial(item = {}) {
+  const qty = normalizeNumber(item.quantidade, 0);
+  const fator = normalizeNumber(item.fator_conversao, 1) || 1;
+  return {
+    ...item,
+    quantidade_base: roundToTwoDecimals(calculateBaseQuantity(qty, fator)),
+  };
+}
+
 /** Tolerância para tratar 19,99 como 20 pacotes (ruído de float ou base×fator impreciso). */
 const DISCRETE_QTY_SNAP_EPSILON = 0.02;
 
