@@ -1309,6 +1309,218 @@ Deno.serve(async (req) => {
     };
 
     // ════════════════════════════════════════════════════════════════════════
+    //  Itens — layout limpo partilhado (expandido A4 + mobile)
+    // ════════════════════════════════════════════════════════════════════════
+    const SLATE900 = [15, 23, 42];
+    const SLATE700 = [51, 65, 85];
+    const SLATE500 = [100, 116, 139];
+
+    const getCleanItemLayout = (layout) => {
+      if (layout === 'wide') {
+        const itemMl = TM + 14;
+        const lineX = TM + 11.5;
+        const qtdColRight = TM + 10.5;
+        return {
+          layout: 'wide',
+          itemMl,
+          lineX,
+          qtdColRight,
+          nomeMaxW: TM + TW - itemMl - 3,
+          contentRight: TM + TW,
+          vs: 1.12,
+          fontScale: 1,
+          lineWidth: 2.5,
+          useZebra: true,
+          zebraX: TM,
+          zebraW: TW,
+        };
+      }
+      const itemMl = M + 14.8;
+      const lineX = M + 12.5;
+      const qtdColRight = M + 11.5;
+      return {
+        layout: 'narrow',
+        itemMl,
+        lineX,
+        qtdColRight,
+        nomeMaxW: M + CW - itemMl - 3,
+        contentRight: M + CW,
+        vs: 1.35,
+        fontScale: 1.05,
+        lineWidth: 2.5,
+        useZebra: false,
+        zebraX: M,
+        zebraW: CW,
+      };
+    };
+
+    const buildExpandedItemDetailText = (layout, item, prod, met) => {
+      const un = met.un;
+      const fatorItem = Number(item.fator_conversao) || 1;
+      const qBase =
+        item.quantidade_base != null && item.quantidade_base !== ''
+          ? Number(item.quantidade_base)
+          : (Number(met.qtd) || 0) * fatorItem;
+      const upPrincipal = prod.unidade_principal || '';
+      let equivSuf = '';
+      if (
+        upPrincipal &&
+        (fatorItem !== 1 || String(un).toUpperCase() !== String(upPrincipal).toUpperCase())
+      ) {
+        equivSuf = ` · Equiv. ${fmtQuantidadePdf(qBase)} ${upPrincipal} (base)`;
+      }
+      if (layout === 'wide') {
+        return {
+          linha1: `Total ${moedaOuTraco(met.totalLinha)} · Comp. ${moedaOuTraco(met.vlrUnit)} · Frete ${moedaOuTraco(met.freteUnit)} · Outros ${moedaOuTraco(met.outrosUnit)} · Custo ${moedaOuTraco(met.custoUnit)}${equivSuf}`,
+          linha2: `Venda ${moedaOuTraco(met.vendaUnit)} · Mk ${percentualOuTraco(met.markup)}`,
+          warning: met.warningText || '',
+        };
+      }
+      return {
+        linha1: `Total ${moedaOuTraco(met.totalLinha)} · ${un} · Comp. ${moedaOuTraco(met.vlrUnit)} · Custo ${moedaOuTraco(met.custoUnit)}${equivSuf}`,
+        linha2: `Venda ${moedaOuTraco(met.vendaUnit)} · Mk ${percentualOuTraco(met.markup)}`,
+        warning: met.warningText || '',
+      };
+    };
+
+    const measureExpandedItemRow = (pedido, item, layout, y0 = 0) => {
+      const cfg = getCleanItemLayout(layout);
+      const prod = produtosMap[item.produto_id] || {};
+      const met = resolveMetricasItemPdf(item, prod, pedido);
+      const det = buildExpandedItemDetailText(layout, item, prod, met);
+      const vs = cfg.vs;
+      const nomeLineStep = 3.85 * vs;
+      const auxDetailStep = 2.95 * vs;
+      const gapNomeDetalhe = 2.4 * vs;
+      const margemLinhaInferiorItem = 1.3 * vs;
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(7 * cfg.fontScale);
+      const nomeLinhas = doc.splitTextToSize(
+        toTitleCase(safe(item.produto_nome || prod.nome || '-')),
+        cfg.nomeMaxW,
+      );
+      const nomeTop = y0 + 3.4 * vs;
+      const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+
+      doc.setFontSize(5.65 * cfg.fontScale);
+      const auxValoresLinhas = doc.splitTextToSize(det.linha1, cfg.nomeMaxW);
+      const detAux1 = lastNomeBaseline + gapNomeDetalhe;
+      const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+      let detEnd = detAux2 + auxDetailStep;
+      if (det.warning) {
+        const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
+        detEnd = detAux2 + auxDetailStep + warnLinhas.length * auxDetailStep;
+      }
+      return {
+        rowBlockH: detEnd + margemLinhaInferiorItem - y0,
+        met,
+        nomeLinhas,
+        auxValoresLinhas,
+        det,
+        cfg,
+        vs,
+        nomeLineStep,
+        auxDetailStep,
+        gapNomeDetalhe,
+        margemLinhaInferiorItem,
+      };
+    };
+
+    const drawExpandedItemRowClean = (pedido, item, layout, y0, idx = 0) => {
+      const measured = measureExpandedItemRow(pedido, item, layout, y0);
+      const {
+        rowBlockH,
+        met,
+        nomeLinhas,
+        auxValoresLinhas,
+        det,
+        cfg,
+        vs,
+        nomeLineStep,
+        auxDetailStep,
+      } = measured;
+
+      const nomeTop = y0 + 3.4 * vs;
+      const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+      const detAux1 = lastNomeBaseline + measured.gapNomeDetalhe;
+      const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+      const branchY = y0 + 2.8 * vs;
+
+      if (cfg.useZebra && idx % 2 === 0) {
+        doc.setFillColor(...C.rowAlt);
+        doc.roundedRect(cfg.zebraX, y0 - 1.25, cfg.zebraW, rowBlockH + 0.6, 1.5, 1.5, 'F');
+      }
+
+      doc.setFillColor(203, 213, 225);
+      doc.rect(cfg.lineX, y0, 0.12, rowBlockH, 'F');
+      doc.rect(cfg.lineX, branchY, cfg.lineWidth, 0.12, 'F');
+
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(6.8 * cfg.fontScale);
+      doc.setTextColor(...SLATE900);
+      doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + 1.2, { align: 'right' });
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(5.9 * cfg.fontScale);
+      doc.setTextColor(...SLATE700);
+      doc.text(met.un, cfg.qtdColRight, nomeTop + 4.6, { align: 'right' });
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(7 * cfg.fontScale);
+      doc.setTextColor(...SLATE700);
+      nomeLinhas.forEach((line, li) => {
+        doc.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
+      });
+
+      doc.setFontSize(5.65 * cfg.fontScale);
+      doc.setTextColor(...SLATE500);
+      auxValoresLinhas.forEach((line, ai) => {
+        doc.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
+      });
+      doc.text(det.linha2, cfg.itemMl, detAux2);
+      if (det.warning) {
+        const warnLinhas = doc.splitTextToSize(det.warning, cfg.nomeMaxW);
+        warnLinhas.forEach((line, wi) => {
+          doc.text(line, cfg.itemMl, detAux2 + auxDetailStep + wi * auxDetailStep);
+        });
+      }
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.15);
+      doc.line(cfg.itemMl, y0 + rowBlockH, cfg.contentRight, y0 + rowBlockH);
+
+      const qtd = Number(met.qtd) || 0;
+      const totCustoAdd = qtd * (Number(met.custoUnit) || 0);
+      const totVendaAdd = qtd * (Number(met.vendaUnit) || 0);
+      return { rowBlockH, totCustoAdd, totVendaAdd };
+    };
+
+    const computeExpandedItemRowH = (pedido, item, layout, y0 = 0) =>
+      measureExpandedItemRow(pedido, item, layout, y0).rowBlockH;
+
+    const mapItensRelatorioComercial = (pedido) =>
+      sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
+        const prod = produtosMap[item.produto_id] || {};
+        const fatorItem = Number(item.fator_conversao) || 1;
+        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
+        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
+        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
+        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
+        return {
+          ...item,
+          quantidade: res.quantidade,
+          quantidade_embarcada: res.quantidade,
+          quantidade_pedida: res.quantidade,
+          unidade_medida: res.unidade,
+          fator_conversao: res.fator_conversao,
+          quantidade_base: qBase,
+          _qtdEfetiva: res.quantidade,
+          _qtdMostrada: res.quantidade,
+        };
+      });
+
+    // ════════════════════════════════════════════════════════════════════════
     //  DESKTOP: layout expandido
     // ════════════════════════════════════════════════════════════════════════
     /**
@@ -1327,32 +1539,14 @@ Deno.serve(async (req) => {
     const drawExpandido = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const stPedido = pedido._display_status || pedido.status;
-      const itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
-        const prod = produtosMap[item.produto_id] || {};
-        const fatorItem = Number(item.fator_conversao) || 1;
-        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
-        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
-        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
-        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
-        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
-        return {
-          ...item,
-          quantidade: res.quantidade,
-          quantidade_embarcada: res.quantidade,
-          quantidade_pedida: res.quantidade,
-          unidade_medida: res.unidade,
-          fator_conversao: res.fator_conversao,
-          quantidade_base: qBase,
-          _qtdEfetiva: res.quantidade,
-        };
-      });
+      const itens = mapItensRelatorioComercial(pedido);
 
-      // Cabeçalho + barra de progresso + 1ª linha da tabela na mesma página
+      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'wide', 0) : 0;
       const minPedidoH =
         32 +
         4.5 +
         scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2) +
-        scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 2) +
+        minPrimeiroItemH +
         14;
       if (y + minPedidoH > pageH - 12) {
         doc.addPage();
@@ -1418,80 +1612,20 @@ Deno.serve(async (req) => {
       y += scaledHeight(EXPANDED_ITEMS_TABLE_HEADER_HEIGHT + 2);
 
       itens.forEach((item, idx) => {
-        const prod = produtosMap[item.produto_id] || {};
-        const met = resolveMetricasItemPdf(item, prod, pedido);
-        const qtd = met.qtd;
-        const liq = met.vlrUnit;
-        const frete = met.freteUnit;
-        const outros = met.outrosUnit;
-        const custo = met.custoUnit;
-        const venda = met.vendaUnit;
-        const totalLiq = met.totalLinha;
-        const mk = met.markup;
-        const totalCusto = (Number(qtd) || 0) * (Number(custo) || 0);
-        totCusto += totalCusto;
-        totVenda += qtd * venda;
-
-        // splitTextToSize deve usar o MESMO fontSize do desenho — senão a largura calculada fica errada e o texto invade VLR. UN.
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(EXPANDED_ITEMS_TABLE_FONT_SIZE);
-        const descMaxW = Math.max(
-          18,
-          EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit -
-            EXPANDED_ITEMS_TABLE_COLUMNS.descricao -
-            EXPANDED_DESC_TO_VLR_GAP_MM
-        );
-        const nomeLinhas = doc.splitTextToSize(
-          safe(item.produto_nome || prod.nome || '-'),
-          descMaxW,
-        );
-        const descLineStep = scaledHeight(3.85);
-        /** Mesma baseline das colunas QTD / VLR. UN. — evita deslocar só a descrição. */
-        const rowBaselineY = (y0) => y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y);
-        /** Altura da linha e âncoras Y para um dado y0 (topo da linha). */
-        const metricsExpandido = (y0) => {
-          const firstY = rowBaselineY(y0);
-          const nomeBottom =
-            nomeLinhas.length === 0
-              ? y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 2)
-              : firstY + Math.max(0, nomeLinhas.length - 1) * descLineStep + scaledHeight(2.8);
-          const numericBottom = y0 + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 3);
-          const advance =
-            Math.max(nomeBottom, numericBottom, y0 + scaledHeight(EXPANDED_ITEMS_TABLE_ROW_HEIGHT + 1.5)) -
-            y0 +
-            scaledHeight(1);
-          return { firstDescY: firstY, rowAdvance: advance };
-        };
-
         const bottomPadExp = 10;
         const maxRowFit = pageH - bottomPadExp - 14;
-        let firstDescY;
-        let rowAdvance;
+        let rowH = computeExpandedItemRowH(pedido, item, 'wide', y);
         for (;;) {
-          ({ firstDescY, rowAdvance } = metricsExpandido(y));
-          if (y + rowAdvance <= pageH - bottomPadExp) break;
-          if (rowAdvance > maxRowFit) break;
+          if (y + rowH <= pageH - bottomPadExp) break;
+          if (rowH > maxRowFit) break;
           doc.addPage();
           y = 14;
+          rowH = computeExpandedItemRowH(pedido, item, 'wide', y);
         }
-        if (idx % 2 === 0) {
-          doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(TM, y - 1.25, TW, rowAdvance + scaledHeight(0.6), 1.5, 1.5, 'F');
-        }
-        doc.setTextColor(...C.text);
-        doc.text(fmtQuantidadePdf(Number(qtd) || 0), TM + 2, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        doc.text(met.un, TM + EXPANDED_ITEMS_TABLE_COLUMNS.unidade, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y));
-        nomeLinhas.forEach((line, li) => {
-          doc.text(line, TM + EXPANDED_ITEMS_TABLE_COLUMNS.descricao, firstDescY + li * descLineStep);
-        });
-        doc.text(moedaSemSimboloOuTraco(liq),      TM + EXPANDED_ITEMS_TABLE_COLUMNS.vlrUnit, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(frete),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.frete, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(outros),   TM + EXPANDED_ITEMS_TABLE_COLUMNS.outros, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(custo),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.custo, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(totalLiq), TM + EXPANDED_ITEMS_TABLE_COLUMNS.total, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(venda),    TM + EXPANDED_ITEMS_TABLE_COLUMNS.venda, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        doc.text(percentualOuTraco(mk),            TM + EXPANDED_ITEMS_TABLE_COLUMNS.markup, y + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y), { align: 'right' });
-        y += rowAdvance;
+        const drawn = drawExpandedItemRowClean(pedido, item, 'wide', y, idx);
+        totCusto += drawn.totCustoAdd;
+        totVenda += drawn.totVendaAdd;
+        y += drawn.rowBlockH;
       });
 
       ensureSpace(scaledHeight(22));
@@ -1514,91 +1648,12 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     //  MOBILE: card limpo modo claro
     // ════════════════════════════════════════════════════════════════════════
-    const ITEM_ML = M + 14.8; // texto do item (à direita da qtd + linha)
-    const LINE_X = M + 12.5;  // linha vertical — quantidade à esquerda
-    const QTD_COL_RIGHT = M + 11.5; // fim da coluna numérica (antes da linha)
-    const SLATE900 = [15, 23, 42];
-    const SLATE700 = [51, 65, 85];
-    const SLATE500 = [100, 116, 139];
-    const MOBILE_ITEMS_FONT_SCALE = 1.05;
-    const MOBILE_ITEMS_VERTICAL_SCALE = 1.35;
-
-    const NOME_X = ITEM_ML;
-    const NOME_MAX_W = M + CW - NOME_X - 3;
-
-    const fmtQtd = fmtQuantidadePdf;
-
-    /** Altura de um bloco de item (mesma fórmula do `forEach` de itens) — y0=0 dá a altura absoluta da linha. */
-    const computeMobileItemRowBlockH = (pedido, item, y0 = 0) => {
-      const prod = produtosMap[item.produto_id] || {};
-      const met = resolveMetricasItemPdf(item, prod, pedido);
-      const qtd = met.qtd;
-      const un = met.un;
-      const precoCompra = met.vlrUnit;
-      const custo = met.custoUnit;
-      const tCompra = met.totalLinha;
-
-      const vs = MOBILE_ITEMS_VERTICAL_SCALE;
-      const nomeLineStep = 3.85 * vs;
-      const auxDetailStep = 2.95 * vs;
-      const gapNomeDetalhe = 2.4 * vs;
-      const margemLinhaInferiorItem = 1.3 * vs;
-
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
-      const nomeLinhas = doc.splitTextToSize(
-        toTitleCase(safe(item.produto_nome || prod.nome || '-')),
-        NOME_MAX_W
-      );
-      const nomeTop = y0 + 3.4 * vs;
-      const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
-
-      doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
-      const fatorItem = Number(item.fator_conversao) || 1;
-      const qBase =
-        item.quantidade_base != null && item.quantidade_base !== ''
-          ? Number(item.quantidade_base)
-          : (Number(qtd) || 0) * fatorItem;
-      const upPrincipal = prod.unidade_principal || '';
-      let equivSuf = '';
-      if (
-        upPrincipal &&
-        (fatorItem !== 1 || String(un).toUpperCase() !== String(upPrincipal).toUpperCase())
-      ) {
-        equivSuf = ` · Equiv. ${fmtQtd(qBase)} ${upPrincipal} (base)`;
-      }
-      const auxValores1 = `Total ${moedaOuTraco(tCompra)} · ${un} · Comp. ${moedaOuTraco(precoCompra)} · Custo ${moedaOuTraco(custo)}${equivSuf}`;
-      const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
-      const detAux1 = lastNomeBaseline + gapNomeDetalhe;
-      const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-      // Linha "Venda · Mk" abaixo do aux principal — sem mais espaço reservado para avisos.
-      const detVendaMk = detAux2 + auxDetailStep;
-      return detVendaMk + margemLinhaInferiorItem - y0;
-    };
-
     const drawMobileCard = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const sc = getStatusColors(statusRelatorio);
 
-      let itens = sortItensAlfabeticamente(getItensRelatorio(pedido), produtosMap).map((item) => {
-        const prod = produtosMap[item.produto_id] || {};
-        const fatorItem = Number(item.fator_conversao) || 1;
-        const qtdCompra = Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
-        const qBase = Number(item.quantidade_base) > 0 ? Number(item.quantidade_base) : qtdCompra * fatorItem;
-        const pdvPref = PDF_PDV_PREFERIDO(prod, item);
-        const snap = { ...prod, unidade_show_ativa: true, unidade_apresentacao_default: pdvPref };
-        const res = PDF_RESOLVE_COMMERCIAL_DISPLAY(snap, qBase, item.unidade_medida || prod.unidade_principal || 'UN');
-        return {
-          ...item,
-          quantidade: res.quantidade,
-          unidade_medida: res.unidade,
-          fator_conversao: res.fator_conversao,
-          quantidade_base: qBase,
-          _qtdMostrada: res.quantidade,
-          _qtdEfetiva: res.quantidade,
-        };
-      });
+      const itens = mapItensRelatorioComercial(pedido);
 
       const valorHeader = isPendencia
         ? moeda(itens.reduce((a, i) => {
@@ -1634,7 +1689,7 @@ Deno.serve(async (req) => {
       const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
 
       // Mesma ideia do desktop (minPedidoH): cabeçalho do pedido + 1.ª linha de itens na mesma página
-      const minPrimeiroItemH = itens.length > 0 ? computeMobileItemRowBlockH(pedido, itens[0], 0) : 0;
+      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow', 0) : 0;
       ensureSpace(cardHeight + 3 + minPrimeiroItemH + 6);
 
       const cardTop = y;
@@ -1690,98 +1745,12 @@ Deno.serve(async (req) => {
       drawProgressBar(pedido._display_status || pedido.status, cy);
       y = cardTop + cardHeight + 3;
 
-      // ── Itens ─────────────────────────────────────────────────────
+      // ── Itens (mesmo layout limpo do expandido, página estreita) ──
       itens.forEach((item) => {
-        const prod = produtosMap[item.produto_id] || {};
-        const met = resolveMetricasItemPdf(item, prod, pedido);
-        const qtd = met.qtd;
-        const un = met.un;
-        const precoCompra = met.vlrUnit;
-        const custo = met.custoUnit;
-        const venda = met.vendaUnit;
-        const tCompra = met.totalLinha;
-        const mk = met.markup;
-
-        const vs = MOBILE_ITEMS_VERTICAL_SCALE;
-        const lineWidth = 2.5;
-        const nomeLineStep = 3.85 * vs;
-        const auxDetailStep = 2.95 * vs;
-        const gapNomeDetalhe = 2.4 * vs;
-        const margemLinhaInferiorItem = 1.3 * vs;
-
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
-        const nomeLinhas = doc.splitTextToSize(
-          toTitleCase(safe(item.produto_nome || prod.nome || '-')),
-          NOME_MAX_W
-        );
-
-        doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
-        const fatorItem = Number(item.fator_conversao) || 1;
-        const qBase =
-          item.quantidade_base != null && item.quantidade_base !== ''
-            ? Number(item.quantidade_base)
-            : (Number(qtd) || 0) * fatorItem;
-        const upPrincipal = prod.unidade_principal || '';
-        let equivSuf = '';
-        if (
-          upPrincipal &&
-          (fatorItem !== 1 || String(un).toUpperCase() !== String(upPrincipal).toUpperCase())
-        ) {
-          equivSuf = ` · Equiv. ${fmtQtd(qBase)} ${upPrincipal} (base)`;
-        }
-        const auxValores1 = `Total ${moedaOuTraco(tCompra)} · ${un} · Comp. ${moedaOuTraco(precoCompra)} · Custo ${moedaOuTraco(custo)}${equivSuf}`;
-        const auxValoresLinhas = doc.splitTextToSize(auxValores1, NOME_MAX_W);
-        const auxValores2 = `Venda ${moedaOuTraco(venda)} · Mk ${percentualOuTraco(mk)}`;
-
-        const layoutMobileItem = (y0) => {
-          const nomeTop = y0 + 3.4 * vs;
-          const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
-          const detAux1 = lastNomeBaseline + gapNomeDetalhe;
-          const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-          const detVendaMk = detAux2 + auxDetailStep;
-          const rowBlockH = detVendaMk + margemLinhaInferiorItem - y0;
-          const branchY = y0 + 2.8 * vs;
-          return { nomeTop, detAux1, detAux2, detVendaMk, rowBlockH, branchY };
-        };
-
-        let mob = layoutMobileItem(y);
-        ensureSpace(mob.rowBlockH + 6);
-        mob = layoutMobileItem(y);
-
-        doc.setFillColor(203, 213, 225);
-        doc.rect(LINE_X, y, 0.12, mob.rowBlockH, 'F');
-        doc.rect(LINE_X, mob.branchY, lineWidth, 0.12, 'F');
-
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(6.8 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE900);
-        doc.text(fmtQtd(qtd), QTD_COL_RIGHT, mob.nomeTop + 1.2, { align: 'right' });
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(5.9 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE700);
-        doc.text(un, QTD_COL_RIGHT, mob.nomeTop + 4.6, { align: 'right' });
-
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE700);
-        nomeLinhas.forEach((line, li) => {
-          doc.text(line, NOME_X, mob.nomeTop + li * nomeLineStep);
-        });
-
-        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(5.65 * MOBILE_ITEMS_FONT_SCALE);
-        doc.setTextColor(...SLATE500);
-        auxValoresLinhas.forEach((line, ai) => {
-          doc.text(line, NOME_X, mob.detAux1 + ai * auxDetailStep);
-        });
-        doc.text(auxValores2, NOME_X, mob.detAux2);
-
-        doc.setDrawColor(226, 232, 240);
-        doc.setLineWidth(0.15);
-        doc.line(ITEM_ML, y + mob.rowBlockH, M + CW, y + mob.rowBlockH);
-
-        y += mob.rowBlockH;
+        const rowH = computeExpandedItemRowH(pedido, item, 'narrow', y);
+        ensureSpace(rowH + 6);
+        const drawn = drawExpandedItemRowClean(pedido, item, 'narrow', y, 0);
+        y += drawn.rowBlockH;
       });
 
       y += 4; // espaço entre pedidos
