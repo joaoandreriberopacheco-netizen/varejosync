@@ -563,6 +563,16 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/** Recalcula `quantidade_base` a partir da quantidade comercial (CX/PAC) e do fator da linha. */
+export function syncItemQuantidadeBaseComercial(item = {}) {
+  const qty = normalizeNumber(item.quantidade, 0);
+  const fator = normalizeNumber(item.fator_conversao, 1) || 1;
+  return {
+    ...item,
+    quantidade_base: roundToTwoDecimals(calculateBaseQuantity(qty, fator)),
+  };
+}
+
 /** Tolerância para tratar 19,99 como 20 pacotes (ruído de float ou base×fator impreciso). */
 const DISCRETE_QTY_SNAP_EPSILON = 0.02;
 
@@ -883,9 +893,10 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
   const fator = normalizeNumber(option.fator_conversao, 1) || 1;
   const oldFator = normalizeNumber(item.fator_conversao, 1) || 1;
   const qbInformada = normalizeNumber(item.quantidade_base, NaN);
+  const fatorParaBase = preserveQuantidadeBase ? oldFator : fator;
   const quantidadeBase = Number.isFinite(qbInformada)
     ? qbInformada
-    : calculateBaseQuantity(normalizeNumber(item.quantidade, 0), oldFator);
+    : calculateBaseQuantity(normalizeNumber(item.quantidade, 0), fatorParaBase);
 
   const unidadeAnterior = normalizeUnitCode(item.unidade_medida);
   const unidadeNova = normalizeUnitCode(option.unidade);
