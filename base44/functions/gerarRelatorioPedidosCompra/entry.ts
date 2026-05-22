@@ -25,10 +25,12 @@ const patchPdfTextVerticalStretch = (doc) => {
 };
 
 const PDF_FONT_BOLD = 'bold';
+const PDF_FONT_MEDIUM = 'medium';
 const PDF_FONT_NORMAL = 'normal';
 const NOTO_REGULAR_URL = 'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
+const NOTO_MEDIUM_URL = 'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Medium.ttf';
 const NOTO_BOLD_URL = 'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Bold.ttf';
-const fontCache = { regular: null, bold: null };
+const fontCache = { regular: null, medium: null, bold: null };
 
 const arrayBufferToBase64 = (buffer) => {
   let binary = '';
@@ -52,12 +54,15 @@ const loadFontBase64 = async (url, cacheKey) => {
 /** Retorna true se NotoSans foi registrada; em falha de rede/CDN usa Helvetica e retorna false. */
 const registerPdfFonts = async (doc): Promise<boolean> => {
   try {
-    const [regularBase64, boldBase64] = await Promise.all([
+    const [regularBase64, mediumBase64, boldBase64] = await Promise.all([
       loadFontBase64(NOTO_REGULAR_URL, 'regular'),
+      loadFontBase64(NOTO_MEDIUM_URL, 'medium'),
       loadFontBase64(NOTO_BOLD_URL, 'bold'),
     ]);
     doc.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
     doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    doc.addFileToVFS('NotoSans-Medium.ttf', mediumBase64);
+    doc.addFont('NotoSans-Medium.ttf', 'NotoSans', 'medium');
     doc.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
     doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
     doc.setFont('NotoSans', PDF_FONT_NORMAL);
@@ -869,14 +874,19 @@ Deno.serve(async (req) => {
     });
     const usarNoto = await registerPdfFonts(doc);
     const pdfFontFamily = usarNoto ? 'NotoSans' : 'helvetica';
+    const pdfFontEmphasis = usarNoto ? PDF_FONT_MEDIUM : PDF_FONT_NORMAL;
     patchPdfTextVerticalStretch(doc);
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const M = isMobile ? 5 : 9;           // margem página (reduz faixa lateral)
-    const TM = isMobile ? 5 : 11;        // inset da tabela de itens (mais largura útil)
-    const CW = pageW - M * 2;             // content width
-    const TW = pageW - TM * 2;            // table width
+    let M = isMobile ? 5 : 9;           // margem página (reduz faixa lateral)
+    let TM = isMobile ? 5 : 11;        // inset da tabela de itens (mais largura útil)
+    let CW = pageW - M * 2;             // content width
+    let TW = pageW - TM * 2;            // table width
+    const syncLayoutWidths = () => {
+      CW = pageW - M * 2;
+      TW = pageW - TM * 2;
+    };
 
     const C = {
       text:      [31,  41,  55],
@@ -957,7 +967,7 @@ Deno.serve(async (req) => {
       if (isMobile) {
         // Header mobile: hierarquia clara, filtros em até 3 linhas, tipografia legível no celular
         let hy = 12;
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFont(pdfFontFamily, pdfFontEmphasis);
         doc.setFontSize(12);
         doc.setTextColor(...C.text);
         doc.text('Embarques', M, hy);
@@ -993,7 +1003,7 @@ Deno.serve(async (req) => {
       doc.setFillColor(...C.teal);
       doc.roundedRect(M + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
       doc.setTextColor(...C.text);
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFont(pdfFontFamily, pdfFontEmphasis);
       doc.setFontSize(16);
       const titulo = normalizedVersion === 'expandida_mobile'
         ? 'Relatorio mobile de embarques'
@@ -1088,7 +1098,7 @@ Deno.serve(async (req) => {
         doc.text(moeda(total), M + CW - 3, y + 2.5, { align: 'right' });
         y += 7;
       });
-      y += 4;
+      y += 11;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1519,7 +1529,7 @@ Deno.serve(async (req) => {
       doc.text(safe(statusRelatorio), M + CW - 18.5, cardTop + 8.2, { align: 'center' });
 
       let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFont(pdfFontFamily, pdfFontEmphasis);
       doc.setFontSize(10.5);
       doc.setTextColor(...SLATE900);
       fornLines.forEach((line, fl) => {
@@ -1531,7 +1541,7 @@ Deno.serve(async (req) => {
       doc.setFontSize(6.8);
       doc.setTextColor(...SLATE500);
       doc.text('Total', M + 4, cy);
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFont(pdfFontFamily, pdfFontEmphasis);
       doc.setFontSize(10.5);
       doc.setTextColor(...SLATE900);
       doc.text(valorHeader, M + CW - 4, cy, { align: 'right' });
@@ -1581,7 +1591,7 @@ Deno.serve(async (req) => {
       doc.text(`Custo total (itens): ${moedaOuTraco(totCusto)}`, M + 4, y + 3);
       doc.text(`Valor de venda total (referência): ${moeda(totVenda)}`, M + 4, y + 8.5);
       y += 12;
-      y += 4;
+      y += 6;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1653,7 +1663,7 @@ Deno.serve(async (req) => {
       doc.text(safe(statusRelatorio), M + CW - 16, cardTop + 6.8, { align: 'center' });
 
       let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFont(pdfFontFamily, pdfFontEmphasis);
       doc.setFontSize(9);
       doc.setTextColor(...SLATE900);
       fornLines.forEach((line, fl) => {
@@ -1666,7 +1676,7 @@ Deno.serve(async (req) => {
       doc.setFontSize(6);
       doc.setTextColor(...SLATE500);
       doc.text('Total', M + 3, cy);
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFont(pdfFontFamily, pdfFontEmphasis);
       doc.setFontSize(9);
       doc.setTextColor(...SLATE900);
       doc.text(valorHeader, M + CW - 3, cy, { align: 'right' });
@@ -1724,14 +1734,26 @@ Deno.serve(async (req) => {
         doc.setTextColor(...SLATE500);
         doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
         y += bandH + 3;
+        (grupo.pedidos || []).forEach(renderPedido);
       } else {
+        y += 3;
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
         doc.setFontSize(8.5);
         doc.setTextColor(...C.muted);
         doc.text(safe(grupo.label || '-'), M, y);
-        y += 4;
+        y += 7;
+        const pedidoInset = 7;
+        const m0 = M;
+        const tm0 = TM;
+        M += pedidoInset;
+        TM += pedidoInset;
+        syncLayoutWidths();
+        (grupo.pedidos || []).forEach(renderPedido);
+        M = m0;
+        TM = tm0;
+        syncLayoutWidths();
+        y += 5;
       }
-      (grupo.pedidos || []).forEach(renderPedido);
     };
 
     if (Array.isArray(grupos) && grupos.length > 0) {
