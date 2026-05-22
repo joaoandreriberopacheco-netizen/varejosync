@@ -944,6 +944,40 @@ const EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE = EXPANDED_A4_BODY_VALUES_FONT_
 const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = EXPANDED_A4_DESC_HEADER_FONT_SIZE;
 const GROUP_LABEL_OUTDENT_MM = 8; // +0,5 cm à esquerda da margem (quebra visual do agrupador)
 const GROUP_AGRUPAMENTO_TO_CARD_GAP_MM = 10; // 1 cm entre resumo/agrupador e card; título ao meio
+/** Espaçamento vertical compacto do card expandido A4 (economia de papel). */
+const EXPANDED_A4_ROW_VS = 1.02;
+const EXPANDED_A4_CARD = {
+  codeY0: 5.5,
+  codigoLineStep: 3.5,
+  codigoFont: 6.5,
+  fornFont: 9,
+  fornLineStep: 4,
+  totalFont: 9,
+  totalRowH: 5,
+  metaFont: 6.5,
+  metaLineStep: 3.3,
+  gapCodeForn: 2,
+  gapAfterForn: 0.5,
+  gapAfterMeta: 1,
+  progBarH: 2,
+  progH: 2.2,
+  gapBeforeColHdr: 1.6,
+  colHdrBaselineOffset: 3.2,
+  colHdrBlockH: 5.2,
+  cardPadBottom: 1.5,
+  statusPillH: 6.5,
+  statusPillTop: 2.2,
+  dotCy: 5.2,
+  dotR: 1.8,
+  gapHeaderToItems: 1,
+  footerLineH: 5,
+  gapAfterCard: 2,
+  rowNomeTop: 2.75,
+  rowGapNomeValores: 2.35,
+  rowValoresH: 3.85,
+  rowMarginBottom: 1.15,
+  rowBranchY: 2.4,
+};
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.2;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.35;
@@ -1093,14 +1127,13 @@ Deno.serve(async (req) => {
       }
     };
 
-    const drawProgressBarCard = (status, barY) => {
+    const drawProgressBarCard = (status, barY, barH = 2.8) => {
       const level = getStatusProgress(status);
       const totalSegs = 5;
       const padX = 3;
       const barW = CW - padX * 2;
       const segGap = 1.3;
       const segW = (barW - (totalSegs - 1) * segGap) / totalSegs;
-      const barH = 2.8;
       const sc = getStatusColors(status);
       for (let s = 0; s < totalSegs; s++) {
         const sx = M + padX + s * (segW + segGap);
@@ -1373,7 +1406,7 @@ Deno.serve(async (req) => {
           contentRight: TM + TW,
           sepLineX0: M + 3,
           sepLineX1: M + CW - 3,
-          vs: 1.12,
+          vs: EXPANDED_A4_ROW_VS,
           fontScale: 1,
           lineWidth: 2.5,
           useZebra: false,
@@ -1381,6 +1414,11 @@ Deno.serve(async (req) => {
           valuesFontSize: EXPANDED_A4_BODY_VALUES_FONT_SIZE,
           qtdFontSize: 7.4,
           unFontSize: 6.35,
+          rowNomeTop: EXPANDED_A4_CARD.rowNomeTop,
+          rowGapNomeValores: EXPANDED_A4_CARD.rowGapNomeValores,
+          rowValoresH: EXPANDED_A4_CARD.rowValoresH,
+          rowMarginBottom: EXPANDED_A4_CARD.rowMarginBottom,
+          rowBranchY: EXPANDED_A4_CARD.rowBranchY,
         };
       }
       const itemMl = M + 14.8;
@@ -1447,21 +1485,22 @@ Deno.serve(async (req) => {
         toTitleCase(safe(item.produto_nome || prod.nome || '-')),
         nomeMaxW,
       );
-      const nomeTop = y0 + 3.4 * vs;
+      const nomeTop = y0 + (layout === 'wide' ? (cfg.rowNomeTop ?? 3.4 * vs) : 3.4 * vs);
       const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
       if (layout === 'wide') {
-        const gapNomeValores = 2.8 * vs;
-        const valoresRowH = 4.6 * vs;
+        const gapNomeValores = cfg.rowGapNomeValores ?? 2.8 * vs;
+        const valoresRowH = cfg.rowValoresH ?? 4.6 * vs;
         const valoresY = lastNomeBaseline + gapNomeValores;
         let detEnd = valoresY + valoresRowH;
         if (met.warningText) {
           doc.setFontSize(5.5 * cfg.fontScale);
           const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
-          detEnd = valoresY + valoresRowH + 1.2 * vs + warnLinhas.length * 2.8 * vs;
+          detEnd = valoresY + valoresRowH + 1 * vs + warnLinhas.length * 2.5 * vs;
         }
+        const margemWide = cfg.rowMarginBottom ?? margemLinhaInferiorItem;
         return {
-          rowBlockH: detEnd + margemLinhaInferiorItem - y0,
+          rowBlockH: detEnd + margemWide - y0,
           met,
           nomeLinhas,
           nomeX: cfg.itemMl,
@@ -1507,7 +1546,7 @@ Deno.serve(async (req) => {
       const measured = measureExpandedItemRow(pedido, item, layout, y0);
       const { rowBlockH, met, nomeLinhas, cfg, vs, nomeLineStep, nomeTop } = measured;
       const nomeX = measured.nomeX ?? cfg.itemMl;
-      const branchY = y0 + 2.8 * vs;
+      const branchY = y0 + (layout === 'wide' ? (cfg.rowBranchY ?? 2.8 * vs) : 2.8 * vs);
 
       doc.setFillColor(203, 213, 225);
       doc.rect(cfg.lineX, y0, 0.12, rowBlockH, 'F');
@@ -1645,87 +1684,87 @@ Deno.serve(async (req) => {
         ? `${itens.length} item(ns) pendente(s)`
         : `${itens.length} item(ns) - ${fmtQuantidadePdf(totalQtdExp)} (un. comerc.)`;
 
+      const c = EXPANDED_A4_CARD;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7.2);
+      doc.setFontSize(c.codigoFont);
       const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 38).slice(0, 2);
-      const codigoLineStep = 4.2;
+      const codigoLineStep = c.codigoLineStep;
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(10.5);
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 8).slice(0, 3);
+      doc.setFontSize(c.fornFont);
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 8).slice(0, 2);
       const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(c.metaFont);
       const metaLines = doc.splitTextToSize(metaTexto, CW - 8).slice(0, 2);
 
-      const fornLineStep = 4.6;
+      const fornLineStep = c.fornLineStep;
       const fornBlock = fornLines.length * fornLineStep;
-      const totalRowH = 6;
-      const metaLineStep = 4;
+      const totalRowH = c.totalRowH;
+      const metaLineStep = c.metaLineStep;
       const metaBlock = metaLines.length * metaLineStep;
-      const progH = 3.2;
-      const gapBeforeColHdr = 3.5;
-      const colHdrBaselineOffset = 4.8;
-      const colHdrBlockH = 7.5;
-      const cardPadBottom = 3;
-      const codeY0 = 7.5;
+      const codeY0 = c.codeY0;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
-      const gapCodeForn = 3.2;
+      const gapCodeForn = c.gapCodeForn;
       const headerCardH =
-        codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + gapBeforeColHdr + colHdrBlockH + cardPadBottom;
+        codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock
+        + c.gapAfterMeta + c.progH + c.gapBeforeColHdr + c.colHdrBlockH + c.cardPadBottom;
 
       const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'wide', 0) : 0;
-      ensureSpace(headerCardH + 2 + minPrimeiroItemH + 8);
+      ensureSpace(headerCardH + c.gapHeaderToItems + minPrimeiroItemH + 6);
 
       const cardTop = y;
       doc.setFillColor(...C.panel);
-      doc.roundedRect(M, cardTop, CW, headerCardH, 3, 3, 'F');
+      doc.roundedRect(M, cardTop, CW, headerCardH, 2.5, 2.5, 'F');
 
       doc.setFillColor(...sc.dot);
-      doc.circle(M + 5, cardTop + 7, 2.2, 'F');
+      doc.circle(M + 5, cardTop + c.dotCy, c.dotR, 'F');
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7.2);
+      doc.setFontSize(c.codigoFont);
       doc.setTextColor(...SLATE500);
       codigoLinhas.forEach((line, ci) => {
-        doc.text(line, M + 11, cardTop + codeY0 + ci * codigoLineStep);
+        doc.text(line, M + 10, cardTop + codeY0 + ci * codigoLineStep);
       });
 
+      const pillTop = cardTop + c.statusPillTop;
       doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M + CW - 34, cardTop + 3, 31, 8, 4, 4, 'F');
-      doc.setFontSize(6.8);
+      doc.roundedRect(M + CW - 32, pillTop, 29, c.statusPillH, 3, 3, 'F');
+      doc.setFontSize(6.2);
       doc.setTextColor(...sc.pillText);
-      doc.text(safe(statusRelatorio), M + CW - 18.5, cardTop + 8.2, { align: 'center' });
+      doc.text(safe(statusRelatorio), M + CW - 17.5, pillTop + c.statusPillH * 0.62, { align: 'center' });
 
       let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(10.5);
+      doc.setFontSize(c.fornFont);
       doc.setTextColor(...SLATE900);
       fornLines.forEach((line, fl) => {
         doc.text(line, M + 4, cy + fl * fornLineStep);
       });
-      cy += fornBlock + 1.2;
+      cy += fornBlock + c.gapAfterForn;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.8);
+      doc.setFontSize(c.metaFont);
       doc.setTextColor(...SLATE500);
       doc.text('Total', M + 4, cy);
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(10.5);
+      doc.setFontSize(c.totalFont);
       doc.setTextColor(...SLATE900);
       doc.text(valorHeader, M + CW - 4, cy, { align: 'right' });
       cy += totalRowH;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.8);
+      doc.setFontSize(c.metaFont);
       doc.setTextColor(...SLATE500);
       metaLines.forEach((line, ml) => {
         doc.text(line, M + 4, cy + ml * metaLineStep);
       });
-      cy += metaBlock + 2;
+      cy += metaBlock + c.gapAfterMeta;
 
-      drawProgressBarCard(statusRelatorio, cy);
-      cy += progH + gapBeforeColHdr;
-      drawWideValueColumnHeaders(cy + colHdrBaselineOffset);
+      drawProgressBarCard(statusRelatorio, cy, c.progBarH);
+      cy += c.progH + c.gapBeforeColHdr;
+      drawWideValueColumnHeaders(cy + c.colHdrBaselineOffset);
 
-      y = cardTop + headerCardH + 2;
+      y = cardTop + headerCardH + c.gapHeaderToItems;
 
       let totCusto = 0;
       let totVenda = 0;
@@ -1746,18 +1785,20 @@ Deno.serve(async (req) => {
         y += drawn.rowBlockH;
       });
 
-      ensureSpace(14);
+      ensureSpace(10);
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.15);
-      doc.line(M + 3, y + 0.5, M + CW - 3, y + 0.5);
-      y += 4;
+      doc.line(M + 3, y + 0.4, M + CW - 3, y + 0.4);
+      y += 2.5;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7.5);
+      doc.setFontSize(6.75);
       doc.setTextColor(...SLATE700);
-      doc.text(`Custo total (itens): ${moedaOuTraco(totCusto)}`, M + 4, y + 3);
-      doc.text(`Valor de venda total (referência): ${moeda(totVenda)}`, M + 4, y + 8.5);
-      y += 12;
-      y += 4;
+      doc.text(
+        `Custo total (itens): ${moedaOuTraco(totCusto)} · Venda ref.: ${moeda(totVenda)}`,
+        M + 4,
+        y + 2.8,
+      );
+      y += EXPANDED_A4_CARD.footerLineH + EXPANDED_A4_CARD.gapAfterCard;
     };
 
     // ════════════════════════════════════════════════════════════════════════
