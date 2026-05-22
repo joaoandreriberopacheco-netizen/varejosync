@@ -936,10 +936,11 @@ const calcularLinhav2 = (item: any = {}, prod: any = {}, _pedido: any = {}) => {
 const resolveMetricasItemPdf = calcularLinhav2;
 
 const TEXT_VERTICAL_SCALE = 1.75;
-const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // descrição + cabeçalhos de coluna
-const EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE = 7.15; // valores numéricos no corpo
-const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 8.25;
-const GROUP_LABEL_OUTDENT_MM = 3; // título do grupo à esquerda da margem oficial (quebra visual)
+const EXPANDED_ITEMS_TABLE_FONT_SIZE = 7; // descrição + cabeçalhos de coluna (QTD, UN, VLR. UN., …)
+const EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE = 6.25; // valores numéricos no corpo
+const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
+const GROUP_LABEL_OUTDENT_MM = 8; // +0,5 cm à esquerda da margem (quebra visual do agrupador)
+const GROUP_AGRUPAMENTO_TO_CARD_GAP_MM = 10; // 1 cm entre resumo/agrupador e card; título ao meio
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.2;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.35;
@@ -1259,7 +1260,6 @@ Deno.serve(async (req) => {
         doc.text(moeda(total), M + CW - 3, y + 2.5, { align: 'right' });
         y += 7;
       });
-      y += 11;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1376,8 +1376,8 @@ Deno.serve(async (req) => {
           useZebra: false,
           nomeFontSize: EXPANDED_ITEMS_TABLE_FONT_SIZE,
           valuesFontSize: EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE,
-          qtdFontSize: 7.4,
-          unFontSize: 6.35,
+          qtdFontSize: 6.75,
+          unFontSize: 5.9,
         };
       }
       const itemMl = M + 14.8;
@@ -1898,12 +1898,13 @@ Deno.serve(async (req) => {
         doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
         y += bandH + 3;
       } else {
-        y += 3;
+        ensureSpace(GROUP_AGRUPAMENTO_TO_CARD_GAP_MM + 12);
+        y += GROUP_AGRUPAMENTO_TO_CARD_GAP_MM / 2;
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(8.5);
+        doc.setFontSize(8);
         doc.setTextColor(...C.muted);
         doc.text(safe(grupo.label || '-'), Math.max(2, M - GROUP_LABEL_OUTDENT_MM), y);
-        y += 7;
+        y += GROUP_AGRUPAMENTO_TO_CARD_GAP_MM / 2;
         const pedidoInset = 7;
         const m0 = M;
         const tm0 = TM;
