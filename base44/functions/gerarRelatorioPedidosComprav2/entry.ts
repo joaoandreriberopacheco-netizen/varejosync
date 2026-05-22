@@ -1099,10 +1099,10 @@ Deno.serve(async (req) => {
       }
     };
 
-    const drawWideValueColumnHeaders = (baselineY) => {
+    const drawWideValueColumnHeaders = (baselineY, fontSize = 9.6) => {
       const cols = EXPANDED_ITEMS_TABLE_COLUMNS;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.75);
+      doc.setFontSize(fontSize);
       doc.setTextColor(...SLATE500);
       doc.text('QTD', TM + cols.qtd, baselineY);
       doc.text('UN', TM + cols.unidade, baselineY);
@@ -1365,13 +1365,20 @@ Deno.serve(async (req) => {
           sepLineX0: M + 3,
           sepLineX1: M + CW - 3,
           vs: 1.12,
-          fontScale: 1.08,
+          fontScale: 1,
           lineWidth: 2.5,
           useZebra: false,
-          nomeFontSize: 8.25,
-          valuesFontSize: 7.15,
-          qtdFontSize: 7.4,
-          unFontSize: 6.35,
+          nomeFontSize: 11.25,
+          valuesFontSize: 10.15,
+          qtdFontSize: 10.1,
+          unFontSize: 8.65,
+          colHeaderFontSize: 9.6,
+          nomeLineStep: 5.85,
+          gapNomeValores: 3.6,
+          valoresRowH: 6.8,
+          qtdYOffset: 1.65,
+          unYOffset: 6.3,
+          warnFontSize: 7.5,
         };
       }
       const itemMl = M + 14.8;
@@ -1427,8 +1434,8 @@ Deno.serve(async (req) => {
       const prod = produtosMap[item.produto_id] || {};
       const met = resolveMetricasItemPdf(item, prod, pedido);
       const vs = cfg.vs;
-      const nomeLineStep = 3.85 * vs;
-      const margemLinhaInferiorItem = 1.3 * vs;
+      const nomeLineStep = layout === 'wide' ? (cfg.nomeLineStep ?? 5.85) * vs : 3.85 * vs;
+      const margemLinhaInferiorItem = layout === 'wide' ? 1.75 * vs : 1.3 * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
@@ -1442,14 +1449,14 @@ Deno.serve(async (req) => {
       const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
       if (layout === 'wide') {
-        const gapNomeValores = 2.8 * vs;
-        const valoresRowH = 4.6 * vs;
+        const gapNomeValores = (cfg.gapNomeValores ?? 3.6) * vs;
+        const valoresRowH = (cfg.valoresRowH ?? 6.8) * vs;
         const valoresY = lastNomeBaseline + gapNomeValores;
         let detEnd = valoresY + valoresRowH;
         if (met.warningText) {
-          doc.setFontSize(5.5 * cfg.fontScale);
+          doc.setFontSize((cfg.warnFontSize ?? 7.5) * cfg.fontScale);
           const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
-          detEnd = valoresY + valoresRowH + 1.2 * vs + warnLinhas.length * 2.8 * vs;
+          detEnd = valoresY + valoresRowH + 1.4 * vs + warnLinhas.length * 3.4 * vs;
         }
         return {
           rowBlockH: detEnd + margemLinhaInferiorItem - y0,
@@ -1509,11 +1516,13 @@ Deno.serve(async (req) => {
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(qtdFs * cfg.fontScale);
       doc.setTextColor(...SLATE900);
-      doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + 1.2, { align: 'right' });
+      const qtdYOff = layout === 'wide' ? (cfg.qtdYOffset ?? 1.65) : 1.2;
+      const unYOff = layout === 'wide' ? (cfg.unYOffset ?? 6.3) : 4.6;
+      doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
       doc.setTextColor(...SLATE700);
-      doc.text(met.un, cfg.qtdColRight, nomeTop + 4.6, { align: 'right' });
+      doc.text(met.un, cfg.qtdColRight, nomeTop + unYOff, { align: 'right' });
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
@@ -1536,11 +1545,11 @@ Deno.serve(async (req) => {
         doc.text(moedaSemSimboloOuTraco(met.vendaUnit), TM + cols.venda, valoresY, { align: 'right' });
         doc.text(percentualOuTraco(met.markup), TM + cols.markup, valoresY, { align: 'right' });
         if (met.warningText) {
-          doc.setFontSize(5.5 * cfg.fontScale);
+          doc.setFontSize((cfg.warnFontSize ?? 7.5) * cfg.fontScale);
           doc.setTextColor(...SLATE500);
           const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
           warnLinhas.forEach((line, wi) => {
-            doc.text(line, cfg.itemMl, valoresY + scaledHeight(EXPANDED_ITEMS_TABLE_TEXT_Y + 1.2) + wi * 2.8 * vs);
+            doc.text(line, cfg.itemMl, valoresY + 4.2 * vs + wi * 3.4 * vs);
           });
         }
       } else {
@@ -1651,8 +1660,8 @@ Deno.serve(async (req) => {
       const metaBlock = metaLines.length * metaLineStep;
       const progH = 3.2;
       const gapBeforeColHdr = 3.5;
-      const colHdrBaselineOffset = 4.2;
-      const colHdrBlockH = 6.5;
+      const colHdrBaselineOffset = 4.8;
+      const colHdrBlockH = 7.5;
       const cardPadBottom = 3;
       const codeY0 = 7.5;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
@@ -1712,7 +1721,7 @@ Deno.serve(async (req) => {
 
       drawProgressBarCard(statusRelatorio, cy);
       cy += progH + gapBeforeColHdr;
-      drawWideValueColumnHeaders(cy + colHdrBaselineOffset);
+      drawWideValueColumnHeaders(cy + colHdrBaselineOffset, 9.6);
 
       y = cardTop + headerCardH + 2;
 
