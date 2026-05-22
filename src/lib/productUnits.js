@@ -880,6 +880,16 @@ export function calcTotalItemCompraPedido(item = {}) {
   const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
+
+  // Embalagem (CX/PAC…): total = qtd comercial × preço/embalagem. Evita (preço÷fator)×(qtd×fator)
+  // arredondar o unitário fator-1 antes do produto (ex.: 110,26÷200 → 0,55 → total 2.200 em vez de 2.205,20).
+  if (fator > 1 && qty > 0) {
+    const custoFinalApres = getCustoFinalApresentacaoItem(item);
+    if (custoFinalApres > 0 || custoF1 > 0) {
+      return roundToTwoDecimals(qty * custoFinalApres);
+    }
+  }
+
   return roundToTwoDecimals(qBase * (custoF1 - descF1));
 }
 

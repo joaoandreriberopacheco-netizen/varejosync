@@ -1506,21 +1506,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
         onLaunchPdfFilePickerConsumed={handleImporterLaunchPdfPickerConsumed}
         onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems }) => {
           setFormData(prev => {
-            const novosItens = importedItems.map(item => {
+            const novosItens = importedItems.map((item) => {
               const produtoItem = produtos.find((p) => p.id === item.produto_id);
-              const itemComercial = produtoItem ? normalizePurchaseItemToCommercial(produtoItem, item) : item;
-              const qty = parseFloat(itemComercial.quantidade) || 1;
-              const cost = roundToTwoDecimals(parseFloat(itemComercial.custo_unitario) || 0);
-              const fator = parseFloat(itemComercial.fator_conversao) || 1;
-              const qtdBase = parseFloat(itemComercial.quantidade_base) || (qty * fator);
+              let line = produtoItem ? normalizePurchaseItemToCommercial(produtoItem, item) : { ...item };
+              line = syncItemDescontoApresentacao(line);
+              line = normalizeItemToCanonicalFactorOne(line, 'custo');
+              const cost = roundToTwoDecimals(parseFloat(line.custo_unitario) || 0);
+              const descUnit = roundToTwoDecimals(parseFloat(line.valor_desconto_item) || 0);
+              const qtdBase = parseFloat(line.quantidade_base) || 0;
+              const totalLinha = calcTotalItemCompraPedido(line);
               return {
-                ...itemComercial,
-                custo_unitario: cost,
-                quantidade_base: qtdBase,
-                // Total em R$: quantidade_base × custo_unitario (eixo fator-1).
+                ...line,
                 subtotal: roundToTwoDecimals(qtdBase * cost),
-                total: roundToTwoDecimals(qtdBase * cost),
-                custo_final_unitario: cost,
+                total: totalLinha,
+                custo_final_unitario: roundToTwoDecimals(cost - descUnit),
               };
             });
             return {

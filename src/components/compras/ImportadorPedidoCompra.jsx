@@ -9,7 +9,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase } from '@/components/compras/productMatchingUtils';
-import { buildPurchaseUnitOptions, pickDefaultPurchaseUnit, calculateBaseQuantity, normalizePurchaseItemToCommercial } from '@/lib/productUnits';
+import {
+  buildPurchaseUnitOptions,
+  pickDefaultPurchaseUnit,
+  calculateBaseQuantity,
+  custoApresentacaoParaFator1,
+  normalizePurchaseItemToCommercial,
+} from '@/lib/productUnits';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { consumirArquivoPedidoImportDoBridge } from '@/lib/torrePedidoImportBridge';
 
@@ -365,6 +371,7 @@ Retorne JSON:
         const precoAjustado = getDiscountedUnitPrice(item);
         const totalEconomico = qtd * precoAjustado;
         const fator = optCompra?.fator_conversao ?? 1;
+        const custoFator1 = custoApresentacaoParaFator1(precoAjustado, fator);
         const itemImportado = normalizePurchaseItemToCommercial(produto, {
           produto_id: produtoId,
           produto_nome: produto.nome,
@@ -372,7 +379,7 @@ Retorne JSON:
           unidade_medida: optCompra?.unidade || produto.unidade_principal || 'UN',
           fator_conversao: fator,
           quantidade_base: calculateBaseQuantity(qtd, fator),
-          custo_unitario: precoAjustado,
+          custo_unitario: custoFator1,
           total: totalEconomico,
           valor_desconto_item: getDiscountPerItem(item),
           observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
