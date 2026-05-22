@@ -776,8 +776,10 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
 };
 
 const TEXT_VERTICAL_SCALE = 1.75;
-const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // ~11px visual size in the generated PDF
-const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
+const EXPANDED_ITEMS_TABLE_FONT_SIZE = 8.25; // descrição + cabeçalhos de coluna
+const EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE = 7.15; // valores numéricos no corpo
+const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 8.25;
+const GROUP_LABEL_OUTDENT_MM = 3; // título do grupo à esquerda da margem oficial (quebra visual)
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
 const EXPANDED_ITEMS_TABLE_ROW_HEIGHT = 7.2;
 const EXPANDED_ITEMS_TABLE_TEXT_Y = 4.35;
@@ -873,10 +875,14 @@ Deno.serve(async (req) => {
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const M = isMobile ? 5 : 9;           // margem página (reduz faixa lateral)
-    const TM = isMobile ? 5 : 11;        // inset da tabela de itens (mais largura útil)
-    const CW = pageW - M * 2;             // content width
-    const TW = pageW - TM * 2;            // table width
+    let M = isMobile ? 5 : 9;           // margem página (reduz faixa lateral)
+    let TM = isMobile ? 5 : 11;        // inset da tabela de itens (mais largura útil)
+    let CW = pageW - M * 2;             // content width
+    let TW = pageW - TM * 2;            // table width
+    const syncLayoutWidths = () => {
+      CW = pageW - M * 2;
+      TW = pageW - TM * 2;
+    };
 
     const C = {
       text:      [31,  41,  55],
@@ -934,7 +940,7 @@ Deno.serve(async (req) => {
     };
 
     /** Títulos das colunas de valores (sem DESCRICAO, sem negrito, alinhados à 2ª linha do item). */
-    const drawWideValueColumnHeaders = (baselineY, fontSize = 9.6) => {
+    const drawWideValueColumnHeaders = (baselineY, fontSize = EXPANDED_ITEMS_TABLE_FONT_SIZE) => {
       const cols = EXPANDED_ITEMS_TABLE_COLUMNS;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(fontSize);
@@ -1088,7 +1094,7 @@ Deno.serve(async (req) => {
         doc.text(moeda(total), M + CW - 3, y + 2.5, { align: 'right' });
         y += 7;
       });
-      y += 4;
+      y += 11;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1203,17 +1209,10 @@ Deno.serve(async (req) => {
           fontScale: 1,
           lineWidth: 2.5,
           useZebra: false,
-          nomeFontSize: 11.25,
-          valuesFontSize: 10.15,
-          qtdFontSize: 10.1,
-          unFontSize: 8.65,
-          colHeaderFontSize: 9.6,
-          nomeLineStep: 5.85,
-          gapNomeValores: 3.6,
-          valoresRowH: 6.8,
-          qtdYOffset: 1.65,
-          unYOffset: 6.3,
-          warnFontSize: 7.5,
+          nomeFontSize: EXPANDED_ITEMS_TABLE_FONT_SIZE,
+          valuesFontSize: EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE,
+          qtdFontSize: 7.4,
+          unFontSize: 6.35,
         };
       }
       const itemMl = M + 14.8;
@@ -1269,8 +1268,8 @@ Deno.serve(async (req) => {
       const prod = produtosMap[item.produto_id] || {};
       const met = resolveMetricasItemPdf(item, prod, pedido);
       const vs = cfg.vs;
-      const nomeLineStep = layout === 'wide' ? (cfg.nomeLineStep ?? 5.85) * vs : 3.85 * vs;
-      const margemLinhaInferiorItem = layout === 'wide' ? 1.75 * vs : 1.3 * vs;
+      const nomeLineStep = 3.85 * vs;
+      const margemLinhaInferiorItem = 1.3 * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
@@ -1284,14 +1283,14 @@ Deno.serve(async (req) => {
       const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
       if (layout === 'wide') {
-        const gapNomeValores = (cfg.gapNomeValores ?? 3.6) * vs;
-        const valoresRowH = (cfg.valoresRowH ?? 6.8) * vs;
+        const gapNomeValores = 2.8 * vs;
+        const valoresRowH = 4.6 * vs;
         const valoresY = lastNomeBaseline + gapNomeValores;
         let detEnd = valoresY + valoresRowH;
         if (met.warningText) {
-          doc.setFontSize((cfg.warnFontSize ?? 7.5) * cfg.fontScale);
+          doc.setFontSize(5.5 * cfg.fontScale);
           const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
-          detEnd = valoresY + valoresRowH + 1.4 * vs + warnLinhas.length * 3.4 * vs;
+          detEnd = valoresY + valoresRowH + 1.2 * vs + warnLinhas.length * 2.8 * vs;
         }
         return {
           rowBlockH: detEnd + margemLinhaInferiorItem - y0,
@@ -1351,8 +1350,8 @@ Deno.serve(async (req) => {
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(qtdFs * cfg.fontScale);
       doc.setTextColor(...SLATE900);
-      const qtdYOff = layout === 'wide' ? (cfg.qtdYOffset ?? 1.65) : 1.2;
-      const unYOff = layout === 'wide' ? (cfg.unYOffset ?? 6.3) : 4.6;
+      const qtdYOff = 1.2;
+      const unYOff = layout === 'wide' ? 4.6 : 4.6;
       doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
@@ -1380,11 +1379,11 @@ Deno.serve(async (req) => {
         doc.text(moedaSemSimboloOuTraco(met.vendaUnit), TM + cols.venda, valoresY, { align: 'right' });
         doc.text(percentualOuTraco(met.markup), TM + cols.markup, valoresY, { align: 'right' });
         if (met.warningText) {
-          doc.setFontSize((cfg.warnFontSize ?? 7.5) * cfg.fontScale);
+          doc.setFontSize(5.5 * cfg.fontScale);
           doc.setTextColor(...SLATE500);
           const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
           warnLinhas.forEach((line, wi) => {
-            doc.text(line, cfg.itemMl, valoresY + 4.2 * vs + wi * 3.4 * vs);
+            doc.text(line, cfg.itemMl, valoresY + 3.2 * vs + wi * 2.8 * vs);
           });
         }
       } else {
@@ -1556,7 +1555,7 @@ Deno.serve(async (req) => {
 
       drawProgressBarCard(statusRelatorio, cy);
       cy += progH + gapBeforeColHdr;
-      drawWideValueColumnHeaders(cy + colHdrBaselineOffset, 9.6);
+      drawWideValueColumnHeaders(cy + colHdrBaselineOffset);
 
       y = cardTop + headerCardH + 2;
 
@@ -1734,11 +1733,24 @@ Deno.serve(async (req) => {
         doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
         y += bandH + 3;
       } else {
+        y += 3;
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
         doc.setFontSize(8.5);
         doc.setTextColor(...C.muted);
-        doc.text(safe(grupo.label || '-'), M, y);
-        y += 4;
+        doc.text(safe(grupo.label || '-'), Math.max(2, M - GROUP_LABEL_OUTDENT_MM), y);
+        y += 7;
+        const pedidoInset = 7;
+        const m0 = M;
+        const tm0 = TM;
+        M += pedidoInset;
+        TM += pedidoInset;
+        syncLayoutWidths();
+        (grupo.pedidos || []).forEach(renderPedido);
+        M = m0;
+        TM = tm0;
+        syncLayoutWidths();
+        y += 5;
+        return;
       }
       (grupo.pedidos || []).forEach(renderPedido);
     };
