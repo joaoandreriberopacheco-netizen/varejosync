@@ -776,9 +776,12 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
 };
 
 const TEXT_VERTICAL_SCALE = 1.75;
-const EXPANDED_ITEMS_TABLE_FONT_SIZE = 7; // descrição + cabeçalhos de coluna (QTD, UN, VLR. UN., …)
-const EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE = 6.25; // valores numéricos no corpo
-const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = 7;
+/** Tipografia do relatório expandido A4 (não aplicar ao mobile). */
+const EXPANDED_A4_DESC_HEADER_FONT_SIZE = 8.25; // descrição + cabeçalhos QTD | UN | VLR. UN. | …
+const EXPANDED_A4_BODY_VALUES_FONT_SIZE = 7; // valores numéricos no corpo
+const EXPANDED_ITEMS_TABLE_FONT_SIZE = EXPANDED_A4_DESC_HEADER_FONT_SIZE;
+const EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE = EXPANDED_A4_BODY_VALUES_FONT_SIZE;
+const EXPANDED_ITEMS_TABLE_HEADER_FONT_SIZE = EXPANDED_A4_DESC_HEADER_FONT_SIZE;
 const GROUP_LABEL_OUTDENT_MM = 8; // +0,5 cm à esquerda da margem (quebra visual do agrupador)
 const GROUP_AGRUPAMENTO_TO_CARD_GAP_MM = 10; // 1 cm entre resumo/agrupador e card; título ao meio
 const EXPANDED_ITEMS_TABLE_HEADER_HEIGHT = 12;
@@ -1209,10 +1212,10 @@ Deno.serve(async (req) => {
           fontScale: 1,
           lineWidth: 2.5,
           useZebra: false,
-          nomeFontSize: EXPANDED_ITEMS_TABLE_FONT_SIZE,
-          valuesFontSize: EXPANDED_ITEMS_TABLE_BODY_VALUES_FONT_SIZE,
-          qtdFontSize: 6.75,
-          unFontSize: 5.9,
+          nomeFontSize: EXPANDED_A4_DESC_HEADER_FONT_SIZE,
+          valuesFontSize: EXPANDED_A4_BODY_VALUES_FONT_SIZE,
+          qtdFontSize: 7.4,
+          unFontSize: 6.35,
         };
       }
       const itemMl = M + 14.8;
