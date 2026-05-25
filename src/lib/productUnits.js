@@ -1020,6 +1020,27 @@ export function formatEstoqueApresentacao(produto) {
   return { sigla: pref, quantidade: qtd, rotulo: alt.rotulo };
 }
 
+/**
+ * Resolve quantidade/unidade a partir da **unidade de compra** escolhida (PDF, modal, catálogo).
+ * Não substitui pela vitrine comercial do produto (ex.: manter M² quando o fornecedor faturou em M²).
+ */
+export function resolvePurchaseUnitDisplay(product, quantityBase = 0, purchaseUnit = "UN") {
+  const unitNorm = normalizeUnitCode(purchaseUnit);
+  const purchaseOptions = buildPurchaseUnitOptions(product);
+  const option =
+    purchaseOptions.find((item) => normalizeUnitCode(item.unidade) === unitNorm) ||
+    purchaseOptions.find((item) => item.is_primary) ||
+    purchaseOptions[0] ||
+    null;
+  const unidade = option?.unidade || unitNorm || resolvePrimaryFromFactorOne(product, "UN");
+  const fator = normalizeNumber(option?.fator_conversao, 1) || 1;
+  const quantidade =
+    fator > 0
+      ? commercialQuantityFromBase(quantityBase, fator, unidade)
+      : normalizeNumber(quantityBase, 0);
+  return { unidade, fator_conversao: fator, quantidade, option };
+}
+
 export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit = "UN") {
   if (!isShowUnitEnabled(product)) {
     const unidadeLegada = resolvePrimaryFromFactorOne(product, fallbackUnit);
@@ -1053,7 +1074,15 @@ export function normalizePurchaseItemToCommercial(product, item = {}) {
   const quantidadeBase = Number.isFinite(quantidadeBaseInformada)
     ? quantidadeBaseInformada
     : calculateBaseQuantity(quantidadeInput, fatorInput);
-  const display = resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || "UN");
+  const fallbackUnit = item.unidade_medida || product?.unidade_principal || "UN";
+  const purchaseOptions = buildPurchaseUnitOptions(product);
+  const purchaseUnitExplicit = normalizeUnitCode(fallbackUnit);
+  const hasExplicitPurchaseUnit =
+    purchaseUnitExplicit &&
+    purchaseOptions.some((opt) => normalizeUnitCode(opt.unidade) === purchaseUnitExplicit);
+  const display = hasExplicitPurchaseUnit
+    ? resolvePurchaseUnitDisplay(product, quantidadeBase, purchaseUnitExplicit)
+    : resolveCommercialDisplay(product, quantidadeBase, fallbackUnit);
   const quantidadeComercial = normalizeNumber(display.quantidade, 0);
   const fatorDisplay = normalizeNumber(display.fator_conversao, 1) || 1;
 

@@ -53,4 +53,26 @@ if (precoExibidoErrado === 22052 && totalErrado === 441040) {
   failed += 1;
 }
 
+// Import M² (fator 2,16 só para estoque/CX): manter unidade do PDF
+const qtyM2 = 64.8;
+const precoM2 = 54.83;
+const fatorCx = 2.16;
+const totalM2Esperado = round2(qtyM2 * precoM2);
+const totalDoubleDiscount = round2(qtyM2 * (precoM2 - (64.5 - precoM2))); // ~15% aplicado duas vezes
+const totalErradoCx = round2((qtyM2 / fatorCx) * precoM2); // preço M² rotulado como CX
+
+console.log('M2 esperado', totalM2Esperado, 'double-discount', totalDoubleDiscount, 'CX errado', totalErradoCx);
+if (totalM2Esperado === 3552.98 || totalM2Esperado === 3552.97) {
+  console.log('OK total M2 import');
+} else {
+  console.error('FAIL total M2 import', totalM2Esperado);
+  failed += 1;
+}
+if (Math.abs(totalDoubleDiscount - 2925.6) < 2) {
+  console.log('OK cenário double-discount reproduzido (~2925.60)');
+} else {
+  console.error('FAIL cenário double-discount', totalDoubleDiscount);
+  failed += 1;
+}
+
 process.exit(failed > 0 ? 1 : 0);

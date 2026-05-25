@@ -1508,7 +1508,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
           setFormData(prev => {
             const novosItens = importedItems.map((item) => {
               const produtoItem = produtos.find((p) => p.id === item.produto_id);
-              let line = produtoItem ? normalizePurchaseItemToCommercial(produtoItem, item) : { ...item };
+              // Item já veio normalizado do importador (unidade do PDF); só re-normalizar se faltar eixo canônico.
+              let line =
+                produtoItem && !item?.quantidade_base
+                  ? normalizePurchaseItemToCommercial(produtoItem, item)
+                  : { ...item };
               line = syncItemDescontoApresentacao(line);
               line = normalizeItemToCanonicalFactorOne(line, 'custo');
               const cost = roundToTwoDecimals(parseFloat(line.custo_unitario) || 0);

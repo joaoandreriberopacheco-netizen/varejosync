@@ -141,12 +141,6 @@ export default function ImportadorPedidoCompra({
     return original;
   };
 
-  const getDiscountPerItem = (item) => {
-    const original = parseFloat(item.preco_unitario) || 0;
-    const adjusted = getDiscountedUnitPrice(item);
-    return isAcrescimo ? 0 : Math.max(0, original - adjusted);
-  };
-
   const processSelectedFile = async () => {
     const arquivo =
       selectedFileRef.current ??
@@ -372,6 +366,7 @@ Retorne JSON:
         const totalEconomico = qtd * precoAjustado;
         const fator = optCompra?.fator_conversao ?? 1;
         const custoFator1 = custoApresentacaoParaFator1(precoAjustado, fator);
+        // Desconto/acréscimo global já está em precoAjustado; não gravar valor_desconto_item (evita dupla dedução no total).
         const itemImportado = normalizePurchaseItemToCommercial(produto, {
           produto_id: produtoId,
           produto_nome: produto.nome,
@@ -381,7 +376,7 @@ Retorne JSON:
           quantidade_base: calculateBaseQuantity(qtd, fator),
           custo_unitario: custoFator1,
           total: totalEconomico,
-          valor_desconto_item: getDiscountPerItem(item),
+          valor_desconto_item: 0,
           observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
         });
         importedItems.push(itemImportado);
