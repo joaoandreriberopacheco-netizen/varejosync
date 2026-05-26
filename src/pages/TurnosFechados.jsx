@@ -12,11 +12,16 @@ import { isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 
 const fmt = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
+const isRecolhimentoMovimento = (m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa';
+
+function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser }) {
   const [expanded, setExpanded] = useState(false);
 
   const reforcos = movimentos.filter(m => m.tipo === 'Reforço' && m.turno_caixa_id === turno.id);
-  const sangrias = movimentos.filter(m => m.tipo === 'Sangria' && m.turno_caixa_id === turno.id);
+  const recolhimentos = movimentos.filter(m => isRecolhimentoMovimento(m) && m.turno_caixa_id === turno.id);
+  const despesasTurno = despesas.filter(
+    (d) => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa'
+  );
   const vendasIdsSnapshot = new Set((turno.vendas_ids || []).map((id) => String(id)));
   const vendasTurno = vendas.filter(
     (v) =>
@@ -45,11 +50,20 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
       return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f3f4f6"><span>${v.numero} · ${v.cliente_nome || 'Consumidor'}${formas ? ` · ${formas}` : ''}</span><span><b>R$ ${fmt(v.valor_total)}</b></span></div>`;
     }).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda registrada</p>';
 
-    const linhasMovimentos = [...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => {
-      const sinal = m.tipo === 'Reforço' ? '+' : '-';
-      const cor = m.tipo === 'Reforço' ? '#059669' : '#2563eb';
-      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f3f4f6"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')} · ${m.tipo}${m.observacao ? ` · ${m.observacao}` : ''}</span><span style="color:${cor};font-weight:600">${sinal}R$ ${fmt(m.valor)}</span></div>`;
-    }).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum movimento registrado</p>';
+    const linhasReforcos = reforcos
+      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date))
+      .map(m => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ` · ${m.observacao}` : ''}</span><span style="color:#059669">+R$ ${fmt(m.valor)}</span></div>`)
+      .join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum reforço</p>';
+
+    const linhasRecolhimentos = recolhimentos
+      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date))
+      .map(m => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ` · ${m.observacao}` : ''}</span><span style="color:#2563eb">-R$ ${fmt(m.valor)}</span></div>`)
+      .join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
+
+    const linhasDespesas = despesasTurno
+      .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))
+      .map(d => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao || 'Despesa'} · ${d.created_date ? format(new Date(d.created_date), 'HH:mm') : '-'}</span><span style="color:#dc2626">-R$ ${fmt(d.valor)}</span></div>`)
+      .join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
 
     const dinheiroNaGaveta = (turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0) - (turno.total_despesas || 0);
 
@@ -74,8 +88,8 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
       <div class="row"><span>Saldo Inicial:</span><span>R$ ${fmt(turno.saldo_inicial || 0)}</span></div>
       <div class="row"><span>+ Vendas:</span><span>R$ ${fmt(turno.total_vendas || 0)}</span></div>
       <div class="row"><span>+ Reforços:</span><span>R$ ${fmt(turno.total_reforcos || 0)}</span></div>
-      <div class="row"><span>- Sangrias:</span><span>R$ ${fmt(turno.total_sangrias || 0)}</span></div>
-      <div class="row"><span>- Despesas:</span><span>R$ ${fmt(turno.total_despesas || 0)}</span></div>
+      <div class="row"><span>− Recolhimentos:</span><span>R$ ${fmt(turno.total_sangrias || 0)}</span></div>
+      <div class="row"><span>− Despesas:</span><span>R$ ${fmt(turno.total_despesas || 0)}</span></div>
       <div class="row total"><span>Saldo do Turno:</span><span>R$ ${fmt(turno.saldo_final || 0)}</span></div>
       <div class="dashed"></div>
       <h2>Recebimentos</h2>
@@ -88,8 +102,14 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
       <div class="row"><span>Total Conferido:</span><span>R$ ${fmt(turno.dinheiro_conferido || 0)}</span></div>
       <div class="row total"><span>Diferença:</span><span>${diferenca >= 0 ? '+' : ''}R$ ${fmt(diferenca)}</span></div>
       <div class="dashed"></div>
-      <h2>Movimentos de Caixa</h2>
-      ${linhasMovimentos}
+      <h2>Reforços do Turno</h2>
+      ${linhasReforcos}
+      <div class="dashed"></div>
+      <h2>Recolhimentos do Turno</h2>
+      ${linhasRecolhimentos}
+      <div class="dashed"></div>
+      <h2>Despesas do Turno</h2>
+      ${linhasDespesas}
       <div class="dashed"></div>
       <h2>Vendas (${vendasTurno.length})</h2>
       ${linhasVendas}
@@ -161,8 +181,12 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
                 <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_reforcos || 0)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">- Sangrias:</span>
+                <span className="text-gray-600 dark:text-gray-400">− Recolhimentos:</span>
                 <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_sangrias || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">− Despesas:</span>
+                <span className="font-semibold text-red-600 dark:text-red-400 font-mono">R$ {fmt(turno.total_despesas || 0)}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 font-bold">
                 <span className="text-gray-800 dark:text-gray-200">Saldo do Turno:</span>
@@ -194,23 +218,57 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
             </div>
           </div>
 
-          {/* Movimentos de Caixa */}
-          {(reforcos.length > 0 || sangrias.length > 0) && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Movimentos de Caixa</div>
-              <div className="space-y-1">
-                {[...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
-                  <div key={m.id} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-                    <span className="text-gray-500 dark:text-gray-400">
-                      {m.numero} · {format(new Date(m.created_date), 'HH:mm')} · {m.tipo}
-                      {m.observacao ? ` · ${m.observacao}` : ''}
-                    </span>
-                    <span className={`font-semibold tabular-nums ${m.tipo === 'Reforço' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                      {m.tipo === 'Reforço' ? '+' : '-'}R$ {fmt(m.valor)}
-                    </span>
+          {/* Movimentos de caixa: reforço, recolhimento, despesa */}
+          {(reforcos.length > 0 || recolhimentos.length > 0 || despesasTurno.length > 0) && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3 space-y-4">
+              {reforcos.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Reforços</div>
+                  <div className="space-y-1">
+                    {reforcos.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
+                      <div key={m.id} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {m.numero} · {format(new Date(m.created_date), 'HH:mm')}
+                          {m.observacao ? ` · ${m.observacao}` : ''}
+                        </span>
+                        <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">+R$ {fmt(m.valor)}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+              {recolhimentos.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Recolhimentos</div>
+                  <div className="space-y-1">
+                    {recolhimentos.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
+                      <div key={m.id} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {m.numero} · {format(new Date(m.created_date), 'HH:mm')}
+                          {m.observacao ? ` · ${m.observacao}` : ''}
+                        </span>
+                        <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">-R$ {fmt(m.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {despesasTurno.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Despesas</div>
+                  <div className="space-y-1">
+                    {despesasTurno.sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0)).map(d => (
+                      <div key={d.id} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {d.descricao || 'Despesa'}
+                          {d.created_date ? ` · ${format(new Date(d.created_date), 'HH:mm')}` : ''}
+                        </span>
+                        <span className="font-semibold tabular-nums text-red-600 dark:text-red-400">-R$ {fmt(d.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -248,7 +306,7 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Dinheiro na Gaveta:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt((turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0))}</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt((turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0) - (turno.total_despesas || 0))}</span>
               </div>
               <div className="flex justify-between font-bold">
                 <span className="text-gray-800 dark:text-gray-200">Total Conferido:</span>
@@ -311,6 +369,7 @@ export default function TurnosFechadosPage() {
   const [turnos, setTurnos] = useState([]);
   const [vendas, setVendas] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
+  const [despesas, setDespesas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [filtroData, setFiltroData] = useState('');
@@ -326,16 +385,16 @@ export default function TurnosFechadosPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [t, v, m] = await Promise.all([
+      const [t, v, m, d] = await Promise.all([
         base44.entities.TurnoCaixa.filter({ status: 'Fechado' }, '-data_fechamento', 100),
         base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 500),
         base44.entities.MovimentosCaixa.list('-created_date', 500),
+        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }, '-created_date', 2000),
       ]);
-      console.log('Turnos carregados:', t);
-      console.log('Exemplo de turno:', t[0]);
       setTurnos(t);
       setVendas(v);
       setMovimentos(m);
+      setDespesas(d);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -492,7 +551,7 @@ export default function TurnosFechadosPage() {
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
             {turnosFiltrados.map(t => (
-              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} onReabrir={handleReabrirTurno} currentUser={currentUser} />
+              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} despesas={despesas} onReabrir={handleReabrirTurno} currentUser={currentUser} />
             ))}
           </div>
         )}
