@@ -18,9 +18,11 @@ import {
   DEFAULT_PRODUTO_FILTERS,
   filterProdutos,
   countActiveProdutoFilters,
+  describeProdutoFilters,
 } from '@/lib/filterProdutos';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import RelatorioCatalogoEstoquePrint from '@/components/produtos/RelatorioCatalogoEstoquePrint';
 
 const REPORT_COLS = ['estoque_atual', 'valor_compra', 'preco_custo', 'inventario_valorizado'];
 
@@ -84,6 +86,20 @@ export default function RelatorioCatalogoEstoque() {
 
   const activeFilterCount = countActiveProdutoFilters(filters);
 
+  const filtersSummary = useMemo(
+    () => describeProdutoFilters(filters, { fornecedores }),
+    [filters, fornecedores]
+  );
+
+  const printGeneratedAt = useMemo(
+    () =>
+      new Date().toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }),
+    [filteredProdutos.length, filtersSummary]
+  );
+
   const handlePrint = () => {
     window.print();
   };
@@ -97,9 +113,31 @@ export default function RelatorioCatalogoEstoque() {
   }
 
   return (
+    <>
+    <style>{`
+      @media print {
+        @page { size: A4 landscape; margin: 12mm; }
+        body > * { visibility: hidden !important; }
+        body * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        #relatorio-catalogo-estoque-print,
+        #relatorio-catalogo-estoque-print * {
+          visibility: visible !important;
+        }
+        #relatorio-catalogo-estoque-print {
+          display: block !important;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 0;
+          background: #fff !important;
+          color: #111 !important;
+        }
+      }
+    `}</style>
     <div
       id="relatorio-catalogo-estoque"
-      className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900 print:h-auto print:overflow-visible"
+      className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900 print:hidden"
     >
       <div className="flex-none border-b border-gray-100 dark:border-gray-800 px-3 py-2 space-y-2 print:border-none">
         <div className="flex items-center gap-2">
@@ -131,7 +169,7 @@ export default function RelatorioCatalogoEstoque() {
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <Input
-              placeholder="Buscar produto..."
+              placeholder="Nome ou descrição (contém)..."
               className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 rounded-xl"
               value={filters.searchTerm}
               onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
@@ -166,7 +204,7 @@ export default function RelatorioCatalogoEstoque() {
           </div>
         )}
 
-        <div className="hidden md:grid md:grid-cols-5 gap-2 print:hidden">
+        <div className="hidden md:grid md:grid-cols-6 gap-2 print:hidden">
           <FilterFields
             filters={filters}
             categorias={categorias}
@@ -198,16 +236,11 @@ export default function RelatorioCatalogoEstoque() {
         />
       </div>
 
-      <div className="flex-none border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-3 print:bg-white">
+      <div className="flex-none border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-3">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="text-[11px] text-gray-500 dark:text-gray-400 print:text-gray-700">
+          <div className="text-[11px] text-gray-500 dark:text-gray-400">
             Totais dos SKUs filtrados: <strong>estoque</strong> (vitrine comercial quando activa) ×{' '}
             <strong>valor de compra</strong> ou <strong>custo total</strong>, como no Tree Grid do catálogo.
-            <span className="hidden print:inline">
-              {' '}
-              Filtros activos: {activeFilterCount > 0 ? `${activeFilterCount}` : 'nenhum'} ·{' '}
-              {filteredProdutos.length} SKU(s).
-            </span>
           </div>
           <div className="flex flex-wrap gap-6">
             <TotalKpi
@@ -224,6 +257,14 @@ export default function RelatorioCatalogoEstoque() {
         </div>
       </div>
     </div>
+
+    <RelatorioCatalogoEstoquePrint
+      produtos={filteredProdutos}
+      filtersSummary={filtersSummary}
+      totals={totals}
+      generatedAt={printGeneratedAt}
+    />
+    </>
   );
 }
 
@@ -244,6 +285,13 @@ function FilterFields({ filters, categorias, fornecedores, onChange, compact }) 
   const itemCls = compact ? 'text-xs' : 'text-sm';
   return (
     <>
+      <Input
+        placeholder="Nome ou descrição..."
+        title="Busca parcial (contém), sem diferenciar maiúsculas"
+        className={`bg-gray-100 dark:bg-gray-800 border-none ${h}`}
+        value={filters.searchTerm || ''}
+        onChange={(e) => onChange('searchTerm', e.target.value)}
+      />
       <Select value={filters.categoria} onValueChange={(v) => onChange('categoria', v)}>
         <SelectTrigger className={`bg-gray-100 dark:bg-gray-800 border-none w-full ${h}`}>
           <SelectValue placeholder="Categoria" />
