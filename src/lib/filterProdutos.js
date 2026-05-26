@@ -2,6 +2,8 @@ import { isCadastroIncompleto } from '@/components/produtos/ProdutosHelpers';
 
 export const DEFAULT_PRODUTO_FILTERS = {
   searchTerm: '',
+  /** false = contém (substring); true = começa com (prefixo), ambos sem distinção de maiúsculas */
+  searchStartsWith: false,
   categoria: 'all',
   fornecedorId: 'all',
   statusEstoque: 'all',
@@ -9,10 +11,11 @@ export const DEFAULT_PRODUTO_FILTERS = {
   cadastroIncompleto: 'all',
 };
 
-/** Busca por nome/descrição/códigos: substring, sem distinção de maiúsculas (não exige texto completo). */
-export function produtoMatchesSearchTerm(produto, rawTerm) {
+/** Busca por nome/descrição/códigos; modo contém (default) ou começa com. */
+export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
   const term = String(rawTerm || '').trim().toLowerCase();
   if (!term) return true;
+  const startsWith = options.startsWith ?? options.searchStartsWith ?? false;
   const haystack = [
     produto?.nome,
     produto?.descricao,
@@ -21,7 +24,7 @@ export function produtoMatchesSearchTerm(produto, rawTerm) {
   ]
     .filter(Boolean)
     .map((s) => String(s).toLowerCase());
-  return haystack.some((s) => s.includes(term));
+  return haystack.some((s) => (startsWith ? s.startsWith(term) : s.includes(term)));
 }
 
 /** Mesma lógica de filtros do catálogo (`Produtos.jsx`). */
@@ -30,7 +33,9 @@ export function filterProdutos(produtos, filters) {
   return produtos.filter((p) => {
     if (!p || typeof p !== 'object') return false;
 
-    const searchTermMatch = produtoMatchesSearchTerm(p, filters.searchTerm);
+    const searchTermMatch = produtoMatchesSearchTerm(p, filters.searchTerm, {
+      startsWith: !!filters.searchStartsWith,
+    });
     const categoriaMatch = filters.categoria === 'all' || p.categoria_nome === filters.categoria;
     const tagMatch =
       !filters.tag ||
@@ -86,7 +91,10 @@ export function countActiveProdutoFilters(filters) {
 export function describeProdutoFilters(filters, { categorias = [], fornecedores = [] } = {}) {
   const parts = [];
   const term = (filters.searchTerm || '').trim();
-  if (term) parts.push(`nome/descrição contém "${term}"`);
+  if (term) {
+    const modo = filters.searchStartsWith ? 'começa com' : 'contém';
+    parts.push(`nome/descrição ${modo} "${term}"`);
+  }
   if (filters.categoria && filters.categoria !== 'all') parts.push(`categoria: ${filters.categoria}`);
   if (filters.fornecedorId && filters.fornecedorId !== 'all') {
     const f = fornecedores.find((x) => x.id === filters.fornecedorId);

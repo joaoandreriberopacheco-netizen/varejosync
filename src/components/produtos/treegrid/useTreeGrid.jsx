@@ -32,6 +32,11 @@ export function collectSkus(node) {
   return skus;
 }
 
+/** Família de um só: ramo com exatamente 1 SKU — não gera linha de grupo redundante. */
+export function isSoloFamilyBranch(node) {
+  return collectSkus(node).length === 1;
+}
+
 // ── Calcula o custo real de um produto (usa preco_custo_calculado se válido,
 //    senão reconstrói a partir dos componentes) ────────────────────────────────
 export function calcCusto(p) {
@@ -277,11 +282,18 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel) {
   const rawKey = parentKey ? `${parentKey}||${key}` : key;
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
   const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
-  const agg = finalNode._agg || aggregateSkus(collectSkus(finalNode));
+  const branchSkus = collectSkus(finalNode);
+  const agg = finalNode._agg || aggregateSkus(branchSkus);
   const rowLevel = visualLevel + 1;
 
   const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
   const isRoot = visualLevel === 0;
+
+  // Família de um só: produto sobe ao nível do cabeçalho (sem grupo + filho)
+  if (branchSkus.length === 1) {
+    rows.push(makeSkuRow(branchSkus[0], rowLevel));
+    return rows;
+  }
 
   if (!isRoot && isLeafGroup) {
     for (const sku of sortedSkus(finalNode.skus)) {
@@ -353,6 +365,8 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
 
     const rawKey  = parentKey ? `${parentKey}||${key}` : key;
     const { node: finalNode } = deepCollapse(node);
+    if (isSoloFamilyBranch(finalNode)) continue;
+
     const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
     const rowLevel = visualLevel + 1;
     const children = finalNode.children || {};

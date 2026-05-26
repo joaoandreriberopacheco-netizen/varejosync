@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TreeGrid, { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import {
@@ -165,16 +166,24 @@ export default function RelatorioCatalogoEstoque() {
           </Button>
         </div>
 
-        <div className="flex gap-2 min-w-0 print:hidden">
+        <div className="flex gap-2 min-w-0 items-center print:hidden">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <Input
-              placeholder="Nome ou descrição (contém)..."
+              placeholder={
+                filters.searchStartsWith
+                  ? 'Nome ou descrição (começa com)...'
+                  : 'Nome ou descrição (contém)...'
+              }
               className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 rounded-xl"
               value={filters.searchTerm}
               onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
             />
           </div>
+          <SearchStartsWithToggle
+            checked={!!filters.searchStartsWith}
+            onChange={(v) => handleFilterChange('searchStartsWith', v)}
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -204,7 +213,7 @@ export default function RelatorioCatalogoEstoque() {
           </div>
         )}
 
-        <div className="hidden md:grid md:grid-cols-6 gap-2 print:hidden">
+        <div className="hidden md:grid md:grid-cols-7 gap-2 print:hidden">
           <FilterFields
             filters={filters}
             categorias={categorias}
@@ -280,18 +289,50 @@ function TotalKpi({ label, value, hint }) {
   );
 }
 
+function SearchStartsWithToggle({ checked, onChange, className = '' }) {
+  return (
+    <label
+      className={`flex items-center gap-1.5 flex-shrink-0 cursor-pointer select-none rounded-xl bg-gray-100 dark:bg-gray-800 px-2 h-10 ${className}`}
+      title={checked ? 'Busca pelo início do texto' : 'Busca em qualquer parte do texto'}
+    >
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
+        className="scale-[0.72] data-[state=checked]:bg-gray-700 dark:data-[state=checked]:bg-gray-300"
+      />
+      <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">
+        Começa com
+      </span>
+    </label>
+  );
+}
+
 function FilterFields({ filters, categorias, fornecedores, onChange, compact }) {
   const h = compact ? 'h-9 text-xs rounded-lg' : 'h-10 text-sm rounded-xl';
   const itemCls = compact ? 'text-xs' : 'text-sm';
+  const searchPlaceholder = filters.searchStartsWith
+    ? 'Nome (começa com)...'
+    : 'Nome (contém)...';
   return (
     <>
-      <Input
-        placeholder="Nome ou descrição..."
-        title="Busca parcial (contém), sem diferenciar maiúsculas"
-        className={`bg-gray-100 dark:bg-gray-800 border-none ${h}`}
-        value={filters.searchTerm || ''}
-        onChange={(e) => onChange('searchTerm', e.target.value)}
-      />
+      <div className={`flex gap-1.5 min-w-0 items-center ${compact ? '' : 'col-span-2'}`}>
+        <Input
+          placeholder={searchPlaceholder}
+          title={
+            filters.searchStartsWith
+              ? 'Texto deve começar com o termo (sem diferenciar maiúsculas)'
+              : 'Busca parcial em qualquer parte (sem diferenciar maiúsculas)'
+          }
+          className={`bg-gray-100 dark:bg-gray-800 border-none flex-1 min-w-0 ${h}`}
+          value={filters.searchTerm || ''}
+          onChange={(e) => onChange('searchTerm', e.target.value)}
+        />
+        <SearchStartsWithToggle
+          checked={!!filters.searchStartsWith}
+          onChange={(v) => onChange('searchStartsWith', v)}
+          className={compact ? 'h-9 px-1.5' : ''}
+        />
+      </div>
       <Select value={filters.categoria} onValueChange={(v) => onChange('categoria', v)}>
         <SelectTrigger className={`bg-gray-100 dark:bg-gray-800 border-none w-full ${h}`}>
           <SelectValue placeholder="Categoria" />
@@ -378,6 +419,7 @@ function ClearFiltersButton({ filters, setFilters }) {
         setFilters({
           ...DEFAULT_PRODUTO_FILTERS,
           searchTerm: filters.searchTerm,
+          searchStartsWith: filters.searchStartsWith,
         })
       }
       className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1"
