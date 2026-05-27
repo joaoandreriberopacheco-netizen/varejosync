@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
 import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3 } from 'lucide-react';
+import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
+import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 
 export default function ProdutosHeader({
   stats,
@@ -99,16 +101,24 @@ export default function ProdutosHeader({
           </div>
         </div>
 
-        <div className="flex gap-2 min-w-0">
+        <div className="flex gap-2 min-w-0 items-center">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
             <Input
-              placeholder="Buscar produto..."
+              placeholder={
+                filters.searchStartsWith
+                  ? 'Nome ou descrição (começa com)...'
+                  : 'Nome ou descrição (contém)...'
+              }
               className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
               value={filters.searchTerm}
               onChange={e => handleFilterChange('searchTerm', e.target.value)}
             />
           </div>
+          <ProdutosSearchStartsWithToggle
+            checked={!!filters.searchStartsWith}
+            onChange={v => handleFilterChange('searchStartsWith', v)}
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -158,7 +168,16 @@ export default function ProdutosHeader({
               </Select>
             </div>
             {activeFilterCount > 0 && (
-              <button onClick={() => setFilters({ searchTerm: filters.searchTerm, categoria: 'all', fornecedorId: 'all', statusEstoque: 'all', tag: '', cadastroIncompleto: 'all' })} className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
+              <button
+                onClick={() =>
+                  setFilters({
+                    ...DEFAULT_PRODUTO_FILTERS,
+                    searchTerm: filters.searchTerm,
+                    searchStartsWith: filters.searchStartsWith,
+                  })
+                }
+                className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1"
+              >
                 <X className="w-3 h-3" /> Limpar filtros
               </button>
             )}

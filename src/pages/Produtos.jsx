@@ -28,7 +28,11 @@ import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
-import { filterProdutos } from '@/lib/filterProdutos';
+import { filterProdutos, countActiveProdutoFilters } from '@/lib/filterProdutos';
+import {
+  loadCatalogProdutoFilters,
+  saveCatalogProdutoFilters,
+} from '@/lib/catalogProdutoFiltersStorage';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
@@ -73,13 +77,7 @@ function ProdutosPageContent() {
   const [categorias, setCategorias] = useState([]);
   const [stats, setStats] = useState({ total: 0, valorEstoque: 0, abaixoMinimo: 0 });
 
-  const [filters, setFilters] = useState({
-    searchTerm: '',
-    categoria: 'all',
-    fornecedorId: 'all',
-    statusEstoque: 'all',
-    cadastroIncompleto: 'all'
-  });
+  const [filters, setFilters] = useState(() => loadCatalogProdutoFilters());
   const [sortOrder, setSortOrder] = useState('az');
   const [viewMode, setViewMode] = useState('dinamica'); // 'dinamica' | 'plana'
 
@@ -126,6 +124,10 @@ function ProdutosPageContent() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    saveCatalogProdutoFilters(filters);
+  }, [filters]);
 
   const loadData = async () => {
     const produtosData = await base44.entities.Produto.list('-created_date');
@@ -1035,13 +1037,7 @@ function ProdutosPageContent() {
     }, {});
   }, [fornecedores]);
 
-  const activeFilterCount = [
-    filters.categoria !== 'all' && filters.categoria,
-    filters.fornecedorId !== 'all' && filters.fornecedorId,
-    filters.statusEstoque !== 'all' && filters.statusEstoque,
-    filters.tag,
-    filters.cadastroIncompleto !== 'all' && filters.cadastroIncompleto,
-  ].filter(Boolean).length;
+  const activeFilterCount = countActiveProdutoFilters(filters);
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-white dark:bg-gray-900">
