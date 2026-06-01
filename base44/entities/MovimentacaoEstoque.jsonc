@@ -3,7 +3,25 @@
   "type": "object",
   "properties": {
     "id": { "type": "string" },
+    "produto_id": { "type": "string" },
+    "produto_nome": { "type": "string" },
     "tipo": { "type": "string" },
-    "quantidade": { "type": "number" }
+    "motivo": { "type": "string" },
+    "quantidade": { "type": "number" },
+    "quantidade_base": { "type": "number" },
+    "quantidade_comercial": { "type": "number" },
+    "unidade_medida": { "type": "string" },
+    "unidade_sigla": { "type": "string" },
+    "produto_unidade_id": { "type": "string" },
+    "fator_conversao": { "type": "number" },
+    "custo_unitario": { "type": "number" },
+    "documento_referencia": { "type": "string" },
+    "referencia_tipo": { "type": "string" },
+    "referencia_id": { "type": "string" },
+    "referencia_numero": { "type": "string" },
+    "origem_tipo": { "type": "string" },
+    "origem_id": { "type": "string" },
+    "observacoes": { "type": "string" },
+    "usuario_responsavel": { "type": "string" }
   }
 }

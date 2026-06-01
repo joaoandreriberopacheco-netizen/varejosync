@@ -91,6 +91,7 @@ import LogsAutenticacao from './pages/LogsAutenticacao';
 import LancamentoAnexos from './pages/LancamentoAnexos';
 import Manual from './pages/Manual';
 import MapaFuncionalidades from './pages/MapaFuncionalidades';
+import MovimentosInventario from './pages/MovimentosInventario';
 import Operacoes from './pages/Operacoes';
 import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
 import PDV from './pages/PDV';
@@ -157,6 +158,7 @@ export const PAGES = {
     "LancamentoAnexos": LancamentoAnexos,
     "Manual": Manual,
     "MapaFuncionalidades": MapaFuncionalidades,
+    "MovimentosInventario": MovimentosInventario,
     "Operacoes": Operacoes,
     "OtimizacaoEstoqueIA": OtimizacaoEstoqueIA,
     "PDV": PDV,
