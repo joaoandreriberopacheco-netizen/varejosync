@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { Search, Plus, Wand2, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NovoProdutoRapidoDialog from '@/components/compras/NovoProdutoRapidoDialog';
-import { getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
+import { filterAndSortProducts, getProdutoLabel } from '@/components/compras/productMatchingUtils';
 
 export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch, onProductCreated }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -56,9 +56,10 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
 
   const visibleProducts = useMemo(() => {
     if (!isFocused) return [];
-    const sorted = [...produtos].sort((a, b) => getProdutoLabel(a).localeCompare(getProdutoLabel(b)));
-    if (!currentQuery.trim()) return sorted.slice(0, 8);
-    return sorted.filter(p => matchesProductQuery(p, currentQuery)).slice(0, 8);
+    return filterAndSortProducts(produtos, currentQuery, {
+      includeEmpty: true,
+      limit: currentQuery.trim() ? null : 12,
+    });
   }, [isFocused, currentQuery, produtos]);
 
   return (
@@ -170,7 +171,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
             </div>
 
             {isFocused && (
-                <div className="border-t border-gray-100 dark:border-gray-800 max-h-52 overflow-y-auto">
+                <div className="border-t border-gray-100 dark:border-gray-800 max-h-72 overflow-y-auto">
                 {visibleProducts.length > 0 ? (
                   visibleProducts.map(produto => (
                     <button

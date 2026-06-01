@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Search, AlertTriangle, Check, X, Package, Hash, MessageSquare, PackagePlus } from 'lucide-react';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 
 export default function LostSalesForm({ open, onClose, currentUser }) {
   const [produtos, setProdutos] = useState([]);
@@ -52,20 +53,15 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
     }
 
     if (formData.is_produto_do_mix && buscaProduto.trim().length >= 2) {
-      const termo = buscaProduto.toLowerCase();
-      const resultados = produtos.filter(p =>
-        p.codigo_barras?.toLowerCase().includes(termo) ||
-        p.codigo_interno?.toLowerCase().includes(termo) ||
-        p.nome?.toLowerCase().includes(termo)
-      ).slice(0, 8);
+      const resultados = filterAndSortProducts(produtos, buscaProduto);
       setProdutosSugeridos(resultados);
       setShowSuggestions(resultados.length > 0);
     } else if (!formData.is_produto_do_mix && buscaProduto.trim().length >= 2) {
       // Busca nos produtos não-mix já registrados
       const termo = buscaProduto.toLowerCase();
-      const resultados = produtosNaoMix.filter(p =>
-        p.toLowerCase().includes(termo)
-      ).slice(0, 8);
+      const resultados = produtosNaoMix
+        .filter(p => p.toLowerCase().includes(termo))
+        .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
       setProdutosSugeridos(resultados.map(nome => ({ nome, id: null })));
       setShowSuggestions(resultados.length > 0);
     } else {
@@ -265,7 +261,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
             </div>
 
             {showSuggestions && produtosSugeridos.length > 0 && (
-              <div className="absolute z-50 w-full mt-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-52 overflow-y-auto border border-gray-100 dark:border-gray-800">
+              <div className="absolute z-50 w-full mt-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-72 overflow-y-auto border border-gray-100 dark:border-gray-800">
                 {produtosSugeridos.map((produto, idx) => (
                   <div
                     key={produto.id || idx}

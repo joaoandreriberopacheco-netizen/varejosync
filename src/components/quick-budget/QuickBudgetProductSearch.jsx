@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { matchesProduct, PrecoVendaTabelaLinhas } from './quickBudgetUtils';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { PrecoVendaTabelaLinhas } from './quickBudgetUtils';
 
 export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, tabelaPreco, onAddProduct, onSubmitFirstResult }) {
   const resultados = useMemo(() => {
-    const ordenados = [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
     if (!query?.trim()) return [];
-    return ordenados.filter((produto) => matchesProduct(produto, query)).slice(0, 8);
+    return filterAndSortProducts(produtos, query);
   }, [produtos, query]);
 
   const shouldShowResults = query?.trim().length > 0;

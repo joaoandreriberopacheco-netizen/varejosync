@@ -30,6 +30,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 
 export default function PDVVendedor() {
   const navigate = useNavigate();
@@ -99,11 +100,11 @@ export default function PDVVendedor() {
       p.ativo &&
       !carrinho.some((c) => c.produto_id === p.id) &&
       !candidates.includes(p)
-      ).slice(0, 10);
+      );
       candidates = [...candidates, ...others];
     }
 
-    setSugestoesContextuais(candidates.slice(0, 4));
+    setSugestoesContextuais(sortProductsAlphabetically(candidates).slice(0, 4));
   }, [carrinho, produtos]);
 
   const [tipoAjuste, setTipoAjuste] = useState('desconto');
@@ -405,14 +406,7 @@ export default function PDVVendedor() {
 
   useEffect(() => {
     if (buscaProduto.trim().length >= 2) {
-      const termo = buscaProduto.toLowerCase();
-      const resultados = produtos.filter((p) =>
-      p.codigo_barras?.toLowerCase().includes(termo) ||
-      p.codigo_interno?.toLowerCase().includes(termo) ||
-      p.nome?.toLowerCase().includes(termo)
-      ).sort((a, b) => a.nome.localeCompare(b.nome));
-
-      setProdutosSugeridos(resultados.slice(0, 10));
+      setProdutosSugeridos(filterAndSortProducts(produtos, buscaProduto));
       setShowSuggestions(true);
       setProdutoSelecionadoIndex(0);
     } else {

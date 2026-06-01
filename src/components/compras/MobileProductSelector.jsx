@@ -7,6 +7,7 @@ import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -81,12 +82,7 @@ export default function MobileProductSelector({
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
-    const lower = search.toLowerCase();
-    return products.filter(p => 
-      p.nome.toLowerCase().includes(lower) || 
-      (p.codigo_interno && p.codigo_interno.toLowerCase().includes(lower)) ||
-      (p.codigo_barras && p.codigo_barras.includes(lower))
-    ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 50);
+    return filterAndSortProducts(products, search);
   }, [products, search]);
 
   /** pt-BR: "1.234,56" ou decimal com ponto "15.49". */

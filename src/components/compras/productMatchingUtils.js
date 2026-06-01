@@ -16,8 +16,16 @@ export function getProdutoLabel(produto) {
   return produto.nome || '';
 }
 
+export function normalizeProductSearchText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 export function getProductSearchText(produto) {
-  return [
+  return normalizeProductSearchText([
     produto?.nome,
     produto?.codigo_interno,
     produto?.codigo_barras,
@@ -27,14 +35,32 @@ export function getProductSearchText(produto) {
     produto?.campo_hierarquico_4,
     produto?.campo_hierarquico_5,
     produto?.marca,
-  ].filter(Boolean).join(' ').toLowerCase();
+  ].filter(Boolean).join(' '));
 }
 
 export function matchesProductQuery(produto, query) {
   if (!query?.trim()) return true;
   const searchable = getProductSearchText(produto);
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const words = normalizeProductSearchText(query).split(/\s+/).filter(Boolean);
   return words.every((word) => searchable.includes(word));
+}
+
+export function sortProductsAlphabetically(produtos = []) {
+  return [...produtos].sort((a, b) =>
+    getProdutoLabel(a).localeCompare(getProdutoLabel(b), 'pt-BR', { sensitivity: 'base' })
+  );
+}
+
+export function filterAndSortProducts(produtos = [], query = '', { limit = null, includeEmpty = false } = {}) {
+  const trimmed = String(query || '').trim();
+  if (!trimmed && !includeEmpty) return [];
+
+  const sorted = sortProductsAlphabetically(produtos);
+  const filtered = trimmed
+    ? sorted.filter((produto) => matchesProductQuery(produto, trimmed))
+    : sorted;
+
+  return Number.isFinite(limit) && limit > 0 ? filtered.slice(0, limit) : filtered;
 }
 
 export function getProdutoCatalogEntry(produto) {

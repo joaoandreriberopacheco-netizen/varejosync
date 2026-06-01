@@ -17,6 +17,7 @@ import {
   invokeRecalcularEstoqueProduto,
 } from '@/lib/p38StockRecalc';
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 
 function getItensDoEmbarque(embarque) {
   const baseItens = Array.isArray(embarque?.itens_embarcados) && embarque.itens_embarcados.length > 0
@@ -113,11 +114,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
   const filteredProdutos = useMemo(() => {
     if (!searchProduto.trim()) return [];
-    const lower = searchProduto.toLowerCase();
-    return produtos.filter(p =>
-      p.nome.toLowerCase().includes(lower) ||
-      p.codigo_interno?.toLowerCase().includes(lower)
-    ).slice(0, 20);
+    return filterAndSortProducts(produtos, searchProduto);
   }, [produtos, searchProduto]);
 
   const handleAceitarTroca = async (novoId, novoNome) => {
@@ -588,7 +585,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                   </div>
 
                   {filteredProdutos.length > 0 && (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
                       {filteredProdutos.map(p => (
                         <button
                           key={p.id}

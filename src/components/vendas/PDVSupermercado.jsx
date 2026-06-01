@@ -17,6 +17,7 @@ import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWarning';
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -147,14 +148,7 @@ export default function PDVSupermercado() {
   // Product Search Logic
   useEffect(() => {
     if (buscaProduto.trim().length >= 2) {
-      const termo = buscaProduto.toLowerCase();
-      const resultados = produtos.filter(p =>
-        p.codigo_barras?.toLowerCase().includes(termo) ||
-        p.codigo_interno?.toLowerCase().includes(termo) ||
-        p.nome?.toLowerCase().includes(termo)
-      ).sort((a, b) => a.nome.localeCompare(b.nome)).slice(0, 10);
-      
-      setProdutosSugeridos(resultados);
+      setProdutosSugeridos(filterAndSortProducts(produtos, buscaProduto));
       setShowSuggestions(true);
       setProdutoSelecionadoIndex(0);
     } else {

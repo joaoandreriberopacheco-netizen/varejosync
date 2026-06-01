@@ -22,6 +22,7 @@ import {
   resolveInventoryProductName,
   updateCountEntryQuantity,
 } from "@/lib/inventoryCountUnits";
+import { filterAndSortProducts } from "@/components/compras/productMatchingUtils";
 
 export default function PDVAuditoria() {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export default function PDVAuditoria() {
     setLoading(true);
     const [conf, prods] = await Promise.all([
       base44.entities.ConferenciaEstoque.filter({ id: conferencia_id }),
-      base44.entities.Produto.list("campo_hierarquico_1", 500),
+      base44.entities.Produto.list("campo_hierarquico_1", 2000),
     ]);
     if (conf.length === 0) return navigate(createPageUrl("AuditoriaEstoque"));
     setConferencia(conf[0]);
@@ -61,15 +62,7 @@ export default function PDVAuditoria() {
 
   useEffect(() => {
     if (!busca.trim()) { setProdutosFiltrados([]); return; }
-    const q = busca.toLowerCase();
-    setProdutosFiltrados(
-      produtos.filter(p =>
-        (p.nome || "").toLowerCase().includes(q) ||
-        (p.campo_hierarquico_1 || "").toLowerCase().includes(q) ||
-        (p.codigo_barras || "").toLowerCase().includes(q) ||
-        (p.codigo_interno || "").toLowerCase().includes(q)
-      ).slice(0, 20)
-    );
+    setProdutosFiltrados(filterAndSortProducts(produtos, busca));
   }, [busca, produtos]);
 
   useEffect(() => {
@@ -383,7 +376,7 @@ export default function PDVAuditoria() {
       <div className="fixed left-0 right-0 z-[55] max-w-full space-y-2 overflow-x-hidden border-t border-gray-100 bg-white p-3 dark:border-gray-800 dark:bg-gray-900 p38-bottom-dock">
         {/* Resultados da busca */}
         {produtosFiltrados.length > 0 && (
-          <div className="max-h-52 overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700">
+          <div className="max-h-72 overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700">
             {produtosFiltrados.map(prod => {
               const nome = resolveInventoryProductName(prod);
               const contagens = itens.filter(i => i.produto_id === prod.id);

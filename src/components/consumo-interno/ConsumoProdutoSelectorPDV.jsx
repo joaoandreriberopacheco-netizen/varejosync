@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Minus, Package, ChevronLeft, X } from 'lucide-react';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -14,15 +15,8 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
   const lastTapRef = useRef(0);
 
   const produtosFiltrados = useMemo(() => {
-    const term = search.toLowerCase().trim();
-    if (!term) return [];
-    return produtos
-      .filter((item) =>
-        item.nome?.toLowerCase().includes(term) ||
-        item.codigo_interno?.toLowerCase().includes(term) ||
-        item.codigo_barras?.includes(term)
-      )
-      .slice(0, 40);
+    if (!search.trim()) return [];
+    return filterAndSortProducts(produtos, search);
   }, [produtos, search]);
 
   const resetState = () => {

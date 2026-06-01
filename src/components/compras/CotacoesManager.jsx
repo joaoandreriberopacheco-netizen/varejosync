@@ -13,6 +13,7 @@ import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 
 export default function CotacoesManager() {
   const [cotacoes, setCotacoes] = useState([]);
@@ -141,19 +142,8 @@ export default function CotacoesManager() {
   };
 
   const filteredManualProducts = useMemo(() => {
-    const query = manualSearch.trim().toLowerCase();
-    if (!query) return [];
-    return produtosCatalogo
-      .filter((produto) => {
-        const searchText = [
-          produto.nome,
-          produto.codigo_interno,
-          produto.codigo_barras,
-          produto.marca
-        ].filter(Boolean).join(' ').toLowerCase();
-        return query.split(/\s+/).every((word) => searchText.includes(word));
-      })
-      .slice(0, 20);
+    if (!manualSearch.trim()) return [];
+    return filterAndSortProducts(produtosCatalogo, manualSearch);
   }, [manualSearch, produtosCatalogo]);
 
   const handleOpenAnaliseCotacao = (cotacao) => {
@@ -567,7 +557,7 @@ export default function CotacoesManager() {
                                         className="h-9 text-sm bg-white pl-8"
                                       />
                                     </div>
-                                    <div className="max-h-44 overflow-y-auto rounded-md border bg-white">
+                                    <div className="max-h-72 overflow-y-auto rounded-md border bg-white">
                                       {filteredManualProducts.length === 0 ? (
                                         <p className="text-xs text-gray-400 p-3">Digite para buscar produtos.</p>
                                       ) : (
@@ -592,7 +582,7 @@ export default function CotacoesManager() {
                                     <Label className="text-xs">Carrinho da Cotação</Label>
                                     <span className="text-xs text-gray-500">{manualCart.length} itens</span>
                                   </div>
-                                  <div className="max-h-44 overflow-y-auto rounded-md border bg-white">
+                                  <div className="max-h-72 overflow-y-auto rounded-md border bg-white">
                                     {manualCart.length === 0 ? (
                                       <p className="text-xs text-gray-400 p-3">Nenhum item adicionado.</p>
                                     ) : (

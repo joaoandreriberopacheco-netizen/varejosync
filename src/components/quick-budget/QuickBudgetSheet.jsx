@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Package, FileText, X, Percent, Minus, Plus } from 'lucide-react';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { toast } from 'sonner';
 
 const fmtCurrency = (value) => `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -131,13 +132,8 @@ function BudgetContent({ onClose, isMobile }) {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return [];
-    return products.filter((product) =>
-      product.nome?.toLowerCase().includes(term) ||
-      product.codigo_interno?.toLowerCase().includes(term) ||
-      product.codigo_barras?.toLowerCase().includes(term)
-    ).slice(0, 8);
+    if (!search.trim()) return [];
+    return filterAndSortProducts(products, search);
   }, [products, search]);
 
   useEffect(() => {

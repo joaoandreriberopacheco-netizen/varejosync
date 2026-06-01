@@ -22,6 +22,7 @@ import {
   resolveInventoryProductName,
   updateCountEntryQuantity,
 } from "@/lib/inventoryCountUnits";
+import { filterAndSortProducts } from "@/components/compras/productMatchingUtils";
 
 // Tela de CONTAGEM CEGA — operário NÃO vê estoque do sistema
 export default function ConferenciaEditor({ conferencia: conferenciaInicial, onVoltar }) {
@@ -57,22 +58,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
   useEffect(() => {
     if (!busca.trim()) { setProdutosFiltrados([]); return; }
-    const q = busca.toLowerCase();
-    const filtrados = produtos
-      .filter(p =>
-        (p.nome || "").toLowerCase().includes(q) ||
-        (p.campo_hierarquico_1 || "").toLowerCase().includes(q) ||
-        (p.campo_hierarquico_2 || "").toLowerCase().includes(q) ||
-        (p.codigo_barras || "").toLowerCase().includes(q) ||
-        (p.codigo_interno || "").toLowerCase().includes(q)
-      )
-      .sort((a, b) => {
-        const nA = (a.nome || a.campo_hierarquico_1 || "").toLowerCase();
-        const nB = (b.nome || b.campo_hierarquico_1 || "").toLowerCase();
-        return nA.localeCompare(nB, "pt-BR");
-      })
-      .slice(0, 30);
-    setProdutosFiltrados(filtrados);
+    setProdutosFiltrados(filterAndSortProducts(produtos, busca));
   }, [busca, produtos]);
 
   const salvarItens = async (novosItens) => {
