@@ -248,6 +248,12 @@ export const ALL_MENU_ITEMS = [
       p?.estoque?.realizar_ajuste_estoque,
     submenu: [
       {
+        name: 'Movimentos de Inventário',
+        page: 'MovimentosInventario',
+        icon: ArrowLeftRight,
+        permissaoCheck: (p) => p?.estoque?.realizar_ajuste_estoque === true
+      },
+      {
         name: 'Conferência',
         page: 'ConferenciaEstoque',
         icon: CheckSquare,

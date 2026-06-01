@@ -1,14 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Ship, CheckSquare, PackageSearch } from 'lucide-react';
+import { ArrowLeftRight, Package, Ship, CheckSquare, PackageSearch } from 'lucide-react';
 import { createPageUrl } from '@/components/utils';
 
 /**
- * A página antiga “Módulo de Estoque” (movimentações genéricas na mesma tela) foi descontinuada.
- * O estoque continua sendo tratado em Conferência, Separação, Produtos e fluxos de compra/venda.
+ * Central de estoque: atalhos para fluxos diferentes, mantendo ajuste pontual separado de conferência/auditoria.
  */
 export default function EstoquePage() {
   const links = [
+    {
+      to: createPageUrl('MovimentosInventario'),
+      icon: ArrowLeftRight,
+      title: 'Movimentos de inventário',
+      desc: 'Entradas e saídas pontuais para ajustes manuais de saldo',
+    },
     {
       to: createPageUrl('Produtos'),
       icon: Package,
@@ -37,11 +42,11 @@ export default function EstoquePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-      <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 p-5 dark:border-amber-900/50 dark:bg-amber-950/40">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Módulo de Estoque descontinuado</h1>
+      <div className="rounded-2xl border border-blue-200/80 bg-blue-50/90 p-5 dark:border-blue-900/50 dark:bg-blue-950/40">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Central de Estoque</h1>
         <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-          Esta tela unificada de movimentações não é mais usada. Use os fluxos abaixo, alinhados ao menu{' '}
-          <strong className="font-medium">Estoque</strong> e <strong className="font-medium">Compras</strong>.
+          Escolha o fluxo correto para cada operação. Movimentos de inventário servem para ajustes pontuais;
+          conferência e auditoria continuam separados para contagens formais.
         </p>
       </div>
 
