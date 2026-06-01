@@ -5,10 +5,23 @@ import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Plus, Minus, Trash2,
   CheckCircle2, Loader2, Package, ChevronDown, ChevronUp,
-  ClipboardCheck, X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw
+  ClipboardCheck, X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw, Boxes
 } from "lucide-react";
 import { saveConferenciaItem } from "@/functions/saveConferenciaItem";
 import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
+import ProductUnitSelectorDialog from "@/components/produtos/ProductUnitSelectorDialog";
+import {
+  buildCountEntry,
+  changeCountEntryUnit,
+  formatCountQuantity,
+  getCountUnitForEntry,
+  getDefaultCountUnit,
+  getEntryBaseQuantity,
+  getEntryDisplayQuantity,
+  getGroupDisplayFromBase,
+  resolveInventoryProductName,
+  updateCountEntryQuantity,
+} from "@/lib/inventoryCountUnits";
 
 // Tela de CONTAGEM CEGA — operário NÃO vê estoque do sistema
 export default function ConferenciaEditor({ conferencia: conferenciaInicial, onVoltar }) {
@@ -27,6 +40,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   const [modalConfirmar, setModalConfirmar] = useState(false); // modal de confirmação de envio
   const [divergencias, setDivergencias] = useState([]); // produtos com diferença vs sistema
   const [verificandoDivergencias, setVerificandoDivergencias] = useState(false);
+  const [unitSelector, setUnitSelector] = useState({ open: false, context: null, itemIdx: null, product: null });
   const qtdInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const buscaRef = useRef(null);
@@ -69,8 +83,8 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
   const selecionarProduto = (produto) => {
     setBusca("");
-    const nome = produto.nome || [produto.campo_hierarquico_1, produto.campo_hierarquico_2, produto.campo_hierarquico_3].filter(Boolean).join(" ");
-    setModalQtd({ produto: { ...produto, nome }, qtdStr: "1" });
+    const nome = resolveInventoryProductName(produto);
+    setModalQtd({ produto: { ...produto, nome }, qtdStr: "1", unitOption: getDefaultCountUnit(produto) });
     setTimeout(() => {
       if (qtdInputRef.current) { qtdInputRef.current.focus(); qtdInputRef.current.select(); }
     }, 100);
@@ -79,7 +93,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   const confirmarQtd = async () => {
     if (!modalQtd) return;
     const qtd = parseFloat(modalQtd.qtdStr) || 0;
-    const novosItens = [...itens, { produto_id: modalQtd.produto.id, produto_nome: modalQtd.produto.nome, quantidade_contada: qtd }];
+    const novosItens = [...itens, buildCountEntry(modalQtd.produto, qtd, modalQtd.unitOption)];
     setItens(novosItens);
     setModalQtd(null);
     setItemExpandido(modalQtd.produto.id);
@@ -87,17 +101,58 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   };
 
   const atualizarQtd = async (idx, delta) => {
-    const novosItens = itens.map((item, i) =>
-      i !== idx ? item : { ...item, quantidade_contada: Math.max(0, (item.quantidade_contada || 0) + delta) }
-    );
+    const novosItens = itens.map((item, i) => {
+      if (i !== idx) return item;
+      const produto = produtos.find(p => p.id === item.produto_id);
+      const qtdAtual = getEntryDisplayQuantity(item, produto);
+      return updateCountEntryQuantity(item, produto, Math.max(0, qtdAtual + delta));
+    });
     setItens(novosItens);
     await salvarItens(novosItens);
   };
 
   const definirQtd = async (idx, valor) => {
-    const novosItens = itens.map((item, i) => i === idx ? { ...item, quantidade_contada: parseFloat(valor) || 0 } : item);
+    const qtd = parseFloat(valor) || 0;
+    const novosItens = itens.map((item, i) => {
+      if (i !== idx) return item;
+      const produto = produtos.find(p => p.id === item.produto_id);
+      return updateCountEntryQuantity(item, produto, qtd);
+    });
     setItens(novosItens);
     await salvarItens(novosItens);
+  };
+
+  const abrirSeletorUnidadeItem = (idx) => {
+    const item = itens[idx];
+    const produto = produtos.find(p => p.id === item?.produto_id);
+    if (!produto) return;
+    setUnitSelector({ open: true, context: "entry", itemIdx: idx, product: produto });
+  };
+
+  const aplicarUnidadeSelecionada = async (unitOption) => {
+    if (!unitOption) return;
+    if (unitSelector.context === "modal") {
+      setModalQtd((prev) => prev ? { ...prev, unitOption } : prev);
+      setUnitSelector({ open: false, context: null, itemIdx: null, product: null });
+      setTimeout(() => {
+        if (qtdInputRef.current) { qtdInputRef.current.focus(); qtdInputRef.current.select(); }
+      }, 50);
+      return;
+    }
+
+    if (unitSelector.context === "entry" && unitSelector.itemIdx !== null) {
+      const novosItens = itens.map((item, idx) => {
+        if (idx !== unitSelector.itemIdx) return item;
+        const produto = produtos.find(p => p.id === item.produto_id);
+        return changeCountEntryUnit(item, produto, unitOption);
+      });
+      setItens(novosItens);
+      setUnitSelector({ open: false, context: null, itemIdx: null, product: null });
+      await salvarItens(novosItens);
+      return;
+    }
+
+    setUnitSelector({ open: false, context: null, itemIdx: null, product: null });
   };
 
   const removerItem = async (idx) => {
@@ -119,12 +174,15 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
         1000
       );
       const saldoExtrato = calcularSaldoMovimentacoes(movs);
-      if (Math.abs(grupo.total - saldoExtrato) > 0.001) {
+      if (Math.abs(grupo.totalBase - saldoExtrato) > 0.001) {
         const cad = parseEstoqueCadastro(prod.estoque_atual);
+        const exibicao = getGroupDisplayFromBase(prod, grupo.totalBase);
         divs.push({
           produto_id: grupo.produto_id,
           produto_nome: grupo.produto_nome,
-          contado: grupo.total,
+          contado: grupo.totalBase,
+          contado_display: exibicao.quantidade,
+          unidade_display: exibicao.unidade,
           sistema: saldoExtrato,
           sistema_cadastro: cad !== saldoExtrato ? cad : null,
         });
@@ -148,15 +206,31 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
     // divergencia, e regrava em ConferenciaItem (espelho recomposto pelo backend).
     try {
       const agrupados = (itens || []).reduce((acc, it) => {
-        const key = it.produto_id;
-        if (!acc[key]) acc[key] = { produto_id: key, produto_nome: it.produto_nome, quantidade_contada: 0 };
-        acc[key].quantidade_contada += Number(it.quantidade_contada) || 0;
+        const produto = produtos.find(p => p.id === it.produto_id);
+        const unit = getCountUnitForEntry(produto, it);
+        const key = `${it.produto_id}::${unit.unidade}`;
+        if (!acc[key]) {
+          acc[key] = {
+            produto_id: it.produto_id,
+            produto_nome: it.produto_nome,
+            unidade_sigla: unit.unidade,
+            unidade_medida: unit.unidade,
+            produto_unidade_id: unit.id,
+            fator_conversao: unit.fator_conversao,
+            quantidade_contada_comercial: 0,
+          };
+        }
+        acc[key].quantidade_contada_comercial += getEntryDisplayQuantity(it, produto);
         return acc;
       }, {});
       const itensCanonicos = Object.values(agrupados).map((it, idx) => ({
         produto_id: it.produto_id,
         produto_nome: it.produto_nome,
-        quantidade_contada_comercial: Number(it.quantidade_contada) || 0,
+        unidade_sigla: it.unidade_sigla,
+        unidade_medida: it.unidade_medida,
+        produto_unidade_id: it.produto_unidade_id,
+        fator_conversao: it.fator_conversao,
+        quantidade_contada_comercial: Number(it.quantidade_contada_comercial) || 0,
         ordem: idx,
       })).filter((it) => it.produto_id);
 
@@ -177,13 +251,25 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   };
 
   const itensAgrupados = itens.reduce((acc, item, idx) => {
+    const produto = produtos.find(p => p.id === item.produto_id);
+    const quantidadeBase = getEntryBaseQuantity(item, produto);
+    const quantidadeDisplay = getEntryDisplayQuantity(item, produto);
+    const unit = getCountUnitForEntry(produto, item);
     const existente = acc.findIndex(a => a.produto_id === item.produto_id);
     if (existente >= 0) {
-      acc[existente].total += item.quantidade_contada;
-      acc[existente].entradas.push({ idx, qtd: item.quantidade_contada });
+      acc[existente].totalBase += quantidadeBase;
+      acc[existente].entradas.push({ idx, qtd: quantidadeDisplay, unidade: unit.unidade, base: quantidadeBase });
     } else {
-      acc.push({ produto_id: item.produto_id, produto_nome: item.produto_nome, total: item.quantidade_contada, entradas: [{ idx, qtd: item.quantidade_contada }] });
+      acc.push({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        totalBase: quantidadeBase,
+        display: getGroupDisplayFromBase(produto, quantidadeBase),
+        entradas: [{ idx, qtd: quantidadeDisplay, unidade: unit.unidade, base: quantidadeBase }],
+      });
     }
+    const grupoAtual = existente >= 0 ? acc[existente] : acc[acc.length - 1];
+    grupoAtual.display = getGroupDisplayFromBase(produto, grupoAtual.totalBase);
     return acc;
   }, []);
 
@@ -272,9 +358,10 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             <div className="absolute top-full left-4 right-4 z-30 mt-1 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto border border-gray-100 dark:border-gray-800">
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {produtosFiltrados.map(prod => {
-                  const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
+                  const nome = resolveInventoryProductName(prod);
                   const contagens = itens.filter(i => i.produto_id === prod.id);
-                  const totalContado = contagens.reduce((s, i) => s + (i.quantidade_contada || 0), 0);
+                  const totalBase = contagens.reduce((s, i) => s + getEntryBaseQuantity(i, prod), 0);
+                  const totalDisplay = getGroupDisplayFromBase(prod, totalBase);
                   return (
                     <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <div className="flex-1 min-w-0">
@@ -286,7 +373,9 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                       {contagens.length > 0 && (
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                          <span className="text-xs text-green-400 font-medium">{totalContado}</span>
+                          <span className="text-xs text-green-400 font-medium">
+                            {formatCountQuantity(totalDisplay.quantidade)} {totalDisplay.unidade}
+                          </span>
                         </div>
                       )}
                       <Plus className="w-4 h-4 text-gray-600 flex-shrink-0" />
@@ -320,10 +409,22 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words">{grupo.produto_nome}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+                  {grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}
+                  {grupo.display?.fator_conversao > 1 && (
+                    <span> · base {formatCountQuantity(grupo.totalBase)} {grupo.display.unidade_base}</span>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-                <span className="text-xl font-bold font-glacial text-gray-900 dark:text-white">{grupo.total}</span>
+                <div className="text-right">
+                  <span className="text-xl font-bold font-glacial text-gray-900 dark:text-white">
+                    {formatCountQuantity(grupo.display?.quantidade ?? grupo.totalBase)}
+                  </span>
+                  <span className="ml-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                    {grupo.display?.unidade || "UN"}
+                  </span>
+                </div>
                 {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-600" />}
               </div>
             </button>
@@ -339,8 +440,17 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                           <Minus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                         </button>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => abrirSeletorUnidadeItem(entrada.idx)}
+                        className="h-7 inline-flex items-center gap-1 rounded-lg bg-white dark:bg-gray-800 px-2 text-[11px] font-semibold text-gray-600 dark:text-gray-300 shadow-sm"
+                        title="Trocar unidade"
+                      >
+                        <Boxes className="w-3 h-3" />
+                        {entrada.unidade || "UN"}
+                      </button>
                       <Input
-                        type="number" inputMode="numeric"
+                        type="number" inputMode="decimal"
                         value={entrada.qtd}
                         readOnly={bloqueada}
                         onChange={e => !bloqueada && definirQtd(entrada.idx, e.target.value)}
@@ -422,9 +532,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                       <p className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{div.produto_nome}</p>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-xs font-semibold text-gray-900 dark:text-white">{div.contado}</span>
+                        <span className="text-xs font-semibold text-gray-900 dark:text-white">
+                          {formatCountQuantity(div.contado_display ?? div.contado)} {div.unidade_display || ""}
+                        </span>
                         <span className="text-xs text-gray-400 dark:text-gray-600">vs saldo</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{div.sistema}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{formatCountQuantity(div.sistema)}</span>
                         {div.sistema_cadastro != null && (
                           <span className="text-[10px] text-gray-500 dark:text-gray-600">cad. {div.sistema_cadastro}</span>
                         )}
@@ -472,7 +584,18 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
           <div className="relative bg-white dark:bg-gray-900 rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl">
             <p className="text-xs text-gray-400 dark:text-gray-600 mb-1">Produto selecionado</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white mb-5 leading-snug">{modalQtd.produto.nome}</p>
-            <label className="text-xs text-gray-400 dark:text-gray-600 mb-2 block">Quantidade contada</label>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <label className="text-xs text-gray-400 dark:text-gray-600 block">Quantidade contada</label>
+              <button
+                type="button"
+                onClick={() => setUnitSelector({ open: true, context: "modal", itemIdx: null, product: modalQtd.produto })}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
+                <Boxes className="w-3.5 h-3.5" />
+                {modalQtd.unitOption?.unidade || "UN"}
+                <ChevronDown className="w-3 h-3 text-gray-400" />
+              </button>
+            </div>
             <div className="flex items-center gap-3 mb-6">
               <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                 <Minus className="w-5 h-5 text-gray-500 dark:text-gray-300" />
@@ -497,6 +620,14 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
           </div>
         </div>
       )}
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="sale"
+        onClose={() => setUnitSelector({ open: false, context: null, itemIdx: null, product: null })}
+        onConfirm={aplicarUnidadeSelecionada}
+      />
     </div>
   );
 }

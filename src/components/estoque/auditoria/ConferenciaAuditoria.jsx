@@ -10,6 +10,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { openPrintWindowOrShareHtml } from "@/lib/mobilePrintAndShare";
+import { formatCountQuantity, getEntryBaseQuantity, getGroupDisplayFromBase } from "@/lib/inventoryCountUnits";
 
 export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualizar }) {
   const [produtos, setProdutos] = useState([]);
@@ -40,11 +41,13 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
   const comparativo = React.useMemo(() => {
     if (!produtos.length) return [];
 
-    // Agrupa contagens por produto
+    // Agrupa em quantidade base para manter o ajuste correto, exibindo em unidade de vitrine.
     const contagens = {};
     (conferencia.itens_conferidos || []).forEach(item => {
-      if (!contagens[item.produto_id]) contagens[item.produto_id] = { nome: item.produto_nome, total: 0 };
-      contagens[item.produto_id].total += item.quantidade_contada || 0;
+      const prod = produtos.find(p => p.id === item.produto_id);
+      const base = getEntryBaseQuantity(item, prod);
+      if (!contagens[item.produto_id]) contagens[item.produto_id] = { nome: item.produto_nome, totalBase: 0 };
+      contagens[item.produto_id].totalBase += base;
     });
 
     return Object.entries(contagens).map(([produto_id, c]) => {
@@ -53,17 +56,24 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
       const saldo_movimentos = Object.prototype.hasOwnProperty.call(saldoPorProduto, produto_id)
         ? saldoPorProduto[produto_id]
         : null;
-      const contado = c.total;
+      const contadoBase = c.totalBase;
+      const exibicao = getGroupDisplayFromBase(prod, contadoBase);
       const baseline = saldo_movimentos !== null ? saldo_movimentos : estoque_cadastro;
-      const diferenca = baseline !== null && Number.isFinite(baseline) ? contado - baseline : null;
+      const diferenca = baseline !== null && Number.isFinite(baseline) ? contadoBase - baseline : null;
+      const fator = Number(exibicao.fator_conversao) > 0 ? Number(exibicao.fator_conversao) : 1;
       return {
         produto_id,
         produto_nome: c.nome,
-        contado,
+        contado: exibicao.quantidade,
+        contado_base: contadoBase,
         estoque_sistema: baseline,
+        estoque_sistema_display: baseline !== null && Number.isFinite(baseline) ? baseline / fator : null,
         estoque_cadastro,
+        estoque_cadastro_display: estoque_cadastro !== null && Number.isFinite(estoque_cadastro) ? estoque_cadastro / fator : null,
         diferenca,
-        unidade: prod?.unidade_principal || "UN",
+        diferenca_display: diferenca !== null ? diferenca / fator : null,
+        unidade: exibicao.unidade,
+        unidade_base: exibicao.unidade_base,
         hierarquia: [prod?.campo_hierarquico_1, prod?.campo_hierarquico_2].filter(Boolean).join(" › "),
       };
     }).sort((a, b) => {
@@ -91,7 +101,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
         1000
       );
       const saldo = calcularSaldoMovimentacoes(movs);
-      const delta = row.contado - saldo;
+      const delta = row.contado_base - saldo;
       if (Math.abs(delta) < 1e-6) continue;
 
       const prod = produtos.find((p) => p.id === row.produto_id);
@@ -107,7 +117,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
         referencia_tipo: "ConferenciaEstoque",
         referencia_id: conferencia.id,
         referencia_numero: conferencia.nome_conferencia,
-        observacoes: `Auditoria: ${conferencia.nome_conferencia} — contagem física ${row.contado} (saldo extrato ${saldo})`,
+        observacoes: `Auditoria: ${conferencia.nome_conferencia} — contagem física ${formatCountQuantity(row.contado)} ${row.unidade} (${formatCountQuantity(row.contado_base)} ${row.unidade_base} base; saldo extrato ${formatCountQuantity(saldo)})`,
         usuario_responsavel: conferencia?.responsavel_nome || conferencia?.responsavel_id || "Sistema",
       });
       recalcIds.add(row.produto_id);
@@ -129,13 +139,14 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
     const dataFim = conferencia.data_fim ? format(new Date(conferencia.data_fim), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "";
     const linhas = comparativo.map(item => {
       const dif = item.diferenca;
-      const difStr = dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${dif}` : `${dif}`;
+      const difDisplay = item.diferenca_display;
+      const difStr = dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${formatCountQuantity(difDisplay)}` : `${formatCountQuantity(difDisplay)}`;
       const difClass = dif > 0 ? "pos" : dif < 0 ? "neg" : "ok";
       return `
         <tr>
           <td>${item.produto_nome}</td>
-          <td style="text-align:center">${item.contado} ${item.unidade}</td>
-          <td style="text-align:center">${item.estoque_sistema ?? "—"} ${item.unidade}${item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? ` <span style="color:#9ca3af">(cad. ${item.estoque_cadastro})</span>` : ""}</td>
+          <td style="text-align:center">${formatCountQuantity(item.contado)} ${item.unidade}</td>
+          <td style="text-align:center">${item.estoque_sistema_display == null ? "—" : formatCountQuantity(item.estoque_sistema_display)} ${item.unidade}${item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? ` <span style="color:#9ca3af">(cad. ${formatCountQuantity(item.estoque_cadastro_display)} ${item.unidade})</span>` : ""}</td>
           <td style="text-align:center" class="${difClass}">${difStr}</td>
         </tr>`;
     }).join("");
@@ -264,18 +275,20 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
               <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words mb-2">{item.produto_nome}</p>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="font-semibold text-gray-700 dark:text-gray-200">{item.contado}</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-200">
+                    {formatCountQuantity(item.contado)} {item.unidade}
+                  </span>
                   <span className="text-gray-300 dark:text-gray-700">·</span>
-                  <span className="text-gray-400 dark:text-gray-500" title={item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? `Cadastro: ${item.estoque_cadastro}` : ""}>
-                    {item.estoque_sistema ?? "—"} {item.unidade}
+                  <span className="text-gray-400 dark:text-gray-500" title={item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? `Cadastro: ${formatCountQuantity(item.estoque_cadastro)} ${item.unidade_base}` : ""}>
+                    {item.estoque_sistema_display == null ? "—" : formatCountQuantity(item.estoque_sistema_display)} {item.unidade}
                     {item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? (
-                      <span className="text-gray-500 dark:text-gray-600 font-normal"> · cad. {item.estoque_cadastro}</span>
+                      <span className="text-gray-500 dark:text-gray-600 font-normal"> · cad. {formatCountQuantity(item.estoque_cadastro_display)} {item.unidade}</span>
                     ) : null}
                   </span>
                 </div>
                 <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${difColor}`}>
                   <DifIcon className="w-3 h-3" />
-                  {dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${dif}` : `${dif}`}
+                  {dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${formatCountQuantity(item.diferenca_display)}` : `${formatCountQuantity(item.diferenca_display)}`}
                 </span>
               </div>
             </div>

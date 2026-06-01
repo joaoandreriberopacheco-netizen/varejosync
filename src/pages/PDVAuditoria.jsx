@@ -7,10 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Search, Plus, Minus, Check, Trash2,
-  CheckCircle2, Loader2, Package, ChevronDown, ChevronUp, ClipboardCheck
+  CheckCircle2, Loader2, Package, ChevronDown, ChevronUp, ClipboardCheck, Boxes
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import ProductUnitSelectorDialog from "@/components/produtos/ProductUnitSelectorDialog";
+import {
+  buildCountEntry,
+  changeCountEntryUnit,
+  formatCountQuantity,
+  getCountUnitForEntry,
+  getEntryBaseQuantity,
+  getEntryDisplayQuantity,
+  getGroupDisplayFromBase,
+  resolveInventoryProductName,
+  updateCountEntryQuantity,
+} from "@/lib/inventoryCountUnits";
 
 export default function PDVAuditoria() {
   const navigate = useNavigate();
@@ -27,6 +39,7 @@ export default function PDVAuditoria() {
   const [loading, setLoading] = useState(true);
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const [itemExpandido, setItemExpandido] = useState(null);
+  const [unitSelector, setUnitSelector] = useState({ open: false, itemIdx: null, product: null });
   const buscaRef = useRef(null);
 
   useEffect(() => {
@@ -71,28 +84,20 @@ export default function PDVAuditoria() {
   }, [conferencia_id]);
 
   const adicionarProduto = async (produto) => {
-    const nome = produto.nome || [
-      produto.campo_hierarquico_1,
-      produto.campo_hierarquico_2,
-      produto.campo_hierarquico_3,
-    ].filter(Boolean).join(" ");
-
-    const novosItens = [...itens, {
-      produto_id: produto.id,
-      produto_nome: nome,
-      quantidade_contada: 1,
-    }];
+    const novosItens = [...itens, buildCountEntry(produto, 1)];
     setItens(novosItens);
     setBusca("");
     setMostrarBusca(false);
-    setItemExpandido(novosItens.length - 1);
+    setItemExpandido(produto.id);
     await salvarItens(novosItens);
   };
 
   const atualizarQtd = async (idx, delta) => {
     const novosItens = itens.map((item, i) => {
       if (i !== idx) return item;
-      return { ...item, quantidade_contada: Math.max(0, (item.quantidade_contada || 0) + delta) };
+      const produto = produtos.find(p => p.id === item.produto_id);
+      const qtdAtual = getEntryDisplayQuantity(item, produto);
+      return updateCountEntryQuantity(item, produto, Math.max(0, qtdAtual + delta));
     });
     setItens(novosItens);
     await salvarItens(novosItens);
@@ -100,8 +105,35 @@ export default function PDVAuditoria() {
 
   const definirQtd = async (idx, valor) => {
     const qtd = parseFloat(valor) || 0;
-    const novosItens = itens.map((item, i) => i === idx ? { ...item, quantidade_contada: qtd } : item);
+    const novosItens = itens.map((item, i) => {
+      if (i !== idx) return item;
+      const produto = produtos.find(p => p.id === item.produto_id);
+      return updateCountEntryQuantity(item, produto, qtd);
+    });
     setItens(novosItens);
+    await salvarItens(novosItens);
+  };
+
+  const abrirSeletorUnidadeItem = (idx) => {
+    const item = itens[idx];
+    const produto = produtos.find(p => p.id === item?.produto_id);
+    if (!produto) return;
+    setUnitSelector({ open: true, itemIdx: idx, product: produto });
+  };
+
+  const aplicarUnidadeSelecionada = async (unitOption) => {
+    if (!unitOption || unitSelector.itemIdx === null) {
+      setUnitSelector({ open: false, itemIdx: null, product: null });
+      return;
+    }
+
+    const novosItens = itens.map((item, idx) => {
+      if (idx !== unitSelector.itemIdx) return item;
+      const produto = produtos.find(p => p.id === item.produto_id);
+      return changeCountEntryUnit(item, produto, unitOption);
+    });
+    setItens(novosItens);
+    setUnitSelector({ open: false, itemIdx: null, product: null });
     await salvarItens(novosItens);
   };
 
@@ -128,7 +160,8 @@ export default function PDVAuditoria() {
 
     const totaisConferidos = itens.reduce((acc, item) => {
       if (!item.produto_id) return acc;
-      acc[item.produto_id] = (acc[item.produto_id] || 0) + (Number(item.quantidade_contada) || 0);
+      const produto = mapaProdutos[item.produto_id] || produtos.find(p => p.id === item.produto_id);
+      acc[item.produto_id] = (acc[item.produto_id] || 0) + getEntryBaseQuantity(item, produto);
       return acc;
     }, {});
 
@@ -186,18 +219,25 @@ export default function PDVAuditoria() {
 
   // Agrupa itens com o mesmo produto_id
   const itensAgrupados = itens.reduce((acc, item, idx) => {
+    const produto = produtos.find(p => p.id === item.produto_id);
+    const quantidadeBase = getEntryBaseQuantity(item, produto);
+    const quantidadeDisplay = getEntryDisplayQuantity(item, produto);
+    const unit = getCountUnitForEntry(produto, item);
     const existente = acc.findIndex(a => a.produto_id === item.produto_id);
     if (existente >= 0) {
-      acc[existente].total += item.quantidade_contada;
-      acc[existente].entradas.push({ idx, qtd: item.quantidade_contada });
+      acc[existente].totalBase += quantidadeBase;
+      acc[existente].entradas.push({ idx, qtd: quantidadeDisplay, unidade: unit.unidade, base: quantidadeBase });
     } else {
       acc.push({
         produto_id: item.produto_id,
         produto_nome: item.produto_nome,
-        total: item.quantidade_contada,
-        entradas: [{ idx, qtd: item.quantidade_contada }],
+        totalBase: quantidadeBase,
+        display: getGroupDisplayFromBase(produto, quantidadeBase),
+        entradas: [{ idx, qtd: quantidadeDisplay, unidade: unit.unidade, base: quantidadeBase }],
       });
     }
+    const grupoAtual = existente >= 0 ? acc[existente] : acc[acc.length - 1];
+    grupoAtual.display = getGroupDisplayFromBase(produto, grupoAtual.totalBase);
     return acc;
   }, []);
 
@@ -255,10 +295,22 @@ export default function PDVAuditoria() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{grupo.produto_nome}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}
+                  {grupo.display?.fator_conversao > 1 && (
+                    <span> · base {formatCountQuantity(grupo.totalBase)} {grupo.display.unidade_base}</span>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-lg font-bold font-glacial text-gray-900 dark:text-white">{grupo.total}</span>
+                <div className="text-right">
+                  <span className="text-lg font-bold font-glacial text-gray-900 dark:text-white">
+                    {formatCountQuantity(grupo.display?.quantidade ?? grupo.totalBase)}
+                  </span>
+                  <span className="ml-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                    {grupo.display?.unidade || "UN"}
+                  </span>
+                </div>
                 {itemExpandido === grupo.produto_id
                   ? <ChevronUp className="w-4 h-4 text-gray-300" />
                   : <ChevronDown className="w-4 h-4 text-gray-300" />
@@ -281,8 +333,18 @@ export default function PDVAuditoria() {
                       >
                         <Minus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => abrirSeletorUnidadeItem(entrada.idx)}
+                        className="h-7 inline-flex items-center gap-1 rounded-lg bg-white dark:bg-gray-700 px-2 text-[11px] font-semibold text-gray-600 dark:text-gray-300 shadow-sm"
+                        title="Trocar unidade"
+                      >
+                        <Boxes className="w-3 h-3" />
+                        {entrada.unidade || "UN"}
+                      </button>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         value={entrada.qtd}
                         onChange={e => definirQtd(entrada.idx, e.target.value)}
                         className="w-14 text-center text-sm font-medium border-0 bg-transparent focus-visible:ring-0 p-0 h-7"
@@ -324,9 +386,10 @@ export default function PDVAuditoria() {
         {produtosFiltrados.length > 0 && (
           <div className="max-h-52 overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700">
             {produtosFiltrados.map(prod => {
-              const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
+              const nome = resolveInventoryProductName(prod);
               const contagens = itens.filter(i => i.produto_id === prod.id);
-              const totalContado = contagens.reduce((s, i) => s + (i.quantidade_contada || 0), 0);
+              const totalBase = contagens.reduce((s, i) => s + getEntryBaseQuantity(i, prod), 0);
+              const totalDisplay = getGroupDisplayFromBase(prod, totalBase);
               return (
                 <button
                   key={prod.id}
@@ -340,7 +403,9 @@ export default function PDVAuditoria() {
                   {contagens.length > 0 && (
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
-                      <span className="text-xs text-green-500 font-medium">{totalContado}</span>
+                      <span className="text-xs text-green-500 font-medium">
+                        {formatCountQuantity(totalDisplay.quantidade)} {totalDisplay.unidade}
+                      </span>
                     </div>
                   )}
                   <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
@@ -374,6 +439,14 @@ export default function PDVAuditoria() {
           </Button>
         </div>
       </div>
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="sale"
+        onClose={() => setUnitSelector({ open: false, itemIdx: null, product: null })}
+        onConfirm={aplicarUnidadeSelecionada}
+      />
     </div>
   );
 }
