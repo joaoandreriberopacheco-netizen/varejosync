@@ -1,33 +1,23 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { createContext, useContext, useCallback } from 'react';
 
 const NavigationTransitionContext = createContext();
 
 export const NavigationTransitionProvider = ({ children }) => {
-  const [showTransition, setShowTransition] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-
   const triggerTransition = useCallback(async (callback) => {
-    setShowTransition(true);
-    setIsNavigating(true);
-    
-    // Aguarda a logo se animar (400ms)
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    // Executa a navegação
     if (callback) {
       callback();
     }
-    
-    // Aguarda a animação de saída (flame) completar (1000ms)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setShowTransition(false);
-    setIsNavigating(false);
   }, []);
 
   return (
-    <NavigationTransitionContext.Provider value={{ triggerTransition, showTransition, setShowTransition, isNavigating }}>
+    <NavigationTransitionContext.Provider
+      value={{
+        triggerTransition,
+        showTransition: false,
+        setShowTransition: () => {},
+        isNavigating: false,
+      }}
+    >
       {children}
     </NavigationTransitionContext.Provider>
   );
@@ -41,25 +31,7 @@ export const useNavigationTransition = () => {
   return context;
 };
 
-// Componente que detecta mudanças de rota - deve estar DENTRO do Router
+// Mantido para compatibilidade com imports antigos; a transição visual foi removida.
 export function NavigationTransitionDetector() {
-  const { showTransition, setShowTransition } = useNavigationTransition();
-  const [lastLocation, setLastLocation] = useState(null);
-  const location = useLocation();
-
-  React.useEffect(() => {
-    if (lastLocation && lastLocation.pathname !== location.pathname) {
-      setShowTransition(true);
-      
-      // 3.2 segundos de transição suave
-      const timeout = setTimeout(() => {
-        setShowTransition(false);
-      }, 3200);
-      
-      return () => clearTimeout(timeout);
-    }
-    setLastLocation(location);
-  }, [location, setShowTransition]);
-
   return null;
 }

@@ -1,8 +1,6 @@
 import React from 'react'
 import './App.css'
 import { Toaster } from "@/components/ui/sonner"
-import SplashScreen from '@/components/SplashScreen'
-import NavigationTransitionOverlay from '@/components/NavigationTransitionOverlay'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { FLARE_AND_INSPECTION_UI_ENABLED } from '@/config/devToolsFlags';
@@ -12,7 +10,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import { NavigationTransitionProvider, NavigationTransitionDetector } from '@/lib/NavigationTransitionContext';
+import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ReimpressaoDocumentos from '@/pages/ReimpressaoDocumentos';
 import Home from '@/pages/Home';
@@ -53,22 +51,12 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
-  const [showSplash, setShowSplash] = React.useState(() => !sessionStorage.getItem('p38_splash_shown'));
-
-  const handleSplashFinish = () => {
-    sessionStorage.setItem('p38_splash_shown', '1');
-    setShowSplash(false);
-  };
 
   React.useEffect(() => {
     if (authError?.type === 'auth_required' && location.pathname !== '/login') {
       navigateToLogin();
     }
   }, [authError, location.pathname, navigateToLogin]);
-
-  if (showSplash) {
-    return <SplashScreen onFinish={handleSplashFinish} />;
-  }
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -95,7 +83,6 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <>
-      <NavigationTransitionDetector />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={
@@ -227,14 +214,12 @@ function App() {
             {FLARE_AND_INSPECTION_UI_ENABLED ? (
               <ModoFlareProvider>
                 <NavigationTracker />
-                <NavigationTransitionOverlay />
                 <AuthenticatedApp />
                 <CatalogOverlay />
               </ModoFlareProvider>
             ) : (
               <>
                 <NavigationTracker />
-                <NavigationTransitionOverlay />
                 <AuthenticatedApp />
               </>
             )}
