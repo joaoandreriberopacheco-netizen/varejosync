@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
 import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
@@ -17,7 +17,6 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
   const [saldoPorProduto, setSaldoPorProduto] = useState({});
   const [loading, setLoading] = useState(true);
   const [aprovando, setAprovando] = useState(false);
-  const printRef = useRef(null);
 
   useEffect(() => { carregar(); }, [conferencia?.id]);
 

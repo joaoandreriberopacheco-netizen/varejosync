@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
 import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, Search, Plus, Minus, Check, Trash2,
+  ArrowLeft, Search, Plus, Minus, Trash2,
   CheckCircle2, Loader2, Package, ChevronDown, ChevronUp, ClipboardCheck, Boxes
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";

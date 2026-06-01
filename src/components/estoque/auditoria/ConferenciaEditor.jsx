@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Plus, Minus, Trash2,
   CheckCircle2, Loader2, Package, ChevronDown, ChevronUp,
-  ClipboardCheck, X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw, Boxes
+  X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw, Boxes
 } from "lucide-react";
 import { saveConferenciaItem } from "@/functions/saveConferenciaItem";
 import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
