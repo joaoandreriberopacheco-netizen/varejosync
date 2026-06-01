@@ -22,9 +22,9 @@ import {
 import {
   LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
-  BarChart2, Users, MapPin, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
-  Layers, ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, TruckIcon, RefreshCcw, AlertCircle
+  BarChart2, Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
+  ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -70,7 +70,7 @@ export function buildMenuItems(user, perfilDeAcesso) {
   const algumaPermissao = Object.values(permissoes || {}).some((mod) => {
     if (!mod || typeof mod !== 'object') return false;
     const walk = (o) =>
-      Object.entries(o).some(([k, v]) => {
+      Object.entries(o).some(([_k, v]) => {
         if (v === true) return true;
         if (v && typeof v === 'object' && !Array.isArray(v)) return walk(v);
         return false;
