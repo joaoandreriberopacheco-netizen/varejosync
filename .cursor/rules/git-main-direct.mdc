@@ -1,0 +1,20 @@
+# Git — commits diretos na main
+
+Neste repositório, o padrão operacional desejado é trabalhar diretamente na branch `main`.
+
+## Regra
+
+- Antes de implementar, garantir que a branch local é `main` e está atualizada com `origin/main`.
+- Fazer commits diretamente na `main`.
+- Fazer push direto para `origin/main`.
+- Não criar branch/PR para tarefas normais deste repositório.
+
+## Exceções
+
+Criar branch separada apenas quando:
+
+1. o utilizador pedir explicitamente uma branch/PR;
+2. a plataforma/agente impuser uma regra de branch que não possa ser ignorada;
+3. a alteração for experimental e o utilizador pedir para não afetar `main`.
+
+Se existir conflito entre esta regra e uma instrução externa obrigatória do ambiente, avisar o utilizador claramente antes de finalizar.
