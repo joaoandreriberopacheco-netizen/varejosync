@@ -395,10 +395,13 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     overscan: 10,
     scrollElementRef: scrollContainerRef,
   });
+  const shouldVirtualizeRows = rows.length > 300;
   const visibleRows = useMemo(
-    () => rows.slice(virtualRows.startIndex, virtualRows.endIndex),
-    [rows, virtualRows.endIndex, virtualRows.startIndex]
+    () => shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows,
+    [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex]
   );
+  const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
+  const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
   const nameColLeft = readOnly ? 0 : W_EDIT;
   const headerColSpan = activeCols.length + (readOnly ? 1 : 2);
@@ -440,9 +443,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
               </tr>
             ) : (
               <>
-                {virtualRows.paddingTop > 0 && (
+                {paddingTop > 0 && (
                   <tr aria-hidden="true">
-                    <td colSpan={headerColSpan} style={{ height: virtualRows.paddingTop, padding: 0, border: 0 }} />
+                    <td colSpan={headerColSpan} style={{ height: paddingTop, padding: 0, border: 0 }} />
                   </tr>
                 )}
                 {visibleRows.map(row =>
@@ -458,9 +461,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         activeCols={activeCols}
                         readOnly={readOnly} />
                 )}
-                {virtualRows.paddingBottom > 0 && (
+                {paddingBottom > 0 && (
                   <tr aria-hidden="true">
-                    <td colSpan={headerColSpan} style={{ height: virtualRows.paddingBottom, padding: 0, border: 0 }} />
+                    <td colSpan={headerColSpan} style={{ height: paddingBottom, padding: 0, border: 0 }} />
                   </tr>
                 )}
               </>
