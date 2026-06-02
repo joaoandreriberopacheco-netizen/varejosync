@@ -261,10 +261,13 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         itens_embarcados: itensOrfaos
       } : null;
 
+      const pedidoItensParaCusto = Array.isArray(pedido?.itens) ? pedido.itens : [];
+
       // 1) Entrada em stock na DB Base44 (antes de fechar o embarque — se falhar, receção não fica «Concluída»).
       for (const item of itensNorm) {
         if (item.quantidade_recebida > 0) {
           const produtoId = item.produto_id_recebido_diferente || item.produto_id;
+          const linhaPedido = pedidoItensParaCusto.find((pi) => String(pi?.produto_id) === String(item?.produto_id));
           await base44.entities.MovimentacaoEstoque.create(
             buildMovimentacaoRecepcaoCompraPayload({
               produtoId,
@@ -272,6 +275,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               quantidade: item.quantidade_recebida,
               pedido,
               embarque,
+              purchaseItem: linhaPedido || item,
             })
           );
           await invokeRecalcularEstoqueProduto(base44, produtoId);

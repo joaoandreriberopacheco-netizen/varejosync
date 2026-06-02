@@ -872,6 +872,19 @@ export function applyItemDescontoValorApresentacao(item = {}, custoApres, absDes
   };
 }
 
+/** Custo de compra líquido fator-1: desconto positivo reduz; desconto negativo/acréscimo aumenta. */
+export function getCustoCompraLiquidoFator1(item = {}) {
+  const custoF1 = normalizeNumber(
+    item?.custo_unitario_fator1 ?? item?.custo_unitario,
+    0,
+  );
+  const ajusteF1 = normalizeNumber(
+    item?.desconto_unitario_fator1 ?? item?.valor_desconto_item ?? item?.desconto_unitario,
+    0,
+  );
+  return roundToTwoDecimals(custoF1 - ajusteF1);
+}
+
 /** Total da linha: quantidade_base × custo final fator-1 (contrato PedidoCompra). */
 export function calcTotalItemCompraPedido(item = {}) {
   const qb = normalizeNumber(item?.quantidade_base, NaN);
