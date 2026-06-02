@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { createPageUrl } from '@/components/utils';
 import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import MassTagGenerator from '@/components/produtos/MassTagGenerator';
 
 export default function ProdutosHeader({
   stats,
@@ -24,8 +26,11 @@ export default function ProdutosHeader({
   handleAddNew,
   setFilters,
   formatarNumero,
+  filteredProdutos = [],
+  loadData,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
+  const [isMassTagOpen, setIsMassTagOpen] = useState(false);
 
   const clearFilters = () => {
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
@@ -94,6 +99,17 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+                  {filteredProdutos.length > 0 && (
+                    <DropdownMenuItem
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setIsMassTagOpen(true);
+                      }}
+                      className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2 text-indigo-500" />Tagificação em Massa
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
                     <Link to={createPageUrl('OtimizacaoEstoqueIA')}>
                       <Sparkles className="w-4 h-4 mr-2 text-purple-500" />Otimizar Estoque
@@ -110,6 +126,13 @@ export default function ProdutosHeader({
                 <PlusCircle className="h-4 w-4 text-gray-700 dark:text-gray-300" />
               </Button>
             </div>
+            <MassTagGenerator
+              products={filteredProdutos}
+              onComplete={loadData}
+              open={isMassTagOpen}
+              onOpenChange={setIsMassTagOpen}
+              hideTrigger
+            />
           </div>
         </div>
 

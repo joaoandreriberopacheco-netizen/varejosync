@@ -9,7 +9,7 @@ export const DEFAULT_PRODUTO_FILTERS = {
   statusEstoque: 'all',
   tag: '',
   cadastroIncompleto: 'all',
-  ativoStatus: 'all',
+  ativoStatus: 'ativos',
   quantidadeOperador: 'all',
   quantidadeValor: '',
   quantidadeValorAte: '',
@@ -153,7 +153,7 @@ export function countActiveProdutoFilters(filters) {
     filters.statusEstoque !== 'all' && filters.statusEstoque,
     filters.tag,
     filters.cadastroIncompleto !== 'all' && filters.cadastroIncompleto,
-    filters.ativoStatus !== 'all' && filters.ativoStatus,
+    filters.ativoStatus !== DEFAULT_PRODUTO_FILTERS.ativoStatus && filters.ativoStatus,
     hasActiveQuantityFilter(filters) && filters.quantidadeOperador,
   ].filter(Boolean).length;
 }

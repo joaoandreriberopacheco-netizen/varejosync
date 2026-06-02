@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Wand2, Loader2, CheckCircle, AlertCircle, StopCircle } from 'lucide-react';
+import { Tag, StopCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 
-export default function MassTagGenerator({ products, onComplete }) {
+export default function MassTagGenerator({ products, onComplete, open, onOpenChange, hideTrigger = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -14,8 +14,37 @@ export default function MassTagGenerator({ products, onComplete }) {
   const [logs, setLogs] = useState([]);
   const [abortController, setAbortController] = useState(null);
   const { toast } = useToast();
+  const isControlled = typeof open === 'boolean';
+  const isDialogOpen = isControlled ? open : isOpen;
+  const setDialogOpen = isControlled ? onOpenChange : setIsOpen;
 
   const BATCH_SIZE = 10;
+
+  const normalizeTag = (tag) => {
+    return String(tag || '')
+      .trim()
+      .replace(/^#+/, '')
+      .replace(/\s+/g, ' ');
+  };
+
+  const mergeUniqueTags = (existingTags = [], newTags = []) => {
+    const merged = [];
+    const seen = new Set();
+
+    [...existingTags, ...newTags].forEach((tag) => {
+      const cleaned = normalizeTag(tag);
+      if (!cleaned) return;
+      const key = cleaned.toLocaleLowerCase('pt-BR');
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(cleaned);
+    });
+
+    return merged;
+  };
+
+  const tagsChanged = (before = [], after = []) =>
+    before.length !== after.length || before.some((tag, index) => tag !== after[index]);
 
   const handleStart = async () => {
     if (!products || products.length === 0) {
@@ -88,7 +117,8 @@ export default function MassTagGenerator({ products, onComplete }) {
       id: p.id,
       nome: p.nome,
       categoria: p.categoria_nome || '',
-      descricao: p.descricao || ''
+      descricao: p.descricao || '',
+      tags_existentes: Array.isArray(p.tags) ? p.tags : []
     }));
 
     const prompt = `
@@ -99,7 +129,8 @@ export default function MassTagGenerator({ products, onComplete }) {
       1. Gere tags curtas e objetivas (ex: #marca, #material, #uso, #tipo).
       2. GERE TAGS HIERÁRQUICAS quando possível, usando o formato "Categoria > Subcategoria" ou "Uso > Específico" (ex: "Hidráulica > Torneiras", "Ferramentas > Elétricas"). Isso ajudará na organização.
       3. NÃO remova tags existentes, apenas adicione novas se relevantes.
-      4. Retorne APENAS um JSON válido com a estrutura:
+      4. NÃO repita uma tag que já exista no produto, mesmo com diferença de maiúsculas/minúsculas ou com #.
+      5. Retorne APENAS um JSON válido com a estrutura:
       {
         "updates": [
           { "id": "ID_DO_PRODUTO", "tags": ["tag1", "tag2", "tag3"] }
@@ -136,13 +167,12 @@ export default function MassTagGenerator({ products, onComplete }) {
       await Promise.all(response.updates.map(async (update) => {
         const originalProduct = batch.find(p => p.id === update.id);
         if (originalProduct) {
-          // Merge existing tags with new tags, avoiding duplicates
-          const existingTags = originalProduct.tags || [];
-          const newTags = update.tags || [];
-          const mergedTags = [...new Set([...existingTags, ...newTags])];
-          
-          // Only update if tags changed
-          if (mergedTags.length !== existingTags.length) {
+          const existingTags = Array.isArray(originalProduct.tags) ? originalProduct.tags : [];
+          const newTags = Array.isArray(update.tags) ? update.tags : [];
+          const normalizedExistingTags = mergeUniqueTags(existingTags, []);
+          const mergedTags = mergeUniqueTags(normalizedExistingTags, newTags);
+
+          if (tagsChanged(existingTags, mergedTags)) {
              await base44.entities.Produto.update(update.id, { tags: mergedTags });
           }
         }
@@ -158,21 +188,23 @@ export default function MassTagGenerator({ products, onComplete }) {
 
   return (
     <>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={() => setIsOpen(true)}
-        className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
-      >
-        <Wand2 className="w-4 h-4" />
-        Tagificação em Massa
-      </Button>
+      {!hideTrigger && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setDialogOpen?.(true)}
+          className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
+        >
+          <Tag className="w-4 h-4" />
+          <span className="hidden sm:inline">Tagificação em Massa</span>
+        </Button>
+      )}
 
-      <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && setIsOpen(open)}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !isProcessing && setDialogOpen?.(open)}>
         <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Wand2 className="w-5 h-5 text-indigo-600" />
+              <Tag className="w-5 h-5 text-indigo-600" />
               Tagificação Inteligente (IA)
             </DialogTitle>
           </DialogHeader>
@@ -212,9 +244,9 @@ export default function MassTagGenerator({ products, onComplete }) {
               </Button>
             ) : (
               <>
-                <Button variant="outline" onClick={() => setIsOpen(false)}>Fechar</Button>
+                <Button variant="outline" onClick={() => setDialogOpen?.(false)}>Fechar</Button>
                 <Button onClick={handleStart} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  <Wand2 className="w-4 h-4 mr-2" />
+                  <Tag className="w-4 h-4 mr-2" />
                   Iniciar
                 </Button>
               </>

@@ -1057,7 +1057,7 @@ function ProdutosPageContent() {
 
   const activeFilterCount = countActiveProdutoFilters(filters);
   const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
-  const headerStats = activeFilterCount > 0 ? filteredStats : stats;
+  const headerStats = filteredStats;
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-white dark:bg-gray-900">
@@ -1067,7 +1067,7 @@ function ProdutosPageContent() {
         categorias={categorias}
         fornecedores={fornecedores}
         activeFilterCount={activeFilterCount}
-        isSummaryFiltered={activeFilterCount > 0}
+        isSummaryFiltered={activeFilterCount > 0 || filteredStats.total !== stats.total}
         isFilterOpen={isFilterOpen}
         setIsFilterOpen={setIsFilterOpen}
         handleFilterChange={handleFilterChange}
@@ -1077,6 +1077,8 @@ function ProdutosPageContent() {
         handleAddNew={handleAddNew}
         setFilters={setFilters}
         formatarNumero={formatarNumero}
+        filteredProdutos={filteredProdutos}
+        loadData={loadData}
       />
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
