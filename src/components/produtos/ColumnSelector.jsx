@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,6 +8,12 @@ import { Columns, Package, DollarSign, Truck, Settings } from 'lucide-react';
 export default function ColumnSelector({ visibleColumns, onColumnsChange, open, onClose }) {
   // Ensure visibleColumns is always an array
   const [tempColumns, setTempColumns] = useState(Array.isArray(visibleColumns) ? visibleColumns : []);
+
+  useEffect(() => {
+    if (open) {
+      setTempColumns(Array.isArray(visibleColumns) ? visibleColumns : []);
+    }
+  }, [open, visibleColumns]);
 
   const columnGroups = {
     descritivo: {

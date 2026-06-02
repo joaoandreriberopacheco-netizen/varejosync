@@ -11,20 +11,36 @@ export const DEFAULT_PRODUTO_FILTERS = {
   cadastroIncompleto: 'all',
 };
 
-/** Busca por nome/descrição/códigos; modo contém (default) ou começa com. */
+function normalizeSearchToken(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getSearchTokens(rawTerm) {
+  return String(rawTerm || '')
+    .split(';')
+    .map(normalizeSearchToken)
+    .filter(Boolean);
+}
+
+/** Busca por nome/descrição/códigos; use ";" para exigir múltiplos termos. */
 export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
-  const term = String(rawTerm || '').trim().toLowerCase();
-  if (!term) return true;
+  const terms = getSearchTokens(rawTerm);
+  if (terms.length === 0) return true;
   const startsWith = options.startsWith ?? options.searchStartsWith ?? false;
   const haystack = [
     produto?.nome,
     produto?.descricao,
     produto?.codigo_interno,
     produto?.codigo_barras,
+    produto?.marca,
+    produto?.categoria_nome,
+    ...(Array.isArray(produto?.tags) ? produto.tags : []),
   ]
     .filter(Boolean)
     .map((s) => String(s).toLowerCase());
-  return haystack.some((s) => (startsWith ? s.startsWith(term) : s.includes(term)));
+  return terms.every((term) =>
+    haystack.some((s) => (startsWith ? s.startsWith(term) : s.includes(term)))
+  );
 }
 
 /** Mesma lógica de filtros do catálogo (`Produtos.jsx`). */
@@ -93,7 +109,12 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
   const term = (filters.searchTerm || '').trim();
   if (term) {
     const modo = filters.searchStartsWith ? 'começa com' : 'contém';
-    parts.push(`nome/descrição ${modo} "${term}"`);
+    const termos = getSearchTokens(term);
+    parts.push(
+      termos.length > 1
+        ? `nome/descrição ${modo} todos: ${termos.map((t) => `"${t}"`).join(' + ')}`
+        : `nome/descrição ${modo} "${term}"`
+    );
   }
   if (filters.categoria && filters.categoria !== 'all') parts.push(`categoria: ${filters.categoria}`);
   if (filters.fornecedorId && filters.fornecedorId !== 'all') {

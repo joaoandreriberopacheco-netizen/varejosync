@@ -75,7 +75,12 @@ function ProdutosPageContent() {
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [stats, setStats] = useState({ total: 0, valorEstoque: 0, abaixoMinimo: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    valorEstoque: 0,
+    valorEstoqueAtivo: 0,
+    abaixoMinimo: 0,
+  });
 
   const [filters, setFilters] = useState(() => loadCatalogProdutoFilters());
   const [sortOrder, setSortOrder] = useState('az');
