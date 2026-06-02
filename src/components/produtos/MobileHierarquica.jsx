@@ -66,20 +66,31 @@ function getPricingForUnit(produto, unitOption) {
   return { fator, precoVenda, custo, valorCompra, margem, markup };
 }
 
-function MetricCard({ label, value, tone = 'default', hint }) {
+function PricingLine({ label, value, tone = 'default', hint }) {
   const toneClass = tone === 'positive'
     ? 'text-emerald-600 dark:text-emerald-400'
     : tone === 'warning'
       ? 'text-orange-600 dark:text-orange-300'
       : tone === 'danger'
         ? 'text-red-600 dark:text-red-400'
-        : 'text-gray-800 dark:text-gray-100';
+        : 'text-gray-900 dark:text-gray-100';
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-3 min-w-0 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
-      <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500 mb-1">{label}</div>
-      <div className={`text-sm font-semibold tabular-nums ${toneClass}`}>{value}</div>
-      {hint && <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-1 truncate">{hint}</div>}
+    <div className="flex items-start justify-between gap-2 py-1.5 border-b border-gray-100 last:border-b-0 dark:border-gray-800/70">
+      <div className="min-w-0">
+        <div className="text-[9px] uppercase tracking-wide text-gray-500 dark:text-gray-500">{label}</div>
+        {hint && <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">{hint}</div>}
+      </div>
+      <div className={`text-xs font-semibold tabular-nums text-right ${toneClass}`}>{value}</div>
+    </div>
+  );
+}
+
+function PricingSection({ title, children }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
+      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{title}</div>
+      {children}
     </div>
   );
 }
@@ -106,7 +117,7 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-gray-200 bg-gray-50 p-4 text-gray-900 shadow-2xl dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
+      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-gray-200 bg-gray-50 p-3 text-gray-900 shadow-2xl dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
         <DialogHeader className="text-left space-y-1 pr-8">
           <DialogTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <span className="w-8 h-8 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
@@ -114,18 +125,18 @@ function PricingDialog({ produto, open, onOpenChange }) {
             </span>
             Precificação
           </DialogTitle>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase leading-snug line-clamp-2">{produto.nome}</p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 uppercase leading-snug line-clamp-1">{produto.nome}</p>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
+        <div className="space-y-2">
+          <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500">Unidade de visualização</div>
-                <div className="text-xs text-gray-500 dark:text-gray-300 truncate">Valores apenas para consulta</div>
+                <div className="text-[9px] uppercase tracking-wide text-gray-500 dark:text-gray-500">Unidade</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-300 truncate">consulta, sem editar</div>
               </div>
               <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                <SelectTrigger className="h-9 w-28 rounded-xl border-gray-200 bg-gray-50 text-xs text-gray-900 focus:ring-0 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
+                <SelectTrigger className="h-8 w-24 rounded-xl border-gray-200 bg-gray-50 text-xs text-gray-900 focus:ring-0 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-[80] border-gray-200 bg-white text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
@@ -140,12 +151,16 @@ function PricingDialog({ produto, open, onOpenChange }) {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <MetricCard label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base: ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
-            <MetricCard label="Preço venda" value={`R$ ${fmtR(pricing.precoVenda)}`} hint={`/${unidadeSelecionada}`} />
-            <MetricCard label="Custo total" value={`R$ ${fmtR(pricing.custo)}`} hint={`/${unidadeSelecionada}`} />
-            <MetricCard label="Valor compra" value={`R$ ${fmtR(pricing.valorCompra)}`} hint={`/${unidadeSelecionada}`} />
-            <MetricCard label="Markup" value={`${fmtN(pricing.markup)}%`} tone={markupTone} />
-            <MetricCard label="Margem" value={`${fmtN(pricing.margem)}%`} tone={margemTone} />
+            <PricingSection title="Custos">
+              <PricingLine label="Valor compra" value={`R$ ${fmtR(pricing.valorCompra)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Custo total" value={`R$ ${fmtR(pricing.custo)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
+            </PricingSection>
+            <PricingSection title="Venda">
+              <PricingLine label="Preço venda" value={`R$ ${fmtR(pricing.precoVenda)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Markup" value={`${fmtN(pricing.markup)}%`} tone={markupTone} />
+              <PricingLine label="Margem" value={`${fmtN(pricing.margem)}%`} tone={margemTone} />
+            </PricingSection>
           </div>
         </div>
       </DialogContent>
@@ -164,6 +179,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
     : e <= m ? 'bg-orange-400'
     : 'bg-green-500';
 
+  const cat = getCatalogoComercialView(p);
   const apresent = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresent ? apresent.quantidade : e;
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
@@ -199,6 +215,14 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
               <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
             </div>
           </div>
+          {cat.precoVenda > 0 && (
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Preço venda</div>
+              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums truncate">
+                R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-gray-400">/{cat.sigla}</span>
+              </div>
+            </div>
+          )}
           {p.codigo_interno && (
             <div className="col-span-2 text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate">
               #{p.codigo_interno}
