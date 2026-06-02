@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3 } from 'lucide-react';
+import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 
@@ -24,6 +24,7 @@ export default function ProdutosHeader({
   handleAddNew,
   setFilters,
   formatarNumero,
+  isSummaryFiltered = false,
 }) {
   return (
     <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 w-full min-w-0">
@@ -32,6 +33,12 @@ export default function ProdutosHeader({
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate font-glacial">Catálogo</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-gray-400 min-w-0">
+              {isSummaryFiltered && (
+                <Filter
+                  className="w-3 h-3 text-blue-500 dark:text-blue-400 flex-shrink-0"
+                  aria-label="Resumo sob filtros ativos"
+                />
+              )}
               <span className="truncate">{stats.total} produtos</span>
               <span className="truncate">R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}</span>
               {stats.abaixoMinimo > 0 && <span className="text-red-500 flex-shrink-0">{stats.abaixoMinimo} abaixo mín.</span>}

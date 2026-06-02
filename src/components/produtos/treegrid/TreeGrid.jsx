@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
+import { useVirtualRows } from '@/hooks/useVirtualRows';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -375,6 +376,21 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     [visibleColumns]
   );
 
+  const estimateRowSize = useCallback(
+    (index) => (rows[index]?.type === 'group' ? 38 : 46),
+    [rows]
+  );
+  const virtualRows = useVirtualRows({
+    itemCount: rows.length,
+    estimateSize: estimateRowSize,
+    overscan: 10,
+    scrollElementRef: scrollContainerRef,
+  });
+  const visibleRows = useMemo(
+    () => rows.slice(virtualRows.startIndex, virtualRows.endIndex),
+    [rows, virtualRows.endIndex, virtualRows.startIndex]
+  );
+
   const nameColLeft = readOnly ? 0 : W_EDIT;
   const headerColSpan = activeCols.length + (readOnly ? 1 : 2);
 
@@ -414,19 +430,31 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                 </td>
               </tr>
             ) : (
-              rows.map(row =>
-                row.type === 'group'
-                  ? <GroupRow key={row.key} row={row}
-                      isExpanded={expandedKeys.has(row.key)}
-                      onToggle={handleToggle}
-                      activeCols={activeCols}
-                      readOnly={readOnly} />
-                  : <SkuRow key={row.key} row={row}
-                      onEdit={onEdit}
-                      onDelete={onDelete || noopDelete}
-                      activeCols={activeCols}
-                      readOnly={readOnly} />
-              )
+              <>
+                {virtualRows.paddingTop > 0 && (
+                  <tr aria-hidden="true">
+                    <td colSpan={headerColSpan} style={{ height: virtualRows.paddingTop, padding: 0, border: 0 }} />
+                  </tr>
+                )}
+                {visibleRows.map(row =>
+                  row.type === 'group'
+                    ? <GroupRow key={row.key} row={row}
+                        isExpanded={expandedKeys.has(row.key)}
+                        onToggle={handleToggle}
+                        activeCols={activeCols}
+                        readOnly={readOnly} />
+                    : <SkuRow key={row.key} row={row}
+                        onEdit={onEdit}
+                        onDelete={onDelete || noopDelete}
+                        activeCols={activeCols}
+                        readOnly={readOnly} />
+                )}
+                {virtualRows.paddingBottom > 0 && (
+                  <tr aria-hidden="true">
+                    <td colSpan={headerColSpan} style={{ height: virtualRows.paddingBottom, padding: 0, border: 0 }} />
+                  </tr>
+                )}
+              </>
             )}
           </tbody>
         </table>

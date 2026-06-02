@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
+import { useVirtualRows } from '@/hooks/useVirtualRows';
 
 const headMap = {
   status: 'Status',
@@ -61,8 +63,18 @@ const widthMap = {
 };
 
 export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, handleEdit, setProdutoParaExcluir, formatarNumero, fornecedorMap, handleCreateSimilar }) {
+  const scrollContainerRef = useRef(null);
+  const virtualRows = useVirtualRows({
+    itemCount: filteredProdutos.length,
+    estimateSize: 58,
+    overscan: 10,
+    scrollElementRef: scrollContainerRef,
+  });
+  const visibleProdutos = filteredProdutos.slice(virtualRows.startIndex, virtualRows.endIndex);
+  const colSpan = 3 + visibleColumns.length;
+
   return (
-    <div className="hidden md:block w-full h-full overflow-auto border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900">
+    <div ref={scrollContainerRef} className="hidden md:block w-full h-full overflow-auto border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900">
       <Table>
         <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
           <TableRow>
@@ -73,7 +85,12 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredProdutos.map(produto => {
+          {virtualRows.paddingTop > 0 && (
+            <TableRow aria-hidden="true">
+              <TableCell colSpan={colSpan} style={{ height: virtualRows.paddingTop, padding: 0, border: 0 }} />
+            </TableRow>
+          )}
+          {visibleProdutos.map(produto => {
             const cat = getCatalogoComercialView(produto);
             const margem =
               cat.precoVenda > 0 && cat.custoNaEmbalagem >= 0 ? cat.margemContribuicaoPct : 0;
@@ -207,6 +224,11 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
               </TableRow>
             );
           })}
+          {virtualRows.paddingBottom > 0 && (
+            <TableRow aria-hidden="true">
+              <TableCell colSpan={colSpan} style={{ height: virtualRows.paddingBottom, padding: 0, border: 0 }} />
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
