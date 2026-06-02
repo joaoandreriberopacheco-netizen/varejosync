@@ -54,16 +54,21 @@ function buildUnitOptions(produto) {
 
 function getPricingForUnit(produto, unitOption) {
   const fator = Number(unitOption?.fator) > 0 ? Number(unitOption.fator) : 1;
+  const scale = (value) => Number(value || 0) * fator;
   const custoBase = resolveCustoTotalUnitBaseProduto(produto);
-  const compraBase = Number(produto?.valor_compra || 0);
   const saleOptions = buildSaleUnitOptions(produto);
   const sale = saleOptions.find((option) => option.unidade === unitOption?.sigla);
   const precoVenda = Number(sale?.valor_unitario ?? (produto?.preco_venda_padrao || 0) * fator) || 0;
   const custo = custoBase * fator;
-  const valorCompra = compraBase * fator;
+  const valorCompra = scale(produto?.valor_compra);
+  const frete = scale(produto?.custo_frete_padrao);
+  const imposto1 = scale(produto?.custo_imposto1_padrao);
+  const imposto2 = scale(produto?.custo_imposto2_padrao);
+  const desconto = scale(produto?.desconto_compra_padrao);
+  const outros = scale(produto?.custo_outros_padrao);
   const margem = precoVenda > 0 ? ((precoVenda - custo) / precoVenda) * 100 : 0;
   const markup = custo > 0 ? ((precoVenda - custo) / custo) * 100 : 0;
-  return { fator, precoVenda, custo, valorCompra, margem, markup };
+  return { fator, precoVenda, custo, valorCompra, frete, imposto1, imposto2, desconto, outros, margem, markup };
 }
 
 function PricingLine({ label, value, tone = 'default', hint }) {
@@ -153,13 +158,18 @@ function PricingDialog({ produto, open, onOpenChange }) {
           <div className="grid grid-cols-2 gap-2">
             <PricingSection title="Custos">
               <PricingLine label="Valor compra" value={`R$ ${fmtR(pricing.valorCompra)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Frete" value={`R$ ${fmtR(pricing.frete)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Imposto 1" value={`R$ ${fmtR(pricing.imposto1)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Imposto 2" value={`R$ ${fmtR(pricing.imposto2)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Desconto" value={`- R$ ${fmtR(pricing.desconto)}`} hint={`/${unidadeSelecionada}`} tone={pricing.desconto > 0 ? 'positive' : 'default'} />
+              <PricingLine label="Outros" value={`R$ ${fmtR(pricing.outros)}`} hint={`/${unidadeSelecionada}`} />
               <PricingLine label="Custo total" value={`R$ ${fmtR(pricing.custo)}`} hint={`/${unidadeSelecionada}`} />
-              <PricingLine label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
             </PricingSection>
             <PricingSection title="Venda">
               <PricingLine label="Preço venda" value={`R$ ${fmtR(pricing.precoVenda)}`} hint={`/${unidadeSelecionada}`} />
               <PricingLine label="Markup" value={`${fmtN(pricing.markup)}%`} tone={markupTone} />
               <PricingLine label="Margem" value={`${fmtN(pricing.margem)}%`} tone={margemTone} />
+              <PricingLine label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
             </PricingSection>
           </div>
         </div>
@@ -196,35 +206,37 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-3">
           {p.nome}
         </p>
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1.5 min-w-0 max-w-full">
-          <div className="min-w-0">
-            <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Estoque</div>
-            <div className="text-[11px] font-medium text-gray-600 dark:text-gray-300 tabular-nums truncate">
-              {fmtN(estoqueExibicao)} {unidadeExibicao}
-            </div>
-            {apresent && (
-              <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">
-                {apresent.rotulo || 'unidade de exibição'}
+        <div className="mt-1.5 min-w-0 max-w-full">
+          <div className="grid grid-cols-3 gap-2 min-w-0">
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Estoque</div>
+              <div className="text-[11px] font-medium text-gray-600 dark:text-gray-300 tabular-nums truncate">
+                {fmtN(estoqueExibicao)} {unidadeExibicao}
               </div>
-            )}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Status</div>
-            <div className="flex items-center gap-1 min-w-0">
-              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
+              {apresent && (
+                <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">
+                  {apresent.rotulo || 'unidade de exibição'}
+                </div>
+              )}
             </div>
-          </div>
-          {cat.precoVenda > 0 && (
             <div className="min-w-0">
               <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Preço venda</div>
               <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums truncate">
-                R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-gray-400">/{cat.sigla}</span>
+                {cat.precoVenda > 0 ? (
+                  <>R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-gray-400">/{cat.sigla}</span></>
+                ) : '-'}
               </div>
             </div>
-          )}
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Status</div>
+              <div className="flex items-center gap-1 min-w-0">
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
+              </div>
+            </div>
+          </div>
           {p.codigo_interno && (
-            <div className="col-span-2 text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate">
+            <div className="mt-1 text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate">
               #{p.codigo_interno}
             </div>
           )}
