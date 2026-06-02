@@ -20,7 +20,7 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassImageUploader from '../components/produtos/MassImageUploader';
-import TreeGrid from '../components/produtos/treegrid/TreeGrid';
+import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
 import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
@@ -118,7 +118,7 @@ function ProdutosPageContent() {
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(() => loadCatalogProdutoColumns());
   // ── Nível de expansão do TreeGrid (controlado pelo painel fixo externo) ─────
-  const [treeLevel, setTreeLevel] = useState(1);
+  const [treeLevel, setTreeLevel] = useState(TREE_GRID_EXPAND_ALL_LEVEL);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);

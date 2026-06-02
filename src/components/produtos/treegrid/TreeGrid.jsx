@@ -39,6 +39,7 @@ const COL_DEFS = [
 
 export const ALL_COLS     = COL_DEFS;
 export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'markup', 'inventario_valorizado'];
+export const TREE_GRID_EXPAND_ALL_LEVEL = 99;
 
 const INDENT_GROUP = 14;
 const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — alinhamento uniforme
@@ -307,18 +308,26 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
 
 // ── Controle de Nível (exportado para uso externo no painel fixo) ─────────────
 export function LevelControl({ level, onChange }) {
+  const levels = [
+    { value: 1, label: '1', title: 'Mostrar apenas famílias principais' },
+    { value: 2, label: '2', title: 'Expandir até o 2º nível' },
+    { value: 3, label: '3', title: 'Expandir até o 3º nível' },
+    { value: 4, label: '4', title: 'Expandir até o 4º nível' },
+    { value: TREE_GRID_EXPAND_ALL_LEVEL, label: 'todos', title: 'Expandir todos os níveis' },
+  ];
+
   return (
     <div className="flex items-center gap-1 select-none">
       <span className="text-[10px] text-gray-400 dark:text-gray-500 mr-1">nível</span>
-      {[1, 2, 3, 4, 99].map(v => (
-        <button key={v} onClick={() => onChange(v)}
+      {levels.map(({ value, label, title }) => (
+        <button key={value} onClick={() => onChange(value)} title={title}
           className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
-            level === v
+            level === value
               ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          {v === 99 ? 'todos' : v}
+          {label}
         </button>
       ))}
     </div>
@@ -329,7 +338,7 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = 1, readOnly = false }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
@@ -338,7 +347,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const tree = useTreeGrid(produtos);
   treeRef.current = tree;
 
-  // Só recalcula expansão quando o nível muda — não quando a árvore é reconstruída (filtro/refresh).
+  // Reaplica o nível selecionado quando filtros/dados reconstruírem a árvore.
   useEffect(() => {
     const scrollEl = scrollContainerRef.current;
     if (scrollEl) {
@@ -347,7 +356,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [masterLevel]);
+  }, [masterLevel, tree]);
 
   const rows = useMemo(() => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys)), [tree, expandedKeys]);
 
