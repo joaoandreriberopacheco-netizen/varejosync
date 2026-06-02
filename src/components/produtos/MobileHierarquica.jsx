@@ -206,35 +206,37 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-3">
           {p.nome}
         </p>
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1.5 min-w-0 max-w-full">
-          <div className="min-w-0">
-            <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Estoque</div>
-            <div className="text-[11px] font-medium text-gray-600 dark:text-gray-300 tabular-nums truncate">
-              {fmtN(estoqueExibicao)} {unidadeExibicao}
-            </div>
-            {apresent && (
-              <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">
-                {apresent.rotulo || 'unidade de exibição'}
+        <div className="mt-1.5 min-w-0 max-w-full">
+          <div className="grid grid-cols-3 gap-2 min-w-0">
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Estoque</div>
+              <div className="text-[11px] font-medium text-gray-600 dark:text-gray-300 tabular-nums truncate">
+                {fmtN(estoqueExibicao)} {unidadeExibicao}
               </div>
-            )}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Status</div>
-            <div className="flex items-center gap-1 min-w-0">
-              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
+              {apresent && (
+                <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">
+                  {apresent.rotulo || 'unidade de exibição'}
+                </div>
+              )}
             </div>
-          </div>
-          {cat.precoVenda > 0 && (
             <div className="min-w-0">
               <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Preço venda</div>
               <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums truncate">
-                R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-gray-400">/{cat.sigla}</span>
+                {cat.precoVenda > 0 ? (
+                  <>R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-gray-400">/{cat.sigla}</span></>
+                ) : '-'}
               </div>
             </div>
-          )}
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Status</div>
+              <div className="flex items-center gap-1 min-w-0">
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
+              </div>
+            </div>
+          </div>
           {p.codigo_interno && (
-            <div className="col-span-2 text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate">
+            <div className="mt-1 text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate">
               #{p.codigo_interno}
             </div>
           )}
