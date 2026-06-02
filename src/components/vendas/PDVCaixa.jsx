@@ -1,24 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { navigateBackOr } from '@/lib/navigateBackOr';
 import { createPageUrl } from '@/components/utils';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MovimentoDialog from './caixa/MovimentoDialog';
 import ComprovanteMovimentoDialog from './caixa/ComprovanteMovimentoDialog';
 import DespesaDialog from './caixa/DespesaDialog';
 import ComprovanteDespesaDialog from './caixa/ComprovanteDespesaDialog';
 import ListaMovimentosDialog from './caixa/ListaMovimentosDialog';
-import SaldoConsolidadoDialog from './caixa/SaldoConsolidadoDialog';
-import GerenciarMovimentoDialog from './caixa/GerenciarMovimentoDialog';
 import CalculadoraCedulasDialog from './caixa/CalculadoraCedulasDialog';
 import RetornoEdicaoDialog from './caixa/RetornoEdicaoDialog';
 import VendasTurnoDialog from './caixa/VendasTurnoDialog';
@@ -28,34 +18,25 @@ import ProcessarVendasView from './caixa/ProcessarVendasView';
 import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog.jsx';
 import PromissoriaDialog from './caixa/PromissoriaDialog';
 import FechamentoCaixaButton from '@/components/vendas/FechamentoCaixaButton';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
   Receipt,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   Clock,
-  CreditCard,
-  Banknote,
-  Smartphone,
   ArrowLeft,
   Wallet,
   PieChart,
   ShoppingCart,
-  BarChart3,
   CheckCircle2,
   Plus,
   Minus,
   Lock,
   Printer,
-  Keyboard,
-  AlertCircle,
   Edit,
   Eye,
-  ChevronRight,
   Monitor,
   RefreshCw,
-  Ticket,
   Package,
   X } from
 'lucide-react';
@@ -66,7 +47,6 @@ import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
-import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
@@ -74,6 +54,77 @@ import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
 const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
 const PDV_CAIXA_IDLE_SYNC_TICK_MS = 45 * 1000;
+
+function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, formatarValorExibicao }) {
+  return (
+    <div
+      className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onDetalhes(rascunho)}
+    >
+      <div className="flex items-start justify-between gap-4 mb-3">
+        {rascunho.senha_atendimento && (
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Senha</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="text-base font-medium text-gray-900 dark:text-white truncate">{rascunho.cliente_nome}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+            R$ {formatarValorExibicao(rascunho.valor_total)}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); onDetalhes(rascunho); }}
+          className="h-12 px-4 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
+          style={{ minHeight: '48px' }}
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onEditar(rascunho); }}
+          className="flex-1 h-12 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+          style={{ minHeight: '48px' }}
+        >
+          <Edit className="w-4 h-4" />
+          <span>Editar</span>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onConfirmar(rascunho); }}
+          className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:shadow-md transition-shadow"
+          style={{ minHeight: '48px' }}
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MovimentoTimelineCard({ item, formatValor }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+        {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.descricao}</div>
+        <div className="text-xs text-gray-400 dark:text-gray-500">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
+      </div>
+      <div className={`text-base font-bold tabular-nums font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+        {item.icone}{formatValor(item.valor)}
+      </div>
+    </div>
+  );
+}
 
 export default function PDVCaixa() {
   const navigate = useNavigate();
@@ -1296,6 +1347,31 @@ export default function PDVCaixa() {
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const movimentosTimelineItems = useMemo(() => {
+    const itensMovimentos = movimentos.map(m => ({
+      id: m.id,
+      tipo: m.tipo,
+      valor: m.valor,
+      descricao: m.observacao || m.tipo,
+      hora: m.created_date,
+      operador: m.usuario_responsavel_nome,
+      cor: m.tipo === 'Reforço' ? 'emerald' : 'blue',
+      icone: m.tipo === 'Reforço' ? '+' : '−',
+    }));
+    const itensDespesas = (caixaData.despesasLista || []).map(d => ({
+      id: d.id,
+      tipo: 'Despesa',
+      valor: d.valor,
+      descricao: d.descricao,
+      hora: d.created_date,
+      operador: null,
+      cor: 'red',
+      icone: '−',
+    }));
+
+    return [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
+  }, [movimentos, caixaData.despesasLista]);
+
   // New helper functions for view navigation
   const handleProcessarVendas = () => {
     setView('processar');
@@ -1753,60 +1829,23 @@ export default function PDVCaixa() {
                         <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        {rascunhosAguardando.map((rascunho) => (
-                          <div
-                            key={rascunho.id}
-                            className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => setRascunhoDetalhesTab(rascunho)}>
-                            <div className="flex items-start justify-between gap-4 mb-3">
-                              {rascunho.senha_atendimento && (
-                                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Senha</div>
-                                  <div className="text-3xl font-bold text-gray-900 dark:text-white font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="text-base font-medium text-gray-900 dark:text-white truncate">{rascunho.cliente_nome}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                                  R$ {formatarValorExibicao(rascunho.valor_total)}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                               <button
-                                 onClick={(e) => { e.stopPropagation(); setRascunhoDetalhesTab(rascunho); }}
-                                 className="h-12 px-4 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
-                                 style={{ minHeight: '48px' }}>
-                                 <Eye className="w-4 h-4" />
-                               </button>
-                               <button
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
-                                 }}
-                                 className="flex-1 h-12 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
-                                 style={{ minHeight: '48px' }}>
-                                 <Edit className="w-4 h-4" />
-                                 <span>Editar</span>
-                               </button>
-                               <button
-                                 onClick={(e) => { e.stopPropagation(); handleAbrirPedido(rascunho); }}
-                                 className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:shadow-md transition-shadow"
-                                 style={{ minHeight: '48px' }}>
-                                 Confirmar
-                               </button>
-                             </div>
-                            </div>
-                            ))}
-                            </div>
-                            )}
+                      <VirtualizedList
+                        items={rascunhosAguardando}
+                        estimateSize={174}
+                        className="h-[calc(100vh-220px)] pr-1"
+                        itemClassName="pb-3"
+                        getItemKey={(rascunho) => rascunho.id}
+                        renderItem={(rascunho) => (
+                          <RascunhoAguardandoCard
+                            rascunho={rascunho}
+                            onDetalhes={setRascunhoDetalhesTab}
+                            onEditar={(item) => window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${item.id}`, '_blank')}
+                            onConfirmar={handleAbrirPedido}
+                            formatarValorExibicao={formatarValorExibicao}
+                          />
+                        )}
+                      />
+                    )}
                             </div>
                             </TabsContent>
 
@@ -1838,54 +1877,26 @@ export default function PDVCaixa() {
                     </div>
 
                     {/* Histórico cronológico de movimentos + despesas */}
-                    {(() => {
-                      const itensMovimentos = movimentos.map(m => ({
-                        id: m.id,
-                        tipo: m.tipo,
-                        valor: m.valor,
-                        descricao: m.observacao || m.tipo,
-                        hora: m.created_date,
-                        operador: m.usuario_responsavel_nome,
-                        cor: m.tipo === 'Reforço' ? 'emerald' : 'blue',
-                        icone: m.tipo === 'Reforço' ? '+' : '−',
-                      }));
-                      const itensDespesas = (caixaData.despesasLista || []).map(d => ({
-                        id: d.id,
-                        tipo: 'Despesa',
-                        valor: d.valor,
-                        descricao: d.descricao,
-                        hora: d.created_date,
-                        operador: null,
-                        cor: 'red',
-                        icone: '−',
-                      }));
-                      const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
-                      if (todos.length === 0) return (
+                    {movimentosTimelineItems.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
                           <Wallet className="w-10 h-10 mb-2" />
                           <p className="text-sm">Nenhuma movimentação registrada</p>
                         </div>
-                      );
-                      return (
+                      ) : (
                         <div className="space-y-2">
                           <p className="text-xs text-gray-400 dark:text-gray-500 px-1">Histórico do turno</p>
-                          {todos.map(item => (
-                            <div key={item.id} className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-                              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                                {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.descricao}</div>
-                                <div className="text-xs text-gray-400 dark:text-gray-500">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
-                              </div>
-                              <div className={`text-base font-bold tabular-nums font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-                                {item.icone}{formatValor(item.valor)}
-                              </div>
-                            </div>
-                          ))}
+                          <VirtualizedList
+                            items={movimentosTimelineItems}
+                            estimateSize={68}
+                            className="h-[calc(100vh-290px)] pr-1"
+                            itemClassName="pb-2"
+                            getItemKey={(item) => item.id}
+                            renderItem={(item) => (
+                              <MovimentoTimelineCard item={item} formatValor={formatValor} />
+                            )}
+                          />
                         </div>
-                      );
-                    })()}
+                      )}
                   </div>
                 </TabsContent>
 

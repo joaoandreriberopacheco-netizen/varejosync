@@ -1,6 +1,6 @@
-import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Printer, Receipt, Eye, ArrowDownUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatarDataHora } from '@/components/utils/dateUtils';
@@ -112,7 +112,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
   );
 }
 
-function htmlLinhaVenda(v, meta, formatValor) {
+function htmlLinhaVenda(v, meta) {
   const pags = (v.pagamentos || []).map((p) => `${p.forma_pagamento} R$ ${(p.valor || 0).toFixed(2)}`).join(' | ');
   let sub = '';
   if (meta?.papel === 'substituto' && meta.origem) {
@@ -152,7 +152,7 @@ export default function VendasTurnoDialog({
           <button
             onClick={async () => {
               const linhas = vendasFinalizadas
-                .map((v) => htmlLinhaVenda(v, metaPorPedidoId[v.id], formatValor))
+                .map((v) => htmlLinhaVenda(v, metaPorPedidoId[v.id]))
                 .join('');
               const cancelamentos = turnoAtivo?.cancelamentos_rastro || [];
               const linhasCancelamentos =
@@ -245,32 +245,39 @@ export default function VendasTurnoDialog({
                   </div>
                 </div>
               )}
-              <div className="hidden md:block">
-                <div className="grid gap-3 max-w-4xl mx-auto">
-                  {vendasFinalizadas.map((venda) => (
+              <VirtualizedList
+                items={vendasFinalizadas}
+                estimateSize={132}
+                className="hidden md:block h-[calc(100vh-190px)] pr-1"
+                contentClassName="max-w-4xl mx-auto"
+                itemClassName="pb-3"
+                getItemKey={(venda) => venda.id}
+                renderItem={(venda) => (
                     <VendaTurnoCard
-                      key={venda.id}
                       venda={venda}
                       meta={metaPorPedidoId[venda.id]}
                       formatValor={formatValor}
                       onVerDetalhes={onVerDetalhes}
                       compact={false}
                     />
-                  ))}
-                </div>
-              </div>
-              <div className="md:hidden space-y-3">
-                {vendasFinalizadas.map((venda) => (
+                )}
+              />
+              <VirtualizedList
+                items={vendasFinalizadas}
+                estimateSize={150}
+                className="md:hidden h-[calc(100vh-190px)] pr-1"
+                itemClassName="pb-3"
+                getItemKey={(venda) => venda.id}
+                renderItem={(venda) => (
                     <VendaTurnoCard
-                      key={venda.id}
                       venda={venda}
                       meta={metaPorPedidoId[venda.id]}
                       formatValor={formatValor}
                       onVerDetalhes={onVerDetalhes}
                       compact
                     />
-                ))}
-              </div>
+                )}
+              />
             </>
           )}
         </div>
