@@ -14,6 +14,10 @@ export function normalizeCatalogProdutoFilters(raw) {
     statusEstoque: raw.statusEstoque || 'all',
     tag: String(raw.tag ?? ''),
     cadastroIncompleto: raw.cadastroIncompleto || 'all',
+    ativoStatus: raw.ativoStatus || 'all',
+    quantidadeOperador: raw.quantidadeOperador || 'all',
+    quantidadeValor: String(raw.quantidadeValor ?? ''),
+    quantidadeValorAte: String(raw.quantidadeValorAte ?? ''),
   };
 }
 

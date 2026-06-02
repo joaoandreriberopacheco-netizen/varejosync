@@ -33,6 +33,10 @@ import {
   loadCatalogProdutoFilters,
   saveCatalogProdutoFilters,
 } from '@/lib/catalogProdutoFiltersStorage';
+import {
+  loadCatalogProdutoColumns,
+  saveCatalogProdutoColumns,
+} from '@/lib/catalogProdutoColumnsStorage';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
@@ -71,6 +75,27 @@ function applyJustSavedUnitSnapshot(merged, snap) {
   return out;
 }
 
+function calculateProdutoStats(produtosList) {
+  let valorTotal = 0;
+  let valorEstoqueAtivo = 0;
+  let abaixoMin = 0;
+
+  (Array.isArray(produtosList) ? produtosList : []).forEach((p) => {
+    const estoqueAtual = p.estoque_atual || 0;
+    const valorEstoque = estoqueAtual * (p.preco_custo_calculado || 0);
+    valorTotal += valorEstoque;
+    if (estoqueAtual > 0) valorEstoqueAtivo += valorEstoque;
+    if (p.estoque_atual <= p.estoque_minimo && p.ativo) abaixoMin++;
+  });
+
+  return {
+    total: Array.isArray(produtosList) ? produtosList.length : 0,
+    valorEstoque: valorTotal,
+    valorEstoqueAtivo,
+    abaixoMinimo: abaixoMin,
+  };
+}
+
 function ProdutosPageContent() {
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -91,14 +116,7 @@ function ProdutosPageContent() {
   const [produtoSimilarBase, setProdutoSimilarBase] = useState(null);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
-  const [visibleColumns, setVisibleColumns] = useState([
-    'status',
-    'fornecedor',
-    'estoque_atual',
-    'preco_venda',
-    'margem',
-    'show_logistica',
-  ]);
+  const [visibleColumns, setVisibleColumns] = useState(() => loadCatalogProdutoColumns());
   // ── Nível de expansão do TreeGrid (controlado pelo painel fixo externo) ─────
   const [treeLevel, setTreeLevel] = useState(1);
 
@@ -133,6 +151,10 @@ function ProdutosPageContent() {
   useEffect(() => {
     saveCatalogProdutoFilters(filters);
   }, [filters]);
+
+  useEffect(() => {
+    saveCatalogProdutoColumns(visibleColumns);
+  }, [visibleColumns]);
 
   const loadData = async () => {
     const produtosData = await base44.entities.Produto.list('-created_date');
@@ -179,21 +201,12 @@ function ProdutosPageContent() {
       }
     }
 
-    // Calcular estatísticas e categorias
-    let valorTotal = 0;
-    let valorEstoqueAtivo = 0;
-    let abaixoMin = 0;
     const catSet = new Set();
     safeProdutos.forEach(p => {
-      valorTotal += (p.estoque_atual || 0) * (p.preco_custo_calculado || 0);
-      if ((p.estoque_atual || 0) > 0) valorEstoqueAtivo += (p.estoque_atual || 0) * (p.preco_custo_calculado || 0);
-      if (p.estoque_atual <= p.estoque_minimo && p.ativo) {
-        abaixoMin++;
-      }
       if(p.categoria_nome) catSet.add(p.categoria_nome);
     });
 
-    setStats({ total: safeProdutos.length, valorEstoque: valorTotal, valorEstoqueAtivo, abaixoMinimo: abaixoMin });
+    setStats(calculateProdutoStats(safeProdutos));
     setCategorias(Array.from(catSet));
   };
 
@@ -1043,15 +1056,18 @@ function ProdutosPageContent() {
   }, [fornecedores]);
 
   const activeFilterCount = countActiveProdutoFilters(filters);
+  const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
+  const headerStats = activeFilterCount > 0 ? filteredStats : stats;
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-white dark:bg-gray-900">
       <ProdutosHeader
-        stats={stats}
+        stats={headerStats}
         filters={filters}
         categorias={categorias}
         fornecedores={fornecedores}
         activeFilterCount={activeFilterCount}
+        isSummaryFiltered={activeFilterCount > 0}
         isFilterOpen={isFilterOpen}
         setIsFilterOpen={setIsFilterOpen}
         handleFilterChange={handleFilterChange}

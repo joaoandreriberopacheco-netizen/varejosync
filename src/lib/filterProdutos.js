@@ -9,6 +9,10 @@ export const DEFAULT_PRODUTO_FILTERS = {
   statusEstoque: 'all',
   tag: '',
   cadastroIncompleto: 'all',
+  ativoStatus: 'all',
+  quantidadeOperador: 'all',
+  quantidadeValor: '',
+  quantidadeValorAte: '',
 };
 
 function normalizeSearchToken(value) {
@@ -20,6 +24,23 @@ function getSearchTokens(rawTerm) {
     .split(';')
     .map(normalizeSearchToken)
     .filter(Boolean);
+}
+
+function parseQuantityFilterNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(String(value).replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function hasActiveQuantityFilter(filters) {
+  if (!filters || filters.quantidadeOperador === 'all') return false;
+  if (filters.quantidadeOperador === 'between') {
+    return (
+      parseQuantityFilterNumber(filters.quantidadeValor) !== null ||
+      parseQuantityFilterNumber(filters.quantidadeValorAte) !== null
+    );
+  }
+  return parseQuantityFilterNumber(filters.quantidadeValor) !== null;
 }
 
 /** Busca por nome/descrição/códigos; use ";" para exigir múltiplos termos. */
@@ -59,6 +80,36 @@ export function filterProdutos(produtos, filters) {
         p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
     const fornecedorMatch =
       filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
+    const ativoMatch =
+      !filters.ativoStatus ||
+      filters.ativoStatus === 'all' ||
+      (filters.ativoStatus === 'ativos' && p.ativo) ||
+      (filters.ativoStatus === 'inativos' && !p.ativo);
+
+    const quantidadeMatch = () => {
+      if (!hasActiveQuantityFilter(filters)) return true;
+      const estoque = Number(p.estoque_atual || 0);
+      const valor = parseQuantityFilterNumber(filters.quantidadeValor);
+      const valorAte = parseQuantityFilterNumber(filters.quantidadeValorAte);
+
+      switch (filters.quantidadeOperador) {
+        case 'gt':
+          return valor === null ? true : estoque > valor;
+        case 'gte':
+          return valor === null ? true : estoque >= valor;
+        case 'lt':
+          return valor === null ? true : estoque < valor;
+        case 'lte':
+          return valor === null ? true : estoque <= valor;
+        case 'between': {
+          const min = valor !== null ? valor : -Infinity;
+          const max = valorAte !== null ? valorAte : Infinity;
+          return estoque >= Math.min(min, max) && estoque <= Math.max(min, max);
+        }
+        default:
+          return true;
+      }
+    };
 
     const statusMatch = () => {
       if (filters.statusEstoque === 'all') return true;
@@ -86,6 +137,8 @@ export function filterProdutos(produtos, filters) {
       categoriaMatch &&
       tagMatch &&
       fornecedorMatch &&
+      ativoMatch &&
+      quantidadeMatch() &&
       statusMatch() &&
       cadastroMatch()
     );
@@ -100,6 +153,8 @@ export function countActiveProdutoFilters(filters) {
     filters.statusEstoque !== 'all' && filters.statusEstoque,
     filters.tag,
     filters.cadastroIncompleto !== 'all' && filters.cadastroIncompleto,
+    filters.ativoStatus !== 'all' && filters.ativoStatus,
+    hasActiveQuantityFilter(filters) && filters.quantidadeOperador,
   ].filter(Boolean).length;
 }
 
@@ -128,5 +183,23 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
   if ((filters.tag || '').trim()) parts.push(`tag contém "${filters.tag.trim()}"`);
   if (filters.cadastroIncompleto === 'incompleto') parts.push('cadastro incompleto');
   if (filters.cadastroIncompleto === 'completo') parts.push('cadastro completo');
+  if (filters.ativoStatus === 'ativos') parts.push('somente ativos');
+  if (filters.ativoStatus === 'inativos') parts.push('somente inativos');
+  if (hasActiveQuantityFilter(filters)) {
+    const labels = {
+      gt: 'maior que',
+      gte: 'maior ou igual a',
+      lt: 'menor que',
+      lte: 'menor ou igual a',
+      between: 'entre',
+    };
+    const inicio = String(filters.quantidadeValor ?? '').trim();
+    const fim = String(filters.quantidadeValorAte ?? '').trim();
+    parts.push(
+      filters.quantidadeOperador === 'between'
+        ? `quantidade entre ${inicio || '-∞'} e ${fim || '+∞'}`
+        : `quantidade ${labels[filters.quantidadeOperador] || filters.quantidadeOperador} ${inicio}`
+    );
+  }
   return parts.length ? parts.join(' · ') : 'nenhum';
 }
