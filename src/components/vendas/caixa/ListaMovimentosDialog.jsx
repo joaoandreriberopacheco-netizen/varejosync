@@ -1,5 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Plus, Minus, DollarSign, Receipt, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
@@ -48,52 +49,64 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
               <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhum registro encontrado</p>
             </div>
           ) : (
-            <div className="space-y-3 max-w-4xl mx-auto">
-              {isDespesas ? listaFiltrada.map((d) => (
-                <div key={d.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">{d.descricao}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{d.categoria} · {d.created_date ? formatarDataHora(d.created_date).split(' ')[1] : ''}</div>
+            <VirtualizedList
+              items={listaFiltrada}
+              estimateSize={isDespesas ? 96 : 132}
+              className="h-[calc(100vh-190px)] pr-1"
+              contentClassName="max-w-4xl mx-auto"
+              itemClassName="pb-3"
+              getItemKey={(item) => item.id}
+              renderItem={(item) => {
+                if (isDespesas) {
+                  return (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">{item.descricao}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.categoria} · {item.created_date ? formatarDataHora(item.created_date).split(' ')[1] : ''}</div>
+                        </div>
+                        <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">−{formatValor(item.valor)}</div>
+                      </div>
                     </div>
-                    <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">−{formatValor(d.valor)}</div>
-                  </div>
-                </div>
-              )) : listaFiltrada.map((mov) => {
-                const cancelado = mov.status_registro === 'Cancelado';
-                const editado = mov.status_registro === 'Editado';
+                  );
+                }
+
+                const cancelado = item.status_registro === 'Cancelado';
+                const editado = item.status_registro === 'Editado';
+
                 return (
-                <div key={mov.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className={`text-sm font-semibold ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>{mov.numero}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{formatarDataHora(mov.created_date).split(' ')[1]}</span>
-                        {cancelado && <span className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">Cancelado</span>}
-                        {editado && <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Editado</span>}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                          <span className={`text-sm font-semibold ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>{item.numero}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{formatarDataHora(item.created_date).split(' ')[1]}</span>
+                          {cancelado && <span className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">Cancelado</span>}
+                          {editado && <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Editado</span>}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.usuario_responsavel_nome}</div>
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{mov.usuario_responsavel_nome}</div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className={`text-2xl font-bold font-glacial ${cancelado ? 'line-through opacity-50 ' : ''}${corTotal}`}>
-                        {sinal}{formatValor(mov.valor)}
+                      <div className="flex items-start gap-2">
+                        <div className={`text-2xl font-bold font-glacial ${cancelado ? 'line-through opacity-50 ' : ''}${corTotal}`}>
+                          {sinal}{formatValor(item.valor)}
+                        </div>
+                        {onSelectMovimento && (
+                          <button onClick={() => onSelectMovimento(item)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <Pencil className="w-4 h-4 text-gray-400" />
+                          </button>
+                        )}
                       </div>
-                      {onSelectMovimento && (
-                        <button onClick={() => onSelectMovimento(mov)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
-                          <Pencil className="w-4 h-4 text-gray-400" />
-                        </button>
-                      )}
                     </div>
+                    {item.observacao && (
+                      <div className={`text-sm pt-3 border-t border-gray-100 dark:border-gray-700 ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>{item.observacao}</div>
+                    )}
+                    {item.motivo_ajuste && (
+                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">Motivo: {item.motivo_ajuste}</div>
+                    )}
                   </div>
-                  {mov.observacao && (
-                    <div className={`text-sm pt-3 border-t border-gray-100 dark:border-gray-700 ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>{mov.observacao}</div>
-                  )}
-                  {mov.motivo_ajuste && (
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">Motivo: {mov.motivo_ajuste}</div>
-                  )}
-                </div>
-              )})}
-            </div>
+                );
+              }}
+            />
           )}
         </div>
 

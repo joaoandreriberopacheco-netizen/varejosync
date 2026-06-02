@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Printer, Receipt, Eye, ArrowDownUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatarDataHora } from '@/components/utils/dateUtils';
@@ -245,32 +246,39 @@ export default function VendasTurnoDialog({
                   </div>
                 </div>
               )}
-              <div className="hidden md:block">
-                <div className="grid gap-3 max-w-4xl mx-auto">
-                  {vendasFinalizadas.map((venda) => (
+              <VirtualizedList
+                items={vendasFinalizadas}
+                estimateSize={132}
+                className="hidden md:block h-[calc(100vh-190px)] pr-1"
+                contentClassName="max-w-4xl mx-auto"
+                itemClassName="pb-3"
+                getItemKey={(venda) => venda.id}
+                renderItem={(venda) => (
                     <VendaTurnoCard
-                      key={venda.id}
                       venda={venda}
                       meta={metaPorPedidoId[venda.id]}
                       formatValor={formatValor}
                       onVerDetalhes={onVerDetalhes}
                       compact={false}
                     />
-                  ))}
-                </div>
-              </div>
-              <div className="md:hidden space-y-3">
-                {vendasFinalizadas.map((venda) => (
+                )}
+              />
+              <VirtualizedList
+                items={vendasFinalizadas}
+                estimateSize={150}
+                className="md:hidden h-[calc(100vh-190px)] pr-1"
+                itemClassName="pb-3"
+                getItemKey={(venda) => venda.id}
+                renderItem={(venda) => (
                     <VendaTurnoCard
-                      key={venda.id}
                       venda={venda}
                       meta={metaPorPedidoId[venda.id]}
                       formatValor={formatValor}
                       onVerDetalhes={onVerDetalhes}
                       compact
                     />
-                ))}
-              </div>
+                )}
+              />
             </>
           )}
         </div>
