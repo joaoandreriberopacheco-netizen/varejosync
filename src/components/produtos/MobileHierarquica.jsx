@@ -68,18 +68,18 @@ function getPricingForUnit(produto, unitOption) {
 
 function MetricCard({ label, value, tone = 'default', hint }) {
   const toneClass = tone === 'positive'
-    ? 'text-emerald-400'
+    ? 'text-emerald-600 dark:text-emerald-400'
     : tone === 'warning'
-      ? 'text-orange-300'
+      ? 'text-orange-600 dark:text-orange-300'
       : tone === 'danger'
-        ? 'text-red-400'
-        : 'text-gray-100';
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-gray-800 dark:text-gray-100';
 
   return (
-    <div className="rounded-2xl border border-gray-800 bg-gray-900/70 p-3 min-w-0">
-      <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">{label}</div>
+    <div className="rounded-2xl border border-gray-200 bg-white p-3 min-w-0 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
+      <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500 mb-1">{label}</div>
       <div className={`text-sm font-semibold tabular-nums ${toneClass}`}>{value}</div>
-      {hint && <div className="text-[10px] text-gray-500 mt-1 truncate">{hint}</div>}
+      {hint && <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-1 truncate">{hint}</div>}
     </div>
   );
 }
@@ -106,29 +106,29 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-gray-800 bg-gray-950 p-4 text-gray-100 shadow-2xl">
+      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-gray-200 bg-gray-50 p-4 text-gray-900 shadow-2xl dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
         <DialogHeader className="text-left space-y-1 pr-8">
-          <DialogTitle className="text-base font-semibold text-gray-100 flex items-center gap-2">
-            <span className="w-8 h-8 rounded-2xl bg-emerald-500/10 text-emerald-300 flex items-center justify-center">
+          <DialogTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </span>
             Precificação
           </DialogTitle>
-          <p className="text-xs text-gray-400 uppercase leading-snug line-clamp-2">{produto.nome}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase leading-snug line-clamp-2">{produto.nome}</p>
         </DialogHeader>
 
         <div className="space-y-3">
-          <div className="rounded-2xl border border-gray-800 bg-gray-900/70 p-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wide text-gray-500">Unidade de visualização</div>
-                <div className="text-xs text-gray-300 truncate">Valores apenas para consulta</div>
+                <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500">Unidade de visualização</div>
+                <div className="text-xs text-gray-500 dark:text-gray-300 truncate">Valores apenas para consulta</div>
               </div>
               <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                <SelectTrigger className="h-9 w-28 rounded-xl border-gray-700 bg-gray-950 text-xs text-gray-100 focus:ring-0">
+                <SelectTrigger className="h-9 w-28 rounded-xl border-gray-200 bg-gray-50 text-xs text-gray-900 focus:ring-0 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="z-[80] border-gray-700 bg-gray-900 text-gray-100">
+                <SelectContent className="z-[80] border-gray-200 bg-white text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
                   {unitOptions.map((option) => (
                     <SelectItem key={option.sigla} value={option.sigla} className="text-xs">
                       {option.sigla}
