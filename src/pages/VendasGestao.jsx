@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,372 @@ const dateRangeMatches = (valor, inicio, fim) => {
   if (fim && chave > fim) return false;
   return true;
 };
+
+const VIRTUAL_LIST_STYLE = { maxHeight: 'calc(100vh - 260px)' };
+const VIRTUAL_OVERSCAN = 8;
+
+const measureVirtualItem = (element) => element?.getBoundingClientRect().height ?? 0;
+
+const getVirtualPadding = (virtualItems, totalSize) => {
+  if (virtualItems.length === 0) {
+    return { paddingTop: 0, paddingBottom: 0 };
+  }
+
+  const paddingTop = virtualItems[0]?.start ?? 0;
+  const lastItem = virtualItems[virtualItems.length - 1];
+  const paddingBottom = Math.max(0, totalSize - (lastItem?.end ?? 0));
+
+  return { paddingTop, paddingBottom };
+};
+
+function PedidoActionsMenu({
+  pedido,
+  align = 'end',
+  triggerClassName = 'h-8 w-8 text-gray-400',
+  onVerDetalhes,
+  onEdit,
+  onReimprimir,
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className={triggerClassName}>
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={align} className="dark:bg-gray-800">
+        <DropdownMenuItem onClick={() => onVerDetalhes(pedido)}>
+          <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(pedido)}>
+          <Edit className="w-4 h-4 mr-2" /> Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onReimprimir(pedido)}>
+          <Printer className="w-4 h-4 mr-2" /> Reimprimir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function PedidoMobileCard({ pedido, onVerDetalhes, onEdit, onReimprimir }) {
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm overflow-hidden">
+      <div className="flex items-start gap-3 min-w-0">
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-gray-800 dark:text-gray-200 break-words leading-tight">
+            {pedido.cliente_nome || 'Cliente não informado'}
+          </div>
+          <div className="text-xs text-blue-600 dark:text-blue-400 break-all">{pedido.numero}</div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 min-w-0">
+            <span className="text-xs text-green-600 break-words">● {pedido.status}</span>
+            <span className="text-xs text-gray-400 break-words">{pedido.vendedor_nome}</span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1 shrink-0 max-w-[42%]">
+          <div className="font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">
+            R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+          </div>
+          <div className="text-xs text-gray-400 text-right">
+            {fmtDataCurta(pedido.created_date)}
+          </div>
+        </div>
+        <PedidoActionsMenu
+          pedido={pedido}
+          triggerClassName="h-8 w-8 text-gray-400 shrink-0"
+          onVerDetalhes={onVerDetalhes}
+          onEdit={onEdit}
+          onReimprimir={onReimprimir}
+        />
+      </div>
+    </div>
+  );
+}
+
+function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }) {
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: pedidos.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 122,
+    getItemKey: (index) => pedidos[index]?.id ?? index,
+    measureElement: measureVirtualItem,
+    overscan: VIRTUAL_OVERSCAN,
+  });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  return (
+    <div ref={parentRef} className="md:hidden overflow-y-auto pr-1" style={VIRTUAL_LIST_STYLE}>
+      <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+        {virtualItems.map((virtualRow) => {
+          const pedido = pedidos[virtualRow.index];
+
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute left-0 top-0 w-full pb-2"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <PedidoMobileCard
+                pedido={pedido}
+                onVerDetalhes={onVerDetalhes}
+                onEdit={onEdit}
+                onReimprimir={onReimprimir}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir }) {
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: pedidos.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 74,
+    getItemKey: (index) => pedidos[index]?.id ?? index,
+    measureElement: measureVirtualItem,
+    overscan: VIRTUAL_OVERSCAN,
+  });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
+
+  return (
+    <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b border-gray-200 dark:border-gray-700">
+            <TableHead className="w-8"></TableHead>
+            <TableHead>Pedido</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Vendedor</TableHead>
+            <TableHead>Data</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paddingTop > 0 && (
+            <TableRow aria-hidden="true" className="border-0">
+              <TableCell colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} />
+            </TableRow>
+          )}
+          {virtualItems.map((virtualRow) => {
+            const pedido = pedidos[virtualRow.index];
+
+            return (
+              <TableRow
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              >
+                <TableCell>
+                  <PedidoActionsMenu
+                    pedido={pedido}
+                    align="start"
+                    onVerDetalhes={onVerDetalhes}
+                    onEdit={onEdit}
+                    onReimprimir={onReimprimir}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">{pedido.cliente_nome || '-'}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">{pedido.numero}</div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-green-600">● {pedido.status}</span>
+                </TableCell>
+                <TableCell className="text-sm text-gray-500 dark:text-gray-400">{pedido.vendedor_nome}</TableCell>
+                <TableCell className="text-sm text-gray-500 dark:text-gray-400">
+                  {fmtDtHora(pedido.created_date)}
+                </TableCell>
+                <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
+                  R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+          {paddingBottom > 0 && (
+            <TableRow aria-hidden="true" className="border-0">
+              <TableCell colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} />
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function RascunhoInutilizarButton({ rascunho, onInutilizar }) {
+  const pedidoVendaVinculado = rascunho.pedido_venda_final_id || rascunho.pedido_venda_id;
+  const podeInutilizar = !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
+
+  if (!podeInutilizar) {
+    return null;
+  }
+
+  return (
+    <button onClick={() => onInutilizar(rascunho)}
+      className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
+      <Ban className="w-3 h-3" /> Inutilizar
+    </button>
+  );
+}
+
+function RascunhoMobileCard({ rascunho, onInutilizar }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4 shadow-sm overflow-hidden">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="inline-flex items-center gap-2 mb-2 px-3 py-2 bg-gray-100 dark:bg-slate-800 rounded-2xl max-w-full">
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">Senha</span>
+            <span className="text-2xl font-bold text-gray-800 dark:text-gray-100 font-mono leading-none truncate">
+              {rascunho.senha_atendimento?.slice(-4)}
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 mb-1 break-all">{rascunho.senha_atendimento}</div>
+          <div className="font-semibold text-gray-800 dark:text-gray-100 break-words leading-tight">
+            {rascunho.cliente_nome || 'Cliente não informado'}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
+            <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
+            <span className="text-xs text-gray-400 break-words">{rascunho.vendedor_nome}</span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2 shrink-0 max-w-[40%]">
+          <div className="font-semibold text-gray-800 dark:text-gray-100 text-right break-words leading-tight">
+            R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+          </div>
+          <div className="text-xs text-gray-400 text-right">
+            {fmtDataCurta(rascunho.created_date)}
+          </div>
+          <RascunhoInutilizarButton rascunho={rascunho} onInutilizar={onInutilizar} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VirtualizedRascunhoCards({ rascunhos, onInutilizar }) {
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rascunhos.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 158,
+    getItemKey: (index) => rascunhos[index]?.id ?? index,
+    measureElement: measureVirtualItem,
+    overscan: VIRTUAL_OVERSCAN,
+  });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  return (
+    <div ref={parentRef} className="md:hidden overflow-y-auto pr-1" style={VIRTUAL_LIST_STYLE}>
+      <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+        {virtualItems.map((virtualRow) => {
+          const rascunho = rascunhos[virtualRow.index];
+
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute left-0 top-0 w-full pb-2"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <RascunhoMobileCard rascunho={rascunho} onInutilizar={onInutilizar} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rascunhos.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 92,
+    getItemKey: (index) => rascunhos[index]?.id ?? index,
+    measureElement: measureVirtualItem,
+    overscan: VIRTUAL_OVERSCAN,
+  });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
+
+  return (
+    <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b border-gray-200 dark:border-gray-700">
+            <TableHead>Senha</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Vendedor</TableHead>
+            <TableHead>Data</TableHead>
+            <TableHead className="text-right">Valor</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paddingTop > 0 && (
+            <TableRow aria-hidden="true" className="border-0">
+              <TableCell colSpan={7} style={{ height: `${paddingTop}px`, padding: 0 }} />
+            </TableRow>
+          )}
+          {virtualItems.map((virtualRow) => {
+            const rascunho = rascunhos[virtualRow.index];
+
+            return (
+              <TableRow
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              >
+                <TableCell>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <span className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">
+                      {rascunho.senha_atendimento?.slice(-4)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">{rascunho.senha_atendimento}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">{rascunho.cliente_nome || '-'}</div>
+                </TableCell>
+                <TableCell>
+                  <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
+                </TableCell>
+                <TableCell className="text-sm text-gray-500 dark:text-gray-400">{rascunho.vendedor_nome}</TableCell>
+                <TableCell className="text-sm text-gray-500 dark:text-gray-400">
+                  {fmtDtHora(rascunho.created_date)}
+                </TableCell>
+                <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
+                  R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </TableCell>
+                <TableCell>
+                  <RascunhoInutilizarButton rascunho={rascunho} onInutilizar={onInutilizar} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+          {paddingBottom > 0 && (
+            <TableRow aria-hidden="true" className="border-0">
+              <TableCell colSpan={7} style={{ height: `${paddingBottom}px`, padding: 0 }} />
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
 export default function VendasGestaoPage() {
   const [pedidos, setPedidos] = useState([]);
@@ -348,112 +715,21 @@ export default function VendasGestaoPage() {
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
           </div>
-        ) : pedidosFiltrados.length === 0 ? (
+        ) : rascunhosFiltrados.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p className="text-sm text-gray-600 dark:text-gray-300">Nenhum pedido encontrado</p>
           </div>
         ) : (
           <>
-            {/* Mobile: Cards */}
-            <div className="md:hidden space-y-2">
-              {rascunhosFiltrados.map(rascunho => {
-                const pedidoVendaVinculado = rascunho.pedido_venda_final_id || rascunho.pedido_venda_id;
-                const podeInutilizar = !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
-                return (
-                <div key={rascunho.id} className="bg-white dark:bg-slate-900 rounded-[26px] p-4 shadow-sm overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="inline-flex items-center gap-2 mb-2 px-3 py-2 bg-gray-100 dark:bg-slate-800 rounded-2xl max-w-full">
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">Senha</span>
-                        <span className="text-2xl font-bold text-gray-800 dark:text-gray-100 font-mono leading-none truncate">
-                          {rascunho.senha_atendimento?.slice(-4)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-400 mb-1 break-all">{rascunho.senha_atendimento}</div>
-                      <div className="font-semibold text-gray-800 dark:text-gray-100 break-words leading-tight">
-                        {rascunho.cliente_nome || 'Cliente não informado'}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
-                        <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
-                        <span className="text-xs text-gray-400 break-words">{rascunho.vendedor_nome}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0 max-w-[40%]">
-                      <div className="font-semibold text-gray-800 dark:text-gray-100 text-right break-words leading-tight">
-                        R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </div>
-                      <div className="text-xs text-gray-400 text-right">
-                        {fmtDataCurta(rascunho.created_date)}
-                      </div>
-                      {podeInutilizar && (
-                        <button onClick={() => handleInutilizarRascunho(rascunho)}
-                          className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
-                          <Ban className="w-3 h-3" /> Inutilizar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-
-            {/* Desktop: Tabela de Rascunhos */}
-            <div className="hidden md:block min-w-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-gray-200 dark:border-gray-700">
-                    <TableHead>Senha</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Vendedor</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rascunhosFiltrados.map(rascunho => {
-                    const pedidoVendaVinculado = rascunho.pedido_venda_final_id || rascunho.pedido_venda_id;
-                    const podeInutilizar = !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
-                    return (
-                    <TableRow key={rascunho.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <TableCell>
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                          <span className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">
-                            {rascunho.senha_atendimento?.slice(-4)}
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">{rascunho.senha_atendimento}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-gray-800 dark:text-gray-200">{rascunho.cliente_nome || '-'}</div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500 dark:text-gray-400">{rascunho.vendedor_nome}</TableCell>
-                      <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                        {fmtDtHora(rascunho.created_date)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </TableCell>
-                      <TableCell>
-                        {podeInutilizar && (
-                          <button onClick={() => handleInutilizarRascunho(rascunho)}
-                            className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
-                            <Ban className="w-3 h-3" /> Inutilizar
-                          </button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <VirtualizedRascunhoCards
+              rascunhos={rascunhosFiltrados}
+              onInutilizar={handleInutilizarRascunho}
+            />
+            <VirtualizedRascunhosTable
+              rascunhos={rascunhosFiltrados}
+              onInutilizar={handleInutilizarRascunho}
+            />
 
 
           </>
@@ -483,107 +759,18 @@ export default function VendasGestaoPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: Cards */}
-            <div className="md:hidden space-y-2">
-              {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm overflow-hidden">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-800 dark:text-gray-200 break-words leading-tight">
-                        {pedido.cliente_nome || 'Cliente não informado'}
-                      </div>
-                      <div className="text-xs text-blue-600 dark:text-blue-400 break-all">{pedido.numero}</div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 min-w-0">
-                        <span className="text-xs text-green-600 break-words">● {pedido.status}</span>
-                        <span className="text-xs text-gray-400 break-words">{pedido.vendedor_nome}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0 max-w-[42%]">
-                      <div className="font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">
-                        R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </div>
-                      <div className="text-xs text-gray-400 text-right">
-                        {fmtDataCurta(pedido.created_date)}
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 shrink-0">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="dark:bg-gray-800">
-                        <DropdownMenuItem onClick={() => handleVerDetalhes(pedido)}>
-                          <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(pedido)}>
-                          <Edit className="w-4 h-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleReimprimir(pedido)}>
-                          <Printer className="w-4 h-4 mr-2" /> Reimprimir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop: Tabela */}
-            <div className="hidden md:block min-w-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-gray-200 dark:border-gray-700">
-                    <TableHead className="w-8"></TableHead>
-                    <TableHead>Pedido</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Vendedor</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pedidosFiltrados.map(pedido => (
-                    <TableRow key={pedido.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="dark:bg-gray-800">
-                            <DropdownMenuItem onClick={() => handleVerDetalhes(pedido)}>
-                              <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEdit(pedido)}>
-                              <Edit className="w-4 h-4 mr-2" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleReimprimir(pedido)}>
-                              <Printer className="w-4 h-4 mr-2" /> Reimprimir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-gray-800 dark:text-gray-200">{pedido.cliente_nome || '-'}</div>
-                        <div className="text-xs text-blue-600 dark:text-blue-400">{pedido.numero}</div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-green-600">● {pedido.status}</span>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500 dark:text-gray-400">{pedido.vendedor_nome}</TableCell>
-                      <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                        {fmtDtHora(pedido.created_date)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <VirtualizedPedidoCards
+              pedidos={pedidosFiltrados}
+              onVerDetalhes={handleVerDetalhes}
+              onEdit={handleEdit}
+              onReimprimir={handleReimprimir}
+            />
+            <VirtualizedPedidosTable
+              pedidos={pedidosFiltrados}
+              onVerDetalhes={handleVerDetalhes}
+              onEdit={handleEdit}
+              onReimprimir={handleReimprimir}
+            />
 
 
           </>
