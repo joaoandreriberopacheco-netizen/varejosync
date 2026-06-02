@@ -1,4 +1,3 @@
-import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
@@ -113,7 +112,7 @@ function VendaTurnoCard({ venda, meta, formatValor, onVerDetalhes, compact }) {
   );
 }
 
-function htmlLinhaVenda(v, meta, formatValor) {
+function htmlLinhaVenda(v, meta) {
   const pags = (v.pagamentos || []).map((p) => `${p.forma_pagamento} R$ ${(p.valor || 0).toFixed(2)}`).join(' | ');
   let sub = '';
   if (meta?.papel === 'substituto' && meta.origem) {
@@ -153,7 +152,7 @@ export default function VendasTurnoDialog({
           <button
             onClick={async () => {
               const linhas = vendasFinalizadas
-                .map((v) => htmlLinhaVenda(v, metaPorPedidoId[v.id], formatValor))
+                .map((v) => htmlLinhaVenda(v, metaPorPedidoId[v.id]))
                 .join('');
               const cancelamentos = turnoAtivo?.cancelamentos_rastro || [];
               const linhasCancelamentos =

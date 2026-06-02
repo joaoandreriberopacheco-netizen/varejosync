@@ -3,22 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { navigateBackOr } from '@/lib/navigateBackOr';
 import { createPageUrl } from '@/components/utils';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MovimentoDialog from './caixa/MovimentoDialog';
 import ComprovanteMovimentoDialog from './caixa/ComprovanteMovimentoDialog';
 import DespesaDialog from './caixa/DespesaDialog';
 import ComprovanteDespesaDialog from './caixa/ComprovanteDespesaDialog';
 import ListaMovimentosDialog from './caixa/ListaMovimentosDialog';
-import SaldoConsolidadoDialog from './caixa/SaldoConsolidadoDialog';
-import GerenciarMovimentoDialog from './caixa/GerenciarMovimentoDialog';
 import CalculadoraCedulasDialog from './caixa/CalculadoraCedulasDialog';
 import RetornoEdicaoDialog from './caixa/RetornoEdicaoDialog';
 import VendasTurnoDialog from './caixa/VendasTurnoDialog';
@@ -33,30 +23,20 @@ import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
   Receipt,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   Clock,
-  CreditCard,
-  Banknote,
-  Smartphone,
   ArrowLeft,
   Wallet,
   PieChart,
   ShoppingCart,
-  BarChart3,
   CheckCircle2,
   Plus,
   Minus,
   Lock,
   Printer,
-  Keyboard,
-  AlertCircle,
   Edit,
   Eye,
-  ChevronRight,
   Monitor,
   RefreshCw,
-  Ticket,
   Package,
   X } from
 'lucide-react';
@@ -67,7 +47,6 @@ import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
-import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';

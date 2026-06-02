@@ -1,7 +1,6 @@
-import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { ArrowLeft, Plus, Minus, DollarSign, Receipt, Pencil, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, DollarSign, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
 export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor, onSelectMovimento, onRefresh }) {
@@ -9,7 +8,6 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
   const isReforcos = tipo === 'reforcos';
   const isSangrias = tipo === 'sangrias';
   const isDespesas = tipo === 'despesas';
-  const isVendas = tipo === 'vendas';
 
   const titulo = isReforcos ? 'Reforços do Turno' : isSangrias ? 'Recolhimentos do Turno' : isDespesas ? 'Despesas do Turno' : 'Movimentações';
 
@@ -21,7 +19,6 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
     ? (despesasLista || [])
     : [];
 
-  const total = isReforcos ? totalReforcos : isSangrias ? totalSangrias : isDespesas ? totalDespesas : 0;
   const corTotal = isReforcos ? 'text-emerald-600 dark:text-emerald-400' : isSangrias ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400';
   const sinal = isReforcos ? '+' : '−';
 
