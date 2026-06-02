@@ -66,6 +66,8 @@ import {
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem', 'RelatorioCatalogoEstoque']);
+/** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
+const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
@@ -91,6 +93,7 @@ export default function Layout({ children, currentPageName }) {
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -342,7 +345,7 @@ export default function Layout({ children, currentPageName }) {
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? `ml-0 pt-12 ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'p38-layout-mobile-scroll-pad'}`
-              : (isOpen ? 'ml-[300px]' : 'ml-16')
+              : (useDesktopOverlaySidebar ? 'ml-16' : (isOpen ? 'ml-[300px]' : 'ml-16'))
           } ${MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) && !isMobile ? 'h-screen max-h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >

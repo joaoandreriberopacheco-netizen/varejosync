@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -395,7 +395,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
   );
 }
 
-export default function VendasGestaoPage() {
+function VendasGestaoPage() {
   const [pedidos, setPedidos] = useState([]);
   const [rascunhos, setRascunhos] = useState([]);
   const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
@@ -822,3 +822,5 @@ export default function VendasGestaoPage() {
     </div>
   );
 }
+
+export default memo(VendasGestaoPage);
