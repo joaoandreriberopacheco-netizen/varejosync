@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowDown, ArrowUp, Columns, Package, DollarSign, Truck, Settings } from 'lucide-react';
+import { ArrowDown, ArrowUp, Columns, Package, DollarSign, Truck, Settings, RotateCcw } from 'lucide-react';
+import { DEFAULT_CATALOG_PRODUTO_COLUMNS } from '@/lib/catalogProdutoColumnsStorage';
 
 export default function ColumnSelector({ visibleColumns, onColumnsChange, open, onClose }) {
   // Ensure visibleColumns is always an array
@@ -251,7 +252,17 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
           })}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setTempColumns([...DEFAULT_CATALOG_PRODUTO_COLUMNS])}
+            className="dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Resetar padrão
+          </Button>
+          <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={onClose}
@@ -265,6 +276,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
           >
             Aplicar
           </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
