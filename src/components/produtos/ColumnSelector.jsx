@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Columns, Package, DollarSign, Truck, Settings } from 'lucide-react';
+import { ArrowDown, ArrowUp, Columns, Package, DollarSign, Truck, Settings } from 'lucide-react';
 
 export default function ColumnSelector({ visibleColumns, onColumnsChange, open, onClose }) {
   // Ensure visibleColumns is always an array
@@ -82,24 +82,29 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
     );
   };
 
-  const handleSelectAll = (groupKey) => {
-    const group = columnGroups[groupKey];
-    if (!group) return;
-
-    const allMainColumns = Array.isArray(group.columns) ? group.columns.map(c => c.id) : [];
-    const allSubColumns = Array.isArray(group.subgroups) 
-      ? group.subgroups.flatMap(sg => Array.isArray(sg.columns) ? sg.columns.map(c => c.id) : []) 
-      : [];
-    
-    const groupColumns = [...allMainColumns, ...allSubColumns];
-    const allSelected = groupColumns.every(col => tempColumns.includes(col));
-    
-    if (allSelected) {
-      setTempColumns(prev => prev.filter(c => !groupColumns.includes(c)));
-    } else {
-      setTempColumns(prev => [...new Set([...prev, ...groupColumns])]);
-    }
+  const moveColumn = (columnId, direction) => {
+    setTempColumns((prev) => {
+      const index = prev.indexOf(columnId);
+      if (index === -1) return prev;
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
   };
+
+  const allColumns = Object.values(columnGroups).flatMap((group) => [
+    ...(Array.isArray(group.columns) ? group.columns : []),
+    ...(Array.isArray(group.subgroups)
+      ? group.subgroups.flatMap((subgroup) => Array.isArray(subgroup.columns) ? subgroup.columns : [])
+      : []),
+  ]);
+  const columnLabelById = allColumns.reduce((acc, column) => {
+    acc[column.id] = column.label;
+    return acc;
+  }, {});
+  const orderedSelectedColumns = tempColumns.filter((columnId) => columnLabelById[columnId]);
 
   const handleSave = () => {
     onColumnsChange(tempColumns);
@@ -117,6 +122,47 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+
+          {orderedSelectedColumns.length > 0 && (
+            <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Columns className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />
+                <Label className="text-sm font-medium text-gray-800 dark:text-gray-200">Ordem das colunas</Label>
+              </div>
+              <div className="space-y-1.5">
+                {orderedSelectedColumns.map((columnId, index) => (
+                  <div key={columnId} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded border border-indigo-100 dark:border-indigo-900/40">
+                    <span className="w-5 text-[10px] font-mono text-gray-400">{index + 1}</span>
+                    <span className="flex-1 min-w-0 truncate text-sm text-gray-700 dark:text-gray-300">{columnLabelById[columnId]}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={index === 0}
+                      onClick={() => moveColumn(columnId, -1)}
+                      className="h-7 w-7 disabled:opacity-30"
+                      title="Mover para a esquerda"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={index === orderedSelectedColumns.length - 1}
+                      onClick={() => moveColumn(columnId, 1)}
+                      className="h-7 w-7 disabled:opacity-30"
+                      title="Mover para a direita"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">A ordem de cima para baixo vira esquerda para direita na tabela.</p>
+            </div>
+          )}
+
           <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />

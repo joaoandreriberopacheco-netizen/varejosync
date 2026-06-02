@@ -380,10 +380,10 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   // Callbacks estáveis para onDelete fallback — evita recriar funções inline no map
   const noopDelete = useCallback(() => {}, []);
 
-  const activeCols = useMemo(
-    () => COL_DEFS.filter(c => visibleColumns.includes(c.id)),
-    [visibleColumns]
-  );
+  const activeCols = useMemo(() => {
+    const defsById = new Map(COL_DEFS.map((col) => [col.id, col]));
+    return visibleColumns.map((id) => defsById.get(id)).filter(Boolean);
+  }, [visibleColumns]);
 
   const estimateRowSize = useCallback(
     (index) => (rows[index]?.type === 'group' ? 38 : 46),

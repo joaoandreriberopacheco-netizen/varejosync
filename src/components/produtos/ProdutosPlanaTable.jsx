@@ -62,6 +62,121 @@ const widthMap = {
   inventario_valorizado: 'min-w-[120px]',
 };
 
+function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }) {
+  switch (col) {
+    case 'codigo_interno':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_interno}</TableCell>;
+    case 'codigo_barras':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_barras || '-'}</TableCell>;
+    case 'categoria':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.categoria_nome || '-'}</TableCell>;
+    case 'tags':
+      return <TableCell key={col}><div className="flex flex-wrap gap-1">{(produto.tags || []).slice(0, 2).map(tag => <span key={tag} className="text-[10px] px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">#{tag}</span>)}</div></TableCell>;
+    case 'status':
+      return <TableCell key={col}>{getStockStatusIndicator(produto)}</TableCell>;
+    case 'cadastro':
+      return <TableCell key={col}>{cadastroStatus.incompleto ? <div className="flex flex-col gap-0.5">{cadastroStatus.checks.semCategoria && <span className="text-[10px] text-red-600 dark:text-red-400">Sem categoria</span>}{cadastroStatus.checks.semFornecedor && <span className="text-[10px] text-red-600 dark:text-red-400">Sem fornecedor</span>}{cadastroStatus.checks.semPrecoVenda && <span className="text-[10px] text-red-600 dark:text-red-400">Sem preço</span>}{cadastroStatus.checks.semCodigoBarras && <span className="text-[10px] text-red-600 dark:text-red-400">Sem cód. barras</span>}{cadastroStatus.checks.semImagem && <span className="text-[10px] text-red-600 dark:text-red-400">Sem imagem</span>}</div> : <span className="text-xs text-green-600 dark:text-green-400">Completo</span>}</TableCell>;
+    case 'fornecedor':
+      return <TableCell key={col}>{fornecedorMap[produto.fornecedor_padrao_id] ? <div className="text-xs text-gray-700 dark:text-gray-300">{fornecedorMap[produto.fornecedor_padrao_id]}</div> : <span className="text-xs text-gray-600 dark:text-gray-400">N/A</span>}</TableCell>;
+    case 'preco_venda':
+      return (
+        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col leading-tight">
+            <span>R$ {formatarNumero(cat.precoVenda)}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+          </div>
+        </TableCell>
+      );
+    case 'margem':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(margem)}%</TableCell>;
+    case 'preco_custo':
+      return (
+        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col leading-tight">
+            <span>R$ {formatarNumero(cat.custoNaEmbalagem)}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+          </div>
+        </TableCell>
+      );
+    case 'valor_compra':
+      return (
+        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col leading-tight">
+            <span>R$ {formatarNumero(cat.valorCompraNaEmbalagem)}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+          </div>
+        </TableCell>
+      );
+    case 'markup':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{cat.markupSobreCustoPct > 0 ? `${formatarNumero(cat.markupSobreCustoPct)}%` : `${produto.preco_venda_percentual || 0}%`}</TableCell>;
+    case 'estoque_atual':
+      return (
+        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col leading-tight">
+            <span>
+              {(() => {
+                const apresent = formatEstoqueApresentacao(produto);
+                if (apresent) return `${formatarNumero(apresent.quantidade)} ${apresent.sigla}`;
+                return `${formatarNumero(produto.estoque_atual)} ${(produto.unidade_principal || 'UN').toUpperCase()}`;
+              })()}
+            </span>
+            {(() => {
+              const apresent = formatEstoqueApresentacao(produto);
+              if (!apresent) return null;
+              return (
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                  {apresent.rotulo ? `(${apresent.rotulo})` : 'unidade de exibição'}
+                </span>
+              );
+            })()}
+          </div>
+        </TableCell>
+      );
+    case 'estoque_minimo':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_minimo)}</TableCell>;
+    case 'estoque_ideal':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_ideal)}</TableCell>;
+    case 'estoque_maximo':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_maximo)}</TableCell>;
+    case 'tempo_reposicao':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.tempo_reposicao_dias || 0}d</TableCell>;
+    case 'peso':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.peso_kg)}kg</TableCell>;
+    case 'dimensoes':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.dimensoes_cm || '-'}</TableCell>;
+    case 'tipo':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>;
+    case 'unidade': {
+      const { unidadeBase, unidadeComercial, mostramMesma } = getCatalogUnitLabels(produto);
+      return (
+        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col leading-tight">
+            <span>{unidadeBase}</span>
+            {!mostramMesma && (
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                com. {unidadeComercial}
+              </span>
+            )}
+          </div>
+        </TableCell>
+      );
+    }
+    case 'unidades_pacote':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>;
+    case 'inventario_valorizado': {
+      const custo = resolveCustoTotalUnitBaseProduto(produto);
+      const lastro = custo * (produto.estoque_atual || 0);
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{lastro > 0 ? `R$ ${formatarNumero(lastro)}` : '—'}</TableCell>;
+    }
+    case 'show_comercial':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN')}</TableCell>;
+    case 'show_logistica':
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}</TableCell>;
+    default:
+      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">-</TableCell>;
+  }
+}
+
 export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, handleEdit, setProdutoParaExcluir, formatarNumero, fornecedorMap, handleCreateSimilar }) {
   const scrollContainerRef = useRef(null);
   const virtualRows = useVirtualRows({
@@ -119,108 +234,7 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                   <div className="font-medium text-sm text-gray-700 dark:text-gray-200 uppercase">{produto.nome}</div>
                   <div className="text-xs text-gray-600 dark:text-gray-400 uppercase">{produto.codigo_interno}</div>
                 </TableCell>
-
-                {visibleColumns.includes('codigo_interno') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_interno}</TableCell>}
-                {visibleColumns.includes('codigo_barras') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_barras || '-'}</TableCell>}
-                {visibleColumns.includes('categoria') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.categoria_nome || '-'}</TableCell>}
-                {visibleColumns.includes('tags') && <TableCell><div className="flex flex-wrap gap-1">{(produto.tags || []).slice(0, 2).map(tag => <span key={tag} className="text-[10px] px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">#{tag}</span>)}</div></TableCell>}
-                {visibleColumns.includes('status') && <TableCell>{getStockStatusIndicator(produto)}</TableCell>}
-                {visibleColumns.includes('cadastro') && <TableCell>{cadastroStatus.incompleto ? <div className="flex flex-col gap-0.5">{cadastroStatus.checks.semCategoria && <span className="text-[10px] text-red-600 dark:text-red-400">Sem categoria</span>}{cadastroStatus.checks.semFornecedor && <span className="text-[10px] text-red-600 dark:text-red-400">Sem fornecedor</span>}{cadastroStatus.checks.semPrecoVenda && <span className="text-[10px] text-red-600 dark:text-red-400">Sem preço</span>}{cadastroStatus.checks.semCodigoBarras && <span className="text-[10px] text-red-600 dark:text-red-400">Sem cód. barras</span>}{cadastroStatus.checks.semImagem && <span className="text-[10px] text-red-600 dark:text-red-400">Sem imagem</span>}</div> : <span className="text-xs text-green-600 dark:text-green-400">Completo</span>}</TableCell>}
-                {visibleColumns.includes('fornecedor') && <TableCell>{fornecedorMap[produto.fornecedor_padrao_id] ? <div className="text-xs text-gray-700 dark:text-gray-300">{fornecedorMap[produto.fornecedor_padrao_id]}</div> : <span className="text-xs text-gray-600 dark:text-gray-400">N/A</span>}</TableCell>}
-                {visibleColumns.includes('preco_venda') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    <div className="flex flex-col leading-tight">
-                      <span>R$ {formatarNumero(cat.precoVenda)}</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
-                    </div>
-                  </TableCell>
-                )}
-                {visibleColumns.includes('margem') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(margem)}%</TableCell>}
-                {visibleColumns.includes('preco_custo') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    <div className="flex flex-col leading-tight">
-                      <span>R$ {formatarNumero(cat.custoNaEmbalagem)}</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
-                    </div>
-                  </TableCell>
-                )}
-                {visibleColumns.includes('valor_compra') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    <div className="flex flex-col leading-tight">
-                      <span>R$ {formatarNumero(cat.valorCompraNaEmbalagem)}</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
-                    </div>
-                  </TableCell>
-                )}
-                {visibleColumns.includes('markup') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    {cat.markupSobreCustoPct > 0 ? `${formatarNumero(cat.markupSobreCustoPct)}%` : `${produto.preco_venda_percentual || 0}%`}
-                  </TableCell>
-                )}
-                {visibleColumns.includes('estoque_atual') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    <div className="flex flex-col leading-tight">
-                      <span>
-                        {(() => {
-                          const apresent = formatEstoqueApresentacao(produto);
-                          if (apresent) return `${formatarNumero(apresent.quantidade)} ${apresent.sigla}`;
-                          return `${formatarNumero(produto.estoque_atual)} ${(produto.unidade_principal || 'UN').toUpperCase()}`;
-                        })()}
-                      </span>
-                      {(() => {
-                        const apresent = formatEstoqueApresentacao(produto);
-                        if (!apresent) return null;
-                        return (
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                            {apresent.rotulo ? `(${apresent.rotulo})` : 'unidade de exibição'}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </TableCell>
-                )}
-                {visibleColumns.includes('estoque_minimo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_minimo)}</TableCell>}
-                {visibleColumns.includes('estoque_ideal') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_ideal)}</TableCell>}
-                {visibleColumns.includes('estoque_maximo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_maximo)}</TableCell>}
-                {visibleColumns.includes('tempo_reposicao') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tempo_reposicao_dias || 0}d</TableCell>}
-                {visibleColumns.includes('peso') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.peso_kg)}kg</TableCell>}
-                {visibleColumns.includes('dimensoes') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.dimensoes_cm || '-'}</TableCell>}
-                {visibleColumns.includes('tipo') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>}
-                {visibleColumns.includes('unidade') && (() => {
-                  const { unidadeBase, unidadeComercial, mostramMesma } = getCatalogUnitLabels(produto);
-                  return (
-                    <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                      <div className="flex flex-col leading-tight">
-                        <span>{unidadeBase}</span>
-                        {!mostramMesma && (
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                            com. {unidadeComercial}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                  );
-                })()}
-                {visibleColumns.includes('unidades_pacote') && <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>}
-                {visibleColumns.includes('inventario_valorizado') && (() => {
-                  const custo = resolveCustoTotalUnitBaseProduto(produto);
-                  const lastro = custo * (produto.estoque_atual || 0);
-                  return (
-                    <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                      {lastro > 0 ? `R$ ${formatarNumero(lastro)}` : '—'}
-                    </TableCell>
-                  );
-                })()}
-                {visibleColumns.includes('show_comercial') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    {getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN')}
-                  </TableCell>
-                )}
-                {visibleColumns.includes('show_logistica') && (
-                  <TableCell className="text-xs text-gray-700 dark:text-gray-300">
-                    {(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}
-                  </TableCell>
-                )}
+                {visibleColumns.map((col) => renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }))}
               </TableRow>
             );
           })}
