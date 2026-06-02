@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import MassTagGenerator from '@/components/produtos/MassTagGenerator';
+import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 
 export default function ProdutosHeader({
   stats,
@@ -28,6 +29,9 @@ export default function ProdutosHeader({
   formatarNumero,
   filteredProdutos = [],
   loadData,
+  treeLevel,
+  setTreeLevel,
+  setIsColumnSelectorOpen,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
@@ -156,10 +160,23 @@ export default function ProdutosHeader({
             <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 flex-shrink-0 rounded-xl bg-gray-100 dark:bg-gray-800"
+            onClick={() => setIsColumnSelectorOpen(true)}
+            title="Colunas"
+          >
+            <Columns className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          </Button>
         </div>
 
         {isFilterOpen && (
           <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Nível da TreeGrid</span>
+              <LevelControl level={treeLevel} onChange={setTreeLevel} />
+            </div>
             <Select value={filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
               <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg"><SelectValue placeholder="Categoria" /></SelectTrigger>
               <SelectContent className="dark:bg-gray-800 dark:border-gray-700">

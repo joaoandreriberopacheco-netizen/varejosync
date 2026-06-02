@@ -8,6 +8,7 @@ export const DEFAULT_CATALOG_PRODUTO_COLUMNS = [
 ];
 
 const CATALOG_PRODUTO_COLUMNS_STORAGE_KEY = 'varejosync.catalogoProdutoColumns';
+const CATALOG_PRODUTO_COLUMNS_STORAGE_VERSION = 1;
 
 const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'status',
@@ -52,7 +53,8 @@ export function loadCatalogProdutoColumns() {
   try {
     const raw = localStorage.getItem(CATALOG_PRODUTO_COLUMNS_STORAGE_KEY);
     if (!raw) return [...DEFAULT_CATALOG_PRODUTO_COLUMNS];
-    return normalizeCatalogProdutoColumns(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    return normalizeCatalogProdutoColumns(Array.isArray(parsed) ? parsed : parsed?.columns);
   } catch {
     return [...DEFAULT_CATALOG_PRODUTO_COLUMNS];
   }
@@ -62,7 +64,10 @@ export function saveCatalogProdutoColumns(columns) {
   try {
     localStorage.setItem(
       CATALOG_PRODUTO_COLUMNS_STORAGE_KEY,
-      JSON.stringify(normalizeCatalogProdutoColumns(columns))
+      JSON.stringify({
+        storageVersion: CATALOG_PRODUTO_COLUMNS_STORAGE_VERSION,
+        columns: normalizeCatalogProdutoColumns(columns),
+      })
     );
   } catch {
     /* quota / private mode */

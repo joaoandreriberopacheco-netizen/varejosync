@@ -1079,21 +1079,19 @@ function ProdutosPageContent() {
         formatarNumero={formatarNumero}
         filteredProdutos={filteredProdutos}
         loadData={loadData}
+        treeLevel={treeLevel}
+        setTreeLevel={setTreeLevel}
+        setIsColumnSelectorOpen={setIsColumnSelectorOpen}
       />
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
         <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4 overflow-x-hidden">
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
             <ProdutosCommandBar
-              filteredProdutos={filteredProdutos}
-              loadData={loadData}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               viewMode={viewMode}
               setViewMode={setViewMode}
-              treeLevel={treeLevel}
-              setTreeLevel={setTreeLevel}
-              setIsColumnSelectorOpen={setIsColumnSelectorOpen}
             />
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
@@ -1359,7 +1357,10 @@ function ProdutosPageContent() {
       {/* Column Selector */}
       <ColumnSelector
         visibleColumns={visibleColumns}
-        onColumnsChange={setVisibleColumns}
+        onColumnsChange={(columns) => {
+          setVisibleColumns(columns);
+          saveCatalogProdutoColumns(columns);
+        }}
         open={isColumnSelectorOpen}
         onClose={() => setIsColumnSelectorOpen(false)}
       />
