@@ -54,16 +54,21 @@ function buildUnitOptions(produto) {
 
 function getPricingForUnit(produto, unitOption) {
   const fator = Number(unitOption?.fator) > 0 ? Number(unitOption.fator) : 1;
+  const scale = (value) => Number(value || 0) * fator;
   const custoBase = resolveCustoTotalUnitBaseProduto(produto);
-  const compraBase = Number(produto?.valor_compra || 0);
   const saleOptions = buildSaleUnitOptions(produto);
   const sale = saleOptions.find((option) => option.unidade === unitOption?.sigla);
   const precoVenda = Number(sale?.valor_unitario ?? (produto?.preco_venda_padrao || 0) * fator) || 0;
   const custo = custoBase * fator;
-  const valorCompra = compraBase * fator;
+  const valorCompra = scale(produto?.valor_compra);
+  const frete = scale(produto?.custo_frete_padrao);
+  const imposto1 = scale(produto?.custo_imposto1_padrao);
+  const imposto2 = scale(produto?.custo_imposto2_padrao);
+  const desconto = scale(produto?.desconto_compra_padrao);
+  const outros = scale(produto?.custo_outros_padrao);
   const margem = precoVenda > 0 ? ((precoVenda - custo) / precoVenda) * 100 : 0;
   const markup = custo > 0 ? ((precoVenda - custo) / custo) * 100 : 0;
-  return { fator, precoVenda, custo, valorCompra, margem, markup };
+  return { fator, precoVenda, custo, valorCompra, frete, imposto1, imposto2, desconto, outros, margem, markup };
 }
 
 function PricingLine({ label, value, tone = 'default', hint }) {
@@ -153,13 +158,18 @@ function PricingDialog({ produto, open, onOpenChange }) {
           <div className="grid grid-cols-2 gap-2">
             <PricingSection title="Custos">
               <PricingLine label="Valor compra" value={`R$ ${fmtR(pricing.valorCompra)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Frete" value={`R$ ${fmtR(pricing.frete)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Imposto 1" value={`R$ ${fmtR(pricing.imposto1)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Imposto 2" value={`R$ ${fmtR(pricing.imposto2)}`} hint={`/${unidadeSelecionada}`} />
+              <PricingLine label="Desconto" value={`- R$ ${fmtR(pricing.desconto)}`} hint={`/${unidadeSelecionada}`} tone={pricing.desconto > 0 ? 'positive' : 'default'} />
+              <PricingLine label="Outros" value={`R$ ${fmtR(pricing.outros)}`} hint={`/${unidadeSelecionada}`} />
               <PricingLine label="Custo total" value={`R$ ${fmtR(pricing.custo)}`} hint={`/${unidadeSelecionada}`} />
-              <PricingLine label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
             </PricingSection>
             <PricingSection title="Venda">
               <PricingLine label="Preço venda" value={`R$ ${fmtR(pricing.precoVenda)}`} hint={`/${unidadeSelecionada}`} />
               <PricingLine label="Markup" value={`${fmtN(pricing.markup)}%`} tone={markupTone} />
               <PricingLine label="Margem" value={`${fmtN(pricing.margem)}%`} tone={margemTone} />
+              <PricingLine label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
             </PricingSection>
           </div>
         </div>
