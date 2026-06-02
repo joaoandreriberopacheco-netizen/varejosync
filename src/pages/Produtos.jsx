@@ -1077,6 +1077,8 @@ function ProdutosPageContent() {
         handleAddNew={handleAddNew}
         setFilters={setFilters}
         formatarNumero={formatarNumero}
+        filteredProdutos={filteredProdutos}
+        loadData={loadData}
       />
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
@@ -1084,7 +1086,6 @@ function ProdutosPageContent() {
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
             <ProdutosCommandBar
               filteredProdutos={filteredProdutos}
-              loadData={loadData}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               viewMode={viewMode}

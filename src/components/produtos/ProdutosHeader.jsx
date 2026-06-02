@@ -7,6 +7,7 @@ import { createPageUrl } from '@/components/utils';
 import { Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import MassTagGenerator from '@/components/produtos/MassTagGenerator';
 
 export default function ProdutosHeader({
   stats,
@@ -24,6 +25,8 @@ export default function ProdutosHeader({
   handleAddNew,
   setFilters,
   formatarNumero,
+  filteredProdutos = [],
+  loadData,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
@@ -63,6 +66,9 @@ export default function ProdutosHeader({
                 <span className="text-xs font-medium text-blue-700 dark:text-blue-300 whitespace-nowrap">Relatório</span>
               </Link>
             </Button>
+            {filteredProdutos.length > 0 && (
+              <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
+            )}
             <div className="flex items-center gap-0.5 flex-shrink-0">
               <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleExportarCatalogo} title="Exportar">
                 <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
