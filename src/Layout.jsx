@@ -1,41 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44 } from '@/api/base44Client';
-import FontScaleControl from '@/components/accessibility/FontScaleControl';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
-import { 
-  LayoutDashboard, 
-  Monitor,
-  TrendingUp,
-  Package,
-  Users,
-  DollarSign,
-  Settings,
-  Menu,
-  X,
-  User,
-  ChevronDown,
-  Receipt,
-  Sun,
-  Moon,
-  ChevronRight,
-  Truck,
-  Warehouse,
-  BookOpen,
-  WifiOff,
-  Search,
-  MoreVertical,
-  Trash2,
-  HelpCircle,
-  Printer,
-  LayoutGrid,
-  Shield
-} from 'lucide-react';
+import { ChevronRight, WifiOff, Search } from 'lucide-react';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,24 +17,6 @@ import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import QuickBudgetLauncher from '@/components/quick-budget/QuickBudgetLauncher';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem', 'RelatorioCatalogoEstoque']);
