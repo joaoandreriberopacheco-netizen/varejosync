@@ -137,9 +137,9 @@ function createCartItem(produto, unit, quantidadeComercial) {
   };
 }
 
-function StepPill({ number, title, description, active = false, done = false }) {
+function StepPill({ number, title, description, active = false, done = false, onClick }) {
   return (
-    <div className={`rounded-2xl border p-4 ${
+    <button type="button" onClick={onClick} className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${
       active
         ? 'border-blue-500/40 bg-blue-50 text-blue-950 dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-50'
         : 'border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
@@ -159,7 +159,7 @@ function StepPill({ number, title, description, active = false, done = false }) 
           <p className="mt-0.5 text-xs opacity-75">{description}</p>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -424,6 +424,25 @@ function RecentMovements({ movimentos }) {
   );
 }
 
+function StepFooter({ activeStep, canGoNext, onPrevious, onNext }) {
+  const isFirst = activeStep === 'setup';
+  const isLast = activeStep === 'review';
+  return (
+    <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+      <Button variant="outline" onClick={onPrevious} disabled={isFirst} className="rounded-2xl">
+        Anterior
+      </Button>
+      <div className="text-center text-xs text-gray-500">
+        {isFirst ? 'Configure o ajuste' : isLast ? 'Confira e conclua' : 'Adicione os produtos ao carrinho'}
+      </div>
+      <Button onClick={onNext} disabled={isLast || !canGoNext} className="rounded-2xl">
+        Próxima
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 export default function MovimentosInventario() {
   const [produtos, setProdutos] = useState([]);
   const [movimentosRecentes, setMovimentosRecentes] = useState([]);
@@ -440,6 +459,7 @@ export default function MovimentosInventario() {
   const [quantityInput, setQuantityInput] = useState('1');
   const [editingKey, setEditingKey] = useState('');
   const [cartItems, setCartItems] = useState([]);
+  const [activeStep, setActiveStep] = useState('setup');
 
   useEffect(() => {
     loadInitialData();
@@ -510,6 +530,24 @@ export default function MovimentosInventario() {
   const hasNegativeStock = reviewRows.some((row) => row.estoque_depois < 0);
   const setupReady = Boolean(tipo && motivo);
   const cartReady = cartItems.length > 0;
+  const activeStepIndex = ['setup', 'items', 'review'].indexOf(activeStep);
+  const canGoNext = activeStep === 'setup' || (activeStep === 'items' && cartReady);
+
+  const goPreviousStep = () => {
+    if (activeStep === 'items') setActiveStep('setup');
+    if (activeStep === 'review') setActiveStep('items');
+  };
+
+  const goNextStep = () => {
+    if (activeStep === 'setup') setActiveStep('items');
+    if (activeStep === 'items') {
+      if (!cartReady) {
+        toast.error('Adicione pelo menos um item ao carrinho para revisar.');
+        return;
+      }
+      setActiveStep('review');
+    }
+  };
 
   const handleSelectProduct = async (produto) => {
     setSelectedProduct(produto);
@@ -563,6 +601,7 @@ export default function MovimentosInventario() {
     setQuantityInput(formatCommercialQuantity(item.quantidade_comercial, item.unidade_medida));
     setEditingKey(item.item_key);
     setSearchTerm(item.produto_nome);
+    setActiveStep('items');
   };
 
   const handleRemoveItem = (itemKey) => {
@@ -659,6 +698,7 @@ export default function MovimentosInventario() {
       setQuantityInput('1');
       setDocumentoReferencia('');
       setObservacoes('');
+      setActiveStep('setup');
       toast.success(`${createdMovements.length} movimento(s) registrado(s) com sucesso.`);
     } catch (error) {
       console.error('Erro ao concluir movimentos de inventário:', error);
@@ -693,11 +733,33 @@ export default function MovimentosInventario() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
-          <StepPill number="1" title="Configurar" description="Entrada/saída, motivo e referência" active done={setupReady} />
-          <StepPill number="2" title="Adicionar itens" description="Buscar produto, unidade e quantidade" active={setupReady} done={cartReady} />
-          <StepPill number="3" title="Conferir e concluir" description="Validar antes/depois do estoque" active={cartReady} />
+          <StepPill
+            number="1"
+            title="Configurar"
+            description="Entrada/saída, motivo e referência"
+            active={activeStep === 'setup'}
+            done={setupReady && activeStepIndex > 0}
+            onClick={() => setActiveStep('setup')}
+          />
+          <StepPill
+            number="2"
+            title="Adicionar itens"
+            description="Buscar produto, unidade e quantidade"
+            active={activeStep === 'items'}
+            done={cartReady && activeStepIndex > 1}
+            onClick={() => setActiveStep('items')}
+          />
+          <StepPill
+            number="3"
+            title="Conferir e concluir"
+            description="Validar antes/depois do estoque"
+            active={activeStep === 'review'}
+            done={false}
+            onClick={() => setActiveStep('review')}
+          />
         </div>
 
+        {activeStep === 'setup' && (
         <Card className="border-gray-200 dark:border-gray-800">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -762,9 +824,17 @@ export default function MovimentosInventario() {
                 </div>
               </div>
             </div>
+            <StepFooter
+              activeStep={activeStep}
+              canGoNext={canGoNext}
+              onPrevious={goPreviousStep}
+              onNext={goNextStep}
+            />
           </CardContent>
         </Card>
+        )}
 
+        {activeStep === 'items' && (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
           <Card className="border-gray-200 dark:border-gray-800">
             <CardHeader className="pb-3">
@@ -827,6 +897,12 @@ export default function MovimentosInventario() {
                   onCancelEdit={handleCancelEdit}
                 />
               </div>
+              <StepFooter
+                activeStep={activeStep}
+                canGoNext={canGoNext}
+                onPrevious={goPreviousStep}
+                onNext={goNextStep}
+              />
             </CardContent>
           </Card>
 
@@ -843,7 +919,34 @@ export default function MovimentosInventario() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <CartPanel items={cartItems} tipo={tipo} onEdit={handleEditItem} onRemove={handleRemoveItem} />
+                <Button
+                  variant="outline"
+                  className="h-12 w-full rounded-2xl"
+                  onClick={() => setActiveStep('review')}
+                  disabled={cartItems.length === 0}
+                >
+                  Conferir antes/depois
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
 
+            <RecentMovements movimentos={movimentosRecentes} />
+          </div>
+        </div>
+        )}
+
+        {activeStep === 'review' && (
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
+            <Card className="border-gray-200 dark:border-gray-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ShoppingCart className="h-5 w-5 text-blue-600" />
+                  3. Conferir carrinho
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <CartPanel items={cartItems} tipo={tipo} onEdit={handleEditItem} onRemove={handleRemoveItem} />
                 <div className="space-y-2">
                   <Label htmlFor="observacoes">Observações gerais</Label>
                   <Textarea
@@ -854,21 +957,29 @@ export default function MovimentosInventario() {
                     className="min-h-24 rounded-2xl"
                   />
                 </div>
+                <StepFooter
+                  activeStep={activeStep}
+                  canGoNext={canGoNext}
+                  onPrevious={goPreviousStep}
+                  onNext={goNextStep}
+                />
+              </CardContent>
+            </Card>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Antes e depois</h3>
-                    {hasNegativeStock && <Badge variant="destructive">corrigir saída</Badge>}
-                  </div>
-                  <ReviewPanel rows={reviewRows} tipo={tipo} />
-                </div>
-
+            <Card className="border-gray-200 dark:border-gray-800 xl:sticky xl:top-4 xl:self-start">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Antes e depois</span>
+                  {hasNegativeStock && <Badge variant="destructive">corrigir saída</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <ReviewPanel rows={reviewRows} tipo={tipo} />
                 {hasNegativeStock && (
                   <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
                     Há produto que ficaria negativo. Edite ou remova o item antes de concluir.
                   </div>
                 )}
-
                 <Button
                   className="h-12 w-full rounded-2xl"
                   onClick={handleConcluir}
@@ -879,10 +990,8 @@ export default function MovimentosInventario() {
                 </Button>
               </CardContent>
             </Card>
-
-            <RecentMovements movimentos={movimentosRecentes} />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
