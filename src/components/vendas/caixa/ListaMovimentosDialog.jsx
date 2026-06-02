@@ -3,7 +3,7 @@ import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Plus, Minus, DollarSign, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
-export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor, onSelectMovimento, onRefresh }) {
+export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, formatValor, onSelectMovimento, onRefresh }) {
 
   const isReforcos = tipo === 'reforcos';
   const isSangrias = tipo === 'sangrias';
