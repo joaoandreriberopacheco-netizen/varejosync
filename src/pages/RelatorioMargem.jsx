@@ -1078,7 +1078,7 @@ export default function RelatorioMargemVendas() {
             document.body
           )}
 
-<div className="flex-none min-h-0 overflow-hidden">
+<div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                 {/* Resumo na mesma linguagem do PDF */}
          <div className="px-3 md:px-4 py-2 min-w-0 max-w-full overflow-x-hidden">
            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -1224,11 +1224,11 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-center py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200">
+                      <th className="text-center py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200">
                         UN
                       </th>
                       <th
@@ -1240,7 +1240,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('asc');
                           }
                         }}
-                        className="text-left py-3 px-3 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-left py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1253,7 +1253,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         PREÇO UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1266,7 +1266,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1279,7 +1279,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1292,7 +1292,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                         LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1305,7 +1305,7 @@ export default function RelatorioMargemVendas() {
                            setSortOrder('desc');
                          }
                        }}
-                       className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                       className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
                        MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
