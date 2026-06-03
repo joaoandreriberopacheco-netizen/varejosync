@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
+import { formatUiLabel } from '@/lib/formatUiLabel';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -145,7 +146,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                     style={itemStyle}
                   >
                     <Icon className="w-5 h-5" style={{ color: c.iconColor }} />
-                    <span className="flex-1 text-left text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{item.name}</span>
+                    <span className="flex-1 text-left text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{formatUiLabel(item.name)}</span>
                     <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                   </button>
                 );
@@ -165,7 +166,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h3 className="text-[1.6rem] font-semibold font-glacial" style={{ color: c.text }}>{activeGroup.name}</h3>
+            <h3 className="text-[1.6rem] font-semibold font-glacial" style={{ color: c.text }}>{formatUiLabel(activeGroup.name)}</h3>
           </div>
 
           <div>
@@ -183,7 +184,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                   }}
                 >
                   {Icon && <Icon className="w-5 h-5 flex-none" style={{ color: c.iconColor }} />}
-                  <span className="flex-1 text-[1.04rem] font-semibold leading-tight tracking-[0.01em]">{subItem.name}</span>
+                  <span className="flex-1 text-[1.04rem] font-semibold leading-tight tracking-[0.01em]">{formatUiLabel(subItem.name)}</span>
                   <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                 </Link>
               );

@@ -5,6 +5,7 @@ import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } 
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
+import { formatUiLabel } from '@/lib/formatUiLabel';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -132,7 +133,7 @@ export default function GlacialSidebar({
       )}
 
       <aside
-        className="fixed left-0 top-0 z-40 flex flex-col"
+        className="p38-sidebar fixed left-0 top-0 z-40 flex flex-col uppercase"
         style={{
           height: '100dvh',
           overflow: 'hidden',
@@ -196,7 +197,7 @@ export default function GlacialSidebar({
                       <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.text : c.iconColor }} />
                       {isOpen && (
                         <>
-                          <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
+                          <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{formatUiLabel(item.name)}</span>
                           <ChevronRight
                             size={14}
                             style={{ color: c.chevron, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
@@ -223,7 +224,7 @@ export default function GlacialSidebar({
                                 fontWeight: isSubActive ? 600 : 400,
                               }}
                             >
-                              {subItem.name}
+                              {formatUiLabel(subItem.name)}
                             </Link>
                           );
                         })}
@@ -245,7 +246,7 @@ export default function GlacialSidebar({
                   >
                     <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.text : c.iconColor }} />
                     {isOpen && (
-                      <span className="text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
+                      <span className="text-sm font-medium" style={{ color: c.text }}>{formatUiLabel(item.name)}</span>
                     )}
                   </Link>
                 )}
@@ -293,8 +294,8 @@ export default function GlacialSidebar({
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{currentUser.full_name}</p>
-                    <p className="text-[11px] truncate" style={{ color: c.textSub }}>{currentUser.email}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{formatUiLabel(currentUser.full_name)}</p>
+                    <p className="text-[11px] truncate preserve-case" style={{ color: c.textSub }}>{currentUser.email}</p>
                   </div>
                 </div>
               )}
@@ -309,7 +310,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   {isDarkLocal ? <Sun size={15} style={{ color: c.iconColor }} /> : <Moon size={15} style={{ color: c.iconColor }} />}
-                  <span className="text-sm">{isDarkLocal ? 'Modo Claro' : 'Modo Escuro'}</span>
+                  <span className="text-sm">{formatUiLabel(isDarkLocal ? 'Modo Claro' : 'Modo Escuro')}</span>
                 </button>
 
                 <button
@@ -320,7 +321,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <ALargeSmall size={15} style={{ color: c.iconColor }} />
-                  <span className="text-sm">Fonte ({fontLabel})</span>
+                  <span className="text-sm">{formatUiLabel(`Fonte (${fontLabel})`)}</span>
                 </button>
 
                 <button
@@ -345,7 +346,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <Settings size={15} style={{ color: c.iconColor }} />
-                  <span className="text-sm">Configurações</span>
+                  <span className="text-sm">{formatUiLabel('Configurações')}</span>
                 </Link>
 
                 <button
@@ -355,7 +356,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <LogOut size={15} style={{ color: '#ef4444' }} />
-                  <span className="text-sm" style={{ color: '#ef4444' }}>Sair</span>
+                  <span className="text-sm" style={{ color: '#ef4444' }}>{formatUiLabel('Sair')}</span>
                 </button>
               </div>
             </div>
