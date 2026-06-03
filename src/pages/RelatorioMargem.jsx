@@ -205,11 +205,11 @@ function MargemLinhaMobile({
           <div className="flex-1 min-w-0">
             <span
               lang="pt-BR"
-              className="block text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 truncate"
+              className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-100 truncate"
             >
               {titulo}
               {row.count != null ? (
-                <span className="ml-1 font-medium text-gray-500 dark:text-gray-400 normal-case">
+                <span className="ml-1 inline-flex h-5 items-center rounded-full border border-gray-200 px-1.5 text-[10px] font-medium text-gray-600 dark:border-gray-700 dark:text-gray-400 normal-case">
                   ({row.count})
                 </span>
               ) : null}
@@ -272,7 +272,7 @@ function MargemLinhaMobile({
     >
       <p
         lang="pt-BR"
-        className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 break-words"
+        className="text-xs font-normal uppercase text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
         style={{ lineHeight: `${1.375 * BODY_LINE_HEIGHT_MULT}` }}
       >
         {titulo}
@@ -1281,8 +1281,8 @@ export default function RelatorioMargemVendas() {
                           <tr
                             key={treeRow.key}
                             onClick={isLeaf ? undefined : () => handleToggleGroup(treeRow.key)}
-                            className={`border-b border-gray-100 dark:border-gray-800 bg-slate-50/80 dark:bg-slate-800/30 ${
-                              isLeaf ? '' : 'cursor-pointer hover:bg-slate-100/90 dark:hover:bg-slate-800/50'
+                            className={`border-b border-gray-100 dark:border-gray-800 select-none ${
+                              isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'
                             }`}
                           >
                             <td
@@ -1301,7 +1301,7 @@ export default function RelatorioMargemVendas() {
                             </td>
                             <td
                               lang="pt-BR"
-                              className="py-1.5 px-2 text-xs font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
+                              className="py-2 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
                               style={{ paddingLeft: 8 + indent, lineHeight: 1.2, minHeight: 38 }}
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
@@ -1314,8 +1314,8 @@ export default function RelatorioMargemVendas() {
                                 )}
                                 {isLeaf && <span className="w-3.5 flex-shrink-0" />}
                                 <span className="truncate">{treeRow.label}</span>
-                                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 normal-case flex-shrink-0">
-                                  ({treeRow.count})
+                                <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0 ml-0.5">
+                                  {treeRow.count}
                                 </span>
                               </div>
                             </td>
@@ -1379,9 +1379,7 @@ export default function RelatorioMargemVendas() {
                           </td>
                           <td
                             lang="pt-BR"
-                            className={`py-3.5 px-3.5 text-sm text-gray-900 dark:text-white font-medium hyphens-auto break-words min-w-0 ${
-                              treeRow.level > 1 ? 'border-l-2 border-gray-200 dark:border-gray-700' : ''
-                            }`}
+                            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase truncate min-w-0"
                             style={{ paddingLeft: descIndent, lineHeight: 1.2, minHeight: 46 }}
                           >
                             {row.nome}
