@@ -51,6 +51,16 @@
 }
 
 
+
+/* Sidebar — maiúsculas explícitas (inline styles não herdavam sempre) */
+.p38-sidebar,
+.p38-sidebar button,
+.p38-sidebar a,
+.p38-sidebar span,
+.p38-sidebar p {
+  text-transform: uppercase;
+}
+
 /* Maiúsculas globais — exceções pontuais */
 .normal-case,
 .preserve-case,

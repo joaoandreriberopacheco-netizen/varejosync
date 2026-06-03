@@ -131,7 +131,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                       style={itemStyle}
                     >
                       <Icon className="w-5 h-5" style={{ color: c.iconColor }} />
-                      <span className="flex-1 text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{item.name}</span>
+                      <span className="flex-1 text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{formatUiLabel(item.name)}</span>
                       <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                     </Link>
                   );

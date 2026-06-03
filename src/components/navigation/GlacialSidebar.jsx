@@ -331,7 +331,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <Shield size={15} style={{ color: currentUser?.pin_definido ? c.iconColor : '#f59e0b' }} />
-                  <span className="text-sm">{currentUser?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}</span>
+                  <span className="text-sm">{formatUiLabel(currentUser?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN')}</span>
                 </button>
 
                 <div style={{ height: 1, background: c.border, margin: '4px 0' }} />
