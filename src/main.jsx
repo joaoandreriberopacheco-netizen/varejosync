@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
+import { normalizeDataText } from '@/lib/normalizeDataText'
 
 // Tema antes da primeira pintura (splash, login, etc.)
 try {
@@ -28,22 +29,24 @@ const UPPERCASE_SKIP_TYPES = new Set([
   'file', 'hidden', 'checkbox', 'radio', 'range', 'color',
 ]);
 
-// Maiúsculas na digitação — grava o valor já em maiúsculas (exceto tipos sensíveis)
-document.addEventListener('input', (e) => {
-  const el = e.target;
+function normalizeInputElement(el) {
   if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
   if (el.closest('[data-preserve-case="true"]')) return;
   if (el instanceof HTMLInputElement && UPPERCASE_SKIP_TYPES.has(el.type)) return;
 
-  const { selectionStart, selectionEnd, value } = el;
-  const upper = value.toUpperCase();
-  if (value === upper) return;
+  const upper = normalizeDataText(el.value);
+  if (el.value === upper) return;
 
+  const { selectionStart, selectionEnd } = el;
   el.value = upper;
   if (selectionStart != null && selectionEnd != null) {
     el.setSelectionRange(selectionStart, selectionEnd);
   }
-});
+}
+
+// Maiúsculas na digitação — grava o valor já em maiúsculas (exceto tipos sensíveis)
+document.addEventListener('input', (e) => normalizeInputElement(e.target));
+document.addEventListener('blur', (e) => normalizeInputElement(e.target), true);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>

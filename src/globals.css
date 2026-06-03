@@ -55,6 +55,35 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* ==========================================
+   DADOS OPERACIONAIS — MAIÚSCULAS
+   (inputs, corpos de tabela, selects; UI livre)
+   ========================================== */
+
+.p38-data-uppercase,
+tbody td,
+tbody th,
+tfoot td,
+input:not([type="password"]):not([type="number"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]):not([type="month"]):not([type="week"]):not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([data-preserve-case="true"]),
+textarea:not([data-preserve-case="true"]),
+[role="combobox"]:not([data-preserve-case="true"]),
+button[role="combobox"]:not([data-preserve-case="true"]) {
+  text-transform: uppercase;
+}
+
+[data-preserve-case="true"],
+.preserve-case,
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  text-transform: none;
+}
+
 /* ==========================================
    MOBILE NATIVE COMPATIBILITY
    ========================================== */
