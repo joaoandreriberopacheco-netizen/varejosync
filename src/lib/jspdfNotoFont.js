@@ -2,8 +2,12 @@ const NOTO_REGULAR_URL =
   'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
 const NOTO_BOLD_URL =
   'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Bold.ttf';
+const NOTO_MONO_LIGHT_URL =
+  'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansMono/NotoSansMono-Light.ttf';
+const NOTO_MONO_REGULAR_URL =
+  'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansMono/NotoSansMono-Regular.ttf';
 
-const fontCache = { regular: null, bold: null };
+const fontCache = { regular: null, bold: null, monoLight: null, monoRegular: null };
 
 const arrayBufferToBase64 = (buffer) => {
   let binary = '';
@@ -41,6 +45,25 @@ export async function registerJsPdfNotoFonts(doc) {
     console.error('jspdfNotoFont: falha ao carregar Noto Sans, usando Helvetica:', err);
     doc.setFont('helvetica', 'normal');
     return 'helvetica';
+  }
+}
+
+/** Noto Sans Mono Light — tipografia fina estilo instrumento de precisão (relatórios mobile). */
+export async function registerJsPdfPrecisionFonts(doc) {
+  try {
+    const [lightBase64, regularBase64] = await Promise.all([
+      loadFontBase64(NOTO_MONO_LIGHT_URL, 'monoLight'),
+      loadFontBase64(NOTO_MONO_REGULAR_URL, 'monoRegular'),
+    ]);
+    doc.addFileToVFS('NotoSansMono-Light.ttf', lightBase64);
+    doc.addFont('NotoSansMono-Light.ttf', 'NotoSansMono', 'normal');
+    doc.addFileToVFS('NotoSansMono-Regular.ttf', regularBase64);
+    doc.addFont('NotoSansMono-Regular.ttf', 'NotoSansMono', 'bold');
+    doc.setFont('NotoSansMono', 'normal');
+    return 'NotoSansMono';
+  } catch (err) {
+    console.error('jspdfNotoFont: falha ao carregar Noto Sans Mono, fallback Noto Sans:', err);
+    return registerJsPdfNotoFonts(doc);
   }
 }
 

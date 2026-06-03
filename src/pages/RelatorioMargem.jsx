@@ -18,7 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
-import { registerJsPdfNotoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { registerJsPdfNotoFonts, registerJsPdfPrecisionFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -612,8 +612,9 @@ export default function RelatorioMargemVendas() {
         unit: 'mm',
         format: [MOBILE_PDF_W_MM, MOBILE_PDF_H_MM],
       });
-      const pdfFontFamily = await registerJsPdfNotoFonts(pdf);
+      const pdfFontFamily = await registerJsPdfPrecisionFonts(pdf);
       const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
+      const MOBILE_PDF_FONT_SCALE = 0.96;
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const M = 5;
@@ -685,11 +686,11 @@ export default function RelatorioMargemVendas() {
 
       const drawMobileHeader = () => {
         setPdfFont('normal');
-        pdf.setFontSize(12);
+        pdf.setFontSize(11 * MOBILE_PDF_FONT_SCALE);
         setColor(C.text);
         pdf.text(normalizePdfText('Margem de Vendas'), M, y);
         y += 5;
-        pdf.setFontSize(6.5);
+        pdf.setFontSize(6.2 * MOBILE_PDF_FONT_SCALE);
         setColor(C.muted);
         pdf.text(normalizePdfText('Relatório para celular'), M, y);
         y += 4.2;
@@ -699,7 +700,7 @@ export default function RelatorioMargemVendas() {
           y += 3.9;
         });
         y += 1;
-        pdf.setFontSize(6.2);
+        pdf.setFontSize(6 * MOBILE_PDF_FONT_SCALE);
         pdf.text(
           normalizePdfText(`Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`),
           M,
@@ -729,10 +730,10 @@ export default function RelatorioMargemVendas() {
             setFill(C.soft);
             pdf.roundedRect(cx, y, colW, cardH, 2, 2, 'F');
             setPdfFont('normal');
-            pdf.setFontSize(6);
+            pdf.setFontSize(5.6 * MOBILE_PDF_FONT_SCALE);
             setColor(C.muted);
             pdf.text(normalizePdfText(card.label), cx + 3, y + 5);
-            pdf.setFontSize(8.5);
+            pdf.setFontSize(8.1 * MOBILE_PDF_FONT_SCALE);
             setColor(card.accent ? C.profit : C.dark);
             pdf.text(card.value, cx + 3, y + 11.5);
           });
@@ -782,7 +783,7 @@ export default function RelatorioMargemVendas() {
         pdf.rect(cfg.lineX, y + 1, 0.12, headerH - 2, 'F');
 
         setPdfFont('normal');
-        pdf.setFontSize(5.4);
+        pdf.setFontSize(5.1 * MOBILE_PDF_FONT_SCALE);
         setColor(SLATE500);
         pdf.text('QTD', cfg.qtdColRight, y + 4.5, { align: 'right' });
         pdf.text('UN', cfg.qtdColRight, y + 8.2, { align: 'right' });
@@ -817,7 +818,7 @@ export default function RelatorioMargemVendas() {
         const row2Y = valoresY + 3.85;
 
         setPdfFont('normal');
-        pdf.setFontSize(6.4 * fontScale);
+        pdf.setFontSize(6.1 * fontScale);
         MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
           if (key === 'custoUnit') setColor(SLATE500);
           else if (key === 'markup') setColor(C.profit);
@@ -834,8 +835,8 @@ export default function RelatorioMargemVendas() {
 
       const measureMarginCompactRow = (dataRow, y0, { isGroup = false, groupLabel = null, showMetrics = true } = {}) => {
         const cfg = getMobileRowLayout();
-        const vs = 1.35;
-        const fontScale = 1.05;
+        const vs = 1.28;
+        const fontScale = MOBILE_PDF_FONT_SCALE;
         const nomeLineStep = 3.85 * vs;
         const margemLinhaInferiorItem = 1.3 * vs;
         const gapNomeValores = 2.35 * vs;
@@ -853,7 +854,7 @@ export default function RelatorioMargemVendas() {
           : normalizePdfText(String(dataRow?.nome || '?'));
 
         setPdfFont('normal');
-        pdf.setFontSize(7 * fontScale);
+        pdf.setFontSize(6.6 * fontScale);
         const nomeLinhas = pdf.splitTextToSize(nomeText, cfg.nomeMaxW).slice(0, 3);
         const nomeTop = y0 + 3.4 * vs;
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
@@ -920,16 +921,16 @@ export default function RelatorioMargemVendas() {
         pdf.rect(cfg.lineX, branchY, cfg.lineWidth, 0.12, 'F');
 
         setPdfFont('normal');
-        pdf.setFontSize(6.8 * fontScale);
+        pdf.setFontSize(6.5 * fontScale);
         setColor(SLATE900);
         pdf.text(formatCommercialQuantity(qtd, unidade), cfg.qtdColRight, nomeTop + 1.2, {
           align: 'right',
         });
-        pdf.setFontSize(5.9 * fontScale);
+        pdf.setFontSize(5.5 * fontScale);
         setColor(SLATE700);
         pdf.text(normalizePdfText(unidade), cfg.qtdColRight, nomeTop + 4.6, { align: 'right' });
 
-        pdf.setFontSize(7 * fontScale);
+        pdf.setFontSize(6.6 * fontScale);
         setColor(SLATE700);
         nomeLinhas.forEach((line, li) => {
           pdf.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
