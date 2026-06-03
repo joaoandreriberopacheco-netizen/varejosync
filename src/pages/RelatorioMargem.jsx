@@ -636,11 +636,26 @@ export default function RelatorioMargemVendas() {
       const setFill = (rgb) => pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
 
       let y = 12;
+      let mobileTableHeaderOnPage = false;
 
-      const ensureSpace = (needed = 20) => {
+      const MOBILE_VALUE_ROWS = [
+        [
+          { key: 'precoMedio', label: 'PREÇO UN' },
+          { key: 'receita', label: 'RECEITA' },
+          { key: 'custo', label: 'CUSTO' },
+        ],
+        [
+          { key: 'lucro', label: 'LUCRO' },
+          { key: 'markup', label: 'MK %' },
+        ],
+      ];
+
+      const ensureSpace = (needed = 20, { repeatTableHeader = true } = {}) => {
         if (y + needed <= pageH - 6) return;
         pdf.addPage();
-        y = 14;
+        y = M + 2;
+        mobileTableHeaderOnPage = false;
+        if (repeatTableHeader) drawMobileColumnHeaders();
       };
 
       const getRowMarkup = (row) => {
@@ -732,14 +747,87 @@ export default function RelatorioMargemVendas() {
         lineWidth: 2.5,
       });
 
+      const buildMobileMarginValueColumns = (itemMl, contentRight, colCount) => {
+        const gap = 0.8;
+        const count = colCount;
+        const colW = (contentRight - itemMl - gap * (count - 1)) / count;
+        const colRight = Array.from({ length: count }, (_, idx) => itemMl + (idx + 1) * colW + idx * gap);
+        return { colW, colRight, gap, count };
+      };
+
+      const drawMobileColumnHeaders = () => {
+        if (mobileTableHeaderOnPage) return;
+        const cfg = getMobileRowLayout();
+        const row1 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
+        const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 2);
+        const headerH = 10.5;
+
+        if (y + headerH + 2 > pageH - 6) {
+          pdf.addPage();
+          y = M + 2;
+        }
+
+        setFill(C.soft);
+        pdf.rect(M, y, CW, headerH, 'F');
+        setFill(SLATE225);
+        pdf.rect(cfg.lineX, y + 1, 0.12, headerH - 2, 'F');
+
+        setPdfFont('normal');
+        pdf.setFontSize(5.4);
+        setColor(SLATE500);
+        pdf.text('QTD', cfg.qtdColRight, y + 4.5, { align: 'right' });
+        pdf.text('UN', cfg.qtdColRight, y + 8.2, { align: 'right' });
+
+        const headerRow1Y = y + 4.8;
+        MOBILE_VALUE_ROWS[0].forEach(({ label }, idx) => {
+          pdf.text(normalizePdfText(label), row1.colRight[idx], headerRow1Y, { align: 'right' });
+        });
+        const headerRow2Y = y + 8.6;
+        MOBILE_VALUE_ROWS[1].forEach(({ label }, idx) => {
+          pdf.text(normalizePdfText(label), row2.colRight[idx], headerRow2Y, { align: 'right' });
+        });
+
+        pdf.setDrawColor(...SLATE200);
+        pdf.setLineWidth(0.15);
+        pdf.line(M, y + headerH, M + CW, y + headerH);
+        y += headerH + 1.2;
+        mobileTableHeaderOnPage = true;
+      };
+
+      const drawMobileTabulatedValues = (dataRow, cfg, valoresY, fontScale) => {
+        const row1 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
+        const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 2);
+        const precoMedio = getRowPrecoMedio(dataRow);
+        const values = {
+          precoMedio: formatNumPdf(precoMedio),
+          receita: formatNumPdf(dataRow.total_recebido || 0),
+          custo: formatNumPdf(dataRow.custo_total || 0),
+          lucro: formatNumPdf(dataRow.lucro_total || 0),
+          markup: formatPctPdf(getRowMarkup(dataRow)),
+        };
+        const row2Y = valoresY + 3.85;
+
+        setPdfFont('normal');
+        pdf.setFontSize(6.4 * fontScale);
+        MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
+          if (key === 'custo') setColor(SLATE500);
+          else setColor(SLATE700);
+          pdf.text(values[key], row1.colRight[idx], valoresY, { align: 'right' });
+        });
+        MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
+          setColor(C.profit);
+          pdf.text(values[key], row2.colRight[idx], row2Y, { align: 'right' });
+        });
+      };
+
       const measureMarginCompactRow = (dataRow, y0, { isGroup = false, groupLabel = null, showMetrics = true } = {}) => {
         const cfg = getMobileRowLayout();
         const vs = 1.35;
         const fontScale = 1.05;
         const nomeLineStep = 3.85 * vs;
         const margemLinhaInferiorItem = 1.3 * vs;
-        const auxDetailStep = 2.95 * vs;
-        const gapNomeDetalhe = 2.4 * vs;
+        const gapNomeValores = 2.35 * vs;
+        const valoresLineH = 7.5 * vs;
 
         const unidade = isGroup
           ? formatMarginTreeUnidade(dataRow, { isGroup: true })
@@ -763,20 +851,8 @@ export default function RelatorioMargemVendas() {
           return { rowBlockH, cfg, vs, fontScale, nomeLinhas, nomeTop, nomeLineStep, isGroup, showMetrics, qtd, unidade };
         }
 
-        const precoMedio = getRowPrecoMedio(dataRow);
-        const linha1 = normalizePdfText(
-          `Receita ${formatMoneyPdf(dataRow.total_recebido || 0)} · ${unidade} · Méd. ${formatMoneyPdf(precoMedio)} · Custo ${formatMoneyPdf(dataRow.custo_total || 0)}`
-        );
-        const linha2 = normalizePdfText(
-          `Lucro ${formatMoneyPdf(dataRow.lucro_total || 0)} · Mk ${formatPctPdf(getRowMarkup(dataRow))}`
-        );
-
-        pdf.setFontSize(5.65 * fontScale);
-        const auxValoresLinhas = pdf.splitTextToSize(linha1, cfg.nomeMaxW);
-        const detAux1 = lastNomeBaseline + gapNomeDetalhe;
-        const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-        const detEnd = detAux2 + auxDetailStep;
-        const rowBlockH = detEnd + margemLinhaInferiorItem - y0;
+        const valoresY = lastNomeBaseline + gapNomeValores;
+        const rowBlockH = valoresY + valoresLineH + margemLinhaInferiorItem - y0;
 
         return {
           rowBlockH,
@@ -786,14 +862,9 @@ export default function RelatorioMargemVendas() {
           nomeLinhas,
           nomeTop,
           nomeLineStep,
-          auxValoresLinhas,
-          linha2,
-          auxDetailStep,
-          gapNomeDetalhe,
+          valoresY,
           qtd,
           unidade,
-          detAux1,
-          detAux2,
           isGroup,
           showMetrics,
         };
@@ -809,13 +880,9 @@ export default function RelatorioMargemVendas() {
           nomeLinhas,
           nomeTop,
           nomeLineStep,
-          auxValoresLinhas,
-          linha2,
-          auxDetailStep,
+          valoresY,
           qtd,
           unidade,
-          detAux1,
-          detAux2,
           isGroup,
           showMetrics,
         } = measured;
@@ -856,12 +923,7 @@ export default function RelatorioMargemVendas() {
           pdf.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
         });
 
-        pdf.setFontSize(5.65 * fontScale);
-        setColor(SLATE500);
-        auxValoresLinhas.forEach((line, ai) => {
-          pdf.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
-        });
-        pdf.text(linha2, cfg.itemMl, detAux2);
+        drawMobileTabulatedValues(dataRow, cfg, valoresY, fontScale);
 
         pdf.setDrawColor(...SLATE200);
         pdf.setLineWidth(0.15);
@@ -894,6 +956,7 @@ export default function RelatorioMargemVendas() {
 
       drawMobileHeader();
       drawMobileKpis();
+      drawMobileColumnHeaders();
       flatRows.forEach((treeRow) => {
         if (treeRow.type === 'group') {
           drawMobileGroupBand(treeRow);
