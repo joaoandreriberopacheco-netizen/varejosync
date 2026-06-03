@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, Wallet, SlidersHorizontal } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal } from 'lucide-react';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import {
   buildMarginTree,
@@ -20,7 +20,6 @@ import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { registerJsPdfNotoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
-import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
 const PDF_COL_GAP_MM = 2;
 
@@ -908,11 +907,11 @@ export default function RelatorioMargemVendas() {
       : null;
 
   return (
-    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-gray-50/50 dark:bg-gray-950 md:overflow-x-hidden">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-white dark:bg-gray-900 md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="flex-none bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm z-10">
-          <div className="w-full min-w-0 px-3 md:px-6 py-2.5 space-y-2">
+        <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
+          <div className="w-full min-w-0 px-3 py-2 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Link to="/Relatorios">
@@ -921,13 +920,17 @@ export default function RelatorioMargemVendas() {
                   </button>
                 </Link>
                 <div className="min-w-0">
-                  <h1 className="text-sm md:text-base font-glacial font-semibold text-gray-900 dark:text-white truncate">Relatório de Margem</h1>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                    {productCount} produto{productCount === 1 ? '' : 's'}
+                  <h1 className="text-sm md:text-base font-glacial font-medium text-gray-800 dark:text-gray-100 truncate">Relatório de Margem</h1>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-normal text-gray-500 dark:text-gray-400 min-w-0">
+                    <span className="truncate">{productCount} produto{productCount === 1 ? '' : 's'}</span>
+                    <span className="truncate">{formatMoney(totals.receita_liquida)} receita</span>
+                    <span className="truncate text-gray-400 dark:text-gray-500">{formatMoney(totals.custo_total)} custo</span>
+                    <span className="truncate text-emerald-600 dark:text-emerald-400">{formatMoney(totals.lucro_total)} lucro</span>
+                    <span className="truncate text-emerald-600 dark:text-emerald-400">{formatPercent(totalMarkup)} markup</span>
                     {periodLabel ? (
-                      <span className="text-gray-400 dark:text-gray-500"> • {periodLabel}</span>
+                      <span className="truncate text-gray-400 dark:text-gray-500">{periodLabel}</span>
                     ) : null}
-                  </p>
+                  </div>
                 </div>
               </div>
               <DropdownMenu>
@@ -1079,52 +1082,8 @@ export default function RelatorioMargemVendas() {
           )}
 
 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {/* Resumo na mesma linguagem do PDF */}
-         <div className="px-3 md:px-4 py-2 min-w-0 max-w-full overflow-x-hidden">
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-             <AuditableMetricTooltip
-               className="!p-3 md:!p-3 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
-               icon={TrendingUp}
-               label="RECEITA LÍQUIDA"
-               value={formatMoney(totals.receita_liquida)}
-               auditData={{
-                 'Receita Bruta': formatMoney(totals.total_recebido),
-                 'Menos Descontos': `- ${formatMoney(totals.total_desconto_venda)}`,
-                 'Receita Líquida': formatMoney(totals.receita_liquida)
-               }}
-             />
-             <AuditableMetricTooltip
-               className="!p-3 md:!p-3 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
-               icon={Wallet}
-               label="CUSTO TOTAL"
-               value={formatMoney(totals.custo_total)}
-               auditData={{
-                 'Custo Total': formatMoney(totals.custo_total)
-               }}
-             />
-             <AuditableMetricTooltip
-               className="!p-3 md:!p-3 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
-               icon={DollarSign}
-               label="LUCRO"
-               value={formatMoney(totals.lucro_total)}
-               auditData={{
-                 'Receita Líquida': formatMoney(totals.receita_liquida),
-                 'Menos Custos': `- ${formatMoney(totals.custo_total)}`,
-                 'Lucro Líquido': formatMoney(totals.lucro_total)
-               }}
-             />
-             <AuditableMetricTooltip
-               className="!p-3 md:!p-3 !bg-emerald-50/80 dark:!bg-emerald-950/20 !border-emerald-100 [&_p:last-child]:!font-normal"
-               icon={Percent}
-               variant="profit"
-               label="MARKUP"
-               value={formatPercent(totalMarkup)}
-             />
-           </div>
-           </div>
-
            {/* Toolbar */}
-           <div className="px-3 md:mx-4 mb-2 rounded-xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm py-2 md:px-3 min-w-0 max-w-full">
+           <div className="px-3 md:mx-4 mb-2 py-2 min-w-0 max-w-full">
              <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
             <div className="hidden md:contents">
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
@@ -1213,8 +1172,8 @@ export default function RelatorioMargemVendas() {
                     <col className="w-[100px]" />
                     <col className="w-[80px]" />
                   </colgroup>
-                  <thead className="sticky top-0 z-30 bg-gray-800 dark:bg-gray-900 backdrop-blur-sm">
-                    <tr className="border-b border-gray-700 dark:border-gray-600">
+                  <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900 backdrop-blur-sm">
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
                       <th
                         onClick={() => {
                           if (sortField === 'quantidade_vendida') {
@@ -1224,11 +1183,11 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-center py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="text-center py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200">
+                      <th className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                         UN
                       </th>
                       <th
@@ -1240,7 +1199,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('asc');
                           }
                         }}
-                        className="text-left py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1253,7 +1212,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         PREÇO UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1266,7 +1225,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1279,7 +1238,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1292,7 +1251,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1305,7 +1264,7 @@ export default function RelatorioMargemVendas() {
                            setSortOrder('desc');
                          }
                        }}
-                       className="text-right py-2 px-2 text-[10px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
+                       className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                       >
                        MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
