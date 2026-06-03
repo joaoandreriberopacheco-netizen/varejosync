@@ -254,7 +254,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
 
     const html = `<html><head><title>Relatório - ${caixaSelecionado.nome}</title><style>
-      body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
+      body{font-family:'DIN 1451',DINish,system-ui,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
       h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
       .row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
       .total{font-size:15px;font-weight:700}

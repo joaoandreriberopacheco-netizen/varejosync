@@ -68,7 +68,7 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
     const dinheiroNaGaveta = (turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0) - (turno.total_despesas || 0);
 
     const html = `<html><head><title>Fechamento ${turno.numero}</title><style>
-      body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:760px;margin:0 auto;color:#111827}
+      body{font-family:'DIN 1451',DINish,system-ui,sans-serif;font-size:13px;padding:20px;max-width:760px;margin:0 auto;color:#111827}
       h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
       .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
       .dashed{border-top:1px dashed #9ca3af;margin:10px 0}

@@ -123,14 +123,14 @@ export default function P38Logo({
 
   const textP38 = {
     color: fg,
-    fontFamily: "'Quicksand', sans-serif",
+    fontFamily: "'DIN 1451', 'DINish', system-ui, sans-serif",
     fontWeight: 700,
     letterSpacing: '-0.02em',
     lineHeight: 1,
   };
   const textErp = {
     color: fg,
-    fontFamily: "'Inter', system-ui, sans-serif",
+    fontFamily: "'DIN 1451', 'DINish', system-ui, sans-serif",
     fontWeight: 400,
     letterSpacing: '0.14em',
     lineHeight: 1,

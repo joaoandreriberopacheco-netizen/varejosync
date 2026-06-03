@@ -131,7 +131,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
         context.fillStyle = gradient;
         context.fillRect(0, canvas.height - 100, canvas.width, 100);
 
-        context.font = "bold 16px Inter, sans-serif";
+        context.font = 'bold 16px "DIN 1451", DINish, system-ui, sans-serif';
         context.fillStyle = "#ffffff";
         context.textAlign = "left";
         context.shadowColor = "rgba(0,0,0,0.5)";

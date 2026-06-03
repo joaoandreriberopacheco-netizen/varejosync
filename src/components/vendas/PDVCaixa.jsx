@@ -1718,7 +1718,7 @@ export default function PDVCaixa() {
                          ? cancelamentos.map(c => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af;padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
                          : '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda cancelada</p>';
                        const html = `<html><head><title>Relatório de Fechamento</title><style>
-                         body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
+                         body{font-family:'DIN 1451',DINish,system-ui,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
                          h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
                          .row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
                          .total{font-size:15px;font-weight:700}

@@ -31,7 +31,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
               const doc = `
               <html><head><title>Saldo Consolidado</title>
               <style>
-                body { font-family: Inter, sans-serif; font-size: 12px; color: #111; margin: 10mm; }
+                body { font-family: 'DIN 1451', DINish, system-ui, sans-serif; font-size: 12px; color: #111; margin: 10mm; }
                 .space-y-3 > * + * { margin-top: 12px; }
                 .rounded-2xl { border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; }
                 .px-5 { padding-left: 20px; padding-right: 20px; }

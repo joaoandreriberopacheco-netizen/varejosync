@@ -1,9 +1,14 @@
-# DINish (estilo DIN 1451) — PDF mobile
+# DINish (estilo DIN 1451) — fonte principal do sistema
 
-Fontes usadas no **PDF mobile** do Relatório de Margem, com aparência de **DIN 1451 Light**.
+Fontes usadas em **toda a interface** do P38 ERP, com aparência de **DIN 1451**.
 
-- `DINish-Light.ttf` — corpo do relatório (peso Light)
-- `DINish-Regular.ttf` — ênfase leve (cabeçalhos de coluna)
+| Ficheiro | Peso CSS | Uso típico |
+|---|---|---|
+| `DINish-Light.ttf` | 300 | Texto secundário, labels leves |
+| `DINish-Regular.ttf` | 400 | Corpo de texto padrão |
+| `DINish-Medium.ttf` | 500 | Destaques moderados |
+| `DINish-SemiBold.ttf` | 600 | Títulos, botões, ênfase |
+| `DINish-Bold.ttf` | 700 | Valores, cabeçalhos fortes |
 
 Derivadas do projeto [DINish](https://github.com/playbeing/dinish) (linhagem DIN 1451 / D-DIN), licença **SIL Open Font License 1.1** — ver `OFL.txt`.
 

@@ -9,7 +9,7 @@ async function printReport(evento) {
     return `<section style="margin-bottom:16px"><h3 style="margin:0 0 8px">${fornecedor.fornecedor_nome || 'Fornecedor'}</h3><ul style="margin:0;padding-left:18px">${itens}</ul></section>`;
   }).join('');
 
-  const html = `<html><head><title>Relatório do Evento</title></head><body style="font-family:Inter,sans-serif;padding:24px"><h2>${evento.embarcacao_nome || 'Evento logístico'}</h2><p>${evento.codigo || ''}</p><p>Total de carga: ${(evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>${fornecedores || '<p>Sem embarques relacionados.</p>'}</body></html>`;
+  const html = `<html><head><title>Relatório do Evento</title></head><body style="font-family:'DIN 1451',DINish,system-ui,sans-serif;padding:24px"><h2>${evento.embarcacao_nome || 'Evento logístico'}</h2><p>${evento.codigo || ''}</p><p>Total de carga: ${(evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>${fornecedores || '<p>Sem embarques relacionados.</p>'}</body></html>`;
   try {
     await openPrintWindowOrShareHtml(html, `evento-carga-${evento.codigo || Date.now()}.html`, evento.embarcacao_nome || 'Evento');
   } catch {
