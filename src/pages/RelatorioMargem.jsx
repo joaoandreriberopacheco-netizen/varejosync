@@ -18,7 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
-import { registerJsPdfNotoFonts, registerJsPdfPrecisionFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { registerJsPdfNotoFonts, registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -612,7 +612,7 @@ export default function RelatorioMargemVendas() {
         unit: 'mm',
         format: [MOBILE_PDF_W_MM, MOBILE_PDF_H_MM],
       });
-      const pdfFontFamily = await registerJsPdfPrecisionFonts(pdf);
+      const pdfFontFamily = await registerJsPdfDin1451Fonts(pdf);
       const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
       const MOBILE_PDF_FONT_SCALE = 0.96;
       const pageW = pdf.internal.pageSize.getWidth();

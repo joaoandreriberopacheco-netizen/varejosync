@@ -2,12 +2,12 @@ const NOTO_REGULAR_URL =
   'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
 const NOTO_BOLD_URL =
   'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Bold.ttf';
-const NOTO_MONO_LIGHT_URL =
-  'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansMono/NotoSansMono-Light.ttf';
-const NOTO_MONO_REGULAR_URL =
-  'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansMono/NotoSansMono-Regular.ttf';
 
-const fontCache = { regular: null, bold: null, monoLight: null, monoRegular: null };
+const PDF_FONT_ASSET_BASE = `${import.meta.env.BASE_URL || '/'}fonts/dinish/`;
+const DIN1451_LIGHT_URL = `${PDF_FONT_ASSET_BASE}DINish-Light.ttf`;
+const DIN1451_REGULAR_URL = `${PDF_FONT_ASSET_BASE}DINish-Regular.ttf`;
+
+const fontCache = { regular: null, bold: null, dinLight: null, dinRegular: null };
 
 const arrayBufferToBase64 = (buffer) => {
   let binary = '';
@@ -48,24 +48,30 @@ export async function registerJsPdfNotoFonts(doc) {
   }
 }
 
-/** Noto Sans Mono Light — tipografia fina estilo instrumento de precisão (relatórios mobile). */
-export async function registerJsPdfPrecisionFonts(doc) {
+/**
+ * DIN 1451 Light (via DINish Light, OFL) — relatório mobile de margem.
+ * Retorna família jsPDF `DIN1451` ou fallback Noto Sans.
+ */
+export async function registerJsPdfDin1451Fonts(doc) {
   try {
     const [lightBase64, regularBase64] = await Promise.all([
-      loadFontBase64(NOTO_MONO_LIGHT_URL, 'monoLight'),
-      loadFontBase64(NOTO_MONO_REGULAR_URL, 'monoRegular'),
+      loadFontBase64(DIN1451_LIGHT_URL, 'dinLight'),
+      loadFontBase64(DIN1451_REGULAR_URL, 'dinRegular'),
     ]);
-    doc.addFileToVFS('NotoSansMono-Light.ttf', lightBase64);
-    doc.addFont('NotoSansMono-Light.ttf', 'NotoSansMono', 'normal');
-    doc.addFileToVFS('NotoSansMono-Regular.ttf', regularBase64);
-    doc.addFont('NotoSansMono-Regular.ttf', 'NotoSansMono', 'bold');
-    doc.setFont('NotoSansMono', 'normal');
-    return 'NotoSansMono';
+    doc.addFileToVFS('DINish-Light.ttf', lightBase64);
+    doc.addFont('DINish-Light.ttf', 'DIN1451', 'normal');
+    doc.addFileToVFS('DINish-Regular.ttf', regularBase64);
+    doc.addFont('DINish-Regular.ttf', 'DIN1451', 'bold');
+    doc.setFont('DIN1451', 'normal');
+    return 'DIN1451';
   } catch (err) {
-    console.error('jspdfNotoFont: falha ao carregar Noto Sans Mono, fallback Noto Sans:', err);
+    console.error('jspdfNotoFont: falha ao carregar DIN 1451 (DINish), fallback Noto Sans:', err);
     return registerJsPdfNotoFonts(doc);
   }
 }
+
+/** @deprecated Use registerJsPdfDin1451Fonts */
+export const registerJsPdfPrecisionFonts = registerJsPdfDin1451Fonts;
 
 /** Normaliza texto para PDF (Unicode NFC, aspas e travessões). */
 export function normalizePdfText(texto) {
