@@ -39,6 +39,8 @@ const MARGIN_MOBILE_STORM = '#526070';
 const MARGIN_ACCENT_HEX_LIGHT = '#4A5D23';
 const MARGIN_ACCENT_HEX_DARK = '#A3E635';
 const MARGIN_ACCENT_RGB = [74, 93, 35];
+/** Limão — destaque no painel/PDF mobile escuro. */
+const MARGIN_ACCENT_LIME_RGB = [163, 230, 53];
 
 /** Tamanho único corpo + cabeçalho da tabela (desktop e lista mobile). */
 const MARGIN_BODY_TEXT = 'text-sm';
@@ -1027,18 +1029,24 @@ export default function RelatorioMargemVendas() {
       const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
       const MOBILE_PDF_FONT_SCALE = 1.12;
       const MOBILE_ROW_GAP = 0.65;
+      const MOBILE_PDF_DARK = {
+        page: [3, 7, 18],
+        text: [243, 244, 246],
+        textMuted: [156, 163, 175],
+        border: [31, 41, 55],
+        divider: [55, 65, 81],
+      };
       const MOBILE_HUD = {
         storm: [82, 96, 112],
         headerText: [255, 255, 255],
-        headerTextMuted: [241, 245, 249],
-        accent: MARGIN_ACCENT_RGB,
-        grid: [226, 232, 240],
+        headerTextMuted: [203, 213, 225],
+        accent: MARGIN_ACCENT_LIME_RGB,
+        grid: MOBILE_PDF_DARK.border,
       };
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const M = 5;
       const CW = pageW - M * 2;
-      const C = PDF_EMBARQUES_C;
       const flatRows = displayRows.length ? displayRows : [];
       const filtrosDesc = buildMarginFiltrosDesc({
         dateRange,
@@ -1058,18 +1066,28 @@ export default function RelatorioMargemVendas() {
       let y = 12;
       let mobileTableHeaderOnPage = false;
 
+      const fillMobilePdfPage = () => {
+        setFill(MOBILE_PDF_DARK.page);
+        pdf.rect(0, 0, pageW, pageH, 'F');
+      };
+
+      fillMobilePdfPage();
+
       const ensureSpace = (needed = 20, { repeatTableHeader = true } = {}) => {
         if (y + needed <= pageH - 6) return;
         pdf.addPage();
+        fillMobilePdfPage();
         y = M + 2;
         mobileTableHeaderOnPage = false;
         if (repeatTableHeader) drawMobileColumnHeaders();
       };
 
-      const SLATE900 = [15, 23, 42];
-      const SLATE700 = [51, 65, 85];
-      const SLATE500 = [100, 116, 139];
-      const SLATE225 = [203, 213, 225];
+      const setPdfMetricColor = (key, tier = 'filho') => {
+        if (key === 'markup' || key === 'lucro') setColor(MARGIN_ACCENT_LIME_RGB);
+        else if (key === 'custoUnit' || key === 'custoTotal') setColor(MOBILE_PDF_DARK.textMuted);
+        else if (tier === 'filho') setColor(MOBILE_PDF_DARK.textMuted);
+        else setColor(MOBILE_PDF_DARK.text);
+      };
 
       const drawMobileHeader = () => {
         const panelH = 26;
@@ -1124,10 +1142,10 @@ export default function RelatorioMargemVendas() {
             const cx = M + col * (colW + 3);
             setPdfFont('normal');
             pdf.setFontSize(5.2 * MOBILE_PDF_FONT_SCALE);
-            setColor(SLATE500);
+            setColor(MOBILE_PDF_DARK.textMuted);
             pdf.text(normalizePdfText(card.label), cx, y + 4);
             pdf.setFontSize(7.8 * MOBILE_PDF_FONT_SCALE);
-            setColor(card.accent ? MARGIN_ACCENT_RGB : SLATE900);
+            setColor(card.accent ? MARGIN_ACCENT_LIME_RGB : MOBILE_PDF_DARK.text);
             pdf.text(card.value, cx, y + 9.2);
           });
           y += cardH + 1.5;
@@ -1161,12 +1179,13 @@ export default function RelatorioMargemVendas() {
 
         if (y + headerH + 2 > pageH - 6) {
           pdf.addPage();
+          fillMobilePdfPage();
           y = M + 2;
         }
 
         setFill(MOBILE_HUD.storm);
         pdf.roundedRect(M, y, CW, headerH, 1.2, 1.2, 'F');
-        setFill(SLATE225);
+        setFill(MOBILE_PDF_DARK.divider);
         pdf.rect(cfg.lineX, y + 1, 0.12, headerH - 2, 'F');
 
         setPdfFont('normal');
@@ -1188,7 +1207,7 @@ export default function RelatorioMargemVendas() {
         mobileTableHeaderOnPage = true;
       };
 
-      const drawMobileTabulatedValues = (dataRow, cfg, valoresY, fontScale) => {
+      const drawMobileTabulatedValues = (dataRow, cfg, valoresY, fontScale, tier = 'filho') => {
         const row1 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
         const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
         const values = {
@@ -1204,15 +1223,11 @@ export default function RelatorioMargemVendas() {
         setPdfFont('normal');
         pdf.setFontSize(7.5 * fontScale);
         MARGIN_MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
-          if (key === 'custoUnit') setColor(SLATE500);
-          else if (key === 'markup') setColor(MARGIN_ACCENT_RGB);
-          else setColor(SLATE900);
+          setPdfMetricColor(key, tier);
           pdf.text(values[key], row1.colRight[idx], valoresY, { align: 'right' });
         });
         MARGIN_MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
-          if (key === 'custoTotal') setColor(SLATE500);
-          else if (key === 'lucro') setColor(MARGIN_ACCENT_RGB);
-          else setColor(SLATE900);
+          setPdfMetricColor(key, tier);
           pdf.text(values[key], row2.colRight[idx], row2Y, { align: 'right' });
         });
       };
@@ -1285,11 +1300,13 @@ export default function RelatorioMargemVendas() {
           isGroup,
           showMetrics,
         } = measured;
+        const tier = opts.tier ?? (isGroup ? 'pai' : 'filho');
+        const descStrong = tier !== 'filho';
 
         if (isGroup && !showMetrics) {
           setPdfFont('normal');
           pdf.setFontSize(7.4 * fontScale);
-          setColor(SLATE700);
+          setColor(MOBILE_PDF_DARK.text);
           nomeLinhas.forEach((line, li) => {
             pdf.text(line, M + 3, nomeTop + li * nomeLineStep);
           });
@@ -1302,27 +1319,29 @@ export default function RelatorioMargemVendas() {
         const branchY = y0 + 2.4 * vs;
         setFill(MOBILE_HUD.accent);
         pdf.circle(cfg.lineX, y0 + 2.1, 0.55, 'F');
-        setFill(SLATE225);
+        setFill(MOBILE_PDF_DARK.divider);
         pdf.rect(cfg.lineX, y0, 0.12, rowBlockH, 'F');
         pdf.rect(cfg.lineX, branchY, cfg.lineWidth, 0.12, 'F');
 
-        setPdfFont('normal');
+        setPdfFont(descStrong ? 'bold' : 'normal');
         pdf.setFontSize(7.4 * fontScale);
-        setColor(SLATE900);
+        setColor(descStrong ? MOBILE_PDF_DARK.text : MOBILE_PDF_DARK.textMuted);
         pdf.text(formatCommercialQuantity(qtd, unidade), cfg.qtdColRight, nomeTop + 1.1, {
           align: 'right',
         });
+        setPdfFont('normal');
         pdf.setFontSize(6.2 * fontScale);
-        setColor(SLATE500);
+        setColor(MOBILE_PDF_DARK.textMuted);
         pdf.text(normalizePdfText(unidade), cfg.qtdColRight, nomeTop + 4.3, { align: 'right' });
 
+        setPdfFont(descStrong ? 'bold' : 'normal');
         pdf.setFontSize(7.8 * fontScale);
-        setColor(SLATE900);
+        setColor(descStrong ? MOBILE_PDF_DARK.text : MOBILE_PDF_DARK.textMuted);
         nomeLinhas.forEach((line, li) => {
           pdf.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
         });
 
-        drawMobileTabulatedValues(dataRow, cfg, valoresY, fontScale);
+        drawMobileTabulatedValues(dataRow, cfg, valoresY, fontScale, tier);
 
         setDraw(MOBILE_HUD.grid);
         pdf.setLineWidth(0.1);
@@ -1342,14 +1361,16 @@ export default function RelatorioMargemVendas() {
           isGroup: true,
           groupLabel: treeRow.label,
           showMetrics: treeRow.showMetrics !== false,
+          tier: 'pai',
         });
         y += rowH + MOBILE_ROW_GAP;
       };
 
-      const drawMobileProductRow = (dataRow) => {
+      const drawMobileProductRow = (dataRow, level = 1) => {
+        const tier = level <= 1 ? 'solteiro' : 'filho';
         const rowH = measureMarginCompactRow(dataRow, y).rowBlockH;
         ensureSpace(rowH + 1);
-        drawMarginCompactRow(dataRow, y);
+        drawMarginCompactRow(dataRow, y, { tier });
         y += rowH + MOBILE_ROW_GAP;
       };
 
@@ -1360,14 +1381,14 @@ export default function RelatorioMargemVendas() {
         if (treeRow.type === 'group') {
           drawMobileGroupBand(treeRow);
         } else {
-          drawMobileProductRow(treeRow.item);
+          drawMobileProductRow(treeRow.item, treeRow.level);
         }
       });
 
       ensureSpace(10);
       setPdfFont('normal');
       pdf.setFontSize(6);
-      setColor(C.muted);
+      setColor(MOBILE_PDF_DARK.textMuted);
       pdf.text(
         normalizePdfText(`${productCount} produto(s) no relatório`),
         M,
