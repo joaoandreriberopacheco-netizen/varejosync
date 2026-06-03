@@ -579,15 +579,13 @@ export default function RelatorioMargemVendas() {
     const footerY = pageHeight - 10;
     const lineHeight = 2.9 * BODY_LINE_HEIGHT_MULT;
     const rowMinHeightProduct = 4.6 * BODY_LINE_HEIGHT_MULT;
-    const rowMinHeightGroup = 6 * BODY_LINE_HEIGHT_MULT;
+    const rowMinHeightGroup = rowMinHeightProduct;
     const rowPadV = 1.2 * BODY_PAD_MULT;
     const textBaseline = 3.5 * BODY_PAD_MULT;
     const pdfIndentGroupMm = 3;
     const pdfIndentProdutoMm = 1.6;
-    const groupCardInset = 2 * BODY_PAD_MULT;
     const descPad = 2 * BODY_PAD_MULT;
-    const rowGapGroup = 1.6 * BODY_PAD_MULT;
-    const descGroupOffset = 2.5 * BODY_PAD_MULT;
+    const rowGapGroup = 0;
 
     const C = PDF_EMBARQUES_C;
 
@@ -806,9 +804,8 @@ export default function RelatorioMargemVendas() {
       const isGroup = treeRow.type === 'group';
       const showMetrics = !isGroup || treeRow.showMetrics !== false;
       const dataRow = isGroup ? treeRow : treeRow.item;
-      const descIndent = isGroup
-        ? 1 + (treeRow.level - 1) * pdfIndentGroupMm
-        : 1 + (treeRow.level - 1) * pdfIndentGroupMm + pdfIndentProdutoMm;
+      const descIndent =
+        1 + pdfIndentProdutoMm + (treeRow.level - 1) * pdfIndentGroupMm;
       const descX = colXAbs.desc + descIndent;
       const descMaxW = Math.max(8, colWidths.desc - descPad - descIndent);
       const descText = isGroup
@@ -821,15 +818,13 @@ export default function RelatorioMargemVendas() {
 
       ensureSpace(rowHeight + rowGap);
 
-      const rowX = margin + (isGroup ? groupCardInset : 0);
-      const rowW = contentWidth - (isGroup ? groupCardInset * 2 : 0);
+      const rowX = margin;
+      const rowW = contentWidth;
 
       if (isGroup) {
-        setFill(C.panel);
-        pdf.roundedRect(rowX, yPos, rowW, rowHeight, 3, 3, 'F');
         setFill(C.teal);
         pdf.roundedRect(
-          rowX + 3 * BODY_PAD_MULT,
+          margin - 3.2,
           yPos + 2.6 * BODY_PAD_MULT,
           1.2,
           Math.min(rowHeight - 4.8 * BODY_PAD_MULT, 6.5),
@@ -856,7 +851,7 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(7.5);
       setColor(C.text);
-      drawDescColumn(descLines, descX + (isGroup ? descGroupOffset : 0), descMaxW, textY);
+      drawDescColumn(descLines, descX, descMaxW, textY);
       if (showMetrics) {
         drawMetricsRow(dataRow, textY, { isGroup });
       }
@@ -1301,8 +1296,8 @@ export default function RelatorioMargemVendas() {
                             </td>
                             <td
                               lang="pt-BR"
-                              className="py-2 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
-                              style={{ paddingLeft: 8 + indent, lineHeight: 1.2, minHeight: 38 }}
+                              className="py-1.5 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
+                              style={{ paddingLeft: MARGIN_INDENT_PRODUTO + indent, lineHeight: 1.2, minHeight: 46 }}
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {!isLeaf && (
@@ -1359,11 +1354,11 @@ export default function RelatorioMargemVendas() {
                       return (
                         <tr
                           key={treeRow.key}
-                            className={`border-b border-gray-100/80 dark:border-gray-800/80 transition-colors ${
+                            className={`border-b border-gray-50 dark:border-gray-800/50 transition-colors group ${
                             rowIdx % 2 === 1
-                              ? 'bg-gray-50/60 dark:bg-gray-800/30'
-                              : 'bg-white dark:bg-gray-900/10'
-                          } hover:bg-gray-100/70 dark:hover:bg-gray-800/50`}
+                              ? 'bg-gray-50/30 dark:bg-gray-800/20'
+                              : 'bg-white dark:bg-gray-900'
+                          } hover:bg-gray-50/70 dark:hover:bg-gray-800/25`}
                         >
                           <td
                             className="py-1.5 px-2 text-xs text-center tabular-nums text-gray-900 dark:text-white font-semibold"
