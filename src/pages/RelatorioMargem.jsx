@@ -640,13 +640,14 @@ export default function RelatorioMargemVendas() {
 
       const MOBILE_VALUE_ROWS = [
         [
-          { key: 'precoMedio', label: 'PREÇO UN' },
-          { key: 'receita', label: 'RECEITA' },
-          { key: 'custo', label: 'CUSTO' },
+          { key: 'custoUnit', label: 'CUSTO UN' },
+          { key: 'precoVenda', label: 'PREÇO VENDA' },
+          { key: 'markup', label: 'MK %' },
         ],
         [
+          { key: 'custoTotal', label: 'CUSTO TOTAL' },
+          { key: 'vendaTotal', label: 'VENDA TOTAL' },
           { key: 'lucro', label: 'LUCRO' },
-          { key: 'markup', label: 'MK %' },
         ],
       ];
 
@@ -672,6 +673,14 @@ export default function RelatorioMargemVendas() {
         }
         const qtd = row.quantidade_vendida || 0;
         return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
+      };
+
+      const getRowCustoUnitCalc = (row) => {
+        const qtd = row.quantidade_vendida || 0;
+        if (qtd > 0 && row.custo_total != null) {
+          return (row.custo_total || 0) / qtd;
+        }
+        return row.custo_unitario_cadastro ?? 0;
       };
 
       const drawMobileHeader = () => {
@@ -759,7 +768,7 @@ export default function RelatorioMargemVendas() {
         if (mobileTableHeaderOnPage) return;
         const cfg = getMobileRowLayout();
         const row1 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
-        const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 2);
+        const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
         const headerH = 10.5;
 
         if (y + headerH + 2 > pageH - 6) {
@@ -796,26 +805,29 @@ export default function RelatorioMargemVendas() {
 
       const drawMobileTabulatedValues = (dataRow, cfg, valoresY, fontScale) => {
         const row1 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
-        const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 2);
-        const precoMedio = getRowPrecoMedio(dataRow);
+        const row2 = buildMobileMarginValueColumns(cfg.itemMl, cfg.contentRight, 3);
         const values = {
-          precoMedio: formatNumPdf(precoMedio),
-          receita: formatNumPdf(dataRow.total_recebido || 0),
-          custo: formatNumPdf(dataRow.custo_total || 0),
-          lucro: formatNumPdf(dataRow.lucro_total || 0),
+          custoUnit: formatNumPdf(getRowCustoUnitCalc(dataRow)),
+          precoVenda: formatNumPdf(getRowPrecoMedio(dataRow)),
           markup: formatPctPdf(getRowMarkup(dataRow)),
+          custoTotal: formatNumPdf(dataRow.custo_total || 0),
+          vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
+          lucro: formatNumPdf(dataRow.lucro_total || 0),
         };
         const row2Y = valoresY + 3.85;
 
         setPdfFont('normal');
         pdf.setFontSize(6.4 * fontScale);
         MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
-          if (key === 'custo') setColor(SLATE500);
+          if (key === 'custoUnit') setColor(SLATE500);
+          else if (key === 'markup') setColor(C.profit);
           else setColor(SLATE700);
           pdf.text(values[key], row1.colRight[idx], valoresY, { align: 'right' });
         });
         MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
-          setColor(C.profit);
+          if (key === 'custoTotal') setColor(SLATE500);
+          else if (key === 'lucro') setColor(C.profit);
+          else setColor(SLATE700);
           pdf.text(values[key], row2.colRight[idx], row2Y, { align: 'right' });
         });
       };
