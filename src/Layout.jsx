@@ -265,7 +265,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
+      <div className="min-h-screen flex font-sans bg-background text-foreground">
 
 
         {/* Sidebar Desktop */}

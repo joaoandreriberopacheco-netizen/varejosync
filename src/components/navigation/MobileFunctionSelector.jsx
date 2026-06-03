@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
+import { p38ThemeColors } from '@/lib/p38ThemeSurfaces';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -39,38 +40,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   const currentList = activeGroup?.submenu || [];
   const isItemActive = (page) => location.pathname.includes(page);
 
-  // Color tokens based on actual dark mode state
-  const c = isDark ? {
-    bg: '#111827',
-    headerBg: '#1f2937',
-    searchBg: '#374151',
-    cardBg: '#1f2937',
-    text: '#ffffff',
-    textMuted: 'rgba(156,163,175,0.92)',
-    textSub: '#d1d5db',
-    iconColor: '#9ca3af',
-    chevron: '#6b7280',
-    divider: 'rgba(255,255,255,0.06)',
-    btnBg: 'rgba(255,255,255,0.06)',
-    backBg: '#1f2937',
-    closeBg: 'rgba(255,255,255,0.08)',
-    closeColor: '#fff',
-  } : {
-    bg: '#f8fafc',
-    headerBg: '#ffffff',
-    searchBg: '#f1f5f9',
-    cardBg: '#ffffff',
-    text: '#1e293b',
-    textMuted: '#64748b',
-    textSub: '#374151',
-    iconColor: '#6b7280',
-    chevron: '#9ca3af',
-    divider: '#e5e7eb',
-    btnBg: 'rgba(0,0,0,0.04)',
-    backBg: '#f1f5f9',
-    closeBg: '#e5e7eb',
-    closeColor: '#374151',
-  };
+  const c = p38ThemeColors(isDark);
 
   if (!isOpen) return null;
 

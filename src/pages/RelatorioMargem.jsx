@@ -34,20 +34,20 @@ const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 50;
 const MARGIN_MOBILE_ROW_H_PRODUTO = 112;
 
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
-const MARGIN_MOBILE_STORM = '#526070';
+const MARGIN_MOBILE_STORM = '#2d333b';
 /** Destaque de lucro/markup: oliva (claro) e limão (escuro). */
 const MARGIN_ACCENT_HEX_LIGHT = '#4A5D23';
-const MARGIN_ACCENT_HEX_DARK = '#A3E635';
+const MARGIN_ACCENT_HEX_DARK = '#a4ce33';
 const MARGIN_ACCENT_RGB = [74, 93, 35];
 /** Limão — destaque no painel/PDF mobile escuro. */
-const MARGIN_ACCENT_LIME_RGB = [163, 230, 53];
+const MARGIN_ACCENT_LIME_RGB = [164, 206, 51];
 
 /** Tamanho único corpo + cabeçalho da tabela (desktop e lista mobile). */
 const MARGIN_BODY_TEXT = 'text-sm';
 const MARGIN_TABLE_MICRO = 'text-xs';
 const MARGIN_TABLE_HEAD =
   'text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-300';
-const MARGIN_ACCENT_VALUE = 'text-[#4A5D23] dark:text-lime-400';
+const MARGIN_ACCENT_VALUE = 'text-[#4A5D23] dark:text-primary';
 const MARGIN_MUTED_VALUE = 'text-gray-500 dark:text-gray-400';
 
 const MARGIN_MOBILE_VALUE_ROWS = [
@@ -346,7 +346,7 @@ function MargemMobileReportHeader({ filtrosDesc }) {
       style={{ backgroundColor: MARGIN_MOBILE_STORM }}
     >
       <div
-        className="absolute left-3 top-4 bottom-4 w-[3px] rounded-sm bg-[#4A5D23] dark:bg-lime-400"
+        className="absolute left-3 top-4 bottom-4 w-[3px] rounded-sm bg-[#4A5D23] dark:bg-primary"
         aria-hidden
       />
       <div className="pl-7 pr-3 py-3">
@@ -427,7 +427,7 @@ function MargemMobileQtdUnCol({ qtd, unidade, showAccentDot = true }) {
     <div className="relative w-[3.25rem] flex-shrink-0 border-r border-slate-200 dark:border-slate-700 pr-1.5 py-2.5 text-right">
       {showAccentDot ? (
         <span
-          className="absolute left-0 top-3 w-1.5 h-1.5 rounded-full bg-[#4A5D23] dark:bg-lime-400"
+          className="absolute left-0 top-3 w-1.5 h-1.5 rounded-full bg-[#4A5D23] dark:bg-primary"
           aria-hidden
         />
       ) : null}
@@ -1030,16 +1030,16 @@ export default function RelatorioMargemVendas() {
       const MOBILE_PDF_FONT_SCALE = 1.12;
       const MOBILE_ROW_GAP = 0.65;
       const MOBILE_PDF_DARK = {
-        page: [3, 7, 18],
+        page: [26, 27, 33],
         text: [243, 244, 246],
-        textMuted: [156, 163, 175],
-        border: [31, 41, 55],
-        divider: [55, 65, 81],
+        textMuted: [139, 139, 147],
+        border: [56, 62, 71],
+        divider: [45, 51, 59],
       };
       const MOBILE_HUD = {
-        storm: [82, 96, 112],
+        storm: [45, 51, 59],
         headerText: [255, 255, 255],
-        headerTextMuted: [203, 213, 225],
+        headerTextMuted: [139, 139, 147],
         accent: MARGIN_ACCENT_LIME_RGB,
         grid: MOBILE_PDF_DARK.border,
       };
@@ -1717,10 +1717,10 @@ export default function RelatorioMargemVendas() {
   const mobileRowOffset = shouldVirtualizeRows ? mobileVirtual.startIndex : 0;
 
   return (
-    <div className="font-din-1451 h-full min-h-0 flex flex-col overflow-hidden bg-white dark:bg-gray-900 md:overflow-x-hidden">
+    <div className="font-din-1451 h-full min-h-0 flex flex-col overflow-hidden bg-background md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
+        <div className="flex-none bg-background border-b border-border z-10">
           <div className="w-full min-w-0 px-3 py-2 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">

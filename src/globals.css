@@ -45,20 +45,6 @@
   letter-spacing: 0.02em;
 }
 
-/* Modo claro: DIN Light some demais em fundo branco */
-html:not(.dark) .font-din-1451,
-html:not(.dark) .font-din-1451 * {
-  font-weight: 400;
-}
-
-html:not(.dark) .font-din-1451 strong,
-html:not(.dark) .font-din-1451 .font-semibold,
-html:not(.dark) .font-din-1451 .font-bold,
-html:not(.dark) .font-din-1451 .font-medium,
-html:not(.dark) .font-din-1451 th {
-  font-weight: 600;
-}
-
 .font-din-1451 strong,
 .font-din-1451 .font-semibold,
 .font-din-1451 th {
@@ -68,35 +54,6 @@ html:not(.dark) .font-din-1451 th {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-
-/* ==========================================
-   DADOS OPERACIONAIS — MAIÚSCULAS
-   (inputs, corpos de tabela, selects; UI livre)
-   ========================================== */
-
-.p38-data-uppercase,
-tbody td,
-tbody th,
-tfoot td,
-input:not([type="password"]):not([type="number"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]):not([type="month"]):not([type="week"]):not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([data-preserve-case="true"]),
-textarea:not([data-preserve-case="true"]),
-[role="combobox"]:not([data-preserve-case="true"]),
-button[role="combobox"]:not([data-preserve-case="true"]) {
-  text-transform: uppercase;
-}
-
-[data-preserve-case="true"],
-.preserve-case,
-input[type="password"],
-input[type="number"],
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"],
-input[type="month"],
-input[type="week"] {
-  text-transform: none;
-}
 
 /* ==========================================
    MOBILE NATIVE COMPATIBILITY
@@ -109,11 +66,11 @@ html {
 body {
   overscroll-behavior: none;
   touch-action: manipulation;
-  background-color: #f8fafc;
+  background-color: hsl(var(--background));
 }
 
 .dark body {
-  background-color: #1f1d22;
+  background-color: hsl(var(--background));
 }
 
 button,
@@ -154,30 +111,34 @@ nav,
 
 .dark body,
 .dark #root {
-  background: #1f1d22;
-  color: #f1f5f9;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 .dark .bg-white {
-  background-color: #23212a !important;
+  background-color: hsl(var(--card)) !important;
 }
 
 .dark .bg-gray-50,
 .dark .bg-slate-50 {
-  background-color: #1f1d22 !important;
+  background-color: hsl(var(--background)) !important;
 }
 
 .dark .bg-gray-100 {
-  background-color: #34303a !important;
+  background-color: hsl(var(--secondary)) !important;
 }
 
 .dark .bg-gray-800 {
-  background-color: #23212a !important;
+  background-color: hsl(var(--secondary)) !important;
 }
 
 .dark .bg-gray-900,
 .dark .bg-slate-950 {
-  background-color: #1f1d22 !important;
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark .bg-gray-700 {
+  background-color: hsl(var(--muted)) !important;
 }
 
 .dark .text-gray-900,
@@ -197,7 +158,7 @@ nav,
 .dark .text-gray-400,
 .dark .text-slate-500,
 .dark .text-slate-400 {
-  color: #94a3b8 !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .dark .border,
@@ -415,13 +376,13 @@ textarea,
 }
 
 /* ==========================================
-   SCROLLBAR PERSONALIZADA (desktop)
+   SCROLLBAR PERSONALIZADA
    ========================================== */
 
-/* Mobile: fina e discreta */
+/* Scrollbar ultra-sutil — Reativo a dark mode */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -429,59 +390,20 @@ textarea,
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 99px;
+  transition: background-color 0.2s ease;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode scrollbar */
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.55);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* Desktop: área de contacto maior, cores sólidas */
-@media (min-width: 1024px) {
-  html {
-    scrollbar-width: auto;
-    scrollbar-color: #000000 transparent;
-  }
-
-  .dark html {
-    scrollbar-color: #9ca3af transparent;
-  }
-
-  ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 99px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #000000;
-    border-radius: 99px;
-    min-height: 56px;
-    transition: background-color 0.15s ease;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #262626;
-  }
-
-  ::-webkit-scrollbar-corner {
-    background: transparent;
-  }
-
-  .dark ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    background: #9ca3af;
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: #b8bec8;
-  }
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }

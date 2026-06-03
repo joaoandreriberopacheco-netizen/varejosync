@@ -141,7 +141,7 @@ export default function HomePage() {
   const formatValor = (valor) => formatCurrency(roundToTwoDecimals(valor || 0));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 md:pb-6">
+    <div className="min-h-screen bg-background pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header com marca + boas-vindas */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

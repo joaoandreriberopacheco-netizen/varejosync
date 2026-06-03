@@ -39,14 +39,16 @@ export function brandLogoProps(surface) {
 }
 
 export const brandSurface = {
-  page: 'bg-gray-50 dark:bg-background',
-  pageScreen: 'min-h-screen bg-gray-50 dark:bg-background',
-  /** Cartão principal (equivalente a Home `dark:bg-card`) */
-  card: 'bg-white shadow-sm dark:bg-card dark:text-card-foreground dark:border dark:border-border',
-  /** Interior suave (equivalente a `dark:bg-muted/40` ou cinza claro) */
-  cardInset: 'bg-gray-50 dark:bg-muted/35',
+  page: 'bg-background',
+  pageScreen: 'min-h-screen bg-background',
+  /** Cartão principal (mobile dark: card sobre navy) */
+  card: 'bg-card text-card-foreground border border-border shadow-sm',
+  /** Interior suave */
+  cardInset: 'bg-muted/50',
   /** Cápsula de ícone (atalhos Home) */
-  iconCapsule: 'rounded-2xl bg-gray-100 dark:bg-muted flex items-center justify-center shadow-sm',
-  textMuted: 'text-gray-500 dark:text-muted-foreground',
-  textLabel: 'text-gray-400 dark:text-muted-foreground',
+  iconCapsule: 'rounded-2xl bg-muted flex items-center justify-center shadow-sm',
+  textMuted: 'text-muted-foreground',
+  textLabel: 'text-muted-foreground',
+  accent: 'text-primary',
+  accentBg: 'bg-primary/10 text-primary',
 };
