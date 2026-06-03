@@ -5,8 +5,10 @@ module.exports = {
   theme: {
   	extend: {
   		fontFamily: {
-  			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-  		},
+			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+			glacial: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

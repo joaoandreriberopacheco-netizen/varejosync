@@ -5,6 +5,7 @@ import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } 
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
+import { p38SidebarColors } from '@/lib/p38ThemeSurfaces';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -77,29 +78,7 @@ export default function GlacialSidebar({
 
   const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
-  const c = isDark ? {
-    bg: '#111827',
-    border: 'rgba(255,255,255,0.06)',
-    text: '#ffffff',
-    textSub: '#9ca3af',
-    iconColor: '#9ca3af',
-    activeBg: 'rgba(255,255,255,0.08)',
-    hoverBg: 'rgba(255,255,255,0.05)',
-    chevron: '#6b7280',
-    sectionLabel: '#6b7280',
-    subBorder: 'rgba(255,255,255,0.08)',
-  } : {
-    bg: '#ffffff',
-    border: 'rgba(0,0,0,0.06)',
-    text: '#1e293b',
-    textSub: '#64748b',
-    iconColor: '#6b7280',
-    activeBg: 'rgba(0,0,0,0.05)',
-    hoverBg: 'rgba(0,0,0,0.03)',
-    chevron: '#9ca3af',
-    sectionLabel: '#9ca3af',
-    subBorder: 'rgba(0,0,0,0.08)',
-  };
+  const c = p38SidebarColors(isDark);
 
   const toggleSubmenu = (menuName) => {
     setExpandedMenus(prev => {

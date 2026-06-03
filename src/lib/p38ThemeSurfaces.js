@@ -47,3 +47,20 @@ export const P38_THEME = {
 export function p38ThemeColors(isDark) {
   return isDark ? P38_THEME.dark : P38_THEME.light;
 }
+
+/** Tokens da sidebar desktop — mesmo cinza da página (#1a1b21), não azul marinho. */
+export function p38SidebarColors(isDark) {
+  const t = isDark ? P38_THEME.dark : P38_THEME.light;
+  return {
+    bg: t.bg,
+    border: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    text: t.text,
+    textSub: t.textMuted,
+    iconColor: t.iconColor,
+    activeBg: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+    hoverBg: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+    chevron: t.chevron,
+    sectionLabel: t.textMuted,
+    subBorder: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+  };
+}
