@@ -717,94 +717,179 @@ export default function RelatorioMargemVendas() {
         y += 4;
       };
 
-      const drawMetricChip = (label, value, x, chipW, baselineY, { accent = false } = {}) => {
+      const SLATE900 = [15, 23, 42];
+      const SLATE700 = [51, 65, 85];
+      const SLATE500 = [100, 116, 139];
+      const SLATE225 = [203, 213, 225];
+      const SLATE200 = [226, 232, 240];
+
+      const getMobileRowLayout = () => ({
+        itemMl: M + 14.8,
+        lineX: M + 12.5,
+        qtdColRight: M + 11.5,
+        nomeMaxW: M + CW - (M + 14.8) - 3,
+        contentRight: M + CW,
+        lineWidth: 2.5,
+      });
+
+      const measureMarginCompactRow = (dataRow, y0, { isGroup = false, groupLabel = null, showMetrics = true } = {}) => {
+        const cfg = getMobileRowLayout();
+        const vs = 1.35;
+        const fontScale = 1.05;
+        const nomeLineStep = 3.85 * vs;
+        const margemLinhaInferiorItem = 1.3 * vs;
+        const auxDetailStep = 2.95 * vs;
+        const gapNomeDetalhe = 2.4 * vs;
+
+        const unidade = isGroup
+          ? formatMarginTreeUnidade(dataRow, { isGroup: true })
+          : dataRow.unidade_exibicao || 'UN';
+        const qtd = dataRow.quantidade_vendida || 0;
+
+        const nomeText = isGroup
+          ? normalizePdfText(
+              `${String(groupLabel || dataRow.label || '').toUpperCase()}${dataRow.count != null ? ` (${dataRow.count})` : ''}`
+            )
+          : normalizePdfText(String(dataRow?.nome || '?'));
+
         setPdfFont('normal');
-        pdf.setFontSize(5.2);
-        setColor(C.muted);
-        pdf.text(normalizePdfText(label), x + 1, baselineY);
-        pdf.setFontSize(6.8);
-        setColor(accent ? C.profit : C.text);
-        const valueLines = pdf.splitTextToSize(value, chipW - 2).slice(0, 1);
-        pdf.text(valueLines[0] || value, x + 1, baselineY + 4.2);
+        pdf.setFontSize(7 * fontScale);
+        const nomeLinhas = pdf.splitTextToSize(nomeText, cfg.nomeMaxW).slice(0, 3);
+        const nomeTop = y0 + 3.4 * vs;
+        const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
+
+        if (isGroup && !showMetrics) {
+          const rowBlockH = lastNomeBaseline + margemLinhaInferiorItem - y0 + 1.5;
+          return { rowBlockH, cfg, vs, fontScale, nomeLinhas, nomeTop, nomeLineStep, isGroup, showMetrics, qtd, unidade };
+        }
+
+        const precoMedio = getRowPrecoMedio(dataRow);
+        const linha1 = normalizePdfText(
+          `Receita ${formatMoneyPdf(dataRow.total_recebido || 0)} · ${unidade} · Méd. ${formatMoneyPdf(precoMedio)} · Custo ${formatMoneyPdf(dataRow.custo_total || 0)}`
+        );
+        const linha2 = normalizePdfText(
+          `Lucro ${formatMoneyPdf(dataRow.lucro_total || 0)} · Mk ${formatPctPdf(getRowMarkup(dataRow))}`
+        );
+
+        pdf.setFontSize(5.65 * fontScale);
+        const auxValoresLinhas = pdf.splitTextToSize(linha1, cfg.nomeMaxW);
+        const detAux1 = lastNomeBaseline + gapNomeDetalhe;
+        const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
+        const detEnd = detAux2 + auxDetailStep;
+        const rowBlockH = detEnd + margemLinhaInferiorItem - y0;
+
+        return {
+          rowBlockH,
+          cfg,
+          vs,
+          fontScale,
+          nomeLinhas,
+          nomeTop,
+          nomeLineStep,
+          auxValoresLinhas,
+          linha2,
+          auxDetailStep,
+          gapNomeDetalhe,
+          qtd,
+          unidade,
+          detAux1,
+          detAux2,
+          isGroup,
+          showMetrics,
+        };
       };
 
-      const drawMobileProductCard = (dataRow) => {
-        const titulo = normalizePdfText(String(dataRow?.nome || '?').toUpperCase());
-        const tituloLines = pdf.splitTextToSize(titulo, CW - 6).slice(0, 2);
-        const unidade = dataRow.unidade_exibicao || 'UN';
-        const precoMedio = getRowPrecoMedio(dataRow);
-        const subtitulo = normalizePdfText(
-          `${formatCommercialQuantity(dataRow.quantidade_vendida || 0, unidade)} · ${unidade} · ${formatMoneyPdf(precoMedio)}/un`
-        );
-        const metrics = [
-          { label: 'Receita', value: formatMoneyPdf(dataRow.total_recebido || 0) },
-          { label: 'Custo', value: formatMoneyPdf(dataRow.custo_total || 0) },
-          { label: 'Lucro', value: formatMoneyPdf(dataRow.lucro_total || 0), accent: true },
-          { label: 'Markup', value: formatPctPdf(getRowMarkup(dataRow)), accent: true },
-        ];
-        const titleBlockH = tituloLines.length * 4.2 + 3.6;
-        const metricsH = 9.5;
-        const cardH = titleBlockH + metricsH + 5;
-        ensureSpace(cardH + 3);
+      const drawMarginCompactRow = (dataRow, y0, opts = {}) => {
+        const measured = measureMarginCompactRow(dataRow, y0, opts);
+        const {
+          rowBlockH,
+          cfg,
+          vs,
+          fontScale,
+          nomeLinhas,
+          nomeTop,
+          nomeLineStep,
+          auxValoresLinhas,
+          linha2,
+          auxDetailStep,
+          qtd,
+          unidade,
+          detAux1,
+          detAux2,
+          isGroup,
+          showMetrics,
+        } = measured;
 
-        setFill(C.panel);
-        pdf.roundedRect(M, y, CW, cardH, 2.5, 2.5, 'F');
-
-        let cy = y + 5;
-        setPdfFont('normal');
-        pdf.setFontSize(7.5);
-        setColor(C.text);
-        tituloLines.forEach((line, idx) => {
-          pdf.text(line, M + 3, cy + idx * 4.2);
-        });
-        cy += titleBlockH - 1;
-        pdf.setFontSize(6);
-        setColor(C.muted);
-        pdf.text(subtitulo, M + 3, cy);
-        cy += 4.5;
-
-        const chipGap = 1.5;
-        const chipW = (CW - 6 - chipGap * (metrics.length - 1)) / metrics.length;
-        metrics.forEach((metric, idx) => {
-          const cx = M + 3 + idx * (chipW + chipGap);
-          setFill(C.white);
-          pdf.roundedRect(cx, cy, chipW, metricsH - 1, 1.5, 1.5, 'F');
-          drawMetricChip(metric.label, metric.value, cx, chipW, cy + 2.2, {
-            accent: metric.accent,
+        if (isGroup && !showMetrics) {
+          setFill([241, 245, 249]);
+          pdf.roundedRect(M, y0, CW, rowBlockH, 1.5, 1.5, 'F');
+          setPdfFont('normal');
+          pdf.setFontSize(6.5 * fontScale);
+          setColor(SLATE900);
+          nomeLinhas.forEach((line, li) => {
+            pdf.text(line, M + 3, nomeTop + li * nomeLineStep);
           });
+          pdf.setDrawColor(...SLATE200);
+          pdf.setLineWidth(0.15);
+          pdf.line(M + 3, y0 + rowBlockH, M + CW - 3, y0 + rowBlockH);
+          return rowBlockH;
+        }
+
+        const branchY = y0 + 2.8 * vs;
+        setFill(SLATE225);
+        pdf.rect(cfg.lineX, y0, 0.12, rowBlockH, 'F');
+        pdf.rect(cfg.lineX, branchY, cfg.lineWidth, 0.12, 'F');
+
+        setPdfFont('normal');
+        pdf.setFontSize(6.8 * fontScale);
+        setColor(SLATE900);
+        pdf.text(formatCommercialQuantity(qtd, unidade), cfg.qtdColRight, nomeTop + 1.2, {
+          align: 'right',
+        });
+        pdf.setFontSize(5.9 * fontScale);
+        setColor(SLATE700);
+        pdf.text(normalizePdfText(unidade), cfg.qtdColRight, nomeTop + 4.6, { align: 'right' });
+
+        pdf.setFontSize(7 * fontScale);
+        setColor(SLATE700);
+        nomeLinhas.forEach((line, li) => {
+          pdf.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
         });
 
-        y += cardH + 2.5;
+        pdf.setFontSize(5.65 * fontScale);
+        setColor(SLATE500);
+        auxValoresLinhas.forEach((line, ai) => {
+          pdf.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
+        });
+        pdf.text(linha2, cfg.itemMl, detAux2);
+
+        pdf.setDrawColor(...SLATE200);
+        pdf.setLineWidth(0.15);
+        pdf.line(cfg.itemMl, y0 + rowBlockH, cfg.contentRight, y0 + rowBlockH);
+
+        return rowBlockH;
       };
 
       const drawMobileGroupBand = (treeRow) => {
-        const dataRow = treeRow;
-        const bandH = treeRow.showMetrics !== false ? 11 : 9;
-        ensureSpace(bandH + 3);
-        setFill([241, 245, 249]);
-        pdf.roundedRect(M, y, CW, bandH, 2, 2, 'F');
-        setPdfFont('normal');
-        pdf.setFontSize(6.5);
-        setColor(C.text);
-        const label = normalizePdfText(
-          `${String(treeRow.label || '').toUpperCase()}${treeRow.count != null ? ` (${treeRow.count})` : ''}`
-        );
-        const labelLines = pdf.splitTextToSize(label, CW - 28).slice(0, 2);
-        labelLines.forEach((line, idx) => {
-          pdf.text(line, M + 3, y + 4.5 + idx * 3.8);
+        const rowH = measureMarginCompactRow(treeRow, y, {
+          isGroup: true,
+          groupLabel: treeRow.label,
+          showMetrics: treeRow.showMetrics !== false,
+        }).rowBlockH;
+        ensureSpace(rowH + 2);
+        drawMarginCompactRow(treeRow, y, {
+          isGroup: true,
+          groupLabel: treeRow.label,
+          showMetrics: treeRow.showMetrics !== false,
         });
-        if (treeRow.showMetrics !== false) {
-          pdf.setFontSize(5.8);
-          setColor(C.muted);
-          const qtyLine = normalizePdfText(
-            `${formatCommercialQuantity(dataRow.quantidade_vendida || 0, dataRow.unidade_exibicao)} · ${formatMarginTreeUnidade(dataRow, { isGroup: true })}`
-          );
-          pdf.text(qtyLine, M + 3, y + bandH - 2.5);
-          pdf.setFontSize(7);
-          setColor(C.profit);
-          pdf.text(formatMoneyPdf(dataRow.lucro_total || 0), M + CW - 3, y + 6, { align: 'right' });
-        }
-        y += bandH + 2.5;
+        y += rowH + 1.5;
+      };
+
+      const drawMobileProductRow = (dataRow) => {
+        const rowH = measureMarginCompactRow(dataRow, y).rowBlockH;
+        ensureSpace(rowH + 2);
+        drawMarginCompactRow(dataRow, y);
+        y += rowH + 1.5;
       };
 
       drawMobileHeader();
@@ -813,7 +898,7 @@ export default function RelatorioMargemVendas() {
         if (treeRow.type === 'group') {
           drawMobileGroupBand(treeRow);
         } else {
-          drawMobileProductCard(treeRow.item);
+          drawMobileProductRow(treeRow.item);
         }
       });
 
