@@ -27,11 +27,11 @@ const MOBILE_PDF_H_MM = 1200;
 /** A partir deste número de linhas, só renderiza a janela visível (desktop + mobile). */
 const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
 const MARGIN_TABLE_COL_COUNT = 9;
-const MARGIN_DESKTOP_ROW_H_GROUP = 38;
-const MARGIN_DESKTOP_ROW_H_PRODUTO = 46;
-const MARGIN_MOBILE_ROW_H_GROUP = 96;
-const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 44;
-const MARGIN_MOBILE_ROW_H_PRODUTO = 100;
+const MARGIN_DESKTOP_ROW_H_GROUP = 42;
+const MARGIN_DESKTOP_ROW_H_PRODUTO = 52;
+const MARGIN_MOBILE_ROW_H_GROUP = 104;
+const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 50;
+const MARGIN_MOBILE_ROW_H_PRODUTO = 112;
 
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
 const MARGIN_MOBILE_STORM = '#526070';
@@ -40,10 +40,11 @@ const MARGIN_ACCENT_HEX_LIGHT = '#4A5D23';
 const MARGIN_ACCENT_HEX_DARK = '#A3E635';
 const MARGIN_ACCENT_RGB = [74, 93, 35];
 
-/** Tamanho único corpo + cabeçalho da tabela desktop. */
-const MARGIN_BODY_TEXT = 'text-xs';
+/** Tamanho único corpo + cabeçalho da tabela (desktop e lista mobile). */
+const MARGIN_BODY_TEXT = 'text-sm';
+const MARGIN_TABLE_MICRO = 'text-xs';
 const MARGIN_TABLE_HEAD =
-  'text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300';
+  'text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-300';
 const MARGIN_ACCENT_VALUE = 'text-[#4A5D23] dark:text-lime-400';
 const MARGIN_MUTED_VALUE = 'text-gray-500 dark:text-gray-400';
 
@@ -118,22 +119,24 @@ function getMarginRowTier(treeRow) {
 }
 
 function marginMetricValueClass(key, tier = 'filho') {
-  if (key === 'markup' || key === 'lucro') return MARGIN_ACCENT_VALUE;
-  if (key === 'custoUnit' || key === 'custoTotal') return MARGIN_MUTED_VALUE;
-  if (tier === 'filho') return MARGIN_MUTED_VALUE;
+  if (key === 'markup' || key === 'lucro') return `${MARGIN_ACCENT_VALUE} font-semibold`;
+  if (key === 'custoUnit' || key === 'custoTotal') {
+    return `${MARGIN_MUTED_VALUE} font-medium dark:font-normal`;
+  }
+  if (tier === 'filho') return `${MARGIN_MUTED_VALUE} font-medium dark:font-normal`;
   return 'text-gray-900 dark:text-gray-100 font-semibold';
 }
 
 function marginDesktopDescClass(tier) {
   if (tier === 'filho') {
-    return `${MARGIN_BODY_TEXT} font-normal text-gray-500 dark:text-gray-400 uppercase`;
+    return `${MARGIN_BODY_TEXT} font-medium dark:font-normal text-gray-600 dark:text-gray-400 uppercase`;
   }
-  return `${MARGIN_BODY_TEXT} font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide`;
+  return `${MARGIN_BODY_TEXT} font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide`;
 }
 
 function marginDesktopQuantClass(tier) {
   if (tier === 'filho') {
-    return `${MARGIN_BODY_TEXT} tabular-nums text-center text-gray-600 dark:text-gray-400 font-normal`;
+    return `${MARGIN_BODY_TEXT} tabular-nums text-center text-gray-700 dark:text-gray-400 font-medium dark:font-normal`;
   }
   return `${MARGIN_BODY_TEXT} tabular-nums text-center text-gray-900 dark:text-white font-semibold`;
 }
@@ -370,7 +373,7 @@ function MargemMobileKpis({ totals, totalMarkup }) {
     <div className="mx-3 mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
       {cards.map((card) => (
         <div key={card.label} className="min-w-0">
-          <p className="text-[9px] uppercase tracking-wide text-slate-500 leading-none">{card.label}</p>
+          <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-slate-500 leading-none`}>{card.label}</p>
           <p
             className={`${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate ${
               card.accent ? MARGIN_ACCENT_VALUE : 'text-slate-900 dark:text-slate-100'
@@ -392,8 +395,8 @@ function MargemMobileColumnHeader({ className = '' }) {
     >
       <div className="flex">
         <div className="w-[3.25rem] flex-shrink-0 border-r border-slate-300/30 px-1.5 py-2 text-right">
-          <p className="text-[9px] uppercase tracking-wide leading-none opacity-90">Qtd</p>
-          <p className="text-[9px] uppercase tracking-wide leading-none mt-2 opacity-90">Un</p>
+          <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide leading-none opacity-90`}>Qtd</p>
+          <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide leading-none mt-2 opacity-90`}>Un</p>
         </div>
         <div className="flex-1 min-w-0 py-2 pr-2">
           {MARGIN_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
@@ -404,7 +407,7 @@ function MargemMobileColumnHeader({ className = '' }) {
               {valueRow.map(({ label }) => (
                 <p
                   key={label}
-                  className="text-[8px] uppercase tracking-wide text-right leading-none opacity-90 truncate"
+                  className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate`}
                 >
                   {label}
                 </p>

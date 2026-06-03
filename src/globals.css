@@ -45,6 +45,20 @@
   letter-spacing: 0.02em;
 }
 
+/* Modo claro: DIN Light some demais em fundo branco */
+html:not(.dark) .font-din-1451,
+html:not(.dark) .font-din-1451 * {
+  font-weight: 400;
+}
+
+html:not(.dark) .font-din-1451 strong,
+html:not(.dark) .font-din-1451 .font-semibold,
+html:not(.dark) .font-din-1451 .font-bold,
+html:not(.dark) .font-din-1451 .font-medium,
+html:not(.dark) .font-din-1451 th {
+  font-weight: 600;
+}
+
 .font-din-1451 strong,
 .font-din-1451 .font-semibold,
 .font-din-1451 th {
