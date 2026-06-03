@@ -166,11 +166,11 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Orçamento rápido</title>
   <style>
-    body { margin: 0; font-family: Inter, Arial, sans-serif; background: #f8fafc; color: #111827; }
+    body { margin: 0; font-family: 'DIN 1451', DINish, system-ui, sans-serif; background: #f8fafc; color: #111827; }
     .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
     .card { background: #fff; border-radius: 24px; box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08); padding: 20px; }
     .top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
-    h1 { margin: 0; font-size: 28px; font-family: Quicksand, Inter, sans-serif; }
+    h1 { margin: 0; font-size: 28px; font-family: 'DIN 1451', DINish, system-ui, sans-serif; }
     .muted { color: #6b7280; font-size: 14px; }
     .total { text-align: right; }
     .total strong { display: block; font-size: 28px; }

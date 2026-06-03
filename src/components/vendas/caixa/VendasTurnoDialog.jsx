@@ -169,7 +169,7 @@ export default function VendasTurnoDialog({
                   ? `<p style="font-size:10px;color:#9ca3af;margin:4px 0">${qtdSub} substituição(ões) — R$ ${valorNaoSoma.toFixed(2)} não somam no total</p>`
                   : '';
               const html = `<html><head><title>Extrato de Vendas</title><style>
-                body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
+                body{font-family:'DIN 1451',DINish,system-ui,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
                 h2{font-size:13px;font-weight:600;margin:14px 0 6px;color:#374151}
                 .dashed{border-top:1px dashed #aaa;margin:8px 0}
               </style></head><body>

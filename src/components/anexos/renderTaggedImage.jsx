@@ -23,7 +23,7 @@ export async function renderTaggedImage(file, tagLines) {
   ctx.fillRect(0, canvas.height - boxHeight, canvas.width, boxHeight);
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `600 ${fontSize}px Inter, sans-serif`;
+  ctx.font = `600 ${fontSize}px "DIN 1451", DINish, system-ui, sans-serif`;
   ctx.textBaseline = 'top';
 
   tagLines.forEach((line, index) => {

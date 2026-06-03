@@ -221,7 +221,7 @@ function BudgetContent({ onClose, isMobile }) {
           <meta charset="UTF-8" />
           <title>Orçamento rápido</title>
           <style>
-            body { font-family: Inter, Arial, sans-serif; padding: 24px; color: #111827; }
+            body { font-family: 'DIN 1451', DINish, system-ui, sans-serif; padding: 24px; color: #111827; }
             h1 { margin: 0 0 8px; font-size: 22px; }
             p { margin: 0 0 16px; color: #6b7280; }
             table { width: 100%; border-collapse: collapse; margin-top: 16px; }
