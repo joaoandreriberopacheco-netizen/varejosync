@@ -13,6 +13,44 @@
   font-family: 'Quicksand', sans-serif;
 }
 
+/* DIN 1451 (DINish OFL) — relatório de margem e PDF */
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-din-1451,
+.font-din-1451 * {
+  font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.font-din-1451 strong,
+.font-din-1451 .font-semibold,
+.font-din-1451 th {
+  font-weight: 400;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

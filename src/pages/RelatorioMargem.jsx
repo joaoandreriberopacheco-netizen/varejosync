@@ -18,7 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
-import { registerJsPdfNotoFonts, registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -158,60 +158,34 @@ function MargemMetricChip({ label, value, muted, profit }) {
   );
 }
 
-/** Mesmo padrão do catálogo: texto alinhado; seta expansiva fora da coluna do texto. */
+/** Coluna de texto: seta à esquerda; pais e solteiros no mesmo alinhamento. */
 const INDENT_GROUP = 14;
-const INDENT_GROUP_BASE = 4;
-const INDENT_PRODUTO = 8;
 const INDENT_GROUP_MOBILE = 10;
-const INDENT_GROUP_BASE_MOBILE = 4;
-const INDENT_PRODUTO_MOBILE = 6;
 const CHEVRON_SLOT_W = 14;
 const CHEVRON_GAP = 6;
 const CHEVRON_PULL = CHEVRON_SLOT_W + CHEVRON_GAP;
 const CHEVRON_GAP_MOBILE = 4;
 const CHEVRON_PULL_MOBILE = CHEVRON_SLOT_W + CHEVRON_GAP_MOBILE;
+/** Início do texto (após área da seta) — nível 1 pais = solteiros. */
+const MARGIN_DESC_TEXT_COL = CHEVRON_PULL;
+const MARGIN_DESC_TEXT_COL_MOBILE = CHEVRON_PULL_MOBILE;
 
-/** Início da coluna de texto (px) — grupos nível 1 alinhados aos solteiros. */
-function marginDescTextStart(level, kind = 'produto') {
-  const lv = level ?? 1;
-  if (kind === 'produto' && lv > 1) {
-    return INDENT_PRODUTO + INDENT_GROUP;
-  }
-  if (kind === 'group' && lv === 1) {
-    return INDENT_PRODUTO;
-  }
-  if (kind === 'group') {
-    return INDENT_GROUP_BASE + (lv - 1) * INDENT_GROUP;
-  }
-  return INDENT_PRODUTO;
+function marginDescTextStart(level) {
+  return MARGIN_DESC_TEXT_COL + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP;
 }
 
-function marginDescTextStartMobile(level, kind = 'produto') {
-  const lv = level ?? 1;
-  if (kind === 'produto' && lv > 1) {
-    return INDENT_PRODUTO_MOBILE + INDENT_GROUP_MOBILE;
-  }
-  if (kind === 'group' && lv === 1) {
-    return INDENT_PRODUTO_MOBILE;
-  }
-  if (kind === 'group') {
-    return INDENT_GROUP_BASE_MOBILE + (lv - 1) * INDENT_GROUP_MOBILE;
-  }
-  return INDENT_PRODUTO_MOBILE;
+function marginDescTextStartMobile(level) {
+  return MARGIN_DESC_TEXT_COL_MOBILE + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP_MOBILE;
 }
 
-function marginDescTextStartPdfMm(level, kind, pdfIndentProdutoMm, pdfIndentGroupMm, pdfIndentGroupBaseMm) {
-  const lv = level ?? 1;
-  if (kind === 'produto' && lv > 1) {
-    return 1 + pdfIndentProdutoMm + pdfIndentGroupMm;
-  }
-  if (kind === 'group' && lv === 1) {
-    return 1 + pdfIndentProdutoMm;
-  }
-  if (kind === 'group') {
-    return 1 + pdfIndentGroupBaseMm + (lv - 1) * pdfIndentGroupMm;
-  }
-  return 1 + pdfIndentProdutoMm;
+function marginDescChevronLeft(textStart, chevronPull = CHEVRON_PULL) {
+  return Math.max(0, textStart - chevronPull);
+}
+
+function marginDescTextStartPdfMm(level, pdfIndentProdutoMm, pdfIndentGroupMm) {
+  const px = marginDescTextStart(level);
+  const pxPerMm = 8 / pdfIndentProdutoMm;
+  return 1 + px / pxPerMm;
 }
 
 function MargemDescricaoTexto({
@@ -222,19 +196,18 @@ function MargemDescricaoTexto({
   children,
   className = '',
 }) {
+  const chevronLeft = marginDescChevronLeft(textStart, chevronPull);
   return (
-    <div className={`flex items-center min-w-0 ${className}`} style={{ paddingLeft: textStart }}>
+    <div className={`relative min-w-0 ${className}`} style={{ paddingLeft: textStart }}>
       {showChevron ? (
-        <span
-          className="inline-flex items-center justify-center flex-shrink-0 text-gray-400"
-          style={{ width: CHEVRON_SLOT_W, marginLeft: -chevronPull }}
-        >
-          <ChevronRight
-            className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`}
-          />
-        </span>
+        <ChevronRight
+          className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 transition-transform ${
+            expanded ? 'rotate-90' : ''
+          }`}
+          style={{ left: chevronLeft }}
+        />
       ) : null}
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
@@ -256,7 +229,7 @@ function MargemLinhaMobile({
   const isSubtotal = variant === 'subtotal';
   const isGroup = variant === 'grupo';
   const titulo = isSubtotal ? row.nome || 'Subtotal' : isGroup ? row.label : row.nome;
-  const textStart = marginDescTextStartMobile(level, isGroup ? 'group' : 'produto');
+  const textStart = marginDescTextStartMobile(level);
   const precoMedio =
     row.valor_unitario_medio ??
     (row.quantidade_vendida > 0 ? (row.total_recebido || 0) / row.quantidade_vendida : 0);
@@ -355,7 +328,7 @@ function MargemLinhaMobile({
       className={`${rowBase} ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
       style={{ paddingLeft: rowPadLeft }}
     >
-      <div style={{ paddingLeft: textStart }}>
+      <MargemDescricaoTexto textStart={textStart} chevronPull={CHEVRON_PULL_MOBILE}>
         <p
           lang="pt-BR"
           className="text-xs font-normal uppercase text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
@@ -363,7 +336,7 @@ function MargemLinhaMobile({
         >
           {titulo}
         </p>
-      </div>
+      </MargemDescricaoTexto>
       <p
         className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate"
         style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
@@ -1060,7 +1033,7 @@ export default function RelatorioMargemVendas() {
     }
 
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pdfFontFamily = await registerJsPdfNotoFonts(pdf);
+    const pdfFontFamily = await registerJsPdfDin1451Fonts(pdf);
     const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -1073,7 +1046,6 @@ export default function RelatorioMargemVendas() {
     const rowPadV = 1.2 * BODY_PAD_MULT;
     const textBaseline = 3.5 * BODY_PAD_MULT;
     const pdfIndentGroupMm = 3;
-    const pdfIndentGroupBaseMm = 1.1;
     const pdfIndentProdutoMm = 1.6;
     const descPad = 2 * BODY_PAD_MULT;
     const rowGapGroup = 0;
@@ -1297,10 +1269,8 @@ export default function RelatorioMargemVendas() {
       const dataRow = isGroup ? treeRow : treeRow.item;
       const descIndent = marginDescTextStartPdfMm(
         treeRow.level,
-        isGroup ? 'group' : 'produto',
         pdfIndentProdutoMm,
-        pdfIndentGroupMm,
-        pdfIndentGroupBaseMm
+        pdfIndentGroupMm
       );
       const descX = colXAbs.desc + descIndent;
       const descMaxW = Math.max(8, colWidths.desc - descPad - descIndent);
@@ -1398,7 +1368,7 @@ export default function RelatorioMargemVendas() {
       : null;
 
   return (
-    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-white dark:bg-gray-900 md:overflow-x-hidden">
+    <div className="font-din-1451 h-full min-h-0 flex flex-col overflow-hidden bg-white dark:bg-gray-900 md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Header */}
         <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
@@ -1411,7 +1381,7 @@ export default function RelatorioMargemVendas() {
                   </button>
                 </Link>
                 <div className="min-w-0">
-                  <h1 className="text-sm md:text-base font-glacial font-medium text-gray-800 dark:text-gray-100 truncate">Relatório de Margem</h1>
+                  <h1 className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-100 truncate">Relatório de Margem</h1>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-normal text-gray-500 dark:text-gray-400 min-w-0">
                     <span className="truncate">{productCount} produto{productCount === 1 ? '' : 's'}</span>
                     <span className="truncate">{formatMoney(totals.receita_liquida)} receita</span>
@@ -1801,7 +1771,7 @@ export default function RelatorioMargemVendas() {
                               style={{ lineHeight: 1.2, minHeight: 46 }}
                             >
                               <MargemDescricaoTexto
-                                textStart={marginDescTextStart(treeRow.level, 'group')}
+                                textStart={marginDescTextStart(treeRow.level)}
                                 showChevron={!isLeaf}
                                 expanded={isExpanded}
                               >
@@ -1848,7 +1818,6 @@ export default function RelatorioMargemVendas() {
                       }
 
                       const row = treeRow.item;
-                      const descIndent = marginDescTextStart(treeRow.level, 'produto');
                       return (
                         <tr
                           key={treeRow.key}
@@ -1875,9 +1844,9 @@ export default function RelatorioMargemVendas() {
                             className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase min-w-0"
                             style={{ lineHeight: 1.2, minHeight: 46 }}
                           >
-                            <div className="truncate" style={{ paddingLeft: descIndent }}>
-                              {row.nome}
-                            </div>
+                            <MargemDescricaoTexto textStart={marginDescTextStart(treeRow.level)}>
+                              <span className="block truncate">{row.nome}</span>
+                            </MargemDescricaoTexto>
                           </td>
                           <td
                             className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
