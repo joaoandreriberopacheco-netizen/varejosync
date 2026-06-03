@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, FilterX, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, Wallet } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, Wallet, SlidersHorizontal } from 'lucide-react';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import {
   buildMarginTree,
@@ -15,7 +15,6 @@ import { Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
@@ -153,6 +152,7 @@ const MARGIN_INDENT_PRODUTO_MOBILE = 6;
 /** Corpo: entrelinha +50% (~1,5) e padding +20% (~1,2) em relação ao layout compacto anterior. */
 const BODY_LINE_HEIGHT_MULT = 1.5;
 const BODY_PAD_MULT = 1.2;
+const MARGIN_SEARCH_SEPARATOR = ';';
 
 function MargemLinhaMobile({
   row,
@@ -307,6 +307,7 @@ export default function RelatorioMargemVendas() {
   const [treeLevel, setTreeLevel] = useState(99);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+  const [searchDraft, setSearchDraft] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortField, setSortField] = useState('lucro_total');
@@ -426,13 +427,27 @@ export default function RelatorioMargemVendas() {
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
 
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      sorted = sorted.filter(item => 
-        item.nome?.toLowerCase?.().includes(term) || 
-        item.codigo_interno?.toLowerCase?.().includes(term)
-      );
+    // Mesmo padrão do catálogo: ";" separa termos que devem aparecer no produto.
+    const searchTokens = String(searchTerm || '')
+      .split(MARGIN_SEARCH_SEPARATOR)
+      .map((term) => term.trim().toLowerCase())
+      .filter(Boolean);
+    if (searchTokens.length > 0) {
+      sorted = sorted.filter((item) => {
+        const haystack = [
+          item.nome,
+          item.codigo_interno,
+          item.categoria,
+          item.campo_hierarquico_1,
+          item.campo_hierarquico_2,
+          item.campo_hierarquico_3,
+          item.campo_hierarquico_4,
+          ...(Array.isArray(item.tags) ? item.tags : []),
+        ]
+          .filter(Boolean)
+          .map((value) => String(value).toLowerCase());
+        return searchTokens.every((term) => haystack.some((value) => value.includes(term)));
+      });
     }
 
     // Filter by tags
@@ -515,6 +530,11 @@ export default function RelatorioMargemVendas() {
   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
 
   const productCount = processedData.length;
+  const activeFilterCount = [
+    searchTerm.trim(),
+    selectedTags.length > 0,
+    treeLevel !== 99,
+  ].filter(Boolean).length;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatPercent = (val) => `${val.toFixed(2)}%`;
@@ -870,7 +890,12 @@ export default function RelatorioMargemVendas() {
     return Array.from(tags).sort();
   }, [products]);
 
+  const handleApplySearchFilter = useCallback(() => {
+    setSearchTerm(searchDraft.trim());
+  }, [searchDraft]);
+
   const handleClearFilters = () => {
+    setSearchDraft('');
     setSearchTerm('');
     setSelectedTags([]);
     setTreeLevel(99);
@@ -886,33 +911,29 @@ export default function RelatorioMargemVendas() {
     <div className="h-full min-h-0 flex flex-col overflow-hidden bg-gray-50/50 dark:bg-gray-950 md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="flex-shrink-0 p-3 md:px-6 md:py-4 md:sticky md:top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between gap-2 md:gap-4">
-            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-              <Link to="/Relatorios">
-                <button className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
-                  <ArrowLeft className="w-4 md:w-5 h-4 md:h-5 text-gray-700 dark:text-gray-200" />
-                </button>
-              </Link>
-              <div className="min-w-0">
-                <h1 className="text-base md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white truncate">Relatório de Margem</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  Rentabilidade por produto
-                  {periodLabel ? (
-                    <span className="block sm:inline mt-0.5 sm:mt-0 text-gray-400 dark:text-gray-500 truncate">
-                      <span className="sm:hidden">Período: </span>
-                      <span className="hidden sm:inline"> • </span>
-                      {periodLabel}
-                    </span>
-                  ) : null}
-                </p>
+        <div className="flex-none bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm z-10">
+          <div className="w-full min-w-0 px-3 md:px-6 py-2.5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Link to="/Relatorios">
+                  <button className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
+                    <ArrowLeft className="w-4 md:w-5 h-4 md:h-5 text-gray-700 dark:text-gray-200" />
+                  </button>
+                </Link>
+                <div className="min-w-0">
+                  <h1 className="text-sm md:text-base font-glacial font-semibold text-gray-900 dark:text-white truncate">Relatório de Margem</h1>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                    {productCount} produto{productCount === 1 ? '' : 's'}
+                    {periodLabel ? (
+                      <span className="text-gray-400 dark:text-gray-500"> • {periodLabel}</span>
+                    ) : null}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200 flex-shrink-0" title="Opções de impressão">
-                    <Printer className="w-4 md:w-5 h-4 md:h-5" />
+                  <button className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-200 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
+                    <Printer className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700 text-sm">
@@ -925,142 +946,108 @@ export default function RelatorioMargemVendas() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
 
-          {/* Filter Button - PDV Style */}
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              onClick={() => setShowFilterDrawer(true)}
-              className="flex items-center gap-2 px-4 min-h-[44px] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs md:text-sm font-medium"
-              title="Filtros"
-            >
-              <FilterX className="w-4 h-4" />
-              Filtros
-            </button>
-            {(searchTerm || selectedTags.length > 0 || treeLevel !== 99) && (
+            <div className="flex gap-2 min-w-0 items-center">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                <input
+                  autoComplete="off"
+                  type="text"
+                  placeholder="Produto, código, categoria ou tag (use ; para combinar termos)..."
+                  value={searchDraft}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') handleApplySearchFilter();
+                  }}
+                  className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 pr-3 text-gray-700 dark:text-gray-200 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
+                />
+              </div>
               <button
-                onClick={handleClearFilters}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                title="Limpar filtros"
+                type="button"
+                onClick={handleApplySearchFilter}
+                className="h-10 px-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                title="Aplicar busca"
               >
-                <X className="w-4 h-4" />
+                Set Filter
               </button>
+              <button
+                type="button"
+                className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800'}`}
+                onClick={() => setShowFilterDrawer((open) => !open)}
+                title="Filtros"
+              >
+                <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={handleClearFilters}
+                  className="h-10 w-10 flex-shrink-0 rounded-xl text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center"
+                  title="Limpar filtros"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {showFilterDrawer && (
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Nível da TreeGrid</span>
+                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                </div>
+                <button
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: today, to: today });
+                  }}
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  Hoje
+                </button>
+                <button
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: subDays(today, 30), to: today });
+                  }}
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  30 dias
+                </button>
+                <button
+                  onClick={() => {
+                    const today = new Date();
+                    setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
+                  }}
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  Mês atual
+                </button>
+                <button
+                  onClick={() => setShowCalendar(true)}
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
+                </button>
+                {allTags.length > 0 && (
+                  <div className="md:col-span-6">
+                    <TagSearchPopup
+                      variant="inline"
+                      allTags={allTags}
+                      selectedTags={selectedTags}
+                      setSelectedTags={setSelectedTags}
+                      onClose={() => {}}
+                    />
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
-
-        {/* Filter Drawer - PDV Style */}
-        <Drawer open={showFilterDrawer} onOpenChange={setShowFilterDrawer}>
-          <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-8 max-h-[85vh] flex flex-col">
-            <DrawerHeader className="px-0 pb-3 text-left sticky top-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-200 dark:border-gray-800">
-              <DrawerTitle className="font-glacial text-gray-900 dark:text-white text-lg">Filtros e Configurações</DrawerTitle>
-            </DrawerHeader>
-
-            <div className="space-y-5 overflow-y-auto pt-1">
-              {/* Período */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Período</label>
-                
-                {/* Atalhos Rápidos */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mb-3">
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      setDateRange({ from: today, to: today });
-                    }}
-                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                  >
-                    Hoje
-                  </button>
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      const thirtyDaysAgo = subDays(today, 30);
-                      setDateRange({ from: thirtyDaysAgo, to: today });
-                    }}
-                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                  >
-                    30 dias
-                  </button>
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
-                    }}
-                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                  >
-                    Mês atual
-                  </button>
-                </div>
-
-                {/* Calendário Personalizado */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Customizado</label>
-                  <button
-                    onClick={() => setShowCalendar(true)}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                  >
-                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Search */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Buscar Produto</label>
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input autoComplete="off" 
-                    type="text" 
-                    placeholder="Nome do produto..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-base md:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
-                  />
-                </div>
-              </div>
-
-              {/* Tags */}
-              {allTags.length > 0 && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Tags</label>
-                  <TagSearchPopup
-                    variant="inline"
-                    allTags={allTags}
-                    selectedTags={selectedTags}
-                    setSelectedTags={setSelectedTags}
-                    onClose={() => {}}
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                  Nível da árvore
-                </label>
-                <div className="overflow-x-auto pb-1 [&_button]:!min-h-9 [&_button]:!min-w-9">
-                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={handleClearFilters}
-                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                >
-                  Limpar
-                </button>
-                <button
-                  onClick={() => setShowFilterDrawer(false)}
-                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 transition"
-                >
-                  Aplicar
-                </button>
-              </div>
-            </div>
-          </DrawerContent>
-        </Drawer>
 
         {/* Calendário acima do Drawer (portal no body; drawer usa z-[310]) */}
         {showCalendar &&
@@ -1091,15 +1078,12 @@ export default function RelatorioMargemVendas() {
             document.body
           )}
 
-<div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] md:pb-0">
+<div className="flex-none min-h-0 overflow-hidden">
                 {/* Resumo na mesma linguagem do PDF */}
-         <div className="px-3 md:px-6 py-2.5 md:py-5 min-w-0 max-w-full overflow-x-hidden">
-           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 md:mb-3 italic">
-             Valores monetários em reais (R$).
-           </p>
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+         <div className="px-3 md:px-4 py-2 min-w-0 max-w-full overflow-x-hidden">
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
              <AuditableMetricTooltip
-               className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
+               className="!p-3 md:!p-3 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={TrendingUp}
                label="RECEITA LÍQUIDA"
                value={formatMoney(totals.receita_liquida)}
@@ -1110,7 +1094,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
-               className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
+               className="!p-3 md:!p-3 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={Wallet}
                label="CUSTO TOTAL"
                value={formatMoney(totals.custo_total)}
@@ -1119,7 +1103,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
-               className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
+               className="!p-3 md:!p-3 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
                icon={DollarSign}
                label="LUCRO"
                value={formatMoney(totals.lucro_total)}
@@ -1130,7 +1114,7 @@ export default function RelatorioMargemVendas() {
                }}
              />
              <AuditableMetricTooltip
-               className="!p-4 md:!p-4 !bg-emerald-50/80 dark:!bg-emerald-950/20 !border-emerald-100 [&_p:last-child]:!font-normal"
+               className="!p-3 md:!p-3 !bg-emerald-50/80 dark:!bg-emerald-950/20 !border-emerald-100 [&_p:last-child]:!font-normal"
                icon={Percent}
                variant="profit"
                label="MARKUP"
@@ -1140,7 +1124,7 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Toolbar */}
-           <div className="px-3 md:mx-6 mb-1.5 md:mb-2 rounded-xl md:rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm py-2.5 md:px-3 md:py-2.5 min-w-0 max-w-full">
+           <div className="px-3 md:mx-4 mb-2 rounded-xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm py-2 md:px-3 min-w-0 max-w-full">
              <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
             <div className="hidden md:contents">
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
@@ -1207,7 +1191,7 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Table - Desktop Table / Mobile Cards */}
-        <div className="p-3 md:p-6 min-w-0 max-w-full overflow-x-hidden" id="relatorio-table">
+        <div className="flex-1 min-h-0 p-3 md:px-4 md:pt-0 md:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40">
               <Loader2 className="w-9 h-9 animate-spin text-gray-400 mb-4" />
@@ -1217,8 +1201,8 @@ export default function RelatorioMargemVendas() {
           ) : processedData.length > 0 ? (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block min-w-0 overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm">
-                <table className="w-full text-sm table-fixed">
+              <div className="hidden md:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <table className="w-full text-xs table-fixed">
                   <colgroup>
                     <col className="w-[72px]" />
                     <col className="w-[52px]" />
@@ -1229,7 +1213,7 @@ export default function RelatorioMargemVendas() {
                     <col className="w-[100px]" />
                     <col className="w-[80px]" />
                   </colgroup>
-                  <thead className="sticky top-0 z-[1] bg-gray-800 dark:bg-gray-900 backdrop-blur-sm">
+                  <thead className="sticky top-0 z-30 bg-gray-800 dark:bg-gray-900 backdrop-blur-sm">
                     <tr className="border-b border-gray-700 dark:border-gray-600">
                       <th
                         onClick={() => {
@@ -1343,14 +1327,14 @@ export default function RelatorioMargemVendas() {
                             }`}
                           >
                             <td
-                              className="py-3 px-2.5 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-center tabular-nums font-semibold text-gray-900 dark:text-white"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida, treeRow.unidade_exibicao) : ''}
                             </td>
                             <td
-                              className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics
                                 ? formatMarginTreeUnidade(treeRow, { isGroup: true })
@@ -1358,8 +1342,8 @@ export default function RelatorioMargemVendas() {
                             </td>
                             <td
                               lang="pt-BR"
-                              className="py-3.5 px-3.5 text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
-                              style={{ paddingLeft: 14.4 + indent, lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
+                              style={{ paddingLeft: 8 + indent, lineHeight: 1.2, minHeight: 38 }}
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {!isLeaf && (
@@ -1377,32 +1361,32 @@ export default function RelatorioMargemVendas() {
                               </div>
                             </td>
                             <td
-                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.valor_unitario_medio) : ''}
                             </td>
                             <td
-                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.total_recebido) : ''}
                             </td>
                             <td
-                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.custo_total) : ''}
                             </td>
                             <td
-                              className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.lucro_total) : ''}
                             </td>
                             <td
-                              className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                              style={{ lineHeight: 1.2 }}
                             >
                               {showGroupMetrics ? formatPercent(treeRow.markup_percentual) : ''}
                             </td>
@@ -1423,14 +1407,14 @@ export default function RelatorioMargemVendas() {
                           } hover:bg-gray-100/70 dark:hover:bg-gray-800/50`}
                         >
                           <td
-                            className="py-3 px-2.5 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-center tabular-nums text-gray-900 dark:text-white font-semibold"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
                           </td>
                           <td
-                            className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {row.unidade_exibicao || 'UN'}
                           </td>
@@ -1439,37 +1423,37 @@ export default function RelatorioMargemVendas() {
                             className={`py-3.5 px-3.5 text-sm text-gray-900 dark:text-white font-medium hyphens-auto break-words min-w-0 ${
                               treeRow.level > 1 ? 'border-l-2 border-gray-200 dark:border-gray-700' : ''
                             }`}
-                            style={{ paddingLeft: descIndent, lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            style={{ paddingLeft: descIndent, lineHeight: 1.2, minHeight: 46 }}
                           >
                             {row.nome}
                           </td>
                           <td
-                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {formatMoney(row.valor_unitario_medio)}
                           </td>
                           <td
-                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {formatMoney(row.total_recebido)}
                           </td>
                           <td
-                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {formatMoney(row.custo_total)}
                           </td>
                           <td
-                            className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {formatMoney(row.lucro_total)}
                           </td>
                           <td
-                            className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
+                            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                            style={{ lineHeight: 1.2 }}
                           >
                             {formatPercent(row.markup_percentual)}
                           </td>
@@ -1481,7 +1465,7 @@ export default function RelatorioMargemVendas() {
               </div>
 
               {/* Mobile: mesmas colunas do PDF */}
-              <div className="md:hidden min-w-0 max-w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
+              <div className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 pb-[var(--p38-scroll-pad-below-nav)]">
                 {displayRows.map((treeRow, rowIdx) =>
                   treeRow.type === 'group' ? (
                     <MargemLinhaMobile
@@ -1504,7 +1488,7 @@ export default function RelatorioMargemVendas() {
                 )}
               </div>
 
-              <div className="mt-4 md:mt-6 flex justify-center">
+              <div className="mt-3 flex justify-center flex-shrink-0">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                   <Package className="w-3.5 h-3.5" />
                   {productCount} produto{productCount === 1 ? '' : 's'}
