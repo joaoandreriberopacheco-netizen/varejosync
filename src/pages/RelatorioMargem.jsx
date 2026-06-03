@@ -30,9 +30,72 @@ const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
 const MARGIN_TABLE_COL_COUNT = 8;
 const MARGIN_DESKTOP_ROW_H_GROUP = 38;
 const MARGIN_DESKTOP_ROW_H_PRODUTO = 46;
-const MARGIN_MOBILE_ROW_H_GROUP = 68;
-const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 52;
-const MARGIN_MOBILE_ROW_H_PRODUTO = 132;
+const MARGIN_MOBILE_ROW_H_GROUP = 96;
+const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 44;
+const MARGIN_MOBILE_ROW_H_PRODUTO = 100;
+
+/** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
+const MARGIN_MOBILE_STORM = '#526070';
+const MARGIN_MOBILE_CYAN = '#06B6D4';
+
+const MARGIN_MOBILE_VALUE_ROWS = [
+  [
+    { key: 'custoUnit', label: 'CUSTO UN' },
+    { key: 'precoVenda', label: 'PREÇO VENDA' },
+    { key: 'markup', label: 'MK %' },
+  ],
+  [
+    { key: 'custoTotal', label: 'CUSTO TOTAL' },
+    { key: 'vendaTotal', label: 'VENDA TOTAL' },
+    { key: 'lucro', label: 'LUCRO' },
+  ],
+];
+
+function getRowMarkup(row) {
+  if (row.markup_percentual != null && !Number.isNaN(row.markup_percentual)) {
+    return row.markup_percentual;
+  }
+  const custo = row.custo_total ?? 0;
+  return custo > 0 ? ((row.lucro_total || 0) / custo) * 100 : 0;
+}
+
+function getRowPrecoMedio(row) {
+  if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
+    return row.valor_unitario_medio;
+  }
+  const qtd = row.quantidade_vendida || 0;
+  return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
+}
+
+function getRowCustoUnitCalc(row) {
+  const qtd = row.quantidade_vendida || 0;
+  if (qtd > 0 && row.custo_total != null) {
+    return (row.custo_total || 0) / qtd;
+  }
+  return row.custo_unitario_cadastro ?? 0;
+}
+
+const formatNumDisplay = (val) =>
+  (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const formatPctShortDisplay = (val) => `${(val ?? 0).toFixed(1).replace('.', ',')}%`;
+
+function buildMarginMobileTabulatedValues(row) {
+  return {
+    custoUnit: formatNumDisplay(getRowCustoUnitCalc(row)),
+    precoVenda: formatNumDisplay(getRowPrecoMedio(row)),
+    markup: formatPctShortDisplay(getRowMarkup(row)),
+    custoTotal: formatNumDisplay(row.custo_total || 0),
+    vendaTotal: formatNumDisplay(row.total_recebido || 0),
+    lucro: formatNumDisplay(row.lucro_total || 0),
+  };
+}
+
+function marginMobileValueColorClass(key) {
+  if (key === 'markup' || key === 'lucro') return 'text-cyan-500 font-medium';
+  if (key === 'custoUnit' || key === 'custoTotal') return 'text-slate-500';
+  return 'text-slate-900 dark:text-slate-100';
+}
 
 function buildMarginFiltrosDesc({ dateRange, searchTerm, selectedTags, treeLevel }) {
   const parts = [];
@@ -145,28 +208,6 @@ const formatMoneyDisplay = (val) =>
 
 const formatPercentDisplay = (val) => `${(val ?? 0).toFixed(2)}%`;
 
-function MargemMetricChip({ label, value, muted, profit }) {
-  const valueClass = profit
-    ? 'text-green-600 dark:text-green-400 font-semibold'
-    : muted
-      ? 'text-gray-500 dark:text-gray-400'
-      : 'text-gray-900 dark:text-white font-medium';
-
-  return (
-    <div className="flex-shrink-0 min-w-[4.25rem] max-w-[5.75rem]">
-      <p className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none truncate">
-        {label}
-      </p>
-      <p
-        className={`text-[11px] tabular-nums mt-0.5 truncate ${valueClass}`}
-        style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
 /** Coluna de texto: seta à esquerda; pais e solteiros no mesmo alinhamento. */
 const INDENT_GROUP = 14;
 const INDENT_GROUP_MOBILE = 10;
@@ -226,6 +267,130 @@ const BODY_LINE_HEIGHT_MULT = 1.5;
 const BODY_PAD_MULT = 1.2;
 const MARGIN_SEARCH_SEPARATOR = ';';
 
+function MargemMobileReportHeader({ filtrosDesc }) {
+  return (
+    <div
+      className="relative mx-3 mt-3 rounded-md overflow-hidden text-white"
+      style={{ backgroundColor: MARGIN_MOBILE_STORM }}
+    >
+      <div
+        className="absolute left-3 top-4 bottom-4 w-[3px] rounded-sm"
+        style={{ backgroundColor: MARGIN_MOBILE_CYAN }}
+        aria-hidden
+      />
+      <div className="pl-7 pr-3 py-3">
+        <p className="text-[13px] font-semibold tracking-wide uppercase leading-tight">Margem de vendas</p>
+        <p className="text-[10px] text-slate-200 mt-0.5 uppercase tracking-wide">Relatório técnico · mobile</p>
+        <p className="text-[10px] text-slate-200/90 mt-2 line-clamp-2 leading-snug">{filtrosDesc}</p>
+        <p className="text-[9px] text-slate-100/80 mt-2 text-right tabular-nums">
+          Gerado {format(new Date(), 'dd/MM/yyyy HH:mm')}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MargemMobileKpis({ totals, totalMarkup }) {
+  const cards = [
+    { label: 'Receita líq.', value: formatMoneyDisplay(totals.receita_liquida) },
+    { label: 'Custo total', value: formatMoneyDisplay(totals.custo_total) },
+    { label: 'Lucro', value: formatMoneyDisplay(totals.lucro_total), accent: true },
+    { label: 'Markup', value: formatPctShortDisplay(totalMarkup), accent: true },
+  ];
+
+  return (
+    <div className="mx-3 mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
+      {cards.map((card) => (
+        <div key={card.label} className="min-w-0">
+          <p className="text-[9px] uppercase tracking-wide text-slate-500 leading-none">{card.label}</p>
+          <p
+            className={`text-[13px] tabular-nums mt-1 truncate ${
+              card.accent ? 'text-cyan-500 font-medium' : 'text-slate-900 dark:text-slate-100'
+            }`}
+          >
+            {card.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MargemMobileColumnHeader({ className = '' }) {
+  return (
+    <div
+      className={`mx-3 mt-3 mb-1 rounded-md overflow-hidden text-white ${className}`}
+      style={{ backgroundColor: MARGIN_MOBILE_STORM }}
+    >
+      <div className="flex">
+        <div className="w-[3.25rem] flex-shrink-0 border-r border-slate-300/30 px-1.5 py-2 text-right">
+          <p className="text-[9px] uppercase tracking-wide leading-none opacity-90">Qtd</p>
+          <p className="text-[9px] uppercase tracking-wide leading-none mt-2 opacity-90">Un</p>
+        </div>
+        <div className="flex-1 min-w-0 py-2 pr-2">
+          {MARGIN_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
+            <div
+              key={rowIdx}
+              className={`grid grid-cols-3 gap-x-1 ${rowIdx === 0 ? '' : 'mt-1.5'}`}
+            >
+              {valueRow.map(({ label }) => (
+                <p
+                  key={label}
+                  className="text-[8px] uppercase tracking-wide text-right leading-none opacity-90 truncate"
+                >
+                  {label}
+                </p>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MargemMobileQtdUnCol({ qtd, unidade, showAccentDot = true }) {
+  return (
+    <div className="relative w-[3.25rem] flex-shrink-0 border-r border-slate-200 dark:border-slate-700 pr-1.5 py-2.5 text-right">
+      {showAccentDot ? (
+        <span
+          className="absolute left-0 top-3 w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: MARGIN_MOBILE_CYAN }}
+          aria-hidden
+        />
+      ) : null}
+      <p className="text-[11px] tabular-nums font-medium text-slate-900 dark:text-slate-100 leading-none">
+        {formatCommercialQuantity(qtd, unidade)}
+      </p>
+      <p className="text-[9px] uppercase text-slate-500 mt-1.5 leading-none truncate">{unidade}</p>
+    </div>
+  );
+}
+
+function MargemMobileTabulatedValues({ row, className = '' }) {
+  const values = buildMarginMobileTabulatedValues(row);
+
+  return (
+    <div className={className}>
+      {MARGIN_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
+        <div
+          key={rowIdx}
+          className={`grid grid-cols-3 gap-x-1 ${rowIdx === 0 ? '' : 'mt-1'}`}
+        >
+          {valueRow.map(({ key }) => (
+            <p
+              key={key}
+              className={`text-[11px] tabular-nums text-right truncate ${marginMobileValueColorClass(key)}`}
+            >
+              {values[key]}
+            </p>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MargemLinhaMobile({
   row,
   variant = 'produto',
@@ -233,76 +398,71 @@ function MargemLinhaMobile({
   isExpanded,
   isLeaf,
   onToggle,
-  striped = false,
 }) {
   const isSubtotal = variant === 'subtotal';
   const isGroup = variant === 'grupo';
   const titulo = isSubtotal ? row.nome || 'Subtotal' : isGroup ? row.label : row.nome;
   const textStart = marginDescTextStartMobile(level);
-  const precoMedio =
-    row.valor_unitario_medio ??
-    (row.quantidade_vendida > 0 ? (row.total_recebido || 0) / row.quantidade_vendida : 0);
-  const markup =
-    row.markup_percentual ??
-    (row.custo_total > 0 ? ((row.lucro_total || 0) / row.custo_total) * 100 : 0);
   const canExpand = isGroup && !isLeaf && typeof onToggle === 'function';
-
-  const accentBorder = isSubtotal
-    ? 'border-l-emerald-500'
-    : isGroup
-      ? 'border-l-slate-400 dark:border-l-slate-500'
-      : level > 1
-        ? 'border-l-gray-200 dark:border-l-gray-700'
-        : 'border-l-transparent';
-
-  const rowPadLeft = 24;
-  const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-5 pr-6 min-w-0 max-w-full touch-pan-y`;
+  const rowBase =
+    'border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 min-w-0 max-w-full touch-pan-y';
 
   if (isGroup || isSubtotal) {
-    const bgClass = isSubtotal
-      ? 'bg-emerald-50/70 dark:bg-emerald-950/20'
-      : 'bg-slate-50/80 dark:bg-slate-800/35';
-    const inner = (
-      <>
+    const showMetrics = !isSubtotal && row.showMetrics !== false;
+    const unidade = formatMarginTreeUnidade(row, { isGroup: true });
+    const qtd = row.quantidade_vendida || 0;
+    const groupTitle = (
+      <span lang="pt-BR" className="block text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-200 line-clamp-2 break-words">
+        {String(titulo || '').toUpperCase()}
+        {row.count != null ? ` (${row.count})` : ''}
+      </span>
+    );
+
+    if (!showMetrics) {
+      const collapsedInner = (
         <MargemDescricaoTexto
           textStart={textStart}
           showChevron={!isLeaf && !isSubtotal}
           expanded={isExpanded}
           chevronPull={CHEVRON_PULL_MOBILE}
-          className="flex-1"
+          className="flex-1 px-3 py-2.5"
         >
-          <span
-            lang="pt-BR"
-            className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-100 truncate"
-          >
-            {titulo}
-            {row.count != null ? (
-              <span className="ml-1 inline-flex h-5 items-center rounded-full border border-gray-200 px-1.5 text-[10px] font-medium text-gray-600 dark:border-gray-700 dark:text-gray-400 normal-case">
-                ({row.count})
-              </span>
-            ) : null}
-          </span>
-          {isGroup && row.showMetrics !== false ? (
-            <p
-              className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums normal-case"
-              style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
-            >
-              <span className="text-gray-700 dark:text-gray-300">
-                {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
-              </span>
-              {' \u00b7 '}
-              {formatMarginTreeUnidade(row, { isGroup: true })}
-            </p>
-          ) : null}
+          {groupTitle}
         </MargemDescricaoTexto>
-        {row.showMetrics !== false ? (
-          <span className="flex-shrink-0 text-right pl-2">
-            <span className="block text-[9px] uppercase text-gray-400 leading-none">Lucro</span>
-            <span className="text-xs tabular-nums font-semibold text-green-600 dark:text-green-400">
-              {formatMoneyDisplay(row.lucro_total)}
-            </span>
+      );
+
+      if (canExpand) {
+        return (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={isExpanded}
+            className={`w-full text-left active:bg-slate-50 dark:active:bg-slate-800/60 ${rowBase}`}
+          >
+            {collapsedInner}
+          </button>
+        );
+      }
+
+      return <div className={rowBase}>{collapsedInner}</div>;
+    }
+
+    const expandedInner = (
+      <>
+        {canExpand ? (
+          <span className="flex-shrink-0 w-6 flex items-start justify-center pt-3 pl-1">
+            <ChevronRight
+              className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            />
           </span>
-        ) : null}
+        ) : (
+          <span className="w-2 flex-shrink-0" aria-hidden />
+        )}
+        <MargemMobileQtdUnCol qtd={qtd} unidade={unidade} />
+        <div className="flex-1 min-w-0 py-2 pr-2">
+          {groupTitle}
+          <MargemMobileTabulatedValues row={row} className="mt-1" />
+        </div>
       </>
     );
 
@@ -312,57 +472,30 @@ function MargemLinhaMobile({
           type="button"
           onClick={onToggle}
           aria-expanded={isExpanded}
-          className={`w-full max-w-full flex items-center gap-2 text-left min-h-[44px] active:bg-gray-100/80 dark:active:bg-gray-800/50 ${rowBase} ${bgClass}`}
-          style={{ paddingLeft: rowPadLeft }}
+          className={`w-full text-left flex min-w-0 active:bg-slate-50 dark:active:bg-slate-800/60 ${rowBase}`}
         >
-          {inner}
+          {expandedInner}
         </button>
       );
     }
 
-    return (
-      <div
-        className={`flex items-center gap-2 min-h-[44px] min-w-0 max-w-full ${rowBase} ${bgClass}`}
-        style={{ paddingLeft: rowPadLeft }}
-      >
-        {inner}
-      </div>
-    );
+    return <div className={`flex min-w-0 ${rowBase}`}>{expandedInner}</div>;
   }
 
   const unidade = row.unidade_exibicao || 'UN';
+  const qtd = row.quantidade_vendida || 0;
 
   return (
-    <div
-      className={`${rowBase} ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
-      style={{ paddingLeft: rowPadLeft }}
-    >
-      <MargemDescricaoTexto textStart={textStart} chevronPull={CHEVRON_PULL_MOBILE}>
+    <div className={`flex ${rowBase}`}>
+      <MargemMobileQtdUnCol qtd={qtd} unidade={unidade} />
+      <div className="flex-1 min-w-0 py-2 pr-2">
         <p
           lang="pt-BR"
-          className="text-xs font-normal uppercase text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
-          style={{ lineHeight: `${1.375 * BODY_LINE_HEIGHT_MULT}` }}
+          className="text-[11px] font-normal uppercase text-slate-900 dark:text-slate-100 line-clamp-2 break-words leading-snug"
         >
           {titulo}
         </p>
-      </MargemDescricaoTexto>
-      <p
-        className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate"
-        style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
-      >
-        <span className="text-gray-700 dark:text-gray-300">{formatQuant(row.quantidade_vendida, unidade)}</span>
-        {' \u00b7 '}
-        {unidade}
-        {' \u00b7 '}
-        <span className="text-gray-600 dark:text-gray-400">{formatMoneyDisplay(precoMedio)}/un</span>
-      </p>
-      <div className="mt-2 min-w-0 w-full max-w-full overflow-x-auto overscroll-x-contain [touch-action:pan-x] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch]" onTouchStart={(e) => e.stopPropagation()}>
-        <div className="inline-flex gap-3 py-0.5 pr-1">
-          <MargemMetricChip label="Receita" value={formatMoneyDisplay(row.total_recebido)} />
-          <MargemMetricChip label="Custo" value={formatMoneyDisplay(row.custo_total)} muted />
-          <MargemMetricChip label="Lucro" value={formatMoneyDisplay(row.lucro_total)} profit />
-          <MargemMetricChip label="Markup" value={formatPercentDisplay(markup)} profit />
-        </div>
+        <MargemMobileTabulatedValues row={row} className="mt-1" />
       </div>
     </div>
   );
@@ -907,49 +1040,12 @@ export default function RelatorioMargemVendas() {
       let y = 12;
       let mobileTableHeaderOnPage = false;
 
-      const MOBILE_VALUE_ROWS = [
-        [
-          { key: 'custoUnit', label: 'CUSTO UN' },
-          { key: 'precoVenda', label: 'PREÇO VENDA' },
-          { key: 'markup', label: 'MK %' },
-        ],
-        [
-          { key: 'custoTotal', label: 'CUSTO TOTAL' },
-          { key: 'vendaTotal', label: 'VENDA TOTAL' },
-          { key: 'lucro', label: 'LUCRO' },
-        ],
-      ];
-
       const ensureSpace = (needed = 20, { repeatTableHeader = true } = {}) => {
         if (y + needed <= pageH - 6) return;
         pdf.addPage();
         y = M + 2;
         mobileTableHeaderOnPage = false;
         if (repeatTableHeader) drawMobileColumnHeaders();
-      };
-
-      const getRowMarkup = (row) => {
-        if (row.markup_percentual != null && !Number.isNaN(row.markup_percentual)) {
-          return row.markup_percentual;
-        }
-        const custo = row.custo_total ?? 0;
-        return custo > 0 ? ((row.lucro_total || 0) / custo) * 100 : 0;
-      };
-
-      const getRowPrecoMedio = (row) => {
-        if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
-          return row.valor_unitario_medio;
-        }
-        const qtd = row.quantidade_vendida || 0;
-        return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
-      };
-
-      const getRowCustoUnitCalc = (row) => {
-        const qtd = row.quantidade_vendida || 0;
-        if (qtd > 0 && row.custo_total != null) {
-          return (row.custo_total || 0) / qtd;
-        }
-        return row.custo_unitario_cadastro ?? 0;
       };
 
       const SLATE900 = [15, 23, 42];
@@ -1062,11 +1158,11 @@ export default function RelatorioMargemVendas() {
         pdf.text('UN', cfg.qtdColRight, y + 8.6, { align: 'right' });
 
         const headerRow1Y = y + 5.2;
-        MOBILE_VALUE_ROWS[0].forEach(({ label }, idx) => {
+        MARGIN_MOBILE_VALUE_ROWS[0].forEach(({ label }, idx) => {
           pdf.text(normalizePdfText(label), row1.colRight[idx], headerRow1Y, { align: 'right' });
         });
         const headerRow2Y = y + 9.2;
-        MOBILE_VALUE_ROWS[1].forEach(({ label }, idx) => {
+        MARGIN_MOBILE_VALUE_ROWS[1].forEach(({ label }, idx) => {
           pdf.text(normalizePdfText(label), row2.colRight[idx], headerRow2Y, { align: 'right' });
         });
 
@@ -1089,13 +1185,13 @@ export default function RelatorioMargemVendas() {
 
         setPdfFont('normal');
         pdf.setFontSize(7.5 * fontScale);
-        MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
+        MARGIN_MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
           if (key === 'custoUnit') setColor(SLATE500);
           else if (key === 'markup') setColor(MOBILE_CYAN);
           else setColor(SLATE900);
           pdf.text(values[key], row1.colRight[idx], valoresY, { align: 'right' });
         });
-        MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
+        MARGIN_MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
           if (key === 'custoTotal') setColor(SLATE500);
           else if (key === 'lucro') setColor(MOBILE_CYAN);
           else setColor(SLATE900);
@@ -1622,7 +1718,7 @@ export default function RelatorioMargemVendas() {
                 </Link>
                 <div className="min-w-0">
                   <h1 className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-100 truncate">Relatório de Margem</h1>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-normal text-gray-500 dark:text-gray-400 min-w-0">
+                  <div className="hidden md:flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-normal text-gray-500 dark:text-gray-400 min-w-0">
                     <span className="truncate">{productCount} produto{productCount === 1 ? '' : 's'}</span>
                     <span className="truncate">{formatMoney(totals.receita_liquida)} receita</span>
                     <span className="truncate text-gray-400 dark:text-gray-500">{formatMoney(totals.custo_total)} custo</span>
@@ -1632,6 +1728,10 @@ export default function RelatorioMargemVendas() {
                       <span className="truncate text-gray-400 dark:text-gray-500">{periodLabel}</span>
                     ) : null}
                   </div>
+                  <p className="md:hidden text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                    {productCount} produto{productCount === 1 ? '' : 's'}
+                    {periodLabel ? ` · ${periodLabel}` : ''}
+                  </p>
                 </div>
               </div>
               <DropdownMenu>
@@ -2005,18 +2105,27 @@ export default function RelatorioMargemVendas() {
                           </table>
               </div>
 
-              {/* Mobile: mesmas colunas do PDF */}
+              {/* Mobile: mesma diagramação do PDF mobile */}
               <div
                 ref={mobileScrollRef}
-                className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 pb-[var(--p38-scroll-pad-below-nav)]"
+                className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 pb-[var(--p38-scroll-pad-below-nav)]"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
+                <MargemMobileReportHeader
+                  filtrosDesc={buildMarginFiltrosDesc({
+                    dateRange,
+                    searchTerm,
+                    selectedTags,
+                    treeLevel,
+                  })}
+                />
+                <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
+                <MargemMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
                 {mobilePadTop > 0 && (
                   <div aria-hidden="true" style={{ height: mobilePadTop, flexShrink: 0 }} />
                 )}
-                {visibleMobileRows.map((treeRow, sliceIdx) => {
-                  const rowIdx = mobileRowOffset + sliceIdx;
-                  return treeRow.type === 'group' ? (
+                {visibleMobileRows.map((treeRow) =>
+                  treeRow.type === 'group' ? (
                     <MargemLinhaMobile
                       key={treeRow.key}
                       variant="grupo"
@@ -2031,10 +2140,9 @@ export default function RelatorioMargemVendas() {
                       key={treeRow.key}
                       row={treeRow.item}
                       level={treeRow.level}
-                      striped={rowIdx % 2 === 1}
                     />
-                  );
-                })}
+                  )
+                )}
                 {mobilePadBottom > 0 && (
                   <div aria-hidden="true" style={{ height: mobilePadBottom, flexShrink: 0 }} />
                 )}
