@@ -143,10 +143,29 @@ function MargemMetricChip({ label, value, muted, profit }) {
   );
 }
 
-const MARGIN_INDENT_GROUP = 14;
-const MARGIN_INDENT_PRODUTO = 8;
-const MARGIN_INDENT_GROUP_MOBILE = 10;
-const MARGIN_INDENT_PRODUTO_MOBILE = 6;
+/** Mesmo padrão do catálogo (`TreeGrid.jsx`): grupos por nível; produtos com coluna fixa à direita. */
+const INDENT_GROUP = 14;
+const INDENT_GROUP_BASE = 4;
+const INDENT_PRODUTO = 8;
+const INDENT_GROUP_MOBILE = 10;
+const INDENT_GROUP_BASE_MOBILE = 4;
+const INDENT_PRODUTO_MOBILE = 6;
+
+function marginGroupDescPadding(level) {
+  return INDENT_GROUP_BASE + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP;
+}
+
+function marginProductDescPadding() {
+  return INDENT_PRODUTO;
+}
+
+function marginGroupDescPaddingMobile(level) {
+  return INDENT_GROUP_BASE_MOBILE + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP_MOBILE;
+}
+
+function marginProductDescPaddingMobile() {
+  return INDENT_PRODUTO_MOBILE;
+}
 
 /** Corpo: entrelinha +50% (~1,5) e padding +20% (~1,2) em relação ao layout compacto anterior. */
 const BODY_LINE_HEIGHT_MULT = 1.5;
@@ -165,8 +184,9 @@ function MargemLinhaMobile({
   const isSubtotal = variant === 'subtotal';
   const isGroup = variant === 'grupo';
   const titulo = isSubtotal ? row.nome || 'Subtotal' : isGroup ? row.label : row.nome;
-  const indentPx =
-    (level - 1) * MARGIN_INDENT_GROUP_MOBILE + (isGroup ? 4 : MARGIN_INDENT_PRODUTO_MOBILE);
+  const indentPx = isGroup
+    ? marginGroupDescPaddingMobile(level)
+    : marginProductDescPaddingMobile();
   const precoMedio =
     row.valor_unitario_medio ??
     (row.quantidade_vendida > 0 ? (row.total_recebido || 0) / row.quantidade_vendida : 0);
@@ -583,6 +603,7 @@ export default function RelatorioMargemVendas() {
     const rowPadV = 1.2 * BODY_PAD_MULT;
     const textBaseline = 3.5 * BODY_PAD_MULT;
     const pdfIndentGroupMm = 3;
+    const pdfIndentGroupBaseMm = 1.1;
     const pdfIndentProdutoMm = 1.6;
     const descPad = 2 * BODY_PAD_MULT;
     const rowGapGroup = 0;
@@ -804,8 +825,9 @@ export default function RelatorioMargemVendas() {
       const isGroup = treeRow.type === 'group';
       const showMetrics = !isGroup || treeRow.showMetrics !== false;
       const dataRow = isGroup ? treeRow : treeRow.item;
-      const descIndent =
-        1 + pdfIndentProdutoMm + (treeRow.level - 1) * pdfIndentGroupMm;
+      const descIndent = isGroup
+        ? 1 + pdfIndentGroupBaseMm + (treeRow.level - 1) * pdfIndentGroupMm
+        : 1 + pdfIndentProdutoMm;
       const descX = colXAbs.desc + descIndent;
       const descMaxW = Math.max(8, colWidths.desc - descPad - descIndent);
       const descText = isGroup
@@ -1268,7 +1290,6 @@ export default function RelatorioMargemVendas() {
                   <tbody>
                     {displayRows.map((treeRow, rowIdx) => {
                       if (treeRow.type === 'group') {
-                        const indent = (treeRow.level - 1) * MARGIN_INDENT_GROUP;
                         const isExpanded = expandedKeys.has(treeRow.key);
                         const isLeaf = treeRow.isLeafGroup;
                         const showGroupMetrics = treeRow.showMetrics !== false;
@@ -1297,7 +1318,7 @@ export default function RelatorioMargemVendas() {
                             <td
                               lang="pt-BR"
                               className="py-1.5 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
-                              style={{ paddingLeft: MARGIN_INDENT_PRODUTO + indent, lineHeight: 1.2, minHeight: 46 }}
+                              style={{ paddingLeft: marginGroupDescPadding(treeRow.level), lineHeight: 1.2, minHeight: 46 }}
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {!isLeaf && (
@@ -1349,8 +1370,7 @@ export default function RelatorioMargemVendas() {
                       }
 
                       const row = treeRow.item;
-                      const descIndent =
-                        (treeRow.level - 1) * MARGIN_INDENT_GROUP + MARGIN_INDENT_PRODUTO;
+                      const descIndent = marginProductDescPadding();
                       return (
                         <tr
                           key={treeRow.key}
