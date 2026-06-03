@@ -50,12 +50,29 @@
   letter-spacing: 0.01em;
 }
 
+
+/* Maiúsculas globais — exceções pontuais */
+.normal-case,
+.preserve-case,
+[data-preserve-case="true"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  text-transform: none;
+}
+
 /* ==========================================
    MOBILE NATIVE COMPATIBILITY
    ========================================== */
 
 html {
   touch-action: manipulation;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 body {
@@ -65,7 +82,7 @@ body {
 }
 
 .dark body {
-  background-color: #1f1d22;
+  background-color: hsl(var(--background));
 }
 
 button,
@@ -106,30 +123,30 @@ nav,
 
 .dark body,
 .dark #root {
-  background: #1f1d22;
-  color: #f1f5f9;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 .dark .bg-white {
-  background-color: #23212a !important;
+  background-color: hsl(var(--card)) !important;
 }
 
 .dark .bg-gray-50,
 .dark .bg-slate-50 {
-  background-color: #1f1d22 !important;
+  background-color: hsl(var(--background)) !important;
 }
 
 .dark .bg-gray-100 {
-  background-color: #34303a !important;
+  background-color: hsl(var(--muted)) !important;
 }
 
 .dark .bg-gray-800 {
-  background-color: #23212a !important;
+  background-color: hsl(var(--card)) !important;
 }
 
 .dark .bg-gray-900,
 .dark .bg-slate-950 {
-  background-color: #1f1d22 !important;
+  background-color: hsl(var(--background)) !important;
 }
 
 .dark .text-gray-900,

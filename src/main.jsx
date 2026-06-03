@@ -23,6 +23,28 @@ document.addEventListener('focusin', (e) => {
   }
 });
 
+const UPPERCASE_SKIP_TYPES = new Set([
+  'password', 'number', 'date', 'time', 'datetime-local', 'month', 'week',
+  'file', 'hidden', 'checkbox', 'radio', 'range', 'color',
+]);
+
+// Maiúsculas na digitação — grava o valor já em maiúsculas (exceto tipos sensíveis)
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+  if (el.closest('[data-preserve-case="true"]')) return;
+  if (el instanceof HTMLInputElement && UPPERCASE_SKIP_TYPES.has(el.type)) return;
+
+  const { selectionStart, selectionEnd, value } = el;
+  const upper = value.toUpperCase();
+  if (value === upper) return;
+
+  el.value = upper;
+  if (selectionStart != null && selectionEnd != null) {
+    el.setSelectionRange(selectionStart, selectionEnd);
+  }
+});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>
   <App />
