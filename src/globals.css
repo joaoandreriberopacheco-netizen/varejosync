@@ -1,9 +1,19 @@
-/* Fontes monoespaçadas — comprovantes térmicos e recibos */
 @import url('https://fonts.googleapis.com/css2?family=Cousine:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap');
+/* 1. FONTES DO SISTEMA (Base, UI, Menus) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+/* 2. FONTE IMPRESSÃO ALTERNATIVA (Iosevka - Ultra Condensada) */
 @import url('https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
+/* 3. FONTE IMPRESSÃO PRINCIPAL (Ubuntu Sans Mono - Estilo Recibo Autêntico) */
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap');
 
-/* DIN 1451 (DINish OFL) — fonte principal do sistema */
+.font-glacial {
+  font-family: 'Quicksand', sans-serif;
+}
+
+/* DIN 1451 (DINish OFL) — relatório de margem e PDF */
 @font-face {
   font-family: 'DIN 1451';
   src: url('/fonts/dinish/DINish-Light.ttf') format('truetype');
@@ -22,58 +32,28 @@
 
 @font-face {
   font-family: 'DIN 1451';
-  src: url('/fonts/dinish/DINish-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DIN 1451';
-  src: url('/fonts/dinish/DINish-SemiBold.ttf') format('truetype');
+  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'DIN 1451';
-  src: url('/fonts/dinish/DINish-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 .font-din-1451,
-.font-glacial {
-  font-family: 'DIN 1451', 'DINish', system-ui, sans-serif;
-  letter-spacing: 0.01em;
+.font-din-1451 * {
+  font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.02em;
 }
 
-
-
-/* Sidebar — maiúsculas explícitas (inline styles não herdavam sempre) */
-.p38-sidebar,
-.p38-sidebar button,
-.p38-sidebar a,
-.p38-sidebar span,
-.p38-sidebar p {
-  text-transform: uppercase;
+.font-din-1451 strong,
+.font-din-1451 .font-semibold,
+.font-din-1451 th {
+  font-weight: 400;
 }
 
-/* Maiúsculas globais — exceções pontuais */
-.normal-case,
-.preserve-case,
-[data-preserve-case="true"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"],
-input[type="month"],
-input[type="week"] {
-  text-transform: none;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ==========================================
    MOBILE NATIVE COMPATIBILITY
@@ -81,8 +61,6 @@ input[type="week"] {
 
 html {
   touch-action: manipulation;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
 }
 
 body {
@@ -92,7 +70,7 @@ body {
 }
 
 .dark body {
-  background-color: hsl(var(--background));
+  background-color: #1f1d22;
 }
 
 button,
@@ -120,7 +98,7 @@ nav,
 
 /* Fonte padrão do sistema */
 * {
-  font-family: 'DIN 1451', 'DINish', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 :root {
@@ -133,30 +111,30 @@ nav,
 
 .dark body,
 .dark #root {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background: #1f1d22;
+  color: #f1f5f9;
 }
 
 .dark .bg-white {
-  background-color: hsl(var(--card)) !important;
+  background-color: #23212a !important;
 }
 
 .dark .bg-gray-50,
 .dark .bg-slate-50 {
-  background-color: hsl(var(--background)) !important;
+  background-color: #1f1d22 !important;
 }
 
 .dark .bg-gray-100 {
-  background-color: hsl(var(--muted)) !important;
+  background-color: #34303a !important;
 }
 
 .dark .bg-gray-800 {
-  background-color: hsl(var(--card)) !important;
+  background-color: #23212a !important;
 }
 
 .dark .bg-gray-900,
 .dark .bg-slate-950 {
-  background-color: hsl(var(--background)) !important;
+  background-color: #1f1d22 !important;
 }
 
 .dark .text-gray-900,
@@ -394,13 +372,13 @@ textarea,
 }
 
 /* ==========================================
-   SCROLLBAR PERSONALIZADA
+   SCROLLBAR PERSONALIZADA (desktop)
    ========================================== */
 
-/* Scrollbar ultra-sutil — Reativo a dark mode */
+/* Mobile: fina e discreta */
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -408,20 +386,67 @@ textarea,
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 99px;
-  transition: background-color 0.2s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
+  border-radius: 99px;
 }
 
-/* Dark mode scrollbar */
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(156, 163, 175, 0.55);
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+/* Desktop: área de contacto maior, cores sólidas */
+@media (min-width: 1024px) {
+  html {
+    scrollbar-width: auto;
+    scrollbar-color: #000000 transparent;
+  }
+
+  .dark html {
+    scrollbar-color: #9ca3af transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    min-height: 48px;
+    transition: background-color 0.15s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #1a1a1a;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #b0b7c3;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
 }
