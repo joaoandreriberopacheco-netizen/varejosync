@@ -36,7 +36,17 @@ const MARGIN_MOBILE_ROW_H_PRODUTO = 100;
 
 /** Paleta e colunas alinhadas ao PDF mobile (`exportToPDF('expandida_mobile')`). */
 const MARGIN_MOBILE_STORM = '#526070';
-const MARGIN_MOBILE_CYAN = '#06B6D4';
+/** Destaque de lucro/markup: oliva (claro) e limão (escuro). */
+const MARGIN_ACCENT_HEX_LIGHT = '#4A5D23';
+const MARGIN_ACCENT_HEX_DARK = '#A3E635';
+const MARGIN_ACCENT_RGB = [74, 93, 35];
+
+/** Tamanho único corpo + cabeçalho da tabela desktop. */
+const MARGIN_BODY_TEXT = 'text-xs';
+const MARGIN_TABLE_HEAD =
+  'text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300';
+const MARGIN_ACCENT_VALUE = 'text-[#4A5D23] dark:text-lime-400';
+const MARGIN_MUTED_VALUE = 'text-gray-500 dark:text-gray-400';
 
 const MARGIN_MOBILE_VALUE_ROWS = [
   [
@@ -102,13 +112,34 @@ function buildMarginMobileTabulatedValues(row) {
   };
 }
 
-function marginMobileValueColorClass(key) {
-  if (key === 'markup' || key === 'lucro') return 'text-cyan-500 font-medium';
-  if (key === 'custoUnit' || key === 'custoTotal') return 'text-slate-500';
-  return 'text-slate-900 dark:text-slate-100';
+/** `pai` = grupo; `solteiro` = produto nível 1; `filho` = produto em grupo. */
+function getMarginRowTier(treeRow) {
+  if (treeRow?.type === 'group') return 'pai';
+  return (treeRow?.level ?? 1) <= 1 ? 'solteiro' : 'filho';
 }
 
-function MargemDesktopMetricCells({ dataRow, showMetrics = true }) {
+function marginMetricValueClass(key, tier = 'filho') {
+  if (key === 'markup' || key === 'lucro') return MARGIN_ACCENT_VALUE;
+  if (key === 'custoUnit' || key === 'custoTotal') return MARGIN_MUTED_VALUE;
+  if (tier === 'filho') return MARGIN_MUTED_VALUE;
+  return 'text-gray-900 dark:text-gray-100 font-semibold';
+}
+
+function marginDesktopDescClass(tier) {
+  if (tier === 'filho') {
+    return `${MARGIN_BODY_TEXT} font-normal text-gray-500 dark:text-gray-400 uppercase`;
+  }
+  return `${MARGIN_BODY_TEXT} font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide`;
+}
+
+function marginDesktopQuantClass(tier) {
+  if (tier === 'filho') {
+    return `${MARGIN_BODY_TEXT} tabular-nums text-center text-gray-600 dark:text-gray-400 font-normal`;
+  }
+  return `${MARGIN_BODY_TEXT} tabular-nums text-center text-gray-900 dark:text-white font-semibold`;
+}
+
+function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' }) {
   if (!showMetrics) {
     return MARGIN_METRIC_KEYS.map((key) => <td key={key} className="py-1.5 px-1.5" />);
   }
@@ -116,7 +147,7 @@ function MargemDesktopMetricCells({ dataRow, showMetrics = true }) {
   return MARGIN_METRIC_KEYS.map((key) => (
     <td
       key={key}
-      className={`py-1.5 px-1.5 text-[11px] text-right tabular-nums ${marginMobileValueColorClass(key)}`}
+      className={`py-1.5 px-1.5 text-right ${MARGIN_BODY_TEXT} tabular-nums ${marginMetricValueClass(key, tier)}`}
       style={{ lineHeight: 1.2 }}
     >
       {values[key]}
@@ -312,12 +343,13 @@ function MargemMobileReportHeader({ filtrosDesc }) {
       style={{ backgroundColor: MARGIN_MOBILE_STORM }}
     >
       <div
-        className="absolute left-3 top-4 bottom-4 w-[3px] rounded-sm"
-        style={{ backgroundColor: MARGIN_MOBILE_CYAN }}
+        className="absolute left-3 top-4 bottom-4 w-[3px] rounded-sm bg-[#4A5D23] dark:bg-lime-400"
         aria-hidden
       />
       <div className="pl-7 pr-3 py-3">
-        <p className="text-[13px] font-semibold tracking-wide uppercase leading-tight">Margem de vendas</p>
+        <p className={`${MARGIN_BODY_TEXT} font-semibold tracking-wide uppercase leading-tight`}>
+          Margem de vendas
+        </p>
         <p className="text-[10px] text-slate-200 mt-0.5 uppercase tracking-wide">Relatório técnico · mobile</p>
         <p className="text-[10px] text-slate-200/90 mt-2 line-clamp-2 leading-snug">{filtrosDesc}</p>
         <p className="text-[9px] text-slate-100/80 mt-2 text-right tabular-nums">
@@ -342,8 +374,8 @@ function MargemMobileKpis({ totals, totalMarkup }) {
         <div key={card.label} className="min-w-0">
           <p className="text-[9px] uppercase tracking-wide text-slate-500 leading-none">{card.label}</p>
           <p
-            className={`text-[13px] tabular-nums mt-1 truncate ${
-              card.accent ? 'text-cyan-500 font-medium' : 'text-slate-900 dark:text-slate-100'
+            className={`${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate ${
+              card.accent ? MARGIN_ACCENT_VALUE : 'text-slate-900 dark:text-slate-100'
             }`}
           >
             {card.value}
@@ -392,20 +424,21 @@ function MargemMobileQtdUnCol({ qtd, unidade, showAccentDot = true }) {
     <div className="relative w-[3.25rem] flex-shrink-0 border-r border-slate-200 dark:border-slate-700 pr-1.5 py-2.5 text-right">
       {showAccentDot ? (
         <span
-          className="absolute left-0 top-3 w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: MARGIN_MOBILE_CYAN }}
+          className="absolute left-0 top-3 w-1.5 h-1.5 rounded-full bg-[#4A5D23] dark:bg-lime-400"
           aria-hidden
         />
       ) : null}
-      <p className="text-[11px] tabular-nums font-medium text-slate-900 dark:text-slate-100 leading-none">
+      <p className={`${MARGIN_BODY_TEXT} tabular-nums text-slate-900 dark:text-slate-100 leading-none`}>
         {formatCommercialQuantity(qtd, unidade)}
       </p>
-      <p className="text-[9px] uppercase text-slate-500 mt-1.5 leading-none truncate">{unidade}</p>
+      <p className={`${MARGIN_BODY_TEXT} uppercase text-slate-500 mt-1.5 leading-none truncate`}>
+        {unidade}
+      </p>
     </div>
   );
 }
 
-function MargemMobileTabulatedValues({ row, className = '' }) {
+function MargemMobileTabulatedValues({ row, className = '', tier = 'filho' }) {
   const values = buildMarginMobileTabulatedValues(row);
 
   return (
@@ -418,7 +451,7 @@ function MargemMobileTabulatedValues({ row, className = '' }) {
           {valueRow.map(({ key }) => (
             <p
               key={key}
-              className={`text-[11px] tabular-nums text-right truncate ${marginMobileValueColorClass(key)}`}
+              className={`${MARGIN_BODY_TEXT} tabular-nums text-right truncate ${marginMetricValueClass(key, tier)}`}
             >
               {values[key]}
             </p>
@@ -444,13 +477,17 @@ function MargemLinhaMobile({
   const canExpand = isGroup && !isLeaf && typeof onToggle === 'function';
   const rowBase =
     'border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 min-w-0 max-w-full touch-pan-y';
+  const productTier = level <= 1 ? 'solteiro' : 'filho';
 
   if (isGroup || isSubtotal) {
     const showMetrics = !isSubtotal && row.showMetrics !== false;
     const unidade = formatMarginTreeUnidade(row, { isGroup: true });
     const qtd = row.quantidade_vendida || 0;
     const groupTitle = (
-      <span lang="pt-BR" className="block text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-200 line-clamp-2 break-words">
+      <span
+        lang="pt-BR"
+        className={`block line-clamp-2 break-words ${marginDesktopDescClass('pai')}`}
+      >
         {String(titulo || '').toUpperCase()}
         {row.count != null ? ` (${row.count})` : ''}
       </span>
@@ -499,7 +536,7 @@ function MargemLinhaMobile({
         <MargemMobileQtdUnCol qtd={qtd} unidade={unidade} />
         <div className="flex-1 min-w-0 py-2 pr-2">
           {groupTitle}
-          <MargemMobileTabulatedValues row={row} className="mt-1" />
+          <MargemMobileTabulatedValues row={row} className="mt-1" tier="pai" />
         </div>
       </>
     );
@@ -527,13 +564,10 @@ function MargemLinhaMobile({
     <div className={`flex ${rowBase}`}>
       <MargemMobileQtdUnCol qtd={qtd} unidade={unidade} />
       <div className="flex-1 min-w-0 py-2 pr-2">
-        <p
-          lang="pt-BR"
-          className="text-[11px] font-normal uppercase text-slate-900 dark:text-slate-100 line-clamp-2 break-words leading-snug"
-        >
+        <p lang="pt-BR" className={`line-clamp-2 break-words leading-snug ${marginDesktopDescClass(productTier)}`}>
           {titulo}
         </p>
-        <MargemMobileTabulatedValues row={row} className="mt-1" />
+        <MargemMobileTabulatedValues row={row} className="mt-1" tier={productTier} />
       </div>
     </div>
   );
@@ -840,6 +874,7 @@ export default function RelatorioMargemVendas() {
         const isExpanded = expandedKeys.has(treeRow.key);
         const isLeaf = treeRow.isLeafGroup;
         const showGroupMetrics = treeRow.showMetrics !== false;
+        const tier = 'pai';
         return (
           <tr
             key={treeRow.key}
@@ -848,21 +883,18 @@ export default function RelatorioMargemVendas() {
               isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'
             }`}
           >
-            <td
-              className="py-1.5 px-2 text-xs text-center tabular-nums font-semibold text-gray-900 dark:text-white"
-              style={{ lineHeight: 1.2 }}
-            >
+            <td className={`py-1.5 px-2 ${marginDesktopQuantClass(tier)}`} style={{ lineHeight: 1.2 }}>
               {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida, treeRow.unidade_exibicao) : ''}
             </td>
             <td
-              className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
+              className={`py-1.5 px-2 ${MARGIN_BODY_TEXT} text-center ${MARGIN_MUTED_VALUE}`}
               style={{ lineHeight: 1.2 }}
             >
               {showGroupMetrics ? formatMarginTreeUnidade(treeRow, { isGroup: true }) : ''}
             </td>
             <td
               lang="pt-BR"
-              className="py-1.5 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
+              className={`py-1.5 px-2 min-w-0 ${marginDesktopDescClass(tier)}`}
               style={{ lineHeight: 1.2, minHeight: 46 }}
             >
               <MargemDescricaoTexto
@@ -872,18 +904,19 @@ export default function RelatorioMargemVendas() {
               >
                 <span className="flex items-center gap-1 min-w-0 truncate">
                   <span className="truncate">{treeRow.label}</span>
-                  <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0">
+                  <span className={`h-5 px-1.5 ${MARGIN_BODY_TEXT} font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0`}>
                     {treeRow.count}
                   </span>
                 </span>
               </MargemDescricaoTexto>
             </td>
-            <MargemDesktopMetricCells dataRow={treeRow} showMetrics={showGroupMetrics} />
+            <MargemDesktopMetricCells dataRow={treeRow} showMetrics={showGroupMetrics} tier={tier} />
           </tr>
         );
       }
 
       const row = treeRow.item;
+      const tier = getMarginRowTier(treeRow);
       return (
         <tr
           key={treeRow.key}
@@ -891,28 +924,25 @@ export default function RelatorioMargemVendas() {
             rowIdx % 2 === 1 ? 'bg-gray-50/30 dark:bg-gray-800/20' : 'bg-white dark:bg-gray-900'
           } hover:bg-gray-50/70 dark:hover:bg-gray-800/25`}
         >
-          <td
-            className="py-1.5 px-2 text-xs text-center tabular-nums text-gray-900 dark:text-white font-semibold"
-            style={{ lineHeight: 1.2 }}
-          >
+          <td className={`py-1.5 px-2 ${marginDesktopQuantClass(tier)}`} style={{ lineHeight: 1.2 }}>
             {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
           </td>
           <td
-            className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
+            className={`py-1.5 px-2 ${MARGIN_BODY_TEXT} text-center ${MARGIN_MUTED_VALUE}`}
             style={{ lineHeight: 1.2 }}
           >
             {row.unidade_exibicao || 'UN'}
           </td>
           <td
             lang="pt-BR"
-            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase min-w-0"
+            className={`py-1.5 px-2 min-w-0 ${marginDesktopDescClass(tier)}`}
             style={{ lineHeight: 1.2, minHeight: 46 }}
           >
             <MargemDescricaoTexto textStart={marginDescTextStart(treeRow.level)}>
               <span className="block truncate">{row.nome}</span>
             </MargemDescricaoTexto>
           </td>
-          <MargemDesktopMetricCells dataRow={row} />
+          <MargemDesktopMetricCells dataRow={row} tier={tier} />
         </tr>
       );
     },
@@ -1006,12 +1036,11 @@ export default function RelatorioMargemVendas() {
       const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
       const MOBILE_PDF_FONT_SCALE = 1.12;
       const MOBILE_ROW_GAP = 0.65;
-      const MOBILE_CYAN = [6, 182, 212];
       const MOBILE_HUD = {
         storm: [82, 96, 112],
         headerText: [255, 255, 255],
         headerTextMuted: [241, 245, 249],
-        accent: MOBILE_CYAN,
+        accent: MARGIN_ACCENT_RGB,
         grid: [226, 232, 240],
       };
       const pageW = pdf.internal.pageSize.getWidth();
@@ -1108,7 +1137,7 @@ export default function RelatorioMargemVendas() {
             setColor(SLATE500);
             pdf.text(normalizePdfText(card.label), cx, y + 4);
             pdf.setFontSize(7.8 * MOBILE_PDF_FONT_SCALE);
-            setColor(card.accent ? MOBILE_CYAN : SLATE900);
+            setColor(card.accent ? MARGIN_ACCENT_RGB : SLATE900);
             pdf.text(card.value, cx, y + 9.2);
           });
           y += cardH + 1.5;
@@ -1186,13 +1215,13 @@ export default function RelatorioMargemVendas() {
         pdf.setFontSize(7.5 * fontScale);
         MARGIN_MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
           if (key === 'custoUnit') setColor(SLATE500);
-          else if (key === 'markup') setColor(MOBILE_CYAN);
+          else if (key === 'markup') setColor(MARGIN_ACCENT_RGB);
           else setColor(SLATE900);
           pdf.text(values[key], row1.colRight[idx], valoresY, { align: 'right' });
         });
         MARGIN_MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
           if (key === 'custoTotal') setColor(SLATE500);
-          else if (key === 'lucro') setColor(MOBILE_CYAN);
+          else if (key === 'lucro') setColor(MARGIN_ACCENT_RGB);
           else setColor(SLATE900);
           pdf.text(values[key], row2.colRight[idx], row2Y, { align: 'right' });
         });
@@ -1493,7 +1522,6 @@ export default function RelatorioMargemVendas() {
     };
 
     const PDF_STORM = [82, 96, 112];
-    const PDF_CYAN = [6, 182, 212];
 
     const drawTableHeader = () => {
       const headerH = 12;
@@ -1570,7 +1598,7 @@ export default function RelatorioMargemVendas() {
       };
 
       MARGIN_METRIC_KEYS.forEach((key) => {
-        if (key === 'markup' || key === 'lucro') setColor(PDF_CYAN);
+        if (key === 'markup' || key === 'lucro') setColor(MARGIN_ACCENT_RGB);
         else if (key === 'custoUnit' || key === 'custoTotal') setColor(C.muted);
         else setColor(C.text);
         pdf.text(metricValues[key], colRightAbs[key] - 1, textY, { align: 'right' });
@@ -1702,13 +1730,15 @@ export default function RelatorioMargemVendas() {
                   </button>
                 </Link>
                 <div className="min-w-0">
-                  <h1 className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-100 truncate">Relatório de Margem</h1>
-                  <div className="hidden md:flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-normal text-gray-500 dark:text-gray-400 min-w-0">
+                  <h1 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100 truncate">
+                    Relatório de Margem
+                  </h1>
+                  <div className={`hidden md:flex flex-wrap items-center gap-x-3 gap-y-0.5 ${MARGIN_BODY_TEXT} font-normal text-gray-500 dark:text-gray-400 min-w-0`}>
                     <span className="truncate">{productCount} produto{productCount === 1 ? '' : 's'}</span>
                     <span className="truncate">{formatMoney(totals.receita_liquida)} receita</span>
                     <span className="truncate text-gray-400 dark:text-gray-500">{formatMoney(totals.custo_total)} custo</span>
-                    <span className="truncate text-emerald-600 dark:text-emerald-400">{formatMoney(totals.lucro_total)} lucro</span>
-                    <span className="truncate text-emerald-600 dark:text-emerald-400">{formatPercent(totalMarkup)} markup</span>
+                    <span className={`truncate ${MARGIN_ACCENT_VALUE}`}>{formatMoney(totals.lucro_total)} lucro</span>
+                    <span className={`truncate ${MARGIN_ACCENT_VALUE}`}>{formatPercent(totalMarkup)} markup</span>
                     {periodLabel ? (
                       <span className="truncate text-gray-400 dark:text-gray-500">{periodLabel}</span>
                     ) : null}
@@ -1957,7 +1987,7 @@ export default function RelatorioMargemVendas() {
                 className="hidden md:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
-                <table className="w-full text-xs table-fixed">
+                <table className={`w-full table-fixed ${MARGIN_BODY_TEXT}`}>
                   <colgroup>
                     <col className="w-[72px]" />
                     <col className="w-[52px]" />
@@ -1977,13 +2007,11 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className={`text-center py-2 px-2 ${MARGIN_TABLE_HEAD} cursor-pointer hover:text-gray-900 dark:hover:text-gray-100`}
                       >
                         QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                        UN
-                      </th>
+                      <th className={`text-center py-2 px-2 ${MARGIN_TABLE_HEAD}`}>UN</th>
                       <th
                         onClick={() => {
                           if (sortField === 'nome') {
@@ -1993,7 +2021,7 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('asc');
                           }
                         }}
-                        className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className={`text-left py-2 px-2 ${MARGIN_TABLE_HEAD} cursor-pointer hover:text-gray-900 dark:hover:text-gray-100`}
                       >
                         DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -2003,7 +2031,7 @@ export default function RelatorioMargemVendas() {
                           <th
                             key={key}
                             onClick={() => handleMetricSort(key)}
-                            className="text-right py-2 px-1 text-[9px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                            className={`text-right py-2 px-1 ${MARGIN_TABLE_HEAD} cursor-pointer hover:text-gray-900 dark:hover:text-gray-100`}
                           >
                             {label}{' '}
                             {sortField === sortKey && (sortOrder === 'asc' ? '↑' : '↓')}
