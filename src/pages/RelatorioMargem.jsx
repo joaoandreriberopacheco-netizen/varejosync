@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, FilterX, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, Wallet } from 'lucide-react';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import {
   buildMarginTree,
@@ -15,15 +15,17 @@ import { Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { registerJsPdfNotoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
+import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
 const PDF_COL_GAP_MM = 2;
 
-/** Paleta alinhada a `gerarRelatorioPedidosComprav2` (relatório expandido de embarques). */
+/** Paleta alinhada a `gerarRelatorioPedidosComprav2` (relat?rio expandido de embarques). */
 const PDF_EMBARQUES_C = {
   text: [31, 41, 55],
   muted: [107, 114, 128],
@@ -40,7 +42,7 @@ const PDF_EMBARQUES_C = {
   profit: [15, 118, 110],
 };
 
-/** Larguras fixas (mm); descrição ocupa o restante de contentWidth menos os gaps. */
+/** Larguras fixas (mm); descri??o ocupa o restante de contentWidth menos os gaps. */
 function buildPdfColumnLayout(contentWidth) {
   const colWidths = {
     quant: 11,
@@ -110,7 +112,7 @@ function formatQuant(val, unitCode) {
   return formatCommercialQuantity(val, unitCode);
 }
 
-/** Coluna UN: folhas usam sigla; grupos só quando todas as folhas coincidem, senão "MIX". */
+/** Coluna UN: folhas usam sigla; grupos s? quando todas as folhas coincidem, sen?o ??? */
 function formatMarginTreeUnidade(row, { isGroup = false } = {}) {
   if (isGroup) return formatMarginGroupUnidadeLabel(row.unidade_exibicao);
   return row.unidade_exibicao || 'UN';
@@ -148,10 +150,9 @@ const MARGIN_INDENT_PRODUTO = 8;
 const MARGIN_INDENT_GROUP_MOBILE = 10;
 const MARGIN_INDENT_PRODUTO_MOBILE = 6;
 
-/** Corpo: entrelinha +50% (~1,5) e padding +20% (~1,2) em relação ao layout compacto anterior. */
+/** Corpo: entrelinha +50% (?1,5) e padding +20% (?1,2) em rela??o ao layout compacto anterior. */
 const BODY_LINE_HEIGHT_MULT = 1.5;
 const BODY_PAD_MULT = 1.2;
-const MARGIN_SEARCH_SEPARATOR = ';';
 
 function MargemLinhaMobile({
   row,
@@ -205,11 +206,11 @@ function MargemLinhaMobile({
           <div className="flex-1 min-w-0">
             <span
               lang="pt-BR"
-              className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-100 truncate"
+              className="block text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 truncate"
             >
               {titulo}
               {row.count != null ? (
-                <span className="ml-1 inline-flex h-5 items-center rounded-full border border-gray-200 px-1.5 text-[10px] font-medium text-gray-600 dark:border-gray-700 dark:text-gray-400 normal-case">
+                <span className="ml-1 font-medium text-gray-500 dark:text-gray-400 normal-case">
                   ({row.count})
                 </span>
               ) : null}
@@ -272,7 +273,7 @@ function MargemLinhaMobile({
     >
       <p
         lang="pt-BR"
-        className="text-xs font-normal uppercase text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
+        className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 break-words"
         style={{ lineHeight: `${1.375 * BODY_LINE_HEIGHT_MULT}` }}
       >
         {titulo}
@@ -306,7 +307,6 @@ export default function RelatorioMargemVendas() {
   const [treeLevel, setTreeLevel] = useState(99);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
-  const [searchDraft, setSearchDraft] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortField, setSortField] = useState('lucro_total');
@@ -388,7 +388,7 @@ export default function RelatorioMargemVendas() {
         entry.quantidade_vendida += quantidadeResolvida.quantidade;
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
          entry.total_recebido += item.total;
-         // Registrar o desconto do pedido (para cada venda, não proporcional por item neste cálculo)
+         // Registrar o desconto do pedido (para cada venda, n?o proporcional por item neste c?lculo)
          entry.total_desconto_venda += (sale.valor_desconto || 0) / (sale.itens?.length || 1);
        });
      });
@@ -426,27 +426,13 @@ export default function RelatorioMargemVendas() {
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
 
-    // Mesmo padrão do catálogo: ";" separa termos que devem aparecer no produto.
-    const searchTokens = String(searchTerm || '')
-      .split(MARGIN_SEARCH_SEPARATOR)
-      .map((term) => term.trim().toLowerCase())
-      .filter(Boolean);
-    if (searchTokens.length > 0) {
-      sorted = sorted.filter((item) => {
-        const haystack = [
-          item.nome,
-          item.codigo_interno,
-          item.categoria,
-          item.campo_hierarquico_1,
-          item.campo_hierarquico_2,
-          item.campo_hierarquico_3,
-          item.campo_hierarquico_4,
-          ...(Array.isArray(item.tags) ? item.tags : []),
-        ]
-          .filter(Boolean)
-          .map((value) => String(value).toLowerCase());
-        return searchTokens.every((term) => haystack.some((value) => value.includes(term)));
-      });
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      sorted = sorted.filter(item => 
+        item.nome?.toLowerCase?.().includes(term) || 
+        item.codigo_interno?.toLowerCase?.().includes(term)
+      );
     }
 
     // Filter by tags
@@ -529,11 +515,6 @@ export default function RelatorioMargemVendas() {
   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
 
   const productCount = processedData.length;
-  const activeFilterCount = [
-    searchTerm.trim(),
-    selectedTags.length > 0,
-    treeLevel !== 99,
-  ].filter(Boolean).length;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatPercent = (val) => `${val.toFixed(2)}%`;
@@ -541,7 +522,7 @@ export default function RelatorioMargemVendas() {
   const exportToCSV = () => {
     const flat = exportRows.length ? exportRows : processedData;
     const headers =
-      'Produto;Categoria;Quant;Un;Preço Un Médio;Receita Total;Custo Total;Lucro;Markup %\n';
+      'Produto;Categoria;Quant;Un;Preco Un Medio;Receita Total;Custo Total;Lucro;Markup %\n';
     const rows = flat
       .map(
         (row) =>
@@ -559,12 +540,12 @@ export default function RelatorioMargemVendas() {
 
   const exportToPDF = async () => {
     if (!dateRange.from || !dateRange.to) {
-      toast.error('Selecione um período antes de exportar');
+      toast.error('Selecione um per?odo antes de exportar');
       return;
     }
 
     if (!processedData.length) {
-      toast.error('Não há dados para exportar no período selecionado');
+      toast.error('N?o h? dados para exportar no per?odo selecionado');
       return;
     }
 
@@ -622,12 +603,12 @@ export default function RelatorioMargemVendas() {
       setColor(C.muted);
       pdf.text(
         normalizePdfText(
-          `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} • ${itemCount} produto(s)`
+          `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} ? ${itemCount} produto(s)`
         ),
         margin,
         footerY
       );
-      pdf.text(normalizePdfText(`Página ${pageNumber}`), pageWidth - margin, footerY, {
+      pdf.text(normalizePdfText(`P?gina ${pageNumber}`), pageWidth - margin, footerY, {
         align: 'right',
       });
     };
@@ -642,13 +623,13 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(15);
       setColor(C.text);
-      pdf.text(normalizePdfText('Relatório de Margem de Vendas'), margin + 11, yPos + 9.5);
+      pdf.text(normalizePdfText('Relat?rio de Margem de Vendas'), margin + 11, yPos + 9.5);
 
       pdf.setFontSize(8.5);
       setColor(C.muted);
       pdf.text(
         normalizePdfText(
-          `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
+          `Per?odo: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
         ),
         margin + 11,
         yPos + 16
@@ -671,7 +652,7 @@ export default function RelatorioMargemVendas() {
 
     const drawSummaryKpis = () => {
       const kpis = [
-        { label: 'Receita líquida', value: formatNumPdf(totals.receita_liquida), accent: false },
+        { label: 'Receita l?quida', value: formatNumPdf(totals.receita_liquida), accent: false },
         { label: 'Custo total', value: formatNumPdf(totals.custo_total), accent: false },
         { label: 'Lucro', value: formatNumPdf(totals.lucro_total), accent: true },
         { label: 'Markup', value: formatPctPdf(totalMarkup), accent: true },
@@ -699,7 +680,7 @@ export default function RelatorioMargemVendas() {
       setPdfFont('normal');
       pdf.setFontSize(6.5);
       setColor(C.mutedLight);
-      pdf.text(normalizePdfText('Valores monetários em reais (R$).'), margin, yPos);
+      pdf.text(normalizePdfText('Valores monet?rios em reais (R$).'), margin, yPos);
       yPos += 6;
     };
 
@@ -717,8 +698,8 @@ export default function RelatorioMargemVendas() {
 
       pdf.text('QUANT', quantCenter, headerY, { align: 'center' });
       pdf.text('UN', unCenter, headerY, { align: 'center' });
-      pdf.text(normalizePdfText('DESCRIÇÃO'), colXAbs.desc + 1, headerY);
-      pdf.text(normalizePdfText('PREÇO UN'), colRightAbs.precoMedio - 1, headerY, { align: 'right' });
+      pdf.text(normalizePdfText('DESCRI????O'), colXAbs.desc + 1, headerY);
+      pdf.text(normalizePdfText('PRE??O UN'), colRightAbs.precoMedio - 1, headerY, { align: 'right' });
       pdf.text('RECEITA', colRightAbs.receita - 1, headerY, { align: 'right' });
       pdf.text('CUSTO', colRightAbs.custo - 1, headerY, { align: 'right' });
       pdf.text('LUCRO', colRightAbs.lucro - 1, headerY, { align: 'right' });
@@ -873,9 +854,9 @@ export default function RelatorioMargemVendas() {
 
     pdf.save('relatorio_margem.pdf');
     } catch (error) {
-      console.error('Erro ao gerar PDF do relatório de margem', error);
+      console.error('Erro ao gerar PDF do relat?rio de margem', error);
       const devDetail = import.meta.env.DEV && error?.message ? ` (${error.message})` : '';
-      toast.error(`Não foi possível gerar o PDF. Tente novamente.${devDetail}`);
+      toast.error(`N?o foi poss?vel gerar o PDF. Tente novamente.${devDetail}`);
     }
   };
 
@@ -889,12 +870,7 @@ export default function RelatorioMargemVendas() {
     return Array.from(tags).sort();
   }, [products]);
 
-  const handleApplySearchFilter = useCallback(() => {
-    setSearchTerm(searchDraft.trim());
-  }, [searchDraft]);
-
   const handleClearFilters = () => {
-    setSearchDraft('');
     setSearchTerm('');
     setSelectedTags([]);
     setTreeLevel(99);
@@ -907,36 +883,36 @@ export default function RelatorioMargemVendas() {
       : null;
 
   return (
-    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-white dark:bg-gray-900 md:overflow-x-hidden">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-gray-50/50 dark:bg-gray-950 md:min-h-screen md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
-          <div className="w-full min-w-0 px-3 py-2 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <Link to="/Relatorios">
-                  <button className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
-                    <ArrowLeft className="w-4 md:w-5 h-4 md:h-5 text-gray-700 dark:text-gray-200" />
-                  </button>
-                </Link>
-                <div className="min-w-0">
-                  <h1 className="text-sm md:text-base font-glacial font-medium text-gray-800 dark:text-gray-100 truncate">Relatório de Margem</h1>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-normal text-gray-500 dark:text-gray-400 min-w-0">
-                    <span className="truncate">{productCount} produto{productCount === 1 ? '' : 's'}</span>
-                    <span className="truncate">{formatMoney(totals.receita_liquida)} receita</span>
-                    <span className="truncate text-gray-400 dark:text-gray-500">{formatMoney(totals.custo_total)} custo</span>
-                    <span className="truncate text-emerald-600 dark:text-emerald-400">{formatMoney(totals.lucro_total)} lucro</span>
-                    <span className="truncate text-emerald-600 dark:text-emerald-400">{formatPercent(totalMarkup)} markup</span>
-                    {periodLabel ? (
-                      <span className="truncate text-gray-400 dark:text-gray-500">{periodLabel}</span>
-                    ) : null}
-                  </div>
-                </div>
+        <div className="flex-shrink-0 p-3 md:px-6 md:py-4 md:sticky md:top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <Link to="/Relatorios">
+                <button className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
+                  <ArrowLeft className="w-4 md:w-5 h-4 md:h-5 text-gray-700 dark:text-gray-200" />
+                </button>
+              </Link>
+              <div className="min-w-0">
+                <h1 className="text-base md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white truncate">Relat?rio de Margem</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  Rentabilidade por produto
+                  {periodLabel ? (
+                    <span className="block sm:inline mt-0.5 sm:mt-0 text-gray-400 dark:text-gray-500 truncate">
+                      <span className="sm:hidden">Per?odo: </span>
+                      <span className="hidden sm:inline"> ? </span>
+                      {periodLabel}
+                    </span>
+                  ) : null}
+                </p>
               </div>
+            </div>
+            <div className="flex items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-200 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
-                    <Printer className="w-4 h-4" />
+                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200 flex-shrink-0" title="Op??es de impress?o">
+                    <Printer className="w-4 md:w-5 h-4 md:h-5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700 text-sm">
@@ -949,116 +925,150 @@ export default function RelatorioMargemVendas() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </div>
 
-            <div className="flex gap-2 min-w-0 items-center">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
-                <input
-                  autoComplete="off"
-                  type="text"
-                  placeholder="Produto, código, categoria ou tag (use ; para combinar termos)..."
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') handleApplySearchFilter();
-                  }}
-                  className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 pr-3 text-gray-700 dark:text-gray-200 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
-                />
-              </div>
+          {/* Filter Button - PDV Style */}
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={() => setShowFilterDrawer(true)}
+              className="flex items-center gap-2 px-4 min-h-[44px] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs md:text-sm font-medium"
+              title="Filtros"
+            >
+              <FilterX className="w-4 h-4" />
+              Filtros
+            </button>
+            {(searchTerm || selectedTags.length > 0 || treeLevel !== 99) && (
               <button
-                type="button"
-                onClick={handleApplySearchFilter}
-                className="h-10 px-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
-                title="Aplicar busca"
+                onClick={handleClearFilters}
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                title="Limpar filtros"
               >
-                Set Filter
+                <X className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800'}`}
-                onClick={() => setShowFilterDrawer((open) => !open)}
-                title="Filtros"
-              >
-                <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 text-[10px] rounded-full flex items-center justify-center font-bold">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={handleClearFilters}
-                  className="h-10 w-10 flex-shrink-0 rounded-xl text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center"
-                  title="Limpar filtros"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {showFilterDrawer && (
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
-                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Nível da TreeGrid</span>
-                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                </div>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: today, to: today });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                >
-                  Hoje
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: subDays(today, 30), to: today });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                >
-                  30 dias
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date();
-                    setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
-                  }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                >
-                  Mês atual
-                </button>
-                <button
-                  onClick={() => setShowCalendar(true)}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                >
-                  {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
-                </button>
-                {allTags.length > 0 && (
-                  <div className="md:col-span-6">
-                    <TagSearchPopup
-                      variant="inline"
-                      allTags={allTags}
-                      selectedTags={selectedTags}
-                      setSelectedTags={setSelectedTags}
-                      onClose={() => {}}
-                    />
-                  </div>
-                )}
-              </div>
             )}
           </div>
         </div>
 
-        {/* Calendário acima do Drawer (portal no body; drawer usa z-[310]) */}
+        {/* Filter Drawer - PDV Style */}
+        <Drawer open={showFilterDrawer} onOpenChange={setShowFilterDrawer}>
+          <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-8 max-h-[85vh] flex flex-col">
+            <DrawerHeader className="px-0 pb-3 text-left sticky top-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-200 dark:border-gray-800">
+              <DrawerTitle className="font-glacial text-gray-900 dark:text-white text-lg">Filtros e Configura??es</DrawerTitle>
+            </DrawerHeader>
+
+            <div className="space-y-5 overflow-y-auto pt-1">
+              {/* Per?odo */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Per?odo</label>
+                
+                {/* Atalhos R?pidos */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mb-3">
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: today, to: today });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      const thirtyDaysAgo = subDays(today, 30);
+                      setDateRange({ from: thirtyDaysAgo, to: today });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    30 dias
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    M?s atual
+                  </button>
+                </div>
+
+                {/* Calend?rio Personalizado */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Customizado</label>
+                  <button
+                    onClick={() => setShowCalendar(true)}
+                    className="w-full px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar per?odo'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Search */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Buscar Produto</label>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input autoComplete="off" 
+                    type="text" 
+                    placeholder="Nome do produto..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-base md:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  />
+                </div>
+              </div>
+
+              {/* Tags */}
+              {allTags.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Tags</label>
+                  <TagSearchPopup
+                    variant="inline"
+                    allTags={allTags}
+                    selectedTags={selectedTags}
+                    setSelectedTags={setSelectedTags}
+                    onClose={() => {}}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                  N?vel da ?rvore
+                </label>
+                <div className="overflow-x-auto pb-1 [&_button]:!min-h-9 [&_button]:!min-w-9">
+                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleClearFilters}
+                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  Limpar
+                </button>
+                <button
+                  onClick={() => setShowFilterDrawer(false)}
+                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 transition"
+                >
+                  Aplicar
+                </button>
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+
+        {/* Calend?rio acima do Drawer (portal no body ??? drawer usa z-[310]) */}
         {showCalendar &&
           createPortal(
             <>
               <button
                 type="button"
-                aria-label="Fechar calendário"
+                aria-label="Fechar calend?rio"
                 className="fixed inset-0 z-[320] cursor-default bg-black/50"
                 onClick={() => setShowCalendar(false)}
               />
@@ -1066,8 +1076,8 @@ export default function RelatorioMargemVendas() {
                 <div
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Selecionar período"
-                  className="pointer-events-auto w-full max-w-[720px] rounded-[28px] bg-white dark:bg-gray-900 p-3 md:p-5 shadow-2xl"
+                  aria-label="Selecionar per?odo"
+                  className="pointer-events-auto w-full max-w-[820px] rounded-[30px] bg-white dark:bg-gray-900 p-3 shadow-2xl"
                 >
                   <CalendarPopup
                     dateRange={dateRange}
@@ -1081,19 +1091,66 @@ export default function RelatorioMargemVendas() {
             document.body
           )}
 
-<div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+<div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] md:overflow-visible md:flex-none md:pb-0">
+                {/* Resumo ? mesma linguagem do PDF */}
+         <div className="px-3 md:px-6 py-2.5 md:py-5 min-w-0 max-w-full overflow-x-hidden">
+           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 md:mb-3 italic">
+             Valores monet?rios em reais (R$).
+           </p>
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+             <AuditableMetricTooltip
+               className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
+               icon={TrendingUp}
+               label="RECEITA L?QUIDA"
+               value={formatMoney(totals.receita_liquida)}
+               auditData={{
+                 'Receita Bruta': formatMoney(totals.total_recebido),
+                 'Menos Descontos': `- ${formatMoney(totals.total_desconto_venda)}`,
+                 'Receita L?quida': formatMoney(totals.receita_liquida)
+               }}
+             />
+             <AuditableMetricTooltip
+               className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
+               icon={Wallet}
+               label="CUSTO TOTAL"
+               value={formatMoney(totals.custo_total)}
+               auditData={{
+                 'Custo Total': formatMoney(totals.custo_total)
+               }}
+             />
+             <AuditableMetricTooltip
+               className="!p-4 md:!p-4 !bg-[#fafafa] dark:!bg-gray-800/60 !border-gray-100 [&_p:last-child]:!font-normal"
+               icon={DollarSign}
+               label="LUCRO"
+               value={formatMoney(totals.lucro_total)}
+               auditData={{
+                 'Receita L?quida': formatMoney(totals.receita_liquida),
+                 'Menos Custos': `- ${formatMoney(totals.custo_total)}`,
+                 'Lucro L?quido': formatMoney(totals.lucro_total)
+               }}
+             />
+             <AuditableMetricTooltip
+               className="!p-4 md:!p-4 !bg-emerald-50/80 dark:!bg-emerald-950/20 !border-emerald-100 [&_p:last-child]:!font-normal"
+               icon={Percent}
+               variant="profit"
+               label="MARKUP"
+               value={formatPercent(totalMarkup)}
+             />
+           </div>
+           </div>
+
            {/* Toolbar */}
-           <div className="px-3 md:mx-4 mb-2 py-2 min-w-0 max-w-full">
+           <div className="px-3 md:mx-6 mb-1.5 md:mb-2 rounded-xl md:rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-sm py-2.5 md:px-3 md:py-2.5 min-w-0 max-w-full">
              <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
             <div className="hidden md:contents">
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
             </div>
-            {/* Critério selecionado - ícone apenas */}
+            {/* Crit?rio Selecionado - Icon Only */}
             <div className="relative">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition" title="Critério de ordenação">
+                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition" title="Crit?rio de ordena??o">
                     {sortField === 'nome' && <Type className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
                     {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
                     {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
@@ -1106,7 +1163,7 @@ export default function RelatorioMargemVendas() {
                 <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700">
                   <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <Type className="w-4 h-4" />
-                    <span>Descrição</span>
+                    <span>Descri??o</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setSortField('quantidade_vendida'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <Package className="w-4 h-4" />
@@ -1114,7 +1171,7 @@ export default function RelatorioMargemVendas() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setSortField('valor_unitario_medio'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    <span>Preço un médio</span>
+                    <span>Pre?o un m?dio</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -1136,11 +1193,11 @@ export default function RelatorioMargemVendas() {
               </DropdownMenu>
             </div>
 
-            {/* Seta para direção */}
+            {/* Seta para dire??o */}
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition"
-              title="Alternar direção"
+              title="Alternar dire??o"
             >
               <ChevronDown className={`w-4 h-4 text-gray-700 dark:text-gray-300 transition ${
                 sortOrder === 'desc' ? 'rotate-180' : ''
@@ -1150,18 +1207,18 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Table - Desktop Table / Mobile Cards */}
-        <div className="flex-1 min-h-0 p-3 md:px-4 md:pt-0 md:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
+        <div className="p-3 md:p-6 min-w-0 max-w-full overflow-x-hidden" id="relatorio-table">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40">
               <Loader2 className="w-9 h-9 animate-spin text-gray-400 mb-4" />
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carregando relatório...</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carregando relat?rio???</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Aguarde enquanto calculamos as margens</p>
             </div>
           ) : processedData.length > 0 ? (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <table className="w-full text-xs table-fixed">
+              <div className="hidden md:block min-w-0 overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm">
+                <table className="w-full text-sm table-fixed">
                   <colgroup>
                     <col className="w-[72px]" />
                     <col className="w-[52px]" />
@@ -1172,8 +1229,8 @@ export default function RelatorioMargemVendas() {
                     <col className="w-[100px]" />
                     <col className="w-[80px]" />
                   </colgroup>
-                  <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900 backdrop-blur-sm">
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <thead className="sticky top-0 z-[1] bg-gray-800 dark:bg-gray-900 backdrop-blur-sm">
+                    <tr className="border-b border-gray-700 dark:border-gray-600">
                       <th
                         onClick={() => {
                           if (sortField === 'quantidade_vendida') {
@@ -1183,11 +1240,11 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        QUANT {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
-                      <th className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                      <th className="text-center py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200">
                         UN
                       </th>
                       <th
@@ -1199,9 +1256,9 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('asc');
                           }
                         }}
-                        className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className="text-left py-3 px-3 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        DESCRI????O {sortField === 'nome' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th
                         onClick={() => {
@@ -1212,9 +1269,9 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        PREÇO UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        PRE??O UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                         onClick={() => {
@@ -1225,9 +1282,9 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                         onClick={() => {
@@ -1238,9 +1295,9 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                         onClick={() => {
@@ -1251,9 +1308,9 @@ export default function RelatorioMargemVendas() {
                             setSortOrder('desc');
                           }
                         }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                        className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                        LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       <th 
                        onClick={() => {
@@ -1264,9 +1321,9 @@ export default function RelatorioMargemVendas() {
                            setSortOrder('desc');
                          }
                        }}
-                       className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                       className="text-right py-3 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-200 cursor-pointer hover:text-white"
                       >
-                       MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
+                       MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '???' : '???')}
                       </th>
                       </tr>
                   </thead>
@@ -1281,19 +1338,19 @@ export default function RelatorioMargemVendas() {
                           <tr
                             key={treeRow.key}
                             onClick={isLeaf ? undefined : () => handleToggleGroup(treeRow.key)}
-                            className={`border-b border-gray-100 dark:border-gray-800 select-none ${
-                              isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                            className={`border-b border-gray-100 dark:border-gray-800 bg-slate-50/80 dark:bg-slate-800/30 ${
+                              isLeaf ? '' : 'cursor-pointer hover:bg-slate-100/90 dark:hover:bg-slate-800/50'
                             }`}
                           >
                             <td
-                              className="py-1.5 px-2 text-xs text-center tabular-nums font-semibold text-gray-900 dark:text-white"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-center tabular-nums font-semibold text-gray-900 dark:text-white"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida, treeRow.unidade_exibicao) : ''}
                             </td>
                             <td
-                              className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics
                                 ? formatMarginTreeUnidade(treeRow, { isGroup: true })
@@ -1301,8 +1358,8 @@ export default function RelatorioMargemVendas() {
                             </td>
                             <td
                               lang="pt-BR"
-                              className="py-2 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
-                              style={{ paddingLeft: 8 + indent, lineHeight: 1.2, minHeight: 38 }}
+                              className="py-3.5 px-3.5 text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide break-words min-w-0 border-l-4 border-slate-300 dark:border-slate-600"
+                              style={{ paddingLeft: 14.4 + indent, lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {!isLeaf && (
@@ -1314,38 +1371,38 @@ export default function RelatorioMargemVendas() {
                                 )}
                                 {isLeaf && <span className="w-3.5 flex-shrink-0" />}
                                 <span className="truncate">{treeRow.label}</span>
-                                <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0 ml-0.5">
-                                  {treeRow.count}
+                                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 normal-case flex-shrink-0">
+                                  ({treeRow.count})
                                 </span>
                               </div>
                             </td>
                             <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.valor_unitario_medio) : ''}
                             </td>
                             <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.total_recebido) : ''}
                             </td>
                             <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.custo_total) : ''}
                             </td>
                             <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics ? formatMoney(treeRow.lucro_total) : ''}
                             </td>
                             <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                              style={{ lineHeight: 1.2 }}
+                              className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                              style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                             >
                               {showGroupMetrics ? formatPercent(treeRow.markup_percentual) : ''}
                             </td>
@@ -1366,51 +1423,53 @@ export default function RelatorioMargemVendas() {
                           } hover:bg-gray-100/70 dark:hover:bg-gray-800/50`}
                         >
                           <td
-                            className="py-1.5 px-2 text-xs text-center tabular-nums text-gray-900 dark:text-white font-semibold"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-center tabular-nums text-gray-900 dark:text-white font-semibold"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
                           </td>
                           <td
-                            className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-center text-gray-600 dark:text-gray-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {row.unidade_exibicao || 'UN'}
                           </td>
                           <td
                             lang="pt-BR"
-                            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase truncate min-w-0"
-                            style={{ paddingLeft: descIndent, lineHeight: 1.2, minHeight: 46 }}
+                            className={`py-3.5 px-3.5 text-sm text-gray-900 dark:text-white font-medium hyphens-auto break-words min-w-0 ${
+                              treeRow.level > 1 ? 'border-l-2 border-gray-200 dark:border-gray-700' : ''
+                            }`}
+                            style={{ paddingLeft: descIndent, lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {row.nome}
                           </td>
                           <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {formatMoney(row.valor_unitario_medio)}
                           </td>
                           <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-900 dark:text-white"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {formatMoney(row.total_recebido)}
                           </td>
                           <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {formatMoney(row.custo_total)}
                           </td>
                           <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {formatMoney(row.lucro_total)}
                           </td>
                           <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                            style={{ lineHeight: 1.2 }}
+                            className="py-3 px-2.5 text-sm text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+                            style={{ lineHeight: BODY_LINE_HEIGHT_MULT }}
                           >
                             {formatPercent(row.markup_percentual)}
                           </td>
@@ -1421,8 +1480,8 @@ export default function RelatorioMargemVendas() {
                           </table>
               </div>
 
-              {/* Mobile: mesmas colunas do PDF */}
-              <div className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 pb-[var(--p38-scroll-pad-below-nav)]">
+              {/* Mobile ? mesmas colunas do PDF */}
+              <div className="md:hidden min-w-0 max-w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
                 {displayRows.map((treeRow, rowIdx) =>
                   treeRow.type === 'group' ? (
                     <MargemLinhaMobile
@@ -1445,7 +1504,7 @@ export default function RelatorioMargemVendas() {
                 )}
               </div>
 
-              <div className="mt-3 flex justify-center flex-shrink-0">
+              <div className="mt-4 md:mt-6 flex justify-center">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                   <Package className="w-3.5 h-3.5" />
                   {productCount} produto{productCount === 1 ? '' : 's'}
@@ -1455,9 +1514,9 @@ export default function RelatorioMargemVendas() {
           ) : (
             <div className="py-16 px-4 text-center rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40">
               <BarChart3 className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="text-base font-medium text-gray-700 dark:text-gray-300">Nenhum dado no período</p>
+              <p className="text-base font-medium text-gray-700 dark:text-gray-300">Nenhum dado no per?odo</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
-                Ajuste o período ou os filtros para ver produtos com vendas e margem.
+                Ajuste o per?odo ou os filtros para ver produtos com vendas e margem.
               </p>
             </div>
           )}
