@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Printer, Loader2, ArrowLeft, Search, X, ChevronDown, ChevronRight, Type, TrendingUp, DollarSign, Percent, Package, BarChart3, SlidersHorizontal } from 'lucide-react';
@@ -19,11 +19,20 @@ import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { useVirtualRows } from '@/hooks/useVirtualRows';
 
 
 const PDF_COL_GAP_MM = 2;
 const MOBILE_PDF_W_MM = 100;
 const MOBILE_PDF_H_MM = 1200;
+/** A partir deste número de linhas, só renderiza a janela visível (desktop + mobile). */
+const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
+const MARGIN_TABLE_COL_COUNT = 8;
+const MARGIN_DESKTOP_ROW_H_GROUP = 38;
+const MARGIN_DESKTOP_ROW_H_PRODUTO = 46;
+const MARGIN_MOBILE_ROW_H_GROUP = 68;
+const MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED = 52;
+const MARGIN_MOBILE_ROW_H_PRODUTO = 132;
 
 function buildMarginFiltrosDesc({ dateRange, searchTerm, selectedTags, treeLevel }) {
   const parts = [];
@@ -540,6 +549,87 @@ export default function RelatorioMargemVendas() {
     [marginTree, expandedKeys]
   );
 
+  const desktopScrollRef = useRef(null);
+  const mobileScrollRef = useRef(null);
+  const pendingDesktopScrollRef = useRef(null);
+  const pendingMobileScrollRef = useRef(null);
+
+  const shouldVirtualizeRows = displayRows.length >= MARGIN_VIRTUALIZE_MIN_ROWS;
+
+  const estimateDesktopRowSize = useCallback(
+    (index) =>
+      displayRows[index]?.type === 'group'
+        ? MARGIN_DESKTOP_ROW_H_GROUP
+        : MARGIN_DESKTOP_ROW_H_PRODUTO,
+    [displayRows]
+  );
+
+  const estimateMobileRowSize = useCallback(
+    (index) => {
+      const row = displayRows[index];
+      if (!row) return MARGIN_MOBILE_ROW_H_PRODUTO;
+      if (row.type === 'group') {
+        return row.showMetrics !== false
+          ? MARGIN_MOBILE_ROW_H_GROUP
+          : MARGIN_MOBILE_ROW_H_GROUP_COLLAPSED;
+      }
+      return MARGIN_MOBILE_ROW_H_PRODUTO;
+    },
+    [displayRows]
+  );
+
+  const desktopVirtual = useVirtualRows({
+    itemCount: displayRows.length,
+    estimateSize: estimateDesktopRowSize,
+    overscan: 12,
+    scrollElementRef: desktopScrollRef,
+  });
+
+  const mobileVirtual = useVirtualRows({
+    itemCount: displayRows.length,
+    estimateSize: estimateMobileRowSize,
+    overscan: 6,
+    scrollElementRef: mobileScrollRef,
+  });
+
+  const visibleDesktopRows = useMemo(
+    () =>
+      shouldVirtualizeRows
+        ? displayRows.slice(desktopVirtual.startIndex, desktopVirtual.endIndex)
+        : displayRows,
+    [displayRows, shouldVirtualizeRows, desktopVirtual.endIndex, desktopVirtual.startIndex]
+  );
+
+  const visibleMobileRows = useMemo(
+    () =>
+      shouldVirtualizeRows
+        ? displayRows.slice(mobileVirtual.startIndex, mobileVirtual.endIndex)
+        : displayRows,
+    [displayRows, shouldVirtualizeRows, mobileVirtual.endIndex, mobileVirtual.startIndex]
+  );
+
+  useLayoutEffect(() => {
+    const desktopEl = desktopScrollRef.current;
+    const mobileEl = mobileScrollRef.current;
+    if (desktopEl) pendingDesktopScrollRef.current = desktopEl.scrollTop;
+    if (mobileEl) pendingMobileScrollRef.current = mobileEl.scrollTop;
+  }, [expandedKeys, treeLevel, displayRows.length]);
+
+  useLayoutEffect(() => {
+    const desktopEl = desktopScrollRef.current;
+    const mobileEl = mobileScrollRef.current;
+    const desktopTop = pendingDesktopScrollRef.current;
+    const mobileTop = pendingMobileScrollRef.current;
+    if (desktopEl != null && desktopTop != null) {
+      desktopEl.scrollTop = desktopTop;
+      pendingDesktopScrollRef.current = null;
+    }
+    if (mobileEl != null && mobileTop != null) {
+      mobileEl.scrollTop = mobileTop;
+      pendingMobileScrollRef.current = null;
+    }
+  }, [expandedKeys, displayRows.length]);
+
   const exportRows = useMemo(
     () => (processedData.length ? collectAllMarginLeaves(marginTree) : []),
     [marginTree, processedData.length]
@@ -553,6 +643,149 @@ export default function RelatorioMargemVendas() {
       return next;
     });
   }, []);
+
+  const renderMargemDesktopRow = useCallback(
+    (treeRow, rowIdx) => {
+      if (treeRow.type === 'group') {
+        const isExpanded = expandedKeys.has(treeRow.key);
+        const isLeaf = treeRow.isLeafGroup;
+        const showGroupMetrics = treeRow.showMetrics !== false;
+        return (
+          <tr
+            key={treeRow.key}
+            onClick={isLeaf ? undefined : () => handleToggleGroup(treeRow.key)}
+            className={`border-b border-gray-100 dark:border-gray-800 select-none ${
+              isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'
+            }`}
+          >
+            <td
+              className="py-1.5 px-2 text-xs text-center tabular-nums font-semibold text-gray-900 dark:text-white"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida, treeRow.unidade_exibicao) : ''}
+            </td>
+            <td
+              className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatMarginTreeUnidade(treeRow, { isGroup: true }) : ''}
+            </td>
+            <td
+              lang="pt-BR"
+              className="py-1.5 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
+              style={{ lineHeight: 1.2, minHeight: 46 }}
+            >
+              <MargemDescricaoTexto
+                textStart={marginDescTextStart(treeRow.level)}
+                showChevron={!isLeaf}
+                expanded={isExpanded}
+              >
+                <span className="flex items-center gap-1 min-w-0 truncate">
+                  <span className="truncate">{treeRow.label}</span>
+                  <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0">
+                    {treeRow.count}
+                  </span>
+                </span>
+              </MargemDescricaoTexto>
+            </td>
+            <td
+              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatMoneyDisplay(treeRow.valor_unitario_medio) : ''}
+            </td>
+            <td
+              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatMoneyDisplay(treeRow.total_recebido) : ''}
+            </td>
+            <td
+              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatMoneyDisplay(treeRow.custo_total) : ''}
+            </td>
+            <td
+              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatMoneyDisplay(treeRow.lucro_total) : ''}
+            </td>
+            <td
+              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+              style={{ lineHeight: 1.2 }}
+            >
+              {showGroupMetrics ? formatPercentDisplay(treeRow.markup_percentual) : ''}
+            </td>
+          </tr>
+        );
+      }
+
+      const row = treeRow.item;
+      return (
+        <tr
+          key={treeRow.key}
+          className={`border-b border-gray-50 dark:border-gray-800/50 transition-colors group ${
+            rowIdx % 2 === 1 ? 'bg-gray-50/30 dark:bg-gray-800/20' : 'bg-white dark:bg-gray-900'
+          } hover:bg-gray-50/70 dark:hover:bg-gray-800/25`}
+        >
+          <td
+            className="py-1.5 px-2 text-xs text-center tabular-nums text-gray-900 dark:text-white font-semibold"
+            style={{ lineHeight: 1.2 }}
+          >
+            {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
+          </td>
+          <td
+            className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
+            style={{ lineHeight: 1.2 }}
+          >
+            {row.unidade_exibicao || 'UN'}
+          </td>
+          <td
+            lang="pt-BR"
+            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase min-w-0"
+            style={{ lineHeight: 1.2, minHeight: 46 }}
+          >
+            <MargemDescricaoTexto textStart={marginDescTextStart(treeRow.level)}>
+              <span className="block truncate">{row.nome}</span>
+            </MargemDescricaoTexto>
+          </td>
+          <td
+            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+            style={{ lineHeight: 1.2 }}
+          >
+            {formatMoneyDisplay(row.valor_unitario_medio)}
+          </td>
+          <td
+            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
+            style={{ lineHeight: 1.2 }}
+          >
+            {formatMoneyDisplay(row.total_recebido)}
+          </td>
+          <td
+            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
+            style={{ lineHeight: 1.2 }}
+          >
+            {formatMoneyDisplay(row.custo_total)}
+          </td>
+          <td
+            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+            style={{ lineHeight: 1.2 }}
+          >
+            {formatMoneyDisplay(row.lucro_total)}
+          </td>
+          <td
+            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
+            style={{ lineHeight: 1.2 }}
+          >
+            {formatPercentDisplay(row.markup_percentual)}
+          </td>
+        </tr>
+      );
+    },
+    [expandedKeys, handleToggleGroup]
+  );
 
   const totals = useMemo(() => {
     if (!processedData.length) {
@@ -1367,6 +1600,13 @@ export default function RelatorioMargemVendas() {
       ? `${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
       : null;
 
+  const desktopPadTop = shouldVirtualizeRows ? desktopVirtual.paddingTop : 0;
+  const desktopPadBottom = shouldVirtualizeRows ? desktopVirtual.paddingBottom : 0;
+  const mobilePadTop = shouldVirtualizeRows ? mobileVirtual.paddingTop : 0;
+  const mobilePadBottom = shouldVirtualizeRows ? mobileVirtual.paddingBottom : 0;
+  const desktopRowOffset = shouldVirtualizeRows ? desktopVirtual.startIndex : 0;
+  const mobileRowOffset = shouldVirtualizeRows ? mobileVirtual.startIndex : 0;
+
   return (
     <div className="font-din-1451 h-full min-h-0 flex flex-col overflow-hidden bg-white dark:bg-gray-900 md:overflow-x-hidden">
       <div className="max-w-full mx-auto min-w-0 flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -1627,7 +1867,11 @@ export default function RelatorioMargemVendas() {
           ) : processedData.length > 0 ? (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div
+                ref={desktopScrollRef}
+                className="hidden md:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 <table className="w-full text-xs table-fixed">
                   <colgroup>
                     <col className="w-[72px]" />
@@ -1738,157 +1982,41 @@ export default function RelatorioMargemVendas() {
                       </tr>
                   </thead>
                   <tbody>
-                    {displayRows.map((treeRow, rowIdx) => {
-                      if (treeRow.type === 'group') {
-                        const isExpanded = expandedKeys.has(treeRow.key);
-                        const isLeaf = treeRow.isLeafGroup;
-                        const showGroupMetrics = treeRow.showMetrics !== false;
-                        return (
-                          <tr
-                            key={treeRow.key}
-                            onClick={isLeaf ? undefined : () => handleToggleGroup(treeRow.key)}
-                            className={`border-b border-gray-100 dark:border-gray-800 select-none ${
-                              isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'
-                            }`}
-                          >
-                            <td
-                              className="py-1.5 px-2 text-xs text-center tabular-nums font-semibold text-gray-900 dark:text-white"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics ? formatQuant(treeRow.quantidade_vendida, treeRow.unidade_exibicao) : ''}
-                            </td>
-                            <td
-                              className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics
-                                ? formatMarginTreeUnidade(treeRow, { isGroup: true })
-                                : ''}
-                            </td>
-                            <td
-                              lang="pt-BR"
-                              className="py-1.5 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
-                              style={{ lineHeight: 1.2, minHeight: 46 }}
-                            >
-                              <MargemDescricaoTexto
-                                textStart={marginDescTextStart(treeRow.level)}
-                                showChevron={!isLeaf}
-                                expanded={isExpanded}
-                              >
-                                <span className="flex items-center gap-1 min-w-0 truncate">
-                                  <span className="truncate">{treeRow.label}</span>
-                                  <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0">
-                                    {treeRow.count}
-                                  </span>
-                                </span>
-                              </MargemDescricaoTexto>
-                            </td>
-                            <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics ? formatMoney(treeRow.valor_unitario_medio) : ''}
-                            </td>
-                            <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics ? formatMoney(treeRow.total_recebido) : ''}
-                            </td>
-                            <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics ? formatMoney(treeRow.custo_total) : ''}
-                            </td>
-                            <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics ? formatMoney(treeRow.lucro_total) : ''}
-                            </td>
-                            <td
-                              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                              style={{ lineHeight: 1.2 }}
-                            >
-                              {showGroupMetrics ? formatPercent(treeRow.markup_percentual) : ''}
-                            </td>
-                          </tr>
-                        );
-                      }
-
-                      const row = treeRow.item;
-                      return (
-                        <tr
-                          key={treeRow.key}
-                            className={`border-b border-gray-50 dark:border-gray-800/50 transition-colors group ${
-                            rowIdx % 2 === 1
-                              ? 'bg-gray-50/30 dark:bg-gray-800/20'
-                              : 'bg-white dark:bg-gray-900'
-                          } hover:bg-gray-50/70 dark:hover:bg-gray-800/25`}
-                        >
-                          <td
-                            className="py-1.5 px-2 text-xs text-center tabular-nums text-gray-900 dark:text-white font-semibold"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
-                          </td>
-                          <td
-                            className="py-1.5 px-2 text-xs text-center text-gray-600 dark:text-gray-400"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {row.unidade_exibicao || 'UN'}
-                          </td>
-                          <td
-                            lang="pt-BR"
-                            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase min-w-0"
-                            style={{ lineHeight: 1.2, minHeight: 46 }}
-                          >
-                            <MargemDescricaoTexto textStart={marginDescTextStart(treeRow.level)}>
-                              <span className="block truncate">{row.nome}</span>
-                            </MargemDescricaoTexto>
-                          </td>
-                          <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {formatMoney(row.valor_unitario_medio)}
-                          </td>
-                          <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {formatMoney(row.total_recebido)}
-                          </td>
-                          <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {formatMoney(row.custo_total)}
-                          </td>
-                          <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {formatMoney(row.lucro_total)}
-                          </td>
-                          <td
-                            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-                            style={{ lineHeight: 1.2 }}
-                          >
-                            {formatPercent(row.markup_percentual)}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {desktopPadTop > 0 && (
+                      <tr aria-hidden="true">
+                        <td
+                          colSpan={MARGIN_TABLE_COL_COUNT}
+                          style={{ height: desktopPadTop, padding: 0, border: 0 }}
+                        />
+                      </tr>
+                    )}
+                    {visibleDesktopRows.map((treeRow, sliceIdx) =>
+                      renderMargemDesktopRow(treeRow, desktopRowOffset + sliceIdx)
+                    )}
+                    {desktopPadBottom > 0 && (
+                      <tr aria-hidden="true">
+                        <td
+                          colSpan={MARGIN_TABLE_COL_COUNT}
+                          style={{ height: desktopPadBottom, padding: 0, border: 0 }}
+                        />
+                      </tr>
+                    )}
                   </tbody>
                           </table>
               </div>
 
               {/* Mobile: mesmas colunas do PDF */}
-              <div className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 pb-[var(--p38-scroll-pad-below-nav)]">
-                {displayRows.map((treeRow, rowIdx) =>
-                  treeRow.type === 'group' ? (
+              <div
+                ref={mobileScrollRef}
+                className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 pb-[var(--p38-scroll-pad-below-nav)]"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                {mobilePadTop > 0 && (
+                  <div aria-hidden="true" style={{ height: mobilePadTop, flexShrink: 0 }} />
+                )}
+                {visibleMobileRows.map((treeRow, sliceIdx) => {
+                  const rowIdx = mobileRowOffset + sliceIdx;
+                  return treeRow.type === 'group' ? (
                     <MargemLinhaMobile
                       key={treeRow.key}
                       variant="grupo"
@@ -1905,7 +2033,10 @@ export default function RelatorioMargemVendas() {
                       level={treeRow.level}
                       striped={rowIdx % 2 === 1}
                     />
-                  )
+                  );
+                })}
+                {mobilePadBottom > 0 && (
+                  <div aria-hidden="true" style={{ height: mobilePadBottom, flexShrink: 0 }} />
                 )}
               </div>
 
