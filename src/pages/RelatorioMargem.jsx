@@ -667,14 +667,12 @@ export default function RelatorioMargemVendas() {
       const pdfFontFamily = await registerJsPdfDin1451Fonts(pdf);
       const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
       const MOBILE_PDF_FONT_SCALE = 1.12;
-      const MOBILE_ROW_GAP = 0.35;
+      const MOBILE_ROW_GAP = 0.5;
       const MOBILE_HUD = {
-        panel: [44, 62, 80],
-        panelEdge: [30, 41, 59],
+        storm: [82, 96, 112],
+        headerText: [241, 245, 249],
+        headerTextMuted: [226, 232, 240],
         accent: [220, 38, 38],
-        white: [255, 255, 255],
-        pillBg: [255, 255, 255],
-        pillBorder: [203, 213, 225],
         grid: [226, 232, 240],
       };
       const pageW = pdf.internal.pageSize.getWidth();
@@ -747,57 +745,42 @@ export default function RelatorioMargemVendas() {
         return row.custo_unitario_cadastro ?? 0;
       };
 
+      const SLATE900 = [15, 23, 42];
+      const SLATE700 = [51, 65, 85];
+      const SLATE500 = [100, 116, 139];
+      const SLATE225 = [203, 213, 225];
+
       const drawMobileHeader = () => {
-        const panelH = 26;
-        setFill(MOBILE_HUD.panel);
-        pdf.roundedRect(M, y, CW, panelH, 2, 2, 'F');
-        setFill(MOBILE_HUD.accent);
-        pdf.roundedRect(M + 3, y + 4, 1.2, panelH - 8, 0.6, 0.6, 'F');
+        const panelH = 24;
+        setFill(MOBILE_HUD.storm);
+        pdf.roundedRect(M, y, CW, panelH, 1.5, 1.5, 'F');
 
         setPdfFont('normal');
-        pdf.setFontSize(12.5 * MOBILE_PDF_FONT_SCALE);
-        setColor(MOBILE_HUD.white);
-        pdf.text(normalizePdfText('MARGEM DE VENDAS'), M + 7, y + 9);
+        pdf.setFontSize(12 * MOBILE_PDF_FONT_SCALE);
+        setColor(MOBILE_HUD.headerText);
+        pdf.text(normalizePdfText('MARGEM DE VENDAS'), M + 4, y + 8.5);
 
-        pdf.setFontSize(6.4 * MOBILE_PDF_FONT_SCALE);
-        setColor([186, 198, 214]);
-        pdf.text(normalizePdfText('RELATÓRIO TÉCNICO · MOBILE'), M + 7, y + 14.5);
+        pdf.setFontSize(6.2 * MOBILE_PDF_FONT_SCALE);
+        setColor(MOBILE_HUD.headerTextMuted);
+        pdf.text(normalizePdfText('RELATÓRIO TÉCNICO · MOBILE'), M + 4, y + 13.5);
 
-        const filtrosLinhas = pdf.splitTextToSize(normalizePdfText(filtrosDesc), CW - 10).slice(0, 2);
-        let fy = y + 18.5;
+        const filtrosLinhas = pdf.splitTextToSize(normalizePdfText(filtrosDesc), CW - 8).slice(0, 2);
+        let fy = y + 17.2;
         filtrosLinhas.forEach((line) => {
-          pdf.text(line, M + 7, fy);
-          fy += 3.6;
+          pdf.text(line, M + 4, fy);
+          fy += 3.4;
         });
 
-        pdf.setFontSize(5.8 * MOBILE_PDF_FONT_SCALE);
+        pdf.setFontSize(5.6 * MOBILE_PDF_FONT_SCALE);
+        setColor(MOBILE_HUD.headerTextMuted);
         pdf.text(
           normalizePdfText(`GERADO ${format(new Date(), 'dd/MM/yyyy HH:mm')}`),
           M + CW - 3,
-          y + panelH - 3,
+          y + panelH - 2.8,
           { align: 'right' }
         );
 
-        setDraw(MOBILE_HUD.accent);
-        pdf.setLineWidth(0.2);
-        pdf.line(M + 3, y + panelH + 1.8, M + CW - 3, y + panelH + 1.8);
-        y += panelH + 3.5;
-      };
-
-      const drawHudValuePill = (text, colRight, baselineY, colW, fontScale, { accent = false } = {}) => {
-        const padX = 1.2;
-        const pillH = 4.8;
-        const pillW = Math.max(colW - 0.2, 8);
-        const x = colRight - pillW;
-        const yTop = baselineY - 3.45;
-        setFill(accent ? [236, 253, 249] : MOBILE_HUD.pillBg);
-        setDraw(accent ? C.profit : MOBILE_HUD.pillBorder);
-        pdf.setLineWidth(0.14);
-        pdf.roundedRect(x, yTop, pillW, pillH, 1, 1, 'FD');
-        setPdfFont('normal');
-        pdf.setFontSize(7.4 * fontScale);
-        setColor(accent ? C.profit : SLATE900);
-        pdf.text(text, colRight - padX, baselineY, { align: 'right' });
+        y += panelH + 2.5;
       };
 
       const drawMobileKpis = () => {
@@ -808,45 +791,25 @@ export default function RelatorioMargemVendas() {
           { label: 'MARKUP', value: formatPctPdf(totalMarkup), accent: true },
         ];
         const colW = (CW - 3) / 2;
-        const cardH = 13;
+        const cardH = 11;
         for (let i = 0; i < cards.length; i += 2) {
-          ensureSpace(16);
+          ensureSpace(14);
           [0, 1].forEach((col) => {
             const card = cards[i + col];
             if (!card) return;
             const cx = M + col * (colW + 3);
-            setFill([241, 245, 249]);
-            pdf.roundedRect(cx, y, colW, cardH, 1.5, 1.5, 'F');
-            setDraw(MOBILE_HUD.grid);
-            pdf.setLineWidth(0.12);
-            pdf.roundedRect(cx, y, colW, cardH, 1.5, 1.5, 'S');
             setPdfFont('normal');
-            pdf.setFontSize(5.4 * MOBILE_PDF_FONT_SCALE);
+            pdf.setFontSize(5.2 * MOBILE_PDF_FONT_SCALE);
             setColor(SLATE500);
-            pdf.text(normalizePdfText(card.label), cx + 2.5, y + 4.5);
-            const valW = colW - 5;
-            setPdfFont('normal');
-            pdf.setFontSize(7.6 * MOBILE_PDF_FONT_SCALE);
-            const valText = card.value;
-            const tw = pdf.getTextWidth(valText);
-            const pillW = Math.min(valW, Math.max(tw + 2.8, 14));
-            const pillX = cx + colW - pillW - 2.5;
-            setFill(card.accent ? [236, 253, 249] : MOBILE_HUD.white);
-            setDraw(card.accent ? C.profit : MOBILE_HUD.pillBorder);
-            pdf.roundedRect(pillX, y + 6.2, pillW, 5.2, 1, 1, 'FD');
+            pdf.text(normalizePdfText(card.label), cx, y + 4);
+            pdf.setFontSize(7.8 * MOBILE_PDF_FONT_SCALE);
             setColor(card.accent ? C.profit : SLATE900);
-            pdf.text(valText, cx + colW - 3.5, y + 10.2, { align: 'right' });
+            pdf.text(card.value, cx, y + 9.2);
           });
-          y += cardH + 2.5;
+          y += cardH + 1.5;
         }
-        y += 2;
+        y += 1.5;
       };
-
-      const SLATE900 = [15, 23, 42];
-      const SLATE700 = [51, 65, 85];
-      const SLATE500 = [100, 116, 139];
-      const SLATE225 = [203, 213, 225];
-      const SLATE200 = [226, 232, 240];
 
       const getMobileRowLayout = () => ({
         itemMl: M + 14.8,
@@ -877,16 +840,14 @@ export default function RelatorioMargemVendas() {
           y = M + 2;
         }
 
-        setFill(MOBILE_HUD.panelEdge);
+        setFill(MOBILE_HUD.storm);
         pdf.roundedRect(M, y, CW, headerH, 1.2, 1.2, 'F');
-        setFill(MOBILE_HUD.accent);
-        pdf.circle(M + 4, y + headerH / 2, 0.9, 'F');
         setFill(SLATE225);
         pdf.rect(cfg.lineX, y + 1, 0.12, headerH - 2, 'F');
 
         setPdfFont('normal');
         pdf.setFontSize(5.6 * MOBILE_PDF_FONT_SCALE);
-        setColor([203, 213, 225]);
+        setColor(MOBILE_HUD.headerText);
         pdf.text('QTD', cfg.qtdColRight, y + 4.8, { align: 'right' });
         pdf.text('UN', cfg.qtdColRight, y + 8.6, { align: 'right' });
 
@@ -899,10 +860,7 @@ export default function RelatorioMargemVendas() {
           pdf.text(normalizePdfText(label), row2.colRight[idx], headerRow2Y, { align: 'right' });
         });
 
-        setDraw(MOBILE_HUD.accent);
-        pdf.setLineWidth(0.18);
-        pdf.line(M + 3, y + headerH + 0.6, M + CW - 3, y + headerH + 0.6);
-        y += headerH + 0.8;
+        y += headerH + 0.6;
         mobileTableHeaderOnPage = true;
       };
 
@@ -917,19 +875,21 @@ export default function RelatorioMargemVendas() {
           vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
           lucro: formatNumPdf(dataRow.lucro_total || 0),
         };
-        const row2Y = valoresY + 5.2;
+        const row2Y = valoresY + 4.1;
 
         setPdfFont('normal');
-        pdf.setFontSize(7.4 * fontScale);
+        pdf.setFontSize(7.5 * fontScale);
         MOBILE_VALUE_ROWS[0].forEach(({ key }, idx) => {
-          drawHudValuePill(values[key], row1.colRight[idx], valoresY, row1.colW, fontScale, {
-            accent: key === 'markup',
-          });
+          if (key === 'custoUnit') setColor(SLATE500);
+          else if (key === 'markup') setColor(C.profit);
+          else setColor(SLATE900);
+          pdf.text(values[key], row1.colRight[idx], valoresY, { align: 'right' });
         });
         MOBILE_VALUE_ROWS[1].forEach(({ key }, idx) => {
-          drawHudValuePill(values[key], row2.colRight[idx], row2Y, row2.colW, fontScale, {
-            accent: key === 'lucro',
-          });
+          if (key === 'custoTotal') setColor(SLATE500);
+          else if (key === 'lucro') setColor(C.profit);
+          else setColor(SLATE900);
+          pdf.text(values[key], row2.colRight[idx], row2Y, { align: 'right' });
         });
       };
 
@@ -938,9 +898,9 @@ export default function RelatorioMargemVendas() {
         const vs = 1.05;
         const fontScale = MOBILE_PDF_FONT_SCALE;
         const nomeLineStep = 3.55 * vs;
-        const margemLinhaInferiorItem = 0.55 * vs;
-        const gapNomeValores = 1.85 * vs;
-        const valoresLineH = 9.8 * vs;
+        const margemLinhaInferiorItem = 0.45 * vs;
+        const gapNomeValores = 1.65 * vs;
+        const valoresLineH = 7.8 * vs;
 
         const unidade = isGroup
           ? formatMarginTreeUnidade(dataRow, { isGroup: true })
@@ -956,7 +916,7 @@ export default function RelatorioMargemVendas() {
         setPdfFont('normal');
         pdf.setFontSize(7.8 * fontScale);
         const nomeLinhas = pdf.splitTextToSize(nomeText, cfg.nomeMaxW).slice(0, 3);
-        const nomeTop = y0 + 2.6 * vs;
+        const nomeTop = y0 + 2.2 * vs;
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
         if (isGroup && !showMetrics) {
@@ -1001,25 +961,19 @@ export default function RelatorioMargemVendas() {
         } = measured;
 
         if (isGroup && !showMetrics) {
-          setFill(MOBILE_HUD.panelEdge);
-          pdf.roundedRect(M, y0, CW, rowBlockH, 1.2, 1.2, 'F');
-          setFill(MOBILE_HUD.accent);
-          pdf.circle(M + 4, y0 + rowBlockH / 2, 0.8, 'F');
           setPdfFont('normal');
-          pdf.setFontSize(7.2 * fontScale);
-          setColor(MOBILE_HUD.white);
+          pdf.setFontSize(7.4 * fontScale);
+          setColor(SLATE700);
           nomeLinhas.forEach((line, li) => {
-            pdf.text(line, M + 7, nomeTop + li * nomeLineStep);
+            pdf.text(line, M + 3, nomeTop + li * nomeLineStep);
           });
           setDraw(MOBILE_HUD.grid);
-          pdf.setLineWidth(0.12);
+          pdf.setLineWidth(0.1);
           pdf.line(M + 3, y0 + rowBlockH, M + CW - 3, y0 + rowBlockH);
           return rowBlockH;
         }
 
-        const branchY = y0 + 2.4 * vs;
-        setFill(MOBILE_HUD.accent);
-        pdf.circle(cfg.lineX, y0 + 2.2, 0.65, 'F');
+        const branchY = y0 + 2.2 * vs;
         setFill(SLATE225);
         pdf.rect(cfg.lineX, y0, 0.12, rowBlockH, 'F');
         pdf.rect(cfg.lineX, branchY, cfg.lineWidth, 0.12, 'F');
@@ -1035,7 +989,7 @@ export default function RelatorioMargemVendas() {
         pdf.text(normalizePdfText(unidade), cfg.qtdColRight, nomeTop + 4.3, { align: 'right' });
 
         pdf.setFontSize(7.8 * fontScale);
-        setColor(SLATE700);
+        setColor(SLATE900);
         nomeLinhas.forEach((line, li) => {
           pdf.text(line, cfg.itemMl, nomeTop + li * nomeLineStep);
         });
