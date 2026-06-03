@@ -16,7 +16,6 @@ import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
-import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
@@ -155,7 +154,7 @@ function MargemDesktopMetricCells({ dataRow, showMetrics = true, tier = 'filho' 
   ));
 }
 
-function buildMarginFiltrosDesc({ dateRange, searchTerm, selectedTags, treeLevel }) {
+function buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }) {
   const parts = [];
   if (dateRange?.from && dateRange?.to) {
     parts.push(
@@ -163,7 +162,6 @@ function buildMarginFiltrosDesc({ dateRange, searchTerm, selectedTags, treeLevel
     );
   }
   if (searchTerm?.trim()) parts.push(`Busca: ${searchTerm.trim()}`);
-  if (selectedTags?.length) parts.push(`Tags: ${selectedTags.join(', ')}`);
   if (treeLevel !== 99) parts.push(`Nível: ${treeLevel}`);
   return parts.length ? parts.join(' · ') : 'Sem filtros adicionais';
 }
@@ -582,7 +580,6 @@ export default function RelatorioMargemVendas() {
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
   const [searchDraft, setSearchDraft] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]);
   const [sortField, setSortField] = useState('lucro_total');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
@@ -728,16 +725,8 @@ export default function RelatorioMargemVendas() {
       });
     }
 
-    // Filter by tags
-    if (selectedTags.length > 0) {
-      sorted = sorted.filter(item => {
-        if (!item.tags || !Array.isArray(item.tags)) return false;
-        return selectedTags.some(tag => item.tags.includes(tag));
-      });
-    }
-
     return sorted;
-  }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags]);
+  }, [sales, products, dateRange, searchTerm, sortField, sortOrder]);
 
   const marginTree = useMemo(
     () => buildMarginTree(Array.isArray(processedData) ? processedData : []),
@@ -986,7 +975,6 @@ export default function RelatorioMargemVendas() {
   const productCount = processedData.length;
   const activeFilterCount = [
     searchTerm.trim(),
-    selectedTags.length > 0,
     treeLevel !== 99,
   ].filter(Boolean).length;
 
@@ -1052,7 +1040,6 @@ export default function RelatorioMargemVendas() {
       const filtrosDesc = buildMarginFiltrosDesc({
         dateRange,
         searchTerm,
-        selectedTags,
         treeLevel,
       });
 
@@ -1682,16 +1669,6 @@ export default function RelatorioMargemVendas() {
     }
   };
 
-  const allTags = React.useMemo(() => {
-    const tags = new Set();
-    products.forEach(p => {
-      if (p.tags && Array.isArray(p.tags)) {
-        p.tags.forEach(tag => tags.add(tag));
-      }
-    });
-    return Array.from(tags).sort();
-  }, [products]);
-
   const handleApplySearchFilter = useCallback(() => {
     setSearchTerm(searchDraft.trim());
   }, [searchDraft]);
@@ -1699,7 +1676,6 @@ export default function RelatorioMargemVendas() {
   const handleClearFilters = () => {
     setSearchDraft('');
     setSearchTerm('');
-    setSelectedTags([]);
     setTreeLevel(99);
     setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
   };
@@ -1858,17 +1834,6 @@ export default function RelatorioMargemVendas() {
                 >
                   {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
                 </button>
-                {allTags.length > 0 && (
-                  <div className="md:col-span-6">
-                    <TagSearchPopup
-                      variant="inline"
-                      allTags={allTags}
-                      selectedTags={selectedTags}
-                      setSelectedTags={setSelectedTags}
-                      onClose={() => {}}
-                    />
-                  </div>
-                )}
               </div>
             )}
           </div>
