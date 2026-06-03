@@ -158,28 +158,85 @@ function MargemMetricChip({ label, value, muted, profit }) {
   );
 }
 
-/** Mesmo padrão do catálogo (`TreeGrid.jsx`): grupos por nível; produtos com coluna fixa à direita. */
+/** Mesmo padrão do catálogo: texto alinhado; seta expansiva fora da coluna do texto. */
 const INDENT_GROUP = 14;
 const INDENT_GROUP_BASE = 4;
 const INDENT_PRODUTO = 8;
 const INDENT_GROUP_MOBILE = 10;
 const INDENT_GROUP_BASE_MOBILE = 4;
 const INDENT_PRODUTO_MOBILE = 6;
+const CHEVRON_SLOT_W = 14;
+const CHEVRON_GAP = 6;
+const CHEVRON_PULL = CHEVRON_SLOT_W + CHEVRON_GAP;
+const CHEVRON_GAP_MOBILE = 4;
+const CHEVRON_PULL_MOBILE = CHEVRON_SLOT_W + CHEVRON_GAP_MOBILE;
 
-function marginGroupDescPadding(level) {
-  return INDENT_GROUP_BASE + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP;
-}
-
-function marginProductDescPadding() {
+/** Início da coluna de texto (px) — grupos nível 1 alinhados aos solteiros. */
+function marginDescTextStart(level, kind = 'produto') {
+  const lv = level ?? 1;
+  if (kind === 'produto' && lv > 1) {
+    return INDENT_PRODUTO + INDENT_GROUP;
+  }
+  if (kind === 'group' && lv === 1) {
+    return INDENT_PRODUTO;
+  }
+  if (kind === 'group') {
+    return INDENT_GROUP_BASE + (lv - 1) * INDENT_GROUP;
+  }
   return INDENT_PRODUTO;
 }
 
-function marginGroupDescPaddingMobile(level) {
-  return INDENT_GROUP_BASE_MOBILE + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP_MOBILE;
+function marginDescTextStartMobile(level, kind = 'produto') {
+  const lv = level ?? 1;
+  if (kind === 'produto' && lv > 1) {
+    return INDENT_PRODUTO_MOBILE + INDENT_GROUP_MOBILE;
+  }
+  if (kind === 'group' && lv === 1) {
+    return INDENT_PRODUTO_MOBILE;
+  }
+  if (kind === 'group') {
+    return INDENT_GROUP_BASE_MOBILE + (lv - 1) * INDENT_GROUP_MOBILE;
+  }
+  return INDENT_PRODUTO_MOBILE;
 }
 
-function marginProductDescPaddingMobile() {
-  return INDENT_PRODUTO_MOBILE;
+function marginDescTextStartPdfMm(level, kind, pdfIndentProdutoMm, pdfIndentGroupMm, pdfIndentGroupBaseMm) {
+  const lv = level ?? 1;
+  if (kind === 'produto' && lv > 1) {
+    return 1 + pdfIndentProdutoMm + pdfIndentGroupMm;
+  }
+  if (kind === 'group' && lv === 1) {
+    return 1 + pdfIndentProdutoMm;
+  }
+  if (kind === 'group') {
+    return 1 + pdfIndentGroupBaseMm + (lv - 1) * pdfIndentGroupMm;
+  }
+  return 1 + pdfIndentProdutoMm;
+}
+
+function MargemDescricaoTexto({
+  textStart,
+  showChevron = false,
+  expanded = false,
+  chevronPull = CHEVRON_PULL,
+  children,
+  className = '',
+}) {
+  return (
+    <div className={`flex items-center min-w-0 ${className}`} style={{ paddingLeft: textStart }}>
+      {showChevron ? (
+        <span
+          className="inline-flex items-center justify-center flex-shrink-0 text-gray-400"
+          style={{ width: CHEVRON_SLOT_W, marginLeft: -chevronPull }}
+        >
+          <ChevronRight
+            className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          />
+        </span>
+      ) : null}
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
 }
 
 /** Corpo: entrelinha +50% (~1,5) e padding +20% (~1,2) em relação ao layout compacto anterior. */
@@ -199,9 +256,7 @@ function MargemLinhaMobile({
   const isSubtotal = variant === 'subtotal';
   const isGroup = variant === 'grupo';
   const titulo = isSubtotal ? row.nome || 'Subtotal' : isGroup ? row.label : row.nome;
-  const indentPx = isGroup
-    ? marginGroupDescPaddingMobile(level)
-    : marginProductDescPaddingMobile();
+  const textStart = marginDescTextStartMobile(level, isGroup ? 'group' : 'produto');
   const precoMedio =
     row.valor_unitario_medio ??
     (row.quantidade_vendida > 0 ? (row.total_recebido || 0) / row.quantidade_vendida : 0);
@@ -218,7 +273,7 @@ function MargemLinhaMobile({
         ? 'border-l-gray-200 dark:border-l-gray-700'
         : 'border-l-transparent';
 
-  const rowPadLeft = 24 + indentPx;
+  const rowPadLeft = 24;
   const rowBase = `border-b border-gray-100 dark:border-gray-800 border-l-2 ${accentBorder} py-5 pr-6 min-w-0 max-w-full touch-pan-y`;
 
   if (isGroup || isSubtotal) {
@@ -227,42 +282,37 @@ function MargemLinhaMobile({
       : 'bg-slate-50/80 dark:bg-slate-800/35';
     const inner = (
       <>
-        <div className="flex items-center gap-1 min-w-0 flex-1">
-          {!isLeaf && !isSubtotal ? (
-            <ChevronRight
-              className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform ${
-                isExpanded ? 'rotate-90' : ''
-              }`}
-            />
-          ) : (
-            <span className="w-3.5 flex-shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            <span
-              lang="pt-BR"
-              className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-100 truncate"
-            >
-              {titulo}
-              {row.count != null ? (
-                <span className="ml-1 inline-flex h-5 items-center rounded-full border border-gray-200 px-1.5 text-[10px] font-medium text-gray-600 dark:border-gray-700 dark:text-gray-400 normal-case">
-                  ({row.count})
-                </span>
-              ) : null}
-            </span>
-            {isGroup && row.showMetrics !== false ? (
-              <p
-                className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums normal-case"
-                style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
-              >
-                <span className="text-gray-700 dark:text-gray-300">
-                  {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
-                </span>
-                {' \u00b7 '}
-                {formatMarginTreeUnidade(row, { isGroup: true })}
-              </p>
+        <MargemDescricaoTexto
+          textStart={textStart}
+          showChevron={!isLeaf && !isSubtotal}
+          expanded={isExpanded}
+          chevronPull={CHEVRON_PULL_MOBILE}
+          className="flex-1"
+        >
+          <span
+            lang="pt-BR"
+            className="block text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-100 truncate"
+          >
+            {titulo}
+            {row.count != null ? (
+              <span className="ml-1 inline-flex h-5 items-center rounded-full border border-gray-200 px-1.5 text-[10px] font-medium text-gray-600 dark:border-gray-700 dark:text-gray-400 normal-case">
+                ({row.count})
+              </span>
             ) : null}
-          </div>
-        </div>
+          </span>
+          {isGroup && row.showMetrics !== false ? (
+            <p
+              className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums normal-case"
+              style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
+            >
+              <span className="text-gray-700 dark:text-gray-300">
+                {formatQuant(row.quantidade_vendida, row.unidade_exibicao)}
+              </span>
+              {' \u00b7 '}
+              {formatMarginTreeUnidade(row, { isGroup: true })}
+            </p>
+          ) : null}
+        </MargemDescricaoTexto>
         {row.showMetrics !== false ? (
           <span className="flex-shrink-0 text-right pl-2">
             <span className="block text-[9px] uppercase text-gray-400 leading-none">Lucro</span>
@@ -305,13 +355,15 @@ function MargemLinhaMobile({
       className={`${rowBase} ${striped ? 'bg-gray-50/60 dark:bg-gray-800/25' : 'bg-white dark:bg-gray-900/30'}`}
       style={{ paddingLeft: rowPadLeft }}
     >
-      <p
-        lang="pt-BR"
-        className="text-xs font-normal uppercase text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
-        style={{ lineHeight: `${1.375 * BODY_LINE_HEIGHT_MULT}` }}
-      >
-        {titulo}
-      </p>
+      <div style={{ paddingLeft: textStart }}>
+        <p
+          lang="pt-BR"
+          className="text-xs font-normal uppercase text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
+          style={{ lineHeight: `${1.375 * BODY_LINE_HEIGHT_MULT}` }}
+        >
+          {titulo}
+        </p>
+      </div>
       <p
         className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums truncate"
         style={{ lineHeight: `${1.25 * BODY_LINE_HEIGHT_MULT}` }}
@@ -1281,9 +1333,13 @@ export default function RelatorioMargemVendas() {
       const isGroup = treeRow.type === 'group';
       const showMetrics = !isGroup || treeRow.showMetrics !== false;
       const dataRow = isGroup ? treeRow : treeRow.item;
-      const descIndent = isGroup
-        ? 1 + pdfIndentGroupBaseMm + (treeRow.level - 1) * pdfIndentGroupMm
-        : 1 + pdfIndentProdutoMm;
+      const descIndent = marginDescTextStartPdfMm(
+        treeRow.level,
+        isGroup ? 'group' : 'produto',
+        pdfIndentProdutoMm,
+        pdfIndentGroupMm,
+        pdfIndentGroupBaseMm
+      );
       const descX = colXAbs.desc + descIndent;
       const descMaxW = Math.max(8, colWidths.desc - descPad - descIndent);
       const descText = isGroup
@@ -1780,22 +1836,20 @@ export default function RelatorioMargemVendas() {
                             <td
                               lang="pt-BR"
                               className="py-1.5 px-2 text-xs font-semibold text-gray-700 dark:text-gray-100 uppercase tracking-wide min-w-0"
-                              style={{ paddingLeft: marginGroupDescPadding(treeRow.level), lineHeight: 1.2, minHeight: 46 }}
+                              style={{ lineHeight: 1.2, minHeight: 46 }}
                             >
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                {!isLeaf && (
-                                  <ChevronRight
-                                    className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform ${
-                                      isExpanded ? 'rotate-90' : ''
-                                    }`}
-                                  />
-                                )}
-                                {isLeaf && <span className="w-3.5 flex-shrink-0" />}
-                                <span className="truncate">{treeRow.label}</span>
-                                <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0 ml-0.5">
-                                  {treeRow.count}
+                              <MargemDescricaoTexto
+                                textStart={marginDescTextStart(treeRow.level, 'group')}
+                                showChevron={!isLeaf}
+                                expanded={isExpanded}
+                              >
+                                <span className="flex items-center gap-1 min-w-0 truncate">
+                                  <span className="truncate">{treeRow.label}</span>
+                                  <span className="h-5 px-1.5 text-[10px] font-medium border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 rounded-full flex items-center justify-center normal-case flex-shrink-0">
+                                    {treeRow.count}
+                                  </span>
                                 </span>
-                              </div>
+                              </MargemDescricaoTexto>
                             </td>
                             <td
                               className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
@@ -1832,7 +1886,7 @@ export default function RelatorioMargemVendas() {
                       }
 
                       const row = treeRow.item;
-                      const descIndent = marginProductDescPadding();
+                      const descIndent = marginDescTextStart(treeRow.level, 'produto');
                       return (
                         <tr
                           key={treeRow.key}
@@ -1856,10 +1910,12 @@ export default function RelatorioMargemVendas() {
                           </td>
                           <td
                             lang="pt-BR"
-                            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase truncate min-w-0"
-                            style={{ paddingLeft: descIndent, lineHeight: 1.2, minHeight: 46 }}
+                            className="py-1.5 px-2 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase min-w-0"
+                            style={{ lineHeight: 1.2, minHeight: 46 }}
                           >
-                            {row.nome}
+                            <div className="truncate" style={{ paddingLeft: descIndent }}>
+                              {row.nome}
+                            </div>
                           </td>
                           <td
                             className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
