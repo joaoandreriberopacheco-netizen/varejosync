@@ -27,7 +27,7 @@ const MOBILE_PDF_W_MM = 100;
 const MOBILE_PDF_H_MM = 1200;
 /** A partir deste número de linhas, só renderiza a janela visível (desktop + mobile). */
 const MARGIN_VIRTUALIZE_MIN_ROWS = 50;
-const MARGIN_TABLE_COL_COUNT = 8;
+const MARGIN_TABLE_COL_COUNT = 9;
 const MARGIN_DESKTOP_ROW_H_GROUP = 38;
 const MARGIN_DESKTOP_ROW_H_PRODUTO = 46;
 const MARGIN_MOBILE_ROW_H_GROUP = 96;
@@ -46,10 +46,21 @@ const MARGIN_MOBILE_VALUE_ROWS = [
   ],
   [
     { key: 'custoTotal', label: 'CUSTO TOTAL' },
-    { key: 'vendaTotal', label: 'VENDA TOTAL' },
+    { key: 'vendaTotal', label: 'RECEITA TOTAL' },
     { key: 'lucro', label: 'LUCRO' },
   ],
 ];
+
+const MARGIN_METRIC_KEYS = MARGIN_MOBILE_VALUE_ROWS.flat().map(({ key }) => key);
+
+const MARGIN_METRIC_SORT_FIELD = {
+  custoUnit: 'custo_unitario_calc',
+  precoVenda: 'valor_unitario_medio',
+  markup: 'markup_percentual',
+  custoTotal: 'custo_total',
+  vendaTotal: 'total_recebido',
+  lucro: 'lucro_total',
+};
 
 function getRowMarkup(row) {
   if (row.markup_percentual != null && !Number.isNaN(row.markup_percentual)) {
@@ -97,6 +108,22 @@ function marginMobileValueColorClass(key) {
   return 'text-slate-900 dark:text-slate-100';
 }
 
+function MargemDesktopMetricCells({ dataRow, showMetrics = true }) {
+  if (!showMetrics) {
+    return MARGIN_METRIC_KEYS.map((key) => <td key={key} className="py-1.5 px-1.5" />);
+  }
+  const values = buildMarginMobileTabulatedValues(dataRow);
+  return MARGIN_METRIC_KEYS.map((key) => (
+    <td
+      key={key}
+      className={`py-1.5 px-1.5 text-[11px] text-right tabular-nums ${marginMobileValueColorClass(key)}`}
+      style={{ lineHeight: 1.2 }}
+    >
+      {values[key]}
+    </td>
+  ));
+}
+
 function buildMarginFiltrosDesc({ dateRange, searchTerm, selectedTags, treeLevel }) {
   const parts = [];
   if (dateRange?.from && dateRange?.to) {
@@ -132,13 +159,24 @@ function buildPdfColumnLayout(contentWidth) {
   const colWidths = {
     quant: 11,
     un: 8,
-    precoMedio: 16,
-    receita: 16,
-    custo: 16,
-    lucro: 16,
-    markup: 12,
+    custoUnit: 14,
+    precoVenda: 14,
+    markup: 11,
+    custoTotal: 14,
+    vendaTotal: 14,
+    lucro: 14,
   };
-  const colKeys = ['quant', 'un', 'desc', 'precoMedio', 'receita', 'custo', 'lucro', 'markup'];
+  const colKeys = [
+    'quant',
+    'un',
+    'desc',
+    'custoUnit',
+    'precoVenda',
+    'markup',
+    'custoTotal',
+    'vendaTotal',
+    'lucro',
+  ];
   const fixedSum = colKeys
     .filter((k) => k !== 'desc')
     .reduce((sum, k) => sum + colWidths[k], 0);
@@ -604,6 +642,10 @@ export default function RelatorioMargemVendas() {
        const margem_percentual = receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0;
        const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
        const lucro_marginal = lucro_total / item.quantidade_vendida;
+       const custo_unitario_calc =
+         item.quantidade_vendida > 0
+           ? custo_total / item.quantidade_vendida
+           : item.custo_unitario_cadastro ?? 0;
 
       return {
          ...item,
@@ -611,6 +653,7 @@ export default function RelatorioMargemVendas() {
          receita_liquida,
          lucro_total,
          valor_unitario_medio,
+         custo_unitario_calc,
          margem_percentual,
          markup_percentual,
          lucro_marginal
@@ -768,6 +811,20 @@ export default function RelatorioMargemVendas() {
     [marginTree, processedData.length]
   );
 
+  const handleMetricSort = useCallback(
+    (metricKey) => {
+      const field = MARGIN_METRIC_SORT_FIELD[metricKey];
+      if (!field) return;
+      if (sortField === field) {
+        setSortOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortField(field);
+        setSortOrder('desc');
+      }
+    },
+    [sortField]
+  );
+
   const handleToggleGroup = useCallback((key) => {
     setExpandedKeys((prev) => {
       const next = new Set(prev);
@@ -821,36 +878,7 @@ export default function RelatorioMargemVendas() {
                 </span>
               </MargemDescricaoTexto>
             </td>
-            <td
-              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-              style={{ lineHeight: 1.2 }}
-            >
-              {showGroupMetrics ? formatMoneyDisplay(treeRow.valor_unitario_medio) : ''}
-            </td>
-            <td
-              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-              style={{ lineHeight: 1.2 }}
-            >
-              {showGroupMetrics ? formatMoneyDisplay(treeRow.total_recebido) : ''}
-            </td>
-            <td
-              className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
-              style={{ lineHeight: 1.2 }}
-            >
-              {showGroupMetrics ? formatMoneyDisplay(treeRow.custo_total) : ''}
-            </td>
-            <td
-              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-              style={{ lineHeight: 1.2 }}
-            >
-              {showGroupMetrics ? formatMoneyDisplay(treeRow.lucro_total) : ''}
-            </td>
-            <td
-              className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-              style={{ lineHeight: 1.2 }}
-            >
-              {showGroupMetrics ? formatPercentDisplay(treeRow.markup_percentual) : ''}
-            </td>
+            <MargemDesktopMetricCells dataRow={treeRow} showMetrics={showGroupMetrics} />
           </tr>
         );
       }
@@ -884,36 +912,7 @@ export default function RelatorioMargemVendas() {
               <span className="block truncate">{row.nome}</span>
             </MargemDescricaoTexto>
           </td>
-          <td
-            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-            style={{ lineHeight: 1.2 }}
-          >
-            {formatMoneyDisplay(row.valor_unitario_medio)}
-          </td>
-          <td
-            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-900 dark:text-white"
-            style={{ lineHeight: 1.2 }}
-          >
-            {formatMoneyDisplay(row.total_recebido)}
-          </td>
-          <td
-            className="py-1.5 px-2 text-xs text-right tabular-nums text-gray-600 dark:text-gray-400"
-            style={{ lineHeight: 1.2 }}
-          >
-            {formatMoneyDisplay(row.custo_total)}
-          </td>
-          <td
-            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-            style={{ lineHeight: 1.2 }}
-          >
-            {formatMoneyDisplay(row.lucro_total)}
-          </td>
-          <td
-            className="py-1.5 px-2 text-xs text-right tabular-nums font-semibold text-green-600 dark:text-green-400"
-            style={{ lineHeight: 1.2 }}
-          >
-            {formatPercentDisplay(row.markup_percentual)}
-          </td>
+          <MargemDesktopMetricCells dataRow={row} />
         </tr>
       );
     },
@@ -967,12 +966,12 @@ export default function RelatorioMargemVendas() {
   const exportToCSV = () => {
     const flat = exportRows.length ? exportRows : processedData;
     const headers =
-      'Produto;Categoria;Quant;Un;Preço Un Médio;Receita Total;Custo Total;Lucro;Markup %\n';
+      'Produto;Categoria;Quant;Un;Custo Un Calc;Preço Venda Médio;Markup %;Custo Total;Receita Total;Lucro\n';
     const rows = flat
-      .map(
-        (row) =>
-          `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${row.valor_unitario_medio.toFixed(2)};${row.total_recebido.toFixed(2)};${row.custo_total.toFixed(2)};${row.lucro_total.toFixed(2)};${row.markup_percentual.toFixed(2)}`
-      )
+      .map((row) => {
+        const values = buildMarginMobileTabulatedValues(row);
+        return `${row.nome};${row.categoria};${row.quantidade_vendida};${row.unidade_exibicao || 'UN'};${values.custoUnit};${values.precoVenda};${values.markup};${values.custoTotal};${values.vendaTotal};${values.lucro}`;
+      })
       .join('\n');
     const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
     const encodedUri = encodeURI(csvContent);
@@ -1493,26 +1492,32 @@ export default function RelatorioMargemVendas() {
       yPos += 6;
     };
 
+    const PDF_STORM = [82, 96, 112];
+    const PDF_CYAN = [6, 182, 212];
+
     const drawTableHeader = () => {
-      const headerH = 8;
-      setFill(C.dark);
+      const headerH = 12;
+      setFill(PDF_STORM);
       pdf.roundedRect(margin, yPos, contentWidth, headerH, 2, 2, 'F');
 
       setPdfFont('normal');
-      pdf.setFontSize(6.5);
+      pdf.setFontSize(6);
       setColor(C.white);
-      const headerY = yPos + 5.2;
+      const headerY1 = yPos + 4.8;
+      const headerY2 = yPos + 9.2;
       const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
       const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
-      pdf.text('QUANT', quantCenter, headerY, { align: 'center' });
-      pdf.text('UN', unCenter, headerY, { align: 'center' });
-      pdf.text(normalizePdfText('DESCRIÇÃO'), colXAbs.desc + 1, headerY);
-      pdf.text(normalizePdfText('PREÇO UN'), colRightAbs.precoMedio - 1, headerY, { align: 'right' });
-      pdf.text('RECEITA', colRightAbs.receita - 1, headerY, { align: 'right' });
-      pdf.text('CUSTO', colRightAbs.custo - 1, headerY, { align: 'right' });
-      pdf.text('LUCRO', colRightAbs.lucro - 1, headerY, { align: 'right' });
-      pdf.text('MARKUP', colRightAbs.markup - 1, headerY, { align: 'right' });
+      pdf.text('QUANT', quantCenter, headerY1, { align: 'center' });
+      pdf.text('UN', unCenter, headerY2, { align: 'center' });
+      pdf.text(normalizePdfText('DESCRIÇÃO'), colXAbs.desc + 1, headerY1);
+
+      MARGIN_MOBILE_VALUE_ROWS[0].forEach(({ label, key }) => {
+        pdf.text(normalizePdfText(label), colRightAbs[key] - 1, headerY1, { align: 'right' });
+      });
+      MARGIN_MOBILE_VALUE_ROWS[1].forEach(({ label, key }) => {
+        pdf.text(normalizePdfText(label), colRightAbs[key] - 1, headerY2, { align: 'right' });
+      });
 
       yPos += headerH + 1.2;
     };
@@ -1524,22 +1529,6 @@ export default function RelatorioMargemVendas() {
       pageNumber += 1;
       yPos = margin;
       drawTableHeader();
-    };
-
-    const getRowMarkup = (row) => {
-      if (row.markup_percentual != null && !Number.isNaN(row.markup_percentual)) {
-        return row.markup_percentual;
-      }
-      const custo = row.custo_total ?? 0;
-      return custo > 0 ? ((row.lucro_total || 0) / custo) * 100 : 0;
-    };
-
-    const getRowPrecoMedio = (row) => {
-      if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
-        return row.valor_unitario_medio;
-      }
-      const qtd = row.quantidade_vendida || 0;
-      return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
     };
 
     const drawDescColumn = (lines, descX, descMaxW, textY) => {
@@ -1571,24 +1560,20 @@ export default function RelatorioMargemVendas() {
         : formatMarginTreeUnidade(dataRow, { isGroup: false });
       pdf.text(normalizePdfText(unLabel), unCenter, textY, { align: 'center' });
 
-      pdf.text(formatNumPdf(getRowPrecoMedio(dataRow)), colRightAbs.precoMedio - 1, textY, {
-        align: 'right',
-      });
-      pdf.text(formatNumPdf(dataRow.total_recebido || 0), colRightAbs.receita - 1, textY, {
-        align: 'right',
-      });
-      setColor(C.muted);
-      pdf.text(formatNumPdf(dataRow.custo_total || 0), colRightAbs.custo - 1, textY, {
-        align: 'right',
-      });
+      const metricValues = {
+        custoUnit: formatNumPdf(getRowCustoUnitCalc(dataRow)),
+        precoVenda: formatNumPdf(getRowPrecoMedio(dataRow)),
+        markup: formatPctPdf(getRowMarkup(dataRow)),
+        custoTotal: formatNumPdf(dataRow.custo_total || 0),
+        vendaTotal: formatNumPdf(dataRow.total_recebido || 0),
+        lucro: formatNumPdf(dataRow.lucro_total || 0),
+      };
 
-      setColor(C.profit);
-      pdf.text(formatNumPdf(dataRow.lucro_total || 0), colRightAbs.lucro - 1, textY, {
-        align: 'right',
-      });
-      setColor(C.text);
-      pdf.text(formatPctPdf(getRowMarkup(dataRow)), colRightAbs.markup - 1, textY, {
-        align: 'right',
+      MARGIN_METRIC_KEYS.forEach((key) => {
+        if (key === 'markup' || key === 'lucro') setColor(PDF_CYAN);
+        else if (key === 'custoUnit' || key === 'custoTotal') setColor(C.muted);
+        else setColor(C.text);
+        pdf.text(metricValues[key], colRightAbs[key] - 1, textY, { align: 'right' });
       });
     };
 
@@ -1977,11 +1962,9 @@ export default function RelatorioMargemVendas() {
                     <col className="w-[72px]" />
                     <col className="w-[52px]" />
                     <col />
-                    <col className="w-[100px]" />
-                    <col className="w-[100px]" />
-                    <col className="w-[100px]" />
-                    <col className="w-[100px]" />
-                    <col className="w-[80px]" />
+                    {MARGIN_METRIC_KEYS.map((key) => (
+                      <col key={key} className="w-[76px]" />
+                    ))}
                   </colgroup>
                   <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900 backdrop-blur-sm">
                     <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -2014,71 +1997,19 @@ export default function RelatorioMargemVendas() {
                       >
                         DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th
-                        onClick={() => {
-                          if (sortField === 'valor_unitario_medio') {
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                          } else {
-                            setSortField('valor_unitario_medio');
-                            setSortOrder('desc');
-                          }
-                        }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                      >
-                        PREÇO UN {sortField === 'valor_unitario_medio' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th 
-                        onClick={() => {
-                          if (sortField === 'total_recebido') {
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                          } else {
-                            setSortField('total_recebido');
-                            setSortOrder('desc');
-                          }
-                        }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                      >
-                        RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th 
-                        onClick={() => {
-                          if (sortField === 'custo_total') {
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                          } else {
-                            setSortField('custo_total');
-                            setSortOrder('desc');
-                          }
-                        }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                      >
-                        CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th 
-                        onClick={() => {
-                          if (sortField === 'lucro_total') {
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                          } else {
-                            setSortField('lucro_total');
-                            setSortOrder('desc');
-                          }
-                        }}
-                        className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                      >
-                        LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th 
-                       onClick={() => {
-                         if (sortField === 'markup_percentual') {
-                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                         } else {
-                           setSortField('markup_percentual');
-                           setSortOrder('desc');
-                         }
-                       }}
-                       className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                      >
-                       MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
+                      {MARGIN_MOBILE_VALUE_ROWS.flat().map(({ key, label }) => {
+                        const sortKey = MARGIN_METRIC_SORT_FIELD[key];
+                        return (
+                          <th
+                            key={key}
+                            onClick={() => handleMetricSort(key)}
+                            className="text-right py-2 px-1 text-[9px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                          >
+                            {label}{' '}
+                            {sortField === sortKey && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </th>
+                        );
+                      })}
                       </tr>
                   </thead>
                   <tbody>
