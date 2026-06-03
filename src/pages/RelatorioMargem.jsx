@@ -2039,7 +2039,6 @@ export default function RelatorioMargemVendas() {
                   filtrosDesc={buildMarginFiltrosDesc({
                     dateRange,
                     searchTerm,
-                    selectedTags,
                     treeLevel,
                   })}
                 />
