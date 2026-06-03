@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import { format, addMonths, subMonths, parse, isValid, isAfter } from 'date-fns';
@@ -7,15 +7,9 @@ import 'react-day-picker/dist/style.css';
 
 export default function CalendarPopup({ dateRange, setDateRange, onClose, isModal = false }) {
    const [month, setMonth] = useState(dateRange?.from || new Date());
-   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
    const [manualFrom, setManualFrom] = useState(dateRange?.from ? format(dateRange.from, 'dd/MM/yyyy') : '');
    const [manualTo, setManualTo] = useState(dateRange?.to ? format(dateRange.to, 'dd/MM/yyyy') : '');
 
-   useEffect(() => {
-     const handleResize = () => setIsMobile(window.innerWidth < 768);
-     window.addEventListener('resize', handleResize);
-     return () => window.removeEventListener('resize', handleResize);
-   }, []);
 
    useEffect(() => {
      setManualFrom(dateRange?.from ? format(dateRange.from, 'dd/MM/yyyy') : '');
@@ -72,7 +66,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
     if (range?.from) setMonth(range.from);
   };
 
-  const visibleMonths = isMobile ? [month] : [month, addMonths(month, 1)];
+  const visibleMonths = [month, addMonths(month, 1)];
   
   return (
     <div className={`${isModal ? 'w-full max-w-[760px] mx-auto' : 'absolute top-full left-0 mt-1 w-[min(760px,calc(100vw-2rem))]'} rounded-[28px] bg-white dark:bg-gray-800 shadow-xl z-50 border border-gray-200 dark:border-gray-700 overflow-hidden`}>
@@ -95,55 +89,53 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
         .dark .rdp-day_selected { background-color: #f8fafc; color: #111827; }
         .dark .rdp-day_range_middle { background-color: #134e4a; color: #f8fafc; }
         @media (max-width: 767px) {
-          .rdp { --rdp-cell-size: 38px; }
-          .rdp-months { display: block; }
-          .rdp-day { width: 38px; height: 38px; font-size: 13px; }
+          .rdp { --rdp-cell-size: 34px; }
+          .rdp-day { width: 34px; height: 34px; font-size: 12px; }
         }
       `}</style>
 
       <div className="space-y-4 p-4 md:p-5">
-        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-          {visibleMonths.map((visibleMonth, index) => (
-            <div key={visibleMonth.toISOString()} className="flex items-center justify-between">
-              {index === 0 ? (
-                <button
-                  type="button"
-                  onClick={handlePrevious}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
-                  aria-label="Mês anterior"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                </button>
-              ) : (
-                <span className="w-9" />
-              )}
-              <p className="text-base font-semibold text-gray-900 dark:text-white capitalize tracking-tight">
-                {format(visibleMonth, 'MMMM yyyy', { locale: ptBR })}
-              </p>
-              {index === visibleMonths.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
-                  aria-label="Próximo mês"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                </button>
-              ) : (
-                <span className="w-9" />
-              )}
+        <div className="overflow-x-auto pb-1">
+          <div className="min-w-[640px] space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {visibleMonths.map((visibleMonth, index) => (
+                <div key={visibleMonth.toISOString()} className="flex items-center justify-between">
+                  {index === 0 ? (
+                    <button
+                      type="button"
+                      onClick={handlePrevious}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
+                      aria-label="Mês anterior"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    </button>
+                  ) : (
+                    <span className="w-9" />
+                  )}
+                  <p className="text-base font-semibold text-gray-900 dark:text-white capitalize tracking-tight">
+                    {format(visibleMonth, 'MMMM yyyy', { locale: ptBR })}
+                  </p>
+                  {index === visibleMonths.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
+                      aria-label="Próximo mês"
+                    >
+                      <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    </button>
+                  ) : (
+                    <span className="w-9" />
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className={`overflow-x-auto ${isMobile ? '' : 'overflow-visible'}`}>
-          <div className="min-w-fit">
             <DayPicker
               mode="range"
               selected={{ from: dateRange.from, to: dateRange.to }}
               onSelect={handleSelectRange}
               month={month}
-              numberOfMonths={isMobile ? 1 : 2}
+              numberOfMonths={2}
               locale={ptBR}
               showOutsideDays={false}
             />
