@@ -22,6 +22,21 @@ import { registerJsPdfNotoFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
 
 const PDF_COL_GAP_MM = 2;
+const MOBILE_PDF_W_MM = 100;
+const MOBILE_PDF_H_MM = 1200;
+
+function buildMarginFiltrosDesc({ dateRange, searchTerm, selectedTags, treeLevel }) {
+  const parts = [];
+  if (dateRange?.from && dateRange?.to) {
+    parts.push(
+      `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
+    );
+  }
+  if (searchTerm?.trim()) parts.push(`Busca: ${searchTerm.trim()}`);
+  if (selectedTags?.length) parts.push(`Tags: ${selectedTags.join(', ')}`);
+  if (treeLevel !== 99) parts.push(`Nível: ${treeLevel}`);
+  return parts.length ? parts.join(' · ') : 'Sem filtros adicionais';
+}
 
 /** Paleta alinhada a `gerarRelatorioPedidosComprav2` (relatório expandido de embarques). */
 const PDF_EMBARQUES_C = {
@@ -577,7 +592,7 @@ export default function RelatorioMargemVendas() {
     link.click();
   };
 
-  const exportToPDF = async () => {
+  const exportToPDF = async (version = 'a4') => {
     if (!dateRange.from || !dateRange.to) {
       toast.error('Selecione um período antes de exportar');
       return;
@@ -588,7 +603,235 @@ export default function RelatorioMargemVendas() {
       return;
     }
 
+    const isMobilePdf = version === 'expandida_mobile';
+
     try {
+    if (isMobilePdf) {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [MOBILE_PDF_W_MM, MOBILE_PDF_H_MM],
+      });
+      const pdfFontFamily = await registerJsPdfNotoFonts(pdf);
+      const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const M = 5;
+      const CW = pageW - M * 2;
+      const C = PDF_EMBARQUES_C;
+      const flatRows = displayRows.length ? displayRows : [];
+      const filtrosDesc = buildMarginFiltrosDesc({
+        dateRange,
+        searchTerm,
+        selectedTags,
+        treeLevel,
+      });
+
+      const formatNumPdf = (val) =>
+        (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formatPctPdf = (val) => `${(val ?? 0).toFixed(1).replace('.', ',')}%`;
+      const formatMoneyPdf = (val) => `R$ ${formatNumPdf(val)}`;
+
+      const setColor = (rgb) => pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
+      const setFill = (rgb) => pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
+
+      let y = 12;
+
+      const ensureSpace = (needed = 20) => {
+        if (y + needed <= pageH - 6) return;
+        pdf.addPage();
+        y = 14;
+      };
+
+      const getRowMarkup = (row) => {
+        if (row.markup_percentual != null && !Number.isNaN(row.markup_percentual)) {
+          return row.markup_percentual;
+        }
+        const custo = row.custo_total ?? 0;
+        return custo > 0 ? ((row.lucro_total || 0) / custo) * 100 : 0;
+      };
+
+      const getRowPrecoMedio = (row) => {
+        if (row.valor_unitario_medio != null && !Number.isNaN(row.valor_unitario_medio)) {
+          return row.valor_unitario_medio;
+        }
+        const qtd = row.quantidade_vendida || 0;
+        return qtd > 0 ? (row.total_recebido || 0) / qtd : 0;
+      };
+
+      const drawMobileHeader = () => {
+        setPdfFont('normal');
+        pdf.setFontSize(12);
+        setColor(C.text);
+        pdf.text(normalizePdfText('Margem de Vendas'), M, y);
+        y += 5;
+        pdf.setFontSize(6.5);
+        setColor(C.muted);
+        pdf.text(normalizePdfText('Relatório para celular'), M, y);
+        y += 4.2;
+        const filtrosLinhas = pdf.splitTextToSize(normalizePdfText(filtrosDesc), CW).slice(0, 3);
+        filtrosLinhas.forEach((line) => {
+          pdf.text(line, M, y);
+          y += 3.9;
+        });
+        y += 1;
+        pdf.setFontSize(6.2);
+        pdf.text(
+          normalizePdfText(`Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`),
+          M,
+          y
+        );
+        y += 4.5;
+        setFill(C.soft);
+        pdf.rect(M, y, CW, 0.5, 'F');
+        y += 2.5;
+      };
+
+      const drawMobileKpis = () => {
+        const cards = [
+          { label: 'Receita líquida', value: formatMoneyPdf(totals.receita_liquida) },
+          { label: 'Custo total', value: formatMoneyPdf(totals.custo_total) },
+          { label: 'Lucro', value: formatMoneyPdf(totals.lucro_total), accent: true },
+          { label: 'Markup', value: formatPctPdf(totalMarkup), accent: true },
+        ];
+        const colW = (CW - 3) / 2;
+        const cardH = 14.5;
+        for (let i = 0; i < cards.length; i += 2) {
+          ensureSpace(18);
+          [0, 1].forEach((col) => {
+            const card = cards[i + col];
+            if (!card) return;
+            const cx = M + col * (colW + 3);
+            setFill(C.soft);
+            pdf.roundedRect(cx, y, colW, cardH, 2, 2, 'F');
+            setPdfFont('normal');
+            pdf.setFontSize(6);
+            setColor(C.muted);
+            pdf.text(normalizePdfText(card.label), cx + 3, y + 5);
+            pdf.setFontSize(8.5);
+            setColor(card.accent ? C.profit : C.dark);
+            pdf.text(card.value, cx + 3, y + 11.5);
+          });
+          y += 16.5;
+        }
+        y += 4;
+      };
+
+      const drawMetricChip = (label, value, x, chipW, baselineY, { accent = false } = {}) => {
+        setPdfFont('normal');
+        pdf.setFontSize(5.2);
+        setColor(C.muted);
+        pdf.text(normalizePdfText(label), x + 1, baselineY);
+        pdf.setFontSize(6.8);
+        setColor(accent ? C.profit : C.text);
+        const valueLines = pdf.splitTextToSize(value, chipW - 2).slice(0, 1);
+        pdf.text(valueLines[0] || value, x + 1, baselineY + 4.2);
+      };
+
+      const drawMobileProductCard = (dataRow) => {
+        const titulo = normalizePdfText(String(dataRow?.nome || '?').toUpperCase());
+        const tituloLines = pdf.splitTextToSize(titulo, CW - 6).slice(0, 2);
+        const unidade = dataRow.unidade_exibicao || 'UN';
+        const precoMedio = getRowPrecoMedio(dataRow);
+        const subtitulo = normalizePdfText(
+          `${formatCommercialQuantity(dataRow.quantidade_vendida || 0, unidade)} · ${unidade} · ${formatMoneyPdf(precoMedio)}/un`
+        );
+        const metrics = [
+          { label: 'Receita', value: formatMoneyPdf(dataRow.total_recebido || 0) },
+          { label: 'Custo', value: formatMoneyPdf(dataRow.custo_total || 0) },
+          { label: 'Lucro', value: formatMoneyPdf(dataRow.lucro_total || 0), accent: true },
+          { label: 'Markup', value: formatPctPdf(getRowMarkup(dataRow)), accent: true },
+        ];
+        const titleBlockH = tituloLines.length * 4.2 + 3.6;
+        const metricsH = 9.5;
+        const cardH = titleBlockH + metricsH + 5;
+        ensureSpace(cardH + 3);
+
+        setFill(C.panel);
+        pdf.roundedRect(M, y, CW, cardH, 2.5, 2.5, 'F');
+
+        let cy = y + 5;
+        setPdfFont('normal');
+        pdf.setFontSize(7.5);
+        setColor(C.text);
+        tituloLines.forEach((line, idx) => {
+          pdf.text(line, M + 3, cy + idx * 4.2);
+        });
+        cy += titleBlockH - 1;
+        pdf.setFontSize(6);
+        setColor(C.muted);
+        pdf.text(subtitulo, M + 3, cy);
+        cy += 4.5;
+
+        const chipGap = 1.5;
+        const chipW = (CW - 6 - chipGap * (metrics.length - 1)) / metrics.length;
+        metrics.forEach((metric, idx) => {
+          const cx = M + 3 + idx * (chipW + chipGap);
+          setFill(C.white);
+          pdf.roundedRect(cx, cy, chipW, metricsH - 1, 1.5, 1.5, 'F');
+          drawMetricChip(metric.label, metric.value, cx, chipW, cy + 2.2, {
+            accent: metric.accent,
+          });
+        });
+
+        y += cardH + 2.5;
+      };
+
+      const drawMobileGroupBand = (treeRow) => {
+        const dataRow = treeRow;
+        const bandH = treeRow.showMetrics !== false ? 11 : 9;
+        ensureSpace(bandH + 3);
+        setFill([241, 245, 249]);
+        pdf.roundedRect(M, y, CW, bandH, 2, 2, 'F');
+        setPdfFont('normal');
+        pdf.setFontSize(6.5);
+        setColor(C.text);
+        const label = normalizePdfText(
+          `${String(treeRow.label || '').toUpperCase()}${treeRow.count != null ? ` (${treeRow.count})` : ''}`
+        );
+        const labelLines = pdf.splitTextToSize(label, CW - 28).slice(0, 2);
+        labelLines.forEach((line, idx) => {
+          pdf.text(line, M + 3, y + 4.5 + idx * 3.8);
+        });
+        if (treeRow.showMetrics !== false) {
+          pdf.setFontSize(5.8);
+          setColor(C.muted);
+          const qtyLine = normalizePdfText(
+            `${formatCommercialQuantity(dataRow.quantidade_vendida || 0, dataRow.unidade_exibicao)} · ${formatMarginTreeUnidade(dataRow, { isGroup: true })}`
+          );
+          pdf.text(qtyLine, M + 3, y + bandH - 2.5);
+          pdf.setFontSize(7);
+          setColor(C.profit);
+          pdf.text(formatMoneyPdf(dataRow.lucro_total || 0), M + CW - 3, y + 6, { align: 'right' });
+        }
+        y += bandH + 2.5;
+      };
+
+      drawMobileHeader();
+      drawMobileKpis();
+      flatRows.forEach((treeRow) => {
+        if (treeRow.type === 'group') {
+          drawMobileGroupBand(treeRow);
+        } else {
+          drawMobileProductCard(treeRow.item);
+        }
+      });
+
+      ensureSpace(10);
+      setPdfFont('normal');
+      pdf.setFontSize(6);
+      setColor(C.muted);
+      pdf.text(
+        normalizePdfText(`${productCount} produto(s) no relatório`),
+        M,
+        y + 4
+      );
+
+      const fileDate = format(new Date(), 'yyyy-MM-dd');
+      pdf.save(`relatorio_margem_mobile_${fileDate}.pdf`);
+      return;
+    }
+
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfFontFamily = await registerJsPdfNotoFonts(pdf);
     const setPdfFont = (style = 'normal') => pdf.setFont(pdfFontFamily, style);
@@ -957,8 +1200,14 @@ export default function RelatorioMargemVendas() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700 text-sm">
-                  <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    PDF
+                  <DropdownMenuItem onClick={() => exportToPDF('a4')} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    PDF (A4)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => exportToPDF('expandida_mobile')}
+                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                  >
+                    PDF mobile
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
                     CSV
