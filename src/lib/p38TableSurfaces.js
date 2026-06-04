@@ -37,17 +37,17 @@ export const p38Table = {
   panelAccentBar: 'bg-[#4A5D23] dark:bg-[#a4ce33]',
   accentDot: 'w-1.5 h-1.5 rounded-full bg-[#4A5D23] dark:bg-[#a4ce33]',
 
-  bodyText: 'text-sm font-din-1451',
+  bodyText: 'text-[14px] font-din-1451',
   microText: 'text-xs',
 
   /** Linhas mobile compactas (substituem cards em smartphone) */
   mobileLine: 'border-b border-border/50 dark:border-white/6 border-l-2 py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] touch-pan-y',
-  mobileLineTitle: 'font-din-1451 font-medium text-sm uppercase tracking-wide text-foreground leading-tight break-words',
+  mobileLineTitle: 'font-din-1451 font-medium text-[14px] uppercase tracking-wide text-foreground leading-tight break-words',
   mobileLineSubtitle: 'text-xs text-muted-foreground break-all mt-0.5 font-din-1451',
   mobileLineMeta: 'text-[10px] uppercase tracking-wide text-muted-foreground font-din-1451',
   mobileLineMetaInline: 'text-xs normal-case tracking-normal text-muted-foreground font-din-1451',
-  mobileLineValue: 'font-semibold text-sm text-foreground text-right tabular-nums font-din-1451',
+  mobileLineValue: 'font-semibold text-[14px] text-foreground text-right tabular-nums font-din-1451',
   mobileLineValueSub: 'text-[10px] text-muted-foreground text-right font-din-1451',
   mobileMicroLabel: 'text-[9px] uppercase tracking-wide text-muted-foreground leading-none font-din-1451',
   mobileListShell: 'md:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background',

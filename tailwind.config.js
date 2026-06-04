@@ -5,29 +5,15 @@ module.exports = {
   theme: {
   	extend: {
   		fontFamily: {
-			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-			glacial: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-		},
+  			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+  			'din-1451': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
-  			olive: {
-  				50: '#f7f8f3',
-  				100: '#eceee3',
-  				200: '#d8dcc4',
-  				300: '#bfc59a',
-  				400: '#9fa865',
-  				500: '#808842',
-  				600: '#636b33',
-  				700: '#4f5529',
-  				800: '#3f4423',
-  				900: '#35391e',
-  				950: '#1c1f10',
-  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
