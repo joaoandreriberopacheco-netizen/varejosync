@@ -66,14 +66,8 @@ const MARGIN_MOBILE_VALUE_ROWS = [
   ],
 ];
 
-/** Labels curtos no cabeçalho mobile (colunas estreitas). */
-const MARGIN_MOBILE_HEADER_ROWS = [
-  ['CUSTO UN', 'PREÇO V.', 'MK %'],
-  ['CUSTO T.', 'RECEITA', 'LUCRO'],
-];
-
-const MARGIN_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-0.5 min-w-0';
-const MARGIN_MOBILE_HEADER_LABEL = 'text-[9px] uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0';
+const MARGIN_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1 min-w-0';
+const MARGIN_MOBILE_HEADER_LABEL = `${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0`;
 
 const MARGIN_METRIC_KEYS = MARGIN_MOBILE_VALUE_ROWS.flat().map(({ key }) => key);
 
@@ -404,12 +398,12 @@ function MargemMobileColumnHeader({ className = '' }) {
           <p className={`${MARGIN_MOBILE_HEADER_LABEL} text-right mt-2`}>Un</p>
         </div>
         <div className="flex-1 min-w-0 py-2 pr-2">
-          {MARGIN_MOBILE_HEADER_ROWS.map((valueRow, rowIdx) => (
+          {MARGIN_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
               className={`${MARGIN_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1.5'}`}
             >
-              {valueRow.map((label) => (
+              {valueRow.map(({ label }) => (
                 <p key={label} className={MARGIN_MOBILE_HEADER_LABEL}>
                   {label}
                 </p>
@@ -479,7 +473,7 @@ function MargemLinhaMobile({
   const textStart = marginDescTextStartMobile(level);
   const canExpand = isGroup && !isLeaf && typeof onToggle === 'function';
   const rowBase =
-    `border-b ${MARGIN_TABLE_BORDER} bg-background min-w-0 max-w-full touch-pan-y`;
+    `mx-3 md:mx-0 border-b ${MARGIN_TABLE_BORDER} bg-background min-w-0 max-w-full touch-pan-y`;
   const productTier = level <= 1 ? 'solteiro' : 'filho';
 
   if (isGroup || isSubtotal) {
