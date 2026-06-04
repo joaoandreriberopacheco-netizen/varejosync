@@ -18,6 +18,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import {
+  p38Table,
+  MARGIN_TABLE_PANEL,
+  MARGIN_TABLE_HEAD,
+  MARGIN_TABLE_BORDER,
+  MARGIN_TABLE_ROW,
+  MARGIN_ACCENT_VALUE,
+  MARGIN_MUTED_VALUE,
+  MARGIN_BODY_TEXT,
+  MARGIN_TABLE_MICRO,
+} from '@/lib/p38TableSurfaces';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 
 
@@ -41,18 +52,6 @@ const MARGIN_ACCENT_HEX_DARK = '#a4ce33';
 const MARGIN_ACCENT_RGB = [74, 93, 35];
 /** Limão — destaque no painel/PDF mobile escuro. */
 const MARGIN_ACCENT_LIME_RGB = [164, 206, 51];
-
-/** Tamanho único corpo + cabeçalho da tabela (desktop e lista mobile). */
-const MARGIN_BODY_TEXT = 'text-sm';
-const MARGIN_TABLE_MICRO = 'text-xs';
-const MARGIN_TABLE_PANEL = 'bg-card text-white';
-const MARGIN_TABLE_HEAD =
-  'text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-200/90';
-const MARGIN_TABLE_BORDER = 'border-border/40 dark:border-white/10';
-const MARGIN_TABLE_ROW =
-  'border-b border-border/50 bg-background hover:bg-secondary/25 dark:hover:bg-secondary/30';
-const MARGIN_ACCENT_VALUE = 'text-[#4A5D23] dark:text-[#a4ce33]';
-const MARGIN_MUTED_VALUE = 'text-gray-500 dark:text-gray-400';
 
 const MARGIN_MOBILE_VALUE_ROWS = [
   [
@@ -346,7 +345,7 @@ const MARGIN_SEARCH_SEPARATOR = ';';
 function MargemMobileReportHeader({ filtrosDesc }) {
   return (
     <div className={`relative mx-3 md:mx-0 mt-3 rounded-lg overflow-hidden ${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER}`}>
-      <div className="absolute left-3 top-4 bottom-4 w-[3px] rounded-sm bg-[#4A5D23] dark:bg-[#a4ce33]" aria-hidden />
+      <div className={`absolute left-3 top-4 bottom-4 w-[3px] rounded-sm ${p38Table.panelAccentBar}`} aria-hidden />
       <div className="pl-7 pr-3 py-3">
         <p className={`${MARGIN_BODY_TEXT} font-semibold tracking-wide uppercase leading-tight`}>
           Margem de vendas
@@ -422,7 +421,7 @@ function MargemMobileQtdUnCol({ qtd, unidade, showAccentDot = true }) {
     <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
       {showAccentDot ? (
         <span
-          className="absolute left-0 top-3 w-1.5 h-1.5 rounded-full bg-[#4A5D23] dark:bg-[#a4ce33]"
+          className={`absolute left-0 top-3 ${p38Table.accentDot}`}
           aria-hidden
         />
       ) : null}

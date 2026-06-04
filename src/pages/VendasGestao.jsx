@@ -167,7 +167,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
     <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-gray-200 dark:border-gray-700">
+          <TableRow>
             <TableHead className="w-8"></TableHead>
             <TableHead>Pedido</TableHead>
             <TableHead>Status</TableHead>
@@ -190,7 +190,6 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
                 key={virtualRow.key}
                 data-index={virtualRow.index}
                 ref={rowVirtualizer.measureElement}
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               >
                 <TableCell>
                   <PedidoActionsMenu
@@ -331,7 +330,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-gray-200 dark:border-gray-700">
+          <TableRow>
             <TableHead>Senha</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Status</TableHead>
@@ -355,7 +354,6 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
                 key={virtualRow.key}
                 data-index={virtualRow.index}
                 ref={rowVirtualizer.measureElement}
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               >
                 <TableCell>
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">

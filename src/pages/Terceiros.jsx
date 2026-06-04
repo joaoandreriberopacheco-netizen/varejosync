@@ -183,7 +183,7 @@ export default function TerceirosPage() {
 
       {/* Tabela */}
       {filteredTerceiros.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+        <div className="text-center py-12 rounded-xl border border-border bg-background shadow-sm overflow-auto">
           <Users className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Nenhum terceiro cadastrado</p>
           <Button onClick={handleAddNew} className="gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm h-9 px-4">
@@ -191,7 +191,7 @@ export default function TerceirosPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm min-w-0 overflow-x-auto">
+        <div className="rounded-xl border border-border bg-background shadow-sm overflow-auto min-w-0 overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-800">
               <TableRow className="border-b border-gray-100 dark:border-gray-700">

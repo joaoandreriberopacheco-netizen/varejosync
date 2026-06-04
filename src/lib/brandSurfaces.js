@@ -41,14 +41,13 @@ export function brandLogoProps(surface) {
 export const brandSurface = {
   page: 'bg-background',
   pageScreen: 'min-h-screen bg-background',
-  /** Cartão principal (mobile dark: card sobre navy) */
   card: 'bg-card text-card-foreground border border-border shadow-sm',
-  /** Interior suave */
   cardInset: 'bg-muted/50',
-  /** Cápsula de ícone (atalhos Home) */
   iconCapsule: 'rounded-2xl bg-muted flex items-center justify-center shadow-sm',
   textMuted: 'text-muted-foreground',
   textLabel: 'text-muted-foreground',
-  accent: 'text-primary',
+  accent: 'text-[#4A5D23] dark:text-[#a4ce33]',
   accentBg: 'bg-primary/10 text-primary',
+  /** Contentor de tabela — ver p38TableSurfaces.js */
+  tableShell: 'rounded-xl border border-border bg-background shadow-sm overflow-auto',
 };

@@ -238,29 +238,29 @@ const PedidosCompraTab = () => {
       <div className="grid gap-3 md:gap-3">
         {/* Responsive: Cards for Mobile, Table for Desktop */}
         {pedidosFiltrados.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+          <div className="text-center py-12 rounded-xl border border-border bg-background shadow-sm overflow-auto">
             <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
             <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum pedido encontrado</p>
           </div>
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block min-w-0 overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+            <div className="hidden md:block min-w-0 overflow-x-auto rounded-xl border border-border bg-background shadow-sm overflow-auto">
               <Table>
-                <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
-                  <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
-                    <TableHead className="w-[100px] text-xs font-semibold uppercase tracking-wider text-gray-500">Número</TableHead>
-                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</TableHead>
-                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Fornecedor</TableHead>
-                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Emissão</TableHead>
-                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Entrega</TableHead>
-                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Total</TableHead>
-                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</TableHead>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead>Emissão</TableHead>
+                    <TableHead>Entrega</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pedidosFiltrados.map((pedido) => (
-                    <TableRow key={pedido.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 border-gray-100 dark:border-gray-700 transition-colors">
+                    <TableRow key={pedido.id}>
                       <TableCell className="font-medium text-gray-900 dark:text-white">
                         {pedido.numero}
                       </TableCell>

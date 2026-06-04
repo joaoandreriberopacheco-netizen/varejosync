@@ -105,7 +105,7 @@ export default function IntervenientesPage() {
                         <div className="min-w-0 overflow-x-auto -mx-1">
                         <Table>
                             <TableHeader>
-                                <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
+                                <TableRow>
                                     <TableHead>Nome</TableHead>
                                     <TableHead>Descrição/Cargo</TableHead>
                                     <TableHead>Status</TableHead>

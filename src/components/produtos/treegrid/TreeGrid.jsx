@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { cn } from '@/components/utils';
+import { p38Table } from '@/lib/p38TableSurfaces';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -219,15 +221,15 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 
   return (
     <tr
-      className={`border-b border-gray-100 dark:border-gray-800 ${isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'} select-none`}
+      className={cn(p38Table.row, !isLeaf && p38Table.rowInteractive, 'select-none')}
       onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
       {!readOnly && (
-        <td className="sticky left-0 bg-white dark:bg-gray-900 z-20"
+        <td className={cn(p38Table.stickyCellLeft)}
           style={{ width: W_EDIT, minWidth: W_EDIT }} />
       )}
       <td
-        className="py-2 sticky bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
+        className={cn(p38Table.stickyCell, 'py-2')}
         style={{ left: editOffset, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
@@ -261,9 +263,9 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
   const editOffset = readOnly ? 0 : W_EDIT;
 
   return (
-    <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
+    <tr className={cn(p38Table.row, 'group')}>
       {!readOnly && (
-        <td className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 text-center"
+        <td className={cn(p38Table.stickyCellLeft, "py-1.5 text-center")}
           style={{ width: W_EDIT, minWidth: W_EDIT }}>
           <div className="flex items-center gap-0.5 justify-center">
             <Button variant="ghost" size="icon"
@@ -280,7 +282,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
         </td>
       )}
       <td
-        className="py-1.5 sticky bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
+        className={cn(p38Table.stickyCell, "py-1.5")}
         style={{ left: editOffset, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -412,21 +414,21 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
       <div className="flex-1 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }} ref={scrollContainerRef}>
         <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
           {/* thead sticky no topo durante scroll vertical */}
-          <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900">
-            <tr className="border-b-2 border-gray-200 dark:border-gray-700">
+          <thead className={p38Table.header}>
+            <tr className="border-b border-border/40 dark:border-white/10">
               {!readOnly && (
-                <th className="sticky left-0 bg-white dark:bg-gray-900 z-40"
+                <th className={cn(p38Table.stickyHeadLeft)}
                   style={{ width: W_EDIT, minWidth: W_EDIT }} />
               )}
               <th
-                className="text-left py-2 sticky bg-white dark:bg-gray-900 z-40 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                className={cn(p38Table.stickyHeadLeft, p38Table.head, "text-left py-2")}
                 style={{ left: nameColLeft, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>
               {activeCols.map(col => (
                 <th key={col.id}
-                  className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
+                  className={cn(p38Table.head, p38Table.headRight, "py-2 whitespace-nowrap")}
                   style={{ width: col.w, minWidth: col.w }}>
                   {col.label}
                 </th>
