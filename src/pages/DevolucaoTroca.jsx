@@ -148,54 +148,64 @@ function SelecionarItensStep({ pedido, onConfirm }) {
       </div>
 
       {/* Itens */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Selecione os itens a devolver</p>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-border">
+          <p className="text-sm font-medium text-foreground">Selecione os itens a devolver</p>
         </div>
-        {(pedido.itens || []).map(item => {
-          const key = item.produto_id + '_' + item.produto_nome;
-          const qtd = qtds[key] || 0;
-          return (
-            <div key={key} className="px-4 py-4 flex items-center gap-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 dark:text-white">{item.produto_nome}</div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {item.quantidade}x · {formatValor(item.preco_unitario_praticado)}/un
+        <P38MobileLineList>
+          {(pedido.itens || []).map((item, index) => {
+            const key = item.produto_id + '_' + item.produto_nome;
+            const qtd = qtds[key] || 0;
+            return (
+              <P38MobileLine
+                key={key}
+                striped={index % 2 === 1}
+                accent={p38AccentKeyFromTone(qtd > 0 ? 'danger' : 'muted')}
+                className="flex items-center gap-3 px-4 py-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium">{item.produto_nome}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {item.quantidade}x · {formatValor(item.preco_unitario_praticado)}/un
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setQtds(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
-                  className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform"
-                >
-                  <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                </button>
-                <input autoComplete="off"
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  min={0}
-                  max={item.quantidade}
-                  value={focusedKey === key ? (qtd === 0 ? '' : qtd) : qtd}
-                  onFocus={(e) => { setFocusedKey(key); e.target.select(); }}
-                  onBlur={() => setFocusedKey(null)}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value) || 0;
-                    setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, Math.max(0, v)) }));
-                  }}
-                  className={`w-14 text-center text-base font-bold tabular-nums rounded-lg border-0 bg-transparent focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-all ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}
-                  style={{ minHeight: '36px' }}
-                />
-                <button
-                  onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
-                  className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform"
-                >
-                  <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setQtds(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
+                    className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active:scale-95 transition-transform"
+                  >
+                    <Minus className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                  <input
+                    autoComplete="off"
+                    type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    min={0}
+                    max={item.quantidade}
+                    value={focusedKey === key ? (qtd === 0 ? '' : qtd) : qtd}
+                    onFocus={(e) => { setFocusedKey(key); e.target.select(); }}
+                    onBlur={() => setFocusedKey(null)}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value) || 0;
+                      setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, Math.max(0, v)) }));
+                    }}
+                    className={`w-14 text-center text-base font-bold tabular-nums rounded-lg border-0 bg-transparent focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-all ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}
+                    style={{ minHeight: '36px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
+                    className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active:scale-95 transition-transform"
+                  >
+                    <Plus className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </P38MobileLine>
+            );
+          })}
+        </P38MobileLineList>
       </div>
 
       {/* Forma de reembolso + Motivo */}

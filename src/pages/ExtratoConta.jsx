@@ -499,16 +499,16 @@ export default function ExtratoContaPage() {
         ) : (
           <div className="space-y-4">
             {diasComSaldo.map((diaData, diaIdx) => (
-              <div key={diaIdx} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+              <div key={diaIdx} className="bg-card border border-border rounded-xl overflow-hidden">
                 {/* Header do dia */}
-                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                <div className="bg-card px-4 py-3 border-b border-border">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-800 dark:text-gray-200">
+                      <p className="font-medium text-foreground">
                         {format(new Date(diaData.dia), "dd 'de' MMMM 'de' yyyy")}
                       </p>
-                      <div className="flex gap-4 mt-1 text-xs text-gray-600 dark:text-gray-400">
-                        <span className="text-green-600 dark:text-green-400">
+                      <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+                        <span className="text-emerald-600 dark:text-emerald-400">
                           ↑ {formatCurrency(diaData.totalEntradas)}
                         </span>
                         <span className="text-red-600 dark:text-red-400">
@@ -517,66 +517,35 @@ export default function ExtratoContaPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Final</p>
-                      <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                      <p className="text-xs text-muted-foreground">Saldo Final</p>
+                      <p className="text-lg font-semibold text-foreground tabular-nums">
                         {formatCurrency(diaData.saldoFinal)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Movimentações do dia */}
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {diaData.movimentacoes.map((mov, idx) => (
-                    <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            {mov.tipo === 'Receita' && (
-                              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <ArrowUpCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              </div>
-                            )}
-                            {mov.tipo === 'Despesa' && (
-                              <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                                <ArrowDownCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                              </div>
-                            )}
-                            {mov.tipo === 'Reforço' && (
-                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                <ArrowUpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              </div>
-                            )}
-                            {mov.tipo === 'Sangria' && (
-                              <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                                <ArrowDownCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-gray-800 dark:text-gray-200">
-                                {mov.descricao || mov.tipo}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {format(new Date(getDataMovimento(mov)), "HH:mm")}
-                                {mov.categoria && ` • ${mov.categoria}`}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-lg font-semibold ${
-                            mov.tipo === 'Receita' || mov.tipo === 'Reforço' ? 
-                            'text-green-600 dark:text-green-400' : 
-                            'text-red-600 dark:text-red-400'
-                          }`}>
-                            {mov.tipo === 'Receita' || mov.tipo === 'Reforço' ? '+' : '-'} 
-                            {formatCurrency(mov.valor)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <P38MobileLineList>
+                  {diaData.movimentacoes.map((mov, idx) => {
+                    const entrada = mov.tipo === 'Receita' || mov.tipo === 'Reforço';
+                    const hora = format(new Date(getDataMovimento(mov)), 'HH:mm');
+                    const subtitle = mov.categoria ? `${hora} · ${mov.categoria}` : hora;
+                    return (
+                      <P38MobileLine
+                        key={idx}
+                        striped={idx % 2 === 1}
+                        accent={p38AccentKeyFromTone(extratoMovAccent(mov.tipo))}
+                        title={mov.descricao || mov.tipo}
+                        subtitle={subtitle}
+                        value={
+                          <span className={entrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                            {entrada ? '+' : '-'}{formatCurrency(mov.valor)}
+                          </span>
+                        }
+                      />
+                    );
+                  })}
+                </P38MobileLineList>
               </div>
             ))}
           </div>

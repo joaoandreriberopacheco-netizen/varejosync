@@ -15,6 +15,7 @@ import {
   normalizeSigla,
   buildProdutoUnidadesPatchFromVitrine,
 } from '@/lib/productUnitsCrud';
+import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);

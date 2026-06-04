@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');
@@ -468,14 +470,14 @@ Retorne um JSON com:
                         )}
 
                         {/* Items Table */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
-                            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                        <div className="bg-card rounded-xl overflow-hidden border border-border">
+                            <div className="p-6 border-b border-border">
                                 <div className="flex items-center gap-3">
-                                    <Package className="w-5 h-5 text-gray-400" />
-                                    <h4 className="font-medium text-gray-900 dark:text-white">Itens para Importação</h4>
+                                    <Package className="w-5 h-5 text-muted-foreground" />
+                                    <h4 className="font-medium text-foreground">Itens para Importação</h4>
                                 </div>
                             </div>
-                            <div className="hidden md:block overflow-x-auto">
+                            <P38TableShell className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead className="bg-gray-50 dark:bg-gray-900/50">
                                         <tr>
@@ -548,25 +550,21 @@ Retorne um JSON com:
                                         ))}
                                     </tbody>
                                 </table>
-                            </div>
-                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                            </P38TableShell>
+                            <P38MobileLineList className="md:hidden">
                                 {mappings.map((m, idx) => (
-                                    <div
+                                    <P38MobileLine
                                         key={idx}
-                                        className={`p-4 space-y-3 ${m.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : ''}`}
+                                        striped={idx % 2 === 1}
+                                        accent={m.ignored ? 'muted' : p38AccentKeyFromTone(m.confianca_match === 'alta' ? 'success' : 'warning')}
+                                        className={`flex-col items-stretch gap-3 p-4 ${m.ignored ? 'opacity-40' : ''}`}
                                     >
-                                        <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-start justify-between gap-3 w-full">
                                             <div className="min-w-0">
-                                                <p className="font-medium text-sm text-gray-900 dark:text-white">{m.descricao_pdf}</p>
-                                                <div className="flex flex-wrap items-center gap-2 mt-1 text-xs">
-                                                    {m.codigo_pdf && (
-                                                        <span className="text-gray-500 dark:text-gray-400">Cód: {m.codigo_pdf}</span>
-                                                    )}
-                                                    {m.marca_pdf && (
-                                                        <span className="px-2 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 rounded-md font-medium">
-                                                            {m.marca_pdf}
-                                                        </span>
-                                                    )}
+                                                <p className="font-medium text-sm">{m.descricao_pdf}</p>
+                                                <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                                    {m.codigo_pdf && <span>Cód: {m.codigo_pdf}</span>}
+                                                    {m.marca_pdf && <span>{m.marca_pdf}</span>}
                                                 </div>
                                             </div>
                                             <Checkbox
@@ -578,9 +576,9 @@ Retorne um JSON com:
                                                 }}
                                             />
                                         </div>
-                                        <div className="text-xs text-gray-600 dark:text-gray-300">
+                                        <div className="text-xs text-muted-foreground w-full">
                                             {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
-                                            <span className="ml-2 font-semibold text-gray-900 dark:text-white">
+                                            <span className="ml-2 font-semibold text-foreground">
                                                 Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
                                             </span>
                                         </div>
@@ -595,16 +593,13 @@ Retorne um JSON com:
                                             onProductCreated={(novoProduto) => setProdutosSistema((prev) => [...prev, novoProduto])}
                                         />
                                         {m.confianca_match && !m.ignored && (
-                                            <div className={`flex items-center gap-1.5 text-xs ${
-                                                m.confianca_match === 'alta' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
-                                            }`}>
-                                                {m.confianca_match === 'alta' ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                                            <P38StatusLabel tone={m.confianca_match === 'alta' ? 'success' : 'warning'}>
                                                 Confiança IA: {m.confianca_match}
-                                            </div>
+                                            </P38StatusLabel>
                                         )}
-                                    </div>
+                                    </P38MobileLine>
                                 ))}
-                            </div>
+                            </P38MobileLineList>
                         </div>
                     </div>
                 )}

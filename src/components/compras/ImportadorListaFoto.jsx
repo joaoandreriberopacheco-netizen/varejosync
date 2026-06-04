@@ -8,6 +8,8 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { buildProdutoMatchingPromptBase, matchesProductQuery } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete, mode = 'create' }) {
     const [step, setStep] = useState('upload');
@@ -318,8 +320,8 @@ Retorne JSON:
 
                     {step === 'review' && (
                         <div className="space-y-6">
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
-                                <div className="hidden md:block overflow-x-auto">
+                            <div className="bg-card rounded-xl overflow-hidden border border-border">
+                                <P38TableShell className="hidden md:block overflow-x-auto">
                                     <table className="w-full">
                                         <thead className="bg-gray-50 dark:bg-gray-900/50">
                                             <tr>
@@ -402,17 +404,22 @@ Retorne JSON:
                                             })}
                                         </tbody>
                                     </table>
-                                </div>
-                                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                                </P38TableShell>
+                                <P38MobileLineList className="md:hidden">
                                     {analyzedItems.map((item, idx) => {
                                         const product = products.find(p => p.id === item.selected_product_id);
                                         return (
-                                            <div key={idx} className={`p-4 space-y-3 ${item.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : ''}`}>
-                                                <div className="flex items-start justify-between gap-3">
+                                            <P38MobileLine
+                                                key={idx}
+                                                striped={idx % 2 === 1}
+                                                accent={item.ignored ? 'muted' : p38AccentKeyFromTone(product ? 'success' : 'warning')}
+                                                className={`flex-col items-stretch gap-3 p-4 ${item.ignored ? 'opacity-40' : ''}`}
+                                            >
+                                                <div className="flex items-start justify-between gap-3 w-full">
                                                     <div className="min-w-0">
-                                                        <p className="font-medium text-sm text-gray-900 dark:text-white">{item.texto_identificado}</p>
+                                                        <p className="font-medium text-sm">{item.texto_identificado}</p>
                                                         {item.quantidade_escrita && (
-                                                            <p className="text-xs text-gray-400 mt-1">Escrito: {item.quantidade_escrita}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">Escrito: {item.quantidade_escrita}</p>
                                                         )}
                                                     </div>
                                                     <Checkbox
@@ -435,9 +442,9 @@ Retorne JSON:
                                                     productSearch={productSearch}
                                                     onProductCreated={(novoProduto) => setProducts((prev) => [...prev, novoProduto])}
                                                 />
-                                                <div className="flex items-center justify-between gap-3 text-xs">
-                                                    <div className="text-gray-500 dark:text-gray-400">
-                                                        Estoque: <span className="font-semibold text-gray-700 dark:text-gray-300">{product?.estoque_atual || 0}</span>
+                                                <div className="flex items-center justify-between gap-3 text-xs w-full">
+                                                    <div className="text-muted-foreground">
+                                                        Estoque: <span className="font-semibold text-foreground">{product?.estoque_atual || 0}</span>
                                                         <span className="ml-2">Min: {product?.estoque_minimo || 0}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -452,15 +459,15 @@ Retorne JSON:
                                                             }}
                                                             disabled={item.ignored}
                                                         />
-                                                        <span className="text-xs text-gray-400 font-medium">
+                                                        <span className="text-xs text-muted-foreground font-medium">
                                                             {product?.unidade_principal || 'UN'}
                                                         </span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </P38MobileLine>
                                         );
                                     })}
-                                </div>
+                                </P38MobileLineList>
                             </div>
 
                             <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center text-sm text-gray-500">

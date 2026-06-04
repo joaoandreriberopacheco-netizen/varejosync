@@ -234,11 +234,14 @@ export default function ReversaoDespesasSangrias() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Não há movimentos de caixa para deletar.</p>
             </div>
           ) : abaSelecionada === 'movimentos' ? (
-            <div className="space-y-3">
-              {movimentos.map((movimento) => (
-                <div
+            <P38MobileLineList>
+              {movimentos.map((movimento, index) => (
+                <P38MobileLine
                   key={movimento.id}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm flex items-start justify-between gap-4">
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(movimento.tipo === 'Reforço' ? 'success' : 'info')}
+                  className="flex items-start justify-between gap-4 p-4"
+                >
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                       movimento.tipo === 'Reforço' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-blue-50 dark:bg-blue-900/20'
@@ -248,30 +251,31 @@ export default function ReversaoDespesasSangrias() {
                         : <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{movimento.tipo}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">#{movimento.numero}</div>
+                      <div className="text-sm font-medium">{movimento.tipo}</div>
+                      <div className="text-xs text-muted-foreground mt-1">#{movimento.numero}</div>
                       {movimento.observacao && (
-                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">{movimento.observacao}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{movimento.observacao}</div>
                       )}
                     </div>
                   </div>
-
                   <div className="text-right flex-shrink-0">
-                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                    <div className="text-lg font-bold tabular-nums">
                       R$ {movimento.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                     <button
+                      type="button"
                       onClick={() => deletarMovimento(movimento)}
                       disabled={revertendo}
                       className="mt-3 h-10 px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-medium text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
-                      style={{ minHeight: '40px' }}>
+                      style={{ minHeight: '40px' }}
+                    >
                       <Trash2 className="w-4 h-4" />
                       Deletar
                     </button>
                   </div>
-                </div>
+                </P38MobileLine>
               ))}
-            </div>
+            </P38MobileLineList>
           ) : null}
         </div>
       </div>

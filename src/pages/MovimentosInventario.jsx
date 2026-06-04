@@ -32,6 +32,7 @@ import {
   normalizeUnitCode,
   resolvePrimaryFromFactorOne,
 } from '@/lib/productUnits';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const REFERENCIA_MOVIMENTO_INVENTARIO = 'MovimentoInventario';
 const MOTIVOS_ENTRADA = ['Ajuste pontual de inventário', 'Entrada manual', 'Devolução ao estoque', 'Correção de saldo'];
@@ -163,39 +164,35 @@ function StepPill({ number, title, description, active = false, done = false, on
   );
 }
 
-function ProductRow({ product, active, inCart, onSelect }) {
+function ProductRow({ product, active, inCart, onSelect, striped }) {
   const unidadeBase = resolvePrimaryFromFactorOne(product, product?.unidade_principal || 'UN');
+  const accent = active ? 'info' : inCart ? 'success' : 'default';
 
   return (
-    <button
+    <P38MobileLine
+      as="button"
       type="button"
+      striped={striped}
+      accent={p38AccentKeyFromTone(accent)}
       onClick={() => onSelect(product)}
-      className={`w-full rounded-2xl border p-4 text-left transition-all ${
-        active
-          ? 'border-blue-500 bg-blue-50 shadow-sm dark:border-blue-500/60 dark:bg-blue-950/30'
-          : inCart
-            ? 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/60 dark:bg-emerald-950/20'
-            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800'
-      }`}
+      className={`w-full text-left flex items-start gap-3 p-4 min-h-[52px] ${active ? 'ring-1 ring-blue-500/50' : ''}`}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-          <Package className="h-5 w-5 text-gray-500" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">{getProdutoNome(product)}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-            {getProdutoCodigo(product) && <span>#{getProdutoCodigo(product)}</span>}
-            <span>Estoque: {formatCommercialQuantity(product.estoque_atual, unidadeBase)} {unidadeBase}</span>
-          </div>
-        </div>
-        {inCart && (
-          <Badge className="border-0 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-100">
-            no carrinho
-          </Badge>
-        )}
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
+        <Package className="h-5 w-5 text-muted-foreground" />
       </div>
-    </button>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 text-sm font-semibold">{getProdutoNome(product)}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {getProdutoCodigo(product) && <span>#{getProdutoCodigo(product)}</span>}
+          <span>Estoque: {formatCommercialQuantity(product.estoque_atual, unidadeBase)} {unidadeBase}</span>
+        </div>
+      </div>
+      {inCart && (
+        <Badge className="border-0 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-100 shrink-0">
+          no carrinho
+        </Badge>
+      )}
+    </P38MobileLine>
   );
 }
 
@@ -322,32 +319,35 @@ function CartPanel({ items, tipo, onEdit, onRemove }) {
   }
 
   return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item.item_key} className="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-start gap-3">
-            <button type="button" onClick={() => onEdit(item)} className="min-w-0 flex-1 text-left">
-              <p className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">{item.produto_nome}</p>
-              <p className="mt-1 text-xs text-gray-500">
-                {formatCommercialQuantity(item.quantidade_comercial, item.unidade_medida)} {item.unidade_medida}
-                {' '}= {formatCommercialQuantity(item.quantidade_base, item.unidade_base)} {item.unidade_base}
-              </p>
-              <p className={`mt-1 text-xs font-semibold ${tipo === 'Entrada' ? 'text-emerald-700' : 'text-red-700'}`}>
-                {tipo}
-              </p>
-            </button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
-              onClick={() => onRemove(item.item_key)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+    <P38MobileLineList>
+      {items.map((item, index) => (
+        <P38MobileLine
+          key={item.item_key}
+          striped={index % 2 === 1}
+          accent={p38AccentKeyFromTone(tipo === 'Entrada' ? 'success' : 'danger')}
+          className="flex items-start gap-3 p-3"
+        >
+          <button type="button" onClick={() => onEdit(item)} className="min-w-0 flex-1 text-left">
+            <p className="line-clamp-2 text-sm font-semibold">{item.produto_nome}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {formatCommercialQuantity(item.quantidade_comercial, item.unidade_medida)} {item.unidade_medida}
+              {' '}= {formatCommercialQuantity(item.quantidade_base, item.unidade_base)} {item.unidade_base}
+            </p>
+            <P38StatusLabel tone={tipo === 'Entrada' ? 'success' : 'danger'} className="mt-1">
+              {tipo}
+            </P38StatusLabel>
+          </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
+            onClick={() => onRemove(item.item_key)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </P38MobileLine>
       ))}
-    </div>
+    </P38MobileLineList>
   );
 }
 
@@ -361,38 +361,36 @@ function ReviewPanel({ rows, tipo }) {
   }
 
   return (
-    <div className="space-y-3">
-      {rows.map((row) => (
-        <div
+    <P38MobileLineList>
+      {rows.map((row, index) => (
+        <P38MobileLine
           key={row.produto_id}
-          className={`rounded-2xl border p-3 ${
-            row.estoque_depois < 0
-              ? 'border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30'
-              : 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950'
-          }`}
+          striped={index % 2 === 1}
+          accent={p38AccentKeyFromTone(row.estoque_depois < 0 ? 'danger' : tipo === 'Entrada' ? 'success' : 'warning')}
+          className="flex-col items-stretch gap-3 p-3"
         >
-          <p className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">{row.produto_nome}</p>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-xl bg-white p-2 dark:bg-gray-900">
-              <span className="block text-gray-500">Antes</span>
-              <strong>{formatCommercialQuantity(row.estoque_antes, row.unidade_base)} {row.unidade_base}</strong>
+          <p className="line-clamp-2 text-sm font-semibold">{row.produto_nome}</p>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded-xl bg-card border border-border p-2">
+              <span className="block text-muted-foreground">Antes</span>
+              <strong className="tabular-nums">{formatCommercialQuantity(row.estoque_antes, row.unidade_base)} {row.unidade_base}</strong>
             </div>
-            <div className="rounded-xl bg-white p-2 dark:bg-gray-900">
-              <span className="block text-gray-500">{tipo}</span>
+            <div className="rounded-xl bg-card border border-border p-2">
+              <span className="block text-muted-foreground">{tipo}</span>
               <strong className={tipo === 'Entrada' ? 'text-emerald-700' : 'text-red-700'}>
                 {tipo === 'Entrada' ? '+' : '-'}{formatCommercialQuantity(row.quantidade_base, row.unidade_base)}
               </strong>
             </div>
-            <div className="rounded-xl bg-white p-2 dark:bg-gray-900">
-              <span className="block text-gray-500">Depois</span>
-              <strong className={row.estoque_depois < 0 ? 'text-red-700' : ''}>
+            <div className="rounded-xl bg-card border border-border p-2">
+              <span className="block text-muted-foreground">Depois</span>
+              <strong className={row.estoque_depois < 0 ? 'text-red-700' : 'tabular-nums'}>
                 {formatCommercialQuantity(row.estoque_depois, row.unidade_base)} {row.unidade_base}
               </strong>
             </div>
           </div>
-        </div>
+        </P38MobileLine>
       ))}
-    </div>
+    </P38MobileLineList>
   );
 }
 
@@ -403,22 +401,30 @@ function RecentMovements({ movimentos }) {
       <CardHeader>
         <CardTitle className="text-base">Últimos ajustes</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {movimentos.slice(0, 5).map((movimento) => (
-          <div key={movimento.id || `${movimento.produto_id}-${movimento.created_date}`} className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
-            <div className="flex items-center justify-between gap-3">
-              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                {movimento.produto_nome || movimento.produto_id || 'Produto'}
-              </p>
-              <Badge variant={movimento.tipo === 'Entrada' ? 'secondary' : 'destructive'}>
-                {movimento.tipo}
-              </Badge>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {formatDate(movimento.created_date || movimento.created_at)} · {formatCommercialQuantity(movimento.quantidade_comercial || movimento.quantidade, movimento.unidade_medida)} {movimento.unidade_medida || 'base'}
-            </p>
-          </div>
-        ))}
+      <CardContent>
+        <P38MobileLineList>
+          {movimentos.slice(0, 5).map((movimento, index) => (
+            <P38MobileLine
+              key={movimento.id || `${movimento.produto_id}-${movimento.created_date}`}
+              striped={index % 2 === 1}
+              accent={p38AccentKeyFromTone(movimento.tipo === 'Entrada' ? 'success' : 'danger')}
+              title={movimento.produto_nome || movimento.produto_id || 'Produto'}
+              subtitle={
+                <>
+                  {formatDate(movimento.created_date || movimento.created_at)}
+                  {' · '}
+                  {formatCommercialQuantity(movimento.quantidade_comercial || movimento.quantidade, movimento.unidade_medida)}{' '}
+                  {movimento.unidade_medida || 'base'}
+                </>
+              }
+              trailing={
+                <P38StatusLabel tone={movimento.tipo === 'Entrada' ? 'success' : 'danger'}>
+                  {movimento.tipo}
+                </P38StatusLabel>
+              }
+            />
+          ))}
+        </P38MobileLineList>
       </CardContent>
     </Card>
   );
@@ -869,19 +875,22 @@ export default function MovimentosInventario() {
                       Nenhum produto encontrado para "{searchTerm}".
                     </div>
                   ) : (
-                    filteredProdutos.map((product) => {
-                      const units = getUnitOptions(product);
-                      const anyInCart = units.some((unit) => cartByKey.has(getCartKey(product.id, unit.unidade)));
-                      return (
-                        <ProductRow
-                          key={product.id}
-                          product={product}
-                          active={selectedProduct?.id === product.id}
-                          inCart={anyInCart}
-                          onSelect={handleSelectProduct}
-                        />
-                      );
-                    })
+                    <P38MobileLineList className="md:hidden">
+                      {filteredProdutos.map((product, index) => {
+                        const units = getUnitOptions(product);
+                        const anyInCart = units.some((unit) => cartByKey.has(getCartKey(product.id, unit.unidade)));
+                        return (
+                          <ProductRow
+                            key={product.id}
+                            product={product}
+                            striped={index % 2 === 1}
+                            active={selectedProduct?.id === product.id}
+                            inCart={anyInCart}
+                            onSelect={handleSelectProduct}
+                          />
+                        );
+                      })}
+                    </P38MobileLineList>
                   )}
                 </div>
 

@@ -228,20 +228,23 @@ export default function ExclusaoDocumentosPage() {
 
             {/* Filhos */}
             {filhos.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border">
                   <span className="text-xs font-semibold text-red-600 dark:text-red-400">
                     {filhos.length} registro{filhos.length > 1 ? 's' : ''} relacionado{filhos.length > 1 ? 's' : ''} também serão excluídos
                   </span>
                 </div>
-                <div className="divide-y divide-gray-50 dark:divide-gray-700">
+                <P38MobileLineList>
                   {filhos.map((f, idx) => (
-                    <div key={idx} className="px-4 py-2.5 flex items-center gap-2">
-                      <ChevronRight className="w-3 h-3 text-gray-300 dark:text-gray-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-600 dark:text-gray-400">{f.label}</span>
-                    </div>
+                    <P38MobileLine
+                      key={idx}
+                      striped={idx % 2 === 1}
+                      accent={p38AccentKeyFromTone('danger')}
+                      title={f.label}
+                      trailing={<ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />}
+                    />
                   ))}
-                </div>
+                </P38MobileLineList>
               </div>
             )}
 

@@ -76,18 +76,23 @@ export default function ResumoPrevisualizacao({ data }) {
             {mostrarDetalhes ? 'Ocultar detalhes' : 'Ver produtos alterados'}
           </button>
           {mostrarDetalhes && (
-            <div className="mt-2 rounded-xl bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800 max-h-48 overflow-y-auto shadow-sm">
-              {alterados.map(({ id, nome, dados }) => (
-                <div key={id} className="px-4 py-2 flex items-start justify-between gap-2">
-                  <p className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate flex-1">{nome}</p>
+            <P38MobileLineList className="mt-2 max-h-48 overflow-y-auto">
+              {alterados.map(({ id, nome, dados }, index) => (
+                <P38MobileLine
+                  key={id}
+                  striped={index % 2 === 1}
+                  accent="info"
+                  className="flex items-start justify-between gap-2 px-4 py-2"
+                >
+                  <p className="text-xs font-medium truncate flex-1">{nome}</p>
                   <div className="flex flex-wrap gap-1 justify-end">
                     {Object.keys(dados).map(campo => (
                       <Badge key={campo} variant="secondary" className="text-[10px] px-1.5 py-0">{campo}</Badge>
                     ))}
                   </div>
-                </div>
+                </P38MobileLine>
               ))}
-            </div>
+            </P38MobileLineList>
           )}
         </div>
       )}

@@ -150,22 +150,6 @@ function KpiAbertas({ kpis }) {
 
 // (ContasFiltro removido — seleção de conta apenas na efetivação)
 
-/** Mesmas classes de badge que ListaLancamentos (StatusBadge) */
-function ContaStatusBadge({ status }) {
-  const map = {
-    Vencido: 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400',
-    'Em Aberto': 'bg-gray-100 dark:bg-gray-700 text-gray-400',
-    Pago: 'bg-gray-100 dark:bg-gray-700 text-gray-500',
-  };
-  if (!status || status === 'Pago') return null;
-  if (status !== 'Vencido' && status !== 'Em Aberto') return null;
-  return (
-    <span className={`rounded-md px-1.5 py-0.5 text-[0.6rem] font-medium ${map[status] || ''}`}>
-      {status}
-    </span>
-  );
-}
-
 /** Igual RecorrenciaBadge em ListaLancamentos */
 function ContaRecorrenciaBadge({ l }) {
   if (!l.frequencia_recorrencia) return null;

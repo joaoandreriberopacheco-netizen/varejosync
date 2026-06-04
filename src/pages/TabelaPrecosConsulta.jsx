@@ -240,16 +240,17 @@ export default function TabelaPrecosConsulta() {
             {searchTerm && <p className="text-xs text-gray-400 mt-1">Tente outros termos de busca</p>}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {produtosFiltrados.map(produto => (
+          <P38MobileLineList>
+            {produtosFiltrados.map((produto, index) => (
               <SkuCard
                 key={produto.id}
                 row={{ produto }}
+                striped={index % 2 === 1}
                 calcularPreco={calcularPreco}
                 tabelaSelecionada={tabelaSelecionada}
               />
             ))}
-          </div>
+          </P38MobileLineList>
         )}
       </div>
     </div>
