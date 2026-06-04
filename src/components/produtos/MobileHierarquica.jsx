@@ -128,7 +128,7 @@ function PricingDialog({ produto, open, onOpenChange }) {
       <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-border/40 bg-muted/40 p-3 text-foreground shadow-2xl dark:border-border/40 dark:bg-background dark:text-foreground">
         <DialogHeader className="text-left space-y-1 pr-8">
           <DialogTitle className="text-base font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-            <span className="w-8 h-8 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+            <span className="w-8 h-8 rounded-2xl p38-catalog-icon-well flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </span>
             Precificação

@@ -54,7 +54,7 @@ function StatusDot({ produto }) {
   const cls = !produto.ativo           ? 'bg-muted-foreground/40'
     : e <= 0                           ? 'bg-red-500 animate-pulse'
     : e <= m                           ? 'bg-orange-400'
-    : 'bg-green-500';
+    : 'p38-catalog-dot-ok';
   const label = !produto.ativo ? 'Inativo' : e <= 0 ? 'Crítico' : e <= m ? 'Baixo' : 'OK';
   return (
     <div className="flex items-center gap-1">
@@ -90,7 +90,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
         ) : '—'}
       </span>
     );
-    case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'text-green-600 dark:text-green-400' : margem > 0 ? 'text-muted-foreground' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
+    case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'p38-text-accent font-medium' : margem > 0 ? 'text-muted-foreground' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
     case 'preco_custo':          return (
       <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight">
         {cat.custoNaEmbalagem > 0 ? (
@@ -205,7 +205,7 @@ function groupCellValue(colId, row) {
         </Badge>
       )
       : (
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium p38-catalog-badge-ok">
           OK
         </Badge>
       );

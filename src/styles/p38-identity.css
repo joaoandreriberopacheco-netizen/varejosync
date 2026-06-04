@@ -253,4 +253,53 @@
     @apply grid grid-cols-2 gap-x-3 gap-y-2;
   }
 
+  /* Catálogo de produtos — acentos mediterrâneos (substitui azul/roxo/turquesa) */
+  .p38-catalog-accent-btn {
+    border-width: 1px;
+    border-style: solid;
+    border-color: hsl(var(--p38-accent-olive) / 0.35);
+    background-color: hsl(var(--p38-accent-olive) / 0.1);
+  }
+
+  .p38-catalog-accent-btn:hover {
+    background-color: hsl(var(--p38-accent-olive) / 0.16);
+  }
+
+  .dark .p38-catalog-accent-btn {
+    border-color: hsl(var(--p38-accent-lime) / 0.4);
+    background-color: hsl(var(--p38-accent-lime) / 0.12);
+  }
+
+  .dark .p38-catalog-accent-btn:hover {
+    background-color: hsl(var(--p38-accent-lime) / 0.2);
+  }
+
+  .p38-catalog-badge-ok {
+    border-color: hsl(var(--p38-accent-olive) / 0.35);
+    color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-catalog-badge-ok {
+    border-color: hsl(var(--p38-accent-lime) / 0.45);
+    color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-catalog-dot-ok {
+    background-color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-catalog-dot-ok {
+    background-color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-catalog-icon-well {
+    background-color: hsl(var(--p38-accent-olive) / 0.12);
+    color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-catalog-icon-well {
+    background-color: hsl(var(--p38-accent-lime) / 0.15);
+    color: hsl(var(--p38-accent-lime));
+  }
+
 }
