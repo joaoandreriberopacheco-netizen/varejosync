@@ -126,54 +126,55 @@ export default function AuditoriaPins() {
             </div>
           ))}
         </div>
+      ) : usuariosFiltrados.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 text-sm">
+          Nenhum usuário encontrado.
+        </div>
       ) : (
-        <div className="space-y-2">
-          {usuariosFiltrados.map(user => {
+        <P38MobileLineList>
+          {usuariosFiltrados.map((user, index) => {
             const feedback = feedbacks[user.id];
             const isResetting = resetandoId === user.id;
+            const pinLabel = user.pin_definido ? 'Com PIN' : 'Sem PIN';
+            const pinTone = user.pin_definido ? 'success' : 'danger';
+
             return (
-              <div key={user.id} className="bg-white dark:bg-gray-800/50 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    user.pin_definido ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'
-                  }`}>
-                    {user.pin_definido
-                      ? <CheckCircle className="w-4 h-4 text-green-500" />
-                      : <XCircle className="w-4 h-4 text-red-400" />
-                    }
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-white truncate">{user.full_name}</p>
-                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <P38MobileLine
+                key={user.id}
+                striped={index % 2 === 1}
+                accent={p38AccentKeyFromTone(pinTone)}
+                title={user.full_name}
+                subtitle={user.email}
+                meta={
+                  <>
+                    <P38StatusLabel tone={pinTone}>{pinLabel}</P38StatusLabel>
                     {feedback && (
-                      <p className={`text-xs mt-0.5 ${feedback.tipo === 'ok' ? 'text-green-500' : 'text-red-500'}`}>
+                      <span className={feedback.tipo === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>
                         {feedback.msg}
-                      </p>
+                      </span>
                     )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleResetPin(user)}
-                  disabled={isResetting}
-                  className="flex-shrink-0 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50 transition-colors px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-                  title="Resetar PIN e enviar por e-mail"
-                >
-                  {isResetting
-                    ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    : <Mail className="w-3.5 h-3.5" />
-                  }
-                  {isResetting ? 'Enviando...' : 'Resetar'}
-                </button>
-              </div>
+                  </>
+                }
+                trailing={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleResetPin(user)}
+                    disabled={isResetting}
+                    className="h-8 gap-1 text-xs text-muted-foreground shrink-0"
+                    title="Resetar PIN e enviar por e-mail"
+                  >
+                    {isResetting
+                      ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      : <Mail className="w-3.5 h-3.5" />
+                    }
+                    {isResetting ? 'Enviando...' : 'Resetar'}
+                  </Button>
+                }
+              />
             );
           })}
-
-          {usuariosFiltrados.length === 0 && (
-            <div className="text-center py-10 text-gray-400 text-sm">
-              Nenhum usuário encontrado.
-            </div>
-          )}
-        </div>
+        </P38MobileLineList>
       )}
     </div>
   );
