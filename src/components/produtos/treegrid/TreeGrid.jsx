@@ -232,15 +232,15 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 
   return (
     <tr
-      className={cn(p38Table.row, isPrimeiroNivel && 'p38-catalog-row-tier', !isLeaf && p38Table.rowInteractive, 'select-none')}
+      className={cn(p38Table.row, !isLeaf && p38Table.rowInteractive, 'select-none')}
       onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
       {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft, isPrimeiroNivel && 'p38-catalog-row-tier__sticky')}
+        <td className={cn(p38Table.stickyCellLeft)}
           style={{ width: W_EDIT, minWidth: W_EDIT }} />
       )}
       <td
-        className={cn(p38Table.stickyCell, isPrimeiroNivel && 'p38-catalog-row-tier__sticky', 'py-2')}
+        className={cn(p38Table.stickyCell, 'py-2')}
         style={{ left: editOffset, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">

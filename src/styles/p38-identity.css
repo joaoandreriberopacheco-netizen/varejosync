@@ -302,21 +302,4 @@
     color: hsl(var(--p38-accent-lime));
   }
 
-  /* Tree Grid: pais (grupo) e solteiros — tom mais claro; filhos mantêm fundo base */
-  .p38-catalog-row-tier {
-    @apply bg-card transition-colors;
-  }
-
-  .p38-catalog-row-tier:hover {
-    @apply bg-secondary/35 dark:bg-white/[0.05];
-  }
-
-  .p38-catalog-row-tier__sticky {
-    @apply !bg-card;
-  }
-
-  .p38-catalog-row-tier:hover .p38-catalog-row-tier__sticky {
-    @apply !bg-secondary/35 dark:!bg-white/[0.05];
-  }
-
 }
