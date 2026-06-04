@@ -1,0 +1,196 @@
+/**
+ * P38 Visual Identity — replicável em qualquer ecrã (CSS puro + Tailwind @apply).
+ * Origem: Relatório de Margem mobile. Valores alinhados a p38ThemeSurfaces.js.
+ *
+ * Uso:
+ *   - HTML/CSS: class="p38-line p38-line-title"
+ *   - React: pode combinar com p38Table / p38MobileSurfaces (JS)
+ */
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* Superfícies */
+    --p38-bg: 68 20% 97%;
+    --p38-surface: 0 0% 100%;
+    --p38-search: 68 12% 92%;
+    --p38-table-head: 68 12% 92%;
+    /* Acento verde (oliva claro / limão escuro) */
+    --p38-accent-olive: 74 36% 25%;
+    --p38-accent-lime: 78 55% 51%;
+    --p38-divider: 0 0% 0% / 0.06;
+    /* Tipografia mobile */
+    --p38-tracking: 0.02em;
+    --p38-title-size: 0.875rem;
+    --p38-label-size: 0.625rem;
+    --p38-meta-size: 0.625rem;
+  }
+
+  .dark {
+    --p38-bg: 264 8% 12%;
+    --p38-surface: 214 13% 20%;
+    --p38-search: 240 6% 16%;
+    --p38-table-head: 216 10% 25%;
+    --p38-accent-olive: 78 55% 51%;
+    --p38-accent-lime: 78 55% 51%;
+    --p38-divider: 0 0% 100% / 0.06;
+  }
+}
+
+@layer components {
+  /* Tipografia DIN — envolver secção mobile ou página inteira */
+  .p38-font {
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    font-weight: 300;
+    letter-spacing: var(--p38-tracking);
+  }
+
+  .p38-font strong,
+  .p38-font .font-semibold,
+  .p38-font th {
+    font-weight: 400;
+  }
+
+  /* Texto acento (lucro, status ok, valores positivos) */
+  .p38-text-accent {
+    color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-text-accent {
+    color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-text-danger {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  /* Labels micro (KPI, colunas) */
+  .p38-micro-label {
+    font-size: var(--p38-label-size);
+    @apply uppercase tracking-wide text-muted-foreground leading-none font-din1451;
+  }
+
+  .p38-meta-label {
+    font-size: var(--p38-meta-size);
+    @apply uppercase tracking-wide text-muted-foreground font-din1451;
+  }
+
+  /* Título de linha mobile */
+  .p38-line-title {
+    font-size: var(--p38-title-size);
+    @apply font-din1451 font-medium uppercase tracking-wide text-foreground leading-tight break-words;
+  }
+
+  /* Linha compacta (substitui card em smartphone) */
+  .p38-line {
+    @apply border-b border-border/50 dark:border-white/6 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-din1451;
+  }
+
+  .p38-line--interactive {
+    @apply active:bg-secondary/30 cursor-pointer select-none min-h-[52px] touch-pan-y;
+  }
+
+  .p38-line--success {
+    border-left-color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-line--success {
+    border-left-color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-line--warning {
+    @apply border-l-amber-500 dark:border-l-amber-400;
+  }
+
+  .p38-line--danger {
+    @apply border-l-red-500 dark:border-l-red-400;
+  }
+
+  .p38-line--info {
+    @apply border-l-cyan-500 dark:border-l-cyan-400;
+  }
+
+  /* Contentor lista mobile */
+  .p38-list-shell {
+    @apply md:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
+  }
+
+  /* Campo busca / filtro */
+  .p38-search-field {
+    background-color: hsl(var(--p38-search));
+    @apply border-0 h-11 rounded-lg shadow-none focus-visible:ring-1 focus-visible:ring-border;
+  }
+
+  /* Painel com barra verde (header mobile, resumo) */
+  .p38-panel {
+    background-color: hsl(var(--p38-surface));
+    @apply relative rounded-lg border border-border/40 dark:border-white/10 overflow-hidden text-foreground;
+  }
+
+  .p38-panel__accent-bar {
+    @apply absolute left-3 top-3 bottom-3 w-[3px] rounded-sm;
+    background-color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-panel__accent-bar {
+    background-color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-panel__body {
+    @apply pl-7 pr-3 py-3 min-w-0;
+  }
+
+  /* Ponto de status ● */
+  .p38-dot {
+    @apply inline-block w-1.5 h-1.5 rounded-full shrink-0;
+    background-color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-dot {
+    background-color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-dot--warning {
+    @apply bg-amber-500 dark:bg-amber-400;
+  }
+
+  .p38-dot--danger {
+    @apply bg-red-500 dark:bg-red-400;
+  }
+
+  .p38-dot--info {
+    @apply bg-cyan-500 dark:bg-cyan-400;
+  }
+
+  .p38-dot--muted {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+
+  /* KPI grid 2 colunas */
+  .p38-kpi-grid {
+    @apply grid grid-cols-2 gap-x-3 gap-y-2;
+  }
+}
