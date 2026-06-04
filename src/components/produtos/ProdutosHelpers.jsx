@@ -28,5 +28,5 @@ export const getStockStatusIndicator = (produto) => {
   if (estoque <= minimo) {
     return <div className="flex items-center gap-1.5 text-orange-500 dark:text-orange-300 text-xs"><div className="w-2 h-2 bg-orange-500 rounded-full" /> Baixo</div>;
   }
-  return <div className="flex items-center gap-1.5 text-green-500 dark:text-green-300 text-xs"><div className="w-2 h-2 bg-green-500 rounded-full" /> OK</div>;
+  return <div className="flex items-center gap-1.5 p38-text-accent text-xs"><div className="w-2 h-2 rounded-full p38-catalog-dot-ok" /> OK</div>;
 };

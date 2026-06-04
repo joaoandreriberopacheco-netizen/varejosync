@@ -156,7 +156,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       {/* Margem */}
       {visibleColumns.includes('margem') && (
         <td className="px-3 py-2 text-right text-xs hidden md:table-cell">
-          <span className={margem < 15 ? 'text-red-500 dark:text-red-400' : margem < 25 ? 'text-orange-500 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}>
+          <span className={margem < 15 ? 'text-red-500 dark:text-red-400' : margem < 25 ? 'text-orange-500 dark:text-orange-400' : 'p38-text-accent font-medium'}>
             {formatarNumero(margem)}%
           </span>
         </td>

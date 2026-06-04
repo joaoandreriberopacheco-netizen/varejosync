@@ -49,7 +49,7 @@ export default function ProdutosHeader({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground min-w-0">
               {isSummaryFiltered && (
                 <Filter
-                  className="w-3 h-3 text-blue-500 dark:text-blue-400 flex-shrink-0"
+                  className="w-3 h-3 p38-text-accent flex-shrink-0"
                   aria-label="Resumo sob filtros ativos"
                 />
               )}
@@ -63,13 +63,13 @@ export default function ProdutosHeader({
             <Button
               variant="outline"
               size="sm"
-              className="h-9 gap-1.5 px-2.5 flex-shrink-0 border-blue-200 bg-blue-50/80 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/40 dark:hover:bg-blue-900/50"
+              className="h-9 gap-1.5 px-2.5 flex-shrink-0 p38-catalog-accent-btn"
               asChild
               title="Relatório de estoque (Tree Grid)"
             >
               <Link to={createPageUrl('RelatorioCatalogoEstoque')}>
-                <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-300 whitespace-nowrap">Relatório</span>
+                <BarChart3 className="w-4 h-4 p38-text-accent" />
+                <span className="text-xs font-medium p38-text-accent whitespace-nowrap">Relatório</span>
               </Link>
             </Button>
             <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -99,7 +99,7 @@ export default function ProdutosHeader({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9" title="IA">
-                    <Sparkles className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                    <Sparkles className="w-4 h-4 p38-text-accent" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
@@ -111,17 +111,17 @@ export default function ProdutosHeader({
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
-                      <Sparkles className="w-4 h-4 mr-2 text-indigo-500" />Tagificação em Massa
+                      <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Tagificação em Massa
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                     <Link to={createPageUrl('OtimizacaoEstoqueIA')}>
-                      <Sparkles className="w-4 h-4 mr-2 text-purple-500" />Otimizar Estoque
+                      <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Otimizar Estoque
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                     <Link to={createPageUrl('EstimativaEmbalagensIA')}>
-                      <Wand2 className="w-4 h-4 mr-2 text-blue-500" />Estimar Embalagens
+                      <Wand2 className="w-4 h-4 mr-2 p38-text-accent" />Estimar Embalagens
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
