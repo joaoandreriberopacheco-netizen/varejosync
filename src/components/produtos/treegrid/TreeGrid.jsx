@@ -226,9 +226,9 @@ function groupCellValue(colId, row) {
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
 const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, readOnly }) {
   const editOffset = readOnly ? 0 : W_EDIT;
-  const indent = (row.level - 1) * INDENT_GROUP;
   const isLeaf = row.isLeafGroup;
   const isPrimeiroNivel = row.level === 1;
+  const hierDepth = catalogHierDepth(row.level);
 
   return (
     <tr
@@ -241,23 +241,22 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       )}
       <td
         className={cn(p38Table.stickyCell, 'py-2')}
-        style={{ left: editOffset, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
+        style={{ left: editOffset, paddingRight: 8, minWidth: 220 }}
       >
-        <div className="flex items-center gap-1.5 min-w-0">
-          {!isLeaf && (
-            <ChevronRight
-              className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-            />
-          )}
-          {isLeaf && <div className="w-3.5 flex-shrink-0" />}
-          {isPrimeiroNivel && <CatalogTierDot />}
+        <CatalogProdutoCell
+          hierDepth={hierDepth}
+          showChevron={!isLeaf}
+          isExpanded={isExpanded}
+          showTierDot={isPrimeiroNivel}
+          showIcon={false}
+        >
           <span className="text-xs font-semibold text-foreground/90 dark:text-foreground truncate uppercase tracking-wide">
             {row.label}
           </span>
           <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
             {row.count}
           </Badge>
-        </div>
+        </CatalogProdutoCell>
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-2 px-2 whitespace-nowrap"
@@ -273,13 +272,13 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, readOnly }) {
   const p = row.produto;
   const editOffset = readOnly ? 0 : W_EDIT;
-  /** Nível 1 = solteiro na raiz; nível ≥ 2 = filho sob um pai */
-  const isSolteiro = row.level === 1;
+  const isPrimeiroNivel = row.level === 1;
+  const hierDepth = catalogHierDepth(row.level);
 
   return (
-    <tr className={cn(p38Table.row, isSolteiro && 'p38-catalog-row-tier', 'group')}>
+    <tr className={cn(p38Table.row, 'group')}>
       {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft, isSolteiro && 'p38-catalog-row-tier__sticky', "py-1.5 text-center")}
+        <td className={cn(p38Table.stickyCellLeft, "py-1.5 text-center")}
           style={{ width: W_EDIT, minWidth: W_EDIT }}>
           <div className="flex items-center gap-0.5 justify-center">
             <Button variant="ghost" size="icon"
@@ -296,22 +295,20 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
         </td>
       )}
       <td
-        className={cn(p38Table.stickyCell, isSolteiro && 'p38-catalog-row-tier__sticky', "py-1.5")}
-        style={{ left: editOffset, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
+        className={cn(p38Table.stickyCell, "py-1.5")}
+        style={{ left: editOffset, paddingRight: 8, minWidth: 220 }}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {isSolteiro && <CatalogTierDot />}
-          <div className="flex-shrink-0 rounded bg-muted overflow-hidden flex items-center justify-center"
-            style={{ width: 32, height: 32 }}>
-            {p.imagem_url
-              ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-              : <Package className="w-3.5 h-3.5 text-muted-foreground" />}
-          </div>
+        <CatalogProdutoCell
+          hierDepth={hierDepth}
+          showTierDot={isPrimeiroNivel}
+          showIcon
+          produto={p}
+        >
           <span className="text-xs font-normal text-muted-foreground truncate uppercase">{p.nome}</span>
           {p.codigo_interno && (
             <span className="text-[10px] text-muted-foreground flex-shrink-0 font-mono">{p.codigo_interno}</span>
           )}
-        </div>
+        </CatalogProdutoCell>
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
