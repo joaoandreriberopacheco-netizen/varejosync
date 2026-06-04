@@ -255,7 +255,7 @@ export default function Layout({ children, currentPageName }) {
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <div className="min-h-screen bg-white dark:bg-background">
+        <div className="min-h-screen bg-background">
           {children}
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-sans bg-background text-foreground">
+      <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
 
 
         {/* Sidebar Desktop */}

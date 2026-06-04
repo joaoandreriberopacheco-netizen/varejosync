@@ -1,5 +1,3 @@
-@import './styles/p38-identity.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -87,40 +85,41 @@ button:focus-visible {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* P38 claro — base neutra quente + acento verde oliva */
+    --background: 68 20% 97%;
+    --foreground: 221 39% 11%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --primary: 68 36% 31%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --secondary: 68 18% 93%;
+    --secondary-foreground: 68 36% 22%;
+    --muted: 68 14% 93%;
+    --muted-foreground: 221 12% 42%;
+    --accent: 68 22% 90%;
+    --accent-foreground: 68 36% 24%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
+    --border: 68 12% 86%;
+    --input: 68 12% 86%;
+    --ring: 68 36% 31%;
+    --chart-1: 68 36% 38%;
     --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-3: 221 39% 22%;
+    --chart-4: 43 74% 55%;
+    --chart-5: 27 87% 55%;
     --app-font-scale: 1;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 221 39% 11%;
+    --sidebar-primary: 68 36% 31%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 68 18% 93%;
+    --sidebar-accent-foreground: 68 36% 22%;
+    --sidebar-border: 68 12% 88%;
+    --sidebar-ring: 68 36% 31%;
 
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;
@@ -176,13 +175,8 @@ button:focus-visible {
   html {
     font-size: calc(16px * var(--app-font-scale));
   }
-  html,
   body {
     @apply bg-background text-foreground;
-    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-size: 14px;
-    font-weight: 300;
-    letter-spacing: 0.02em;
   }
 }
 

@@ -66,8 +66,8 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
               <span 
                 className={`text-[10px] font-medium transition-colors duration-200 ${
                   active 
-                    ? 'text-slate-900 dark:text-white' 
-                    : 'text-slate-400 dark:text-gray-500'
+                    ? 'text-foreground' 
+                    : 'text-muted-foreground'
                 }`}
               >
                 {item.label}
