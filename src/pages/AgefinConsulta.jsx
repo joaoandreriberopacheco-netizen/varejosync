@@ -19,6 +19,8 @@ import {
   lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
 import { brandSurface } from '@/lib/brandSurfaces';
+import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { p38Mobile } from '@/lib/p38MobileSurfaces';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;

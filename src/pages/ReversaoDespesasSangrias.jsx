@@ -167,7 +167,7 @@ export default function ReversaoDespesasSangrias() {
           {abaSelecionada === 'despesas' && despesasProblematicas.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                <AlertCircle className="w-8 h-8 text-[#4A5D23] dark:text-[#a4ce33]" />
               </div>
               <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">Tudo limpo!</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -228,7 +228,7 @@ export default function ReversaoDespesasSangrias() {
           {abaSelecionada === 'movimentos' && movimentos.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                <AlertCircle className="w-8 h-8 text-[#4A5D23] dark:text-[#a4ce33]" />
               </div>
               <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nenhum movimento</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Não há movimentos de caixa para deletar.</p>
@@ -247,7 +247,7 @@ export default function ReversaoDespesasSangrias() {
                       movimento.tipo === 'Reforço' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-blue-50 dark:bg-blue-900/20'
                     }`}>
                       {movimento.tipo === 'Reforço'
-                        ? <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        ? <Plus className="w-5 h-5 text-[#4A5D23] dark:text-[#a4ce33]" />
                         : <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
                     </div>
                     <div className="min-w-0">

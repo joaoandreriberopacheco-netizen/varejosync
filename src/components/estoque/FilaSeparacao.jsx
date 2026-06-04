@@ -202,7 +202,7 @@ export default function FilaSeparacao() {
       </Card>
 
       {/* Lista Mobile */}
-      <P38MobileLineList className="md:block lg:hidden">
+      <P38MobileLineList>
         {ordens.map((ordem, index) => {
           const tone = p38StatusTone(ordem.status);
           return (
@@ -232,7 +232,7 @@ export default function FilaSeparacao() {
       </P38MobileLineList>
 
       {/* Tabela Desktop */}
-      <Card className="hidden lg:block">
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-lg font-normal text-gray-700">
             <div className="p-2 bg-gray-50 rounded-lg">

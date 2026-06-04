@@ -47,7 +47,7 @@ function LancRow({ l, onClick, striped }) {
     R(Math.abs(l.valor || 0))
   ) : (
     <>
-      <span className={isR ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+      <span className={isR ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
         {isR ? '+' : '−'}
       </span>
       {R(Math.abs(l.valor || 0))}
@@ -110,7 +110,7 @@ function Grupo({ label, items, totais, onRow }) {
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {totais.r > 0 && <span className="text-[0.62rem] text-muted-foreground font-medium">+{R(totais.r)}</span>}
           {totais.d > 0 && <span className="text-[0.62rem] text-muted-foreground font-medium">−{R(totais.d)}</span>}
-          <span className={`text-[0.62rem] font-bold ${(totais.r || 0) - (totais.d || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+          <span className={`text-[0.62rem] font-bold ${(totais.r || 0) - (totais.d || 0) >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-500 dark:text-red-400'}`}>
             {(totais.r || 0) - (totais.d || 0) >= 0 ? '+' : '−'}{R(Math.abs((totais.r || 0) - (totais.d || 0)))}
           </span>
           <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />

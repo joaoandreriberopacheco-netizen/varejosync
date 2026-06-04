@@ -6,7 +6,7 @@ import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
 
 const getStatusClass = (status) => {
   const variants = {
-    'Ativo': 'text-emerald-600 dark:text-emerald-400',
+    'Ativo': 'text-[#4A5D23] dark:text-[#a4ce33]',
     'Utilizado Parcialmente': 'text-amber-600 dark:text-amber-400',
     'Utilizado': 'text-gray-500 dark:text-gray-400',
     'Expirado': 'text-red-500 dark:text-red-400',

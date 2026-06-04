@@ -198,7 +198,7 @@ export default function ExclusaoDocumentosPage() {
         {excluido && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-              <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="w-7 h-7 text-[#4A5D23] dark:text-[#a4ce33]" />
             </div>
             <p className="text-base font-semibold text-gray-900 dark:text-white">Excluído com sucesso</p>
             <button onClick={resetar} className="text-sm text-gray-500 dark:text-gray-400 underline">Excluir outro documento</button>

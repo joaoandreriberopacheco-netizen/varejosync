@@ -11,7 +11,7 @@ const statusConfig = {
   "Rascunho": { icon: Clock, color: "text-gray-400 dark:text-gray-500", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
   "Em Andamento": { icon: Play, color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20", label: "Em Andamento" },
   "Aguardando Auditoria": { icon: AlertCircle, color: "text-gray-600 dark:text-gray-300", bg: "bg-gray-100 dark:bg-gray-700", label: "Aguardando" },
-  "Concluída": { icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20", label: "Concluída" },
+  "Concluída": { icon: CheckCircle2, color: "text-[#4A5D23] dark:text-[#a4ce33]", bg: "bg-secondary/30 dark:bg-secondary/20", label: "Concluída" },
   "Cancelada": { icon: XCircle, color: "text-red-500 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
 };
 
@@ -90,7 +90,7 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
           {grupos.ativas.length > 0 && (
             <section>
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
-              <P38MobileLineList className="md:block">
+              <P38MobileLineList>
                 {grupos.ativas.map((conf, index) => (
                   <ConferenciaLine key={conf.id} conf={conf} onClick={handleClick} striped={index % 2 === 1} />
                 ))}
@@ -101,7 +101,7 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
           {grupos.concluidas.length > 0 && (
             <section>
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
-              <P38MobileLineList className="md:block">
+              <P38MobileLineList>
                 {grupos.concluidas.map((conf, index) => (
                   <ConferenciaLine key={conf.id} conf={conf} onClick={handleClick} striped={index % 2 === 1} />
                 ))}

@@ -130,7 +130,7 @@ export default function PainelGerente() {
             {tendencia > 0 ? (
               <>
                 <ArrowUp className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-600 dark:text-green-400">+{tendencia}%</span>
+                <span className="text-xs text-[#4A5D23] dark:text-[#a4ce33]">+{tendencia}%</span>
               </>
             ) : tendencia < 0 ? (
               <>

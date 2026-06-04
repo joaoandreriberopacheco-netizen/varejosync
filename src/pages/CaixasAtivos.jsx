@@ -273,7 +273,35 @@ export default function CaixasAtivosPage() {
         ) : (
           <div className="space-y-6">
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <P38MobileLineList className="md:hidden">
+              {turnosAtivos.map((turno, index) => {
+                const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
+                return (
+                  <P38MobileLine
+                    key={turno.id}
+                    striped={index % 2 === 1}
+                    accent="success"
+                    onClick={() => handleSelecionarCaixa(turno)}
+                    title={turno.conta_caixa_pdv_nome}
+                    subtitle={liq?.turnoAberto ? `Liquidez: ${formatValor(liq.liquidez)}` : 'Turno aberto'}
+                    meta={
+                      liq ? (
+                        <>
+                          <P38StatusLabel tone="success">Aberto</P38StatusLabel>
+                          <span>Gaveta: {formatValor(liq.dinheiroNaGaveta)}</span>
+                        </>
+                      ) : (
+                        <P38StatusLabel tone="muted">Sem dados</P38StatusLabel>
+                      )
+                    }
+                    value={liq ? formatValor(liq.totalVendas) : '—'}
+                    valueSub="vendas"
+                  />
+                );
+              })}
+            </P38MobileLineList>
+
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-3">
                 {turnosAtivos.map(turno => {
                   const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
                   return (
@@ -292,7 +320,7 @@ export default function CaixasAtivosPage() {
                           </h3>
                           {liq?.turnoAberto && (
                             <div className="space-y-0.5">
-                              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                              <p className="text-sm font-semibold text-[#4A5D23] dark:text-[#a4ce33]">
                                 Turno aberto · Liquidez: {formatValor(liq.liquidez)}
                               </p>
                               <p className="text-sm font-medium text-gray-700 dark:text-gray-200">

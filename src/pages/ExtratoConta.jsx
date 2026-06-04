@@ -9,6 +9,13 @@ import { ArrowLeft, Plus, ArrowUpCircle, ArrowDownCircle, ArrowRightLeft, Calend
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+
+function extratoMovAccent(tipo) {
+  if (tipo === 'Receita' || tipo === 'Reforço') return 'success';
+  if (tipo === 'Despesa' || tipo === 'Sangria') return 'danger';
+  return 'muted';
+}
 
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
@@ -508,7 +515,7 @@ export default function ExtratoContaPage() {
                         {format(new Date(diaData.dia), "dd 'de' MMMM 'de' yyyy")}
                       </p>
                       <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                        <span className="text-emerald-600 dark:text-emerald-400">
+                        <span className="text-[#4A5D23] dark:text-[#a4ce33]">
                           ↑ {formatCurrency(diaData.totalEntradas)}
                         </span>
                         <span className="text-red-600 dark:text-red-400">
@@ -537,8 +544,9 @@ export default function ExtratoContaPage() {
                         accent={p38AccentKeyFromTone(extratoMovAccent(mov.tipo))}
                         title={mov.descricao || mov.tipo}
                         subtitle={subtitle}
+                        meta={<P38StatusLabel tone={extratoMovAccent(mov.tipo)}>{mov.tipo}</P38StatusLabel>}
                         value={
-                          <span className={entrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                          <span className={entrada ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
                             {entrada ? '+' : '-'}{formatCurrency(mov.valor)}
                           </span>
                         }

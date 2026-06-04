@@ -24,7 +24,7 @@ export default function ResumoPrevisualizacao({ data }) {
 
       {/* Status */}
       {erros.length === 0 && alterados.length > 0 && (
-        <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
+        <div className="flex items-center gap-2 text-[#4A5D23] dark:text-[#a4ce33] text-sm">
           <CheckCircle2 className="w-4 h-4" />
           Tudo válido. Pronto para sincronizar.
         </div>

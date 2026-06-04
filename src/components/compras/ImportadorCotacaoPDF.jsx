@@ -539,7 +539,7 @@ Retorne um JSON com:
                                                     )}
                                                     {m.confianca_match && !m.ignored && (
                                                         <div className={`flex items-center gap-1.5 mt-2 text-xs ${
-                                                            m.confianca_match === 'alta' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+                                                            m.confianca_match === 'alta' ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-amber-600 dark:text-amber-400'
                                                         }`}>
                                                             {m.confianca_match === 'alta' ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
                                                             Confiança IA: {m.confianca_match}

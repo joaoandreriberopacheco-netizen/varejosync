@@ -68,9 +68,17 @@ export function P38MobileLine({
       {...props}
     >
       <div className="flex-1 min-w-0">
-        {title ? <div className={p38Table.mobileLineTitle}>{title}</div> : null}
+        {title ? (
+          <div className={p38Table.mobileLineTitle}>
+            {typeof title === 'string' ? title.toUpperCase() : title}
+          </div>
+        ) : null}
         {subtitle ? <div className={p38Table.mobileLineSubtitle}>{subtitle}</div> : null}
-        {meta ? <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 min-w-0', p38Table.mobileLineMeta)}>{meta}</div> : null}
+        {meta ? (
+          <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 min-w-0', p38Table.mobileLineMetaInline)}>
+            {meta}
+          </div>
+        ) : null}
       </div>
       {(value || valueSub || trailing) && (
         <div className="flex items-center gap-1 shrink-0 max-w-[42%]">
@@ -154,7 +162,7 @@ export function P38MobileMetric({ label, value, tone = 'default', className }) {
 
   return (
     <div className={cn('flex-shrink-0 min-w-[4.25rem] max-w-[5.75rem]', className)}>
-      <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-none truncate">{label}</p>
+      <p className={cn(p38Table.mobileMicroLabel, 'truncate')}>{label}</p>
       <p className={cn('text-[11px] tabular-nums mt-0.5 truncate', valueClass)}>{value}</p>
     </div>
   );

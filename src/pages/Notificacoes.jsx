@@ -49,7 +49,7 @@ export default function NotificacoesPage() {
 
   const getColor = (type) => {
     switch (type) {
-      case 'success': return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400';
+      case 'success': return 'bg-secondary/50 dark:bg-secondary/30 text-[#4A5D23] dark:text-[#a4ce33]';
       case 'warning': return 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400';
       case 'info': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400';
       default: return 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
@@ -76,7 +76,7 @@ export default function NotificacoesPage() {
             <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
           </div>
         ) : (
-          <P38MobileLineList className="md:block">
+          <P38MobileLineList>
             {notifications.map((notification, index) => {
               const tone = p38TypeTone(notification.type);
               return (

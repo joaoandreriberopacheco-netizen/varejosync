@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
-import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { Users, PlusCircle, Edit, Trash2, Search, Download, Upload } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ImportacaoTerceiros from '../components/terceiros/ImportacaoTerceiros';
@@ -198,10 +198,14 @@ export default function TerceirosPage() {
               <P38MobileLine
                 key={terceiro.id}
                 striped={index % 2 === 1}
+                accent={p38AccentKeyFromTone(terceiro.ativo !== false ? 'success' : 'muted')}
                 title={terceiro.nome}
                 subtitle={terceiro.codigo_interno}
                 meta={
                   <>
+                    <P38StatusLabel tone={terceiro.ativo !== false ? 'success' : 'muted'}>
+                      {terceiro.ativo !== false ? 'Ativo' : 'Inativo'}
+                    </P38StatusLabel>
                     <span>{terceiro.tipo}</span>
                     <span>{terceiro.cpf_cnpj || '-'}</span>
                   </>

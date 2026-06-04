@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
-import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 import { Package, CheckCircle, Truck, Eye } from 'lucide-react';
 import ConfirmarEntrega from '../components/vendas/ConfirmarEntrega';
 import { useToast } from "@/components/ui/use-toast";
@@ -60,7 +60,7 @@ export default function ExpedicaoPage() {
           </div>
         ) : (
           <>
-            <P38MobileLineList className="lg:hidden">
+            <P38MobileLineList>
               {pedidosProntos.map((pedido, index) => (
                 <P38MobileLine
                   key={pedido.id}
@@ -69,20 +69,23 @@ export default function ExpedicaoPage() {
                   title={pedido.numero}
                   subtitle={pedido.cliente_nome}
                   meta={
-                    <span className="inline-flex items-center gap-1">
-                      {pedido.metodo_entrega === 'Delivery' ? (
-                        <><Truck className="w-3 h-3" /> Delivery</>
-                      ) : (
-                        <><Package className="w-3 h-3" /> Retirada</>
-                      )}
-                    </span>
+                    <>
+                      <P38StatusLabel tone="success">Pronto</P38StatusLabel>
+                      <span className="inline-flex items-center gap-1">
+                        {pedido.metodo_entrega === 'Delivery' ? (
+                          <><Truck className="w-3 h-3" /> Delivery</>
+                        ) : (
+                          <><Package className="w-3 h-3" /> Retirada</>
+                        )}
+                      </span>
+                    </>
                   }
                   value={`R$ ${formatValor(pedido.valor_total)}`}
                   trailing={
                     <Button
                       size="sm"
                       onClick={() => handleConfirmarEntrega(pedido)}
-                      className="bg-green-600 hover:bg-green-700 gap-1 shrink-0 h-9"
+                      className="bg-[#4A5D23] hover:bg-[#3d4f1d] dark:bg-[#a4ce33] dark:hover:bg-[#8fb32a] dark:text-gray-900 gap-1 shrink-0 h-9"
                     >
                       <CheckCircle className="w-4 h-4" />
                       Confirmar
@@ -92,7 +95,7 @@ export default function ExpedicaoPage() {
               ))}
             </P38MobileLineList>
 
-            <Card className="hidden lg:block">
+            <Card className="hidden md:block">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-indigo-600" />

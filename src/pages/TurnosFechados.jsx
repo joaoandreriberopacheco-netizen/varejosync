@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from '@/components/utils';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -9,6 +10,8 @@ import { toast } from 'sonner';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
+import { P38MobileDetailRows, p38Mobile } from '@/lib/p38MobileSurfaces';
+import { P38StatusDot } from '@/components/ui/p38-mobile-line';
 
 const fmt = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -134,6 +137,7 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
+            <P38StatusDot tone={Math.abs(diferenca) < 0.01 ? 'muted' : diferenca > 0 ? 'success' : 'danger'} />
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{turno.numero}</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
             <span className="text-xs text-gray-500 dark:text-gray-400">{turno.conta_caixa_pdv_nome}</span>
@@ -149,11 +153,11 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
         <div className="flex items-center gap-4 flex-shrink-0">
           <div className="text-right hidden sm:block">
             <div className="text-xs text-gray-400 dark:text-gray-500">Total Vendas</div>
-            <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">R$ {fmt(turno.total_vendas)}</div>
+            <div className="text-sm font-semibold text-[#4A5D23] dark:text-[#a4ce33]">R$ {fmt(turno.total_vendas)}</div>
           </div>
           <div className="text-right hidden md:block">
             <div className="text-xs text-gray-400 dark:text-gray-500">Diferença</div>
-            <div className={`text-sm font-semibold ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+            <div className={`text-sm font-semibold ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-500 dark:text-red-400'}`}>
               {diferenca > 0 ? '+' : ''}{fmt(diferenca)}
             </div>
           </div>
@@ -165,57 +169,27 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
       {expanded && (
         <div className="px-4 pb-4 bg-gray-50/50 dark:bg-gray-800/20">
           {/* Saldos e Movimentação */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3 mt-3">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Saldos do Turno</div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Saldo Inicial:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.saldo_inicial || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">+ Vendas:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_vendas || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">+ Reforços:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_reforcos || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">− Recolhimentos:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_sangrias || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">− Despesas:</span>
-                <span className="font-semibold text-red-600 dark:text-red-400 font-mono">R$ {fmt(turno.total_despesas || 0)}</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 font-bold">
-                <span className="text-gray-800 dark:text-gray-200">Saldo do Turno:</span>
-                <span className="text-gray-900 dark:text-white font-mono">R$ {fmt(turno.saldo_final || 0)}</span>
-              </div>
-            </div>
+          <div className={cn(p38Mobile.detailPanel, 'mb-3 mt-3')}>
+            <p className={p38Mobile.detailLabel}>Saldos do Turno</p>
+            <P38MobileDetailRows rows={[
+              { label: 'Saldo Inicial', value: `R$ ${fmt(turno.saldo_inicial || 0)}` },
+              { label: '+ Vendas', value: `R$ ${fmt(turno.total_vendas || 0)}` },
+              { label: '+ Reforços', value: `R$ ${fmt(turno.total_reforcos || 0)}` },
+              { label: '− Recolhimentos', value: `R$ ${fmt(turno.total_sangrias || 0)}` },
+              { label: '− Despesas', value: `R$ ${fmt(turno.total_despesas || 0)}`, danger: true },
+              { label: 'Saldo do Turno', value: `R$ ${fmt(turno.saldo_final || 0)}`, highlight: true },
+            ]} />
           </div>
 
           {/* Recebimentos */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">RECEBIMENTOS</div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Dinheiro:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_dinheiro || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">PIX:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_pix || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Cartão Débito:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_debito || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Cartão Crédito:</span>
-                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_credito || 0)}</span>
-              </div>
-            </div>
+          <div className={cn(p38Mobile.detailPanel, 'mb-3')}>
+            <p className={p38Mobile.detailLabel}>Recebimentos</p>
+            <P38MobileDetailRows rows={[
+              { label: 'Dinheiro', value: `R$ ${fmt(turno.recebimentos_dinheiro || 0)}` },
+              { label: 'PIX', value: `R$ ${fmt(turno.recebimentos_pix || 0)}` },
+              { label: 'Cartão Débito', value: `R$ ${fmt(turno.recebimentos_debito || 0)}` },
+              { label: 'Cartão Crédito', value: `R$ ${fmt(turno.recebimentos_credito || 0)}` },
+            ]} />
           </div>
 
           {/* Movimentos de caixa: reforço, recolhimento, despesa */}
@@ -231,7 +205,7 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
                           {m.numero} · {format(new Date(m.created_date), 'HH:mm')}
                           {m.observacao ? ` · ${m.observacao}` : ''}
                         </span>
-                        <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">+R$ {fmt(m.valor)}</span>
+                        <span className="font-semibold tabular-nums text-[#4A5D23] dark:text-[#a4ce33]">+R$ {fmt(m.valor)}</span>
                       </div>
                     ))}
                   </div>
@@ -316,7 +290,7 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
                 Math.abs(diferenca) < 0.01 
                   ? 'text-gray-400 dark:text-gray-500' 
                   : diferenca > 0 
-                    ? 'text-emerald-600 dark:text-emerald-400' 
+                    ? 'text-[#4A5D23] dark:text-[#a4ce33]' 
                     : 'text-red-600 dark:text-red-400'
               }`}>
                 <span>Diferença:</span>

@@ -6,6 +6,10 @@ import { toast } from 'sonner';
 import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 import { calcularPrecoVendaTabela, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
+import { p38Mobile } from '@/lib/p38MobileSurfaces';
+import { P38StatusDot } from '@/components/ui/p38-mobile-line';
+import { p38Table } from '@/lib/p38TableSurfaces';
+import { cn } from '@/components/utils';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -15,11 +19,6 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
   const p      = row.produto;
   const e = p.estoque_atual  || 0;
   const m = p.estoque_minimo || 0;
-  const dotCls = !p.ativo    ? 'bg-gray-400'
-    : e <= 0                 ? 'bg-red-500 animate-pulse'
-    : e <= m                 ? 'bg-orange-400'
-    : 'bg-green-500';
-
   const { unidadeDefault, precoSelecionado } = getSaleUnitContextForTabela(p, tabelaSelecionada);
   const siglaVitrine = unidadeDefault?.unidade || getUnidadeExibicaoSigla(p, p.unidade_principal || 'UN');
   const precoFinal = precoSelecionado ?? calcularPreco(p);
@@ -33,7 +32,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
 
   return (
     <div
-      className="flex items-center gap-4 px-4 py-3.5 bg-white dark:bg-gray-900 w-full"
+      className={cn(p38Table.mobileLine, 'flex items-center gap-4 border-l-transparent')}
       style={{ boxSizing: 'border-box' }}
     >
       {/* Thumbnail */}
@@ -56,7 +55,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {/* Status estoque */}
           <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
+            <P38StatusDot tone={!p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success'} />
             <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
               {fmtN(estoqueExibicao)} {unidadeExibicao}
               {apresentEstoque && <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">(show comercial)</span>}
@@ -180,11 +179,10 @@ export default function TabelaPrecosConsulta() {
                <button
                  key={tabela.id}
                  onClick={() => setTabelaSelecionada(tabela)}
-                 className={`px-4 py-2 rounded-2xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                   tabelaSelecionada?.id === tabela.id
-                     ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 shadow-sm'
-                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                 }`}
+                 className={cn(
+                   tabelaSelecionada?.id === tabela.id ? p38Mobile.filterChipActive : p38Mobile.filterChip,
+                   'cursor-pointer active:scale-95'
+                 )}
                >
                 {tabela.nome_tabela}
                 {tabela.fator_ajuste !== 1 && (
@@ -204,7 +202,7 @@ export default function TabelaPrecosConsulta() {
             placeholder="Buscar produto, código, EAN..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="border-none bg-gray-100 dark:bg-gray-800 h-12 text-sm pl-10 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full rounded-2xl"
+            className={cn(p38Mobile.searchInput, "text-sm pl-10 w-full")}
           />
         </div>
       </div>

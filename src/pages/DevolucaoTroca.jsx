@@ -358,7 +358,7 @@ function ComprovanteStep({ resultado, onClose }) {
   return (
     <div className="flex flex-col items-center gap-5 p-5 max-w-lg mx-auto w-full">
       <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-        <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+        <CheckCircle2 className="w-8 h-8 text-[#4A5D23] dark:text-[#a4ce33]" />
       </div>
 
       <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
@@ -392,11 +392,11 @@ function ComprovanteStep({ resultado, onClose }) {
 
         {resultado.valeCode && (
           <div className="px-5 py-4 bg-emerald-50 dark:bg-emerald-900/20 space-y-2">
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 text-center font-medium">Vale Troca Gerado</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-mono text-center">{resultado.valeCode}</p>
+            <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center font-medium">Vale Troca Gerado</p>
+            <p className="text-2xl font-bold text-[#4A5D23] dark:text-[#a4ce33] font-mono text-center">{resultado.valeCode}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Saldo: {formatValor(resultado.valorTotal)}</p>
             <div className="bg-emerald-100/60 dark:bg-emerald-900/30 rounded-xl p-3 mt-1">
-              <p className="text-xs text-emerald-700 dark:text-emerald-300 text-center leading-relaxed">
+              <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center leading-relaxed">
                 📌 Se o cliente usar apenas parte do saldo, o mesmo código continuará válido com o saldo restante.
               </p>
             </div>

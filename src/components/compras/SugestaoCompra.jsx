@@ -11,7 +11,7 @@ import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Tru
 import { useToast } from "@/components/ui/use-toast";
 import { dataHoje } from '@/components/utils/dateUtils';
 import { resolveCommercialDisplay } from '@/lib/productUnits';
-import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function SugestaoCompra() {
   const [produtos, setProdutos] = useState([]);
@@ -469,10 +469,11 @@ export default function SugestaoCompra() {
           <P38MobileLine
             key={p.id}
             striped={index % 2 === 1}
-            accent={selectedItems[p.id] ? 'info' : 'default'}
+            accent={p38AccentKeyFromTone(selectedItems[p.id] ? 'info' : 'muted')}
             title={p.nome}
             meta={
               <>
+                <P38StatusLabel tone={(p.estoque_atual || 0) <= (p.estoque_minimo || 0) ? 'warning' : 'success'}>Estoque</P38StatusLabel>
                 <span>
                   Estoque {p.estoque_atual || 0}/{p.estoque_minimo || 0} mín
                 </span>

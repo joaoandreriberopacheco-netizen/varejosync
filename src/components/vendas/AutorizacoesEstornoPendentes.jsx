@@ -247,13 +247,13 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                   <div className="bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-700 rounded-2xl p-6">
                     <div className="flex items-start gap-3 mb-4">
                       <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle2 className="w-5 h-5 text-[#4A5D23] dark:text-[#a4ce33]" />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
                           Confirmação de Identidade
                         </h3>
-                        <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                        <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] mt-1">
                           Confirme que você é {currentUser?.full_name} e está autorizando este reembolso
                         </p>
                       </div>
@@ -261,7 +261,7 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
 
                     <div className="space-y-4">
                       <div>
-                        <label className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold block mb-2">
+                        <label className="text-xs text-[#4A5D23] dark:text-[#a4ce33] font-semibold block mb-2">
                           Operador (seu nome) *
                         </label>
                         <Input
@@ -274,16 +274,16 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                       <div className="pt-2 border-t-2 border-dashed border-emerald-300 dark:border-emerald-700">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Valor a Reembolsar</div>
-                            <div className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 font-glacial">
+                            <div className="text-xs text-[#4A5D23] dark:text-[#a4ce33] mb-1">Valor a Reembolsar</div>
+                            <div className="text-3xl font-bold text-[#4A5D23] dark:text-[#a4ce33] font-glacial">
                               {formatValor(selectedAuth.valor_autorizado)}
                             </div>
                           </div>
-                          <CheckCircle2 className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+                          <CheckCircle2 className="w-12 h-12 text-[#4A5D23] dark:text-[#a4ce33]" />
                         </div>
                       </div>
 
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300 text-center py-3 bg-white dark:bg-gray-800 rounded-xl">
+                      <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center py-3 bg-white dark:bg-gray-800 rounded-xl">
                         Ao confirmar, você está validando o reembolso do cliente {selectedAuth.cliente_nome} e entregando o valor em dinheiro
                       </p>
                     </div>

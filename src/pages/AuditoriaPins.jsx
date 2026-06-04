@@ -149,7 +149,7 @@ export default function AuditoriaPins() {
                   <>
                     <P38StatusLabel tone={pinTone}>{pinLabel}</P38StatusLabel>
                     {feedback && (
-                      <span className={feedback.tipo === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>
+                      <span className={feedback.tipo === 'ok' ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-500'}>
                         {feedback.msg}
                       </span>
                     )}
