@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-
 /**
  * P38 Visual Identity — replicável em qualquer ecrã (CSS puro + Tailwind @apply).
  * Origem: Relatório de Margem mobile. Valores alinhados a p38ThemeSurfaces.js.
@@ -8,6 +6,31 @@
  *   - HTML/CSS: class="p38-line p38-line-title"
  *   - React: pode combinar com p38Table / p38MobileSurfaces (JS)
  */
+
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN 1451';
+  src: url('/fonts/dinish/DINish-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   :root {
@@ -75,6 +98,20 @@
     font-weight: 600;
   }
 
+
+  .font-din-native {
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    font-size: var(--p38-body-size, 14px);
+    font-weight: 300;
+    letter-spacing: var(--p38-tracking);
+  }
+
+  .font-din-native strong,
+  .font-din-native .font-semibold,
+  .font-din-native th {
+    font-weight: 400;
+  }
+
   /* Tipografia Montserrat — mantém .font-din-1451 por compatibilidade */
   .p38-font {
     font-family: 'Montserrat', system-ui, sans-serif;
@@ -120,7 +157,7 @@
 
   /* Linha compacta (substitui card em smartphone) */
   .p38-line {
-    @apply border-b border-border/50 dark:border-white/6 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-montserrat;
+    @apply border-b border-border/50 dark:border-white/10 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-montserrat;
   }
 
   .p38-line--interactive {

@@ -5,10 +5,11 @@ module.exports = {
   theme: {
   	extend: {
   		fontFamily: {
-			montserrat: ['Montserrat', 'system-ui', 'sans-serif'],
-  			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-  			'din-1451': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
-  		},
+					montserrat: ['Montserrat', 'system-ui', 'sans-serif'],
+					din1451: ['Montserrat', 'system-ui', 'sans-serif'],
+					'din-1451': ['Montserrat', 'system-ui', 'sans-serif'],
+					'din-native': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+			},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

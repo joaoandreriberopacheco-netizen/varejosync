@@ -41,7 +41,7 @@ export const p38Table = {
   microText: 'text-xs',
 
   /** Linhas mobile compactas (substituem cards em smartphone) */
-  mobileLine: 'border-b border-border/50 dark:border-white/6 border-l-2 py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
+  mobileLine: 'border-b border-border/50 dark:border-white/10 border-l-2 py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] touch-pan-y',
   mobileLineTitle: 'font-din-1451 font-medium text-[14px] uppercase tracking-wide text-foreground leading-tight break-words',
   mobileLineSubtitle: 'text-xs text-muted-foreground break-all mt-0.5 font-din-1451',
