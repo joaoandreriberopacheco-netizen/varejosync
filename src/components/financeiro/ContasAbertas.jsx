@@ -238,7 +238,7 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="group flex w-full min-w-0 items-center justify-between gap-2 px-0.5 py-1"
+        className="group flex w-full min-w-0 items-center justify-between gap-2 border-b border-border/50 dark:border-white/10 px-0.5 py-2 mb-0.5"
       >
         <p className={`min-w-0 flex-1 truncate text-left text-[0.62rem] font-semibold uppercase tracking-wide sm:tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-muted-foreground'}`}>
           {label}

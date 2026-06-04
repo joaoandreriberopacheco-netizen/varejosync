@@ -240,7 +240,7 @@ Ordem sugerida para reduzir duplicação do Margem:
 | Onda | Escopo | Critério de pronto |
 |------|--------|-------------------|
 | **M0** | Fundação | Tokens + `p38-mobile-line` + doc; Margem ✅; audit gray ✅ |
-| **M1** | Financeiro + caixa | FluxoCaixa, ContasFinanceiras, Agefin página, Extrato revisão M-F |
+| **M1** | Financeiro + caixa | ✅ ContasFinanceiras, Agefin, Fluxo/ExecucaoOrcamentaria, FinanceiroModulo; Extrato = M-F |
 | **M2** | Vendas + compras | VendasPerdidas, PedidosCompra, Cotacoes, PDVAuditoria |
 | **M3** | Estoque + logística | Armazenagem, ConferenciaVolumes/Itens, templates expedição |
 | **M4** | Relatórios + produtos | Catálogo estoque, Performance, Produtos mobile wrapper |

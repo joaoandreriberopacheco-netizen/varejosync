@@ -41,10 +41,10 @@ export default function AgefinLista({ contas, onRefresh }) {
           <button
             key={status}
             onClick={() => setFilterStatus(filterStatus === status ? null : status)}
-            className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all border ${
               filterStatus === status
-                ? 'bg-blue-600 text-white'
-                : 'bg-muted text-foreground/90'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-foreground/90 border-border/40'
             }`}
           >
             {status}
@@ -57,7 +57,7 @@ export default function AgefinLista({ contas, onRefresh }) {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="flex-1 px-4 py-3 rounded-2xl bg-muted text-foreground border-0 focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-4 py-3 rounded-xl p38-search-field text-foreground border-0 focus-visible:ring-1 focus-visible:ring-ring"
         >
           <option value="vencimento">Ordenar por vencimento</option>
           <option value="valor">Ordenar por valor</option>
@@ -78,7 +78,7 @@ export default function AgefinLista({ contas, onRefresh }) {
             {filterStatus && (
               <button
                 onClick={() => setFilterStatus(null)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-all"
               >
                 <X className="w-4 h-4" />
                 Limpar filtro

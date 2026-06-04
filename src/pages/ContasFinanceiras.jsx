@@ -6,8 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Wallet, PlusCircle, Edit, Trash2, Eye, Banknote, CreditCard, DollarSign, ArrowRightLeft, Clock } from 'lucide-react';
+import { Wallet, PlusCircle, Edit, Eye, Banknote, CreditCard, DollarSign, ArrowRightLeft, Clock } from 'lucide-react';
 import ConciliacaoBancaria from '@/components/financeiro/ConciliacaoBancaria';
+import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 
 export default function ContasFinanceirasPage() {
   const [accounts, setAccounts] = useState([]);
@@ -86,7 +92,7 @@ export default function ContasFinanceirasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6">
+    <div className="min-h-screen bg-background font-din-1451 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -103,7 +109,70 @@ export default function ContasFinanceirasPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <P38MobileLineList className="md:hidden">
+          {accounts.map((account, index) => {
+            const saldo = calcularSaldoConta(account);
+            const isNegativo = saldo < 0;
+            const pend = pendenciasConciliacao[account.id] || 0;
+            return (
+              <P38MobileLine
+                key={account.id}
+                striped={index % 2 === 1}
+                accent={p38AccentKeyFromTone(isNegativo ? 'danger' : account.ativo !== false ? 'success' : 'muted')}
+                title={account.nome}
+                subtitle={account.tipo}
+                meta={
+                  <>
+                    <P38StatusLabel tone={account.ativo !== false ? 'success' : 'muted'}>
+                      {account.ativo !== false ? 'Ativa' : 'Inativa'}
+                    </P38StatusLabel>
+                    {pend > 0 && (
+                      <P38StatusLabel tone="warning">
+                        {pend} conciliação{pend > 1 ? 'ões' : ''}
+                      </P38StatusLabel>
+                    )}
+                  </>
+                }
+                value={formatCurrency(saldo)}
+                valueSub={account.banco || undefined}
+                trailing={
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`);
+                      }}
+                      className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60"
+                      aria-label="Extrato"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAccount(account);
+                        setFormData(account);
+                        setIsDialogOpen(true);
+                      }}
+                      className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60"
+                      aria-label="Editar"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </div>
+                }
+                onClick={() => {
+                  if (pend > 0) setConciliacaoConta(account);
+                  else window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`);
+                }}
+              />
+            );
+          })}
+        </P38MobileLineList>
+
+        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {accounts.map((account) => {
             const Icon = tipoIconMap[account.tipo] || Wallet;
             const saldo = calcularSaldoConta(account);
@@ -113,7 +182,7 @@ export default function ContasFinanceirasPage() {
               <div
                 key={account.id}
                 className="bg-card rounded-3xl shadow-sm overflow-hidden border-l-4"
-                style={{ borderLeftColor: account.cor || '#10B981' }}
+                style={{ borderLeftColor: account.cor || 'hsl(var(--primary))' }}
               >
                 <div className="p-5 space-y-4">
                   <div className="flex items-start justify-between">
