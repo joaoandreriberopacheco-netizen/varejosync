@@ -117,9 +117,9 @@ export default function Agefin() {
   }, [contas]);
 
   return (
-    <div className="min-h-screen bg-card">
+    <div className="min-h-screen bg-background font-din-1451 pb-[var(--p38-scroll-pad-below-nav)]">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-card shadow-sm min-w-0">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/40 min-w-0">
         <div className="p-4 md:p-6 min-w-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 min-w-0">
             <div className="min-w-0 flex-1">
@@ -132,7 +132,7 @@ export default function Agefin() {
             </div>
             <Button
               onClick={() => setShowImportDialog(true)}
-              className="rounded-2xl h-12 sm:h-14 px-5 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base shadow-sm shrink-0 w-full sm:w-auto"
+              className="rounded-2xl h-12 sm:h-14 px-5 sm:px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base shadow-sm shrink-0 w-full sm:w-auto"
             >
               <Upload className="w-5 h-5 mr-2" />
               Importar
@@ -140,32 +140,32 @@ export default function Agefin() {
           </div>
 
           {/* Pathway KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {/* Critical Actions */}
-            <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-3xl p-5 border-l-4 border-red-500 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1 flex items-center gap-2">
-                    <Zap className="w-4 h-4" /> Ações Urgentes
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            <div className="p38-panel border border-border/40 dark:border-white/10">
+              <div className="p38-panel__accent-bar bg-red-500 dark:bg-red-400" aria-hidden />
+              <div className="p38-panel__body flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="p38-micro-label flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <Zap className="w-4 h-4" /> Ações urgentes
                   </p>
-                  <p className="text-4xl font-bold text-red-900 dark:text-red-100">{stats.vencidas}</p>
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-2">contas vencidas aguardando pagamento</p>
+                  <p className="text-3xl font-semibold tabular-nums text-foreground mt-2">{stats.vencidas}</p>
+                  <p className="text-xs text-muted-foreground mt-1">contas vencidas aguardando pagamento</p>
                 </div>
-                <AlertCircle className="w-14 h-14 text-red-300 dark:text-red-700 opacity-40" />
+                <AlertCircle className="w-10 h-10 text-red-500/30 shrink-0" />
               </div>
             </div>
 
-            {/* Pending Next */}
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-3xl p-5 border-l-4 border-amber-500 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-1 flex items-center gap-2">
+            <div className="p38-panel border border-border/40 dark:border-white/10">
+              <div className="p38-panel__accent-bar bg-amber-500 dark:bg-amber-400" aria-hidden />
+              <div className="p38-panel__body flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="p38-micro-label flex items-center gap-2 text-amber-700 dark:text-amber-300">
                     <Calendar className="w-4 h-4" /> Próximos 7 dias
                   </p>
-                  <p className="text-4xl font-bold text-amber-900 dark:text-amber-100">{stats.proximosSete}</p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">vencimentos previstos</p>
+                  <p className="text-3xl font-semibold tabular-nums text-foreground mt-2">{stats.proximosSete}</p>
+                  <p className="text-xs text-muted-foreground mt-1">vencimentos previstos</p>
                 </div>
-                <Calendar className="w-14 h-14 text-amber-300 dark:text-amber-700 opacity-40" />
+                <Calendar className="w-10 h-10 text-amber-500/30 shrink-0" />
               </div>
             </div>
           </div>
@@ -183,13 +183,13 @@ export default function Agefin() {
           <TabsList className="w-full justify-start rounded-none border-0 bg-transparent px-4 md:px-6 h-auto p-0">
             <TabsTrigger
               value="contas"
-              className="rounded-none border-b-2 px-0 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=inactive]:border-transparent text-foreground/90"
+              className="rounded-none border-b-2 px-0 py-3 data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=inactive]:border-transparent text-muted-foreground"
             >
               Contas a Pagar
             </TabsTrigger>
             <TabsTrigger
               value="recorrentes"
-              className="rounded-none border-b-2 px-6 py-3 ml-4 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=inactive]:border-transparent text-foreground/90"
+              className="rounded-none border-b-2 px-6 py-3 ml-4 data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=inactive]:border-transparent text-muted-foreground"
             >
               Recorrências
             </TabsTrigger>
@@ -205,8 +205,8 @@ export default function Agefin() {
           </div>
         ) : !dataLoaded || contas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-96 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
-              <FileText className="w-10 h-10 text-blue-500" />
+            <div className="w-20 h-20 bg-muted/50 rounded-2xl border border-border/40 flex items-center justify-center mb-6">
+              <FileText className="w-10 h-10 text-muted-foreground" />
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Nenhuma conta cadastrada</h2>
             <p className="text-sm text-muted-foreground mb-8 max-w-sm">
@@ -215,7 +215,7 @@ export default function Agefin() {
             <div className="flex gap-3">
               <Button
                 onClick={() => setShowImportDialog(true)}
-                className="rounded-2xl h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
+                className="rounded-2xl h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Importar Contas
@@ -261,16 +261,18 @@ export default function Agefin() {
 
 function MetricPill({ label, value, icon, color }) {
   const colors = {
-    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-    green: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
-    purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    blue: 'bg-muted/40 text-foreground border-border/40',
+    green: 'bg-muted/40 text-foreground border-border/40',
+    purple: 'bg-muted/40 text-foreground border-border/40',
   };
+  const valueClass =
+    color === 'green' ? 'p38-text-accent' : 'text-foreground';
 
   return (
-    <div className={`${colors[color]} rounded-2xl p-4 text-center border shadow-sm`}>
+    <div className={`${colors[color]} rounded-xl p-4 text-center border`}>
       <div className="flex items-center justify-center gap-1.5 mb-1.5">{icon}</div>
       <p className="text-xs font-medium opacity-75 mb-1">{label}</p>
-      <p className="text-xl font-bold">{value}</p>
+      <p className={`text-xl font-bold tabular-nums ${valueClass}`}>{value}</p>
     </div>
   );
 }

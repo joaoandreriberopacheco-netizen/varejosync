@@ -12,6 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle, CheckCircle, XCircle, Clock, FileText, Eye, ArrowRightLeft, TrendingUp, Target } from 'lucide-react';
+import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
@@ -152,8 +158,16 @@ export default function FinanceiroModuloPage() {
     }
   };
 
+  const tipoIconMap = {
+    'Caixa Físico': Banknote,
+    'Conta Bancária': CreditCard,
+    'Carteira Digital': Wallet,
+    'Poupança': Wallet,
+    'Investimento': DollarSign,
+  };
+
   return (
-    <div className="w-full min-w-0 overflow-x-hidden" style={{ maxWidth: '100%' }}>
+    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6" style={{ maxWidth: '100%' }}>
       {/* Header */}
       <div className="pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground mb-0.5">Gestão Financeira</h1>
@@ -218,29 +232,81 @@ export default function FinanceiroModuloPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {accounts.map((account) => {
-                  const tipoIconMap = {
-                    'Caixa Físico': <Banknote className="w-5 h-5" />,
-                    'Conta Bancária': <CreditCard className="w-5 h-5" />,
-                    'Carteira Digital': <Wallet className="w-5 h-5" />,
-                    'Poupança': <Wallet className="w-5 h-5" />,
-                    'Investimento': <DollarSign className="w-5 h-5" />,
-                  };
+              <>
+              <P38MobileLineList className="sm:hidden">
+                {accounts.map((account, index) => {
                   const saldo = account.saldo_atual || 0;
                   const isNegativo = saldo < 0;
+                  const pend = pendenciasConciliacao[account.id] || 0;
+                  return (
+                    <P38MobileLine
+                      key={account.id}
+                      striped={index % 2 === 1}
+                      accent={p38AccentKeyFromTone(isNegativo ? 'danger' : account.ativo ? 'success' : 'muted')}
+                      title={account.nome}
+                      subtitle={account.tipo}
+                      meta={
+                        <>
+                          <P38StatusLabel tone={account.ativo ? 'success' : 'muted'}>
+                            {account.ativo ? 'Ativa' : 'Inativa'}
+                          </P38StatusLabel>
+                          {pend > 0 && (
+                            <P38StatusLabel tone="warning">{pend} conciliação</P38StatusLabel>
+                          )}
+                        </>
+                      }
+                      value={formatCurrency(saldo)}
+                      trailing={
+                        <div className="flex items-center gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditAccount(account);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAccount(account.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      }
+                      onClick={() => {
+                        if (pend > 0) setConciliacaoConta(account);
+                      }}
+                    />
+                  );
+                })}
+              </P38MobileLineList>
+
+              <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {accounts.map((account) => {
+                  const saldo = account.saldo_atual || 0;
+                  const isNegativo = saldo < 0;
+                  const Icon = tipoIconMap[account.tipo] || Wallet;
                   return (
                     <div
                       key={account.id}
                       className="bg-card rounded-2xl shadow-sm overflow-hidden flex flex-col border-l-2"
-                      style={{ borderLeftColor: account.cor || '#10B981' }}
+                      style={{ borderLeftColor: account.cor || 'hsl(var(--primary))' }}
                     >
                       <div className="p-4 flex-1 flex flex-col gap-3">
                         {/* Nome e tipo */}
                         <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/40 dark:bg-muted text-muted-foreground">
-                            {tipoIconMap[account.tipo] || <Wallet className="w-5 h-5" />}
+                            <Icon className="w-5 h-5" />
                           </div>
                             <div>
                               <p className="font-semibold text-foreground leading-tight">{account.nome}</p>
@@ -307,6 +373,7 @@ export default function FinanceiroModuloPage() {
                   );
                 })}
               </div>
+              </>
             )}
           </TabsContent>
 

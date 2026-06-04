@@ -277,9 +277,9 @@ export default function ExecucaoOrcamentaria() {
 
   return (
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
-      {/* Header + tabs (card cinza: só até KPIs/controles — igual Fluxo) */}
-      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-transparent bg-[#F3F4F6] px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-border dark:bg-card">
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
+      {/* Header + tabs (painel mediterrâneo — até KPIs/controles) */}
+      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-border/40 bg-muted/40 px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-white/10 dark:bg-card">
         <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
             <p className="text-[24px] leading-none font-semibold text-foreground sm:text-[32px] dark:text-foreground font-glacial">Financeiro</p>

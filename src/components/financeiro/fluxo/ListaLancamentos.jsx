@@ -105,7 +105,7 @@ function Grupo({ label, items, totais, onRow }) {
   const [open, setOpen] = useState(true);
   return (
     <div className="w-full min-w-0">
-      <button type="button" onClick={() => setOpen(o => !o)} className="group flex w-full min-w-0 items-center justify-between gap-2 px-1 py-1.5">
+      <button type="button" onClick={() => setOpen(o => !o)} className="group flex w-full min-w-0 items-center justify-between gap-2 border-b border-border/50 dark:border-white/10 px-1 py-2 mb-0.5">
         <p className="min-w-0 flex-1 truncate text-left text-[0.62rem] font-semibold uppercase tracking-wide text-muted-foreground sm:tracking-widest">{label}</p>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {totais.r > 0 && <span className="text-[0.62rem] text-muted-foreground font-medium">+{R(totais.r)}</span>}
@@ -146,7 +146,7 @@ export default function ListaLancamentos({ grupos, loading, onRow }) {
   }
 
   return (
-    <div className="min-w-0 w-full max-w-full space-y-3 overflow-x-hidden">
+    <div className="min-w-0 w-full max-w-full space-y-3 overflow-x-hidden pb-2 md:pb-0">
       {grupos.map(({ k, label, items, totais }) => (
         <Grupo key={k} label={label} items={items} totais={totais} onRow={onRow} />
       ))}
