@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
-import { p38ThemeColors } from '@/lib/p38ThemeSurfaces';
+import { getP38ShellColors } from '@/lib/p38ShellColors';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -40,13 +40,13 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   const currentList = activeGroup?.submenu || [];
   const isItemActive = (page) => location.pathname.includes(page);
 
-  const c = p38ThemeColors(isDark);
+  const c = getP38ShellColors(isDark);
 
   if (!isOpen) return null;
 
   // Deve aparecer em todos os viewports em que o bottom nav existe (< lg = 1024px). `md:hidden` ocultava tablets (768px+).
   return (
-    <div className="fixed inset-0 z-[60] lg:hidden" style={{ background: c.bg }}>
+    <div className="fixed inset-0 z-[60] lg:hidden font-din-1451" style={{ background: c.bg }}>
       {/* Header */}
       <div style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }} className="px-4 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">
@@ -83,7 +83,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
         /* Lista principal */
         <div className="px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
           <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <h3 className="text-base font-semibold font-glacial mb-3" style={{ color: c.textMuted }}>Funções</h3>
+            <h3 className="text-base font-semibold mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
               {visibleGroups.map((item) => {
                 const Icon = item.icon;
@@ -135,7 +135,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h3 className="text-[1.6rem] font-semibold font-glacial" style={{ color: c.text }}>{activeGroup.name}</h3>
+            <h3 className="text-[1.6rem] font-semibold" style={{ color: c.text }}>{activeGroup.name}</h3>
           </div>
 
           <div>

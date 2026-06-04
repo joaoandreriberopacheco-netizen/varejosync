@@ -5,6 +5,7 @@ import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } 
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
+import { getP38ShellColors } from '@/lib/p38ShellColors';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -77,29 +78,7 @@ export default function GlacialSidebar({
 
   const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
-  const c = isDark ? {
-    bg: '#111827',
-    border: 'rgba(255,255,255,0.06)',
-    text: '#ffffff',
-    textSub: '#9ca3af',
-    iconColor: '#9ca3af',
-    activeBg: 'rgba(255,255,255,0.08)',
-    hoverBg: 'rgba(255,255,255,0.05)',
-    chevron: '#6b7280',
-    sectionLabel: '#6b7280',
-    subBorder: 'rgba(255,255,255,0.08)',
-  } : {
-    bg: '#ffffff',
-    border: 'rgba(0,0,0,0.06)',
-    text: '#1e293b',
-    textSub: '#64748b',
-    iconColor: '#6b7280',
-    activeBg: 'rgba(0,0,0,0.05)',
-    hoverBg: 'rgba(0,0,0,0.03)',
-    chevron: '#9ca3af',
-    sectionLabel: '#9ca3af',
-    subBorder: 'rgba(0,0,0,0.08)',
-  };
+  const c = getP38ShellColors(isDark);
 
   const toggleSubmenu = (menuName) => {
     setExpandedMenus(prev => {
@@ -132,7 +111,7 @@ export default function GlacialSidebar({
       )}
 
       <aside
-        className="fixed left-0 top-0 z-40 flex flex-col"
+        className="fixed left-0 top-0 z-40 flex flex-col font-din-1451"
         style={{
           height: '100dvh',
           overflow: 'hidden',
@@ -184,17 +163,16 @@ export default function GlacialSidebar({
                   <>
                     <button
                       onClick={() => toggleSubmenu(item.name)}
-                      className="w-full flex items-center rounded-xl transition-colors relative"
+                      className="w-full flex items-center rounded-xl transition-colors"
                       style={{
                         gap: 10,
                         padding: isOpen ? '10px 12px' : '10px',
                         justifyContent: isOpen ? 'flex-start' : 'center',
                         background: isActive ? c.activeBg : 'transparent',
                         color: isActive ? c.text : c.textSub,
-                        borderLeft: isActive ? `2px solid ${c.accent}` : '2px solid transparent',
                       }}
                     >
-                      <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.accent : c.iconColor }} />
+                      <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.text : c.iconColor }} />
                       {isOpen && (
                         <>
                           <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
@@ -289,7 +267,7 @@ export default function GlacialSidebar({
               {currentUser && (
                 <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${c.border}` }}>
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: c.hoverBg }}>
-                    <span className="text-sm font-semibold font-glacial" style={{ color: c.text }}>
+                    <span className="text-sm font-semibold" style={{ color: c.text }}>
                       {currentUser.full_name?.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase() || '?'}
                     </span>
                   </div>

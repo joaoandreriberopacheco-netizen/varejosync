@@ -40,10 +40,10 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/96 dark:bg-gray-900/96 backdrop-blur-xl border-t border-slate-200/70 dark:border-gray-800/80"
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451"
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
-        boxShadow: '0 -6px 24px -12px rgba(15,23,42,0.28)'
+        boxShadow: '0 -6px 24px -12px rgba(0,0,0,0.18)'
       }}
     >
       <div className="flex items-stretch h-[68px]">
@@ -53,13 +53,13 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
           const content = (
             <div className="flex flex-col items-center justify-center gap-1 w-full h-full pt-1">
-              <div className={`h-1 w-10 rounded-full transition-all duration-200 ${active ? 'bg-slate-900 dark:bg-white' : 'bg-transparent'}`} />
+              <div className={`h-1 w-10 rounded-full transition-all duration-200 ${active ? 'bg-foreground' : 'bg-transparent'}`} />
               <div className="flex items-center justify-center w-12 h-7">
                 <Icon 
                   className={`transition-all duration-200 ${
                     active 
-                      ? 'w-5 h-5 text-slate-900 dark:text-white stroke-[2]' 
-                      : 'w-5 h-5 text-slate-400 dark:text-gray-500 stroke-[1.75]'
+                      ? 'w-5 h-5 text-foreground stroke-[2]' 
+                      : 'w-5 h-5 text-muted-foreground stroke-[1.75]'
                   }`} 
                 />
               </div>
