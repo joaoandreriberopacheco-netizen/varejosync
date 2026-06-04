@@ -464,38 +464,31 @@ export default function CaixasAtivosPage() {
                   </div>
                 </div>
 
-                {senhasNaoProcessadas.map((rascunho) => (
-                  <div
-                    key={rascunho.id}
-                    className="rounded-2xl bg-white dark:bg-gray-800 px-4 py-4 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                          {rascunho.cliente_nome || 'Avulso'} · {rascunho.vendedor_nome || 'Sem vendedor'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}</p>
-                        </div>
+                <P38MobileLineList>
+                  {senhasNaoProcessadas.map((rascunho, index) => (
+                    <P38MobileLine
+                      key={rascunho.id}
+                      striped={index % 2 === 1}
+                      accent="warning"
+                      title={`Senha ${String(rascunho.senha_atendimento || '').slice(-4) || '----'}`}
+                      subtitle={`${rascunho.cliente_nome || 'Avulso'} · ${rascunho.vendedor_nome || 'Sem vendedor'}`}
+                      value={formatValor(rascunho.valor_total)}
+                      trailing={
                         <button
+                          type="button"
                           onClick={() => {
                             setShowSenhasPage(false);
                             setRascunhoSelecionado(rascunho);
                           }}
-                          className="h-11 w-11 rounded-xl bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+                          className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-secondary"
+                          aria-label="Ver senha"
                         >
-                          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <Eye className="w-4 h-4" />
                         </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                      }
+                    />
+                  ))}
+                </P38MobileLineList>
               </div>
             </div>
           </div>

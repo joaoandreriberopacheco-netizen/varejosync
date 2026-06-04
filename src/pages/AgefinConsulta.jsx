@@ -780,11 +780,12 @@ export default function AgefinConsulta() {
                     {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 gap-2 md:gap-3">
-                  {grupo.contas.map((conta) => (
+                <P38MobileLineList>
+                  {grupo.contas.map((conta, index) => (
                     <ContaCard
                       key={conta.id}
                       conta={conta}
+                      striped={index % 2 === 1}
                       modoSelecao={modoSelecao}
                       selecionado={selecionadosIds.includes(conta.id)}
                       onToggleSelecao={toggleSelecaoConta}
@@ -792,7 +793,7 @@ export default function AgefinConsulta() {
                       avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                     />
                   ))}
-                </div>
+                </P38MobileLineList>
               </section>
             ))}
           </div>

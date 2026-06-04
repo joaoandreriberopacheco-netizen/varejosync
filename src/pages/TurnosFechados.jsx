@@ -68,7 +68,7 @@ function TurnoRow({ turno, vendas, movimentos, despesas, onReabrir, currentUser 
     const dinheiroNaGaveta = (turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0) - (turno.total_despesas || 0);
 
     const html = `<html><head><title>Fechamento ${turno.numero}</title><style>
-      body{font-family:'DIN 1451',DINish,system-ui,sans-serif;font-size:13px;padding:20px;max-width:760px;margin:0 auto;color:#111827}
+      body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:760px;margin:0 auto;color:#111827}
       h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
       .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
       .dashed{border-top:1px dashed #9ca3af;margin:10px 0}
@@ -549,11 +549,11 @@ export default function TurnosFechadosPage() {
             <p>Nenhum turno fechado encontrado</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
-            {turnosFiltrados.map(t => (
-              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} despesas={despesas} onReabrir={handleReabrirTurno} currentUser={currentUser} />
+          <P38MobileLineList>
+            {turnosFiltrados.map((t, index) => (
+              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} despesas={despesas} onReabrir={handleReabrirTurno} currentUser={currentUser} striped={index % 2 === 1} />
             ))}
-          </div>
+          </P38MobileLineList>
         )}
       </div>
 

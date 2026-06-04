@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronRight, AlertCircle, CheckCircle2, Calendar, DollarSign, Paperclip, Filter, X } from 'lucide-react';
+import { ChevronRight, AlertCircle, Calendar, Paperclip, Filter, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AgefinDetalhes from './AgefinDetalhes';
 

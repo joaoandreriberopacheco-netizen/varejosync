@@ -264,98 +264,52 @@ export default function ControleEntregas() {
       </Card>
 
       {/* Lista de Pedidos */}
-      <div className="space-y-3">
-        {isLoading ? (
-          <div className="text-center py-12 text-gray-500">CARREGANDO PEDIDOS...</div>
-        ) : pedidos.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">NENHUM PEDIDO ENCONTRADO</div>
-        ) : (
-          pedidos.map((pedido) => {
+      {isLoading ? (
+        <div className="text-center py-12 text-gray-500">CARREGANDO PEDIDOS...</div>
+      ) : pedidos.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">NENHUM PEDIDO ENCONTRADO</div>
+      ) : (
+        <P38MobileLineList>
+          {pedidos.map((pedido, index) => {
             const statusConfig = getStatusConfig(pedido.status);
-            const StatusIcon = statusConfig.icone;
-            
+            const tone = p38StatusTone(pedido.status);
+            const itensResumo =
+              `${pedido.itens?.length || 0} ${pedido.itens?.length === 1 ? 'item' : 'itens'} · ` +
+              (pedido.itens?.slice(0, 2).map((i) => i.produto_nome).join(', ') || '') +
+              (pedido.itens?.length > 2 ? '…' : '');
+
             return (
-              <Card key={pedido.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2">
-                      {/* Linha 1: Identificação */}
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-lg font-bold text-gray-800 dark:text-white">
-                          {pedido.numero}
-                        </span>
-                        {pedido.senha_atendimento && (
-                          <Badge variant="outline" className="text-sm font-mono">
-                            SENHA: {pedido.senha_atendimento}
-                          </Badge>
-                        )}
-                        <Badge className={statusConfig.cor}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusConfig.label}
-                        </Badge>
-                        {pedido.metodo_entrega === 'Delivery' && (
-                          <Badge variant="outline" className="text-xs">
-                            <Truck className="w-3 h-3 mr-1" />
-                            DELIVERY
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Linha 2: Cliente e Valor */}
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          <span>{pedido.cliente_nome}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{new Date(pedido.created_date).toLocaleDateString('pt-BR')}</span>
-                          <span className="text-xs">
-                            {new Date(pedido.created_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 font-semibold text-gray-800 dark:text-white">
-                          <DollarSign className="w-4 h-4" />
-                          <span>{formatValor(pedido.valor_total)}</span>
-                        </div>
-                      </div>
-
-                      {/* Linha 3: Itens */}
-                      <div className="text-xs text-gray-500">
-                        {pedido.itens?.length} {pedido.itens?.length === 1 ? 'ITEM' : 'ITENS'} • {' '}
-                        {pedido.itens?.slice(0, 2).map(i => i.produto_nome).join(', ')}
-                        {pedido.itens?.length > 2 && '...'}
-                      </div>
-                    </div>
-
-                    {/* Botões de Ação */}
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleMostrarLiberacao(pedido)}
-                        className="text-xs"
-                      >
-                        <QrCode className="w-4 h-4 mr-1" />
-                        QR CODE
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleAbrirDetalhes(pedido)}
-                        className="text-xs"
-                      >
-                        DETALHES
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </div>
+              <P38MobileLine
+                key={pedido.id}
+                striped={index % 2 === 1}
+                accent={p38AccentKeyFromTone(tone)}
+                title={pedido.numero}
+                subtitle={pedido.cliente_nome}
+                meta={
+                  <>
+                    <P38StatusLabel tone={tone}>{statusConfig.label}</P38StatusLabel>
+                    {pedido.senha_atendimento ? <span className="font-mono">SENHA {pedido.senha_atendimento}</span> : null}
+                    {pedido.metodo_entrega === 'Delivery' ? <span>Delivery</span> : null}
+                    <span className="tabular-nums truncate">{itensResumo}</span>
+                  </>
+                }
+                value={formatValor(pedido.valor_total)}
+                valueSub={new Date(pedido.created_date).toLocaleDateString('pt-BR')}
+                trailing={
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button size="sm" variant="outline" onClick={() => handleMostrarLiberacao(pedido)} className="h-7 text-xs px-2">
+                      <QrCode className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleAbrirDetalhes(pedido)} className="h-7 text-xs px-2">
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                }
+              />
             );
-          })
-        )}
-      </div>
+          })}
+        </P38MobileLineList>
+      )}
 
       {/* Dialog de Detalhes */}
       <Dialog open={mostrarDetalhes} onOpenChange={setMostrarDetalhes}>

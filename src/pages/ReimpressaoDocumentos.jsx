@@ -170,44 +170,40 @@ export default function ReimpressaoDocumentos() {
         )}
 
         {!isLoading && documentos.length > 0 && (
-          <div className="space-y-2">
-            {documentos.map((doc) => (
-              <div
-                key={doc.id}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-gray-900 dark:text-white">
-                        {doc.numero}
+          <P38MobileLineList>
+            {documentos.map((doc, index) => {
+              const tipoLabel = TIPOS_DOCUMENTO.find((t) => t.value === tipoDoc)?.label || tipoDoc;
+              const tone = p38StatusTone(doc.status || tipoLabel);
+              const nome =
+                doc.cliente_nome || doc.fornecedor_nome || doc.produto_nome || 'Sem identificação';
+              return (
+                <P38MobileLine
+                  key={doc.id}
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(tone)}
+                  title={doc.numero}
+                  subtitle={nome}
+                  meta={
+                    <>
+                      <P38StatusLabel tone={tone}>{doc.status || tipoLabel}</P38StatusLabel>
+                      {tipoDoc === 'prevenda' && doc.senha_atendimento ? (
+                        <span>Senha {doc.senha_atendimento}</span>
+                      ) : null}
+                      <span className="tabular-nums">
+                        {new Date(doc.created_date).toLocaleDateString('pt-BR')}
                       </span>
-                      {tipoDoc === 'prevenda' && doc.senha_atendimento && (
-                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-xs rounded">
-                          Senha: {doc.senha_atendimento}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                      {doc.cliente_nome || 'Cliente não informado'}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {new Date(doc.created_date).toLocaleDateString('pt-BR')} •{' '}
-                      R$ {(doc.valor_total || 0).toFixed(2)}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => handlePrint(doc)}
-                    size="sm"
-                    className="flex-shrink-0"
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Imprimir
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                    </>
+                  }
+                  value={`R$ ${(doc.valor_total || 0).toFixed(2)}`}
+                  trailing={
+                    <Button onClick={() => handlePrint(doc)} size="sm" className="h-8 shrink-0">
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                  }
+                />
+              );
+            })}
+          </P38MobileLineList>
         )}
       </div>
 

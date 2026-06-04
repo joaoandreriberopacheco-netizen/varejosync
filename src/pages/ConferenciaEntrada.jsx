@@ -5,6 +5,7 @@ import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs
 import { QrCode, Package, Layers } from 'lucide-react';
 import GestaoCodigosConferencia from '@/components/logistica/GestaoCodigosConferencia';
 import PainelConferencias from '@/components/compras/PainelConferencias';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function ConferenciaEntrada() {
   const [activeTab, setActiveTab] = useState('codigos');

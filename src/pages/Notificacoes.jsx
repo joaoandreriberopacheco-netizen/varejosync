@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Bell, CheckCircle2, AlertCircle, Info, TrendingUp, Package } from 'lucide-react';
 import { format } from 'date-fns';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38TypeTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function NotificacoesPage() {
   const [notifications, setNotifications] = useState([]);
@@ -56,7 +57,7 @@ export default function NotificacoesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
+    <div className="min-h-screen bg-background pb-20 md:pb-6">
       <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-4">
         {/* Header */}
         <div>
@@ -69,45 +70,29 @@ export default function NotificacoesPage() {
         </div>
 
         {/* Notifications List */}
-        <div className="space-y-2">
-          {notifications.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center shadow-sm">
-              <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Nenhuma notificação
-              </p>
-            </div>
-          ) : (
-            notifications.map((notification) => {
-              const Icon = getIcon(notification.type);
-              const colorClass = getColor(notification.type);
-              
+        {notifications.length === 0 ? (
+          <div className="text-center py-12 rounded-xl border border-border/40 bg-card shadow-sm">
+            <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
+          </div>
+        ) : (
+          <P38MobileLineList className="md:block">
+            {notifications.map((notification, index) => {
+              const tone = p38TypeTone(notification.type);
               return (
-                <div
+                <P38MobileLine
                   key={notification.id}
-                  className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-start gap-3 ${
-                    !notification.read ? 'border-l-4 border-blue-500' : ''
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      {notification.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      {format(notification.timestamp, 'HH:mm')}
-                    </p>
-                  </div>
-                </div>
+                  striped={index % 2 === 1}
+                  accent={!notification.read ? p38AccentKeyFromTone(tone) : 'muted'}
+                  title={notification.title}
+                  subtitle={notification.message}
+                  meta={<P38StatusLabel tone={tone}>{notification.type}</P38StatusLabel>}
+                  valueSub={format(notification.timestamp, 'HH:mm')}
+                />
               );
-            })
-          )}
-        </div>
+            })}
+          </P38MobileLineList>
+        )}
       </div>
     </div>
   );

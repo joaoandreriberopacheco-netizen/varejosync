@@ -311,54 +311,56 @@ export default function AprovacoesFinanceirasPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {Object.entries(groupedTransactions).map(([refNumero, transacoes]) => {
+          <P38MobileLineList>
+            {Object.entries(groupedTransactions).map(([refNumero, transacoes], index) => {
               const primeira = transacoes[0];
               const total = primeira.valor || 0;
+              const tone = p38StatusTone('pendente');
               return (
-                <div key={refNumero} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm">
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    {modoSelecaoLote && (
-                      <button
-                        onClick={() => handleTogglePedidoLote(primeira.id)}
-                        className={`mt-1 h-5 w-5 rounded-full transition-colors ${selectedPedidosIds.includes(primeira.id) ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-gray-700'}`}
-                      />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{refNumero}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{primeira.descricao}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                            {formatCurrency(total)}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {primeira._pedido?.fornecedor_nome || ''}
-                          </p>
-                        </div>
-                      </div>
+                <P38MobileLine
+                  key={refNumero}
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(tone)}
+                  title={refNumero}
+                  subtitle={primeira.descricao}
+                  meta={
+                    <>
+                      <P38StatusLabel tone={tone}>Pendente</P38StatusLabel>
+                      {primeira._pedido?.fornecedor_nome ? (
+                        <span className="truncate">{primeira._pedido.fornecedor_nome}</span>
+                      ) : null}
+                    </>
+                  }
+                  value={formatCurrency(total)}
+                  trailing={
+                    <div className="flex flex-col gap-1 shrink-0">
+                      {modoSelecaoLote && (
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePedidoLote(primeira.id)}
+                          className={`h-5 w-5 rounded-full transition-colors ${selectedPedidosIds.includes(primeira.id) ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+                        />
+                      )}
+                      {primeira.referencia_tipo === 'PedidoCompra' && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewPedido(primeira)}>
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {!modoSelecaoLote && (
+                        <Button
+                          size="icon"
+                          className="h-8 w-8 bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => setSelectedTransaction(primeira)}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {primeira.referencia_tipo === 'PedidoCompra' && (
-                      <Button variant="ghost" size="sm" onClick={() => handleViewPedido(primeira)} className="flex-1 gap-2 rounded-xl">
-                        <Eye className="w-4 h-4" />
-                        Ver Pedido
-                      </Button>
-                    )}
-                    {!modoSelecaoLote && (
-                      <Button onClick={() => { setSelectedTransaction(primeira); }} className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2 rounded-xl">
-                        <CheckCircle className="w-4 h-4" />
-                        Aprovar
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  }
+                />
               );
             })}
-          </div>
+          </P38MobileLineList>
         )}
 
         {modoSelecaoLote && (

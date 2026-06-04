@@ -234,67 +234,59 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 </div>
                 
                 {/* Desktop Table */}
-                <div className="hidden md:block">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-100 dark:border-gray-700">
-                          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide p-4">Produto</th>
-                          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide p-4">Qtd</th>
-                          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide p-4">Preço Unit.</th>
-                          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide p-4">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pedido.itens && pedido.itens.length > 0 ? (
-                          pedido.itens.map((item, idx) => (
-                            <tr key={idx} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-                              <td className="p-4">
-                                <div className="font-medium text-gray-800 dark:text-gray-200">{item.produto_nome}</div>
-                                <div className="text-xs text-gray-400 font-mono">{item.produto_id?.substring(0, 8) || '-'}</div>
-                              </td>
-                              <td className="p-4 text-right text-gray-700 dark:text-gray-300">{item.quantidade}</td>
-                              <td className="p-4 text-right text-gray-700 dark:text-gray-300">{formatValor(item.preco_unitario_praticado)}</td>
-                              <td className="p-4 text-right font-semibold text-gray-800 dark:text-gray-200">{formatValor(item.total)}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4} className="p-8 text-center text-gray-500">
-                              Nenhum item cadastrado
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <P38TableShell className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
+                        <TableHead className="text-right">Preço Unit.</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pedido.itens && pedido.itens.length > 0 ? (
+                        pedido.itens.map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>
+                              <div className="font-medium">{item.produto_nome}</div>
+                              <div className="text-xs text-muted-foreground font-mono">{item.produto_id?.substring(0, 8) || '-'}</div>
+                            </TableCell>
+                            <TableCell className="text-right">{item.quantidade}</TableCell>
+                            <TableCell className="text-right">{formatValor(item.preco_unitario_praticado)}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatValor(item.total)}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                            Nenhum item cadastrado
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </P38TableShell>
 
                 {/* Mobile List */}
-                <div className="md:hidden space-y-3">
-                  {pedido.itens && pedido.itens.length > 0 ? (
-                    pedido.itens.map((item, idx) => (
-                      <div key={idx} className="bg-white dark:bg-gray-800 p-4 rounded-xl">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-800 dark:text-gray-200">{item.produto_nome}</div>
-                            <div className="text-xs text-gray-400 font-mono">{item.produto_id?.substring(0, 8) || '-'}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-gray-800 dark:text-gray-200">{formatValor(item.total)}</div>
-                          </div>
-                        </div>
-                        <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                          <span>{item.quantidade} un × {formatValor(item.preco_unitario_praticado)}</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center text-gray-500 bg-white dark:bg-gray-800 rounded-xl">
-                      Nenhum item cadastrado
-                    </div>
-                  )}
-                </div>
+                {pedido.itens && pedido.itens.length > 0 ? (
+                  <P38MobileLineList>
+                    {pedido.itens.map((item, idx) => (
+                      <P38MobileLine
+                        key={idx}
+                        striped={idx % 2 === 1}
+                        title={item.produto_nome}
+                        subtitle={item.produto_id?.substring(0, 8) || '-'}
+                        meta={<span>{item.quantidade} un × {formatValor(item.preco_unitario_praticado)}</span>}
+                        value={formatValor(item.total)}
+                      />
+                    ))}
+                  </P38MobileLineList>
+                ) : (
+                  <div className="md:hidden p-8 text-center text-muted-foreground">
+                    Nenhum item cadastrado
+                  </div>
+                )}
               </div>
 
               {/* Resumo de Valores */}

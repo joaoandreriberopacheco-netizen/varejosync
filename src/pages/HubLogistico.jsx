@@ -158,70 +158,33 @@ export default function HubLogistico() {
           <p className="text-gray-500">Nenhum manifesto encontrado</p>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {manifestosFiltrados.map(manifesto => (
-            <div
-              key={manifesto.id}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 hover:border-teal-200 dark:hover:border-teal-800 transition-all"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center">
-                    <Truck className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">{manifesto.numero}</h3>
-                      <Badge className={`${getStatusBadge(manifesto.status)} border-0`}>
-                        {manifesto.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-0.5">{manifesto.transportadora_nome}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleVerDetalhes(manifesto)}
-                  className="gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  Ver Detalhes
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <div>
-                  <p className="text-xs text-gray-400 uppercase mb-1">ETA</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    {format(parseISO(manifesto.eta), 'dd/MM/yyyy HH:mm')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase mb-1">Pedidos</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                    <Package className="w-3.5 h-3.5 text-gray-400" />
-                    {manifesto.pedidos_vinculados?.length || 0} vinculados
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase mb-1">Peso Total</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                    <Weight className="w-3.5 h-3.5 text-gray-400" />
-                    {manifesto.peso_total_bruto_kg?.toFixed(2) || 0} kg
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase mb-1">Volumes</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                    {manifesto.observacoes_consolidadas || 'Sem descrição'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <P38MobileLineList>
+          {manifestosFiltrados.map((manifesto, index) => {
+            const tone = p38StatusTone(manifesto.status);
+            return (
+              <P38MobileLine
+                key={manifesto.id}
+                striped={index % 2 === 1}
+                accent={p38AccentKeyFromTone(tone)}
+                title={manifesto.numero}
+                subtitle={manifesto.transportadora_nome}
+                meta={
+                  <>
+                    <P38StatusLabel tone={tone}>{manifesto.status}</P38StatusLabel>
+                    <span className="tabular-nums">ETA {format(parseISO(manifesto.eta), 'dd/MM/yyyy HH:mm')}</span>
+                    <span>{manifesto.pedidos_vinculados?.length || 0} pedidos</span>
+                    <span className="tabular-nums">{manifesto.peso_total_bruto_kg?.toFixed(2) || 0} kg</span>
+                  </>
+                }
+                trailing={
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleVerDetalhes(manifesto)}>
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                }
+              />
+            );
+          })}
+        </P38MobileLineList>
       )}
 
       {/* Modal de Detalhes */}

@@ -320,47 +320,37 @@ export default function InterfaceSeparador() {
             <Card className="shadow-lg">
               <CardContent className="p-4">
                 <h3 className="text-sm font-semibold text-gray-500 mb-3">ITENS PARA SEPARAR</h3>
-                <div className="space-y-2">
+                <P38MobileLineList>
                   {pedidoAtual.itens.map((item, index) => {
                     const separado = itensSeparados.includes(index);
-                    
                     return (
-                      <button
+                      <P38MobileLine
                         key={index}
+                        as="button"
+                        type="button"
+                        striped={index % 2 === 1}
+                        accent={separado ? 'success' : 'default'}
                         onClick={() => handleMarcarItem(index)}
-                        className={`w-full p-4 rounded-lg transition-all ${
-                          separado 
-                            ? 'bg-green-50 dark:bg-green-900/20 shadow-sm' 
-                            : 'bg-white dark:bg-gray-800 hover:shadow-md'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              separado 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
-                            }`}>
-                              {separado ? (
-                                <CheckCircle className="w-5 h-5" />
-                              ) : (
-                                <Package className="w-5 h-5" />
-                              )}
-                            </div>
-                            <div className="text-left">
-                              <p className={`font-medium ${separado ? 'line-through text-gray-500' : 'text-gray-800 dark:text-white'}`}>
-                                {item.produto_nome}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                QTD: {item.quantidade} • {formatValor(item.total)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
+                        className="w-full text-left"
+                        title={<span className={separado ? 'line-through opacity-70' : ''}>{item.produto_nome}</span>}
+                        meta={
+                          <P38StatusLabel tone={separado ? 'success' : 'muted'}>
+                            {separado ? 'Separado' : 'Pendente'}
+                          </P38StatusLabel>
+                        }
+                        value={`Qtd ${item.quantidade}`}
+                        valueSub={formatValor(item.total)}
+                        trailing={
+                          separado ? (
+                            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                          ) : (
+                            <Package className="w-5 h-5 text-muted-foreground shrink-0" />
+                          )
+                        }
+                      />
                     );
                   })}
-                </div>
+                </P38MobileLineList>
               </CardContent>
             </Card>
 

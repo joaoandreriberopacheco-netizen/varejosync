@@ -64,11 +64,11 @@ export default function AuditoriaEstoque() {
             {grupos.ativas.length > 0 && (
               <section>
                 <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
-                <div className="space-y-2">
-                  {grupos.ativas.map(conf => (
-                    <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} />
+                <P38MobileLineList>
+                  {grupos.ativas.map((conf, index) => (
+                    <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} striped={index % 2 === 1} />
                   ))}
-                </div>
+                </P38MobileLineList>
               </section>
             )}
 

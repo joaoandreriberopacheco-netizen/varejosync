@@ -5,6 +5,7 @@ import { Plus, ClipboardList, Play, CheckCircle2, Clock, XCircle, AlertCircle, C
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const statusConfig = {
   "Rascunho": { icon: Clock, color: "text-gray-400 dark:text-gray-500", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },

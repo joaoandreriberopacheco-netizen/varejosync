@@ -201,67 +201,35 @@ export default function FilaSeparacao() {
         </CardHeader>
       </Card>
 
-      {/* Lista Mobile - Compacta */}
-      <div className="lg:hidden space-y-2">
-        {ordens.map(ordem => (
-          <div key={ordem.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <p className="font-medium text-base text-gray-900">{ordem.pedido_numero}</p>
-                <p className="text-sm text-gray-500 font-light">{ordem.cliente_nome || 'Cliente não identificado'}</p>
-              </div>
-              {getStatusBadge(ordem.status)}
-            </div>
-            
-            <div className="flex items-center justify-between text-sm text-gray-500 mb-4 font-light">
-              <span>{ordem.itens?.length || 0} itens na lista</span>
-              {ordem.estoquista_nome && <span className="text-xs bg-gray-50 px-2 py-1 rounded-full">Resp: {ordem.estoquista_nome}</span>}
-            </div>
-
-            {ordem.status === 'Pendente' && (
-              <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
-                <span className="text-sm font-medium text-gray-600">Iniciar Separação</span>
-                <Button 
-                  onClick={() => handleIniciarSeparacao(ordem)}
-                  className="h-10 w-10 rounded-full bg-gray-900 text-white hover:bg-gray-800 shadow-sm p-0"
-                >
-                  <Play className="w-4 h-4 ml-0.5" />
-                </Button>
-              </div>
-            )}
-            {ordem.status === 'Em Separação' && ordem.estoquista_id === currentUser?.id && (
-              <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
-                <span className="text-sm font-medium text-blue-700">Continuar Separação</span>
-                <Button 
-                  onClick={() => {
-                    setOrdemSelecionada(ordem);
-                    setItemAtualIndex(0);
-                    setIsDialogOpen(true);
-                  }}
-                  className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-sm p-0"
-                >
-                  <Play className="w-4 h-4 ml-0.5" />
-                </Button>
-              </div>
-            )}
-            {ordem.status === 'Separado' && (
-              <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
-                <span className="text-sm font-medium text-emerald-700">Concluída</span>
-                <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-sm">
-                  <CheckCircle className="w-5 h-5" />
-                </div>
-              </div>
-            )}
-            </div>
-            ))}
-
-            {ordens.length === 0 && (
-          <div className="bg-white rounded-lg p-8 text-center">
-            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-gray-500">Nenhuma ordem pendente</p>
+      {/* Lista Mobile */}
+      <P38MobileLineList className="md:block lg:hidden">
+        {ordens.map((ordem, index) => {
+          const tone = p38StatusTone(ordem.status);
+          return (
+            <P38MobileLine
+              key={ordem.id}
+              striped={index % 2 === 1}
+              accent={p38AccentKeyFromTone(tone)}
+              title={ordem.pedido_numero}
+              subtitle={ordem.cliente_nome || 'Cliente não identificado'}
+              meta={
+                <>
+                  <P38StatusLabel tone={tone}>{ordem.status}</P38StatusLabel>
+                  <span>{ordem.itens?.length || 0} itens</span>
+                  {ordem.estoquista_nome ? <span className="truncate">Resp: {ordem.estoquista_nome}</span> : null}
+                </>
+              }
+              trailing={renderOrdemTrailing(ordem)}
+            />
+          );
+        })}
+        {ordens.length === 0 && (
+          <div className="p-8 text-center">
+            <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-muted-foreground text-sm">Nenhuma ordem pendente</p>
           </div>
         )}
-      </div>
+      </P38MobileLineList>
 
       {/* Tabela Desktop */}
       <Card className="hidden lg:block">
@@ -274,9 +242,9 @@ export default function FilaSeparacao() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-hidden">
+          <P38TableShell>
             <Table>
-              <TableHeader className="bg-gray-50">
+              <TableHeader>
                 <TableRow>
                   <TableHead>Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
@@ -324,14 +292,14 @@ export default function FilaSeparacao() {
                 ))}
                 {ordens.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       Nenhuma ordem de separação pendente.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-          </div>
+          </P38TableShell>
         </CardContent>
       </Card>
 

@@ -11,6 +11,7 @@ import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Tru
 import { useToast } from "@/components/ui/use-toast";
 import { dataHoje } from '@/components/utils/dateUtils';
 import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
 
 export default function SugestaoCompra() {
   const [produtos, setProdutos] = useState([]);

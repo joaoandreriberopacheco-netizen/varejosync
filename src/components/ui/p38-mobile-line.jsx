@@ -96,6 +96,16 @@ export const P38MobileLineList = React.forwardRef(function P38MobileLineList({ c
 P38MobileLineList.displayName = 'P38MobileLineList';
 
 
+
+/** Mapeia tipo de notificação/UI (success, warning, info, error) para tom P38. */
+export function p38TypeTone(type) {
+  if (type === 'warning') return 'warning';
+  if (type === 'info') return 'info';
+  if (type === 'error' || type === 'danger') return 'danger';
+  if (type === 'muted') return 'muted';
+  return 'success';
+}
+
 /** Mapeia texto de status para tom semântico P38. */
 export function p38StatusTone(status) {
   if (!status) return 'muted';
