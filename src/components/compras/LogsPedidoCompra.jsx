@@ -4,7 +4,7 @@ import { ArrowRight, User, Bot, Users } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
 const STATUS_CORES = {
-  'Rascunho':             'bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90',
+  'Rascunho':             'bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90',
   'Enviado':              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   'Aguardando Liberação': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   'Aprovado':             'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
@@ -69,14 +69,14 @@ export default function LogsPedidoCompra({ pedidoId }) {
             {/* Linha de transição de status */}
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {log.status_anterior && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_anterior] || 'bg-gray-100 text-muted-foreground'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_anterior] || 'bg-muted text-muted-foreground'}`}>
                   {log.status_anterior}
                 </span>
               )}
               {log.status_anterior && (
                 <ArrowRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
               )}
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_novo] || 'bg-gray-100 text-muted-foreground'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_novo] || 'bg-muted text-muted-foreground'}`}>
                 {log.status_novo}
               </span>
             </div>

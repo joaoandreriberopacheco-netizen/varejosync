@@ -36,12 +36,12 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
   const years = createYears(monthDate.getFullYear());
 
   return (
-    <div className="rounded-3xl bg-muted/40 dark:bg-slate-950/60 p-3 shadow-sm min-w-[300px]">
+    <div className="rounded-3xl bg-muted/40 dark:bg-muted/60 p-3 shadow-sm min-w-[300px]">
       <div className="flex items-center justify-between mb-3 px-1">
         <button
           type="button"
           onClick={onPrev}
-          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/90 dark:text-gray-100 bg-gray-200 dark:bg-muted hover:bg-gray-300 dark:hover:bg-slate-700"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/90 dark:text-foreground bg-muted dark:bg-muted hover:bg-muted dark:hover:bg-muted"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -50,14 +50,14 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
           <button
             type="button"
             onClick={() => setMode(mode === 'months' ? 'days' : 'months')}
-            className="px-3 py-1.5 rounded-full text-sm font-medium text-foreground bg-gray-200 dark:bg-muted capitalize"
+            className="px-3 py-1.5 rounded-full text-sm font-medium text-foreground bg-muted dark:bg-muted capitalize"
           >
             {format(monthDate, 'MMMM', { locale: ptBR })}
           </button>
           <button
             type="button"
             onClick={() => setMode(mode === 'years' ? 'days' : 'years')}
-            className="px-3 py-1.5 rounded-full text-sm font-medium text-foreground bg-gray-200 dark:bg-muted"
+            className="px-3 py-1.5 rounded-full text-sm font-medium text-foreground bg-muted dark:bg-muted"
           >
             {format(monthDate, 'yyyy')}
           </button>
@@ -66,7 +66,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
         <button
           type="button"
           onClick={onNext}
-          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/90 dark:text-gray-100 bg-gray-200 dark:bg-muted hover:bg-gray-300 dark:hover:bg-slate-700"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/90 dark:text-foreground bg-muted dark:bg-muted hover:bg-muted dark:hover:bg-muted"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -87,12 +87,12 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
             table: 'w-full border-collapse',
             head_cell: 'text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]',
             row: 'flex w-full mt-2',
-            cell: 'h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-slate-200 dark:[&:has([aria-selected])]:bg-slate-800',
-            day: 'h-10 w-10 p-0 rounded-full font-normal text-foreground/90 hover:bg-slate-200 dark:hover:bg-slate-800',
-            day_selected: 'bg-slate-900 text-white hover:bg-slate-900 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-200',
-            day_today: 'bg-slate-200 text-slate-900 dark:bg-muted dark:text-white',
-            day_range_middle: 'aria-selected:bg-slate-200 aria-selected:text-slate-900 dark:aria-selected:bg-slate-800 dark:aria-selected:text-white',
-            day_outside: 'text-gray-300 dark:text-muted-foreground opacity-50',
+            cell: 'h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-muted dark:[&:has([aria-selected])]:bg-card',
+            day: 'h-10 w-10 p-0 rounded-full font-normal text-foreground/90 hover:bg-muted dark:hover:bg-card',
+            day_selected: 'bg-primary text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-muted',
+            day_today: 'bg-muted text-foreground dark:bg-muted dark:text-white',
+            day_range_middle: 'aria-selected:bg-muted aria-selected:text-foreground dark:aria-selected:bg-card dark:aria-selected:text-white',
+            day_outside: 'text-muted-foreground dark:text-muted-foreground opacity-50',
           }}
         />
       )}
@@ -104,7 +104,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
               key={month.value}
               type="button"
               onClick={() => onPickMonth(month.value)}
-              className={`h-11 rounded-2xl text-sm capitalize ${monthDate.getMonth() === month.value ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : 'bg-gray-200 dark:bg-muted text-foreground/90'}`}
+              className={`h-11 rounded-2xl text-sm capitalize ${monthDate.getMonth() === month.value ? 'bg-primary text-white dark:bg-primary dark:text-primary-foreground' : 'bg-muted dark:bg-muted text-foreground/90'}`}
             >
               {month.label}
             </button>
@@ -119,7 +119,7 @@ function MonthPanel({ monthDate, onPrev, onNext, onSelectDay, start, end, mode, 
               key={year}
               type="button"
               onClick={() => onPickYear(year)}
-              className={`h-11 rounded-2xl text-sm ${monthDate.getFullYear() === year ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : 'bg-gray-200 dark:bg-muted text-foreground/90'}`}
+              className={`h-11 rounded-2xl text-sm ${monthDate.getFullYear() === year ? 'bg-primary text-white dark:bg-primary dark:text-primary-foreground' : 'bg-muted dark:bg-muted text-foreground/90'}`}
             >
               {year}
             </button>
@@ -181,7 +181,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
         type="button"
         variant="ghost"
         onClick={handleOpen}
-        className="w-full h-12 rounded-2xl bg-gray-100 dark:bg-muted hover:bg-gray-200 dark:hover:bg-slate-700 justify-between px-4 text-foreground/90 dark:text-gray-100"
+        className="w-full h-12 rounded-2xl bg-muted dark:bg-muted hover:bg-muted dark:hover:bg-muted justify-between px-4 text-foreground/90 dark:text-foreground"
       >
         <span className="flex items-center gap-2 truncate">
           <CalendarDays className="w-4 h-4 opacity-80" />
@@ -190,13 +190,13 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
       </Button>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Período</DrawerTitle>
           </DrawerHeader>
 
           <div className="space-y-4">
-            <div className="rounded-2xl bg-gray-100 dark:bg-muted p-4">
+            <div className="rounded-2xl bg-muted dark:bg-muted p-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <div className="text-muted-foreground mb-1">De</div>
@@ -268,7 +268,7 @@ export default function MobileDateRangePicker({ startDate, endDate, onApply, onC
               </Button>
               <Button
                 type="button"
-                className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground dark:hover:bg-card"
                 onClick={() => {
                   onApply(tempStart, tempEnd);
                   setOpen(false);

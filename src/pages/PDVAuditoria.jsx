@@ -236,7 +236,7 @@ export default function PDVAuditoria() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-card">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -244,7 +244,7 @@ export default function PDVAuditoria() {
   return (
     <div className="min-h-screen bg-card flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/90 dark:bg-background/90 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-border/40">
+      <div className="sticky top-0 z-20 bg-card/90 dark:bg-background/90 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-border/40">
         <button
           onClick={() => navigate(createPageUrl("AuditoriaEstoque"))}
           className="w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground"
@@ -259,7 +259,7 @@ export default function PDVAuditoria() {
             {itens.length} entr{itens.length !== 1 ? "adas" : "ada"} · {itensAgrupados.length} produto{itensAgrupados.length !== 1 ? "s" : ""}
           </p>
         </div>
-        {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-300 flex-shrink-0" />}
+        {saving && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground flex-shrink-0" />}
         {!saving && <div className="w-4 h-4" />}
       </div>
 
@@ -268,10 +268,10 @@ export default function PDVAuditoria() {
         {itensAgrupados.length === 0 && (
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-              <Package className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
+              <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
             </div>
             <p className="text-muted-foreground text-sm">Nenhum produto conferido</p>
-            <p className="text-gray-300 dark:text-muted-foreground text-xs mt-1">Busque e adicione produtos abaixo</p>
+            <p className="text-muted-foreground dark:text-muted-foreground text-xs mt-1">Busque e adicione produtos abaixo</p>
           </div>
         )}
 
@@ -282,7 +282,7 @@ export default function PDVAuditoria() {
               onClick={() => setItemExpandido(prev => prev === grupo.produto_id ? null : grupo.produto_id)}
               className="w-full flex items-center gap-3 p-3.5 text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-card dark:bg-muted flex items-center justify-center flex-shrink-0 shadow-sm">
                 <Package className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
@@ -304,15 +304,15 @@ export default function PDVAuditoria() {
                   </span>
                 </div>
                 {itemExpandido === grupo.produto_id
-                  ? <ChevronUp className="w-4 h-4 text-gray-300" />
-                  : <ChevronDown className="w-4 h-4 text-gray-300" />
+                  ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  : <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 }
               </div>
             </button>
 
             {/* Entradas expandidas */}
             {itemExpandido === grupo.produto_id && (
-              <div className="border-t border-border/40 divide-y divide-gray-100 dark:divide-gray-700">
+              <div className="border-t border-border/40 divide-y divide-border/40 dark:divide-border/40">
                 {grupo.entradas.map((entrada, eIdx) => (
                          <div key={entrada.idx} className="flex items-center gap-2 px-3 py-2.5 min-w-0">
                            <span className="text-xs text-muted-foreground w-14 flex-shrink-0">
@@ -328,7 +328,7 @@ export default function PDVAuditoria() {
                       <button
                         type="button"
                         onClick={() => abrirSeletorUnidadeItem(entrada.idx)}
-                        className="h-7 inline-flex items-center gap-1 rounded-lg bg-white dark:bg-muted px-2 text-[11px] font-semibold text-muted-foreground shadow-sm"
+                        className="h-7 inline-flex items-center gap-1 rounded-lg bg-card dark:bg-muted px-2 text-[11px] font-semibold text-muted-foreground shadow-sm"
                         title="Trocar unidade"
                       >
                         <Boxes className="w-3 h-3" />
@@ -362,7 +362,7 @@ export default function PDVAuditoria() {
                     const prod = produtos.find(p => p.id === grupo.produto_id);
                     if (prod) adicionarProduto(prod);
                   }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-300"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground"
                 >
                   <Plus className="w-3 h-3" /> Adicionar outra entrada
                 </button>
@@ -373,10 +373,10 @@ export default function PDVAuditoria() {
       </div>
 
       {/* Barra de busca */}
-      <div className="fixed left-0 right-0 z-[55] max-w-full space-y-2 overflow-x-hidden border-t border-border/40 bg-white p-3 dark:border-border/40 dark:bg-background p38-bottom-dock">
+      <div className="fixed left-0 right-0 z-[55] max-w-full space-y-2 overflow-x-hidden border-t border-border/40 bg-card p-3 dark:border-border/40 dark:bg-background p38-bottom-dock">
         {/* Resultados da busca */}
         {produtosFiltrados.length > 0 && (
-          <div className="max-h-72 overflow-y-auto bg-card rounded-2xl shadow-xl border border-border/40 divide-y divide-gray-50 dark:divide-gray-700">
+          <div className="max-h-72 overflow-y-auto bg-card rounded-2xl shadow-xl border border-border/40 divide-y divide-border/30 dark:divide-border/40">
             {produtosFiltrados.map(prod => {
               const nome = resolveInventoryProductName(prod);
               const contagens = itens.filter(i => i.produto_id === prod.id);
@@ -400,7 +400,7 @@ export default function PDVAuditoria() {
                       </span>
                     </div>
                   )}
-                  <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                  <Plus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </button>
               );
             })}
@@ -409,14 +409,14 @@ export default function PDVAuditoria() {
 
         <div className="flex gap-2 min-w-0">
           <div className="flex-1 relative min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
             <Input
               ref={buscaRef}
               placeholder="Buscar produto..."
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onFocus={() => setMostrarBusca(true)}
-              className="pl-9 rounded-xl border-0 bg-muted/50 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700 w-full"
+              className="pl-9 rounded-xl border-0 bg-muted/50 h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-gray-700 w-full"
             />
           </div>
           <Button

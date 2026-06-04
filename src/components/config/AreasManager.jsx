@@ -100,7 +100,7 @@ export default function AreasManager() {
             </Button>
           </div>
           <Button onClick={() => setShowDialog(true)} size="sm"
-            className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
+            className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Nova Área</span>
           </Button>
@@ -108,10 +108,10 @@ export default function AreasManager() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : areas.length === 0 ? (
         <div className="text-center py-12 rounded-xl bg-muted/50/50">
-          <MapPin className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <MapPin className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-foreground/90" />
           <p className="text-sm text-muted-foreground mb-4">Nenhuma área cadastrada</p>
           <Button onClick={() => setShowDialog(true)} size="sm" className="bg-primary text-white gap-1.5">
             <Plus className="w-3.5 h-3.5" /> Criar Primeira
@@ -122,11 +122,11 @@ export default function AreasManager() {
           {areas.map(area => (
             <div key={area.id}
               className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-primary dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-primary dark:bg-muted flex items-center justify-center flex-shrink-0">
                 <span className="text-[10px] font-bold text-white">{area.codigo}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{area.nome}</p>
+                <p className="text-sm font-medium text-foreground truncate">{area.nome}</p>
                 {area.descricao && <p className="text-xs text-muted-foreground truncate">{area.descricao}</p>}
               </div>
               {!area.ativo && (
@@ -134,7 +134,7 @@ export default function AreasManager() {
               )}
               <div className="flex gap-1 flex-shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => handleEdit(area)}
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200">
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground">
                   <Edit3 className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(area.id)}
@@ -156,7 +156,7 @@ export default function AreasManager() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <MapPin className="w-4 h-4 text-muted-foreground" />
               {editingArea ? 'Editar Área' : 'Nova Área'}
             </DialogTitle>
@@ -191,7 +191,7 @@ export default function AreasManager() {
           <DialogFooter className="gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={handleClose} className="h-8 text-xs">Cancelar</Button>
             <Button size="sm" onClick={handleSave}
-              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>

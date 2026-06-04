@@ -29,11 +29,11 @@ export default function ConsumoDestinacaoStep({
   onNext,
 }) {
   return (
-    <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-muted">
+    <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Caixa ativo do dia">
           <Select value={formData.turno_caixa_id} onValueChange={(value) => setFormData((prev) => ({ ...prev, turno_caixa_id: value }))}>
-            <SelectTrigger className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-background">
+            <SelectTrigger className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-background">
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
@@ -45,7 +45,7 @@ export default function ConsumoDestinacaoStep({
         <Field label="Destinação">
           <div className="flex gap-2">
             <Select value={formData.destinacao} onValueChange={(value) => setFormData((prev) => ({ ...prev, destinacao: value }))}>
-              <SelectTrigger ref={destinacaoRef} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-background">
+              <SelectTrigger ref={destinacaoRef} className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-background">
                 <SelectValue placeholder="Escolha a destinação" />
               </SelectTrigger>
               <SelectContent>
@@ -59,7 +59,7 @@ export default function ConsumoDestinacaoStep({
         <Field label="Interveniente / quem recebeu">
           <div className="flex gap-2">
             <Select value={formData.responsavel_recebimento} onValueChange={(value) => setFormData((prev) => ({ ...prev, responsavel_recebimento: value }))}>
-              <SelectTrigger ref={responsavelRef} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-background">
+              <SelectTrigger ref={responsavelRef} className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-background">
                 <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
               <SelectContent>
@@ -71,17 +71,17 @@ export default function ConsumoDestinacaoStep({
         </Field>
 
         <Field label="Tags">
-          <Input ref={tagsRef} type="text" inputMode="text" className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-background" placeholder="Ex: obra, manutenção" onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value.split(',').map((item) => item.trim()).filter(Boolean) }))} />
+          <Input ref={tagsRef} type="text" inputMode="text" className="h-11 rounded-2xl border-0 bg-muted shadow-sm dark:bg-background" placeholder="Ex: obra, manutenção" onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value.split(',').map((item) => item.trim()).filter(Boolean) }))} />
         </Field>
       </div>
 
       <div className="mt-4">
         <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Observações</Label>
-        <Textarea ref={observacoesRef} className="min-h-[100px] rounded-[24px] border-0 bg-gray-100 shadow-sm dark:bg-background" value={formData.observacoes} onChange={(e) => setFormData((prev) => ({ ...prev, observacoes: e.target.value }))} />
+        <Textarea ref={observacoesRef} className="min-h-[100px] rounded-[24px] border-0 bg-muted shadow-sm dark:bg-background" value={formData.observacoes} onChange={(e) => setFormData((prev) => ({ ...prev, observacoes: e.target.value }))} />
       </div>
 
       <div className="mt-4 flex justify-end">
-        <Button type="button" onClick={onNext} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground md:w-44">
+        <Button type="button" onClick={onNext} className="h-11 w-full rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground md:w-44">
           Próximo
         </Button>
       </div>

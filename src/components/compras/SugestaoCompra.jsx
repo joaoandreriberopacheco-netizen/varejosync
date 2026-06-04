@@ -333,23 +333,23 @@ export default function SugestaoCompra() {
   return (
     <div className="space-y-4 -mx-2 md:mx-0">
       <div className="px-2 md:px-0">
-        <div className="rounded-[28px] bg-slate-900 dark:bg-card/95 text-white p-4 md:p-5 shadow-sm space-y-4">
+        <div className="rounded-[28px] bg-primary dark:bg-card/95 text-white p-4 md:p-5 shadow-sm space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-lg md:text-xl font-semibold font-glacial flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-gray-300" />
+                <Lightbulb className="w-5 h-5 text-muted-foreground" />
                 Sugestões de Compra
               </h3>
               <p className="text-sm text-muted-foreground mt-1">Reposição baseada em estoque mínimo</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button onClick={loadData} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white border-0">
+              <Button onClick={loadData} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-card hover:bg-muted text-white border-0">
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button onClick={() => setShowFilters(true)} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white border-0 relative">
+              <Button onClick={() => setShowFilters(true)} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-card hover:bg-muted text-white border-0 relative">
                 <SlidersHorizontal className="h-4 w-4" />
                 {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-white text-slate-950 text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-card text-foreground text-[10px] font-bold flex items-center justify-center">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -363,20 +363,20 @@ export default function SugestaoCompra() {
               placeholder="Buscar produto..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-800 text-white placeholder:text-muted-foreground border-0 h-12 rounded-2xl"
+              className="pl-9 bg-card text-white placeholder:text-muted-foreground border-0 h-12 rounded-2xl"
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3 text-sm text-gray-300">
+          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
             <span>{filteredProducts.length} item(ns)</span>
             <span>{selectedCount} selecionado(s)</span>
           </div>
 
           <div className="grid grid-cols-2 md:flex gap-2">
-            <Button onClick={handleQuote} disabled={selectedCount === 0} variant="outline" size="sm" className="gap-1.5 h-11 rounded-2xl border-slate-700 bg-slate-800 text-white hover:bg-slate-700">
+            <Button onClick={handleQuote} disabled={selectedCount === 0} variant="outline" size="sm" className="gap-1.5 h-11 rounded-2xl border-border/40 bg-card text-white hover:bg-muted">
               <FileText className="w-3.5 h-3.5" />Cotação
             </Button>
-            <Button onClick={handleGenerate} disabled={selectedCount === 0} size="sm" className="gap-1.5 h-11 rounded-2xl bg-white text-slate-950 hover:bg-gray-200">
+            <Button onClick={handleGenerate} disabled={selectedCount === 0} size="sm" className="gap-1.5 h-11 rounded-2xl bg-card text-foreground hover:bg-muted">
               <ShoppingCart className="w-3.5 h-3.5" />Gerar ({selectedCount})
             </Button>
           </div>
@@ -384,7 +384,7 @@ export default function SugestaoCompra() {
       </div>
 
       <Drawer open={showFilters} onOpenChange={setShowFilters}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
             <DrawerDescription>Refine as sugestões sem ocupar a tela principal.</DrawerDescription>
@@ -401,7 +401,7 @@ export default function SugestaoCompra() {
 
       {produtos.length === 0 ? (
         <div className="text-center py-16 bg-card rounded-xl mx-2 md:mx-0">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
           <p className="text-muted-foreground">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
       ) : (

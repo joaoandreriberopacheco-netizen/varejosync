@@ -48,7 +48,7 @@ export default function TerceirosPage() {
         await base44.entities.Terceiro.update(selectedTerceiro.id, formData);
         toast({ 
           title: "Terceiro atualizado!", 
-          className: "bg-card border border-gray-300 dark:border-border/40"
+          className: "bg-card border border-border/40 dark:border-border/40"
         });
       } else {
         const allTerceiros = await base44.entities.Terceiro.list();
@@ -64,7 +64,7 @@ export default function TerceirosPage() {
         });
         toast({ 
           title: "Terceiro criado!", 
-          className: "bg-card border border-gray-300 dark:border-border/40"
+          className: "bg-card border border-border/40 dark:border-border/40"
         });
       }
       loadTerceiros();
@@ -85,7 +85,7 @@ export default function TerceirosPage() {
       loadTerceiros();
       toast({ 
         title: "Terceiro excluído!", 
-        className: "bg-card border border-gray-300 dark:border-border/40"
+        className: "bg-card border border-border/40 dark:border-border/40"
       });
     }
   };
@@ -141,7 +141,7 @@ export default function TerceirosPage() {
     <div className="max-w-7xl mx-auto space-y-4">
       {/* Header glacial */}
       <div>
-        <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Terceiros</h1>
+        <h1 className="text-lg font-semibold text-foreground font-glacial">Terceiros</h1>
         <p className="text-xs text-muted-foreground">Clientes, fornecedores e parceiros</p>
       </div>
 
@@ -152,7 +152,7 @@ export default function TerceirosPage() {
             <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Buscar..." 
-              className="pl-6 bg-transparent border-0 border-b border-border/40 rounded-none focus:border-gray-700 dark:focus:border-gray-400 h-9 text-sm dark:text-foreground" 
+              className="pl-6 bg-transparent border-0 border-b border-border/40 rounded-none focus:border-border/40 dark:focus:border-border/40 h-9 text-sm dark:text-foreground" 
               value={searchTerm} 
               onChange={e => setSearchTerm(e.target.value)} 
             />
@@ -185,7 +185,7 @@ export default function TerceirosPage() {
       {/* Tabela */}
       {filteredTerceiros.length === 0 ? (
         <div className="text-center py-12 bg-card rounded-2xl shadow-sm">
-          <Users className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <Users className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-foreground/90" />
           <p className="text-sm text-muted-foreground mb-4">Nenhum terceiro cadastrado</p>
           <Button onClick={handleAddNew} className="gap-2 bg-primary hover:bg-primary/90 text-white text-sm h-9 px-4">
             <PlusCircle className="w-4 h-4" /> Criar Primeiro Terceiro
@@ -304,7 +304,7 @@ export default function TerceirosPage() {
                 <Input 
                   value={formData.nome}
                   onChange={e => setFormData({...formData, nome: e.target.value})}
-                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                  className="dark:bg-muted dark:border-border/40 dark:text-foreground"
                 />
               </div>
               <div>
@@ -312,13 +312,13 @@ export default function TerceirosPage() {
                 <Input 
                   value={formData.cpf_cnpj}
                   onChange={e => setFormData({...formData, cpf_cnpj: e.target.value})}
-                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                  className="dark:bg-muted dark:border-border/40 dark:text-foreground"
                 />
               </div>
               <div>
                 <Label className="text-foreground/90">Tipo *</Label>
                 <Select value={formData.tipo} onValueChange={v => setFormData({...formData, tipo: v})}>
-                  <SelectTrigger className="dark:bg-muted dark:border-gray-600 dark:text-foreground">
+                  <SelectTrigger className="dark:bg-muted dark:border-border/40 dark:text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -334,7 +334,7 @@ export default function TerceirosPage() {
                   type="email"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
-                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                  className="dark:bg-muted dark:border-border/40 dark:text-foreground"
                 />
               </div>
               <div>
@@ -342,16 +342,16 @@ export default function TerceirosPage() {
                 <Input 
                   value={formData.telefone}
                   onChange={e => setFormData({...formData, telefone: e.target.value})}
-                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                  className="dark:bg-muted dark:border-border/40 dark:text-foreground"
                 />
               </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-muted dark:border-gray-600 text-foreground/90 h-11 md:h-10 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-muted dark:border-border/40 text-foreground/90 h-11 md:h-10 w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white h-11 md:h-10 w-full sm:w-auto">
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted text-white h-11 md:h-10 w-full sm:w-auto">
               Salvar
             </Button>
           </DialogFooter>

@@ -36,18 +36,18 @@ export default function AgefinNaturezaSelector({ value = 'Único', onChange }) {
             onClick={() => onChange(option.id)}
             className={`relative rounded-2xl px-3 py-4 text-center transition-all ${
               isActive
-                ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-foreground'
-                : 'bg-gray-100 text-muted-foreground shadow-sm hover:bg-gray-200 dark:bg-background dark:text-muted-foreground dark:hover:bg-gray-950'
+                ? 'bg-background text-white shadow-sm dark:bg-card dark:text-foreground'
+                : 'bg-muted text-muted-foreground shadow-sm hover:bg-muted dark:bg-background dark:text-muted-foreground dark:hover:bg-background'
             }`}
           >
             <div className="mb-2 flex justify-center">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isActive ? 'bg-white/10 dark:bg-gray-200' : 'bg-card'}`}>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isActive ? 'bg-card/10 dark:bg-muted' : 'bg-card'}`}>
                 <Icon className="h-5 w-5" />
               </div>
             </div>
             <p className="text-xs font-semibold leading-tight">{option.label}</p>
             {isActive && (
-              <div className="absolute right-2 top-2 rounded-full bg-white/15 p-1 dark:bg-gray-200">
+              <div className="absolute right-2 top-2 rounded-full bg-card/15 p-1 dark:bg-muted">
                 <Check className="h-3 w-3" />
               </div>
             )}

@@ -57,7 +57,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
                     produto={produto}
                     tabelaPreco={tabelaPreco}
                     variant="quickBudget"
-                    finalClassName="text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums"
+                    finalClassName="text-sm font-bold text-foreground tabular-nums"
                     labelBottom={false}
                   />
                 </div>

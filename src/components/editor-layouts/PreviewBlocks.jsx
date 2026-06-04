@@ -8,13 +8,13 @@ const LOREM_IPSUM = {
 
 export default function PreviewBlocks({ blocks }) {
   return (
-    <div className="bg-white rounded-lg p-8 shadow-sm border border-border/40 dark:bg-muted">
+    <div className="bg-card rounded-lg p-8 shadow-sm border border-border/40 dark:bg-muted">
       {blocks.map((block) => {
         const loremContent = LOREM_IPSUM[block.tipo] || block.conteudo;
         
         if (block.tipo === 'header') {
           return (
-            <div key={block.id} className="border-b-2 border-gray-900 dark:border-white pb-3 mb-4 text-center">
+            <div key={block.id} className="border-b-2 border-border/40 dark:border-white pb-3 mb-4 text-center">
               <p className="font-bold text-foreground text-sm">
                 {loremContent}
               </p>
@@ -24,7 +24,7 @@ export default function PreviewBlocks({ blocks }) {
 
         if (block.tipo === 'footer') {
           return (
-            <div key={block.id} className="border-t border-gray-400 dark:border-gray-500 pt-3 mt-6 text-center">
+            <div key={block.id} className="border-t border-border/40 dark:border-border/40 pt-3 mt-6 text-center">
               <p className="text-xs text-muted-foreground">
                 {loremContent}
               </p>

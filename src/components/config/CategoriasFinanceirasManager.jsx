@@ -57,7 +57,7 @@ export default function CategoriasFinanceirasManager() {
           {!cat.ativo && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">inativa</span>}
           <div className="flex gap-1 flex-shrink-0">
             <Button variant="ghost" size="icon" onClick={() => handleEdit(cat)}
-              className="h-6 w-6 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200">
+              className="h-6 w-6 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground">
               <Edit className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => handleDelete(cat)}
@@ -80,7 +80,7 @@ export default function CategoriasFinanceirasManager() {
           <p className="text-xs text-muted-foreground mt-0.5">Organize receitas e despesas</p>
         </div>
         <Button onClick={handleAddNew} size="sm"
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
           <PlusCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Nova Categoria</span>
         </Button>
@@ -88,7 +88,7 @@ export default function CategoriasFinanceirasManager() {
 
       {categorias.length === 0 ? (
         <div className="text-center py-12 rounded-xl bg-muted/50/50">
-          <FileText className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <FileText className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-foreground/90" />
           <p className="text-sm text-muted-foreground mb-4">Nenhuma categoria cadastrada</p>
           <Button onClick={handleAddNew} size="sm" className="bg-primary text-white gap-1.5">
             <PlusCircle className="w-3.5 h-3.5" /> Criar Primeira
@@ -104,7 +104,7 @@ export default function CategoriasFinanceirasManager() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
               {selectedCategoria ? 'Editar Categoria' : 'Nova Categoria'}
             </DialogTitle>
@@ -154,7 +154,7 @@ export default function CategoriasFinanceirasManager() {
           <DialogFooter className="gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
             <Button size="sm" onClick={handleSave}
-              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>

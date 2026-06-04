@@ -154,7 +154,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
                 value={manualFrom}
                 onChange={handleManualFromChange}
                 onBlur={() => commitManualRange(manualFrom, manualTo)}
-                className="w-full h-11 rounded-xl border border-border/40 bg-card px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20"
+                className="w-full h-11 rounded-xl border border-border/40 bg-card px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-border/10 dark:focus:ring-white/20"
               />
             </label>
             <label className="block">
@@ -167,7 +167,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
                 value={manualTo}
                 onChange={handleManualToChange}
                 onBlur={() => commitManualRange(manualFrom, manualTo)}
-                className="w-full h-11 rounded-xl border border-border/40 bg-card px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20"
+                className="w-full h-11 rounded-xl border border-border/40 bg-card px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-border/10 dark:focus:ring-white/20"
               />
             </label>
           </div>
@@ -189,7 +189,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
           disabled={!dateRange.from || !dateRange.to}
           className={`w-full py-2.5 rounded-xl font-semibold text-sm transition ${
             dateRange.from && dateRange.to
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground hover:opacity-90'
+              ? 'bg-background dark:bg-card text-white dark:text-foreground hover:opacity-90'
               : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >

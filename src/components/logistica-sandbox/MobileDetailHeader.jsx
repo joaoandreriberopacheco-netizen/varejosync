@@ -9,7 +9,7 @@ export default function MobileDetailHeader({ title, subtitle, onBack }) {
         <ArrowLeft className="w-4 h-4" />
       </Button>
       <div className="min-w-0">
-        <p className="text-lg font-semibold text-foreground dark:text-gray-100 font-glacial truncate">{title}</p>
+        <p className="text-lg font-semibold text-foreground dark:text-foreground font-glacial truncate">{title}</p>
         {subtitle ? <p className="text-xs text-muted-foreground truncate">{subtitle}</p> : null}
       </div>
     </div>

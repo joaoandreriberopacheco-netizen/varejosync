@@ -71,7 +71,7 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
         {modoFiltro !== "auditoria" && (
           <Button
             onClick={() => setShowNova(true)}
-            className="bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl h-9 px-4 text-sm font-medium shadow-none"
+            className="bg-background dark:bg-card text-white dark:text-foreground rounded-xl h-9 px-4 text-sm font-medium shadow-none"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Nova
@@ -112,11 +112,11 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
           {lista.length === 0 && (
             <div className="text-center py-16">
               <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                <ClipboardList className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
+                <ClipboardList className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
               </div>
               <p className="text-muted-foreground text-sm">Nenhuma conferência encontrada</p>
               {modoFiltro !== "auditoria" && (
-                <p className="text-gray-300 dark:text-muted-foreground text-xs mt-1">Crie uma nova para começar</p>
+                <p className="text-muted-foreground dark:text-muted-foreground text-xs mt-1">Crie uma nova para começar</p>
               )}
             </div>
           )}

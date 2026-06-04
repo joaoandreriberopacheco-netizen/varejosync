@@ -109,14 +109,14 @@ export default function FechamentoCaixaButton({
         onClick={() => setShowConfirmacao(true)}
         isLoading={isClosing}
         loadingText="Fechando..."
-        className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
+        className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
         style={{ minHeight: '48px' }}
       >
         <Lock className="w-4 h-4" /> Fechar Caixa
       </SafeActionButton>
 
       <AlertDialog open={showConfirmacao} onOpenChange={setShowConfirmacao}>
-        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-white p-5 shadow-2xl sm:w-full sm:max-w-lg sm:p-6 dark:bg-background">
+        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-card p-5 shadow-2xl sm:w-full sm:max-w-lg sm:p-6 dark:bg-background">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar fechamento do caixa?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -125,7 +125,7 @@ export default function FechamentoCaixaButton({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-2xl border-0">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground">Fechar agora</AlertDialogAction>
+            <AlertDialogAction onClick={handleFechar} className="rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">Fechar agora</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

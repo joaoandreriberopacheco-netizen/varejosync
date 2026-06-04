@@ -29,9 +29,9 @@ function Toggle({ checked, onChange }) {
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-none ${checked ? 'bg-primary dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-none ${checked ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`}
     >
-      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+      <span className={`inline-block h-4 w-4 rounded-full bg-card shadow transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
     </button>
   );
 }
@@ -177,7 +177,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         }, 0);
         await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
-      toast({ title: `${alvos.length} lançamento(s) marcados como pagos!`, className: 'bg-gray-100 text-gray-800' });
+      toast({ title: `${alvos.length} lançamento(s) marcados como pagos!`, className: 'bg-muted text-foreground' });
       onSaved?.();
       setSaving(false);
       return;
@@ -195,23 +195,23 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         const delta = isReceita ? valorNumerico || lancamento.valor || 0 : -(valorNumerico || lancamento.valor || 0);
         await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
-      toast({ title: 'Pagamento registrado!', className: 'bg-gray-100 text-gray-800' });
+      toast({ title: 'Pagamento registrado!', className: 'bg-muted text-foreground' });
     } else if (!isPagoLocal && isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, { ...payloadValor, status: 'Em Aberto', data_pagamento: null });
       if (conta) {
         const delta = isReceita ? -(valorNumerico || lancamento.valor || 0) : (valorNumerico || lancamento.valor || 0);
         await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
-      toast({ title: 'Marcado como em aberto', className: 'bg-gray-100 text-gray-800' });
+      toast({ title: 'Marcado como em aberto', className: 'bg-muted text-foreground' });
     } else if (isPagoLocal && isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
         ...payloadValor,
         data_pagamento: dataPagamento, conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
       });
-      toast({ title: 'Dados atualizados!', className: 'bg-gray-100 text-gray-800' });
+      toast({ title: 'Dados atualizados!', className: 'bg-muted text-foreground' });
     } else if (houveAlteracaoValor) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, payloadValor);
-      toast({ title: 'Valor atualizado!', className: 'bg-gray-100 text-gray-800' });
+      toast({ title: 'Valor atualizado!', className: 'bg-muted text-foreground' });
     }
     onSaved?.();
     setSaving(false);
@@ -241,7 +241,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       status_conciliacao: 'Conciliado',
       data_liquidacao_efetiva: dataLiquidacao
     });
-    toast({ title: 'Lançamento conciliado!', className: 'bg-gray-100 text-gray-800' });
+    toast({ title: 'Lançamento conciliado!', className: 'bg-muted text-foreground' });
     onSaved?.();
     setSaving(false);
   };
@@ -254,7 +254,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       status: statusAnterior,
       observacoes: (lancamento.observacoes || '').replace(/\[CANCELADO.*?\]/gs, '').trim()
     });
-    toast({ title: 'Lançamento restaurado!', className: 'bg-gray-100 text-gray-800' });
+    toast({ title: 'Lançamento restaurado!', className: 'bg-muted text-foreground' });
     onSaved?.();
     setSaving(false);
   };
@@ -282,7 +282,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           ...basePayload,
           data_vencimento: venAtual || lancamento.data_vencimento,
         });
-        toast({ title: 'Dados da conta atualizados', className: 'bg-gray-100 text-gray-800' });
+        toast({ title: 'Dados da conta atualizados', className: 'bg-muted text-foreground' });
         onSaved?.();
         return;
       }
@@ -319,7 +319,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       }
       toast({
         title: `${alvos.length} lançamento(s) atualizados`,
-        className: 'bg-gray-100 text-gray-800',
+        className: 'bg-muted text-foreground',
       });
       onSaved?.();
     } catch {
@@ -336,7 +336,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       return;
     }
     if (!cadastroDirty) {
-      toast({ title: 'Nada foi alterado', className: 'bg-gray-100 text-gray-800' });
+      toast({ title: 'Nada foi alterado', className: 'bg-muted text-foreground' });
       return;
     }
     if (lancamento.is_recorrente && lancamento.grupo_lancamento_id) {
@@ -356,12 +356,12 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   return (
     <>
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-white/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
+      <DialogContent className="flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-card/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
 
         <div className="shrink-0">
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1 pr-3">{lancamento.descricao}</p>
+          <p className="text-sm font-semibold text-foreground leading-snug flex-1 pr-3">{lancamento.descricao}</p>
           <button onClick={onClose} className="w-7 h-7 flex-none flex items-center justify-center rounded-full bg-muted text-muted-foreground">
             <X className="w-3.5 h-3.5" />
           </button>
@@ -374,7 +374,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </span>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              <p className="text-2xl font-bold text-foreground">
                 {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
               </p>
               {lancamento.is_recorrente && lancamento.data_vencimento && (
@@ -423,7 +423,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   autoComplete="off"
                   value={cadDescricao}
                   onChange={(e) => setCadDescricao(e.target.value)}
-                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -434,7 +434,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                     type="date"
                     value={cadVencimento}
                     onChange={(e) => setCadVencimento(e.target.value)}
-                    className="w-full h-10 px-2 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                    className="w-full h-10 px-2 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
                   />
                 </div>
                 <div>
@@ -446,7 +446,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                     min="0"
                     value={cadValor}
                     onChange={(e) => setCadValor(e.target.value)}
-                    className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                    className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
                   />
                 </div>
               </div>
@@ -456,14 +456,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   value={cadObs}
                   onChange={(e) => setCadObs(e.target.value)}
                   rows={2}
-                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleSalvarCadastro}
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary dark:bg-gray-200 text-white dark:text-foreground text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary dark:bg-muted text-white dark:text-foreground text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {saving ? 'A guardar…' : 'Guardar alterações'}
@@ -482,7 +482,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               min="0"
               value={valorEditavel}
               onChange={(e) => setValorEditavel(e.target.value)}
-              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
             />
           </div>
         )}
@@ -508,13 +508,13 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   value={dataPagamento}
                   onChange={(e) => setDataPagamento(e.target.value)}
                   disabled={!isPagoLocal}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">Conta</p>
                 <Select value={contaId} onValueChange={setContaId}>
-                  <SelectTrigger className="h-9 text-sm bg-muted border-0 rounded-xl text-foreground focus:ring-2 focus:ring-gray-300">
+                  <SelectTrigger className="h-9 text-sm bg-muted border-0 rounded-xl text-foreground focus:ring-2 focus:ring-border/40">
                     <SelectValue placeholder="Selecionar..." />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -528,7 +528,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             <button
               onClick={handleSalvarPagamento}
               disabled={saving}
-              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground text-base font-semibold active:scale-95 transition-transform disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-base font-semibold active:scale-95 transition-transform disabled:opacity-50">
               <Save className="w-5 h-5" />
               Salvar
             </button>
@@ -576,13 +576,13 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   type="date"
                   value={dataLiquidacao}
                   onChange={(e) => setDataLiquidacao(e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
                 />
               </div>
               <button
                 onClick={handleConciliar}
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary dark:bg-gray-200 text-white dark:text-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary dark:bg-muted text-white dark:text-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
                 <CheckCircle2 className="w-4 h-4" />
                 Salvar Conciliação
               </button>

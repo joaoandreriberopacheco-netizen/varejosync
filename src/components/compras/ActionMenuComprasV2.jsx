@@ -190,7 +190,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       icon: <CheckSquare className="w-5 h-5" />,
       label: modoSelecao ? 'Cancelar seleção' : 'Selecionar embarques',
       onClick: () => { onToggleModoSelecao?.(); setIsExpanded(false); },
-      color: modoSelecao ? 'bg-gray-900 dark:bg-gray-600 text-white' : 'bg-white dark:bg-muted text-foreground/90',
+      color: modoSelecao ? 'bg-background dark:bg-muted text-white' : 'bg-card dark:bg-muted text-foreground/90',
     },
     ...(modoSelecao ? [{
       icon: <Send className="w-5 h-5" />,
@@ -203,32 +203,32 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       icon: <Plus className="w-5 h-5" />,
       label: 'Novo Pedido',
       onClick: () => { onNovopedido(); setIsExpanded(false); },
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'Importar NF',
       onClick: () => { onImportarNF(); setIsExpanded(false); },
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
       icon: <Download className="w-5 h-5" />,
       label: 'Template',
       onClick: () => { onDownloadTemplate(); setIsExpanded(false); },
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
       icon: <FileSpreadsheet className="w-5 h-5" />,
       label: 'PDF expandido',
       onClick: () => handleGerarRelatorio('expandida'),
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
       label: 'PDF mobile',
       onClick: () => handleGerarRelatorio('expandida_mobile'),
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
     },
   ];
@@ -249,7 +249,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
         <button
           onClick={() => setIsExpanded(prev => !prev)}
           className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-            isExpanded ? 'bg-gray-600 dark:bg-muted/400 rotate-45' : 'bg-gray-900 dark:bg-muted'
+            isExpanded ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
           } text-white`}
           title="Ações de compras"
         >

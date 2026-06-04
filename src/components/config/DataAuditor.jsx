@@ -162,8 +162,8 @@ export default function DataAuditor() {
 
   return (
     <Card className="font-glacial border-0 shadow-sm bg-card">
-      <CardHeader className="pb-2 border-b border-slate-50 bg-slate-50/30">
-        <CardTitle className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+      <CardHeader className="pb-2 border-b border-border/40 bg-muted/30">
+        <CardTitle className="text-base md:text-lg font-medium text-foreground/90 dark:text-muted-foreground flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-indigo-600" />
           Auditoria de Dados
         </CardTitle>

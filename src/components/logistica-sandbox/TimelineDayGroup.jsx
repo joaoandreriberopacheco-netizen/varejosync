@@ -15,12 +15,12 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
       </div>
       <div className="pb-6">
         <div className="flex items-center gap-2 mb-3">
-          <p className="text-sm font-semibold text-foreground dark:text-gray-100 font-glacial">{label}</p>
+          <p className="text-sm font-semibold text-foreground dark:text-foreground font-glacial">{label}</p>
           {isToday && <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">Hoje</span>}
         </div>
         <div className="space-y-2">
           {!eventos.length && isToday ? (
-            <div className="rounded-2xl bg-white/70 px-4 py-3 text-xs text-muted-foreground shadow-sm dark:bg-muted/70 dark:text-muted-foreground">
+            <div className="rounded-2xl bg-card/70 px-4 py-3 text-xs text-muted-foreground shadow-sm dark:bg-muted/70 dark:text-muted-foreground">
               Nenhuma viagem neste dia.
             </div>
           ) : null}
@@ -34,7 +34,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
             <button
               key={evento.id}
               onClick={() => onSelect(evento)}
-              className={`relative w-full text-left rounded-2xl bg-card px-4 py-4 shadow-sm transition-all ${isSelected ? 'ring-2 ring-gray-300 dark:ring-gray-500 shadow-md' : 'ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700'}`}
+              className={`relative w-full text-left rounded-2xl bg-card px-4 py-4 shadow-sm transition-all ${isSelected ? 'ring-2 ring-border/40 dark:ring-border/40 shadow-md' : 'ring-1 ring-transparent hover:ring-border/40 dark:hover:ring-border/50'}`}
             >
               {(comprasAtivas > 0 || comprasConcluidas > 0) ? (
                 <div className="absolute -right-1 -top-1 flex items-center gap-1">
@@ -45,7 +45,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
               <div className="space-y-2 pr-4">
                 <div className="flex items-start gap-2 min-w-0">
                   <ShipWheel className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                  <span className="text-sm leading-snug text-foreground dark:text-gray-100 font-medium break-words">{evento.embarcacao_nome}</span>
+                  <span className="text-sm leading-snug text-foreground dark:text-foreground font-medium break-words">{evento.embarcacao_nome}</span>
                 </div>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -60,7 +60,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
                       <CalendarClock className="w-3.5 h-3.5" />
                       <span>{viewModeLabel}</span>
                     </div>
-                    <p className="mt-1 text-xs text-foreground dark:text-gray-100">{evento.visualizacao_data_formatada}</p>
+                    <p className="mt-1 text-xs text-foreground dark:text-foreground">{evento.visualizacao_data_formatada}</p>
                   </div>
                 </div>
               </div>

@@ -91,7 +91,7 @@ export default function PerfisDeAcessoManager() {
         <Button
           onClick={() => setEditando('novo')}
           size="sm"
-          className="bg-primary hover:bg-gray-900 text-white dark:bg-gray-200 dark:text-foreground gap-1.5 h-8 px-3"
+          className="bg-primary hover:bg-background text-white dark:bg-muted dark:text-foreground gap-1.5 h-8 px-3"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="text-xs">Novo Perfil</span>
@@ -100,7 +100,7 @@ export default function PerfisDeAcessoManager() {
 
       {perfis.length === 0 ? (
         <div className="bg-card rounded-xl shadow-sm text-center py-14">
-          <Shield className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-3" />
+          <Shield className="w-8 h-8 text-muted-foreground dark:text-foreground/90 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Nenhum perfil criado ainda</p>
           <p className="text-xs text-muted-foreground mt-1">Crie perfis para controlar o acesso de cada usuário</p>
         </div>
@@ -129,7 +129,7 @@ export default function PerfisDeAcessoManager() {
                   <div className="flex gap-0.5">
                     <button
                       onClick={() => setEditando(perfil)}
-                      className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors"
+                      className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground transition-colors"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
@@ -161,7 +161,7 @@ export default function PerfisDeAcessoManager() {
                 </div>
 
                 <div className="w-full bg-muted rounded-full h-1">
-                  <div className="h-1 rounded-full bg-gray-600 dark:bg-gray-400 transition-all" style={{ width: `${pct}%` }} />
+                  <div className="h-1 rounded-full bg-muted dark:bg-muted-foreground/40 transition-all" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );

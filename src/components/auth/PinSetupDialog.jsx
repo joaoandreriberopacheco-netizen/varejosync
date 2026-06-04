@@ -75,7 +75,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <CheckCircle className="w-12 h-12 text-green-500" />
             <p className="font-medium text-foreground">PIN definido com sucesso!</p>
-            <Button onClick={handleClose} className="mt-2 w-full bg-gray-900 dark:bg-white dark:text-foreground text-white">Fechar</Button>
+            <Button onClick={handleClose} className="mt-2 w-full bg-background dark:bg-card dark:text-foreground text-white">Fechar</Button>
           </div>
         )}
 
@@ -84,7 +84,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
             <Mail className="w-12 h-12 text-blue-500" />
             <p className="font-medium text-foreground">PIN temporário enviado!</p>
             <p className="text-xs text-muted-foreground">Verifique seu e-mail e use o PIN enviado para fazer login. Depois redefina-o aqui.</p>
-            <Button onClick={handleClose} className="mt-2 w-full bg-gray-900 dark:bg-white dark:text-foreground text-white">Fechar</Button>
+            <Button onClick={handleClose} className="mt-2 w-full bg-background dark:bg-card dark:text-foreground text-white">Fechar</Button>
           </div>
         )}
 
@@ -145,7 +145,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
             <Button
               onClick={handleSalvar}
               disabled={loading}
-              className="w-full bg-gray-900 dark:bg-white dark:text-foreground text-white"
+              className="w-full bg-background dark:bg-card dark:text-foreground text-white"
             >
               {loading ? 'Salvando...' : 'Salvar PIN'}
             </Button>
@@ -154,7 +154,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
               <button
                 onClick={handleResetEmail}
                 disabled={loading}
-                className="w-full text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-200 text-center pt-1"
+                className="w-full text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground text-center pt-1"
               >
                 Esqueci meu PIN — enviar novo por e-mail
               </button>

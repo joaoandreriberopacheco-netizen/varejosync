@@ -229,7 +229,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
               </p>
               <button
                 onClick={() => onClose ? onClose() : navigate(-1)}
-                className="mt-6 px-6 py-2.5 bg-muted text-foreground/90 rounded-2xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors"
+                className="mt-6 px-6 py-2.5 bg-muted text-foreground/90 rounded-2xl text-sm font-medium hover:bg-muted dark:hover:bg-primary/90 transition-colors"
               >
                 Voltar
               </button>
@@ -243,7 +243,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                   <button
                     key={caixa.id}
                     onClick={() => handleSelecionarCaixa(caixa)}
-                    className="bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-border/40 dark:hover:border-gray-700"
+                    className="bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-border/40 dark:hover:border-border/40"
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
@@ -324,11 +324,11 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
 
                 {/* Display do valor com cursor fino */}
                 <div className="relative inline-block">
-                  <div className="text-6xl font-bold text-foreground dark:text-gray-800 font-mono mb-2 flex items-center justify-center gap-0.5">
-                    <span className={saldoInicial ? 'text-foreground dark:text-gray-800' : 'text-gray-300 dark:text-muted-foreground'}>
+                  <div className="text-6xl font-bold text-foreground dark:text-foreground font-mono mb-2 flex items-center justify-center gap-0.5">
+                    <span className={saldoInicial ? 'text-foreground dark:text-foreground' : 'text-muted-foreground dark:text-muted-foreground'}>
                       {saldoInicial || '0,00'}
                     </span>
-                    <span className="animate-pulse w-0.5 h-16 bg-gray-600 dark:bg-muted"></span>
+                    <span className="animate-pulse w-0.5 h-16 bg-muted dark:bg-muted"></span>
                   </div>
                 </div>
 
@@ -342,7 +342,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                   placeholder="Descrição (opcional)"
                   value={descricaoSaldo}
                   onChange={(e) => setDescricaoSaldo(e.target.value)}
-                  className="text-center text-muted-foreground border-0 border-b-2 border-border/40 rounded-0 bg-transparent focus:ring-0 focus:border-b-2 focus:border-gray-400"
+                  className="text-center text-muted-foreground border-0 border-b-2 border-border/40 rounded-0 bg-transparent focus:ring-0 focus:border-b-2 focus:border-border/40"
                 />
               </div>
             </div>
@@ -351,7 +351,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
             <div className="px-6 pb-6">
               <Button
                 onClick={handleAbrirTurno}
-                className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-foreground font-semibold rounded-3xl hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+                className="w-full h-14 bg-background dark:bg-card text-white dark:text-foreground font-semibold rounded-3xl hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
               >
                 <span>Abrir Turno</span>
                 <ChevronRight className="w-5 h-5" />

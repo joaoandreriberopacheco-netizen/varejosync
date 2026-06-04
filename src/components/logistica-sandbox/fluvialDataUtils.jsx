@@ -30,8 +30,8 @@ export function getEmbarqueLifecycleStatus(embarque = {}) {
 export function getLinkedIndicatorStyle(status = 'ativo') {
   if (status === 'finalizado') {
     return {
-      badge: 'bg-gray-300/90 text-gray-800 dark:bg-muted/400/70 dark:text-gray-100',
-      dot: 'bg-gray-300 dark:bg-muted/400'
+      badge: 'bg-muted/90 text-foreground dark:bg-muted/400/70 dark:text-foreground',
+      dot: 'bg-muted dark:bg-muted/400'
     };
   }
 

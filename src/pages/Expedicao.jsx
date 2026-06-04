@@ -50,12 +50,12 @@ export default function ExpedicaoPage() {
   return (
     <div className="p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Expedição e Entrega</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Expedição e Entrega</h1>
         <p className="text-muted-foreground mb-8">Confirme a entrega dos pedidos separados.</p>
 
         {pedidosProntos.length === 0 ? (
           <div className="bg-card rounded-lg p-8 text-center">
-            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
             <p className="text-muted-foreground">Nenhum pedido pronto para expedição</p>
           </div>
         ) : (

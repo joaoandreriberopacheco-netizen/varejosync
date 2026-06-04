@@ -57,19 +57,19 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
                   <div className="flex gap-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); setRascunhoDetalhes(rascunho); }}
-                      className="h-12 px-4 bg-muted/40 dark:bg-muted text-foreground/90 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                      className="h-12 px-4 bg-muted/40 dark:bg-muted text-foreground/90 rounded-xl font-medium hover:bg-muted dark:hover:bg-muted transition-colors flex items-center justify-center gap-2"
                       style={{ minHeight: '48px' }}>
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank'); }}
-                      className="flex-1 h-12 bg-muted/40 dark:bg-muted text-foreground/90 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 h-12 bg-muted/40 dark:bg-muted text-foreground/90 rounded-xl font-medium hover:bg-muted dark:hover:bg-muted transition-colors flex items-center justify-center gap-2"
                       style={{ minHeight: '48px' }}>
                       <Edit className="w-4 h-4" /><span>Editar</span>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); onAbrirPedido(rascunho); }}
-                      className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl font-medium hover:shadow-md transition-shadow"
+                      className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-medium hover:shadow-md transition-shadow"
                       style={{ minHeight: '48px' }}>
                       Confirmar
                     </button>
@@ -101,7 +101,7 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
             <div className="p-5 space-y-3">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Itens</div>
               {(rascunhoDetalhes.itens || []).map((item, i) => (
-                <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-border/40 last:border-0">
+                <div key={i} className="flex items-start gap-3 py-2 border-b border-border/30 dark:border-border/40 last:border-0">
                   <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                     <Package className="w-4 h-4 text-muted-foreground" />
                   </div>

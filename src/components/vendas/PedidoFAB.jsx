@@ -76,8 +76,8 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
           onClick={() => setIsOpen(!isOpen)}
           className={`w-14 h-14 rounded-full shadow-lg transition-all duration-200 flex items-center justify-center ${
             isOpen
-              ? 'bg-gray-700 dark:bg-gray-600'
-              : 'bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-muted/400'
+              ? 'bg-muted dark:bg-muted'
+              : 'bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400'
           } text-white`}
           title="Menu de ações"
         >
@@ -116,7 +116,7 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
 
       {/* Dialog de Visualização e Impressão */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="flex max-h-[90vh] min-h-0 max-w-2xl flex-col overflow-hidden border-gray-700 p-0 dark:border-border/40 dark:bg-background dark:text-foreground">
+        <DialogContent className="flex max-h-[90vh] min-h-0 max-w-2xl flex-col overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-background dark:text-foreground">
           <div className="flex shrink-0 items-center justify-between border-b border-border/40 px-6 py-4 dark:border-border/40">
             <h2 className="text-lg font-semibold text-foreground">
               Formulário - Pedido {pedido.numero}
@@ -126,7 +126,7 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
                 onClick={handlePrint}
                 variant="outline"
                 size="sm"
-                className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
               >
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
@@ -135,7 +135,7 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
                 onClick={handleDownloadPDF}
                 variant="outline"
                 size="sm"
-                className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
               >
                 <Download className="w-4 h-4 mr-2" />
                 PDF
@@ -143,7 +143,7 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-white px-6 py-4 dark:bg-muted [scrollbar-gutter:stable]">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-card px-6 py-4 dark:bg-muted [scrollbar-gutter:stable]">
             <div id="formulario-impresso" className="text-sm">
               <FormularioPedidoImpresso pedido={pedido} empresa={empresa} />
             </div>

@@ -277,7 +277,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
                   <span className="font-semibold text-foreground/90">
                     {formatCountQuantity(item.contado)} {item.unidade}
                   </span>
-                  <span className="text-gray-300 dark:text-foreground/90">·</span>
+                  <span className="text-muted-foreground dark:text-foreground/90">·</span>
                   <span className="text-muted-foreground" title={item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? `Cadastro: ${formatCountQuantity(item.estoque_cadastro)} ${item.unidade_base}` : ""}>
                     {item.estoque_sistema_display == null ? "—" : formatCountQuantity(item.estoque_sistema_display)} {item.unidade}
                     {item.estoque_cadastro != null && item.estoque_cadastro !== item.estoque_sistema ? (
@@ -294,7 +294,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
           );
         })}
         {comparativo.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-300 dark:text-foreground/90">
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground dark:text-foreground/90">
             <Package className="w-10 h-10 mb-3" />
             <p className="text-sm">Nenhum item conferido</p>
           </div>
@@ -302,7 +302,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
       </div>
 
       {/* Footer ações */}
-      <div className="flex-shrink-0 px-4 pb-20 pt-3 bg-card border-t border-border/40 dark:border-gray-900">
+      <div className="flex-shrink-0 px-4 pb-20 pt-3 bg-card border-t border-border/40 dark:border-border/40">
         {!isConcluida && conferencia.status === "Aguardando Auditoria" && (
           <>
             {totais.com_dif > 0 && (
@@ -317,14 +317,14 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
               <Button
                 variant="ghost"
                 onClick={reprovar}
-                className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-background text-foreground/90 hover:bg-gray-200 dark:hover:bg-muted border-0"
+                className="flex-1 h-12 rounded-2xl bg-muted dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted border-0"
               >
                 <XCircle className="w-4 h-4 mr-2" /> Recontar
               </Button>
               <Button
                 onClick={aprovar}
                 disabled={aprovando}
-                className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-primary dark:hover:bg-gray-100 text-white dark:text-foreground shadow-none font-semibold"
+                className="flex-1 h-12 rounded-2xl bg-background dark:bg-card hover:bg-primary dark:hover:bg-muted text-white dark:text-foreground shadow-none font-semibold"
               >
                 {aprovando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Aprovar</>}
               </Button>

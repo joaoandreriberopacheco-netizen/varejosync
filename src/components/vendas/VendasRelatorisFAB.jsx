@@ -29,7 +29,7 @@ export default function VendasRelatorisFAB() {
         <button
           onClick={() => setIsExpanded(prev => !prev)}
           className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-            isExpanded ? 'bg-gray-600 dark:bg-muted/400 rotate-45' : 'bg-gray-900 dark:bg-muted'
+            isExpanded ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
           } text-white`}
           title="Relatórios de Vendas"
         >
@@ -40,7 +40,7 @@ export default function VendasRelatorisFAB() {
         {isExpanded && (
           <button
             onClick={() => { setShowDialog(true); setIsExpanded(false); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all flex-shrink-0 bg-white dark:bg-muted text-foreground/90 hover:bg-gray-100 dark:hover:bg-gray-600"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all flex-shrink-0 bg-card dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted"
             style={{
               animation: `fadeSlideUp 0.18s ease both`,
               animationDelay: `0ms`,
@@ -73,7 +73,7 @@ export default function VendasRelatorisFAB() {
                   }}
                   className="flex items-start gap-3 p-4 rounded-2xl bg-muted/50 hover:bg-muted transition-colors group cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-gray-300 dark:group-hover:bg-gray-600 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-muted dark:group-hover:bg-muted transition-colors">
                     <Icon className="w-5 h-5 text-foreground/90" />
                   </div>
                   <div className="flex-1 min-w-0">

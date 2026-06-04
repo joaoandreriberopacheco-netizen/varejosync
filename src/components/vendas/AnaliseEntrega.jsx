@@ -39,7 +39,7 @@ export default function AnaliseEntrega({ pedido }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            <div className="h-48 bg-gray-200 rounded-md flex items-center justify-center">
+            <div className="h-48 bg-muted rounded-md flex items-center justify-center">
               <p className="text-muted-foreground">[Mapa da Rota]</p>
             </div>
             <div className="space-y-3">
@@ -122,7 +122,7 @@ export default function AnaliseEntrega({ pedido }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="h-64 bg-gray-200 rounded-md flex items-center justify-center">
+            <div className="h-64 bg-muted rounded-md flex items-center justify-center">
               <p className="text-muted-foreground">[Mini-calendário com horários]</p>
             </div>
             <div className="grid grid-cols-2 gap-4">

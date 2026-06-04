@@ -89,8 +89,8 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
     }
     if (isCompleted) {
       return isActive
-        ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-500'
-        : 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground';
+        ? 'bg-muted dark:bg-muted text-white dark:text-foreground ring-2 ring-offset-1 ring-ring dark:ring-border/40'
+        : 'bg-muted dark:bg-muted text-white dark:text-foreground';
     }
     return 'bg-muted text-muted-foreground';
   };
@@ -100,7 +100,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
     if (idx < currentIndex) {
       // Linha até "Aprovado" fica verde
       if (idx >= 1 && currentIndex >= 2) return 'bg-lime-500';
-      return 'bg-gray-700 dark:bg-gray-300';
+      return 'bg-muted dark:bg-muted';
     }
     return 'bg-muted';
   };

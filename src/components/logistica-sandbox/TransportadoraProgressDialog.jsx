@@ -11,11 +11,11 @@ function StepItem({ label, active, done }) {
         ) : active ? (
           <Loader2 className="h-4 w-4 animate-spin text-foreground/90" />
         ) : (
-          <div className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-600" />
+          <div className="h-2 w-2 rounded-full bg-muted dark:bg-muted" />
         )}
       </div>
       <div>
-        <p className="text-sm font-medium text-foreground dark:text-gray-100">{label}</p>
+        <p className="text-sm font-medium text-foreground dark:text-foreground">{label}</p>
         <p className="text-xs text-muted-foreground">
           {done ? 'Concluído' : active ? 'Em andamento...' : 'Aguardando'}
         </p>
@@ -27,10 +27,10 @@ function StepItem({ label, active, done }) {
 export default function TransportadoraProgressDialog({ open, currentStep = 0, steps = [], success = false, stepStatuses = [] }) {
   return (
     <Dialog open={open}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-background">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[28px] border-0 bg-card p-0 shadow-2xl dark:bg-background">
         <div className="space-y-4 p-5">
           <div>
-            <h3 className="font-glacial text-xl font-semibold text-foreground dark:text-gray-100">
+            <h3 className="font-glacial text-xl font-semibold text-foreground dark:text-foreground">
               {success ? 'Processo concluído' : 'Atualizando transportadora'}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">

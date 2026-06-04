@@ -59,7 +59,7 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
   const getStatusInfo = () => {
     const configs = {
       'Pendente Geração': {
-        color: 'bg-gray-100 text-foreground/90',
+        color: 'bg-muted text-foreground/90',
         icon: Clock,
         label: 'Não Gerado'
       },

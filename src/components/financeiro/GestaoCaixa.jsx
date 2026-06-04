@@ -139,61 +139,61 @@ export default function GestaoCaixa() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] bg-white dark:bg-card shadow-sm p-4 md:p-5 space-y-5">
+      <div className="rounded-[28px] bg-card dark:bg-card shadow-sm p-4 md:p-5 space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 font-glacial">Caixa do dia</h3>
+            <h3 className="text-lg font-medium text-foreground font-glacial">Caixa do dia</h3>
             <p className="text-sm text-muted-foreground">Resumo das movimentações e atalhos rápidos</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => handleAbrirDialog('Sangria')} className="h-11 rounded-2xl bg-gray-900 hover:bg-primary text-white dark:bg-slate-200 dark:text-slate-900">
+            <Button onClick={() => handleAbrirDialog('Sangria')} className="h-11 rounded-2xl bg-background hover:bg-primary text-white dark:bg-primary dark:text-primary-foreground">
               Sangria
             </Button>
-            <Button onClick={() => handleAbrirDialog('Reforço')} variant="ghost" className="h-11 rounded-2xl bg-gray-100 dark:bg-muted text-foreground/90 hover:bg-gray-200 dark:hover:bg-slate-700">
+            <Button onClick={() => handleAbrirDialog('Reforço')} variant="ghost" className="h-11 rounded-2xl bg-muted dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted">
               Reforço
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="rounded-2xl bg-gray-100 dark:bg-muted p-4">
+          <div className="rounded-2xl bg-muted dark:bg-muted p-4">
             <div className="text-xs text-muted-foreground mb-1">Vendas</div>
-            <div className="text-xl font-semibold text-gray-800 dark:text-gray-100">{formatCurrency(fluxoCaixa.vendas)}</div>
+            <div className="text-xl font-semibold text-foreground">{formatCurrency(fluxoCaixa.vendas)}</div>
           </div>
-          <div className="rounded-2xl bg-gray-100 dark:bg-muted p-4">
+          <div className="rounded-2xl bg-muted dark:bg-muted p-4">
             <div className="text-xs text-muted-foreground mb-1">Reforços</div>
-            <div className="text-xl font-semibold text-gray-800 dark:text-gray-100">{formatCurrency(fluxoCaixa.reforcos)}</div>
+            <div className="text-xl font-semibold text-foreground">{formatCurrency(fluxoCaixa.reforcos)}</div>
           </div>
-          <div className="rounded-2xl bg-gray-100 dark:bg-muted p-4">
+          <div className="rounded-2xl bg-muted dark:bg-muted p-4">
             <div className="text-xs text-muted-foreground mb-1">Sangrias</div>
-            <div className="text-xl font-semibold text-gray-800 dark:text-gray-100">{formatCurrency(fluxoCaixa.sangrias)}</div>
+            <div className="text-xl font-semibold text-foreground">{formatCurrency(fluxoCaixa.sangrias)}</div>
           </div>
-          <div className="rounded-2xl bg-gray-100 dark:bg-muted p-4">
+          <div className="rounded-2xl bg-muted dark:bg-muted p-4">
             <div className="text-xs text-muted-foreground mb-1">Saldo</div>
-            <div className="text-xl font-semibold text-gray-800 dark:text-gray-100">{formatCurrency(fluxoCaixa.saldo)}</div>
+            <div className="text-xl font-semibold text-foreground">{formatCurrency(fluxoCaixa.saldo)}</div>
           </div>
         </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="dark:bg-card dark:border-slate-700 rounded-3xl border-0">
+        <DialogContent className="dark:bg-card dark:border-border/40 rounded-3xl border-0">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-100 font-glacial">
+            <DialogTitle className="text-foreground font-glacial">
               Registrar {tipoMovimento}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
               <Label className="text-foreground/90">Valor</Label>
-              <Input type="number" step="0.01" value={movimentoData.valor} onChange={e => setMovimentoData({...movimentoData, valor: parseFloat(e.target.value) || 0})} placeholder="0,00" className="mt-1 h-11 rounded-2xl bg-gray-100 dark:bg-muted border-0 dark:text-gray-100" />
+              <Input type="number" step="0.01" value={movimentoData.valor} onChange={e => setMovimentoData({...movimentoData, valor: parseFloat(e.target.value) || 0})} placeholder="0,00" className="mt-1 h-11 rounded-2xl bg-muted dark:bg-muted border-0 dark:text-foreground" />
             </div>
             <div>
               <Label className="text-foreground/90">Conta Financeira</Label>
               <Select value={movimentoData.conta_id} onValueChange={v => setMovimentoData({...movimentoData, conta_id: v})}>
-                <SelectTrigger className="mt-1 h-11 rounded-2xl bg-gray-100 dark:bg-muted border-0 dark:text-gray-100">
+                <SelectTrigger className="mt-1 h-11 rounded-2xl bg-muted dark:bg-muted border-0 dark:text-foreground">
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-card dark:border-slate-700">
+                <SelectContent className="dark:bg-card dark:border-border/40">
                   {contas.map(conta => (
                     <SelectItem key={conta.id} value={conta.id}>{conta.nome}</SelectItem>
                   ))}
@@ -202,12 +202,12 @@ export default function GestaoCaixa() {
             </div>
             <div>
               <Label className="text-foreground/90">Observação</Label>
-              <Textarea value={movimentoData.observacao} onChange={e => setMovimentoData({...movimentoData, observacao: e.target.value})} placeholder="Motivo do movimento..." className="mt-1 rounded-2xl bg-gray-100 dark:bg-muted border-0 dark:text-gray-100" />
+              <Textarea value={movimentoData.observacao} onChange={e => setMovimentoData({...movimentoData, observacao: e.target.value})} placeholder="Motivo do movimento..." className="mt-1 rounded-2xl bg-muted dark:bg-muted border-0 dark:text-foreground" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-2xl">Cancelar</Button>
-            <Button onClick={handleRegistrarMovimento} className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900">Confirmar</Button>
+            <Button onClick={handleRegistrarMovimento} className="rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

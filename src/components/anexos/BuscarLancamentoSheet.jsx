@@ -128,7 +128,7 @@ function FilterChipRow({ label, icon: Icon, options, value, onChange }) {
               className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
                 active
                   ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
-                  : 'bg-gray-100 text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                  : 'bg-muted text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
               }`}
             >
               {opt.label}
@@ -200,7 +200,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         <button
           type="button"
           onClick={onVoltar}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 dark:bg-muted dark:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted dark:bg-muted dark:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -209,7 +209,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
 
       <div className="shrink-0 rounded-[20px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
         <div className="flex items-center gap-2">
-          <div className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
+          <div className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-card px-3 dark:bg-card dark:ring-1 dark:ring-border">
             <Search className="h-4 w-4 flex-none text-muted-foreground dark:text-muted-foreground" />
             <input autoComplete="off"
               value={query}
@@ -226,7 +226,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
           <button
             type="button"
             onClick={() => setFilterOpen(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-card dark:bg-card dark:ring-1 dark:ring-border"
           >
             <SlidersHorizontal className="h-4 w-4 text-foreground" />
             {hasActiveFilters ? (
@@ -385,12 +385,12 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
       className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left transition-all active:scale-[0.98] ${
         selecionado
           ? 'bg-primary/15 ring-2 ring-primary/40 dark:bg-muted dark:ring-primary/45'
-          : 'bg-white shadow-sm dark:border dark:border-border dark:bg-card'
+          : 'bg-card shadow-sm dark:border dark:border-border dark:bg-card'
       }`}
     >
       <div
         className={`flex h-9 w-9 flex-none items-center justify-center rounded-xl ${
-          selecionado ? 'bg-primary/20 dark:bg-background/50' : 'bg-gray-100 dark:bg-muted'
+          selecionado ? 'bg-primary/20 dark:bg-background/50' : 'bg-muted dark:bg-muted'
         }`}
       >
         <Icon

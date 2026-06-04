@@ -267,7 +267,7 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                         <Input
                           value={currentUser?.full_name || ''}
                           disabled
-                          className="bg-white dark:bg-muted border-emerald-200 dark:border-emerald-700 dark:text-white"
+                          className="bg-card dark:bg-muted border-emerald-200 dark:border-emerald-700 dark:text-white"
                         />
                       </div>
 
@@ -293,7 +293,7 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                     <button
                       onClick={() => setStep('info')}
                       disabled={loading}
-                      className="flex-1 h-14 rounded-2xl font-semibold text-foreground/90 bg-muted hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      className="flex-1 h-14 rounded-2xl font-semibold text-foreground/90 bg-muted hover:bg-muted dark:hover:bg-primary/90 transition-colors disabled:opacity-50"
                       style={{ minHeight: '56px' }}>
                       Voltar
                     </button>

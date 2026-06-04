@@ -176,7 +176,7 @@ JSON:
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-border/40" />
       </div>
     );
   }
@@ -213,7 +213,7 @@ JSON:
               className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                 modoAnalise === 'sem_info' 
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'border-border/40 hover:border-gray-300'
+                  : 'border-border/40 hover:border-border/40'
               }`}
             >
               <div className="font-medium text-sm text-foreground mb-1">Apenas Sem Info</div>
@@ -225,7 +225,7 @@ JSON:
               className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                 modoAnalise === 'todos' 
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'border-border/40 hover:border-gray-300'
+                  : 'border-border/40 hover:border-border/40'
               }`}
             >
               <div className="font-medium text-sm text-foreground mb-1">Todos os Produtos</div>
@@ -283,7 +283,7 @@ JSON:
               <div className="p-4 border-b border-border/40">
                 <h3 className="font-medium">Estimativas Geradas</h3>
               </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-96 overflow-y-auto">
+              <div className="divide-y divide-border/40 dark:divide-border/40 max-h-96 overflow-y-auto">
                {Object.entries(estimativas).map(([produtoId, est]) => {
                  const produto = produtosTodos.find(p => p.id === produtoId);
                  return (

@@ -263,7 +263,7 @@ Retorne JSON:
                                         <Calculator className="w-3.5 h-3.5" />
                                         <span>Sugestão Automática Ativa</span>
                                     </div>
-                                    <Button onClick={handleCreateQuotation} className="bg-gray-900 hover:bg-black text-white rounded-lg shadow-lg w-full md:w-auto">
+                                    <Button onClick={handleCreateQuotation} className="bg-background hover:bg-black text-white rounded-lg shadow-lg w-full md:w-auto">
                                         {mode === 'merge' ? 'Aplicar Itens na Cotação' : 'Gerar Cotação'}
                                     </Button>
                                 </div>
@@ -277,7 +277,7 @@ Retorne JSON:
                     {step === 'upload' && (
                         <div className="max-w-2xl mx-auto">
                             <div className="py-20 flex flex-col items-center justify-center">
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800 flex items-center justify-center mb-8">
+                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-muted/60 flex items-center justify-center mb-8">
                                     <Camera className="w-12 h-12 text-purple-500 dark:text-purple-400" />
                                 </div>
                                 <h3 className="text-2xl font-light text-foreground mb-2">
@@ -289,7 +289,7 @@ Retorne JSON:
                                 </p>
                                 
                                 <div className="relative">
-                                    <Button size="lg" className="h-14 px-10 bg-gray-900 hover:bg-primary text-white rounded-full shadow-xl">
+                                    <Button size="lg" className="h-14 px-10 bg-background hover:bg-primary text-white rounded-full shadow-xl">
                                         <ImageIcon className="w-5 h-5 mr-2.5" /> 
                                         Selecionar Imagem
                                     </Button>
@@ -332,7 +332,7 @@ Retorne JSON:
                                                 <th className="px-6 py-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Sugerido</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                        <tbody className="divide-y divide-border/40 dark:divide-border/40">
                                             {analyzedItems.map((item, idx) => {
                                                 const product = products.find(p => p.id === item.selected_product_id);
                                                 
@@ -378,7 +378,7 @@ Retorne JSON:
                                                                     <span className="text-muted-foreground text-[10px] mt-1">Min: {product.estoque_minimo || 0}</span>
                                                                 </div>
                                                             ) : (
-                                                                <span className="text-gray-200 text-xl">−</span>
+                                                                <span className="text-muted-foreground text-xl">−</span>
                                                             )}
                                                         </td>
                                                         <td className="px-6 py-4">

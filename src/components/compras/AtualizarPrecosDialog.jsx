@@ -524,7 +524,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <p className="text-xs text-foreground/90 font-medium">
               {itensCalc.length} produto(s) no pedido
               {qtdComDiferenca > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-800 dark:bg-muted dark:text-foreground rounded text-[10px] font-semibold">
+                <span className="ml-2 px-2 py-0.5 bg-muted text-foreground dark:bg-muted dark:text-foreground rounded text-[10px] font-semibold">
                   {qtdComDiferenca} com alteração
                 </span>
               )}
@@ -556,7 +556,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     </div>
                     {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                       <div className="mt-1">
-                        <span className="text-sm font-bold text-foreground dark:text-gray-100">{item.unidadeComercialLegenda}</span>
+                        <span className="text-sm font-bold text-foreground dark:text-foreground">{item.unidadeComercialLegenda}</span>
                         <span className="text-xs text-muted-foreground ml-1.5">
                           {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                         </span>
@@ -802,7 +802,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         )}
                         {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                           <div>
-                            <div className="text-xs font-bold text-foreground dark:text-gray-100">{item.unidadeComercialLegenda}</div>
+                            <div className="text-xs font-bold text-foreground dark:text-foreground">{item.unidadeComercialLegenda}</div>
                             <div className="text-[10px] text-muted-foreground leading-snug mt-1">
                               {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                             </div>
@@ -812,7 +812,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         )}
                       </td>
                       <td className="p-2">
-                        <div className="font-medium text-foreground dark:text-gray-100">{item.produto_nome}</div>
+                        <div className="font-medium text-foreground dark:text-foreground">{item.produto_nome}</div>
                         {item.temDiferenca && (
                           <div className="flex items-center gap-1 text-xs mt-0.5">
                             {item.diferencaCusto > 0 ? (
@@ -891,7 +891,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         </td>
                       ))}
                       <td className="p-2 bg-muted/50">
-                        <div className="text-center font-bold text-foreground dark:text-gray-100">R$ {fmt(item.novoCusto * item.multDisplay)}</div>
+                        <div className="text-center font-bold text-foreground dark:text-foreground">R$ {fmt(item.novoCusto * item.multDisplay)}</div>
                       </td>
                       <td className="p-2">
                         <Input

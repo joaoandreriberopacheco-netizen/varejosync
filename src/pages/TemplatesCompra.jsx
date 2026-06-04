@@ -233,7 +233,7 @@ export default function TemplatesCompra() {
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
               activeTab === id
-                ? 'text-foreground border-gray-900 dark:border-white'
+                ? 'text-foreground border-border/40 dark:border-white'
                 : 'text-muted-foreground border-transparent'
             }`}
           >
@@ -260,7 +260,7 @@ export default function TemplatesCompra() {
               <Button
                 onClick={handleDownloadTemplate}
                 disabled={isGenerating}
-                className="bg-gray-900 dark:bg-white text-white dark:text-foreground hover:bg-primary"
+                className="bg-background dark:bg-card text-white dark:text-foreground hover:bg-primary"
               >
                 {isGenerating ? 'Gerando...' : 'Baixar Template'}
               </Button>
@@ -319,7 +319,7 @@ export default function TemplatesCompra() {
                     <div key={s.id} className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
                         isDone  ? 'bg-green-500' :
-                        isActive ? 'bg-gray-700 dark:bg-gray-200' :
+                        isActive ? 'bg-muted dark:bg-muted' :
                                    'bg-muted'
                       }`}>
                         {isDone ? (
@@ -327,7 +327,7 @@ export default function TemplatesCompra() {
                         ) : isActive ? (
                           <div className="w-2 h-2 rounded-full bg-card animate-pulse" />
                         ) : (
-                          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-muted/400" />
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground/40 dark:bg-muted/400" />
                         )}
                       </div>
                       <span className={`text-sm ${
@@ -372,8 +372,8 @@ export default function TemplatesCompra() {
             onDrop={handleDrop}
             className={`rounded-lg p-8 text-center transition-colors border-2 border-dashed ${
               dragActive
-                ? 'border-gray-700 dark:border-gray-300 bg-muted/40 dark:bg-muted/50'
-                : 'border-gray-300 dark:border-gray-600 bg-card'
+                ? 'border-border/40 dark:border-border/40 bg-muted/40 dark:bg-muted/50'
+                : 'border-border/40 dark:border-border/40 bg-card'
             }`}
           >
             <div className="flex flex-col items-center justify-center space-y-3">
@@ -395,7 +395,7 @@ export default function TemplatesCompra() {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting}
-                className="bg-gray-900 dark:bg-white text-white dark:text-foreground hover:bg-primary"
+                className="bg-background dark:bg-card text-white dark:text-foreground hover:bg-primary"
               >
                 {isImporting ? 'Importando...' : 'Selecionar Arquivo'}
               </Button>

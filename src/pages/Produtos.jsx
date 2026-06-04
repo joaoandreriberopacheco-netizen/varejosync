@@ -386,7 +386,7 @@ function ProdutosPageContent() {
     toast({
       title: "Catálogo exportado!",
       description: `${produtos.length} produtos exportados com todos os campos.`,
-      className: "bg-white border border-gray-300 dark:bg-muted dark:text-foreground dark:border-border/40",
+      className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
   };
@@ -499,7 +499,7 @@ function ProdutosPageContent() {
     toast({
       title: "✓ Template baixado!",
       description: "Preencha produtos e custos conforme os comentários no arquivo.",
-      className: "bg-white border border-gray-300 dark:bg-muted dark:text-foreground dark:border-border/40",
+      className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
   };
@@ -1149,7 +1149,7 @@ function ProdutosPageContent() {
                 type="file" 
                 accept=".csv,.xlsx,.xls" 
                 onChange={(e) => setImportFile(e.target.files[0])} 
-                className="border-gray-300 dark:border-border/40 dark:bg-muted dark:text-foreground text-sm"
+                className="border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground text-sm"
               />
               {importFile && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
@@ -1173,7 +1173,7 @@ function ProdutosPageContent() {
             <Button 
               onClick={handleProcessarImportacaoUnificada} 
               disabled={isProcessingImport || !importFile}
-              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-muted/400"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-white text-sm dark:bg-muted dark:hover:bg-muted/400"
             >
               {isProcessingImport && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Processar
@@ -1282,7 +1282,7 @@ function ProdutosPageContent() {
                 !previewData || 
                 previewData.produtos.length === 0
               }
-              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-muted/400"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-white text-sm dark:bg-muted dark:hover:bg-muted/400"
             >
               {isProcessingImport && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirmar Importação ({previewData?.produtos.length || 0})
@@ -1481,7 +1481,7 @@ function ProdutosPageContent() {
                                       ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
                                       : item.variacao_custo < 0
                                         ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                                        : 'bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90'
+                                        : 'bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90'
                                   }`}
                                 >
                                   {isAumento ? '↑' : item.variacao_custo < 0 ? '↓' : '='}

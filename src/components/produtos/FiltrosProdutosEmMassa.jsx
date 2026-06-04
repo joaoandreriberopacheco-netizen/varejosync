@@ -27,7 +27,7 @@ export default function FiltrosProdutosEmMassa({ filtros, onFiltrosChange, onAdi
           placeholder="Buscar..."
           value={filtros.busca}
           onChange={(e) => onFiltrosChange({ ...filtros, busca: e.target.value })}
-          className="w-full pl-10 pr-3 py-1.5 text-xs bg-card border border-border/40 text-foreground placeholder-gray-400 dark:placeholder-gray-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full pl-10 pr-3 py-1.5 text-xs bg-card border border-border/40 text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
 

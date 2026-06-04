@@ -103,7 +103,7 @@ export default function ControleEntregas() {
       'Em Rota de Entrega': { cor: 'bg-indigo-100 text-indigo-800', icone: Truck, label: 'EM ROTA DE ENTREGA' },
       'Pedido Concluído': { cor: 'bg-green-100 text-green-800', icone: CheckCircle, label: 'CONCLUÍDO' }
     };
-    return configs[status] || { cor: 'bg-gray-100 text-gray-800', icone: Clock, label: status };
+    return configs[status] || { cor: 'bg-muted text-foreground', icone: Clock, label: status };
   };
 
   const handleAbrirDetalhes = async (pedido) => {

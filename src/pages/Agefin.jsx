@@ -201,7 +201,7 @@ export default function Agefin() {
       <div className="p-4 md:p-6">
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" />
           </div>
         ) : !dataLoaded || contas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-96 text-center">

@@ -22,11 +22,11 @@ export default function FluvialBottomFilterSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-slate-900/95 backdrop-blur-sm px-4 pb-6 pt-4 text-white shadow-2xl">
-        <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-white/20" />
+      <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-muted/95 backdrop-blur-sm px-4 pb-6 pt-4 text-white shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-card/20" />
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-card/10 shadow-sm">
               <SlidersHorizontal className="h-4 w-4 text-white" />
             </div>
             <div className="min-w-0">
@@ -39,7 +39,7 @@ export default function FluvialBottomFilterSheet({
             size="icon"
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="h-9 w-9 rounded-2xl bg-white/10 text-white hover:bg-white/15"
+            className="h-9 w-9 rounded-2xl bg-card/10 text-white hover:bg-card/15"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -53,21 +53,21 @@ export default function FluvialBottomFilterSheet({
             </label>
             <input autoComplete="off"
               type="date"
-              className="w-full rounded-2xl bg-white/8 border border-white/15 shadow-sm px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:bg-white/12 focus:border-indigo-400/50"
+              className="w-full rounded-2xl bg-card/8 border border-white/15 shadow-sm px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:bg-card/12 focus:border-indigo-400/50"
             />
           </div>
 
           {/* Filtros */}
           <div className="space-y-3">
             <label className="block text-xs uppercase tracking-[0.16em] text-white/60 font-medium">Filtros</label>
-            <div className="space-y-2 rounded-3xl bg-white/5 p-3 shadow-sm">
+            <div className="space-y-2 rounded-3xl bg-card/5 p-3 shadow-sm">
               <button
                 type="button"
                 onClick={() => onOnlyLinkedChange?.(!onlyLinked)}
                 className={`flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm shadow-sm transition-colors ${
                   onlyLinked
-                    ? 'bg-white text-slate-900 font-medium'
-                    : 'bg-white/10 text-white/80 hover:bg-white/15'
+                    ? 'bg-card text-foreground font-medium'
+                    : 'bg-card/10 text-white/80 hover:bg-card/15'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -83,8 +83,8 @@ export default function FluvialBottomFilterSheet({
                     onClick={() => onLinkedStatusChange?.('todos')}
                     className={`rounded-2xl px-3 py-2.5 text-xs shadow-sm transition-colors ${
                       linkedStatus === 'todos'
-                        ? 'bg-white text-slate-900 font-medium'
-                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                        ? 'bg-card text-foreground font-medium'
+                        : 'bg-card/10 text-white/70 hover:bg-card/15'
                     }`}
                   >
                     Todos
@@ -94,8 +94,8 @@ export default function FluvialBottomFilterSheet({
                     onClick={() => onLinkedStatusChange?.('ativos')}
                     className={`rounded-2xl px-3 py-2.5 text-xs shadow-sm transition-colors ${
                       linkedStatus === 'ativos'
-                        ? 'bg-lime-400 text-slate-900 font-medium'
-                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                        ? 'bg-lime-400 text-foreground font-medium'
+                        : 'bg-card/10 text-white/70 hover:bg-card/15'
                     }`}
                   >
                     Ativos
@@ -105,8 +105,8 @@ export default function FluvialBottomFilterSheet({
                     onClick={() => onLinkedStatusChange?.('concluidos')}
                     className={`rounded-2xl px-3 py-2.5 text-xs shadow-sm transition-colors ${
                       linkedStatus === 'concluidos'
-                        ? 'bg-gray-300 text-slate-900 font-medium'
-                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                        ? 'bg-muted text-foreground font-medium'
+                        : 'bg-card/10 text-white/70 hover:bg-card/15'
                     }`}
                   >
                     Concluídos

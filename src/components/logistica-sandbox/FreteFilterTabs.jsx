@@ -46,7 +46,7 @@ export default function FreteFilterTabs({
                 className={`rounded-2xl px-3 py-2.5 text-xs font-medium transition-colors ${
                   selectedFilter === filter.id
                     ? 'bg-muted text-foreground shadow-sm'
-                    : 'bg-gray-100/80 dark:bg-muted text-muted-foreground'
+                    : 'bg-muted/80 dark:bg-muted text-muted-foreground'
                 }`}
               >
                 {filter.label}

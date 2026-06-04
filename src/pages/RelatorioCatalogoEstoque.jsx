@@ -137,7 +137,7 @@ export default function RelatorioCatalogoEstoque() {
               </Link>
             </Button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 font-glacial">
+              <h1 className="text-sm font-semibold text-foreground font-glacial">
                 Relatório de estoque (Tree Grid)
               </h1>
               <p className="text-[11px] text-muted-foreground">
@@ -179,7 +179,7 @@ export default function RelatorioCatalogoEstoque() {
           )}
         </div>
 
-        <div className="flex items-center justify-between px-3 py-2 flex-none border-b border-gray-50 dark:border-border/40/80">
+        <div className="flex items-center justify-between px-3 py-2 flex-none border-b border-border/30 dark:border-border/40/80">
           <span className="text-xs text-muted-foreground">
             {filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''} na grade
           </span>
@@ -231,7 +231,7 @@ function TotalKpi({ label, value, hint }) {
   return (
     <div className="text-right">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold tabular-nums text-foreground dark:text-gray-100">
+      <div className="text-lg font-semibold tabular-nums text-foreground dark:text-foreground">
         R$ {formatarMoeda(value)}
       </div>
       <div className="text-[10px] text-muted-foreground">{hint}</div>

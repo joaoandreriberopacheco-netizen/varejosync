@@ -81,7 +81,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                 setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: '' } : c));
                 setTimeout(() => inputRef.current?.focus(), 10);
               }}
-              className="w-6 h-6 rounded-full bg-card shadow-sm flex items-center justify-center text-muted-foreground hover:text-gray-800 dark:hover:text-gray-100 flex-none"
+              className="w-6 h-6 rounded-full bg-card shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground dark:hover:text-foreground flex-none"
               title="Trocar produto"
             >
               <Pencil className="w-3 h-3" />
@@ -107,7 +107,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
         ) : (
           <div className={cn(
             "rounded-2xl bg-background shadow-sm transition-all",
-            isFocused && "ring-1 ring-gray-300 dark:ring-gray-600"
+            isFocused && "ring-1 ring-border/40 dark:ring-border/40"
           )}>
             <div className="flex items-center gap-2 px-2 sm:px-3 h-12">
               <span className={cn(
@@ -131,7 +131,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                   value={currentQuery}
                   onChange={handleChange}
                   onFocus={() => setIsFocused(true)}
-                  className="w-full h-10 bg-transparent pl-5 pr-1 text-xs sm:text-sm text-gray-800 dark:text-gray-100 placeholder:text-muted-foreground outline-none"
+                  className="w-full h-10 bg-transparent pl-5 pr-1 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground outline-none"
                   placeholder="Buscar item"
                 />
               </div>
@@ -179,7 +179,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
                       type="button"
                       tabIndex={0}
                       onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProdutoLabel(produto)); }}
-                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-gray-800 dark:text-gray-100 hover:bg-muted/40 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
+                      className="w-full px-3 sm:px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:bg-muted/40 dark:hover:bg-background border-b border-border/30 dark:border-border/40 last:border-0"
                     >
                       {getProdutoLabel(produto)}
                     </button>

@@ -60,7 +60,7 @@ const PedidosTab = () => {
 
   const getStatusBadge = (status) => {
     const variants = {
-      "Orçamento": "bg-gray-200 text-gray-800",
+      "Orçamento": "bg-muted text-foreground",
       "Aguardando Caixa": "bg-yellow-100 text-yellow-800",
       "Aguardando Aprovação": "bg-orange-100 text-orange-800",
       "Aguardando Pagamento": "bg-yellow-100 text-yellow-800",
@@ -69,7 +69,7 @@ const PedidosTab = () => {
       "Finalizado": "bg-green-100 text-green-800",
       "Cancelado": "bg-red-100 text-red-800",
     };
-    return variants[status] || "bg-gray-100 text-gray-800";
+    return variants[status] || "bg-muted text-foreground";
   };
 
   const formatValor = (valor) => {
@@ -87,14 +87,14 @@ const PedidosTab = () => {
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-0 pt-0 pb-4">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por Nº ou cliente..." className="pl-9 bg-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <Input placeholder="Buscar por Nº ou cliente..." className="pl-9 bg-card" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto shrink-0">
           <PlusCircle className="h-4 w-4" /> Novo Pedido/Orçamento
         </Button>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="border rounded-lg bg-white min-w-0 overflow-x-auto">
+        <div className="border rounded-lg bg-card min-w-0 overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/40">
               <TableRow>

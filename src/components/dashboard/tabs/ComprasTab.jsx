@@ -104,13 +104,13 @@ export default function ComprasTab() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Compras do Mês</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {formatCurrency(data.valorComprasMes)}
             </div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Pedidos Abertos</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {data.pedidosAbertos}
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function ComprasTab() {
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Principal</div>
-            <div className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">
+            <div className="text-sm font-semibold text-foreground dark:text-foreground truncate">
               {data.fornecedorPrincipal}
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function ComprasTab() {
             {Object.entries(data.statusCounts).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between py-2">
                 <span className="text-sm font-medium text-foreground/90">{status}</span>
-                <span className="text-lg font-semibold text-foreground dark:text-gray-100">{count}</span>
+                <span className="text-lg font-semibold text-foreground dark:text-foreground">{count}</span>
               </div>
             ))}
           </div>

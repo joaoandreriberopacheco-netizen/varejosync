@@ -23,7 +23,7 @@ export default function FontScaleControl({ compact = false }) {
               key={option.value}
               type="button"
               onClick={() => handleSelect(option.value)}
-              className={`h-10 rounded-2xl text-sm font-medium shadow-sm transition-colors ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+              className={`h-10 rounded-2xl text-sm font-medium shadow-sm transition-colors ${active ? 'bg-background text-white dark:bg-card dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
             >
               {option.label}
             </button>

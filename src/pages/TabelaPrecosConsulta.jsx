@@ -39,7 +39,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-5 h-5 text-gray-300 dark:text-muted-foreground" />}
+          : <Package className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />}
       </div>
 
       {/* Nome + info */}
@@ -78,7 +78,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
           </div>
         )}
         {precoFinal > 0 && (
-          <div className="text-base font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap tabular-nums">
+          <div className="text-base font-bold text-foreground whitespace-nowrap tabular-nums">
             R$ {fmtR(precoFinal)}
             <span className="text-[10px] font-normal text-muted-foreground ml-0.5">/{siglaVitrine}</span>
           </div>
@@ -161,7 +161,7 @@ export default function TabelaPrecosConsulta() {
         {/* Título + contagem */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Tabela de Preços</h1>
+            <h1 className="text-lg font-semibold text-foreground font-glacial">Tabela de Preços</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
               {searchTerm && ` · "${searchTerm}"`}
@@ -210,7 +210,7 @@ export default function TabelaPrecosConsulta() {
       {/* FAB Orçamento */}
       <button
         onClick={() => setShowOrcamento(true)}
-        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-gray-100 dark:hover:bg-gray-200 p38-bottom-fab1 lg:right-6"
+        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-muted dark:hover:bg-muted p38-bottom-fab1 lg:right-6"
         title="Novo Orçamento"
       >
         <Calculator className="w-6 h-6 text-white dark:text-foreground" />
@@ -232,7 +232,7 @@ export default function TabelaPrecosConsulta() {
         {produtosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mb-3">
-              <Package className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
+              <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
             {searchTerm && <p className="text-xs text-muted-foreground mt-1">Tente outros termos de busca</p>}

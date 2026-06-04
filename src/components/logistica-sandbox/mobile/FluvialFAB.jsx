@@ -25,7 +25,7 @@ export default function FluvialFAB({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-muted-foreground shadow-sm transition-shadow hover:shadow-md dark:bg-muted dark:text-muted-foreground pdv-button-static p38-bottom-fab1"
+        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground shadow-sm transition-shadow hover:shadow-md dark:bg-muted dark:text-muted-foreground pdv-button-static p38-bottom-fab1"
       >
         <Sliders className="w-5 h-5" />
       </button>
@@ -51,8 +51,8 @@ export default function FluvialFAB({
                     }}
                     className={`w-full text-left px-3 py-2.5 rounded text-xs font-medium transition-colors ${
                       viewMode === mode.id
-                        ? 'bg-card text-foreground dark:text-gray-100 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700'
-                        : 'bg-muted text-foreground/90 dark:text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+                        ? 'bg-card text-foreground dark:text-foreground shadow-sm ring-1 ring-border/40 dark:ring-border/40'
+                        : 'bg-muted text-foreground/90 dark:text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
                     }`}
                   >
                     {mode.label}
@@ -74,7 +74,7 @@ export default function FluvialFAB({
                   onSimulationDateChange(e.target.value);
                   setOpen(false);
                 }}
-                className="text-xs bg-card border-border/40 text-foreground dark:text-gray-100"
+                className="text-xs bg-card border-border/40 text-foreground dark:text-foreground"
               />
             </div>
 
@@ -90,8 +90,8 @@ export default function FluvialFAB({
                     onClick={() => onEmbarqueLinkFilterChange?.(mode.id)}
                     className={`w-full text-left px-3 py-2.5 rounded text-xs font-medium transition-colors ${
                       embarqueLinkFilter === mode.id
-                        ? 'bg-card text-foreground dark:text-gray-100 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700'
-                        : 'bg-muted text-foreground/90 dark:text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+                        ? 'bg-card text-foreground dark:text-foreground shadow-sm ring-1 ring-border/40 dark:ring-border/40'
+                        : 'bg-muted text-foreground/90 dark:text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
                     }`}
                   >
                     {mode.label}
@@ -107,7 +107,7 @@ export default function FluvialFAB({
                   onSimulationDateChange(format(new Date(), 'yyyy-MM-dd'));
                   setOpen(false);
                 }}
-                className="w-full text-xs px-3 py-2.5 rounded bg-muted text-foreground/90 font-medium hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors"
+                className="w-full text-xs px-3 py-2.5 rounded bg-muted text-foreground/90 font-medium hover:bg-muted dark:hover:bg-primary/90 transition-colors"
               >
                 Ir para Hoje
               </button>

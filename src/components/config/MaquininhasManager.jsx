@@ -68,7 +68,7 @@ function PreviewParcelamento({ faixas, taxaIntermediacao }) {
           const acum = calcularAcumuladoPorFaixa(faixas, n);
           const total = (taxaIntermediacao || 0) + acum;
           return (
-            <div key={n} className="bg-white dark:bg-muted/60 rounded-lg p-1 text-center">
+            <div key={n} className="bg-card dark:bg-muted/60 rounded-lg p-1 text-center">
               <div className="text-[9px] text-muted-foreground">{n}x</div>
               <div className="text-[10px] font-semibold text-foreground/90">{total.toFixed(2)}%</div>
             </div>
@@ -216,7 +216,7 @@ export default function MaquininhasManager() {
               </div>
             </div>
             {expandido === maq.id && (
-              <div className="border-t border-gray-50 dark:border-border/40 px-4 py-3 space-y-2">
+              <div className="border-t border-border/30 dark:border-border/40 px-4 py-3 space-y-2">
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -229,7 +229,7 @@ export default function MaquininhasManager() {
                     </thead>
                     <tbody>
                       {(maq.bandeiras || []).map(b => (
-                        <tr key={b.bandeira} className="border-t border-gray-50 dark:border-border/40/50">
+                        <tr key={b.bandeira} className="border-t border-border/30 dark:border-border/40/50">
                           <td className="py-1.5 font-medium text-foreground/90">{b.bandeira}</td>
                           <td className="py-1.5 text-right text-muted-foreground">{b.taxa_debito ?? 0}%</td>
                           <td className="py-1.5 text-right text-muted-foreground">{b.taxa_credito_1x ?? 0}%</td>
@@ -329,23 +329,23 @@ export default function MaquininhasManager() {
                             <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Débito</div>
                             <input autoComplete="off" type="number" step="0.01" value={b.taxa_debito ?? 0}
                               onChange={e => updateBandeira(b.bandeira, 'taxa_debito', e.target.value)}
-                              className="w-full h-7 text-center text-xs bg-white dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-foreground" />
+                              className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
                           </div>
                           <div>
                             <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Créd 1x</div>
                             <input autoComplete="off" type="number" step="0.01" value={b.taxa_credito_1x ?? 0}
                               onChange={e => updateBandeira(b.bandeira, 'taxa_credito_1x', e.target.value)}
-                              className="w-full h-7 text-center text-xs bg-white dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-foreground" />
+                              className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
                           </div>
                           <div>
                             <div className="text-[9px] text-muted-foreground mb-0.5 text-center">Interm. Parc.</div>
                             <input autoComplete="off" type="number" step="0.01" value={b.taxa_intermediacao_parcelado ?? 0}
                               onChange={e => updateBandeira(b.bandeira, 'taxa_intermediacao_parcelado', e.target.value)}
-                              className="w-full h-7 text-center text-xs bg-white dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-foreground" />
+                              className="w-full h-7 text-center text-xs bg-card dark:bg-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-border/40 dark:text-foreground" />
                           </div>
                         </div>
                         <button onClick={() => setBandeirExpandida(bandeirExpandida === b.bandeira ? null : b.bandeira)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-white dark:hover:bg-primary/90">
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-card dark:hover:bg-primary/90">
                           <ChevronDown className={`w-3.5 h-3.5 transition-transform ${bandeirExpandida === b.bandeira ? 'rotate-180' : ''}`} />
                         </button>
                       </div>
@@ -355,13 +355,13 @@ export default function MaquininhasManager() {
                         <div className="px-3 pb-3 border-t border-border/40 pt-2 space-y-2">
                           <div className="flex items-center justify-between">
                             <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Faixas de Parcelamento (Taxa/mês do vendedor)</p>
-                            <button onClick={() => addFaixa(b.bandeira)} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300">
+                            <button onClick={() => addFaixa(b.bandeira)} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground">
                               <PlusCircle className="w-3 h-3" /> Faixa
                             </button>
                           </div>
 
                           {(b.faixas_parcelamento || []).map((f, idx) => (
-                            <div key={idx} className="flex items-center gap-2 bg-white dark:bg-muted/50 rounded-lg px-2 py-1.5">
+                            <div key={idx} className="flex items-center gap-2 bg-card dark:bg-muted/50 rounded-lg px-2 py-1.5">
                               <span className="text-[10px] text-muted-foreground w-4">De</span>
                               <input autoComplete="off" type="number" min="2" max="12" value={f.min_parcelas}
                                 onChange={e => updateFaixa(b.bandeira, idx, 'min_parcelas', e.target.value)}

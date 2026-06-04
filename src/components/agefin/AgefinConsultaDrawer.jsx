@@ -96,7 +96,7 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
                   <CircleAlert className="w-3.5 h-3.5" /> Vencido
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-foreground/90 dark:bg-muted dark:text-foreground">
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground/90 dark:bg-muted dark:text-foreground">
                   <Wallet className="w-3.5 h-3.5" /> {conta.status || 'Pendente'}
                 </span>
               )}

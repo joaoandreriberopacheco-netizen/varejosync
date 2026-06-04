@@ -239,7 +239,7 @@ export default function DiscriminarVolumes() {
         {/* Botão Adicionar */}
         <Button
           onClick={handleAddVolume}
-          className="w-full bg-gray-900 hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
+          className="w-full bg-background hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
         >
           Adicionar
         </Button>
@@ -269,7 +269,7 @@ export default function DiscriminarVolumes() {
                 key={index}
                 className="bg-muted rounded-2xl p-4 flex items-center gap-4"
               >
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-card dark:bg-muted flex items-center justify-center flex-shrink-0">
                   <Package className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -294,7 +294,7 @@ export default function DiscriminarVolumes() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Package className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-muted-foreground" />
+            <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground dark:text-muted-foreground" />
             <p className="text-muted-foreground">
               Nenhum volume adicionado ainda
             </p>
@@ -303,12 +303,12 @@ export default function DiscriminarVolumes() {
 
         {/* Botão Salvar Fixo */}
         {volumes.length > 0 && (
-          <div className="fixed left-0 right-0 z-[55] border-t border-border/40 bg-white p-4 dark:border-border/40 dark:bg-muted p38-bottom-dock">
+          <div className="fixed left-0 right-0 z-[55] border-t border-border/40 bg-card p-4 dark:border-border/40 dark:bg-muted p38-bottom-dock">
             <div className="max-w-2xl mx-auto">
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full bg-gray-900 hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
+                className="w-full bg-background hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
               >
                 <Save className="w-5 h-5 mr-2" />
                 Salvar Volumes

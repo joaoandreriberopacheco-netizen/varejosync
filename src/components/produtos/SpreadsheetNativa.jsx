@@ -214,7 +214,7 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
             <div
               key={coluna.key}
               style={{ width: coluna.width }}
-              className={`px-3 py-2 text-xs font-semibold border-b border-gray-300 dark:border-gray-600 ${
+              className={`px-3 py-2 text-xs font-semibold border-b border-border/40 dark:border-border/40 ${
                 coluna.volatile 
                   ? 'bg-muted text-muted-foreground italic' 
                   : 'bg-muted/50 text-foreground/90'
@@ -286,7 +286,7 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
                           }
                           if (e.key === 'Escape') setEditandoCell(null);
                         }}
-                        className="w-full h-full px-2 border border-blue-500 dark:border-blue-400 bg-card text-foreground text-sm focus:outline-none placeholder-gray-400"
+                        className="w-full h-full px-2 border border-blue-500 dark:border-blue-400 bg-card text-foreground text-sm focus:outline-none placeholder:text-muted-foreground"
                         placeholder={coluna.tipo === 'numero' ? '0 ou =50*1.1' : ''}
                         autoFocus
                       />

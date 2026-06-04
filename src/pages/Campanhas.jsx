@@ -63,7 +63,7 @@ export default function CampanhasPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 min-w-0">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-gray-800">Campanhas Promocionais</h1>
+            <h1 className="text-3xl font-bold text-foreground">Campanhas Promocionais</h1>
             <p className="text-muted-foreground">Crie promoções automáticas com data e hora de validade.</p>
           </div>
           <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 shrink-0 w-full sm:w-auto">

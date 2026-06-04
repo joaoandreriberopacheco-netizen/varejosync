@@ -385,7 +385,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl w-[calc(100vw-1rem)] md:w-full h-[calc(100vh-1rem)] md:h-[90vh] bg-card border-0 rounded-3xl p-0 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-border/40/50 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-gradient-to-b from-white to-muted/60 dark:from-muted/40 dark:to-muted/60 px-6 py-5 border-b border-border/40/50 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
                 <Package className="w-5 h-5 text-teal-600 dark:text-teal-400" />
@@ -397,7 +397,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-gray-200 dark:hover:bg-primary/90">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-muted dark:hover:bg-primary/90">
               <X className="w-5 h-5" />
             </Button>
           </div>
@@ -427,7 +427,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                     variant="outline"
                     size="sm"
                     onClick={copiarQuantidadesEmbarcado}
-                    className="h-9 rounded-xl border-0 bg-muted text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 shrink-0"
+                    className="h-9 rounded-xl border-0 bg-muted text-foreground hover:bg-muted dark:hover:bg-muted shrink-0"
                   >
                     <Copy className="w-3.5 h-3.5 mr-1.5" />
                     Igual ao embarcado
@@ -483,7 +483,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                         isReadOnly ? 'opacity-60 cursor-not-allowed' :
                         hasDivergencia
                           ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-0'
-                          : 'border-0 bg-muted text-foreground/90 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          : 'border-0 bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted'
                       }`}
                     >
                       <AlertTriangle className="w-4 h-4 mr-2" />
@@ -508,7 +508,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </div>
 
           {/* Footer com Data e Botão */}
-          <div className="shrink-0 border-t border-border/40/50 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-6 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-border/40/50 bg-gradient-to-b from-white to-muted/60 dark:from-muted/40 dark:to-muted/60 px-6 py-6 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             {/* Data de Entrada */}
             <div>
               <Label className="text-xs text-foreground/90 font-semibold block mb-2">Data de Entrada</Label>
@@ -555,7 +555,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       <Dialog open={showDivergenciaDialog} onOpenChange={setShowDivergenciaDialog}>
         <DialogContent className="max-w-lg bg-card border-0 rounded-3xl p-0 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-border/40/50">
+          <div className="bg-gradient-to-b from-white to-muted/60 dark:from-muted/40 dark:to-muted/60 px-6 py-5 border-b border-border/40/50">
             <h2 className="font-quicksand text-lg font-semibold text-foreground">Registrar Divergência</h2>
           </div>
 
@@ -603,7 +603,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                     type="button"
                     variant="outline"
                     onClick={() => setShowNovoProduct(!showNovoProduct)}
-                    className="w-full h-11 text-sm font-semibold border-0 bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-primary/90 rounded-xl"
+                    className="w-full h-11 text-sm font-semibold border-0 bg-muted text-foreground hover:bg-muted dark:hover:bg-primary/90 rounded-xl"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Criar Novo Produto
@@ -647,7 +647,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           <div className="border-t border-border/40/50 px-6 py-4">
             <Button
               onClick={() => setShowDivergenciaDialog(false)}
-              className="w-full h-11 bg-muted text-foreground border-0 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-primary/90"
+              className="w-full h-11 bg-muted text-foreground border-0 font-semibold rounded-xl hover:bg-muted dark:hover:bg-primary/90"
             >
               Fechar
             </Button>
@@ -678,7 +678,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             </button>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-0 bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-primary/90 rounded-xl font-semibold">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="border-0 bg-muted text-foreground hover:bg-muted dark:hover:bg-primary/90 rounded-xl font-semibold">Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -686,7 +686,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       {/* Dialog Código Conferência Cega */}
       <Dialog open={showCodigoConferencia} onOpenChange={setShowCodigoConferencia}>
         <DialogContent className="max-w-lg bg-card border-0 rounded-3xl p-0 overflow-hidden">
-          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-border/40/50">
+          <div className="bg-gradient-to-b from-white to-muted/60 dark:from-muted/40 dark:to-muted/60 px-6 py-5 border-b border-border/40/50">
             <h2 className="font-quicksand text-lg font-semibold text-foreground">Código Conferência Cega</h2>
           </div>
           <div className="px-6 py-8 space-y-6">
@@ -725,7 +725,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 setShowCodigoConferencia(false);
                 onClose();
               }}
-              className="w-full h-12 bg-muted text-foreground font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors"
+              className="w-full h-12 bg-muted text-foreground font-semibold rounded-xl hover:bg-muted dark:hover:bg-primary/90 transition-colors"
             >
               Fechar
             </button>

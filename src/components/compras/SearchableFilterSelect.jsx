@@ -32,7 +32,7 @@ export default function SearchableFilterSelect({
         variant="ghost"
         onClick={() => setOpen(true)}
         className={cn(
-          'w-full h-12 px-4 rounded-xl justify-between bg-gray-100 dark:bg-muted text-foreground/90 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-700 border-0 shadow-none',
+          'w-full h-12 px-4 rounded-xl justify-between bg-muted dark:bg-muted text-foreground/90 dark:text-foreground hover:bg-muted dark:hover:bg-muted border-0 shadow-none',
           className
         )}
       >
@@ -41,7 +41,7 @@ export default function SearchableFilterSelect({
       </Button>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-3 text-left">
             <DrawerTitle className="font-glacial text-foreground">{placeholder}</DrawerTitle>
           </DrawerHeader>
@@ -51,10 +51,10 @@ export default function SearchableFilterSelect({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-12 rounded-xl border-0 bg-gray-100 dark:bg-muted text-gray-800 dark:text-gray-100 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
+              className="h-12 rounded-xl border-0 bg-muted dark:bg-muted text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
             />
 
-            <div className="max-h-[48vh] overflow-y-auto space-y-1 rounded-2xl bg-muted/40 dark:bg-slate-950/40 p-2">
+            <div className="max-h-[48vh] overflow-y-auto space-y-1 rounded-2xl bg-muted/40 dark:bg-muted/40 p-2">
               {filteredOptions.map((option) => {
                 const isSelected = option.value === value;
                 return (
@@ -69,8 +69,8 @@ export default function SearchableFilterSelect({
                     className={cn(
                       'w-full flex items-center justify-between rounded-xl px-3 py-3 text-left text-sm transition-colors',
                       isSelected
-                        ? 'bg-slate-200 dark:bg-muted text-foreground'
-                        : 'text-foreground/90 hover:bg-gray-200 dark:hover:bg-slate-800/80'
+                        ? 'bg-muted dark:bg-muted text-foreground'
+                        : 'text-foreground/90 hover:bg-muted dark:hover:bg-muted/80'
                     )}
                   >
                     <span>{option.label}</span>

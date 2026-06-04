@@ -6,17 +6,17 @@ const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { m
 
 export default function ConsumoItensStep({ formData, totalAtual, onOpenSelector, onBack, onNext }) {
   return (
-    <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-muted">
+    <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted">
       <div className="mb-4 flex items-center justify-between">
         <p className="text-lg font-semibold text-foreground">Itens</p>
         <p className="text-sm text-muted-foreground">{formatCurrency(totalAtual)}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
-        <Button type="button" variant="outline" onClick={onOpenSelector} className="h-12 justify-start rounded-2xl border-0 bg-gray-100 text-foreground/90 shadow-sm hover:bg-gray-200 dark:bg-background dark:text-foreground dark:hover:bg-muted">
+        <Button type="button" variant="outline" onClick={onOpenSelector} className="h-12 justify-start rounded-2xl border-0 bg-muted text-foreground/90 shadow-sm hover:bg-muted dark:bg-background dark:text-foreground dark:hover:bg-muted">
           <Search className="mr-2 h-4 w-4" />Selecionar itens
         </Button>
-        <div className="flex h-12 items-center rounded-2xl bg-gray-100 px-4 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90">
+        <div className="flex h-12 items-center rounded-2xl bg-muted px-4 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90">
           Baixa pelo custo calculado do produto
         </div>
       </div>
@@ -42,7 +42,7 @@ export default function ConsumoItensStep({ formData, totalAtual, onOpenSelector,
         <Button type="button" variant="outline" onClick={onBack} className="h-11 flex-1 rounded-2xl border-0 shadow-sm">
           Voltar
         </Button>
-        <Button type="button" onClick={onNext} className="h-11 flex-1 rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground">
+        <Button type="button" onClick={onNext} className="h-11 flex-1 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
           Próximo
         </Button>
       </div>

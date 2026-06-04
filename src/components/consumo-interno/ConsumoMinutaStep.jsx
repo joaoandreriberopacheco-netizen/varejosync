@@ -5,13 +5,13 @@ import { Paperclip, Signature, Clock3 } from 'lucide-react';
 export default function ConsumoMinutaStep({ formData, currentUser, onOpenAssinatura, onBack, onSubmit }) {
   return (
     <div className="space-y-5">
-      <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-muted">
+      <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted">
         <p className="mb-4 text-lg font-semibold text-foreground">Minuta</p>
         <div className="space-y-3">
           <Button type="button" variant="outline" className="h-11 w-full justify-start rounded-2xl border-0 shadow-sm" onClick={onOpenAssinatura}>
             <Signature className="mr-2 h-4 w-4" />{formData.assinatura_recolhedor_nome ? `Assinado por ${formData.assinatura_recolhedor_nome}` : 'Coletar assinatura'}
           </Button>
-          <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded-[24px] bg-gray-100 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
+          <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded-[24px] bg-muted text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
             <Paperclip className="mb-2 h-5 w-5" />Adicionar anexos
             <input id="consumo-anexo-input" type="file" multiple className="hidden" />
           </label>
@@ -32,7 +32,7 @@ export default function ConsumoMinutaStep({ formData, currentUser, onOpenAssinat
           <Button type="button" variant="outline" onClick={onBack} className="h-12 flex-1 rounded-2xl border-0 shadow-sm">
             Voltar
           </Button>
-          <Button type="button" onClick={onSubmit} className="h-12 flex-1 rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground">
+          <Button type="button" onClick={onSubmit} className="h-12 flex-1 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
             Concluir
           </Button>
         </div>

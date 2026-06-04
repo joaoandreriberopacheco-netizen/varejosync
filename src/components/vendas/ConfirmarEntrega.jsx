@@ -158,9 +158,9 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md h-screen m-0 p-0 rounded-none sm:rounded-lg sm:h-auto sm:max-h-[90vh]">
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col h-full bg-card">
           {/* Header */}
-          <div className="bg-gray-900 text-white px-3 py-2 flex items-center justify-between flex-shrink-0">
+          <div className="bg-background text-white px-3 py-2 flex items-center justify-between flex-shrink-0">
             <div>
               <p className="text-[10px] text-muted-foreground">EXPEDIÇÃO</p>
               <p className="text-sm font-bold">Confirmar Entrega: {pedido?.numero}</p>
@@ -220,14 +220,14 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
                   <button
                     type="button"
                     onClick={() => setShowAssinaturaMenu(!showAssinaturaMenu)}
-                    className="p-2 bg-gray-100 rounded-md hover:bg-gray-200 transition"
+                    className="p-2 bg-muted rounded-md hover:bg-muted transition"
                   >
                     <Paperclip className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
                 
                 {showAssinaturaMenu && (
-                  <div className="absolute right-0 top-12 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
+                  <div className="absolute right-0 top-12 bg-card border rounded-lg shadow-lg z-10 overflow-hidden">
                     <button
                       onClick={() => handleAssinaturaOption('camera')}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left"
@@ -283,14 +283,14 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
                   <button
                     type="button"
                     onClick={() => setShowComprovanteMenu(!showComprovanteMenu)}
-                    className="p-2 bg-gray-100 rounded-md hover:bg-gray-200 transition"
+                    className="p-2 bg-muted rounded-md hover:bg-muted transition"
                   >
                     <Paperclip className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
                 
                 {showComprovanteMenu && (
-                  <div className="absolute right-0 top-12 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
+                  <div className="absolute right-0 top-12 bg-card border rounded-lg shadow-lg z-10 overflow-hidden">
                     <button
                       onClick={() => handleComprovanteOption('camera')}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left"

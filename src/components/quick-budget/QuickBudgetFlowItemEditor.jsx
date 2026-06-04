@@ -65,7 +65,7 @@ export default function QuickBudgetFlowItemEditor({
               tabelaPreco={tabelaPreco}
               unitOption={selectedUnit}
               variant="quickBudget"
-              finalClassName="text-lg font-bold text-gray-800 dark:text-gray-100 tabular-nums"
+              finalClassName="text-lg font-bold text-foreground tabular-nums"
               labelBottom={false}
             />
           </div>
@@ -85,8 +85,8 @@ export default function QuickBudgetFlowItemEditor({
                   onClick={() => onUnitChange?.(opt)}
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                     active
-                      ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-foreground'
-                      : 'border-border/40 bg-white text-foreground/90 hover:border-gray-400 dark:border-gray-600 dark:bg-background dark:text-foreground'
+                      ? 'border-border/40 bg-background text-white dark:border-white dark:bg-card dark:text-foreground'
+                      : 'border-border/40 bg-card text-foreground/90 hover:border-border/40 dark:border-border/40 dark:bg-background dark:text-foreground'
                   }`}
                 >
                   {opt.unidade}
@@ -137,12 +137,12 @@ export default function QuickBudgetFlowItemEditor({
 
       <div className="flex gap-3">
         {stage === 'quantity' && (
-          <Button onClick={onNext} className="flex-1 h-12 rounded-2xl bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground shadow-none">
+          <Button onClick={onNext} className="flex-1 h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
             <ArrowRight className="w-4 h-4 mr-2" /> Próximo
           </Button>
         )}
         {stage === 'price' && (
-          <Button onClick={onSave} className="flex-1 h-12 rounded-2xl bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground shadow-none">
+          <Button onClick={onSave} className="flex-1 h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
             <ShoppingCart className="w-4 h-4 mr-2" /> Salvar carrinho
           </Button>
         )}

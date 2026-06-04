@@ -231,7 +231,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
 
         {step === 'upload' && (
           <div
-            className="py-10 text-center border-2 border-dashed border-gray-300 rounded-xl bg-muted/40 cursor-pointer hover:bg-gray-100 transition-colors"
+            className="py-10 text-center border-2 border-dashed border-border/40 rounded-xl bg-muted/40 cursor-pointer hover:bg-muted transition-colors"
             onClick={() => fileInputRef.current?.click()}
             role="button"
             tabIndex={0}

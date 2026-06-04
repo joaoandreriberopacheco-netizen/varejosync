@@ -124,7 +124,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
         className="w-full h-12 rounded-xl bg-muted/50 shadow-sm px-4 flex items-center gap-3 text-left"
       >
         <Truck className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        <span className={`flex-1 text-sm truncate ${selected ? 'text-gray-800 dark:text-gray-100' : 'text-muted-foreground'}`}>
+        <span className={`flex-1 text-sm truncate ${selected ? 'text-foreground' : 'text-muted-foreground'}`}>
           {selected ? selected.nome : 'Selecione ou busque...'}
         </span>
         {value && <button type="button" onClick={e => { e.stopPropagation(); onChange(''); }} className="p-1"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
@@ -141,7 +141,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Buscar transportadora..."
-              className="flex-1 text-sm bg-transparent outline-none text-gray-800 dark:text-gray-100 placeholder:text-muted-foreground"
+              className="flex-1 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
             />
           </div>
           {/* lista */}
@@ -179,11 +179,11 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
                 onChange={e => setNomeNova(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSalvarNova()}
                 placeholder="Nome da transportadora..."
-                className="w-full text-sm bg-muted/50 rounded-xl px-3 py-2 outline-none text-gray-800 dark:text-gray-100"
+                className="w-full text-sm bg-muted/50 rounded-xl px-3 py-2 outline-none text-foreground"
               />
               <div className="flex gap-2">
                 <Button type="button" size="sm" onClick={handleSalvarNova} disabled={salvando || !nomeNova.trim()}
-                  className="flex-1 h-9 text-xs bg-gray-900 dark:bg-white dark:text-foreground text-white border-0">
+                  className="flex-1 h-9 text-xs bg-background dark:bg-card dark:text-foreground text-white border-0">
                   {salvando ? 'Salvando...' : 'Salvar'}
                 </Button>
                 <Button type="button" size="sm" variant="outline" onClick={() => setCriando(false)}
@@ -576,11 +576,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
         <div className="flex flex-shrink-0 items-center gap-3 px-6 pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#0f172a] to-[#111827]">
           <div className="w-10 h-10 rounded-3xl bg-[#1e293b] flex items-center justify-center shadow-sm">
-            <Truck className="w-4 h-4 text-slate-200 flex-shrink-0" />
+            <Truck className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </div>
           <h2 className="text-base font-semibold text-white font-quicksand flex-1">
             {isEdicao ? 'Editar Despacho' : 'Informar Despacho'}
-            <span className="text-slate-400 font-normal"> — {pedido.numero}</span>
+            <span className="text-muted-foreground font-normal"> — {pedido.numero}</span>
           </h2>
         </div>
 
@@ -595,20 +595,20 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                 <div className="space-y-2 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs text-slate-400">Fornecedor do pedido</p>
+                      <p className="text-xs text-muted-foreground">Fornecedor do pedido</p>
                       <p className="text-sm font-medium text-white truncate">{fornecedorLocal.nome || '—'}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setPodeEscolherFornecedor(true)}
-                      className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+                      className="shrink-0 rounded-lg bg-card/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-card/20"
                     >
                       Alterar fornecedor
                     </button>
                   </div>
                   {podeEscolherFornecedor && (
                     <div className="space-y-2 pt-1 border-t border-white/10">
-                      <label className="text-xs text-slate-400">Selecionar fornecedor</label>
+                      <label className="text-xs text-muted-foreground">Selecionar fornecedor</label>
                       <select
                         value={fornecedorLocal.id}
                         onChange={(e) => {
@@ -639,7 +639,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium text-white hover:bg-white/20"
+                          className="rounded-lg bg-card/10 px-4 py-2 text-xs font-medium text-white hover:bg-card/20"
                           onClick={() => {
                             setPodeEscolherFornecedor(false);
                             setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
@@ -703,15 +703,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     }}
                     className="w-full h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white px-4 flex items-center gap-3 text-left"
                   >
-                    <ShipWheel className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-white' : 'text-slate-400'}`}>
+                    <ShipWheel className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-white' : 'text-muted-foreground'}`}>
                       {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Informar viagem no itinerário'}
                     </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </button>
                   {eventoSelecionado ? (
                     <div className="flex items-center justify-between gap-3 px-1">
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-muted-foreground">
                         Ao escolher a viagem, datas e transportadora foram preenchidas; você pode ajustar manualmente.
                       </p>
                       <button type="button" onClick={() => setEventoLogisticoId('')} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
@@ -727,7 +727,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     placeholder="Observações sobre este embarque..."
                     value={observacoes}
                     onChange={e => setObservacoes(e.target.value)}
-                    className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white placeholder:text-slate-400"
+                    className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white placeholder:text-muted-foreground"
                   />
                 </div>
               </TabsContent>
@@ -740,7 +740,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                 }`}>
                   {statusPreview === 'Total' && <CheckCircle2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
                   {statusPreview === 'Parcial' && <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />}
-                  {statusPreview === 'Nenhum' && <Package className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                  {statusPreview === 'Nenhum' && <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
                   <span>
                     {statusPreview === 'Total' && 'Embarque total — todos os itens cobertos'}
                     {statusPreview === 'Parcial' && 'Embarque parcial — haverá itens órfãos aguardando despacho'}
@@ -766,7 +766,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                           <button
                             type="button"
                             onClick={() => toggleItem(item.produto_id)}
-                            className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-gray-700 dark:bg-gray-300' : 'bg-gray-200 dark:bg-gray-600'}`}
+                            className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-muted'}`}
                           >
                             {selecionado && <Check className="w-3 h-3 text-white dark:text-foreground" />}
                           </button>
@@ -788,7 +788,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                               disabled={!selecionado}
                               value={qtdEmbarque[item.produto_id] ?? ''}
                               onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                              className={`w-14 h-8 text-xs text-right rounded-lg bg-white dark:bg-muted text-foreground dark:text-gray-100 disabled:opacity-40 placeholder:text-gray-300 px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
+                              className={`w-14 h-8 text-xs text-right rounded-lg bg-card dark:bg-muted text-foreground dark:text-foreground disabled:opacity-40 placeholder:text-muted-foreground px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
                               placeholder="0"
                             />
                             <span className="text-[9px] text-muted-foreground uppercase">{item.unidade_medida}</span>
@@ -809,7 +809,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
               Cancelar
             </Button>
             <Button onClick={handleSalvar} disabled={loading}
-              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground text-white min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
+              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-background hover:bg-primary dark:bg-card dark:text-foreground text-white min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />

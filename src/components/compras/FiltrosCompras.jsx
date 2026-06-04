@@ -6,8 +6,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 
 const STATUS_OPTIONS = [
-  { codigo: '__nao_concluido__',    label: 'Ocultar concluídos',    cor: 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' },
-  { codigo: 'Rascunho',             label: 'Rascunho',              cor: 'bg-gray-100 text-foreground/90' },
+  { codigo: '__nao_concluido__',    label: 'Ocultar concluídos',    cor: 'bg-primary text-white dark:bg-muted dark:text-foreground' },
+  { codigo: 'Rascunho',             label: 'Rascunho',              cor: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguardando Liberação',  cor: 'bg-yellow-100 text-yellow-800' },
   { codigo: 'Aguardando Aprovação Financeira', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800' },
   { codigo: 'Aprovado',             label: 'Aprovado',              cor: 'bg-green-100 text-green-800' },
@@ -106,12 +106,12 @@ export default function FiltrosCompras({
             value={search}
             onChange={e => onSearch(e.target.value)}
             placeholder="Buscar embarque, pedido, fornecedor..."
-            className="w-full pl-10 pr-4 h-12 bg-white dark:bg-muted border-0 text-foreground/90 dark:text-gray-100 placeholder:text-muted-foreground rounded-2xl outline-none shadow-sm text-sm focus:ring-2 focus:ring-teal-300 dark:focus:ring-teal-600 transition-shadow"
+            className="w-full pl-10 pr-4 h-12 bg-card dark:bg-muted border-0 text-foreground/90 dark:text-foreground placeholder:text-muted-foreground rounded-2xl outline-none shadow-sm text-sm focus:ring-2 focus:ring-teal-300 dark:focus:ring-teal-600 transition-shadow"
           />
         </div>
         <button
           onClick={() => setShowFilters(true)}
-          className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm relative bg-gray-100 dark:bg-muted text-foreground/90"
+          className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm relative bg-muted dark:bg-muted text-foreground/90"
           title="Filtros"
         >
           <SlidersHorizontal className="w-5 h-5" />
@@ -145,7 +145,7 @@ export default function FiltrosCompras({
       )}
 
       <Drawer open={showFilters} onOpenChange={setShowFilters}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
@@ -170,7 +170,7 @@ export default function FiltrosCompras({
                     <button
                       key={s.codigo}
                       onClick={() => toggleStatus(s.codigo)}
-                      className={`inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-full transition-all ${selected ? `${s.cor} font-medium shadow-sm` : 'bg-gray-100 dark:bg-muted text-muted-foreground'}`}
+                      className={`inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-full transition-all ${selected ? `${s.cor} font-medium shadow-sm` : 'bg-muted dark:bg-muted text-muted-foreground'}`}
                     >
                       {selected && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
                       {s.label}
@@ -186,11 +186,11 @@ export default function FiltrosCompras({
                 <div className="space-y-2">
                   <div className="relative">
                     <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <Input placeholder="Buscar tag..." className="pl-8 h-11 text-xs bg-gray-100 dark:bg-muted border-0 shadow-sm rounded-2xl" value={searchTag} onChange={e => setSearchTag(e.target.value)} />
+                    <Input placeholder="Buscar tag..." className="pl-8 h-11 text-xs bg-muted dark:bg-muted border-0 shadow-sm rounded-2xl" value={searchTag} onChange={e => setSearchTag(e.target.value)} />
                   </div>
                   <div className="max-h-32 overflow-y-auto space-y-0.5 pr-1">
                     {tagsFiltradas.map(tag => (
-                      <label key={tag} className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-muted/40 dark:hover:bg-slate-800 cursor-pointer">
+                      <label key={tag} className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-muted/40 dark:hover:bg-card cursor-pointer">
                         <Checkbox checked={tagsSel.includes(tag)} onCheckedChange={() => toggleTag(tag)} className="w-3.5 h-3.5" />
                         <span className="text-xs text-foreground/90 truncate">{tag}</span>
                       </label>
@@ -209,7 +209,7 @@ export default function FiltrosCompras({
                     <Input
                       ref={fornecedorInputRef}
                       placeholder="Buscar fornecedor..."
-                      className="pl-8 h-11 text-xs bg-gray-100 dark:bg-muted border-0 shadow-sm rounded-2xl"
+                      className="pl-8 h-11 text-xs bg-muted dark:bg-muted border-0 shadow-sm rounded-2xl"
                       value={searchFornecedor}
                       onFocus={() => keepInputVisibleOnMobileKeyboard(fornecedorInputRef)}
                       onChange={e => setSearchFornecedor(e.target.value)}
@@ -217,7 +217,7 @@ export default function FiltrosCompras({
                   </div>
                   <div className="max-h-40 overflow-y-auto space-y-0.5 pr-1">
                     {fornecedoresFiltrados.map(f => (
-                      <label key={f.id} className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-muted/40 dark:hover:bg-slate-800 cursor-pointer">
+                      <label key={f.id} className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-muted/40 dark:hover:bg-card cursor-pointer">
                         <Checkbox checked={fornecedorSel.includes(f.id)} onCheckedChange={() => toggleFornecedor(f.id)} className="w-3.5 h-3.5" />
                         <span className="text-xs text-foreground/90 truncate">{f.nome}</span>
                       </label>
@@ -234,7 +234,7 @@ export default function FiltrosCompras({
                   setSearchFornecedor('');
                   setSearchTag('');
                 }}
-                className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-muted text-sm text-muted-foreground"
+                className="flex-1 h-11 rounded-2xl bg-muted dark:bg-muted text-sm text-muted-foreground"
               >
                 Limpar
               </button>

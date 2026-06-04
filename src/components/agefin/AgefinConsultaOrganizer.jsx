@@ -50,7 +50,7 @@ export default function AgefinConsultaOrganizer({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
             title="Agrupar contas"
           >
             <CurrentIcon className="h-4 w-4" />
@@ -76,7 +76,7 @@ export default function AgefinConsultaOrganizer({
       <button
         type="button"
         onClick={onSortOrderToggle}
-        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
+        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
         title={sortOrder === 'desc' ? 'Ordem: mais recente / Z–A' : 'Ordem: mais antigo / A–Z'}
       >
         <ArrowDownUp className={`h-4 w-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />

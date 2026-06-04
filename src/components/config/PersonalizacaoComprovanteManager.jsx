@@ -101,7 +101,7 @@ export default function PersonalizacaoComprovanteManager() {
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preview</p>
         <div className="flex justify-center p-4 rounded-xl bg-muted/50/60">
-          <div className="bg-white p-4 shadow-lg rounded" style={{ width: '240px', fontFamily: 'Courier, monospace', fontSize: '10px', color: '#000' }}>
+          <div className="bg-card p-4 shadow-lg rounded" style={{ width: '240px', fontFamily: 'Courier, monospace', fontSize: '10px', color: '#000' }}>
             <div className="text-center space-y-1">
               {formData.logo_url && (
                 <img src={formData.logo_url} alt="" className="mx-auto mb-2" style={{ maxWidth: '80px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)' }} />
@@ -126,7 +126,7 @@ export default function PersonalizacaoComprovanteManager() {
           Cancelar
         </Button>
         <Button onClick={handleSalvar} disabled={salvando} size="sm"
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 text-xs">
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 text-xs">
           <Save className="w-3.5 h-3.5" />
           {salvando ? 'Salvando...' : 'Salvar'}
         </Button>

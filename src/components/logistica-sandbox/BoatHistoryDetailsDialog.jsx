@@ -10,7 +10,7 @@ function InfoBlock({ icon: Icon, label, value }) {
         <Icon className="w-3.5 h-3.5" />
         {label}
       </div>
-      <p className="text-sm font-medium text-foreground dark:text-gray-100">{value}</p>
+      <p className="text-sm font-medium text-foreground dark:text-foreground">{value}</p>
     </div>
   );
 }
@@ -23,7 +23,7 @@ export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento })
       <DialogContent className="w-[calc(100vw-1rem)] max-w-2xl rounded-[28px] border-0 bg-card p-0 overflow-hidden shadow-2xl">
         <div className="p-5 space-y-4">
           <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-semibold font-glacial text-foreground dark:text-gray-100">{evento.titulo}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold font-glacial text-foreground dark:text-foreground">{evento.titulo}</DialogTitle>
             <p className="text-sm text-muted-foreground">{evento.codigo} · {evento.data}</p>
           </DialogHeader>
 
@@ -36,17 +36,17 @@ export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento })
 
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-semibold text-foreground dark:text-gray-100">Embarques desta viagem</p>
+              <p className="text-sm font-semibold text-foreground dark:text-foreground">Embarques desta viagem</p>
               <p className="text-xs text-muted-foreground mt-1">Visualização resumida dos embarques relacionados.</p>
             </div>
             <div className="space-y-2">
               {(evento.embarques || []).map((embarque) => (
                 <div key={embarque.id} className="rounded-2xl bg-muted/50 p-4 shadow-sm flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground dark:text-gray-100">{embarque.nome}</p>
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">{embarque.nome}</p>
                     <p className="text-xs text-muted-foreground mt-1">{embarque.resumo}</p>
                   </div>
-                  <Badge className="border-0 shadow-none bg-white text-foreground/90 dark:bg-background dark:text-foreground">{embarque.status}</Badge>
+                  <Badge className="border-0 shadow-none bg-card text-foreground/90 dark:bg-background dark:text-foreground">{embarque.status}</Badge>
                 </div>
               ))}
             </div>
@@ -54,17 +54,17 @@ export default function BoatHistoryDetailsDialog({ open, onOpenChange, evento })
 
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-semibold text-foreground dark:text-gray-100">Anexos vinculados</p>
+              <p className="text-sm font-semibold text-foreground dark:text-foreground">Anexos vinculados</p>
               <p className="text-xs text-muted-foreground mt-1">Itens apenas visuais para consulta rápida.</p>
             </div>
             <div className="space-y-2">
               {(evento.anexos || []).map((anexo) => (
                 <div key={anexo.id} className="rounded-2xl bg-muted/50 p-4 shadow-sm flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground dark:text-gray-100">{anexo.nome}</p>
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">{anexo.nome}</p>
                     <p className="text-xs text-muted-foreground mt-1">{anexo.tipo}</p>
                   </div>
-                  <Badge className="border-0 shadow-none bg-white text-foreground/90 dark:bg-background dark:text-foreground">Visual</Badge>
+                  <Badge className="border-0 shadow-none bg-card text-foreground/90 dark:bg-background dark:text-foreground">Visual</Badge>
                 </div>
               ))}
             </div>

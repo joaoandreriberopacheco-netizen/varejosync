@@ -151,27 +151,27 @@ export default function SimuladorCartaoAvancado() {
       </Card>
 
       {/* Resumo Final */}
-      <Card className="p-5 bg-gray-900 dark:bg-muted shadow-sm">
+      <Card className="p-5 bg-background dark:bg-muted shadow-sm">
         <h3 className="text-base font-semibold text-white mb-4 font-glacial">
           Resumo da Operação
         </h3>
 
         <div className="space-y-3">
           {/* Linha 1 */}
-          <div className="flex items-center justify-between pb-3 border-b border-gray-700">
-            <span className="text-gray-300">Valor Total da Venda</span>
+          <div className="flex items-center justify-between pb-3 border-b border-border/40">
+            <span className="text-muted-foreground">Valor Total da Venda</span>
             <span className="text-xl font-bold text-white">{formatValor(calculos.vBruto)}</span>
           </div>
 
           {/* Linha 2 */}
-          <div className="flex items-center justify-between pb-3 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-3 border-b border-border/40">
             <span className="text-muted-foreground">Taxa de Operadora ({calculos.tPerc}%)</span>
             <span className="text-lg font-semibold text-red-400">−{formatValor(calculos.valorTaxa)}</span>
           </div>
 
           {/* Linha 3 */}
-          <div className="flex items-center justify-between pb-3 border-b border-gray-700">
-            <span className="text-gray-300 font-semibold">Valor que Entra na Conta</span>
+          <div className="flex items-center justify-between pb-3 border-b border-border/40">
+            <span className="text-muted-foreground font-semibold">Valor que Entra na Conta</span>
             <span className="text-2xl font-bold text-green-400">{formatValor(calculos.valorLiquido)}</span>
           </div>
 

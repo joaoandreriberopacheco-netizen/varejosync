@@ -20,12 +20,12 @@ export default function ConsumoDetalheDialog({ open, onOpenChange, consumo, anex
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border-0 bg-white p-0 shadow-2xl dark:bg-background">
+      <DialogContent className="max-w-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
         <div className="relative flex max-h-[88vh] flex-col overflow-hidden rounded-[32px]">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
+            className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
           >
             <X className="h-4 w-4" />
           </button>
@@ -52,7 +52,7 @@ export default function ConsumoDetalheDialog({ open, onOpenChange, consumo, anex
               </div>
               <div className="space-y-2">
                 {(consumo.itens || []).map((item, index) => (
-                  <div key={index} className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-background">
+                  <div key={index} className="flex items-center justify-between rounded-2xl bg-card px-3 py-2 shadow-sm dark:bg-background">
                     <div>
                       <p className="text-sm font-medium text-foreground">{item.produto_nome}</p>
                       <p className="text-xs text-muted-foreground">{item.quantidade} {item.unidade_medida || 'UN'}</p>
@@ -70,7 +70,7 @@ export default function ConsumoDetalheDialog({ open, onOpenChange, consumo, anex
               </div>
               <div className="space-y-2">
                 {anexos.length === 0 ? (
-                  <div className="rounded-2xl bg-white px-3 py-3 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
+                  <div className="rounded-2xl bg-card px-3 py-3 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
                     Nenhum anexo salvo.
                   </div>
                 ) : anexos.map((anexo) => (
@@ -79,7 +79,7 @@ export default function ConsumoDetalheDialog({ open, onOpenChange, consumo, anex
                     href={anexo.url_drive}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-100 dark:bg-background dark:hover:bg-gray-950"
+                    className="flex items-center justify-between rounded-2xl bg-card px-3 py-3 shadow-sm transition-colors hover:bg-muted dark:bg-muted dark:hover:bg-background"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{anexo.nome_arquivo || 'Anexo'}</p>

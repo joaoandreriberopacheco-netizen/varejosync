@@ -8,7 +8,7 @@ function StepDots({ step, total = 3 }) {
         <div
           key={i}
           className={`h-2 rounded-full transition-all duration-300 ${
-            i < step ? 'w-5 bg-gray-900 dark:bg-white' : i === step ? 'w-5 bg-gray-400 dark:bg-muted/400' : 'w-2 bg-muted'
+            i < step ? 'w-5 bg-background dark:bg-card' : i === step ? 'w-5 bg-muted-foreground/40 dark:bg-muted/400' : 'w-2 bg-muted'
           }`}
         />
       ))}
@@ -18,7 +18,7 @@ function StepDots({ step, total = 3 }) {
 
 export default function ConsumoFormHeader({ isDesktop, mobileStep, stepLabels, onBack }) {
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-border/40 bg-white px-4 py-3 dark:border-border/40 dark:bg-background">
+    <div className="flex shrink-0 items-center gap-3 border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-background">
       <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
         <ArrowLeft className="h-5 w-5 text-foreground/90" />
       </button>
@@ -36,7 +36,7 @@ export default function ConsumoFormHeader({ isDesktop, mobileStep, stepLabels, o
           {stepLabels.map((label, i) => (
             <div key={i} className="flex items-center gap-1">
               <span className="text-xs font-semibold text-muted-foreground">{label}</span>
-              {i < stepLabels.length - 1 && <ChevronRight className="h-3 w-3 text-gray-300 dark:text-foreground/90" />}
+              {i < stepLabels.length - 1 && <ChevronRight className="h-3 w-3 text-muted-foreground dark:text-foreground/90" />}
             </div>
           ))}
         </div>

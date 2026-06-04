@@ -195,7 +195,7 @@ export default function AutoShop({
 
   return (
     <motion.div 
-      className="flex-1 flex flex-col h-full bg-gray-100 dark:bg-background overflow-hidden"
+      className="flex-1 flex flex-col h-full bg-muted dark:bg-muted overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -448,7 +448,7 @@ export default function AutoShop({
                         className={`w-full text-left px-3 py-3 rounded-lg text-base font-medium transition-all flex items-center justify-between ${
                           selectedCategory === 'Todos' 
                             ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' 
-                            : 'text-muted-foreground active:bg-gray-100'
+                            : 'text-muted-foreground active:bg-muted'
                         }`}
                       >
                         Todos
@@ -465,7 +465,7 @@ export default function AutoShop({
                             className={`w-full text-left px-3 py-3 rounded-lg text-base font-medium transition-all flex items-center justify-between ${
                               selectedCategory === cat.name 
                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' 
-                                : 'text-muted-foreground active:bg-gray-100'
+                                : 'text-muted-foreground active:bg-muted'
                             }`}
                           >
                             {cat.name}
@@ -562,7 +562,7 @@ export default function AutoShop({
         </AnimatePresence>
 
         {/* Grid de Produtos */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 bg-gray-100 dark:bg-background">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 bg-muted dark:bg-muted">
           <div className="max-w-full mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -571,7 +571,7 @@ export default function AutoShop({
               <Button 
                 variant="ghost" 
                 onClick={() => setShowLostSales(true)}
-                className="text-muted-foreground hover:text-gray-800 dark:text-muted-foreground dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-muted-foreground"
               >
                 <Frown className="w-5 h-5 mr-2" />
                 Não encontrou?
@@ -594,7 +594,7 @@ export default function AutoShop({
                   className="bg-card rounded-3xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col h-full border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 group"
                 >
                   {/* Imagem do Produto com Fallback */}
-                  <div className="aspect-square bg-muted/40 dark:bg-muted rounded-2xl mb-4 flex items-center justify-center text-gray-300 dark:text-muted-foreground overflow-hidden relative">
+                  <div className="aspect-square bg-muted/40 dark:bg-muted rounded-2xl mb-4 flex items-center justify-center text-muted-foreground dark:text-muted-foreground overflow-hidden relative">
                     {produto.imagem_url ? (
                       <img 
                         src={produto.imagem_url} 
@@ -627,7 +627,7 @@ export default function AutoShop({
             
             {produtosFiltrados.length === 0 && (
               <div className="text-center py-20">
-                <Package className="w-24 h-24 mx-auto text-gray-300 dark:text-muted-foreground mb-4" />
+                <Package className="w-24 h-24 mx-auto text-muted-foreground dark:text-muted-foreground mb-4" />
                 <h3 className="text-2xl font-bold text-muted-foreground mb-2">Nenhum produto encontrado</h3>
                 <p className="text-muted-foreground mb-8">Tente buscar por outro termo ou categoria</p>
                 <Button 
@@ -654,7 +654,7 @@ export default function AutoShop({
       </div>
 
       {/* Bottom Area: Cart Bar Only */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col bg-gradient-to-t from-white/90 to-transparent dark:from-gray-900/90 pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col bg-gradient-to-t from-white/90 to-transparent dark:from-muted/40 pointer-events-none">
           {/* Cart Bar */}
           {carrinho.length > 0 && (
             <div className="bg-card border-t border-border/40 p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.2)] pointer-events-auto">
@@ -737,7 +737,7 @@ export default function AutoShop({
             ) : (
               carrinho.map(item => (
                 <div key={item.produto_id} className="flex items-center gap-4 p-4 bg-muted/50 rounded-2xl border border-border/40">
-                  <div className="w-16 h-16 bg-white dark:bg-muted rounded-xl flex items-center justify-center text-gray-300 overflow-hidden relative">
+                  <div className="w-16 h-16 bg-card dark:bg-muted rounded-xl flex items-center justify-center text-muted-foreground overflow-hidden relative">
                     {item.imagem ? (
                       <img src={item.imagem} alt={item.produto_nome} className="w-full h-full object-cover" />
                     ) : (
@@ -922,11 +922,11 @@ function SuggestedProductsSidebar({ recommendations, onAddRec }) {
             key={rec.id}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="group relative bg-white dark:bg-muted rounded-xl p-3 border border-border/40 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm transition-all cursor-pointer"
+            className="group relative bg-card dark:bg-muted rounded-xl p-3 border border-border/40 dark:border-border/40 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm transition-all cursor-pointer"
             onClick={() => onAddRec(rec)}
           >
             {/* Imagem do Produto Recomendado */}
-            <div className="aspect-video bg-muted/40 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative flex items-center justify-center">
+            <div className="aspect-video bg-muted/40 dark:bg-muted rounded-lg mb-2 overflow-hidden relative flex items-center justify-center">
               {rec.imagem_url ? (
                 <img 
                   src={rec.imagem_url} 
@@ -939,7 +939,7 @@ function SuggestedProductsSidebar({ recommendations, onAddRec }) {
                 />
               ) : null}
               <div className={`absolute inset-0 flex items-center justify-center ${rec.imagem_url ? 'hidden' : ''}`}>
-                <Package className="w-8 h-8 text-gray-300 dark:text-muted-foreground" />
+                <Package className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
               </div>
             </div>
             
@@ -986,7 +986,7 @@ function WelcomeBanner({ config, onUpdateConfig, visible }) {
 
   return (
     <div 
-      className="relative h-64 md:h-80 bg-slate-900 text-white shrink-0 overflow-hidden group mb-6 rounded-b-3xl shadow-2xl mx-4 mt-4"
+      className="relative h-64 md:h-80 bg-primary text-white shrink-0 overflow-hidden group mb-6 rounded-b-3xl shadow-2xl mx-4 mt-4"
       style={{ 
         backgroundImage: config.imagem_fundo_url ? `linear-gradient(to bottom, rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.9)), url(${config.imagem_fundo_url})` : undefined,
         backgroundSize: 'cover',
@@ -1002,7 +1002,7 @@ function WelcomeBanner({ config, onUpdateConfig, visible }) {
             <h1 className="text-4xl md:text-6xl font-extrabold mb-3 text-white drop-shadow-lg tracking-tight">
                 {config.titulo_boas_vindas}
             </h1>
-            <p className="text-xl text-slate-200 font-medium max-w-2xl drop-shadow-md bg-black/20 backdrop-blur-sm p-2 rounded-lg inline-block">
+            <p className="text-xl text-muted-foreground font-medium max-w-2xl drop-shadow-md bg-black/20 backdrop-blur-sm p-2 rounded-lg inline-block">
                 {config.subtitulo_boas_vindas}
             </p>
           </motion.div>

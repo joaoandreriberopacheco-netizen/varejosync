@@ -6,7 +6,7 @@ import { base44 } from '@/api/base44Client';
 function getButtonBorderColor(temConta, status, estaAtrazo) {
   // Sem conta vinculada - cinza claro
   if (!temConta) {
-    return 'border-gray-300 dark:border-gray-600 text-muted-foreground';
+    return 'border-border/40 dark:border-border/40 text-muted-foreground';
   }
 
   // Com atraso - flamingo (rosa coral)
@@ -61,7 +61,7 @@ export default function FreteListCard({ evento, onSelect }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
             <ShipWheel className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            <p className="text-sm font-medium text-foreground dark:text-gray-100 truncate">{evento.embarcacao_nome}</p>
+            <p className="text-sm font-medium text-foreground dark:text-foreground truncate">{evento.embarcacao_nome}</p>
           </div>
           <p className="text-xs text-muted-foreground mt-1 truncate">{evento.codigo || 'Sem código'}</p>
           <div className="space-y-1 mt-2 text-[11px] text-muted-foreground">

@@ -17,7 +17,7 @@ export default function RouteModeToggle({ value, onChange }) {
           <button
             key={option.value}
             onClick={() => onChange(option.value)}
-            className={`snap-start flex items-center justify-center gap-2 min-w-[132px] px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-gray-700 text-gray-100 dark:bg-muted dark:text-gray-100' : 'bg-gray-900/70 text-gray-300 dark:bg-background dark:text-muted-foreground'}`}
+            className={`snap-start flex items-center justify-center gap-2 min-w-[132px] px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-muted text-foreground dark:bg-muted dark:text-foreground' : 'bg-muted/70 text-muted-foreground dark:bg-background dark:text-muted-foreground'}`}
           >
             <Icon className="w-4 h-4" />
             <span>{option.value}</span>

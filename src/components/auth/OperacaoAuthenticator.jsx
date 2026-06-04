@@ -239,9 +239,9 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                                 <button
                                     onClick={takePhoto}
-                                    className="rounded-full w-16 h-16 bg-white/20 hover:bg-white/40 border-2 border-white backdrop-blur-sm flex items-center justify-center transition-all active:scale-90"
+                                    className="rounded-full w-16 h-16 bg-card/20 hover:bg-card/40 border-2 border-white backdrop-blur-sm flex items-center justify-center transition-all active:scale-90"
                                 >
-                                    <div className="w-12 h-12 bg-white rounded-full" />
+                                    <div className="w-12 h-12 bg-card rounded-full" />
                                 </button>
                             </div>
                             {error && (
@@ -264,7 +264,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                             </div>
                             <Button
                                 onClick={() => setShowPinSetup(true)}
-                                className="bg-gray-900 dark:bg-white dark:text-foreground text-white gap-2"
+                                className="bg-background dark:bg-card dark:text-foreground text-white gap-2"
                             >
                                 Configurar PIN agora
                                 <ChevronRight className="w-4 h-4" />
@@ -291,7 +291,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                             <div className="flex justify-center gap-3 py-2">
                                 {dots.map((filled, i) => (
                                     <div key={i} className={`w-3 h-3 rounded-full transition-all duration-150 ${
-                                        filled ? 'bg-primary dark:bg-white scale-110' : 'bg-muted'
+                                        filled ? 'bg-primary dark:bg-card scale-110' : 'bg-muted'
                                     }`} />
                                 ))}
                             </div>
@@ -304,7 +304,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                     value={pin}
                                     onChange={e => { setError(''); setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
                                     onKeyDown={e => e.key === 'Enter' && pin.length === 6 && handlePinSubmit()}
-                                    className="w-full h-14 rounded-2xl bg-muted/50 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                                    className="w-full h-14 rounded-2xl bg-muted/50 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
                                     maxLength={6}
                                     placeholder="••••••"
                                     autoComplete="one-time-code"
@@ -329,7 +329,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                         <Button
                             onClick={handlePinSubmit}
                             disabled={loading || pin.length < 6}
-                            className="bg-gray-900 dark:bg-white dark:text-foreground text-white min-w-[120px]"
+                            className="bg-background dark:bg-card dark:text-foreground text-white min-w-[120px]"
                         >
                             {loading ? (
                                 <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Validando...</>

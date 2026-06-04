@@ -51,7 +51,7 @@ const W_EDIT = 60;       // coluna de edição sticky à esquerda (edit + delete
 function StatusDot({ produto }) {
   const e = produto.estoque_atual  || 0;
   const m = produto.estoque_minimo || 0;
-  const cls = !produto.ativo           ? 'bg-gray-400'
+  const cls = !produto.ativo           ? 'bg-muted-foreground/40'
     : e <= 0                           ? 'bg-red-500 animate-pulse'
     : e <= m                           ? 'bg-orange-400'
     : 'bg-green-500';
@@ -159,7 +159,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
 function groupCellValue(colId, row) {
   const tilde  = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtR(v)}</span> : dash();
   const tildeP = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtPct(v)}</span> : dash();
-  const dash   = () => <span className="text-xs text-gray-300 dark:text-foreground/90">—</span>;
+  const dash   = () => <span className="text-xs text-muted-foreground dark:text-foreground/90">—</span>;
   switch (colId) {
     case 'preco_venda':           return tilde(row.precoMedio);
     case 'preco_custo':           return tilde(row.custoMedio);
@@ -239,7 +239,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
             />
           )}
           {isLeaf && <div className="w-3.5 flex-shrink-0" />}
-          <span className="text-xs font-semibold text-foreground/90 dark:text-gray-100 truncate uppercase tracking-wide">
+          <span className="text-xs font-semibold text-foreground/90 dark:text-foreground truncate uppercase tracking-wide">
             {row.label}
           </span>
           <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
@@ -290,7 +290,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
             style={{ width: 32, height: 32 }}>
             {p.imagem_url
               ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-              : <Package className="w-3.5 h-3.5 text-gray-300" />}
+              : <Package className="w-3.5 h-3.5 text-muted-foreground" />}
           </div>
           <span className="text-xs font-normal text-muted-foreground truncate uppercase">{p.nome}</span>
           {p.codigo_interno && (
@@ -325,8 +325,8 @@ export function LevelControl({ level, onChange }) {
         <button key={value} onClick={() => onChange(value)} title={title}
           className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
             level === value
-              ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+              ? 'bg-muted dark:bg-muted text-white dark:text-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
           }`}
         >
           {label}

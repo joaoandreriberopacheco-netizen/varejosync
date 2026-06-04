@@ -734,7 +734,7 @@ ${blocoTextoLocal}`,
       <div
         className={`flex h-full flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5 ${fluxoLoopAtualizadorRecorrente ? 'min-h-0' : 'min-h-[32rem]'}`}
       >
-        <div className="rounded-[32px] bg-white p-6 shadow-sm dark:bg-muted">
+        <div className="rounded-[32px] bg-card p-6 shadow-sm dark:bg-muted">
           <div className="mb-5 flex items-start gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
               <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
@@ -795,7 +795,7 @@ ${blocoTextoLocal}`,
   if (!extractedData) {
     return (
       <div className="h-full overflow-y-auto space-y-5 px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-2">
-        <div className="rounded-[28px] bg-white/95 p-5 shadow-sm dark:bg-muted">
+        <div className="rounded-[28px] bg-card/95 p-5 shadow-sm dark:bg-muted">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Importar conta</p>
@@ -808,8 +808,8 @@ ${blocoTextoLocal}`,
           </div>
 
           <label className="block cursor-pointer">
-            <div className="rounded-[24px] bg-gray-100 px-5 py-7 text-center shadow-sm transition-all hover:bg-gray-200 dark:bg-background dark:hover:bg-gray-950">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-muted">
+            <div className="rounded-[24px] bg-muted px-5 py-7 text-center shadow-sm transition-all hover:bg-muted dark:bg-background dark:hover:bg-background">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-card shadow-sm dark:bg-muted">
                 <Upload className="h-6 w-6 text-muted-foreground" />
               </div>
               <p className="font-medium text-foreground">{file ? file.name : 'Selecionar documento'}</p>
@@ -826,7 +826,7 @@ ${blocoTextoLocal}`,
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-muted">
+          <div className="rounded-3xl bg-card p-4 shadow-sm dark:bg-muted">
             <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Formato</p>
             <div className="mt-3 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted">
@@ -835,7 +835,7 @@ ${blocoTextoLocal}`,
               <p className="text-sm font-medium text-foreground">PDF ou imagem</p>
             </div>
           </div>
-          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-muted">
+          <div className="rounded-3xl bg-card p-4 shadow-sm dark:bg-muted">
             <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Resultado</p>
             <div className="mt-3 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted">
@@ -847,9 +847,9 @@ ${blocoTextoLocal}`,
         </div>
 
         {loading && (
-          <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-muted">
+          <div className="rounded-3xl bg-card p-5 shadow-sm dark:bg-muted">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl border-2 border-gray-300 border-t-gray-600 animate-spin dark:border-gray-600 dark:border-t-gray-200" />
+              <div className="h-10 w-10 rounded-2xl border-2 border-border/40 border-t-gray-600 animate-spin dark:border-border/40 dark:border-t-gray-200" />
               <div>
                 <p className="text-sm font-medium text-foreground">Lendo documento</p>
                 <p className="text-xs text-muted-foreground">Analisando campos principais para contas a pagar.</p>
@@ -889,7 +889,7 @@ ${blocoTextoLocal}`,
     <div className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
-          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-muted">
+          <div className="rounded-[28px] bg-card p-5 shadow-sm dark:bg-muted">
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
                 <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -900,14 +900,14 @@ ${blocoTextoLocal}`,
               </div>
               <button
                 onClick={resetState}
-                className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 text-muted-foreground transition-colors hover:bg-muted dark:text-foreground/90 dark:hover:bg-gray-600"
+                className="flex h-9 w-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground transition-colors hover:bg-muted dark:text-foreground/90 dark:hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-muted">
+          <div className="rounded-[28px] bg-card p-5 shadow-sm dark:bg-muted">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Pr?-preenchimento</p>
@@ -920,14 +920,14 @@ ${blocoTextoLocal}`,
                   </p>
                 )}
               </div>
-              <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-muted-foreground dark:bg-muted dark:text-foreground/90">PDV style</span>
+              <span className="rounded-2xl bg-muted px-3 py-1 text-xs font-medium text-muted-foreground dark:bg-muted dark:text-foreground/90">PDV style</span>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground/90">Conta financeira</label>
                 <Select value={contaFinanceiraId} onValueChange={setContaFinanceiraId}>
-                  <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-foreground shadow-none focus:ring-0 dark:bg-background dark:text-white">
+                  <SelectTrigger className="h-14 rounded-2xl border-0 bg-muted px-4 text-base text-foreground shadow-none focus:ring-0 dark:bg-background dark:text-white">
                     <SelectValue placeholder="Escolher conta" />
                   </SelectTrigger>
                   <SelectContent>
@@ -953,7 +953,7 @@ ${blocoTextoLocal}`,
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
                   readOnly={!fluxoListaRecorrentes && descricaoSacralizadaLock}
                   title={!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'Esta conta j? tem descri??o confirmada; novos PDFs n?o a alteram.' : undefined}
-                  className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950 ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
+                  className={`h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
                 />
                 {fluxoListaRecorrentes && (
                   <p className="mt-1.5 text-xs text-muted-foreground">
@@ -979,7 +979,7 @@ ${blocoTextoLocal}`,
                     type="text"
                     value={extractedData.terceiro_nome}
                     onChange={(e) => setExtractedData({ ...extractedData, terceiro_nome: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                   />
                 </div>
                 <div>
@@ -988,7 +988,7 @@ ${blocoTextoLocal}`,
                     type="date"
                     value={extractedData.periodo_referencia}
                     onChange={(e) => setExtractedData({ ...extractedData, periodo_referencia: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                   />
                 </div>
               </div>
@@ -1000,7 +1000,7 @@ ${blocoTextoLocal}`,
                     type="number"
                     value={extractedData.valor}
                     onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) || 0 })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-muted px-4 text-lg font-semibold text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                     step="0.01"
                   />
                 </div>
@@ -1010,7 +1010,7 @@ ${blocoTextoLocal}`,
                     type="date"
                     value={extractedData.data_vencimento}
                     onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                   />
                 </div>
               </div>
@@ -1023,13 +1023,13 @@ ${blocoTextoLocal}`,
                     type="number"
                     value={extractedData.parcela_numero}
                     onChange={(e) => setExtractedData({ ...extractedData, parcela_numero: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                   />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground/90">Frequ?ncia</label>
                   <Select value={selectedRecorrencia} onValueChange={setSelectedRecorrencia}>
-                    <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-foreground shadow-none focus:ring-0 dark:bg-background dark:text-white">
+                    <SelectTrigger className="h-14 rounded-2xl border-0 bg-muted px-4 text-base text-foreground shadow-none focus:ring-0 dark:bg-background dark:text-white">
                       <SelectValue placeholder="Escolher frequ?ncia" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1050,7 +1050,7 @@ ${blocoTextoLocal}`,
                 <textarea
                   value={extractedData.linha_digitavel}
                   onChange={(e) => setExtractedData({ ...extractedData, linha_digitavel: e.target.value })}
-                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                  className="min-h-[92px] w-full rounded-2xl bg-muted px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                 />
               </div>
 
@@ -1059,7 +1059,7 @@ ${blocoTextoLocal}`,
                 <textarea
                   value={extractedData.codigo_pix_copia_cola}
                   onChange={(e) => setExtractedData({ ...extractedData, codigo_pix_copia_cola: e.target.value })}
-                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                  className="min-h-[92px] w-full rounded-2xl bg-muted px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                 />
               </div>
 
@@ -1068,14 +1068,14 @@ ${blocoTextoLocal}`,
                 <textarea
                   value={extractedData.observacoes}
                   onChange={(e) => setExtractedData({ ...extractedData, observacoes: e.target.value })}
-                  className="min-h-[110px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
+                  className="min-h-[110px] w-full rounded-2xl bg-muted px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background"
                 />
               </div>
             </div>
           </div>
 
           {!fluxoListaRecorrentes && (
-          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-muted">
+          <div className="rounded-[28px] bg-card p-5 shadow-sm dark:bg-muted">
             <label className="mb-3 block text-sm font-medium text-foreground/90">Qual ? a natureza desta conta?</label>
             <AgefinNaturezaSelector value={selectedNatureza || '??nico'} onChange={setSelectedNatureza} />
             {selectedNatureza === 'Recorrente' && (
@@ -1097,7 +1097,7 @@ ${blocoTextoLocal}`,
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-muted/40/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-gray-950/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-muted/40/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-muted/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"
@@ -1109,7 +1109,7 @@ ${blocoTextoLocal}`,
           <Button
             onClick={handleConfirm}
             disabled={loading || (!fluxoListaRecorrentes && !selectedNatureza) || !contaFinanceiraId}
-            className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-foreground hover:bg-gray-400 dark:bg-gray-200 dark:text-foreground dark:hover:bg-white"
+            className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground hover:bg-muted-foreground/40 dark:bg-muted dark:text-foreground dark:hover:bg-card"
           >
             {loading ? 'Salvando...' : fluxoListaRecorrentes ? 'Guardar boleto' : 'Salvar Conta'}
           </Button>

@@ -57,7 +57,7 @@ function MiniCal({ base, rangeStart, rangeEnd, hover, onDay, onHover, onPrev, on
               onClick={() => onDay(d)}
               onMouseEnter={() => onHover(d)}
               className={`text-center text-[0.7rem] py-1 rounded-lg transition-colors
-                ${isS || isE ? 'bg-muted/400 text-white dark:bg-gray-100 dark:text-foreground font-bold' : ''}
+                ${isS || isE ? 'bg-muted/400 text-white dark:bg-muted dark:text-foreground font-bold' : ''}
                 ${in_ && !isS && !isE ? 'bg-muted text-foreground/90' : ''}
                 ${!isS && !isE && !in_ ? 'text-muted-foreground hover:bg-muted' : ''}
               `}>
@@ -111,7 +111,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
     <button key={c.v}
       onClick={() => { onPeriodo(c.v); if (c.v === 'periodo') setShowCal(s => !s); else setShowCal(false); }}
       className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-        ${periodo === c.v ? 'bg-muted/400 dark:bg-gray-200 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
+        ${periodo === c.v ? 'bg-muted/400 dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
       {chipLabel(c)}
       {c.v === 'periodo' && periodo === 'periodo' && (rs || re) && (
         <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
@@ -136,7 +136,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
               <span className="text-xs text-muted-foreground">
                 {format(rs, 'dd MMM yyyy', { locale: ptBR })} → {format(re, 'dd MMM yyyy', { locale: ptBR })}
               </span>
-              <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-muted/400 dark:bg-gray-200 text-white dark:text-foreground px-3 py-1 rounded-lg">OK</button>
+              <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-muted/400 dark:bg-muted text-white dark:text-foreground px-3 py-1 rounded-lg">OK</button>
             </div>
           )}
         </div>
@@ -156,22 +156,22 @@ function ContasFiltro({ contas, sel, onSel }) {
       <PopoverTrigger asChild>
         <button className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all shadow-sm
           ${!todasSel
-            ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-            : 'bg-gray-100 dark:bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-slate-700'}`}>
+            ? 'bg-primary dark:bg-muted text-white dark:text-foreground'
+            : 'bg-muted dark:bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-muted'}`}>
           <Wallet className="w-3.5 h-3.5" />
           <span>{todasSel ? 'Todas as contas' : `${sel.length} selecionada${sel.length > 1 ? 's' : ''}`}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2.5 border-0 shadow-xl rounded-3xl bg-white dark:bg-card" align="start">
+      <PopoverContent className="w-64 p-2.5 border-0 shadow-xl rounded-3xl bg-card dark:bg-card" align="start">
         <div className="mb-2 px-2 pt-1">
           <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Contas financeiras</p>
         </div>
         <button
           onClick={handleTodas}
           className={`w-full text-left px-3 py-2 rounded-2xl text-xs mb-1.5 transition-colors ${todasSel
-            ? 'bg-gray-100 dark:bg-muted text-foreground font-medium shadow-sm'
-            : 'text-muted-foreground hover:bg-muted/40 dark:hover:bg-slate-800'}`}
+            ? 'bg-muted dark:bg-muted text-foreground font-medium shadow-sm'
+            : 'text-muted-foreground hover:bg-muted/40 dark:hover:bg-card'}`}
         >
           Todas as contas
         </button>
@@ -180,8 +180,8 @@ function ContasFiltro({ contas, sel, onSel }) {
             <label
               key={c.id}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${sel.includes(c.id)
-                ? 'bg-gray-100 dark:bg-muted shadow-sm'
-                : 'hover:bg-muted/40 dark:hover:bg-slate-800/70'}`}
+                ? 'bg-muted dark:bg-muted shadow-sm'
+                : 'hover:bg-muted/40 dark:hover:bg-muted/70'}`}
             >
               <Checkbox checked={sel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-4 h-4" />
               <span className="w-2.5 h-2.5 rounded-full flex-none shadow-sm" style={{ background: c.cor || '#10B981' }} />
@@ -204,7 +204,7 @@ function StatusFiltro({ sel, onSel }) {
     <Popover>
       <PopoverTrigger asChild>
         <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? 'bg-muted/400 dark:bg-gray-100 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
+          ${!todasSel ? 'bg-muted/400 dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
           <RefreshCw className="w-3 h-3" />
           {label}
           <ChevronDown className="w-3 h-3" />
@@ -234,7 +234,7 @@ function TipoFiltro({ sel, onSel }) {
     <Popover>
       <PopoverTrigger asChild>
         <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? 'bg-muted/400 dark:bg-gray-100 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
+          ${!todasSel ? 'bg-muted/400 dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
           <BarChart3 className="w-3 h-3" />
           {todasSel ? 'Tipo' : sel.join(', ')}
           <ChevronDown className="w-3 h-3" />
@@ -256,7 +256,7 @@ function CmvFiltro({ cmvOnly, onToggle }) {
   return (
     <button
       onClick={() => onToggle(!cmvOnly)}
-      className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${cmvOnly ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
+      className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${cmvOnly ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
     >
       <Layers className="w-3 h-3" /> CMV
     </button>
@@ -267,7 +267,7 @@ function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90">
+        <button className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90">
           <Clock className="w-3 h-3" /> Conciliar em lote
         </button>
       </PopoverTrigger>
@@ -314,12 +314,12 @@ export default function FiltrosFluxoCaixa({
     <>
       <div className={`${surfaceClass} min-w-0`}>
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 dark:border-slate-700/70 dark:bg-muted sm:h-12 sm:rounded-[16px] sm:px-3">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-card px-2.5 dark:border-border/70 dark:bg-muted sm:h-12 sm:rounded-[16px] sm:px-3">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
             <input autoComplete="off"
               value={search} onChange={e => onSearch(e.target.value)}
               placeholder="Buscar lançamento, categoria, tag..."
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground dark:text-gray-100 sm:text-sm"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground dark:text-foreground sm:text-sm"
             />
             {search && <button type="button" onClick={() => onSearch('')}><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
           </div>
@@ -327,19 +327,19 @@ export default function FiltrosFluxoCaixa({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-white text-foreground dark:border-slate-700/70 dark:bg-muted dark:text-foreground sm:h-12 sm:w-12 sm:rounded-[16px]"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-card text-foreground dark:border-border/70 dark:bg-muted dark:text-foreground sm:h-12 sm:w-12 sm:rounded-[16px]"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {hasActiveFilters && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 dark:bg-white text-[10px] text-white dark:text-slate-900 flex items-center justify-center">•</span>
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary dark:bg-card text-[10px] text-white dark:text-foreground flex items-center justify-center">•</span>
             )}
           </button>
         </div>
 
-        <div className="mt-2.5 flex items-center justify-between border-t border-white/70 px-1.5 pt-2.5 dark:border-slate-700/70">
+        <div className="mt-2.5 flex items-center justify-between border-t border-white/70 px-1.5 pt-2.5 dark:border-border/70">
           <p className="text-[11px] text-muted-foreground">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
           {hasActiveFilters && (
-            <button onClick={onLimparFiltros} className="text-[11px] text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 flex items-center gap-1">
+            <button onClick={onLimparFiltros} className="text-[11px] text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground flex items-center gap-1">
               <X className="w-3 h-3" /> Limpar
             </button>
           )}
@@ -347,7 +347,7 @@ export default function FiltrosFluxoCaixa({
       </div>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
@@ -369,7 +369,7 @@ export default function FiltrosFluxoCaixa({
               <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
               <button
                 onClick={() => onPendentes(!pendentes)}
-                className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
+                className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
               >
                 <Clock className="w-3 h-3" /> Conciliação
               </button>
@@ -377,10 +377,10 @@ export default function FiltrosFluxoCaixa({
             </div>
 
             <div className="flex gap-2 pt-2">
-              <button onClick={onLimparFiltros} className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-muted text-sm text-muted-foreground">
+              <button onClick={onLimparFiltros} className="flex-1 h-11 rounded-2xl bg-muted dark:bg-muted text-sm text-muted-foreground">
                 Limpar
               </button>
-              <button onClick={() => setOpen(false)} className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900">
+              <button onClick={() => setOpen(false)} className="flex-1 h-11 rounded-2xl bg-primary dark:bg-muted text-sm text-white dark:text-foreground">
                 Aplicar
               </button>
             </div>

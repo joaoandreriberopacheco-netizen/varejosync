@@ -381,7 +381,7 @@ export default function ExtratoContaPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-border/40 dark:border-white"></div>
       </div>
     );
   }
@@ -454,8 +454,8 @@ export default function ExtratoContaPage() {
                 onClick={() => setFiltroPeriodo(filtro.value)}
                 className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
                   filtroPeriodo === filtro.value
-                    ? 'bg-primary dark:bg-gray-600 text-white'
-                    : 'bg-white dark:bg-muted text-foreground/90 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-primary dark:bg-muted text-white'
+                    : 'bg-card dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted'
                 }`}
               >
                 {filtro.label}
@@ -470,13 +470,13 @@ export default function ExtratoContaPage() {
                 type="date"
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
-                className="dark:bg-muted dark:border-gray-600"
+                className="dark:bg-muted dark:border-border/40"
               />
               <Input
                 type="date"
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
-                className="dark:bg-muted dark:border-gray-600"
+                className="dark:bg-muted dark:border-border/40"
               />
             </div>
           )}
@@ -564,7 +564,7 @@ export default function ExtratoContaPage() {
       <button
         type="button"
         onClick={() => setShowFAB(!showFAB)}
-        className="fixed right-6 p38-bottom-fab1 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-110 hover:bg-gray-900 dark:bg-muted dark:hover:bg-gray-600"
+        className="fixed right-6 p38-bottom-fab1 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-110 hover:bg-background dark:bg-muted dark:hover:bg-muted"
       >
         <Plus className={`w-6 h-6 transition-transform ${showFAB ? 'rotate-45' : ''}`} />
       </button>
@@ -617,7 +617,7 @@ export default function ExtratoContaPage() {
                 placeholder="Ex: Venda de produto, Pagamento de fornecedor..."
                 value={formLancamento.descricao}
                 onChange={(e) => setFormLancamento({ ...formLancamento, descricao: e.target.value })}
-                className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
               />
             </div>
             <div>
@@ -628,7 +628,7 @@ export default function ExtratoContaPage() {
                 placeholder="0,00"
                 value={formLancamento.valor}
                 onChange={(e) => setFormLancamento({ ...formLancamento, valor: e.target.value })}
-                className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
               />
             </div>
             <div>
@@ -637,7 +637,7 @@ export default function ExtratoContaPage() {
                 value={formLancamento.categoria} 
                 onValueChange={(v) => setFormLancamento({ ...formLancamento, categoria: v })}
               >
-                <SelectTrigger className="dark:bg-muted dark:border-gray-600 dark:text-foreground">
+                <SelectTrigger className="dark:bg-muted dark:border-border/40 dark:text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -653,8 +653,8 @@ export default function ExtratoContaPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter className="shrink-0 border-t border-gray-700/50 pt-4 dark:border-gray-600/50">
-            <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-muted dark:border-gray-600">
+          <DialogFooter className="shrink-0 border-t border-border/50 pt-4 dark:border-border/50">
+            <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-muted dark:border-border/40">
               Cancelar
             </Button>
             <Button 
@@ -680,7 +680,7 @@ export default function ExtratoContaPage() {
                 value={formTransferencia.conta_destino_id} 
                 onValueChange={(v) => setFormTransferencia({ ...formTransferencia, conta_destino_id: v })}
               >
-                <SelectTrigger className="dark:bg-muted dark:border-gray-600 dark:text-foreground">
+                <SelectTrigger className="dark:bg-muted dark:border-border/40 dark:text-foreground">
                   <SelectValue placeholder="Selecione a conta..." />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -698,7 +698,7 @@ export default function ExtratoContaPage() {
                 placeholder="0,00"
                 value={formTransferencia.valor}
                 onChange={(e) => setFormTransferencia({ ...formTransferencia, valor: e.target.value })}
-                className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
               />
             </div>
             <div>
@@ -707,12 +707,12 @@ export default function ExtratoContaPage() {
                 placeholder="Ex: Reforço de caixa, Sangria..."
                 value={formTransferencia.descricao}
                 onChange={(e) => setFormTransferencia({ ...formTransferencia, descricao: e.target.value })}
-                className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
+                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
               />
             </div>
           </div>
-          <DialogFooter className="shrink-0 border-t border-gray-700/50 pt-4 dark:border-gray-600/50">
-            <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-muted dark:border-gray-600">
+          <DialogFooter className="shrink-0 border-t border-border/50 pt-4 dark:border-border/50">
+            <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-muted dark:border-border/40">
               Cancelar
             </Button>
             <Button onClick={handleSaveTransferencia} className="bg-blue-600 hover:bg-blue-700">

@@ -87,7 +87,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
                   type="date"
                   value={etaValue}
                   onChange={e => setEtaValue(e.target.value)}
-                  className="text-[0.75rem] border border-gray-300 dark:border-gray-500 rounded-lg px-1 py-0 bg-white dark:bg-muted text-foreground focus:outline-none focus:border-teal-400"
+                  className="text-[0.75rem] border border-border/40 dark:border-border/40 rounded-lg px-1 py-0 bg-card dark:bg-muted text-foreground focus:outline-none focus:border-teal-400"
                   autoFocus
                 />
                 <button onClick={handleSalvarEta} disabled={salvandoEta} className="text-emerald-500 font-bold text-xs">{salvandoEta ? '…' : '✓'}</button>
@@ -175,7 +175,7 @@ function ItensOrfaos({ itens, onAcordo }) {
         {itens.map((item) =>
         <div key={item.produto_id} className="flex items-start justify-between gap-3">
             <span className="text-sm text-foreground flex-1 leading-tight">{item.produto_nome}</span>
-            <span className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap flex-shrink-0">
+            <span className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap flex-shrink-0">
               {formatQuantity(item.qtd_pendente)} <span className="text-muted-foreground font-normal">{item.unidade_medida}</span> <span className="text-xs text-muted-foreground">pend.</span>
             </span>
           </div>
@@ -255,7 +255,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Dashboard de embarques</p>
             <div className="mt-1 flex items-center gap-2 flex-wrap">
-              <span className="text-2xl font-semibold text-foreground dark:text-gray-100">{temEmbarqueReal ? percentualEmbarcado.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}%</span>
+              <span className="text-2xl font-semibold text-foreground dark:text-foreground">{temEmbarqueReal ? percentualEmbarcado.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}%</span>
               <span className="text-sm text-muted-foreground">despachado</span>
               <span className="text-sm text-emerald-600 dark:text-emerald-400">{temEmbarqueReal ? percentualConcluido.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}% concluído</span>
             </div>
@@ -268,7 +268,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
         <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden flex">
           <div className="h-full bg-emerald-500 transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualConcluido)) : 0}%` }} />
           <div className="h-full bg-cyan-500 transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualEmbarcado - percentualConcluido)) : 0}%` }} />
-          <div className="h-full bg-gray-300 dark:bg-gray-600 transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualPendente)) : 100}%` }} />
+          <div className="h-full bg-muted dark:bg-muted transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualPendente)) : 100}%` }} />
         </div>
       </div>
 
@@ -311,7 +311,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
       {/* Estado vazio */}
       {semEmbarques &&
       <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-muted/50/50 text-center space-y-2">
-          <Clock className="w-8 h-8 text-gray-300 dark:text-muted-foreground" />
+          <Clock className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Nenhum despacho registrado</p>
           <p className="text-xs text-muted-foreground">Use o botão acima para registrar o primeiro embarque</p>
         </div>

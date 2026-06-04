@@ -16,7 +16,7 @@ export default function TimelineViewControls({ viewMode, onViewModeChange }) {
         </div>
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Visualização</p>
-          <p className="text-sm text-foreground dark:text-gray-100 font-medium">Escolha o marco principal e até quando quer ver</p>
+          <p className="text-sm text-foreground dark:text-foreground font-medium">Escolha o marco principal e até quando quer ver</p>
         </div>
       </div>
 
@@ -32,7 +32,7 @@ export default function TimelineViewControls({ viewMode, onViewModeChange }) {
                 key={option.value}
                 type="button"
                 onClick={() => onViewModeChange(option.value)}
-                className={`px-3 py-3 rounded-2xl shadow-sm text-sm transition-all min-h-[72px] flex items-center justify-center text-center leading-tight ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground' : 'bg-muted/40 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+                className={`px-3 py-3 rounded-2xl shadow-sm text-sm transition-all min-h-[72px] flex items-center justify-center text-center leading-tight ${active ? 'bg-background text-white dark:bg-card dark:text-foreground' : 'bg-muted/40 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
               >
                 <span className="break-words">{option.label}</span>
               </button>

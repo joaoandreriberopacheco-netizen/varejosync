@@ -241,7 +241,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
       toast({
         title: "✓ Pedido salvo!",
         description: "Pedido de venda criado com sucesso.",
-        className: "bg-white border border-gray-300 dark:bg-muted dark:text-foreground"
+        className: "bg-card border border-border/40 dark:bg-muted dark:text-foreground"
       });
     } catch (error) {
       toast({
@@ -266,11 +266,11 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
             {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Venda'}
           </DialogTitle>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose} className="border-gray-300 dark:border-gray-600 dark:bg-muted dark:text-foreground h-8 px-3 text-xs md:text-sm">
+            <Button variant="outline" size="sm" onClick={onClose} className="border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground h-8 px-3 text-xs md:text-sm">
               <X className="w-3 h-3 md:w-4 md:h-4 mr-1" />
               Cancelar
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={isSaving || descontoExcedido} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-muted/400 text-white h-8 px-3 text-xs md:text-sm">
+            <Button size="sm" onClick={handleSave} disabled={isSaving || descontoExcedido} className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400 text-white h-8 px-3 text-xs md:text-sm">
               <Save className="w-3 h-3 md:w-4 md:h-4 mr-1" />
               {isSaving ? 'Salvando...' : 'Salvar'}
             </Button>
@@ -280,15 +280,15 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
 
       <Tabs defaultValue="dados-gerais" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="grid grid-cols-3 w-full bg-transparent border-b border-border/40 rounded-none h-auto p-0 flex-shrink-0">
-          <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs md:text-sm">
+          <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-2 text-xs md:text-sm">
             <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1 text-foreground/90 dark:text-muted-foreground" />
             <span className="hidden sm:inline">Dados Gerais</span><span className="sm:hidden">Geral</span>
           </TabsTrigger>
-          <TabsTrigger value="valores" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs md:text-sm">
+          <TabsTrigger value="valores" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-2 text-xs md:text-sm">
             <DollarSign className="w-3 h-3 md:w-4 md:h-4 mr-1 text-foreground/90 dark:text-muted-foreground" />
             <span className="hidden sm:inline">Valores</span><span className="sm:hidden">Valor</span>
           </TabsTrigger>
-          <TabsTrigger value="entrega" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs md:text-sm">
+          <TabsTrigger value="entrega" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-2 text-xs md:text-sm">
             <Truck className="w-3 h-3 md:w-4 md:h-4 mr-1 text-foreground/90 dark:text-muted-foreground" />
             <span className="hidden sm:inline">Entrega</span><span className="sm:hidden">Entreg</span>
           </TabsTrigger>
@@ -301,7 +301,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
               <div className="md:col-span-2">
                 <Label className="text-xs text-muted-foreground mb-2 block">Cliente *</Label>
                 <Select value={formData.cliente_id} onValueChange={handleClienteChange}>
-                  <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-foreground">
+                  <SelectTrigger className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none h-10 text-sm dark:text-foreground">
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -315,7 +315,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
               <div>
                 <Label className="text-xs text-muted-foreground mb-2 block">Status</Label>
                 <Select value={formData.status} onValueChange={v => handleChange('status', v)}>
-                  <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-foreground">
+                  <SelectTrigger className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none h-10 text-sm dark:text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -333,7 +333,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                 <Input 
                   value={formData.vendedor_nome}
                   disabled
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-muted-foreground"
+                  className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-muted-foreground"
                 />
               </div>
             </div>
@@ -473,7 +473,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                         const valorDesc = (subtotal * percent) / 100;
                         handleChange('valor_desconto', valorDesc);
                       }}
-                      className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-foreground"
+                      className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
                     />
                     <Percent className="w-4 h-4 text-muted-foreground" />
                   </div>
@@ -491,7 +491,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                     step="0.01"
                     value={formData.valor_desconto}
                     onChange={e => handleChange('valor_desconto', parseFloat(e.target.value) || 0)}
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-foreground"
+                    className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
                   />
                 </div>
 
@@ -502,7 +502,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                     step="0.01"
                     value={formData.valor_frete}
                     onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)}
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-foreground"
+                    className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
                   />
                 </div>
               </div>
@@ -534,7 +534,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
             <div>
               <Label className="text-xs text-muted-foreground mb-2 block">Método de Entrega</Label>
               <Select value={formData.metodo_entrega} onValueChange={v => handleChange('metodo_entrega', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-foreground">
+                <SelectTrigger className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none h-10 text-sm dark:text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -556,7 +556,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                 value={formData.observacoes}
                 onChange={e => handleChange('observacoes', e.target.value)}
                 placeholder="Informações adicionais..."
-                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-foreground"
+                className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm dark:text-foreground"
               />
             </div>
           </TabsContent>
@@ -571,13 +571,13 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
             <span>{formData.itens.length} item(s) • Total: <strong className="text-foreground">{formatCurrency(valorTotal)}</strong></span>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 dark:bg-muted dark:text-foreground">
+            <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground">
               Cancelar
             </Button>
             <Button 
               onClick={handleSave} 
               disabled={isSaving || descontoExcedido || !formData.cliente_id || formData.itens.length === 0}
-              className="flex-1 sm:flex-none bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-muted/400 text-white"
+              className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400 text-white"
             >
               {isSaving ? 'Salvando...' : 'Salvar Pedido'}
             </Button>

@@ -51,7 +51,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-muted/40 dark:bg-gray-950">
+    <div className="fixed inset-0 z-50 flex flex-col bg-muted/40 dark:bg-background">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 bg-card border-b border-border/40 flex-shrink-0">
         <button
@@ -78,7 +78,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
         ) : orcamentos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <div className="w-16 h-16 rounded-3xl bg-muted flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-gray-300 dark:text-muted-foreground" />
+              <FileText className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">Nenhum orçamento nos últimos 2 dias</p>
           </div>
@@ -98,7 +98,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                   </div>
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                    <p className="text-sm font-semibold text-foreground truncate">
                       {orc.cliente_nome || 'Sem cliente'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -120,7 +120,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                     {/* Itens */}
                     <div className="space-y-1.5">
                       {(orc.itens || []).map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-border/40 last:border-b-0">
+                        <div key={idx} className="flex items-center justify-between py-2 border-b border-border/30 dark:border-border/40 last:border-b-0">
                           <div className="flex items-center gap-2.5 flex-1 min-w-0">
                             <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
                               <Package className="w-3.5 h-3.5 text-muted-foreground" />
@@ -139,7 +139,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
                     {/* Botão carregar */}
                     <button
                       onClick={() => handleCarregar(orc)}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground rounded-2xl text-sm font-semibold active:scale-[0.98] transition-all"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-background dark:bg-muted text-white dark:text-foreground rounded-2xl text-sm font-semibold active:scale-[0.98] transition-all"
                     >
                       <ShoppingCart className="w-4 h-4" />
                       Carregar no PDV

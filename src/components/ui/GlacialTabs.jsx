@@ -31,8 +31,8 @@ export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, l
       className={cn(
         'flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[36px]',
         isActive
-          ? 'bg-white dark:bg-muted text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200',
+          ? 'bg-card dark:bg-muted text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground',
         className
       )}
     >
@@ -68,8 +68,8 @@ export function GlacialSubTabsTrigger({ value, activeValue, onSelect, icon: Icon
       className={cn(
         'flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[40px]',
         isActive
-          ? 'border-gray-700 dark:border-gray-300 text-gray-800 dark:text-gray-100'
-          : 'border-transparent text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-300',
+          ? 'border-border/40 dark:border-border/40 text-foreground'
+          : 'border-transparent text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground',
         className
       )}
     >

@@ -69,7 +69,7 @@ function MiniCalendar({ month, year, rangeStart, rangeEnd, hoverDate, onDayClick
                 color: isStart || isEnd ? '#fff' : '#374151',
                 transition: 'background 0.1s',
               }}
-              className={!isStart && !isEnd ? 'dark:text-foreground dark:hover:bg-primary/90' : 'dark:bg-gray-200 dark:text-foreground'}
+              className={!isStart && !isEnd ? 'dark:text-foreground dark:hover:bg-primary/90' : 'dark:bg-muted dark:text-foreground'}
             >
               {d.getDate()}
             </button>
@@ -142,7 +142,7 @@ export default function PeriodoPicker({ periodo, onPeriodo, customStart, customE
               key={p.value}
               onClick={() => { onPeriodo(p.value); setShowCal(false); }}
               style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 99, fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
-              className={periodo === p.value && !isPeriodoAtivo ? 'bg-primary dark:bg-gray-100 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
+              className={periodo === p.value && !isPeriodoAtivo ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
             >
               {p.label}
             </button>
@@ -152,7 +152,7 @@ export default function PeriodoPicker({ periodo, onPeriodo, customStart, customE
           <button
             onClick={() => { onPeriodo('periodo'); setShowCal(s => !s); }}
             style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 99, fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
-            className={isPeriodoAtivo ? 'bg-primary dark:bg-gray-100 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
+            className={isPeriodoAtivo ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}
           >
             {isPeriodoAtivo ? formatRange() : 'Período'}
             {isPeriodoAtivo && (rangeStart || rangeEnd) && (

@@ -16,8 +16,8 @@ export default function RecorrenciaConfig({ isRecorrente, onToggle, frequencia, 
         <button
           type="button"
           onClick={() => onToggle(!isRecorrente)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-none ${isRecorrente ? 'bg-primary dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`}>
-          <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${isRecorrente ? 'translate-x-6' : 'translate-x-1'}`} />
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-none ${isRecorrente ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`}>
+          <span className={`inline-block h-4 w-4 rounded-full bg-card shadow transform transition-transform ${isRecorrente ? 'translate-x-6' : 'translate-x-1'}`} />
         </button>
       </div>
 

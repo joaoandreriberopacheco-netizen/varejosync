@@ -100,8 +100,8 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
               key={imp.id}
               className={`p-4 rounded-lg border ${
                 imp.status === 'Desfeita'
-                  ? 'bg-muted/40 border-gray-300 dark:bg-muted/50 dark:border-border/40'
-                  : 'bg-white border-border/40 dark:bg-muted dark:border-border/40'
+                  ? 'bg-muted/40 border-border/40 dark:bg-muted/50 dark:border-border/40'
+                  : 'bg-card border-border/40 dark:bg-muted dark:border-border/40'
               }`}
             >
               <div className="flex items-start justify-between mb-3">
@@ -125,7 +125,7 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
 
                 <Badge className={`${
                   imp.status === 'Desfeita'
-                    ? 'bg-gray-200 text-foreground/90 dark:bg-muted dark:text-foreground/90'
+                    ? 'bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90'
                     : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
                 } text-xs`}>
                   {imp.status === 'Desfeita' ? (

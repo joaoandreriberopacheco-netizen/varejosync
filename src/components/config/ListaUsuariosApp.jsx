@@ -106,12 +106,12 @@ export default function ListaUsuariosApp() {
 
   const getBadgePerfil = (user) => {
     if (user.perfil_acesso_nome) {
-      return <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90 border-0 font-normal text-xs">{user.perfil_acesso_nome}</Badge>;
+      return <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90 border-0 font-normal text-xs">{user.perfil_acesso_nome}</Badge>;
     }
     if (user.perfil) {
       return (
         <div className="flex items-center gap-1">
-          <Badge className={`border-0 font-normal text-xs ${MAPA_LEGADO[user.perfil] || 'bg-gray-100 text-muted-foreground'}`}>{user.perfil}</Badge>
+          <Badge className={`border-0 font-normal text-xs ${MAPA_LEGADO[user.perfil] || 'bg-muted text-muted-foreground'}`}>{user.perfil}</Badge>
           <Badge className="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border-0 text-[10px]">legado</Badge>
         </div>
       );
@@ -156,12 +156,12 @@ export default function ListaUsuariosApp() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Usuários do Sistema</h2>
+          <h2 className="text-sm font-semibold text-foreground">Usuários do Sistema</h2>
           <p className="text-xs text-muted-foreground font-light mt-0.5">Vincule perfil de acesso e caixas autorizados</p>
         </div>
         <Button
           size="sm"
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
           onClick={() => toast({ title: 'Para convidar usuários', description: 'Use a função convidarUsuarios no dashboard > functions', duration: 6000 })}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -232,7 +232,7 @@ export default function ListaUsuariosApp() {
                              {caixasVinculadas} caixa{caixasVinculadas !== 1 ? 's' : ''}
                            </span>
                          ) : (
-                           <span className="text-xs text-gray-300 dark:text-muted-foreground">—</span>
+                           <span className="text-xs text-muted-foreground dark:text-muted-foreground">—</span>
                          )}
                        </TableCell>
                        <TableCell className="hidden lg:table-cell">
@@ -242,13 +242,13 @@ export default function ListaUsuariosApp() {
                              {user.tabela_preco_nome}
                            </span>
                          ) : (
-                           <span className="text-[10px] text-gray-300 dark:text-muted-foreground italic">usa padrão</span>
+                           <span className="text-[10px] text-muted-foreground dark:text-muted-foreground italic">usa padrão</span>
                          )}
                        </TableCell>
                        <TableCell className="text-right">
                         <Button
                           size="sm" variant="ghost"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground"
                           onClick={() => handleEditar(user)}
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -267,7 +267,7 @@ export default function ListaUsuariosApp() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Shield className="w-4 h-4 text-muted-foreground" />
               Configurar Acesso
             </DialogTitle>
@@ -369,12 +369,12 @@ export default function ListaUsuariosApp() {
                         onClick={() => toggleCaixa(conta.id)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                           ativo
-                            ? 'bg-primary text-white dark:bg-gray-200 dark:text-foreground'
+                            ? 'bg-primary text-white dark:bg-muted dark:text-foreground'
                             : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
                         <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
-                          ativo ? 'bg-white/20 dark:bg-black/10' : 'border border-gray-300 dark:border-gray-600'
+                          ativo ? 'bg-card/20 dark:bg-black/10' : 'border border-border/40 dark:border-border/40'
                         }`}>
                           {ativo && (
                             <svg className="w-2.5 h-2.5 text-white dark:text-foreground" fill="none" viewBox="0 0 12 12">
@@ -400,7 +400,7 @@ export default function ListaUsuariosApp() {
             </Button>
             <Button
               size="sm"
-              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs"
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
               onClick={handleSalvar}
             >
               Salvar

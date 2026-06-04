@@ -34,7 +34,7 @@ export default function TagSearchPopup({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           autoFocus={!isInline}
-          className="w-full pl-7 pr-2 py-1.5 text-sm bg-muted/40 dark:bg-muted rounded border border-border/40 text-foreground placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full pl-7 pr-2 py-1.5 text-sm bg-muted/40 dark:bg-muted rounded border border-border/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
       
@@ -46,7 +46,7 @@ export default function TagSearchPopup({
               <button
                 key={tag}
                 onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded text-xs font-medium hover:opacity-80 transition"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-background dark:bg-card text-white dark:text-foreground rounded text-xs font-medium hover:opacity-80 transition"
               >
                 {tag}
                 <X className="w-3 h-3" />
@@ -62,7 +62,7 @@ export default function TagSearchPopup({
             <button
               key={tag}
               onClick={() => setSelectedTags(prev => [...prev, tag])}
-              className="w-full text-left px-2 py-1.5 text-sm text-foreground bg-muted/40 dark:bg-muted rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+              className="w-full text-left px-2 py-1.5 text-sm text-foreground bg-muted/40 dark:bg-muted rounded hover:bg-muted dark:hover:bg-muted transition"
             >
               {tag}
             </button>
@@ -77,7 +77,7 @@ export default function TagSearchPopup({
       {!isInline && (
         <button
           onClick={onClose}
-          className="w-full mt-2 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-foreground text-xs font-medium rounded hover:opacity-90 transition"
+          className="w-full mt-2 py-1.5 bg-background dark:bg-card text-white dark:text-foreground text-xs font-medium rounded hover:opacity-90 transition"
         >
           Fechar
         </button>

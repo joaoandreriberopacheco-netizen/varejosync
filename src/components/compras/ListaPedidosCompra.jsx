@@ -21,7 +21,7 @@ const R = (v) => {
 };
 
 const STATUS_CONFIG = {
-  'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-muted text-muted-foreground' },
+  'Rascunho': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted text-muted-foreground' },
   'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
   'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Cancelado': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-muted text-muted-foreground' },
+  'Cancelado': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted text-muted-foreground' },
 };
 
 // Adiciona animação de piscar ao CSS global
@@ -343,7 +343,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   if (grupos.length === 0) {
     return (
       <div className="bg-card rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
-        <Package2 className="w-9 h-9 text-gray-200 dark:text-foreground/90" />
+        <Package2 className="w-9 h-9 text-muted-foreground dark:text-foreground/90" />
         <p className="text-sm text-muted-foreground">Nenhum embarque encontrado</p>
       </div>
     );

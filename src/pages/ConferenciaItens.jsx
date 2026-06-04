@@ -331,7 +331,7 @@ export default function ConferenciaItens() {
                     className="hidden"
                     onChange={(e) => handleUploadFoto(index, e.target.files[0])}
                   />
-                  <Button type="button" className="w-full h-12 bg-muted hover:bg-gray-200 dark:hover:bg-gray-600 text-foreground/90">
+                  <Button type="button" className="w-full h-12 bg-muted hover:bg-muted dark:hover:bg-muted text-foreground/90">
                     <Camera className="w-5 h-5" />
                     {item.fotos.length > 0 && (
                       <span className="ml-2 text-xs">({item.fotos.length})</span>
@@ -345,7 +345,7 @@ export default function ConferenciaItens() {
               <Button
                 onClick={() => abrirModalLotes(index)}
                 variant="outline"
-                className="w-full h-12 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                className="w-full h-12 border-2 border-dashed border-border/40 dark:border-border/40 hover:border-border/40 dark:hover:border-border/40"
               >
                 <Hash className="w-4 h-4 mr-2" />
                 GERENCIAR LOTES/VALIDADE
@@ -367,7 +367,7 @@ export default function ConferenciaItens() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando || itensConferidos.length === 0}
-              className="flex-1 h-14 text-base bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600 shadow-lg"
+              className="flex-1 h-14 text-base bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -471,7 +471,7 @@ export default function ConferenciaItens() {
 
             <Button
               onClick={() => setModalLote({ ...modalLote, open: false })}
-              className="w-full h-12 bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600"
+              className="w-full h-12 bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               CONFIRMAR LOTES

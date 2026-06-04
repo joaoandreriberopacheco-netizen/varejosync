@@ -47,7 +47,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
     gerarRelatorio().catch(err => { setError(err.message); setLoading(false); });
   }, [pedidoId]);
 
-  if (loading) return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>;
+  if (loading) return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   if (error)   return <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-sm text-red-600 dark:text-red-400">Erro: {error}</div>;
   if (!dados)  return null;
 
@@ -69,7 +69,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
         <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/40">
           <div>
             <p className="text-[10px] text-muted-foreground mb-0.5">Data Prevista</p>
-            <p className="text-xs font-medium text-gray-800 dark:text-gray-100">
+            <p className="text-xs font-medium text-foreground">
               {pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : '—'}
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
           </div>
           <div>
             <p className="text-[10px] text-muted-foreground mb-0.5">Itens</p>
-            <p className="text-xs font-medium text-gray-800 dark:text-gray-100">{itens_consolidados.length} produto(s)</p>
+            <p className="text-xs font-medium text-foreground">{itens_consolidados.length} produto(s)</p>
           </div>
         </div>
       </div>
@@ -91,15 +91,15 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
           return (
           <div key={idx} className="rounded-2xl bg-card shadow-sm overflow-hidden">
             {/* Nome do produto */}
-            <div className="px-4 pt-3 pb-2 border-b border-gray-50 dark:border-border/40/50">
+            <div className="px-4 pt-3 pb-2 border-b border-border/30 dark:border-border/40/50">
               <div className="flex items-center gap-2">
                 <Package className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 uppercase">{item.nome_produto}</p>
+                <p className="text-xs font-semibold text-foreground uppercase">{item.nome_produto}</p>
               </div>
             </div>
 
             {/* Linha de valores principais */}
-            <div className="grid grid-cols-3 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 px-0">
+            <div className="grid grid-cols-3 gap-0 divide-x divide-border/30 dark:divide-border/40/50 px-0">
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-muted-foreground mb-0.5">Qtd</p>
                 <p className="text-xs font-medium text-foreground/90 tabular-nums">{fmtQtd(item.quantidade, item.unidade_medida)} {item.unidade_medida || 'UN'}</p>
@@ -110,12 +110,12 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
               </div>
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-muted-foreground mb-0.5">Total</p>
-                <p className="text-xs font-bold text-gray-800 dark:text-gray-100 tabular-nums">R$ {fmtR(item.valor_total_item)}</p>
+                <p className="text-xs font-bold text-foreground tabular-nums">R$ {fmtR(item.valor_total_item)}</p>
               </div>
             </div>
 
             {/* Custo e Preço de Venda */}
-            <div className="grid grid-cols-2 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 border-t border-gray-50 dark:border-border/40/50">
+            <div className="grid grid-cols-2 gap-0 divide-x divide-border/30 dark:divide-border/40/50 border-t border-border/30 dark:border-border/40/50">
               <div className="px-4 py-2.5">
                 <p className="text-[10px] text-muted-foreground mb-0.5">Custo Calculado</p>
                 <div className="flex items-center gap-1.5">
@@ -134,7 +134,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
 
             {/* Detalhes de custos (expansível) */}
             <details className="group">
-              <summary className="px-4 py-2 text-[10px] text-muted-foreground cursor-pointer select-none border-t border-gray-50 dark:border-border/40/50 list-none flex items-center gap-1 hover:text-muted-foreground dark:hover:text-gray-300">
+              <summary className="px-4 py-2 text-[10px] text-muted-foreground cursor-pointer select-none border-t border-border/30 dark:border-border/40/50 list-none flex items-center gap-1 hover:text-muted-foreground dark:hover:text-muted-foreground">
                 <span className="group-open:hidden">▸</span>
                 <span className="hidden group-open:inline">▾</span>
                 Ver composição de custos

@@ -33,7 +33,7 @@ export default function KpiFluxo({ kpis }) {
           <p className="text-[12px] font-semibold text-foreground/90 sm:text-[13px] dark:text-foreground">{taxa}%</p>
         </div>
       </div>
-      <div className="h-1 overflow-hidden rounded-full bg-white sm:h-1.5 dark:bg-muted">
+      <div className="h-1 overflow-hidden rounded-full bg-card sm:h-1.5 dark:bg-muted">
         <div className="h-full rounded-full bg-teal-400 transition-all dark:bg-primary/50" style={{ width: `${Math.min(Number(taxa), 100)}%` }} />
       </div>
     </>
@@ -44,7 +44,7 @@ export default function KpiFluxo({ kpis }) {
       <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
         <div className={kpiTopPad}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-card sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <TrendingUp className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
             </div>
             <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">Receitas</p>
@@ -54,7 +54,7 @@ export default function KpiFluxo({ kpis }) {
         </div>
         <div className={kpiTopPad}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-card sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <TrendingDown className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
             </div>
             <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">Despesas</p>
@@ -90,10 +90,10 @@ export default function KpiFluxo({ kpis }) {
 
       {kpis.totalTransferencias > 0 &&
       <div className={`${kpiBlock} flex items-center gap-2 sm:gap-3`}>
-          <ArrowRightLeft className="h-3.5 w-3.5 flex-none text-slate-500 sm:h-4 sm:w-4 dark:text-muted-foreground" />
+          <ArrowRightLeft className="h-3.5 w-3.5 flex-none text-muted-foreground sm:h-4 sm:w-4 dark:text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <p className="text-[8px] uppercase tracking-wider text-muted-foreground sm:text-[9px] dark:text-muted-foreground">Transferências</p>
-            <p className="text-xs font-semibold text-gray-800 sm:text-sm dark:text-foreground">{R(kpis.totalTransferencias)}</p>
+            <p className="text-xs font-semibold text-foreground sm:text-sm dark:text-foreground">{R(kpis.totalTransferencias)}</p>
           </div>
         </div>
       }

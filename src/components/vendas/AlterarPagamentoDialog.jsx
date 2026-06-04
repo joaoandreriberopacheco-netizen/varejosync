@@ -52,7 +52,7 @@ function BuscarPedidoStep({ onFound }) {
 
   return (
     <div className="flex flex-col gap-5 p-5">
-      <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-muted">
+      <div className="rounded-2xl bg-card p-5 shadow-sm dark:bg-muted">
         <p className="mb-1 text-sm text-muted-foreground">Informe o número do pedido</p>
         <p className="mb-4 text-xs text-muted-foreground">
           A forma de pagamento registrada será substituída
@@ -69,7 +69,7 @@ function BuscarPedidoStep({ onFound }) {
           <Button
             onClick={buscar}
             disabled={buscando}
-            className="rounded-xl bg-gray-900 px-5 text-white dark:bg-white dark:text-foreground"
+            className="rounded-xl bg-background px-5 text-white dark:bg-card dark:text-foreground"
           >
             {buscando ? '...' : <Search className="h-4 w-4" />}
           </Button>
@@ -193,7 +193,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
   return (
     <>
       <div className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto p-4">
-        <div className="rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-muted">
+        <div className="rounded-2xl bg-card px-4 py-3 shadow-sm dark:bg-muted">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold text-foreground">{pedido.numero}</div>
@@ -207,7 +207,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
 
         <div className="space-y-2">
           {pagamentos.map((pag) => (
-            <div key={pag._id} className="rounded-2xl bg-white px-4 py-4 shadow-sm dark:bg-muted">
+            <div key={pag._id} className="rounded-2xl bg-card px-4 py-4 shadow-sm dark:bg-muted">
               <div className="mb-3 flex items-center gap-2">
                 <IconForma forma={pag.forma_pagamento} />
                 <Select
@@ -264,7 +264,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
                 >
                   {pag.maquininha_nome ? (
                     <>
-                      <span className="font-medium text-gray-800 dark:text-gray-100">
+                      <span className="font-medium text-foreground">
                         {pag.maquininha_nome} · {pag.bandeira || '—'} · {pag.taxa_maquininha ?? 0}%
                         {pag.forma_pagamento === 'Cartão de Crédito' && (
                           <> · {pag.parcelas || 1}x</>
@@ -325,7 +325,7 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
         <Button
           onClick={handleConfirm}
           disabled={Math.abs(diferenca) > 0.01}
-          className="h-14 w-full rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-foreground"
+          className="h-14 w-full rounded-2xl bg-background text-base font-semibold text-white dark:bg-card dark:text-foreground"
           style={{ minHeight: 56 }}
         >
           Salvar Alteração
@@ -412,7 +412,7 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="m-0 flex h-full max-h-none w-full max-w-none flex-col rounded-none bg-muted/40 p-0 dark:bg-background">
-        <div className="flex flex-shrink-0 items-center border-b border-border/40 bg-white px-4 py-3 dark:border-border/40 dark:bg-muted">
+        <div className="flex flex-shrink-0 items-center border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-muted">
           <button
             type="button"
             onClick={step === 'editar' ? () => setStep('buscar') : handleClose}
@@ -429,8 +429,8 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
 
         <div className="relative flex-1 overflow-auto">
           {salvando && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-background/80">
-              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-gray-900 dark:border-white" />
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-card/80 dark:bg-background/80">
+              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-border/40 dark:border-white" />
             </div>
           )}
           {step === 'buscar' && (

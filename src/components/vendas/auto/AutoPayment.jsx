@@ -85,8 +85,8 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
             </div>
 
             {/* Cupom Visual */}
-            <div className="bg-muted/40 dark:bg-muted/30 p-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 mb-8 font-mono text-sm">
-              <div className="text-center border-b border-dashed border-gray-300 dark:border-gray-600 pb-4 mb-4">
+            <div className="bg-muted/40 dark:bg-muted/30 p-6 rounded-xl border border-dashed border-border/40 dark:border-border/40 mb-8 font-mono text-sm">
+              <div className="text-center border-b border-dashed border-border/40 dark:border-border/40 pb-4 mb-4">
                 <h3 className="font-bold text-lg uppercase">VarejoSync</h3>
                 <p>Pedido #{pedidoFinalizado.numero}</p>
                 <p className="text-xs text-muted-foreground">{new Date().toLocaleString()}</p>
@@ -101,7 +101,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
                 ))}
               </div>
               
-              <div className="border-t border-dashed border-gray-300 dark:border-gray-600 pt-4 flex justify-between font-bold text-lg">
+              <div className="border-t border-dashed border-border/40 dark:border-border/40 pt-4 flex justify-between font-bold text-lg">
                 <span>TOTAL</span>
                 <span>R$ {pedidoFinalizado.valor_total.toFixed(2)}</span>
               </div>

@@ -199,7 +199,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-3xl h-[80vh] flex flex-col p-0 gap-0 bg-card border-border/40">
         <DialogHeader className="p-6 pb-0 flex-none">
-          <DialogTitle className="flex items-center gap-2 text-xl text-gray-800 dark:text-gray-100">
+          <DialogTitle className="flex items-center gap-2 text-xl text-foreground">
             <FileImage className="w-6 h-6 text-muted-foreground" />
             Importação Massiva de Imagens
           </DialogTitle>
@@ -209,13 +209,13 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
         <div className="flex gap-1 px-6 pt-3 pb-0 border-b border-border/40">
           <button
             onClick={() => { setTab('files'); setResults(null); }}
-            className={`px-4 py-2 text-sm rounded-t-md transition-colors font-medium ${tab === 'files' ? 'text-foreground border-b-2 border-gray-800 dark:border-border/40' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300'}`}
+            className={`px-4 py-2 text-sm rounded-t-md transition-colors font-medium ${tab === 'files' ? 'text-foreground border-b-2 border-border/40 dark:border-border/40' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground'}`}
           >
             Upload de Arquivos
           </button>
           <button
             onClick={() => { setTab('url'); setResults(null); }}
-            className={`px-4 py-2 text-sm rounded-t-md transition-colors font-medium flex items-center gap-1.5 ${tab === 'url' ? 'text-foreground border-b-2 border-gray-800 dark:border-border/40' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300'}`}
+            className={`px-4 py-2 text-sm rounded-t-md transition-colors font-medium flex items-center gap-1.5 ${tab === 'url' ? 'text-foreground border-b-2 border-border/40 dark:border-border/40' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground'}`}
           >
             <Table2 className="w-3.5 h-3.5" />
             Importar por URL (Planilha)
@@ -242,7 +242,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
               </div>
               <h3 className="text-sm font-medium text-foreground/90 mb-2">Detalhes</h3>
               <ScrollArea className="flex-1 rounded-xl bg-card">
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                <div className="divide-y divide-border/40 dark:divide-border/40">
                   {results.details.map((item, idx) => (
                     <div key={idx} className="p-3 flex items-start gap-3 text-sm">
                       {item.status === 'success'
@@ -250,7 +250,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                         : <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                       }
                       <div>
-                        <div className="font-medium text-foreground dark:text-gray-100 text-xs">{item.file}</div>
+                        <div className="font-medium text-foreground dark:text-foreground text-xs">{item.file}</div>
                         <div className="text-muted-foreground text-xs">{item.msg}</div>
                       </div>
                     </div>
@@ -269,7 +269,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                 onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
                 onClick={() => fileInputRef.current?.click()}
                 className={`flex-none rounded-xl p-8 text-center cursor-pointer transition-all border-2 border-dashed
-                  ${isDragActive ? 'border-gray-400 bg-muted' : 'border-border/40 hover:border-gray-400 bg-card'}`}
+                  ${isDragActive ? 'border-border/40 bg-muted' : 'border-border/40 hover:border-border/40 bg-card'}`}
               >
                 <input type="file" ref={fileInputRef} onChange={e => { handleFiles(e.target.files); e.target.value=''; }} className="hidden" multiple accept="image/*" />
                 <div className="flex flex-col items-center gap-3">
@@ -325,7 +325,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                 <p className="text-sm font-medium text-foreground/90">Importar Planilha</p>
                 <div
                   onClick={() => xlsInputRef.current?.click()}
-                  className="rounded-xl border-2 border-dashed border-border/40 p-6 text-center cursor-pointer hover:border-gray-400 bg-card transition-colors"
+                  className="rounded-xl border-2 border-dashed border-border/40 p-6 text-center cursor-pointer hover:border-border/40 bg-card transition-colors"
                 >
                   <input ref={xlsInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => { setXlsFile(e.target.files[0] || null); e.target.value=''; }} />
                   {xlsFile ? (
@@ -354,7 +354,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                 <span>Processando...</span><span>{progress}%</span>
               </div>
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-gray-700 dark:bg-gray-300 transition-all duration-300" style={{ width: `${progress}%` }} />
+                <div className="h-full bg-muted dark:bg-muted transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
             </div>
           ) : (
@@ -363,12 +363,12 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                 {results ? 'Fechar' : 'Cancelar'}
               </Button>
               {!results && tab === 'files' && (
-                <Button onClick={handleUploadFiles} disabled={files.length === 0} className="bg-primary hover:bg-primary/90 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-foreground text-white">
+                <Button onClick={handleUploadFiles} disabled={files.length === 0} className="bg-primary hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white">
                   Iniciar Importação
                 </Button>
               )}
               {!results && tab === 'url' && (
-                <Button onClick={handleImportXls} disabled={!xlsFile} className="bg-primary hover:bg-primary/90 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-foreground text-white">
+                <Button onClick={handleImportXls} disabled={!xlsFile} className="bg-primary hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white">
                   Importar Planilha
                 </Button>
               )}

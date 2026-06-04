@@ -43,11 +43,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-card p-6 shadow-sm"
+        className="w-full max-w-sm space-y-4 rounded-xl border border-border/40 dark:border-border/40 bg-card dark:bg-card p-6 shadow-sm"
       >
         <div className="space-y-1">
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Entrar</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Sessão Supabase (modo P38).</p>
+          <h1 className="text-lg font-semibold text-foreground dark:text-foreground">Entrar</h1>
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">Sessão Supabase (modo P38).</p>
         </div>
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -55,7 +55,7 @@ export default function LoginPage() {
           </p>
         ) : null}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+          <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Email</label>
           <Input
             type="email"
             autoComplete="username"
@@ -65,7 +65,7 @@ export default function LoginPage() {
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Palavra-passe</label>
+          <label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Palavra-passe</label>
           <Input
             type="password"
             autoComplete="current-password"

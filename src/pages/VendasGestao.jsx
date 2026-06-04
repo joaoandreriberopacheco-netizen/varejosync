@@ -528,7 +528,7 @@ function VendasGestaoPage() {
   // if Badge component was to be reintroduced. For this exact change, it could be removed.
   const getStatusBadge = (status) => {
     const variants = {
-      "Orçamento": "bg-gray-200 text-gray-800",
+      "Orçamento": "bg-muted text-foreground",
       "Aguardando Caixa": "bg-yellow-100 text-yellow-800",
       "Aguardando Aprovação": "bg-orange-100 text-orange-800",
       "Aguardando Pagamento": "bg-yellow-100 text-yellow-800",
@@ -537,7 +537,7 @@ function VendasGestaoPage() {
       "Finalizado": "bg-green-100 text-green-800",
       "Cancelado": "bg-red-100 text-red-800",
     };
-    return variants[status] || "bg-gray-100 text-gray-800";
+    return variants[status] || "bg-muted text-foreground";
   };
 
   const formatValor = (valor) => {
@@ -557,23 +557,23 @@ function VendasGestaoPage() {
       {/* Header limpo */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 pr-2">
-          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Gestão de Vendas</h1>
+          <h1 className="text-lg font-semibold text-foreground font-glacial">Gestão de Vendas</h1>
           <p className="text-xs text-muted-foreground">Orçamentos, pedidos e acompanhamento</p>
         </div>
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
             <RotateCcw className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
             <RefreshCw className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-muted dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
             <CreditCard className="w-4 h-4 text-muted-foreground" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-full sm:hidden rounded-2xl bg-gray-100 dark:bg-muted"
+            className="h-11 w-full sm:hidden rounded-2xl bg-muted dark:bg-muted"
             onClick={() => setShowFiltros(true)}
           >
             <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -591,13 +591,13 @@ function VendasGestaoPage() {
               placeholder="Buscar por número, cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 h-12 bg-white dark:bg-muted border-0 rounded-2xl min-w-0 shadow-sm"
+              className="pl-10 pr-4 h-12 bg-card dark:bg-muted border-0 rounded-2xl min-w-0 shadow-sm"
             />
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="hidden sm:flex h-12 w-12 rounded-2xl bg-gray-100 dark:bg-muted shrink-0"
+            className="hidden sm:flex h-12 w-12 rounded-2xl bg-muted dark:bg-muted shrink-0"
             onClick={() => setShowFiltros(true)}
           >
             <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -606,7 +606,7 @@ function VendasGestaoPage() {
       </div>
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
@@ -624,10 +624,10 @@ function VendasGestaoPage() {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Status</label>
               <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-                <SelectTrigger className="h-12 rounded-2xl bg-gray-100 dark:bg-muted border-0">
+                <SelectTrigger className="h-12 rounded-2xl bg-muted dark:bg-muted border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-card dark:border-slate-700">
+                <SelectContent className="dark:bg-card dark:border-border/40">
                   <SelectItem value="todos">Todos</SelectItem>
                   {activeTab === 'rascunhos' ? (
                     <>
@@ -686,7 +686,7 @@ function VendasGestaoPage() {
               </Button>
               <Button
                 size="sm"
-                className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
+                className="flex-1 h-11 rounded-2xl bg-primary hover:bg-card text-white dark:bg-primary dark:text-primary-foreground"
                 onClick={() => setShowFiltros(false)}
               >
                 Aplicar
@@ -710,11 +710,11 @@ function VendasGestaoPage() {
           <div>
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
           </div>
         ) : rascunhosFiltrados.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (
@@ -747,11 +747,11 @@ function VendasGestaoPage() {
           <div>
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
           </div>
         ) : pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (

@@ -15,7 +15,7 @@ const formatarNumero = (n) => {
 };
 
 const getStockDot = (produto) => {
-  if (!produto.ativo) return 'bg-gray-400';
+  if (!produto.ativo) return 'bg-muted-foreground/40';
   const e = produto.estoque_atual || 0;
   const m = produto.estoque_minimo || 0;
   if (e <= 0 || e <= m / 2) return 'bg-red-500';
@@ -60,7 +60,7 @@ function GroupRow({ label, count, valorEstoque, abaixoMin, estoqueTotal, depth, 
         {abaixoMin > 0 ? (
           <span className="text-red-500 dark:text-red-400">{abaixoMin} abaixo mín.</span>
         ) : (
-          <span className="text-gray-300 dark:text-muted-foreground">—</span>
+          <span className="text-muted-foreground dark:text-muted-foreground">—</span>
         )}
       </td>
       <td colSpan={99} />
@@ -80,7 +80,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
   const unidadeExibicao = estoqueApresent ? estoqueApresent.sigla : (produto.unidade_principal || 'UN');
 
   return (
-    <tr className="hover:bg-muted/40 dark:hover:bg-muted/30 border-b border-gray-50 dark:border-border/40/60 group">
+    <tr className="hover:bg-muted/40 dark:hover:bg-muted/30 border-b border-border/30 dark:border-border/40/60 group">
       {/* Ações */}
       <td className="p-1 w-8 sticky left-0 z-10 bg-card">
         <DropdownMenu modal={false}>
@@ -108,7 +108,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
         <div className="w-8 h-8 bg-muted rounded flex items-center justify-center overflow-hidden mx-auto">
           {produto.imagem_url
             ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-            : <Package className="w-3.5 h-3.5 text-gray-300 dark:text-muted-foreground" />
+            : <Package className="w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground" />
           }
         </div>
       </td>
@@ -142,7 +142,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       {/* Fornecedor */}
       {visibleColumns.includes('fornecedor') && (
         <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">
-          {fornecedorMap[produto.fornecedor_padrao_id] || <span className="text-gray-300">—</span>}
+          {fornecedorMap[produto.fornecedor_padrao_id] || <span className="text-muted-foreground">—</span>}
         </td>
       )}
 
@@ -473,7 +473,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
 
         {produtos.length === 0 && (
           <div className="py-16 text-center">
-            <Package className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-2" />
+            <Package className="w-8 h-8 text-muted-foreground dark:text-foreground/90 mx-auto mb-2" />
             <p className="text-xs text-muted-foreground">Nenhum produto encontrado</p>
           </div>
         )}
@@ -501,7 +501,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                 onClick={() => setPage(i)}
                 className={`h-6 w-6 text-[11px] rounded transition-colors ${
                   i === page
-                    ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground font-semibold'
+                    ? 'bg-primary dark:bg-muted text-white dark:text-foreground font-semibold'
                     : 'text-muted-foreground hover:bg-muted'
                 }`}
               >

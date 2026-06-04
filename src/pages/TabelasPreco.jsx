@@ -52,7 +52,7 @@ export default function TabelasPrecoPage() {
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 min-w-0">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-gray-800">Tabelas de Preço</h1>
+            <h1 className="text-3xl font-bold text-foreground">Tabelas de Preço</h1>
             <p className="text-muted-foreground">Gerencie diferentes políticas de precificação para seus clientes.</p>
           </div>
           <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 shrink-0 w-full sm:w-auto">

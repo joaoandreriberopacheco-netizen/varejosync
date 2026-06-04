@@ -79,14 +79,14 @@ export default function LancamentosCompraPanel({ pedidoId }) {
       {totalTotal > 0 && (
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
-            className="h-full bg-gray-400 dark:bg-muted/400 rounded-full transition-all"
+            className="h-full bg-muted-foreground/40 dark:bg-muted/400 rounded-full transition-all"
             style={{ width: `${Math.min((totalPago / totalTotal) * 100, 100)}%` }}
           />
         </div>
       )}
 
       {/* Lista de parcelas */}
-      <div className="bg-card rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
+      <div className="bg-card rounded-2xl shadow-sm overflow-hidden divide-y divide-border/30 dark:divide-white/5">
         {lancamentosCompra
           .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
           .map(l => {
@@ -101,7 +101,7 @@ export default function LancamentosCompraPanel({ pedidoId }) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[0.8rem] font-medium text-gray-800 dark:text-gray-100 truncate">{l.descricao}</p>
+                  <p className="text-[0.8rem] font-medium text-foreground truncate">{l.descricao}</p>
                   <p className="text-[0.68rem] text-muted-foreground mt-0.5">
                     {formatDateSafe(l.data_vencimento, "dd 'de' MMM yyyy") || 'Sem vencimento'}
                     {formatDateSafe(l.data_pagamento, 'dd/MM/yyyy') ? ` · Pago em ${formatDateSafe(l.data_pagamento, 'dd/MM/yyyy')}` : ''}

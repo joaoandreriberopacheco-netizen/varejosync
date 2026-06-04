@@ -197,7 +197,7 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
                       {item.score_iep}
                     </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300 dark:text-muted-foreground" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-border/40/50">
@@ -291,7 +291,7 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
 
         {/* Lista de Produtos */}
         <div className="flex-1 overflow-y-auto">
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
+          <div className="divide-y divide-border/40 dark:divide-border/40">
             {carregando && (
               <div className="p-6 flex items-center justify-center text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

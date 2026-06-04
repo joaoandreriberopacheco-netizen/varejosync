@@ -38,7 +38,7 @@ export default function TimelinePeriodPicker({ range, onChange }) {
         </div>
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Período</p>
-          <p className="text-sm text-foreground dark:text-gray-100 font-medium">Escolha manualmente a janela de tempo</p>
+          <p className="text-sm text-foreground dark:text-foreground font-medium">Escolha manualmente a janela de tempo</p>
         </div>
       </div>
 
@@ -52,7 +52,7 @@ export default function TimelinePeriodPicker({ range, onChange }) {
               ref={isCenter ? centerRef : null}
               type="button"
               onClick={() => onChange({ from: day, to: addDays(day, 30) })}
-              className={`flex-shrink-0 rounded-2xl shadow-sm min-w-[70px] min-h-[70px] ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground' : 'bg-muted/40 text-foreground/90 dark:bg-muted dark:text-foreground'}`}
+              className={`flex-shrink-0 rounded-2xl shadow-sm min-w-[70px] min-h-[70px] ${active ? 'bg-background text-white dark:bg-card dark:text-foreground' : 'bg-muted/40 text-foreground/90 dark:bg-muted dark:text-foreground'}`}
             >
               <div className="text-[10px] uppercase tracking-wide opacity-70">{format(day, 'MMM')}</div>
               <div className="text-base font-semibold leading-none mt-1">{format(day, 'dd')}</div>
@@ -62,7 +62,7 @@ export default function TimelinePeriodPicker({ range, onChange }) {
         })}
       </div>
 
-      <div className="text-sm text-foreground dark:text-gray-100">{label}</div>
+      <div className="text-sm text-foreground dark:text-foreground">{label}</div>
     </div>
   );
 }

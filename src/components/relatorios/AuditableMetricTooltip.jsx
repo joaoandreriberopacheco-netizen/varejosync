@@ -64,7 +64,7 @@ export default function AuditableMetricTooltip({
               {value}
             </p>
           </div>
-          <HelpCircle className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-gray-300 dark:text-muted-foreground mt-0.5" />
+          <HelpCircle className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-muted-foreground dark:text-muted-foreground mt-0.5" />
         </div>
       </div>
 

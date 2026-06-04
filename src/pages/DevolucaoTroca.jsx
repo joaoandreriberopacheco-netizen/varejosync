@@ -51,7 +51,7 @@ function BuscarPedidoStep({ onFound }) {
             onKeyDown={e => e.key === 'Enter' && buscar()}
             className="text-lg font-mono uppercase border-0 border-b border-border/40 rounded-none bg-transparent focus-visible:ring-0 flex-1 h-12"
           />
-          <Button onClick={buscar} disabled={buscando} className="bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl px-6 h-12">
+          <Button onClick={buscar} disabled={buscando} className="bg-background dark:bg-card text-white dark:text-foreground rounded-xl px-6 h-12">
             {buscando ? '...' : <Search className="w-4 h-4" />}
           </Button>
         </div>
@@ -279,7 +279,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
           {fotos.length < 5 && (
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-20 h-20 rounded-xl border-2 border-dashed border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-gray-300 dark:hover:border-gray-500 transition-colors flex-shrink-0"
+              className="w-20 h-20 rounded-xl border-2 border-dashed border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-border/40 dark:hover:border-border/40 transition-colors flex-shrink-0"
             >
               <Camera className="w-5 h-5" />
               <span className="text-xs">Foto</span>
@@ -298,7 +298,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
       </div>
 
       {/* Total + Botão fixo no rodapé */}
-      <div className="fixed left-0 right-0 z-[55] space-y-3 border-t border-border/40 bg-white p-4 dark:border-border/40 dark:bg-background p38-bottom-dock">
+      <div className="fixed left-0 right-0 z-[55] space-y-3 border-t border-border/40 bg-card p-4 dark:border-border/40 dark:bg-background p38-bottom-dock">
         <div className="flex justify-between items-center max-w-lg mx-auto">
           <span className="text-sm text-muted-foreground">Total a reembolsar</span>
           <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValor(totalDevolvido)}</span>
@@ -306,7 +306,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
         <Button
           disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
           onClick={handleConfirmarClick}
-          className="w-full max-w-lg mx-auto block h-14 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-2xl font-semibold text-base"
+          className="w-full max-w-lg mx-auto block h-14 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold text-base"
         >
           Confirmar Devolução
         </Button>
@@ -418,7 +418,7 @@ function ComprovanteStep({ resultado, onClose }) {
         <button onClick={onClose} className="flex-1 h-14 bg-muted text-foreground/90 rounded-2xl font-medium text-base">
           Fechar
         </button>
-        <button onClick={imprimir} className="flex-1 h-14 rounded-2xl font-medium text-white bg-gray-900 dark:bg-white dark:text-foreground flex items-center justify-center gap-2 text-base">
+        <button onClick={imprimir} className="flex-1 h-14 rounded-2xl font-medium text-white bg-background dark:bg-card dark:text-foreground flex items-center justify-center gap-2 text-base">
           <Printer className="w-4 h-4" /> Imprimir
         </button>
       </div>
@@ -605,8 +605,8 @@ export default function DevolucaoTrocaPage() {
       {/* Content */}
       <div className="flex-1 overflow-auto relative">
         {processando && (
-          <div className="absolute inset-0 bg-white/80 dark:bg-background/80 flex items-center justify-center z-50">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 dark:border-white" />
+          <div className="absolute inset-0 bg-card/80 dark:bg-background/80 flex items-center justify-center z-50">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40 dark:border-white" />
           </div>
         )}
         {step === 'buscar' && <BuscarPedidoStep onFound={p => { setPedido(p); setStep('itens'); }} />}

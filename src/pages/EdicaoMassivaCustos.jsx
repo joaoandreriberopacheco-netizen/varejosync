@@ -343,7 +343,7 @@ export default function EdicaoMassivaCustos() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-800">Edição Massiva de Custos</h1>
+          <h1 className="text-3xl font-bold text-foreground">Edição Massiva de Custos</h1>
           <p className="text-muted-foreground">
             Exporte uma planilha com todos os custos detalhados por produto, edite os valores no Excel e importe para atualizar o sistema em massa.
           </p>

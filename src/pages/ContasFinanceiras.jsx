@@ -97,7 +97,7 @@ export default function ContasFinanceirasPage() {
               Saldo total: {formatCurrency(saldoTotal)}
             </p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)} className="bg-gray-900 dark:bg-white dark:text-foreground gap-2 rounded-2xl">
+          <Button onClick={() => setIsDialogOpen(true)} className="bg-background dark:bg-card dark:text-foreground gap-2 rounded-2xl">
             <PlusCircle className="w-4 h-4" />
             Nova Conta
           </Button>
@@ -150,14 +150,14 @@ export default function ContasFinanceirasPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-muted/40 dark:bg-muted hover:bg-gray-100 text-foreground/90 text-sm"
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-muted/40 dark:bg-muted hover:bg-muted text-foreground/90 text-sm"
                     >
                       <Eye className="w-4 h-4" />
                       Extrato
                     </button>
                     <button
                       onClick={() => { setSelectedAccount(account); setFormData(account); setIsDialogOpen(true); }}
-                      className="w-10 h-10 rounded-xl bg-muted/40 dark:bg-muted hover:bg-gray-100 flex items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-muted/40 dark:bg-muted hover:bg-muted flex items-center justify-center"
                     >
                       <Edit className="w-4 h-4 text-muted-foreground" />
                     </button>

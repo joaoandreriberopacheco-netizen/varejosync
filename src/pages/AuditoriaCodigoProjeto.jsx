@@ -117,7 +117,7 @@ export default function AuditoriaCodigoProjeto() {
   const totalDecididos = Object.values(decisoes).filter(v => v && v !== 'pendente').length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 font-mono text-sm text-gray-800 dark:text-gray-100">
+    <div className="max-w-3xl mx-auto px-4 py-6 font-mono text-sm text-foreground">
 
       {/* Header */}
       <div className="mb-6 border-b border-border/40 pb-4">
@@ -178,7 +178,7 @@ export default function AuditoriaCodigoProjeto() {
                                 ? s === 'excluir' ? 'bg-red-600 text-white border-red-600'
                                   : s === 'manter' ? 'bg-green-700 text-white border-green-700'
                                   : 'bg-amber-500 text-white border-amber-500'
-                                : 'bg-white dark:bg-muted border-border/40 text-muted-foreground hover:border-gray-400'
+                                : 'bg-card dark:bg-muted border-border/40 text-muted-foreground hover:border-border/40'
                             }`}
                           >
                             {s === 'excluir' ? '✕' : s === 'manter' ? '✓' : '?'}
@@ -186,7 +186,7 @@ export default function AuditoriaCodigoProjeto() {
                         ))}
                         <button
                           onClick={() => setEditandoNota(editandoNota === item ? null : item)}
-                          className="text-xs px-2 py-0.5 rounded border border-border/40 bg-white dark:bg-muted text-muted-foreground hover:border-gray-400"
+                          className="text-xs px-2 py-0.5 rounded border border-border/40 bg-card dark:bg-muted text-muted-foreground hover:border-border/40"
                         >
                           ✎
                         </button>
@@ -206,7 +206,7 @@ export default function AuditoriaCodigoProjeto() {
                         }}
                         onBlur={() => setEditandoNota(null)}
                         placeholder="Observação..."
-                        className="mt-1.5 w-full text-xs bg-white dark:bg-muted border border-border/40 rounded px-2 py-1 outline-none focus:border-gray-400"
+                        className="mt-1.5 w-full text-xs bg-card dark:bg-muted border border-border/40 rounded px-2 py-1 outline-none focus:border-border/40"
                       />
                     )}
                     {nota && editandoNota !== item && (

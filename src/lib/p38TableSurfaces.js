@@ -10,7 +10,7 @@ export const p38Table = {
 
   /** thead sticky — cinza médio #2d333b (bg-card) */
   header: 'sticky top-0 z-30 backdrop-blur-sm bg-card text-white [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
-  head: 'h-auto py-2 px-2 align-middle text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-200/90',
+  head: 'h-auto py-2 px-2 align-middle text-xs font-bold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground/90',
   headSortable: 'cursor-pointer hover:text-foreground dark:hover:text-white',
   headRight: 'text-right',
   headCenter: 'text-center',

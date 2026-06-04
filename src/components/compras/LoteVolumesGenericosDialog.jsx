@@ -64,7 +64,7 @@ export default function LoteVolumesGenericosDialog({ isOpen, onClose, manifestos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md bg-card border-0 rounded-3xl shadow-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-foreground dark:text-gray-100">
+          <DialogTitle className="flex items-center gap-2 text-foreground dark:text-foreground">
             <Boxes className="w-5 h-5 text-foreground/90" />
             Criar volumes genéricos em lote
           </DialogTitle>
@@ -113,7 +113,7 @@ export default function LoteVolumesGenericosDialog({ isOpen, onClose, manifestos
           <Button variant="outline" onClick={onClose} disabled={saving} className="border-0 bg-muted rounded-2xl shadow-sm">
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={saving || manifestos.length === 0} className="bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-foreground rounded-2xl shadow-sm gap-2">
+          <Button onClick={handleConfirm} disabled={saving || manifestos.length === 0} className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground rounded-2xl shadow-sm gap-2">
             <Package2 className="w-4 h-4" />
             {saving ? 'Criando...' : 'Criar em lote'}
           </Button>

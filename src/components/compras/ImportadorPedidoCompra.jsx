@@ -394,7 +394,7 @@ Retorne JSON:
 
   return (
     <div className="fixed inset-0 z-[80] bg-card overflow-y-auto">
-      <div className="sticky top-0 z-10 bg-white/95 dark:bg-background/95 backdrop-blur px-4 py-3 shadow-sm">
+      <div className="sticky top-0 z-10 bg-card/95 dark:bg-background/95 backdrop-blur px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10 rounded-full">
@@ -438,7 +438,7 @@ Retorne JSON:
               </Button>
             </div>
             <div
-              className="rounded-3xl border-2 border-dashed border-gray-300 bg-muted/40 p-8 text-center shadow-sm transition-colors hover:bg-gray-100 dark:border-border/40 dark:bg-muted/60 dark:hover:bg-muted md:p-14"
+              className="rounded-3xl border-2 border-dashed border-border/40 bg-muted/40 p-8 text-center shadow-sm transition-colors hover:bg-muted dark:border-border/40 dark:bg-muted/60 dark:hover:bg-muted md:p-14"
               onClick={() => fileInputRef.current?.click()}
               role="button"
               tabIndex={0}
@@ -527,18 +527,18 @@ Retorne JSON:
                       max="100"
                       value={discountValue}
                       onChange={e => setDiscountValue(e.target.value)}
-                      className="w-28 text-center text-6xl font-light bg-transparent border-none outline-none text-gray-800 dark:text-gray-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-28 text-center text-6xl font-light bg-transparent border-none outline-none text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <div className="flex flex-col items-center gap-0.5">
                       <button
                         onClick={() => setDiscountValue(v => String((parseFloat(v) || 0) + 1))}
-                        className="text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors p-1"
+                        className="text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground transition-colors p-1"
                       >
                         <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 7L6 2L11 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                       <button
                         onClick={() => setDiscountValue(v => String(Math.max(0, (parseFloat(v) || 0) - 1)))}
-                        className="text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors p-1"
+                        className="text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground transition-colors p-1"
                       >
                         <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
@@ -562,7 +562,7 @@ Retorne JSON:
                 <Button variant="outline" onClick={() => { selectedFileRef.current = null; setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-gray-900 dark:bg-white dark:text-foreground text-white gap-2">
+                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-background dark:bg-card dark:text-foreground text-white gap-2">
                   Buscar Itens
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </Button>
@@ -577,7 +577,7 @@ Retorne JSON:
             <p className="font-glacial text-xl text-foreground">{processingStatus}</p>
             <p className="text-sm text-muted-foreground mb-4">Passo {processingStep} de 5</p>
             <div className="w-full h-2 rounded-full bg-muted overflow-hidden shadow-sm">
-              <div className="h-full bg-gray-700 dark:bg-gray-300 transition-all duration-300" style={{ width: progressWidth }} />
+              <div className="h-full bg-muted dark:bg-muted transition-all duration-300" style={{ width: progressWidth }} />
             </div>
           </div>
         )}
@@ -588,7 +588,7 @@ Retorne JSON:
               <div className="rounded-3xl bg-muted/50/60 p-5 shadow-sm md:col-span-2">
                 <Label className="text-xs text-muted-foreground mb-2 block">Fornecedor</Label>
                 <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
-                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-card shadow-sm text-base text-gray-950 dark:text-white">
+                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-card shadow-sm text-base text-foreground dark:text-white">
                     <SelectValue placeholder="Selecionar fornecedor" />
                   </SelectTrigger>
                   <SelectContent>

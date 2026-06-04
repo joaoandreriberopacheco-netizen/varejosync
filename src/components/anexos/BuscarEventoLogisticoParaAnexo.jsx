@@ -83,7 +83,7 @@ function TimelineViagemFluvial({ ev }) {
           <React.Fragment key={s.key}>
             {i > 0 ? (
               <div
-                className={`mx-0.5 mt-5 h-px min-w-[12px] flex-1 ${s.highlight ? 'bg-emerald-400/80 dark:bg-emerald-500/70' : 'bg-gray-200 dark:bg-gray-600'}`}
+                className={`mx-0.5 mt-5 h-px min-w-[12px] flex-1 ${s.highlight ? 'bg-emerald-400/80 dark:bg-emerald-500/70' : 'bg-muted dark:bg-muted'}`}
               />
             ) : null}
             <div
@@ -235,7 +235,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
         <button
           type="button"
           onClick={onVoltar}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -251,7 +251,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           title="Recarregar lista de viagens"
           onClick={() => carregarDados()}
           disabled={carregando}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-muted-foreground transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-muted dark:text-foreground/90 dark:hover:bg-primary/90"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50 dark:bg-muted dark:text-foreground/90 dark:hover:bg-primary/90"
         >
           <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
         </button>
@@ -268,7 +268,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           value={query}
           onChange={handleSearchChange}
           placeholder="Código, barco, datas, fornecedor, pedido…"
-          className="w-full rounded-2xl border border-transparent bg-white py-3 pl-10 pr-4 text-sm text-gray-800 shadow-sm outline-none ring-2 ring-gray-200/80 placeholder:text-muted-foreground focus:border-primary/30 focus:ring-primary/35 dark:bg-background dark:text-foreground dark:ring-gray-700 dark:focus:ring-primary/40"
+          className="w-full rounded-2xl border border-transparent bg-card py-3 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none ring-2 ring-border/80 placeholder:text-muted-foreground focus:border-primary/30 focus:ring-primary/35 dark:bg-background dark:text-foreground dark:ring-border/40 dark:focus:ring-primary/40"
         />
       </div>
 
@@ -299,7 +299,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
               type="button"
               onClick={() => carregarDados()}
               disabled={carregando}
-              className="inline-flex items-center gap-2 rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 disabled:opacity-50 dark:bg-muted dark:text-gray-100 dark:hover:bg-primary/90"
+              className="inline-flex items-center gap-2 rounded-xl bg-muted px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 dark:bg-muted dark:text-foreground dark:hover:bg-primary/90"
             >
               <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
               Atualizar lista
@@ -313,8 +313,8 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
               onClick={() => setSelecionado(ev)}
               className={`flex w-full flex-col rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                 selecionado?.id === ev.id
-                  ? 'bg-gray-900 text-white ring-2 ring-gray-900 dark:bg-white dark:text-foreground dark:ring-white'
-                  : 'bg-white text-gray-800 dark:bg-background dark:text-foreground'
+                  ? 'bg-background text-white ring-2 ring-border/40 dark:bg-card dark:text-foreground dark:ring-white'
+                  : 'bg-card text-foreground dark:bg-background dark:text-foreground'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -335,7 +335,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           type="button"
           onClick={() => onSelecionar(selecionado)}
           disabled={uploadando}
-          className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white dark:bg-white dark:text-foreground"
+          className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-background text-sm font-semibold text-white dark:bg-card dark:text-foreground"
         >
           {uploadando ? (
             <>

@@ -12,7 +12,7 @@ function getMarkerPosition(status) {
 function getLoadColor(ocupacao) {
   if (ocupacao >= 85) return 'bg-red-500';
   if (ocupacao >= 60) return 'bg-emerald-500';
-  return 'bg-gray-400';
+  return 'bg-muted-foreground/40';
 }
 
 export default function LogisticaSandboxBoard({ eventos, onSelect }) {
@@ -20,7 +20,7 @@ export default function LogisticaSandboxBoard({ eventos, onSelect }) {
     <div className="bg-card rounded-3xl shadow-sm p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-foreground dark:text-gray-100 font-glacial">Painel visual da rota</h2>
+          <h2 className="text-base font-semibold text-foreground dark:text-foreground font-glacial">Painel visual da rota</h2>
           <p className="text-xs text-muted-foreground">Porto de origem, travessia e porto de destino</p>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function LogisticaSandboxBoard({ eventos, onSelect }) {
           </div>
           <div className="flex-1 px-4">
             <div className="h-2 rounded-full bg-muted relative">
-              <div className="absolute inset-y-0 left-0 w-full border-t border-dashed border-gray-400 dark:border-gray-500 top-1/2 -translate-y-1/2" />
+              <div className="absolute inset-y-0 left-0 w-full border-t border-dashed border-border/40 dark:border-border/40 top-1/2 -translate-y-1/2" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -45,13 +45,13 @@ export default function LogisticaSandboxBoard({ eventos, onSelect }) {
             <button
               key={evento.id}
               onClick={() => onSelect(evento)}
-              className="w-full text-left rounded-2xl bg-white/90 dark:bg-background/90 shadow-sm p-3 md:p-4"
+              className="w-full text-left rounded-2xl bg-card/90 dark:bg-background/90 shadow-sm p-3 md:p-4"
             >
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <ShipWheel className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium text-sm text-foreground dark:text-gray-100 truncate">{evento.embarcacao_nome}</span>
+                    <span className="font-medium text-sm text-foreground dark:text-foreground truncate">{evento.embarcacao_nome}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     {evento.codigo && <span className="text-[11px] text-muted-foreground">{evento.codigo}</span>}

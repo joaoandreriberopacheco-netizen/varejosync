@@ -346,7 +346,7 @@ export default function ConferenciaVolumes() {
                     <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 block">
                       Tipo de Volume
                     </label>
-                    <div className="bg-gray-100 dark:bg-background rounded-lg px-4 h-11 flex items-center text-foreground/90 font-medium">
+                    <div className="bg-muted dark:bg-muted rounded-lg px-4 h-11 flex items-center text-foreground/90 font-medium">
                       {volume.descricao || 'Volume sem descrição'}
                     </div>
                   </div>
@@ -438,7 +438,7 @@ export default function ConferenciaVolumes() {
               {ocorrencia.midias.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {ocorrencia.midias.map((url, idx) => (
-                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-background">
+                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted dark:bg-muted">
                       <img src={url} alt="Evidência" className="w-full h-full object-cover" />
                     </div>
                   ))}
@@ -461,7 +461,7 @@ export default function ConferenciaVolumes() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando}
-              className="flex-1 h-12 bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600 shadow-lg"
+              className="flex-1 h-12 bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -544,7 +544,7 @@ export default function ConferenciaVolumes() {
                 )}
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-gray-900 hover:bg-primary dark:bg-muted"
+                  className="flex-1 bg-background hover:bg-primary dark:bg-muted"
                 >
                   {divergencias.length > 0 ? 'Salvar com Divergências' : 'Prosseguir'}
                 </Button>
@@ -584,7 +584,7 @@ export default function ConferenciaVolumes() {
                 </Button>
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-gray-900 hover:bg-primary"
+                  className="flex-1 bg-background hover:bg-primary"
                 >
                   Avançar
                 </Button>
@@ -602,7 +602,7 @@ export default function ConferenciaVolumes() {
 
               {!foto ? (
                 <div className="space-y-3">
-                  <div className="relative bg-gray-900 rounded-xl overflow-hidden aspect-video">
+                  <div className="relative bg-background rounded-xl overflow-hidden aspect-video">
                     <video
                       ref={videoRef}
                       autoPlay
@@ -612,7 +612,7 @@ export default function ConferenciaVolumes() {
                   </div>
                   <Button
                     onClick={tirarFoto}
-                    className="w-full bg-gray-900 hover:bg-primary"
+                    className="w-full bg-background hover:bg-primary"
                   >
                     <Camera className="w-4 h-4 mr-2" />
                     Tirar Foto
@@ -620,7 +620,7 @@ export default function ConferenciaVolumes() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="relative bg-gray-100 dark:bg-background rounded-xl overflow-hidden aspect-video">
+                  <div className="relative bg-muted dark:bg-muted rounded-xl overflow-hidden aspect-video">
                     <img src={foto} alt="Foto do conferente" className="w-full h-full object-cover" />
                   </div>
                   <Button

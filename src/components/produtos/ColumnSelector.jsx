@@ -169,8 +169,8 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
               <Package className="w-4 h-4 text-muted-foreground" />
               <Label className="text-sm font-medium text-foreground">Coluna Fixa</Label>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-muted rounded">
-              <Checkbox checked={true} disabled className="dark:border-gray-500" />
+            <div className="flex items-center gap-2 p-2 bg-card dark:bg-muted rounded">
+              <Checkbox checked={true} disabled className="dark:border-border/40" />
               <Label className="text-sm text-muted-foreground">Produto (sempre visível)</Label>
             </div>
           </div>
@@ -212,13 +212,13 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                   {Array.isArray(group.columns) && group.columns.map(column => (
                     <div
                       key={column.id}
-                      className="flex items-center gap-2 p-2 bg-white dark:bg-muted rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                      className="flex items-center gap-2 p-2 bg-card dark:bg-muted rounded hover:bg-muted dark:hover:bg-muted cursor-pointer"
                       onClick={() => handleToggleColumn(column.id)}
                     >
                       <Checkbox
                         checked={tempColumns.includes(column.id)}
                         onCheckedChange={() => handleToggleColumn(column.id)}
-                        className="dark:border-gray-500"
+                        className="dark:border-border/40"
                       />
                       <Label className="text-sm cursor-pointer text-foreground/90">{column.label}</Label>
                     </div>
@@ -233,13 +233,13 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                       {Array.isArray(subgroup.columns) && subgroup.columns.map(column => (
                         <div
                           key={column.id}
-                          className="flex items-center gap-2 p-2 bg-white dark:bg-muted rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                          className="flex items-center gap-2 p-2 bg-card dark:bg-muted rounded hover:bg-muted dark:hover:bg-muted cursor-pointer"
                           onClick={() => handleToggleColumn(column.id)}
                         >
                           <Checkbox
                             checked={tempColumns.includes(column.id)}
                             onCheckedChange={() => handleToggleColumn(column.id)}
-                            className="dark:border-gray-500"
+                            className="dark:border-border/40"
                           />
                           <Label className="text-sm cursor-pointer text-foreground/90">{column.label}</Label>
                         </div>
@@ -272,7 +272,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-muted/400 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted dark:hover:bg-muted/400 text-white"
           >
             Aplicar
           </Button>

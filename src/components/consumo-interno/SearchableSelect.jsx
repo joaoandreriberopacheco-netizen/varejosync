@@ -70,7 +70,7 @@ export default function SearchableSelect({
   return (
     <div ref={containerRef} className="relative flex-1 min-w-0 w-full">
       {/* Trigger */}
-      <div className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-background overflow-hidden">
+      <div className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-muted px-3 shadow-sm dark:bg-background overflow-hidden">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input autoComplete="off"
           ref={inputRef}
@@ -80,7 +80,7 @@ export default function SearchableSelect({
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setIsOpen(true)}
           onClick={() => setIsOpen(true)}
-          className="flex-1 min-w-0 bg-transparent text-sm text-foreground placeholder-gray-500 outline-none dark:text-white dark:placeholder-gray-400"
+          className="flex-1 min-w-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none dark:text-white dark:placeholder:text-muted-foreground"
         />
         {selectedLabel && (
           <button
@@ -90,7 +90,7 @@ export default function SearchableSelect({
               e.stopPropagation();
               handleClear();
             }}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-muted"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded hover:bg-muted dark:hover:bg-muted"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -99,7 +99,7 @@ export default function SearchableSelect({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-[60] mt-1 max-h-60 overflow-y-auto rounded-2xl border-0 bg-white shadow-lg dark:bg-muted">
+        <div className="absolute top-full left-0 right-0 z-[60] mt-1 max-h-60 overflow-y-auto rounded-2xl border-0 bg-card shadow-lg dark:bg-muted">
           {filtered.length > 0 ? (
             <>
               {filtered.map((item) => (

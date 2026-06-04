@@ -56,7 +56,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
             <Boxes className="w-4 h-4 text-teal-600 flex-shrink-0" />
             <span className="font-quicksand font-semibold text-sm text-foreground flex-1">Volumes da Carga</span>
             <button type="button" onClick={onClose}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 hover:bg-muted transition-colors">
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground hover:bg-muted transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -70,7 +70,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
+                className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -81,7 +81,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
                   placeholder="0"
                   value={quantidade}
                   onChange={e => setQuantidade(e.target.value.replace(',', '.'))}
-                  className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
+                  className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-1.5">
@@ -91,7 +91,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
                   placeholder="0,00"
                   value={pesoUnit}
                   onChange={e => setPesoUnit(e.target.value.replace(',', '.'))}
-                  className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
+                  className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
                       </span>
                     </span>
                   </div>
-                  <button type="button" onClick={() => handleRemove(idx)} className="p-1 text-gray-300 hover:text-rose-400 transition-colors">
+                  <button type="button" onClick={() => handleRemove(idx)} className="p-1 text-muted-foreground hover:text-rose-400 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

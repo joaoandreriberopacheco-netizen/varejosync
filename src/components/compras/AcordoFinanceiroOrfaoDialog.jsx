@@ -113,7 +113,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Tipo de Acordo</Label>
             <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100">
+              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
@@ -136,7 +136,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
               placeholder="0,00"
               value={valor}
               onChange={e => setValor(e.target.value.replace(',', '.'))}
-              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
+              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -144,7 +144,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Conta Financeira *</Label>
             <Select value={contaId} onValueChange={setContaId}>
-              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100">
+              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
@@ -162,7 +162,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
               placeholder="Motivo do acordo, referência NF, etc..."
               value={observacoes}
               onChange={e => setObservacoes(e.target.value)}
-              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
+              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>

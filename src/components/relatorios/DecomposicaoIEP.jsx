@@ -56,7 +56,7 @@ const DecomposicaoIEP = ({ produto, janelaGiro }) => {
   return (
     <div className="space-y-3">
       {/* Card Principal - IEP Score */}
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-800 border border-border/40 rounded-lg p-4">
+      <div className="bg-gradient-to-br from-muted/40 to-muted/60 dark:from-muted/40 dark:to-muted/60 border border-border/40 rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Decomposição do Índice IEP</p>
@@ -64,7 +64,7 @@ const DecomposicaoIEP = ({ produto, janelaGiro }) => {
           </div>
           <button
             onClick={() => setExpandido(!expandido)}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-primary/90 rounded transition"
+            className="p-2 hover:bg-muted dark:hover:bg-primary/90 rounded transition"
           >
             <ChevronDown className={`w-4 h-4 text-muted-foreground transition ${expandido ? 'rotate-180' : ''}`} />
           </button>

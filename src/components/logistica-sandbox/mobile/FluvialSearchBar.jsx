@@ -10,7 +10,7 @@ export default function FluvialSearchBar({ value, onChange }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Buscar embarcação"
-          className="w-full bg-transparent border-0 outline-none text-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
+          className="w-full bg-transparent border-0 outline-none text-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
         />
         {value ? (
           <button type="button" onClick={() => onChange('')} className="text-muted-foreground flex-shrink-0">

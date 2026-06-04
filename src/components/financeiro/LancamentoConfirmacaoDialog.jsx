@@ -30,13 +30,13 @@ export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnothe
             <div className="w-full flex flex-col gap-2 pt-2">
               <button
                 onClick={onCreateAnother}
-                className="w-full h-12 rounded-2xl bg-muted text-gray-800 dark:text-gray-100 text-sm font-medium"
+                className="w-full h-12 rounded-2xl bg-muted text-foreground text-sm font-medium"
               >
                 Realizar outro lançamento
               </button>
               <button
                 onClick={onFinish}
-                className="w-full h-12 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground text-sm font-semibold"
+                className="w-full h-12 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-sm font-semibold"
               >
                 Concluir
               </button>

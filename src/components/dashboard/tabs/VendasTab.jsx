@@ -99,25 +99,25 @@ export default function VendasTab() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Faturamento</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {formatCurrency(data.kpisVendas.faturamentoHoje)}
             </div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Pedidos</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {data.kpisVendas.pedidosHoje}
             </div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Taxa Conversão</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {data.kpisVendas.taxaConversao.toFixed(1)}%
             </div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Ticket Médio</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {formatCurrency(data.kpisVendas.ticketMedioHoje)}
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function VendasTab() {
                     </div>
                     <span className="text-sm font-medium text-foreground truncate">{vendedor.nome}</span>
                   </div>
-                  <span className="text-sm font-semibold text-foreground dark:text-gray-100 ml-2">{formatCurrency(vendedor.faturamento)}</span>
+                  <span className="text-sm font-semibold text-foreground dark:text-foreground ml-2">{formatCurrency(vendedor.faturamento)}</span>
                 </div>
               ))
             )}
@@ -162,7 +162,7 @@ export default function VendasTab() {
               data.produtosMaisVendidos.map((produto) => (
                 <div key={produto.nome} className="flex items-center justify-between py-2">
                   <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0 mr-2">{produto.nome}</span>
-                  <span className="text-sm font-semibold text-foreground dark:text-gray-100">{produto.quantidade} un.</span>
+                  <span className="text-sm font-semibold text-foreground dark:text-foreground">{produto.quantidade} un.</span>
                 </div>
               ))
             )}
@@ -175,11 +175,11 @@ export default function VendasTab() {
         <h3 className="text-sm font-medium text-foreground mb-4">Funil de Vendas</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div className="p-4 bg-muted/50 rounded-lg text-center">
-            <div className="text-3xl font-bold text-foreground dark:text-gray-100 mb-1">{data.funnelVendas.orcamentos}</div>
+            <div className="text-3xl font-bold text-foreground dark:text-foreground mb-1">{data.funnelVendas.orcamentos}</div>
             <div className="text-xs text-muted-foreground">Orçamentos Abertos</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg text-center">
-            <div className="text-3xl font-bold text-foreground dark:text-gray-100 mb-1">{data.funnelVendas.aguardandoPagamento}</div>
+            <div className="text-3xl font-bold text-foreground dark:text-foreground mb-1">{data.funnelVendas.aguardandoPagamento}</div>
             <div className="text-xs text-muted-foreground">Aguardando Pagamento</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg text-center">

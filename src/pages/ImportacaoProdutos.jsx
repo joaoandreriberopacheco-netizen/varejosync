@@ -224,19 +224,19 @@ export default function ImportacaoProdutosPage() {
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted p-1 rounded-xl gap-1">
-            <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+            <TabsTrigger value="produtos" className="data-[state=active]:bg-card rounded-lg">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Produtos</span>
             </TabsTrigger>
-            <TabsTrigger value="embalagens" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+            <TabsTrigger value="embalagens" className="data-[state=active]:bg-card rounded-lg">
               <Package className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Embalagens</span>
             </TabsTrigger>
-            <TabsTrigger value="estoque" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+            <TabsTrigger value="estoque" className="data-[state=active]:bg-card rounded-lg">
               <Download className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Estoque</span>
             </TabsTrigger>
-            <TabsTrigger value="desfazer" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+            <TabsTrigger value="desfazer" className="data-[state=active]:bg-card rounded-lg">
               <RotateCcw className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Desfazer</span>
             </TabsTrigger>
@@ -247,7 +247,7 @@ export default function ImportacaoProdutosPage() {
             {/* Step 1: Download */}
             <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
                 <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -263,7 +263,7 @@ export default function ImportacaoProdutosPage() {
             {/* Step 2: Upload */}
             <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
                 <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -280,7 +280,7 @@ export default function ImportacaoProdutosPage() {
             {parsedData && (
               <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
                   <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -297,7 +297,7 @@ export default function ImportacaoProdutosPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
+                        className="bg-background dark:bg-card h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
@@ -310,7 +310,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmar}
                   disabled={!podeConfirmar || salvando}
-                  className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                  className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -335,7 +335,7 @@ export default function ImportacaoProdutosPage() {
           <TabsContent value="embalagens" className="space-y-6 mt-8">
             <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
                 <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -346,9 +346,9 @@ export default function ImportacaoProdutosPage() {
                 <BookOpen className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
                 <span>
                   Documentação da migração (no clone Git):{' '}
-                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-muted/80 px-1 py-0.5">docs/migration/README.md</code>
+                  <code className="text-[11px] rounded bg-muted/80 dark:bg-muted/80 px-1 py-0.5">docs/migration/README.md</code>
                   {' · '}
-                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-muted/80 px-1 py-0.5">docs/migration/A29_VS_VAREJO_EMBALAGENS_GAP.md</code>
+                  <code className="text-[11px] rounded bg-muted/80 dark:bg-muted/80 px-1 py-0.5">docs/migration/A29_VS_VAREJO_EMBALAGENS_GAP.md</code>
                 </span>
               </p>
               <p className="text-sm text-muted-foreground mb-4">
@@ -359,7 +359,7 @@ export default function ImportacaoProdutosPage() {
 
             <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
                 <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -375,7 +375,7 @@ export default function ImportacaoProdutosPage() {
             {parsedEmbalagens && (
               <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
                   <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -392,7 +392,7 @@ export default function ImportacaoProdutosPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
+                        className="bg-background dark:bg-card h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
@@ -405,7 +405,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmarEmbalagens}
                   disabled={!podeConfirmarEmbalagens || salvando}
-                  className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                  className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -431,7 +431,7 @@ export default function ImportacaoProdutosPage() {
             {/* Step 1: Download */}
             <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
                 <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -447,7 +447,7 @@ export default function ImportacaoProdutosPage() {
             {/* Step 2: Upload */}
             <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
                 <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -464,7 +464,7 @@ export default function ImportacaoProdutosPage() {
             {parsedEstoque && (
               <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
                   <h2 className="text-lg font-semibold text-foreground font-glacial">
@@ -514,7 +514,7 @@ export default function ImportacaoProdutosPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
+                        className="bg-background dark:bg-card h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
@@ -527,7 +527,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmarEstoque}
                   disabled={!podeConfirmarEstoque || salvando}
-                  className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                  className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Atualizando lote ${progresso.lote}/${progresso.totalLotes}...`

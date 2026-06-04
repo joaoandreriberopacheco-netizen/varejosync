@@ -67,7 +67,7 @@ export default function LancamentoAnexos() {
         <button
           type="button"
           onClick={voltar}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>

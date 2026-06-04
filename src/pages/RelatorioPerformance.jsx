@@ -99,10 +99,10 @@ const RelatorioPerformance = ({ dados, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 print:fixed print:inset-0 print:bg-white print:z-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 print:fixed print:inset-0 print:bg-card print:z-auto">
       
       {/* Modal Container */}
-      <div className="w-full max-w-lg bg-card rounded-lg shadow-2xl flex flex-col max-h-[90vh] print:fixed print:inset-0 print:rounded-none print:shadow-none print:max-h-full print:bg-white print:dark:bg-white">
+      <div className="w-full max-w-lg bg-card rounded-lg shadow-2xl flex flex-col max-h-[90vh] print:fixed print:inset-0 print:rounded-none print:shadow-none print:max-h-full print:bg-card print:dark:bg-card">
         
         {/* Header com Botão Fechar - Oculto na Impressão */}
         <div className="flex justify-between items-center p-4 border-b border-border/40 print:hidden">
@@ -131,7 +131,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
               </div>
 
               {/* Contexto de Negócio: Categoria + Lucro 90d */}
-              <div className="bg-muted/50/50 border border-border/40 rounded p-3 mb-4 print:bg-white print:border-border/40">
+              <div className="bg-muted/50/50 border border-border/40 rounded p-3 mb-4 print:bg-card print:border-border/40">
                 <div className="flex justify-between items-baseline text-xs print:text-foreground/90">
                   <span>
                     <span className="text-muted-foreground font-bold uppercase tracking-wider">Categoria:</span>
@@ -214,7 +214,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
             </div>
 
             {/* Diagnóstico IA */}
-            <div className="bg-gray-900 dark:bg-muted text-gray-100 dark:text-foreground p-5 rounded mb-6 print:bg-white print:text-foreground print:border-2 print:border-gray-900 print:mb-4">
+            <div className="bg-background dark:bg-muted text-foreground dark:text-foreground p-5 rounded mb-6 print:bg-card print:text-foreground print:border-2 print:border-border/40 print:mb-4">
               <h3 className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 mb-2 text-muted-foreground print:text-muted-foreground">
                 <BrainCircuit className="w-4 h-4" /> Diagnóstico do Sistema
               </h3>
@@ -228,7 +228,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                  <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-3 print:mb-2">
                    <AlertTriangle className="w-4 h-4" /> Itens Excluídos da Análise
                  </h3>
-                 <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 rounded p-3 text-xs print:bg-white print:border-rose-200">
+                 <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 rounded p-3 text-xs print:bg-card print:border-rose-200">
                    <p className="text-rose-800 dark:text-rose-200 font-bold mb-2 flex items-center gap-1 print:text-rose-900">
                      <Info className="w-3 h-3" /> Itens removidos para cálculo de médias (variações extremas):
                    </p>
@@ -244,12 +244,12 @@ const RelatorioPerformance = ({ dados, onClose }) => {
             )}
 
             {/* Rodapé */}
-            <div className="mt-8 pt-6 border-t border-border/40 text-center print:mt-4 print:pt-4 print:border-t print:border-gray-300">
-              <Building2 className="w-6 h-6 mx-auto text-gray-300 dark:text-muted-foreground mb-2 print:text-muted-foreground" />
+            <div className="mt-8 pt-6 border-t border-border/40 text-center print:mt-4 print:pt-4 print:border-t print:border-border/40">
+              <Building2 className="w-6 h-6 mx-auto text-muted-foreground dark:text-muted-foreground mb-2 print:text-muted-foreground" />
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest print:text-muted-foreground">
                 {empresa.departamento}
               </p>
-              <p className="text-xs font-bold text-foreground dark:text-foreground uppercase mt-1 print:text-gray-800">
+              <p className="text-xs font-bold text-foreground dark:text-foreground uppercase mt-1 print:text-foreground">
                 {empresa.nome}
               </p>
               <div className="flex justify-center items-center gap-2 mt-2 text-[10px] text-muted-foreground font-mono print:text-muted-foreground">
@@ -275,7 +275,7 @@ const RelatorioPerformance = ({ dados, onClose }) => {
           </Button>
           <Button
             onClick={handleImprimir}
-            className="flex-1 bg-gray-900 hover:bg-primary text-white text-sm flex items-center justify-center gap-2 dark:bg-muted dark:hover:bg-gray-600"
+            className="flex-1 bg-background hover:bg-primary text-white text-sm flex items-center justify-center gap-2 dark:bg-muted dark:hover:bg-muted"
           >
             <Download className="w-4 h-4" /> PDF
           </Button>

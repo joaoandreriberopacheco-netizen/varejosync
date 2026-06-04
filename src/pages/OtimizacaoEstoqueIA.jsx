@@ -219,7 +219,7 @@ JSON:
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-border/40" />
       </div>
     );
   }
@@ -340,7 +340,7 @@ JSON:
               <div className="p-4 border-b border-border/40">
                 <h3 className="font-medium">Produtos Otimizados</h3>
               </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-96 overflow-y-auto">
+              <div className="divide-y divide-border/40 dark:divide-border/40 max-h-96 overflow-y-auto">
                 {resultados.produtos.map(r => {
                   const produto = produtos.find(p => p.id === r.produto_id);
                   return (

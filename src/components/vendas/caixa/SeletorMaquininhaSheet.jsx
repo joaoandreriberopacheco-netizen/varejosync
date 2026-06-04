@@ -61,7 +61,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
     <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent
         className={cn(
-          'z-[100] flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-background sm:w-full',
+          'z-[100] flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-card p-5 shadow-2xl dark:bg-background sm:w-full',
           '[&>button]:hidden'
         )}
       >
@@ -101,8 +101,8 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                       onClick={() => setParcelas(p)}
                       className={`w-10 h-9 rounded-xl text-sm font-semibold transition-colors ${
                         parcelas === p
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
                       }`}
                     >
                       {p}x
@@ -121,7 +121,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                   onClick={() => { setSelecionada(maq); setBandeiraSelecionada(''); }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-left ${
                     selecionada?.id === maq.id
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                      ? 'bg-background dark:bg-card text-white dark:text-foreground'
                       : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                   }`}
                 >
@@ -151,7 +151,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                         onClick={() => setBandeiraSelecionada(b)}
                         className={`flex flex-col items-center py-2 px-1 rounded-xl transition-colors text-sm ${
                           bandeiraSelecionada === b
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                            ? 'bg-background dark:bg-card text-white dark:text-foreground'
                             : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
@@ -188,7 +188,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
               <button
                 onClick={handleConfirmar}
                 disabled={!selecionada || !bandeiraSelecionada}
-                className="flex-1 h-11 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
+                className="flex-1 h-11 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
               >
                 Confirmar <ChevronRight className="w-4 h-4" />
               </button>

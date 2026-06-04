@@ -71,7 +71,7 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
             <th className="w-12 px-4 py-3"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-border/40 dark:divide-border/40">
           {produtos.map((produto) => {
             const hasAlteracoes = !!alteracoes[produto.id];
             return (
@@ -108,7 +108,7 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
                             type={campo.tipo}
                             value={valor}
                             onChange={(e) => onAlteracao(produto.id, campo.key, e.target.value)}
-                            className={`w-full px-2 py-1 text-xs bg-white dark:bg-muted text-foreground rounded border transition-colors ${
+                            className={`w-full px-2 py-1 text-xs bg-card dark:bg-muted text-foreground rounded border transition-colors ${
                               temErro
                                 ? 'border-red-300 dark:border-red-600'
                                 : 'border-border/40 focus:border-blue-500'

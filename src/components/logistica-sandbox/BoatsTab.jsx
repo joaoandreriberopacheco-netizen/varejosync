@@ -17,7 +17,7 @@ function BoatListCard({ transportadora, onClick }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-11 h-11 rounded-2xl bg-muted flex items-center justify-center shadow-sm flex-shrink-0 ring-2 ${transportadora.status === 'ativa' ? 'ring-emerald-500/70' : 'ring-gray-400/40 dark:ring-gray-500/50'}`}>
+          <div className={`w-11 h-11 rounded-2xl bg-muted flex items-center justify-center shadow-sm flex-shrink-0 ring-2 ${transportadora.status === 'ativa' ? 'ring-emerald-500/70' : 'ring-border/40 dark:ring-border/50'}`}>
             <Anchor className="w-5 h-5 text-muted-foreground" />
           </div>
           <div className="min-w-0">
@@ -128,13 +128,13 @@ export default function BoatsTab() {
           <button
             key={item.value}
             onClick={() => setFilter(item.value)}
-            className={`px-4 py-2 rounded-2xl text-sm shadow-sm transition ${filter === item.value ? 'bg-primary text-white dark:bg-gray-100 dark:text-foreground' : 'bg-card text-muted-foreground'}`}
+            className={`px-4 py-2 rounded-2xl text-sm shadow-sm transition ${filter === item.value ? 'bg-primary text-white dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground'}`}
           >
             {item.label}
           </button>
         ))}
         </div>
-        <Button onClick={() => setShowNewDialog(true)} className="rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-gray-100 dark:text-foreground dark:hover:bg-gray-200 gap-2">
+        <Button onClick={() => setShowNewDialog(true)} className="rounded-2xl bg-background text-white hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-muted gap-2">
           <Plus className="w-4 h-4" /> Nova transportadora
         </Button>
       </div>

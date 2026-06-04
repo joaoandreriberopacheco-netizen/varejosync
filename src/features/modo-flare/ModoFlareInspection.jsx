@@ -613,19 +613,19 @@ export default function ModoFlareInspection({ onClose }) {
       role="presentation"
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between border-b border-slate-700/50 bg-slate-900/90 px-4 py-2 text-sm text-slate-100 backdrop-blur-sm"
+        className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between border-b border-border/50 bg-muted/90 px-4 py-2 text-sm text-foreground backdrop-blur-sm"
         style={{ zIndex: HUD_Z + 1 }}
       >
         <span className="font-medium">Marcar melhorias</span>
         <span className="hidden opacity-90 sm:inline">Toca num elemento · Esc para sair</span>
         <div className="flex items-center gap-2" data-flare-control="1">
-          <span className="rounded-md border border-slate-600/50 bg-slate-800/80 px-2 py-1 text-[11px] text-slate-200">
+          <span className="rounded-md border border-border/50 bg-muted/80 px-2 py-1 text-[11px] text-muted-foreground">
             {localPins.length} marcas
           </span>
           <button
             type="button"
             data-flare-control="1"
-            className="pointer-events-auto rounded-md bg-slate-700 px-3 py-1 text-xs font-medium text-white hover:bg-slate-600"
+            className="pointer-events-auto rounded-md bg-muted px-3 py-1 text-xs font-medium text-white hover:bg-muted"
             onClick={onClose}
           >
             Sair
@@ -637,7 +637,7 @@ export default function ModoFlareInspection({ onClose }) {
           <button
             type="button"
             data-flare-control="1"
-            className="pointer-events-auto flex items-center gap-1.5 rounded-lg border border-slate-600/50 bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-100 shadow-md backdrop-blur-sm hover:bg-slate-800/95"
+            className="pointer-events-auto flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/90 px-3 py-2 text-xs font-medium text-foreground shadow-md backdrop-blur-sm hover:bg-muted/95"
             onClick={() => setQueueOpen(true)}
           >
             Pendentes ({localPins.length})
@@ -646,16 +646,16 @@ export default function ModoFlareInspection({ onClose }) {
         </div>
       ) : (
         <div
-          className="absolute right-4 top-14 w-[360px] rounded-lg border border-slate-600/40 bg-slate-950/90 p-3 text-xs text-slate-100 shadow-xl backdrop-blur-sm"
+          className="absolute right-4 top-14 w-[360px] rounded-lg border border-border/40 bg-muted/90 p-3 text-xs text-foreground shadow-xl backdrop-blur-sm"
           style={{ zIndex: HUD_Z + 2 }}
           data-flare-control="1"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-slate-50">Marcas pendentes</p>
+            <p className="text-sm font-medium text-muted-foreground">Marcas pendentes</p>
             <button
               type="button"
               data-flare-control="1"
-              className="pointer-events-auto flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/80 px-2 py-1 text-[11px] text-slate-200 hover:bg-slate-700/80"
+              className="pointer-events-auto flex items-center gap-1 rounded-md border border-border/50 bg-muted/80 px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/80"
               onClick={() => setQueueOpen(false)}
               title="Fechar painel"
             >
@@ -663,14 +663,14 @@ export default function ModoFlareInspection({ onClose }) {
               Fechar
             </button>
           </div>
-          <p className="mb-2 text-[10px] text-slate-400">
+          <p className="mb-2 text-[10px] text-muted-foreground">
             Compras: {purchasePins.length} · Outros: {otherPins.length} · Total: {localPins.length}
           </p>
           <Collapsible open={teamOpen} onOpenChange={setTeamOpen} className="mb-3">
             <CollapsibleTrigger
               type="button"
               data-flare-control="1"
-              className="pointer-events-auto flex w-full items-center justify-between rounded-md border border-slate-600/40 bg-slate-900/60 px-2 py-1.5 text-left text-[11px] font-medium text-slate-200 hover:bg-slate-800/80"
+              className="pointer-events-auto flex w-full items-center justify-between rounded-md border border-border/40 bg-muted/60 px-2 py-1.5 text-left text-[11px] font-medium text-muted-foreground hover:bg-muted/80"
             >
               Equipa (avançado)
               <ChevronDown
@@ -684,7 +684,7 @@ export default function ModoFlareInspection({ onClose }) {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  className="h-6 border-border/40 bg-muted/40 px-2 text-[10px] pointer-events-auto text-muted-foreground hover:bg-card"
                   data-flare-control="1"
                   onClick={() => {
                     void runPrecheckCount();
@@ -697,7 +697,7 @@ export default function ModoFlareInspection({ onClose }) {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  className="h-6 border-border/40 bg-muted/40 px-2 text-[10px] pointer-events-auto text-muted-foreground hover:bg-card"
                   data-flare-control="1"
                   onClick={() => {
                     void runFullCleanup();
@@ -710,7 +710,7 @@ export default function ModoFlareInspection({ onClose }) {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  className="h-6 border-border/40 bg-muted/40 px-2 text-[10px] pointer-events-auto text-muted-foreground hover:bg-card"
                   data-flare-control="1"
                   onClick={() => {
                     void runSmokeNewFlare();
@@ -723,7 +723,7 @@ export default function ModoFlareInspection({ onClose }) {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  className="h-6 border-border/40 bg-muted/40 px-2 text-[10px] pointer-events-auto text-muted-foreground hover:bg-card"
                   data-flare-control="1"
                   onClick={() => {
                     void resolveAllPurchasePins();
@@ -736,7 +736,7 @@ export default function ModoFlareInspection({ onClose }) {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  className="h-6 border-border/40 bg-muted/40 px-2 text-[10px] pointer-events-auto text-muted-foreground hover:bg-card"
                   data-flare-control="1"
                   onClick={() => {
                     void reloadPins();
@@ -749,7 +749,7 @@ export default function ModoFlareInspection({ onClose }) {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 border-slate-600 bg-slate-900/40 px-2 text-[10px] pointer-events-auto text-slate-200 hover:bg-slate-800"
+                  className="h-6 border-border/40 bg-muted/40 px-2 text-[10px] pointer-events-auto text-muted-foreground hover:bg-card"
                   data-flare-control="1"
                   onClick={() => {
                     void exportFlarePendingReport();
@@ -761,26 +761,26 @@ export default function ModoFlareInspection({ onClose }) {
                 </Button>
               </div>
               {precheckCount != null ? (
-                <p className="text-[10px] text-slate-500">Nuvem (total): {precheckCount} registo(s).</p>
+                <p className="text-[10px] text-muted-foreground">Nuvem (total): {precheckCount} registo(s).</p>
               ) : null}
             </CollapsibleContent>
           </Collapsible>
           <div className="max-h-56 space-y-3 overflow-auto pr-1">
             {purchasePins.length > 0 ? (
               <div>
-                <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Compras</p>
+                <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Compras</p>
                 <div className="space-y-2">
                   {purchasePins.slice(0, 8).map((flare) => (
-                    <div key={flare.id} className="rounded-md border border-slate-600/40 bg-slate-900/50 p-2">
-                      <p className="mb-1 text-[9px] uppercase tracking-wide text-slate-500">
+                    <div key={flare.id} className="rounded-md border border-border/40 bg-muted/50 p-2">
+                      <p className="mb-1 text-[9px] uppercase tracking-wide text-muted-foreground">
                         {flare.scope === 'remote' ? 'Nuvem' : 'Dispositivo'}
                       </p>
-                      <p className="line-clamp-2 text-[11px] text-slate-100">{flare.action_briefing || flare.briefing}</p>
-                      <p className="mt-1 text-[10px] text-slate-500">
+                      <p className="line-clamp-2 text-[11px] text-foreground">{flare.action_briefing || flare.briefing}</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
                         {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
                       </p>
                       {flare.file_path && flare.line && flare.column ? (
-                        <p className="mt-1 break-all font-mono text-[10px] text-slate-500">
+                        <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">
                           {flare.file_path}:{flare.line}:{flare.column}
                         </p>
                       ) : null}
@@ -788,7 +788,7 @@ export default function ModoFlareInspection({ onClose }) {
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="mt-2 h-6 border-slate-600 px-2 text-[10px] pointer-events-auto text-slate-200"
+                        className="mt-2 h-6 border-border/40 px-2 text-[10px] pointer-events-auto text-muted-foreground"
                         data-flare-control="1"
                         onClick={() => {
                           void resolvePin(flare);
@@ -803,19 +803,19 @@ export default function ModoFlareInspection({ onClose }) {
             ) : null}
             {otherPins.length > 0 ? (
               <div>
-                <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Outros</p>
+                <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Outros</p>
                 <div className="space-y-2">
                   {otherPins.slice(0, 24).map((flare) => (
-                    <div key={flare.id} className="rounded-md border border-slate-600/40 bg-slate-900/50 p-2">
-                      <p className="mb-1 text-[9px] uppercase tracking-wide text-slate-500">
+                    <div key={flare.id} className="rounded-md border border-border/40 bg-muted/50 p-2">
+                      <p className="mb-1 text-[9px] uppercase tracking-wide text-muted-foreground">
                         {flare.scope === 'remote' ? 'Nuvem' : 'Dispositivo'}
                       </p>
-                      <p className="line-clamp-2 text-[11px] text-slate-100">{flare.action_briefing || flare.briefing}</p>
-                      <p className="mt-1 text-[10px] text-slate-500">
+                      <p className="line-clamp-2 text-[11px] text-foreground">{flare.action_briefing || flare.briefing}</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
                         {flare.confidence} · {flare.component_name || 'sem componente'} · {flare.route || '/'}
                       </p>
                       {flare.file_path && flare.line && flare.column ? (
-                        <p className="mt-1 break-all font-mono text-[10px] text-slate-500">
+                        <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">
                           {flare.file_path}:{flare.line}:{flare.column}
                         </p>
                       ) : null}
@@ -823,7 +823,7 @@ export default function ModoFlareInspection({ onClose }) {
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="mt-2 h-6 border-slate-600 px-2 text-[10px] pointer-events-auto text-slate-200"
+                        className="mt-2 h-6 border-border/40 px-2 text-[10px] pointer-events-auto text-muted-foreground"
                         data-flare-control="1"
                         onClick={() => {
                           void resolvePin(flare);
@@ -837,7 +837,7 @@ export default function ModoFlareInspection({ onClose }) {
               </div>
             ) : null}
             {purchasePins.length === 0 && otherPins.length === 0 ? (
-              <p className="rounded-md border border-dashed border-slate-600/50 bg-slate-900/30 p-3 text-[11px] leading-relaxed text-slate-400">
+              <p className="rounded-md border border-dashed border-border/50 bg-muted/30 p-3 text-[11px] leading-relaxed text-muted-foreground">
                 {syncMode === 'loading'
                   ? 'A sincronizar…'
                   : 'Nada por aqui — marca um elemento no ecrã ou espera pela sincronização com a equipa.'}
@@ -848,7 +848,7 @@ export default function ModoFlareInspection({ onClose }) {
       )}
 
       <div
-        className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md border border-slate-700/40 bg-slate-900/90 px-3 py-2 text-xs text-slate-200 backdrop-blur-sm"
+        className="pointer-events-none absolute bottom-4 left-4 max-w-md rounded-md border border-border/40 bg-muted/90 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm"
         style={{ zIndex: HUD_Z + 2 }}
       >
         {listStatusFooter}

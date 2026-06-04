@@ -132,14 +132,14 @@ function marginMetricValueClass(key, tier = 'filho') {
     return `${MARGIN_MUTED_VALUE} font-medium dark:font-normal`;
   }
   if (tier === 'filho') return `${MARGIN_MUTED_VALUE} font-medium dark:font-normal`;
-  return 'text-foreground dark:text-gray-100 font-semibold';
+  return 'text-foreground dark:text-foreground font-semibold';
 }
 
 function marginDesktopDescClass(tier) {
   if (tier === 'filho') {
     return `${MARGIN_BODY_TEXT} font-medium dark:font-normal text-muted-foreground uppercase`;
   }
-  return `${MARGIN_BODY_TEXT} font-semibold text-foreground dark:text-gray-100 uppercase tracking-wide`;
+  return `${MARGIN_BODY_TEXT} font-semibold text-foreground dark:text-foreground uppercase tracking-wide`;
 }
 
 function marginDesktopQuantClass(tier) {
@@ -1717,12 +1717,12 @@ export default function RelatorioMargemVendas() {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Link to="/Relatorios">
-                  <button className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-muted/80 rounded-lg transition flex-shrink-0">
+                  <button className="p-1.5 md:p-2 hover:bg-muted dark:hover:bg-muted/80 rounded-lg transition flex-shrink-0">
                     <ArrowLeft className="w-4 md:w-5 h-4 md:h-5 text-foreground/90" />
                   </button>
                 </Link>
                 <div className="min-w-0">
-                  <h1 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100 truncate">
+                  <h1 className="text-lg md:text-xl font-semibold text-foreground truncate">
                     Relatório de Margem
                   </h1>
                   <div className={`hidden md:flex flex-wrap items-center gap-x-3 gap-y-0.5 ${MARGIN_BODY_TEXT} font-normal text-muted-foreground min-w-0`}>
@@ -1743,7 +1743,7 @@ export default function RelatorioMargemVendas() {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-9 w-9 rounded-xl hover:bg-gray-100 dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
+                  <button className="h-9 w-9 rounded-xl hover:bg-muted dark:hover:bg-secondary/80 transition text-foreground/90 flex items-center justify-center flex-shrink-0" title="Opções de impressão">
                     <Printer className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -1776,26 +1776,26 @@ export default function RelatorioMargemVendas() {
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') handleApplySearchFilter();
                   }}
-                  className="border-none bg-gray-100 dark:bg-secondary h-10 text-sm pl-9 pr-3 text-foreground/90 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
+                  className="border-none bg-muted dark:bg-secondary h-10 text-sm pl-9 pr-3 text-foreground/90 shadow-none focus:outline-none focus:ring-0 w-full min-w-0 rounded-xl"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleApplySearchFilter}
-                className="h-10 px-3 rounded-xl bg-gray-900 dark:bg-secondary text-white dark:text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                className="h-10 px-3 rounded-xl bg-background dark:bg-secondary text-white dark:text-foreground hover:bg-primary dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
                 title="Aplicar busca"
               >
                 Filtrar
               </button>
               <button
                 type="button"
-                className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-gray-200 dark:bg-muted' : 'bg-gray-100 dark:bg-secondary'}`}
+                className={`h-10 w-10 flex-shrink-0 rounded-xl relative flex items-center justify-center ${showFilterDrawer || activeFilterCount > 0 ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-secondary'}`}
                 onClick={() => setShowFilterDrawer((open) => !open)}
                 title="Filtros"
               >
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-700 dark:bg-gray-300 text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted dark:bg-muted text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
                     {activeFilterCount}
                   </span>
                 )}
@@ -1803,7 +1803,7 @@ export default function RelatorioMargemVendas() {
               {activeFilterCount > 0 && (
                 <button
                   onClick={handleClearFilters}
-                  className="h-10 w-10 flex-shrink-0 rounded-xl text-muted-foreground bg-gray-100 dark:bg-secondary hover:bg-gray-200 dark:hover:bg-muted/80 transition flex items-center justify-center"
+                  className="h-10 w-10 flex-shrink-0 rounded-xl text-muted-foreground bg-muted dark:bg-secondary hover:bg-muted dark:hover:bg-muted/80 transition flex items-center justify-center"
                   title="Limpar filtros"
                 >
                   <X className="w-4 h-4" />
@@ -1813,7 +1813,7 @@ export default function RelatorioMargemVendas() {
 
             {showFilterDrawer && (
               <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
-                <div className="flex items-center gap-2 bg-gray-100 dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
+                <div className="flex items-center gap-2 bg-muted dark:bg-secondary rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2 overflow-x-auto">
                   <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
                   <LevelControl level={treeLevel} onChange={setTreeLevel} />
                 </div>
@@ -1822,7 +1822,7 @@ export default function RelatorioMargemVendas() {
                     const today = new Date();
                     setDateRange({ from: today, to: today });
                   }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-secondary text-foreground/90 hover:bg-gray-200 dark:hover:bg-muted/80 transition"
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
                 >
                   Hoje
                 </button>
@@ -1831,7 +1831,7 @@ export default function RelatorioMargemVendas() {
                     const today = new Date();
                     setDateRange({ from: subDays(today, 30), to: today });
                   }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-secondary text-foreground/90 hover:bg-gray-200 dark:hover:bg-muted/80 transition"
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
                 >
                   30 dias
                 </button>
@@ -1840,13 +1840,13 @@ export default function RelatorioMargemVendas() {
                     const today = new Date();
                     setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
                   }}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-secondary text-foreground/90 hover:bg-gray-200 dark:hover:bg-muted/80 transition"
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
                 >
                   Mês atual
                 </button>
                 <button
                   onClick={() => setShowCalendar(true)}
-                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-gray-100 dark:bg-secondary text-foreground/90 hover:bg-gray-200 dark:hover:bg-muted/80 transition"
+                  className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
                 >
                   {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
                 </button>
@@ -1870,7 +1870,7 @@ export default function RelatorioMargemVendas() {
                   role="dialog"
                   aria-modal="true"
                   aria-label="Selecionar período"
-                  className="pointer-events-auto w-full max-w-[820px] rounded-[30px] bg-white dark:bg-card p-3 shadow-2xl"
+                  className="pointer-events-auto w-full max-w-[820px] rounded-[30px] bg-card dark:bg-card p-3 shadow-2xl"
                 >
                   <CalendarPopup
                     dateRange={dateRange}
@@ -1890,13 +1890,13 @@ export default function RelatorioMargemVendas() {
              <div className="flex flex-wrap items-center gap-2 min-w-0 [&_button]:!min-h-9 [&_button]:!min-w-9 md:[&_button]:!min-h-6 md:[&_button]:!min-w-6">
             <div className="hidden md:contents">
             <LevelControl level={treeLevel} onChange={setTreeLevel} />
-            <div className="w-px h-8 bg-gray-200 dark:bg-muted mx-0.5 flex-shrink-0" />
+            <div className="w-px h-8 bg-muted dark:bg-muted mx-0.5 flex-shrink-0" />
             </div>
             {/* Critério selecionado - ícone apenas */}
             <div className="relative">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-white dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
+                  <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition" title="Critério de ordenação">
                     {sortField === 'nome' && <Type className="w-4 h-4 text-foreground/90" />}
                     {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-foreground/90" />}
                     {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-foreground/90" />}
@@ -1942,7 +1942,7 @@ export default function RelatorioMargemVendas() {
             {/* Seta para direção */}
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-border/40/80 dark:border-border bg-white dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition"
+              className="flex items-center justify-center w-11 h-11 md:w-10 md:h-10 flex-shrink-0 rounded-xl border border-border/40/80 dark:border-border bg-card dark:bg-secondary hover:bg-muted/40 dark:hover:bg-muted/80 shadow-sm transition"
               title="Alternar direção"
             >
               <ChevronDown className={`w-4 h-4 text-foreground/90 transition ${
@@ -1955,7 +1955,7 @@ export default function RelatorioMargemVendas() {
            {/* Table - Desktop Table / Mobile Cards */}
         <div className="flex-1 min-h-0 p-3 md:px-4 md:pt-0 md:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-white/60 dark:bg-background/60">
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-card/60 dark:bg-background/60">
               <Loader2 className="w-9 h-9 animate-spin text-muted-foreground mb-4" />
               <p className="text-sm font-medium text-foreground/90">Carregando relatório...</p>
               <p className="text-xs text-muted-foreground mt-1">Aguarde enquanto calculamos as margens</p>
@@ -2100,15 +2100,15 @@ export default function RelatorioMargemVendas() {
               </div>
 
               <div className="mt-3 flex justify-center flex-shrink-0">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-secondary text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted dark:bg-secondary text-muted-foreground">
                   <Package className="w-3.5 h-3.5" />
                   {productCount} produto{productCount === 1 ? '' : 's'}
                 </span>
               </div>
             </>
           ) : (
-            <div className="py-16 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-white/60 dark:bg-background/60">
-              <BarChart3 className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+            <div className="py-16 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-card/60 dark:bg-background/60">
+              <BarChart3 className="w-12 h-12 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
               <p className="text-base font-medium text-foreground/90">Nenhum dado no período</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
                 Ajuste o período ou os filtros para ver produtos com vendas e margem.

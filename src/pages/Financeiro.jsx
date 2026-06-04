@@ -55,7 +55,7 @@ export default function FinanceiroPage() {
 
         <Button
           onClick={() => setShowImportDialog(true)}
-          className="fixed right-4 z-[55] h-14 w-14 rounded-full bg-gray-900 p38-bottom-fab1 text-white shadow-lg hover:bg-primary lg:bottom-8 lg:right-8"
+          className="fixed right-4 z-[55] h-14 w-14 rounded-full bg-background p38-bottom-fab1 text-white shadow-lg hover:bg-primary lg:bottom-8 lg:right-8"
           size="icon"
         >
           <Plus className="w-6 h-6" />

@@ -83,7 +83,7 @@ export default function DesignerCanvas({ layout, onLayoutChange, camposDisponive
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Canvas principal */}
-      <div className="flex-1 overflow-auto bg-gray-200 dark:bg-gray-950 p-4">
+      <div className="flex-1 overflow-auto bg-muted dark:bg-background p-4">
         {/* Régua */}
         <Regua largura={layout.largura} />
 

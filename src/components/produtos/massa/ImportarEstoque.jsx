@@ -121,12 +121,12 @@ export default function ImportarEstoque({ onParsed }) {
     <div>
       {!arquivo ? (
         <div
-          className="border-2 border-dashed border-border/40 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          className="border-2 border-dashed border-border/40 rounded-xl p-8 text-center cursor-pointer hover:border-border/40 dark:hover:border-border/40 transition-colors"
           onClick={() => inputRef.current?.click()}
           onDrop={e => { e.preventDefault(); handleArquivo(e.dataTransfer.files[0]); }}
           onDragOver={e => e.preventDefault()}
         >
-          <Upload className="w-8 h-8 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
+          <Upload className="w-8 h-8 text-muted-foreground dark:text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
             Arraste o arquivo aqui ou <span className="text-foreground font-medium underline">clique para selecionar</span>
           </p>
@@ -142,7 +142,7 @@ export default function ImportarEstoque({ onParsed }) {
           {parsing ? (
             <span className="text-xs text-muted-foreground animate-pulse">Analisando...</span>
           ) : (
-            <button onClick={handleRemover} className="text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-200">
+            <button onClick={handleRemover} className="text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground">
               <X className="w-4 h-4" />
             </button>
           )}

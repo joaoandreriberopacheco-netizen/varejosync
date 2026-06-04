@@ -186,7 +186,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
               <button
                 onClick={() => setModoJurosCliente(false)}
                 className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg text-xs font-medium transition-all ${
-                  !modoJurosCliente ? 'bg-white dark:bg-muted text-foreground shadow-sm' : 'text-muted-foreground'
+                  !modoJurosCliente ? 'bg-card dark:bg-muted text-foreground shadow-sm' : 'text-muted-foreground'
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" /> Vendedor paga
@@ -194,7 +194,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
               <button
                 onClick={() => { setModoJurosCliente(true); setModalidade('Crédito Parcelado'); setParcelas(2); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg text-xs font-medium transition-all ${
-                  modoJurosCliente ? 'bg-white dark:bg-muted text-foreground shadow-sm' : 'text-muted-foreground'
+                  modoJurosCliente ? 'bg-card dark:bg-muted text-foreground shadow-sm' : 'text-muted-foreground'
                 }`}
               >
                 <Users className="w-3.5 h-3.5" /> Cliente paga juros
@@ -208,7 +208,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                 <select
                   value={maqSelecionada?.id || ''}
                   onChange={e => setMaqSelecionada(maquininhas.find(m => m.id === e.target.value))}
-                  className="w-full h-11 pl-4 pr-10 rounded-xl bg-muted/50 text-sm text-foreground dark:text-gray-100 appearance-none focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                  className="w-full h-11 pl-4 pr-10 rounded-xl bg-muted/50 text-sm text-foreground dark:text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700"
                 >
                   {maquininhas.map(m => <option key={m.id} value={m.id}>{m.nome} — {m.adquirente}</option>)}
                 </select>
@@ -224,7 +224,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                   <button key={b} onClick={() => setBandeira(b)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                       bandeira === b
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                        ? 'bg-background dark:bg-card text-white dark:text-foreground'
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >{b}</button>
@@ -245,7 +245,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                     }}
                       className={`flex-1 h-10 rounded-xl text-xs font-medium transition-all ${
                         modalidade === mod
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
                           : 'bg-muted/50 text-muted-foreground'
                       }`}
                     >{mod === 'Crédito à Vista' ? 'Créd. 1x' : mod === 'Crédito Parcelado' ? 'Crédito Parc.' : mod}</button>
@@ -267,7 +267,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                       onClick={() => setParcelas(n)}
                       className={`h-14 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-all ${
                         parcelas === n
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                          ? 'bg-background dark:bg-card text-white dark:text-foreground'
                           : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                       }`}
                     >

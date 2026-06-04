@@ -88,7 +88,7 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
                 <Button
                   type="button"
                   onClick={() => setShowRefreshImport(true)}
-                  className="h-10 rounded-2xl bg-gray-900 px-3 text-sm font-medium text-white hover:bg-primary dark:bg-gray-100 dark:text-foreground dark:hover:bg-white"
+                  className="h-10 rounded-2xl bg-background px-3 text-sm font-medium text-white hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-card"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {hasBoleto ? 'Atualizar' : 'Importar'}
@@ -124,7 +124,7 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
 
       <Dialog open={showRefreshImport} onOpenChange={setShowRefreshImport}>
         <DialogContent className="z-[120] flex min-h-0 max-h-[90vh] max-w-3xl flex-col overflow-hidden border-0 bg-transparent p-0 shadow-none">
-          <div className="flex min-h-0 max-h-[85vh] flex-1 flex-col overflow-hidden rounded-[28px] bg-muted/40 dark:bg-gray-950">
+          <div className="flex min-h-0 max-h-[85vh] flex-1 flex-col overflow-hidden rounded-[28px] bg-muted/40 dark:bg-background">
             <AgefinImportador
               modoAtualizacao
               contaPrevistaId={contaMes?.referencia_id || undefined}

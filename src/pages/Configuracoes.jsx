@@ -45,7 +45,7 @@ export default function ConfiguracoesPage() {
         <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
           <ShieldAlert className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">Acesso Restrito</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">Acesso Restrito</h2>
         <p className="text-sm text-muted-foreground max-w-xs">
           Você não tem permissão para acessar as configurações do sistema. Solicite acesso ao administrador.
         </p>
@@ -56,7 +56,7 @@ export default function ConfiguracoesPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
       <div>
-        <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Configurações</h1>
+        <h1 className="text-lg font-semibold text-foreground font-glacial">Configurações</h1>
         <p className="text-xs text-muted-foreground">Regras de negócio e parâmetros do sistema</p>
       </div>
 

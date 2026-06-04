@@ -113,7 +113,7 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
     <div className="space-y-4 pb-4">
       <button
         onClick={onBack}
-        className="text-sm text-muted-foreground font-medium hover:text-foreground/90 dark:hover:text-gray-300"
+        className="text-sm text-muted-foreground font-medium hover:text-foreground/90 dark:hover:text-muted-foreground"
       >
         ← Voltar
       </button>

@@ -209,24 +209,24 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1 flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-[#253042] flex items-center justify-center shadow-sm flex-shrink-0">
-              <ShoppingCart className="w-4 h-4 text-slate-200" />
+              <ShoppingCart className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-slate-700 text-sm font-semibold truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
-              <p className="text-slate-400 text-xs truncate">{embarque.pedido_compra_numero || embarque.numero || embarque.codigo || 'Compra vinculada'}</p>
+              <p className="text-foreground/90 text-sm font-semibold truncate">{embarque.fornecedor_nome || 'Fornecedor'}</p>
+              <p className="text-muted-foreground text-xs truncate">{embarque.pedido_compra_numero || embarque.numero || embarque.codigo || 'Compra vinculada'}</p>
             </div>
             <div className="text-right flex-shrink-0 pr-1">
               <p className="text-sm font-semibold text-white whitespace-nowrap">{resumo.totalCompra.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
             </div>
           </div>
-          <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
         </div>
       </button>
 
       {open &&
       <div className="px-3 pb-3">
           <div className="rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
-            <div className="grid grid-cols-[32px_34px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-slate-300">
+            <div className="grid grid-cols-[32px_34px_1fr_60px_70px] items-center gap-2 px-1 pb-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
               <span>Qtd</span>
               <span>Un</span>
               <span className="text-left">Descrição</span>
@@ -239,11 +239,11 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
               const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
               const total = Number(item.total ?? item.valor_total ?? item.total_item ?? quantidade * custo) || 0;
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_34px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-white/[0.03]">
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[32px_34px_1fr_60px_70px] items-start gap-2 rounded-xl px-1 py-2 text-[9px] text-white odd:bg-card/[0.03]">
                     <span className="pt-0.5 text-white font-medium">{quantidade}</span>
-                    <span className="pt-0.5 text-slate-300 font-medium">{normalizarSiglaUnidade(item.unidade_medida)}</span>
+                    <span className="pt-0.5 text-muted-foreground font-medium">{normalizarSiglaUnidade(item.unidade_medida)}</span>
                     <p className="min-w-0 text-[9px] leading-snug break-words font-normal text-white/90 text-left line-clamp-2">{item.produto_nome || 'Item sem descrição'}</p>
-                    <span className="pt-0.5 text-[9px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    <span className="pt-0.5 text-[9px] text-right whitespace-nowrap text-muted-foreground">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     <span className="pt-0.5 text-[9px] text-right font-medium whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>);
 
@@ -292,14 +292,14 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
         <div className="flex items-center justify-between gap-3 text-sm text-white">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-2xl bg-[#253042] flex items-center justify-center shadow-sm flex-shrink-0">
-              <Layers3 className="w-4 h-4 text-slate-200" />
+              <Layers3 className="w-4 h-4 text-muted-foreground" />
             </div>
-            <span className="text-slate-900">Compras vinculadas</span>
+            <span className="text-foreground">Compras vinculadas</span>
           </div>
-          <span className="text-slate-700 font-semibold whitespace-nowrap">{resumoGeral.quantidade} Compra{resumoGeral.quantidade > 1 ? 's' : ''}</span>
+          <span className="text-foreground/90 font-semibold whitespace-nowrap">{resumoGeral.quantidade} Compra{resumoGeral.quantidade > 1 ? 's' : ''}</span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-3 pl-10 text-sm text-white">
-          <span className="text-slate-300">Valor total</span>
+          <span className="text-muted-foreground">Valor total</span>
           <span className="font-semibold whitespace-nowrap">{resumoGeral.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
         </div>
       </div>

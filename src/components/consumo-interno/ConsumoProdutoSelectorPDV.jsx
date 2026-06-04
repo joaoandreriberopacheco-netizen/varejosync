@@ -75,11 +75,11 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
         className="absolute inset-0"
         onClick={() => handleClose(false)}
       />
-      <div className="relative z-10 flex h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-background md:h-auto md:max-h-[88vh] md:rounded-[32px]">
+      <div className="relative z-10 flex h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[32px] bg-card shadow-2xl dark:bg-background md:h-auto md:max-h-[88vh] md:rounded-[32px]">
         <button
           type="button"
           onClick={() => handleClose(false)}
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
         >
           <X className="h-4 w-4" />
         </button>
@@ -103,7 +103,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                     }
                   }}
                   placeholder="Digite para buscar produto"
-                  className="h-12 touch-manipulation rounded-2xl border-0 bg-gray-100 pl-10 shadow-sm dark:bg-muted"
+                  className="h-12 touch-manipulation rounded-2xl border-0 bg-muted pl-10 shadow-sm dark:bg-muted"
                 />
               </div>
             </div>
@@ -164,9 +164,9 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                         handleAdd();
                       }
                     }}
-                    className="h-16 w-24 rounded-2xl border-0 bg-white text-center text-3xl font-bold text-foreground shadow-sm dark:bg-background dark:text-white"
+                    className="h-16 w-24 rounded-2xl border-0 bg-card text-center text-3xl font-bold text-foreground shadow-sm dark:bg-background dark:text-white"
                   />
-                  <Button type="button" size="icon" className="h-12 w-12 rounded-full bg-gray-900 text-white shadow-sm hover:bg-primary dark:bg-white dark:text-foreground" onClick={() => setQuantidade(String((Number(String(quantidade).replace(',', '.')) || 0) + 1))}>
+                  <Button type="button" size="icon" className="h-12 w-12 rounded-full bg-background text-white shadow-sm hover:bg-primary dark:bg-card dark:text-foreground" onClick={() => setQuantidade(String((Number(String(quantidade).replace(',', '.')) || 0) + 1))}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -181,7 +181,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                   <span>{formatCurrency((produtoSelecionado.preco_custo_calculado || 0) * ((Number(String(quantidade).replace(',', '.')) || 0)))}</span>
                 </div>
               </div>
-              <Button type="button" onClick={handleAdd} className="h-12 w-full rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground">
+              <Button type="button" onClick={handleAdd} className="h-12 w-full rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
                 Adicionar item
               </Button>
             </div>

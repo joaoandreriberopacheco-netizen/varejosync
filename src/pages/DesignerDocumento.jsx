@@ -54,7 +54,7 @@ function SeletorDocumento({ onSelecionar }) {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-muted/40 dark:bg-gray-950">
+    <div className="flex flex-col h-screen bg-muted/40 dark:bg-background">
       <div className="px-6 py-5 bg-card border-b border-border/40">
         <h1 className="text-xl font-semibold text-foreground font-glacial">
           Designer de Documentos
@@ -96,7 +96,7 @@ function SeletorDocumento({ onSelecionar }) {
                         )}
                       </div>
                     </div>
-                    <ArrowLeft className="w-4 h-4 text-gray-300 group-hover:text-muted-foreground rotate-180 transition mt-1" />
+                    <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground rotate-180 transition mt-1" />
                   </div>
                 </button>
               );
@@ -192,7 +192,7 @@ export default function DesignerDocumento() {
 
   // ── Editor ──
   return (
-    <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-950 overflow-hidden">
+    <div className="flex flex-col h-screen bg-muted dark:bg-background overflow-hidden">
       <DesignerToolbar
         templateNome={templateNome}
         onNomeChange={setTemplateNome}

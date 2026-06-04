@@ -216,25 +216,25 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     <div className={rootClassName} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-5 pb-3">
-        <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-muted active:scale-95">
+        <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-muted dark:bg-muted active:scale-95">
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
-        <div className="flex gap-1 bg-gray-200 dark:bg-muted rounded-2xl p-1">
+        <div className="flex gap-1 bg-muted dark:bg-muted rounded-2xl p-1">
           {TIPOS.map(t => {
             const Icon = t.icon;
             const isActive = tipo === t.value;
             return (
               <button key={t.value} onClick={() => setTipo(t.value)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-muted/400 dark:bg-gray-200 text-white dark:text-foreground shadow-sm' : 'text-muted-foreground'}`}>
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-muted/400 dark:bg-muted text-white dark:text-foreground shadow-sm' : 'text-muted-foreground'}`}>
                 <Icon className="w-3.5 h-3.5" />{t.label}
               </button>
             );
           })}
         </div>
         <div className="flex gap-1">
-          <div className={`w-2 h-2 rounded-full transition-all ${step === 'valor' ? 'bg-primary dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`} />
-          <div className={`w-2 h-2 rounded-full transition-all ${step === 'detalhes' ? 'bg-primary dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`} />
-          <div className={`w-2 h-2 rounded-full transition-all ${step === 'anexos' ? 'bg-primary dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`} />
+          <div className={`w-2 h-2 rounded-full transition-all ${step === 'valor' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
+          <div className={`w-2 h-2 rounded-full transition-all ${step === 'detalhes' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
+          <div className={`w-2 h-2 rounded-full transition-all ${step === 'anexos' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
         </div>
       </div>
 
@@ -247,17 +247,17 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               value={valorNumerico === 0 ? '' : valorNumerico}
               onChange={e => setValorCents(Math.round(parseFloat(e.target.value || '0') * 100).toString() || '0')}
               placeholder="0,00"
-              className="w-full text-center text-5xl font-semibold text-foreground tracking-tight font-glacial bg-transparent outline-none border-0 placeholder-gray-300"
+              className="w-full text-center text-5xl font-semibold text-foreground tracking-tight font-glacial bg-transparent outline-none border-0 placeholder:text-muted-foreground"
             />
             <p className="text-xs text-muted-foreground mt-1">R$</p>
           </div>
           <input autoComplete="off"
             value={descricao} onChange={e => setDescricao(e.target.value)}
             placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Descrição *'}
-            className="w-full text-center bg-transparent border-0 border-b border-border/40 py-2 text-sm text-muted-foreground placeholder-gray-400 outline-none focus:border-gray-400 transition-colors"
+            className="w-full text-center bg-transparent border-0 border-b border-border/40 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground outline-none focus:border-border/40 transition-colors"
           />
           <button onClick={() => setStep('detalhes')}
-            className="w-full h-14 rounded-2xl bg-muted/400 dark:bg-white text-white dark:text-foreground text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2">
+            className="w-full h-14 rounded-2xl bg-muted/400 dark:bg-card text-white dark:text-foreground text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2">
             Continuar <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -310,7 +310,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               <div className="flex gap-2">
                 {['Em Aberto', 'Pago'].map(s => (
                   <button key={s} onClick={() => setStatus(s)}
-                    className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === s ? 'bg-muted/400 dark:bg-white text-white dark:text-foreground' : 'bg-card text-muted-foreground'}`}>
+                    className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === s ? 'bg-muted/400 dark:bg-card text-white dark:text-foreground' : 'bg-card text-muted-foreground'}`}>
                     {s}
                   </button>
                 ))}
@@ -373,7 +373,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
           <button onClick={handleSave}
             disabled={saving}
-            className="w-full h-14 rounded-2xl bg-muted/400 dark:bg-white text-white dark:text-foreground text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:pointer-events-none">
+            className="w-full h-14 rounded-2xl bg-muted/400 dark:bg-card text-white dark:text-foreground text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:pointer-events-none">
             <CheckCircle2 className="w-5 h-5" />
             {saving ? 'Processando...' : isRecorrente && frequencia === 'Parcelado' ? `Criar ${parcelas} parcelas` : isRecorrente ? 'Criar Recorrência' : 'Confirmar Lançamento'}
           </button>
@@ -418,7 +418,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         <button
           type="button"
           aria-label="Fechar"
-          className="fixed inset-0 z-[59] cursor-default bg-slate-950/25 dark:bg-slate-950/40"
+          className="fixed inset-0 z-[59] cursor-default bg-muted/25 dark:bg-muted/40"
           onClick={onClose}
         />
         <div

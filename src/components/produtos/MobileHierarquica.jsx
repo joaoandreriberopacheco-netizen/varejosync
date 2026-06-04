@@ -81,7 +81,7 @@ function PricingLine({ label, value, tone = 'default', hint }) {
       ? 'text-orange-600 dark:text-orange-300'
       : tone === 'danger'
         ? 'text-red-600 dark:text-red-400'
-        : 'text-foreground dark:text-gray-100';
+        : 'text-foreground dark:text-foreground';
 
   return (
     <div className="flex items-start justify-between gap-2 py-1.5 border-b border-border/40 last:border-b-0 dark:border-border/40/70">
@@ -96,7 +96,7 @@ function PricingLine({ label, value, tone = 'default', hint }) {
 
 function PricingSection({ title, children }) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-white px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
+    <div className="rounded-2xl border border-border/40 bg-card px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
       <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
       {children}
     </div>
@@ -125,9 +125,9 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-border/40 bg-muted/40 p-3 text-foreground shadow-2xl dark:border-border/40 dark:bg-gray-950 dark:text-gray-100">
+      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-border/40 bg-muted/40 p-3 text-foreground shadow-2xl dark:border-border/40 dark:bg-background dark:text-foreground">
         <DialogHeader className="text-left space-y-1 pr-8">
-          <DialogTitle className="text-base font-semibold text-foreground dark:text-gray-100 flex items-center gap-2">
+          <DialogTitle className="text-base font-semibold text-foreground dark:text-foreground flex items-center gap-2">
             <span className="w-8 h-8 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </span>
@@ -137,17 +137,17 @@ function PricingDialog({ produto, open, onOpenChange }) {
         </DialogHeader>
 
         <div className="space-y-2">
-          <div className="rounded-2xl border border-border/40 bg-white px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
+          <div className="rounded-2xl border border-border/40 bg-card px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-[9px] uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">Unidade</div>
                 <div className="text-[11px] text-muted-foreground dark:text-foreground/90 truncate">consulta, sem editar</div>
               </div>
               <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                <SelectTrigger className="h-8 w-24 rounded-xl border-border/40 bg-muted/40 text-xs text-foreground focus:ring-0 dark:border-border/40 dark:bg-gray-950 dark:text-gray-100">
+                <SelectTrigger className="h-8 w-24 rounded-xl border-border/40 bg-muted/40 text-xs text-foreground focus:ring-0 dark:border-border/40 dark:bg-background dark:text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="z-[80] border-border/40 bg-white text-foreground dark:border-border/40 dark:bg-background dark:text-gray-100">
+                <SelectContent className="z-[80] border-border/40 bg-card text-foreground dark:border-border/40 dark:bg-background dark:text-foreground">
                   {unitOptions.map((option) => (
                     <SelectItem key={option.sigla} value={option.sigla} className="text-xs">
                       {option.sigla}
@@ -199,7 +199,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
       <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-4 h-4 text-gray-300 dark:text-muted-foreground" />}
+          : <Package className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />}
       </div>
 
       <button type="button" className="min-w-0 overflow-hidden text-left" onClick={() => onEdit(p)}>
@@ -221,7 +221,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
             </div>
             <div className="min-w-0">
               <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Preço venda</div>
-              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums truncate">
+              <div className="text-[11px] font-semibold text-foreground tabular-nums truncate">
                 {cat.precoVenda > 0 ? (
                   <>R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-muted-foreground">/{cat.sigla}</span></>
                 ) : '-'}
@@ -281,7 +281,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       />
       <span className={`flex-1 min-w-0 truncate ${
         isRoot
-          ? 'text-[12px] font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide'
+          ? 'text-[12px] font-semibold text-foreground uppercase tracking-wide'
           : 'text-[11px] font-medium text-muted-foreground dark:text-foreground/90 uppercase'
       }`}>
         {row.label}
@@ -296,7 +296,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
           variant="outline"
           className={`h-5 px-1.5 text-[10px] font-medium flex-shrink-0 ${
             isRoot
-              ? 'border-gray-700 text-gray-800 dark:border-gray-500 dark:text-gray-100'
+              ? 'border-border/40 text-foreground dark:border-border/40 dark:text-foreground'
               : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-foreground/90'
           }`}
         >
@@ -340,7 +340,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
     return (
       <div className="py-16 text-center px-8">
         <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
-          <Package className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
+          <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
         <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>

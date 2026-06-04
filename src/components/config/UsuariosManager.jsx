@@ -115,7 +115,7 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
 
                 {/* Valor do perfil base (read-only) */}
                 <div className="flex justify-center">
-                  <div className={`w-4 h-4 rounded flex items-center justify-center ${valorBase ? 'bg-gray-200 dark:bg-gray-600' : ''}`}>
+                  <div className={`w-4 h-4 rounded flex items-center justify-center ${valorBase ? 'bg-muted dark:bg-muted' : ''}`}>
                     {valorBase && <Check className="w-2.5 h-2.5 text-muted-foreground" />}
                   </div>
                 </div>
@@ -128,7 +128,7 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
                     className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                       overrideAdd
                         ? 'bg-green-500 text-white'
-                        : 'border border-border/40 text-gray-300 hover:border-green-400 hover:text-green-400'
+                        : 'border border-border/40 text-muted-foreground hover:border-green-400 hover:text-green-400'
                     }`}
                   >
                     <Check className="w-3 h-3" />
@@ -143,7 +143,7 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
                     className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                       overrideRem
                         ? 'bg-red-400 text-white'
-                        : 'border border-border/40 text-gray-300 hover:border-red-400 hover:text-red-400'
+                        : 'border border-border/40 text-muted-foreground hover:border-red-400 hover:text-red-400'
                     }`}
                   >
                     <X className="w-3 h-3" />
@@ -207,7 +207,7 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
             size="sm"
             onClick={handleSalvar}
             disabled={saving}
-            className="h-8 text-xs bg-primary hover:bg-gray-900 text-white dark:bg-gray-200 dark:text-foreground"
+            className="h-8 text-xs bg-primary hover:bg-background text-white dark:bg-muted dark:text-foreground"
           >
             {saving ? 'Salvando...' : 'Salvar Acesso'}
           </Button>
@@ -227,14 +227,14 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
                   onClick={() => setPerfilId(p.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${
                     perfilId === p.id
-                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground'
+                      ? 'bg-background dark:bg-muted text-white dark:text-foreground'
                       : 'bg-card shadow-sm hover:shadow text-foreground/90'
                   }`}
                 >
                   <Shield className={`w-4 h-4 flex-shrink-0 ${perfilId === p.id ? 'text-white dark:text-foreground/90' : 'text-muted-foreground'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{p.nome}</p>
-                    {p.descricao && <p className={`text-xs truncate mt-0.5 ${perfilId === p.id ? 'text-gray-300 dark:text-muted-foreground' : 'text-muted-foreground'}`}>{p.descricao}</p>}
+                    {p.descricao && <p className={`text-xs truncate mt-0.5 ${perfilId === p.id ? 'text-muted-foreground dark:text-muted-foreground' : 'text-muted-foreground'}`}>{p.descricao}</p>}
                   </div>
                   {perfilId === p.id && <Check className="w-3.5 h-3.5 flex-shrink-0 text-white dark:text-foreground/90" />}
                 </button>
@@ -260,7 +260,7 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
                   <div key={m.key} className="flex items-center gap-2">
                     <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                     <span className="text-xs text-muted-foreground flex-1">{m.label}</span>
-                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${ativas > 0 ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${ativas > 0 ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-muted text-muted-foreground'}`}>
                       {ativas}/{total}
                     </span>
                   </div>
@@ -283,19 +283,19 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
             <p className="text-xs text-muted-foreground font-medium tracking-wide">OVERRIDES INDIVIDUAIS</p>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                <div className="w-3 h-3 rounded bg-muted dark:bg-muted flex items-center justify-center">
                   <Check className="w-2 h-2 text-muted-foreground" />
                 </div>
                 <span>Perfil base</span>
               </div>
-              <span className="text-gray-300">|</span>
+              <span className="text-muted-foreground">|</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-green-500 flex items-center justify-center">
                   <Check className="w-2 h-2 text-white" />
                 </div>
                 <span>Adicionar</span>
               </div>
-              <span className="text-gray-300">|</span>
+              <span className="text-muted-foreground">|</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-red-400 flex items-center justify-center">
                   <X className="w-2 h-2 text-white" />
@@ -307,7 +307,7 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
 
           {!perfilSelecionado ? (
             <div className="bg-card rounded-xl shadow-sm p-8 text-center">
-              <Shield className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-2" />
+              <Shield className="w-8 h-8 text-muted-foreground dark:text-foreground/90 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Selecione um template para configurar overrides</p>
             </div>
           ) : (
@@ -433,7 +433,7 @@ export default function UsuariosManager() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-medium text-foreground truncate">{usuario.full_name || usuario.email}</p>
                   {isAdmin && (
-                    <span className="text-[10px] bg-gray-900 dark:bg-gray-200 text-white dark:text-foreground px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+                    <span className="text-[10px] bg-background dark:bg-muted text-white dark:text-foreground px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
                       <Lock className="w-2.5 h-2.5" /> Admin
                     </span>
                   )}
@@ -456,7 +456,7 @@ export default function UsuariosManager() {
                       )}
                       <div className="flex items-center gap-1.5">
                         <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-muted/400 dark:bg-gray-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          <div className="h-full bg-muted/400 dark:bg-muted-foreground/40 rounded-full transition-all" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-[10px] text-muted-foreground font-mono">{totalAtivas}/{totalGeral}</span>
                       </div>
@@ -472,7 +472,7 @@ export default function UsuariosManager() {
               {!isAdmin && (
                 <button
                   onClick={() => setEditando(usuario)}
-                  className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors flex-shrink-0"
+                  className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground transition-colors flex-shrink-0"
                   title="Configurar acesso"
                 >
                   <Pencil className="w-4 h-4" />
@@ -484,7 +484,7 @@ export default function UsuariosManager() {
 
         {usuariosFiltrados.length === 0 && (
           <div className="bg-card rounded-xl shadow-sm py-12 text-center">
-            <Users className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-2" />
+            <Users className="w-8 h-8 text-muted-foreground dark:text-foreground/90 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
               {busca ? `Nenhum resultado para "${busca}"` : 'Nenhum usuário encontrado'}
             </p>

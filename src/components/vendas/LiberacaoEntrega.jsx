@@ -31,7 +31,7 @@ export default function LiberacaoEntrega({ open, onClose, pedido }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center">
+      <DialogContent className="max-w-md p-0 bg-muted flex justify-center">
         
         {/* CSS ESTRITO PARA IMPRESSÃO TÉRMICA (80mm) */}
         <style type="text/css">

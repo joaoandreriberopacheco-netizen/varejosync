@@ -119,20 +119,20 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo }) {
   if (!open || !consumo) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-100 dark:bg-gray-950">
-      <div className="flex items-center justify-between border-b border-border/40 bg-white px-4 py-3 dark:border-border/40 dark:bg-background">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-muted dark:bg-background">
+      <div className="flex items-center justify-between border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-background">
         <button onClick={onClose} className="flex items-center gap-2 text-sm text-muted-foreground">
           <ArrowLeft className="h-4 w-4" />Voltar
         </button>
         <span className="text-sm font-semibold text-foreground">Minuta</span>
         <div className="flex items-center gap-2">
           <Button onClick={handlePrint} size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs"><Printer className="h-3.5 w-3.5" /></Button>
-          <Button onClick={handleShare} disabled={gerando} size="sm" className="h-9 gap-1.5 rounded-xl bg-gray-900 px-4 text-xs text-white hover:bg-primary dark:bg-gray-100 dark:text-foreground">
+          <Button onClick={handleShare} disabled={gerando} size="sm" className="h-9 gap-1.5 rounded-xl bg-background px-4 text-xs text-white hover:bg-primary dark:bg-muted dark:text-foreground">
             {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}Compartilhar
           </Button>
         </div>
       </div>
-      <div className="border-b border-border/40 bg-white px-4 py-2 dark:border-border/40 dark:bg-background">
+      <div className="border-b border-border/40 bg-card px-4 py-2 dark:border-border/40 dark:bg-background">
         <div className="flex items-center gap-2">
           <Button onClick={() => setFormato('80mm')} size="sm" variant={formato === '80mm' ? 'default' : 'outline'} className="h-8 text-xs">80mm</Button>
           <Button onClick={() => setFormato('a4')} size="sm" variant={formato === 'a4' ? 'default' : 'outline'} className="h-8 text-xs">A4</Button>

@@ -108,12 +108,12 @@ export default function UnidadesAlternativasEditor({
               className="rounded-2xl bg-muted/50/60 dark:border-border/40 p-4 shadow-sm space-y-3 border border-transparent"
             >
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <Badge className="bg-white text-foreground/90 dark:bg-background dark:text-foreground border-0 shadow-sm">
+                <Badge className="bg-card text-foreground/90 dark:bg-background dark:text-foreground border-0 shadow-sm">
                   {item.unidade || `Embalagem ${index + 1}`}
                 </Badge>
                 <div className="flex items-center gap-2 ml-auto">
                   {showCatalogControls && (
-                    <div className="flex items-center gap-1.5 rounded-full bg-white/80 dark:bg-background/80 px-2 py-1 border border-border/40/80 dark:border-gray-600/80">
+                    <div className="flex items-center gap-1.5 rounded-full bg-card/80 dark:bg-background/80 px-2 py-1 border border-border/40/80 dark:border-border/80">
                       <Switch
                         id={`catalogo-alt-${rowId || index}`}
                         className="scale-90"

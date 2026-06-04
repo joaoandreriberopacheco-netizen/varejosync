@@ -79,7 +79,7 @@ export default function VolumetrizacaoManifestos() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar por número, pedido ou fornecedor..." 
-            className="h-11 pl-11 bg-card border-0 rounded-2xl shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground" 
+            className="h-11 pl-11 bg-card border-0 rounded-2xl shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
@@ -87,7 +87,7 @@ export default function VolumetrizacaoManifestos() {
         <Button
           onClick={() => setShowLoteDialog(true)}
           disabled={manifestosFiltrados.length === 0}
-          className="h-11 rounded-2xl bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-foreground shadow-sm gap-2"
+          className="h-11 rounded-2xl bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground shadow-sm gap-2"
         >
           <Boxes className="w-4 h-4" />
           Criar em lote
@@ -97,9 +97,9 @@ export default function VolumetrizacaoManifestos() {
       {/* Lista de Manifestos - Glacial */}
       <div className="grid gap-3">
         {manifestosFiltrados.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-2xl ring-1 ring-gray-100 dark:ring-gray-700">
+          <div className="text-center py-16 bg-card rounded-2xl ring-1 ring-border/30 dark:ring-border/40">
             <div className="w-16 h-16 mx-auto mb-4 bg-muted/50 rounded-full flex items-center justify-center">
-              <Package className="w-8 h-8 text-gray-300 dark:text-muted-foreground" />
+              <Package className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
             </div>
             <p className="text-muted-foreground font-light">Nenhum manifesto encontrado</p>
           </div>
@@ -114,7 +114,7 @@ export default function VolumetrizacaoManifestos() {
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-base font-semibold text-foreground dark:text-gray-100 tracking-tight">{m.numero}</span>
+                      <span className="text-base font-semibold text-foreground dark:text-foreground tracking-tight">{m.numero}</span>
                       <Badge className={`font-normal rounded-full px-3 ${getStatusBadge(m.status)}`}>
                         {m.status}
                       </Badge>
@@ -145,7 +145,7 @@ export default function VolumetrizacaoManifestos() {
                 <Button 
                   variant="outline" 
                   onClick={() => handleDiscriminarVolumes(m)}
-                  className="gap-2 text-muted-foreground border-0 bg-muted hover:bg-gray-200 dark:hover:bg-gray-600 rounded-2xl h-10 px-4 w-full md:w-auto font-medium shadow-sm"
+                  className="gap-2 text-muted-foreground border-0 bg-muted hover:bg-muted dark:hover:bg-muted rounded-2xl h-10 px-4 w-full md:w-auto font-medium shadow-sm"
                 >
                   <Edit className="w-4 h-4 text-muted-foreground" />
                   Discriminar Volumes

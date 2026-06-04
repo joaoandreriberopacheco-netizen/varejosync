@@ -31,14 +31,14 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
           </div>
 
           {/* Period Selector */}
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-8 text-center">
+          <div className="bg-gradient-to-br from-muted/40 to-muted/60 dark:from-muted/40 dark:to-muted/60 rounded-3xl p-8 text-center">
             <p className="text-sm text-muted-foreground mb-4">Quantos períodos?</p>
 
             <div className="flex items-center justify-center gap-4 mb-6">
               <button
                 onClick={handleDecrement}
                 disabled={periodos <= 1}
-                className="w-14 h-14 rounded-full bg-white dark:bg-muted flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 transition-all active:scale-95"
+                className="w-14 h-14 rounded-full bg-card dark:bg-muted flex items-center justify-center hover:bg-muted dark:hover:bg-muted disabled:opacity-50 transition-all active:scale-95"
               >
                 <ChevronDown className="w-6 h-6 text-foreground" />
               </button>
@@ -55,13 +55,13 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
               <button
                 onClick={handleIncrement}
                 disabled={periodos >= 12}
-                className="w-14 h-14 rounded-full bg-white dark:bg-muted flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 transition-all active:scale-95"
+                className="w-14 h-14 rounded-full bg-card dark:bg-muted flex items-center justify-center hover:bg-muted dark:hover:bg-muted disabled:opacity-50 transition-all active:scale-95"
               >
                 <ChevronUp className="w-6 h-6 text-foreground" />
               </button>
             </div>
 
-            <div className="border-t border-gray-300 dark:border-border/40 pt-4">
+            <div className="border-t border-border/40 dark:border-border/40 pt-4">
               <p className="text-sm text-muted-foreground mb-1">Valor Total</p>
               <p className="text-3xl font-bold text-foreground">
                 R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -80,7 +80,7 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
                   className={`py-3 rounded-2xl font-semibold text-sm transition-all ${
                     periodos === p
                       ? 'bg-blue-600 text-white'
-                      : 'bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+                      : 'bg-muted text-foreground hover:bg-muted dark:hover:bg-primary/90'
                   }`}
                 >
                   {p}

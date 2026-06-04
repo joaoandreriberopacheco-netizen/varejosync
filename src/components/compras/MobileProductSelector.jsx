@@ -316,7 +316,7 @@ export default function MobileProductSelector({
               onClick={() => setTipoDesconto('desconto')}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${
                 isDesconto
-                  ? 'bg-white dark:bg-muted text-emerald-700 dark:text-emerald-400 shadow-sm'
+                  ? 'bg-card dark:bg-muted text-emerald-700 dark:text-emerald-400 shadow-sm'
                   : 'text-muted-foreground'
               }`}
             >
@@ -327,7 +327,7 @@ export default function MobileProductSelector({
               onClick={() => setTipoDesconto('acrescimo')}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${
                 !isDesconto
-                  ? 'bg-white dark:bg-muted text-red-600 dark:text-red-400 shadow-sm'
+                  ? 'bg-card dark:bg-muted text-red-600 dark:text-red-400 shadow-sm'
                   : 'text-muted-foreground'
               }`}
             >
@@ -411,7 +411,7 @@ export default function MobileProductSelector({
             className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
             disabled={isLocked}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm">
               <Search className="w-6 h-6 text-foreground/90" />
             </div>
             <div className="flex-1 text-left">
@@ -426,7 +426,7 @@ export default function MobileProductSelector({
             onClick={() => setView('cart')}
             className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm relative">
+            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm relative">
               <ShoppingCart className="w-6 h-6 text-foreground/90" />
               {items.length > 0 && (
                 <div className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
@@ -449,7 +449,7 @@ export default function MobileProductSelector({
             className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
             disabled={isLocked}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm">
               <Plus className="w-6 h-6 text-foreground/90" />
             </div>
             <div className="flex-1 text-left">
@@ -469,7 +469,7 @@ export default function MobileProductSelector({
                 : 'bg-muted/50'
             }`}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-card dark:bg-muted flex items-center justify-center shadow-sm">
               <DollarSign className="w-6 h-6 text-foreground/90" />
             </div>
             <div className="flex-1 text-left">
@@ -508,13 +508,13 @@ export default function MobileProductSelector({
               onClick={() => setEditUnitSelector({ open: true })}
               className="flex items-center gap-1 shrink-0"
             >
-              <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm">
+              <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm">
                 {editingItem.unidade_medida || 'UN'}
               </Badge>
               <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400">trocar</span>
             </button>
           ) : (
-            <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm shrink-0">
+            <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm shrink-0">
               {editingItem.unidade_medida || 'UN'}
             </Badge>
           )}
@@ -536,7 +536,7 @@ export default function MobileProductSelector({
              <Label className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Quantidade ({editingItem.unidade_medida})</Label>
              <div className="flex items-center gap-5">
                 <Button 
-                 variant="outline" size="icon" className="h-11 w-11 rounded-full border-gray-300 dark:border-gray-600"
+                 variant="outline" size="icon" className="h-11 w-11 rounded-full border-border/40 dark:border-border/40"
                  onClick={() => {
                    const newVal = Math.max(1, (parseFloat(editingItem.quantidade) || 0) - 1);
                    patchEditingQuantidade(newVal);
@@ -550,7 +550,7 @@ export default function MobileProductSelector({
                 ref={quantidadeInputRef}
                 type="text"
                 inputMode="decimal"
-                className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
+                className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
                 value={quantidadeInput}
                 onChange={e => {
                   const val = e.target.value;
@@ -601,7 +601,7 @@ export default function MobileProductSelector({
               ref={custoInputRef}
               type="text"
               inputMode="decimal"
-              className="h-13 text-xl font-bold bg-muted/50 border-0 shadow-sm text-center text-foreground placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
+              className="h-13 text-xl font-bold bg-muted/50 border-0 shadow-sm text-center text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
               value={custoInput}
               onChange={e => {
                 const val = e.target.value;
@@ -924,7 +924,7 @@ export default function MobileProductSelector({
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
+                          <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-foreground'}`}>
                             {product.nome}
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
@@ -977,7 +977,7 @@ export default function MobileProductSelector({
                 document.activeElement?.blur();
                 setShowNovoProduto(true);
               }}
-              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-shadow hover:shadow-xl dark:bg-white dark:text-foreground p38-bottom-fab1"
+              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-shadow hover:shadow-xl dark:bg-card dark:text-foreground p38-bottom-fab1"
               title="Criar novo produto"
             >
               <Plus className="w-6 h-6" />
@@ -1031,7 +1031,7 @@ export default function MobileProductSelector({
             <p className="text-sm mb-6">Adicione produtos ao pedido</p>
             <Button 
               onClick={() => setView('catalog')}
-              className="bg-gray-700 hover:bg-gray-600"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={isLocked}
             >
               <Plus className="w-4 h-4 mr-2" />

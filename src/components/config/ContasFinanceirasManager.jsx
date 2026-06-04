@@ -72,7 +72,7 @@ export default function ContasFinanceirasManager() {
           <p className="text-xs text-muted-foreground mt-0.5">Caixas físicos, contas bancárias e carteiras digitais</p>
         </div>
         <Button onClick={handleAddNew} size="sm"
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
           <PlusCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Nova Conta</span>
         </Button>
@@ -80,7 +80,7 @@ export default function ContasFinanceirasManager() {
 
       {contas.length === 0 ? (
         <div className="text-center py-12 rounded-xl bg-muted/50/50">
-          <Wallet className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <Wallet className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-foreground/90" />
           <p className="text-sm text-muted-foreground mb-4">Nenhuma conta cadastrada</p>
           <Button onClick={handleAddNew} size="sm" className="bg-primary text-white gap-1.5">
             <PlusCircle className="w-3.5 h-3.5" /> Criar Primeira Conta
@@ -96,7 +96,7 @@ export default function ContasFinanceirasManager() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{conta.nome}</span>
+                  <span className="text-sm font-medium text-foreground truncate">{conta.nome}</span>
                   {conta.is_caixa_pdv && (
                     <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">PDV</span>
                   )}
@@ -122,7 +122,7 @@ export default function ContasFinanceirasManager() {
                   <Scale className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200">
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground">
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(conta)}
@@ -145,7 +145,7 @@ export default function ContasFinanceirasManager() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm dark:bg-background dark:border-border/40 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Wallet className="w-4 h-4 text-muted-foreground" />
               {selectedConta ? 'Editar Conta' : 'Nova Conta Financeira'}
             </DialogTitle>
@@ -227,7 +227,7 @@ export default function ContasFinanceirasManager() {
           <DialogFooter className="gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
             <Button size="sm" onClick={handleSave}
-              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>

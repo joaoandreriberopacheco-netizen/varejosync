@@ -16,7 +16,7 @@ const getIcon = (anexo) => {
 export default function ConsumoAnexosDialog({ open, onOpenChange, anexos = [], consumoNumero }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-background">
+      <DialogContent className="max-w-lg rounded-[28px] border-0 bg-card p-0 shadow-2xl dark:bg-background">
         <div className="p-5 md:p-6">
           <div className="mb-5">
             <p className="text-lg font-semibold text-foreground">Anexos do consumo</p>
@@ -34,14 +34,14 @@ export default function ConsumoAnexosDialog({ open, onOpenChange, anexos = [], c
               const Icon = getIcon(anexo);
               return (
                 <div key={anexo.id} className="flex items-center gap-3 rounded-[24px] bg-muted/40 p-4 shadow-sm dark:bg-muted">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-card text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{anexo.nome_arquivo || 'Arquivo'}</p>
                     <p className="truncate text-xs text-muted-foreground">{anexo.descricao || anexo.tipo_documento || 'Anexo'}</p>
                   </div>
-                  <Button asChild className="h-10 rounded-2xl bg-gray-900 px-3 text-white hover:bg-primary dark:bg-white dark:text-foreground">
+                  <Button asChild className="h-10 rounded-2xl bg-background px-3 text-white hover:bg-primary dark:bg-card dark:text-foreground">
                     <a href={anexo.url_drive} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" />
                     </a>

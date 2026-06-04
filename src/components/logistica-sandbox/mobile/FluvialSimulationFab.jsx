@@ -10,7 +10,7 @@ export default function FluvialSimulationFab({ value, onChange }) {
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="w-14 h-14 rounded-full bg-gray-900 text-white dark:bg-gray-100 dark:text-foreground shadow-xl flex items-center justify-center"
+            className="w-14 h-14 rounded-full bg-background text-white dark:bg-muted dark:text-foreground shadow-xl flex items-center justify-center"
           >
             <CalendarDays className="w-5 h-5" />
           </button>

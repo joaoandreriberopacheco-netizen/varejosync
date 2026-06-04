@@ -237,12 +237,12 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-100 dark:bg-gray-950">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-muted dark:bg-background">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border/40 flex-shrink-0">
         <button
           onClick={onClose}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gray-800 dark:hover:text-gray-200 py-1"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground py-1"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar
@@ -254,7 +254,7 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
           onClick={handlePrint}
           disabled={exportingPdf}
           size="sm"
-          className="bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+          className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
         >
           {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
           {exportingPdf ? 'Gerando…' : 'Imprimir'}

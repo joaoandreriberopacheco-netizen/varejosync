@@ -277,7 +277,7 @@ export default function ControleCaixasAtivos() {
     return (
       <div className="min-h-screen bg-background p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="h-8 w-48 bg-gray-200 dark:bg-muted rounded animate-pulse mb-6"></div>
+          <div className="h-8 w-48 bg-muted dark:bg-muted rounded animate-pulse mb-6"></div>
           <div className="h-64 bg-card rounded-xl shadow-sm animate-pulse"></div>
         </div>
       </div>
@@ -290,7 +290,7 @@ export default function ControleCaixasAtivos() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground dark:text-gray-100 font-glacial">
+            <h1 className="text-2xl font-bold text-foreground dark:text-foreground font-glacial">
               Controle de Caixas Ativos
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -342,7 +342,7 @@ export default function ControleCaixasAtivos() {
           <div>
             <Card className="shadow-sm border-0 dark:bg-muted dark:border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground dark:text-gray-100">
+                <CardTitle className="text-base font-semibold text-foreground dark:text-foreground">
                   Movimentos
                 </CardTitle>
               </CardHeader>
@@ -350,7 +350,7 @@ export default function ControleCaixasAtivos() {
                 {/* Saldo Inicial */}
                 <div className="flex items-center justify-between py-2 border-b border-border/40">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <div className="w-2 h-2 rounded-full bg-muted-foreground/40"></div>
                     <span className="text-sm text-muted-foreground">Saldo Inicial</span>
                   </div>
                   <span className="text-base font-semibold text-foreground">
@@ -401,7 +401,7 @@ export default function ControleCaixasAtivos() {
                             {entrada.tipo === 'Venda' && (
                               <button
                                 onClick={() => handleVerDetalhesVenda(entrada.referencia)}
-                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                                className="p-1 hover:bg-muted dark:hover:bg-muted rounded transition-colors">
                                 <Eye className="w-3 h-3 text-muted-foreground" />
                               </button>
                             )}
@@ -463,7 +463,7 @@ export default function ControleCaixasAtivos() {
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                     <span className="text-sm font-semibold text-foreground/90">Saldo</span>
                   </div>
-                  <span className="text-lg font-bold text-foreground dark:text-gray-100">
+                  <span className="text-lg font-bold text-foreground dark:text-foreground">
                     {formatValor(resumo.saldoAtual)}
                   </span>
                 </div>
@@ -475,7 +475,7 @@ export default function ControleCaixasAtivos() {
           <div className="space-y-4">
             <Card className="shadow-sm border-0 dark:bg-muted dark:border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground dark:text-gray-100">
+                <CardTitle className="text-base font-semibold text-foreground dark:text-foreground">
                   Formas de Pagamento
                 </CardTitle>
               </CardHeader>
@@ -504,7 +504,7 @@ export default function ControleCaixasAtivos() {
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                     <span className="text-sm font-semibold text-foreground/90">Saldo</span>
                   </div>
-                  <span className="text-lg font-bold text-foreground dark:text-gray-100">
+                  <span className="text-lg font-bold text-foreground dark:text-foreground">
                     {formatValor(resumo.saldoAtual)}
                   </span>
                 </div>
@@ -518,7 +518,7 @@ export default function ControleCaixasAtivos() {
       <Dialog open={showVendaDialog} onOpenChange={setShowVendaDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-foreground dark:text-gray-100">Detalhes da Venda</DialogTitle>
+            <DialogTitle className="text-foreground dark:text-foreground">Detalhes da Venda</DialogTitle>
           </DialogHeader>
           {vendaSelecionada && (
             <div className="space-y-4">
@@ -589,7 +589,7 @@ export default function ControleCaixasAtivos() {
 
               <div className="pt-3 border-t border-border/40 flex justify-between text-lg">
                 <span className="font-semibold text-foreground/90">Total:</span>
-                <span className="font-bold text-foreground dark:text-gray-100">
+                <span className="font-bold text-foreground dark:text-foreground">
                   {formatValor(vendaSelecionada.valor_total)}
                 </span>
               </div>

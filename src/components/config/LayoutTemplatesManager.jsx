@@ -191,7 +191,7 @@ export default function LayoutTemplatesManager() {
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="O que poderia melhorar? Alguma dificuldade?"
-              className="w-full p-2 text-xs rounded bg-card border border-gray-300 dark:border-gray-600 mb-2"
+              className="w-full p-2 text-xs rounded bg-card border border-border/40 dark:border-border/40 mb-2"
               rows="3"
             />
             <div className="flex gap-2">
@@ -219,7 +219,7 @@ export default function LayoutTemplatesManager() {
                 <select
                   value={categoria}
                   onChange={(e) => setCategoria(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded bg-card border border-gray-300 dark:border-gray-600"
+                  className="w-full px-3 py-2 text-xs rounded bg-card border border-border/40 dark:border-border/40"
                 >
                   {Object.entries(CATEGORIAS_NOMES).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
@@ -260,7 +260,7 @@ export default function LayoutTemplatesManager() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Editor de Layouts</h2>
+          <h2 className="text-sm font-semibold text-foreground">Editor de Layouts</h2>
           <p className="text-xs text-muted-foreground mt-1">Customize comprovantes, relatórios e documentos</p>
         </div>
         <Button
@@ -291,7 +291,7 @@ export default function LayoutTemplatesManager() {
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-card text-xs"
+          className="px-3 py-2 rounded border border-border/40 dark:border-border/40 bg-card text-xs"
         >
           <option value="">Todas</option>
           {Object.entries(CATEGORIAS_NOMES).map(([key, label]) => (

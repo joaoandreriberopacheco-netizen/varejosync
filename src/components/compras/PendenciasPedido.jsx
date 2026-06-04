@@ -101,7 +101,7 @@ export default function PendenciasPedido({ pedido }) {
       'Produto a Mais': 'bg-blue-100 text-blue-800',
       'Pedido Diferente': 'bg-purple-100 text-purple-800'
     };
-    return map[tipo] || 'bg-gray-100 text-gray-800';
+    return map[tipo] || 'bg-muted text-foreground';
   };
 
   const getStatusColor = (status) => {
@@ -112,7 +112,7 @@ export default function PendenciasPedido({ pedido }) {
       'Aceita': 'bg-green-100 text-green-800',
       'Rejeitada': 'bg-red-100 text-red-800'
     };
-    return map[status] || 'bg-gray-100 text-gray-800';
+    return map[status] || 'bg-muted text-foreground';
   };
 
   if (loading) return <div>Carregando...</div>;
@@ -142,7 +142,7 @@ export default function PendenciasPedido({ pedido }) {
       <Card className="border-0 shadow-sm">
         <CardContent className="py-12 text-center">
           <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
-          <p className="font-semibold text-lg text-foreground dark:text-gray-100">Nenhuma Pendência</p>
+          <p className="font-semibold text-lg text-foreground dark:text-foreground">Nenhuma Pendência</p>
           <p className="text-sm text-muted-foreground mb-6">Todos os itens foram conferidos sem divergências</p>
           
           {pedido.status !== 'Concluído' && (

@@ -311,7 +311,7 @@ export default function ImportarPlanilha({ onParsed }) {
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-muted/50/50 p-8 transition-colors hover:border-gray-400 hover:bg-muted"
+          className="relative rounded-xl border-2 border-dashed border-border/40 dark:border-border/40 bg-muted/50/50 p-8 transition-colors hover:border-border/40 hover:bg-muted"
         >
           <input
             ref={inputRef}

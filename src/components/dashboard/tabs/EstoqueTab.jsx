@@ -81,7 +81,7 @@ export default function EstoqueTab() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Valor Estoque</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {formatCurrency(data.valorEstoque)}
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function EstoqueTab() {
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Sem Giro</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {data.itensSemGiro}
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function EstoqueTab() {
             {data.top5ProdutosPorValor.map((produto, index) => (
               <div key={index} className="flex items-center justify-between py-2">
                 <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0 mr-2">{produto.nome}</span>
-                <span className="text-sm font-semibold text-foreground dark:text-gray-100">{formatCurrency(produto.valor)}</span>
+                <span className="text-sm font-semibold text-foreground dark:text-foreground">{formatCurrency(produto.valor)}</span>
               </div>
             ))}
           </div>
@@ -155,11 +155,11 @@ export default function EstoqueTab() {
         <h3 className="text-sm font-medium text-foreground mb-4">Última Contagem</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div className="p-4 bg-muted/50 rounded-lg text-center">
-            <div className="text-3xl font-bold text-foreground dark:text-gray-100 mb-1">0</div>
+            <div className="text-3xl font-bold text-foreground dark:text-foreground mb-1">0</div>
             <div className="text-xs text-muted-foreground">Discrepâncias</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg text-center">
-            <div className="text-3xl font-bold text-foreground dark:text-gray-100 mb-1">{formatCurrency(0)}</div>
+            <div className="text-3xl font-bold text-foreground dark:text-foreground mb-1">{formatCurrency(0)}</div>
             <div className="text-xs text-muted-foreground">Excesso/Falta</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg text-center">

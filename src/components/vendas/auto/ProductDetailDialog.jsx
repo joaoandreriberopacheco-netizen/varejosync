@@ -27,7 +27,7 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
           {product.imagem_url ? (
             <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-cover" />
           ) : (
-            <div className="text-gray-300 dark:text-muted-foreground">
+            <div className="text-muted-foreground dark:text-muted-foreground">
               <ShoppingCart className="w-24 h-24 opacity-20" />
             </div>
           )}

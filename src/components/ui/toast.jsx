@@ -20,7 +20,7 @@ ToastViewport.displayName = "ToastViewport"
 
 const Toast = React.forwardRef(({ className, variant = "default", open, onOpenChange, ...props }, ref) => {
   const variants = {
-      default: "border bg-card text-gray-950 dark:text-gray-50",
+      default: "border bg-card text-foreground dark:text-foreground",
       destructive: "destructive group border-red-500 bg-red-500 text-white",
   }
   

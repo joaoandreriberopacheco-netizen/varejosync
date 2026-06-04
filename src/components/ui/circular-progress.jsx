@@ -19,7 +19,7 @@ export function CircularProgress({ value, max, currentBatch, totalBatches, proce
             stroke="currentColor"
             strokeWidth="8"
             fill="none"
-            className="text-gray-200 dark:text-foreground/90"
+            className="text-muted-foreground dark:text-foreground/90"
           />
           {/* Progress circle */}
           <circle

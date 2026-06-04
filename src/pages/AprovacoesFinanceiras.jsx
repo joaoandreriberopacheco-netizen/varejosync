@@ -435,7 +435,7 @@ export default function AprovacoesFinanceirasPage() {
         )}
 
         {isProcessingApproval && (
-          <div className="fixed inset-0 z-[70] bg-white/80 dark:bg-background/80 backdrop-blur-sm flex items-center justify-center px-6">
+          <div className="fixed inset-0 z-[70] bg-card/80 dark:bg-background/80 backdrop-blur-sm flex items-center justify-center px-6">
             <div className="bg-card shadow-xl rounded-3xl px-6 py-7 flex flex-col items-center gap-3 max-w-xs w-full text-center">
               <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
                 <Loader2 className="w-7 h-7 animate-spin text-emerald-600" />
@@ -487,7 +487,7 @@ export default function AprovacoesFinanceirasPage() {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-3">
-                    <p className="text-sm font-semibold text-foreground dark:text-gray-100">
+                    <p className="text-sm font-semibold text-foreground dark:text-foreground">
                       R$ {calcValorTotalPedidoCompra(p).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${

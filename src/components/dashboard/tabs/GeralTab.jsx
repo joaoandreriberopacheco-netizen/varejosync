@@ -109,15 +109,15 @@ export default function GeralTab() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Faturamento</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">{formatCurrency(data.receitaMes)}</div>
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">{formatCurrency(data.receitaMes)}</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Margem Bruta</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">{data.margemBruta.toFixed(1)}%</div>
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">{data.margemBruta.toFixed(1)}%</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Ticket Médio</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">{formatCurrency(data.ticketMedio)}</div>
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">{formatCurrency(data.ticketMedio)}</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Lucro (30d)</div>
@@ -136,7 +136,7 @@ export default function GeralTab() {
                 <Package className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Baixo Estoque</span>
               </div>
-              <span className="text-2xl font-semibold text-foreground dark:text-gray-100">{data.produtosAbaixoMinimo}</span>
+              <span className="text-2xl font-semibold text-foreground dark:text-foreground">{data.produtosAbaixoMinimo}</span>
             </div>
             <p className="text-xs text-muted-foreground">
               {data.produtosAbaixoMinimo > 0 
@@ -151,7 +151,7 @@ export default function GeralTab() {
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Contas Vencendo</span>
               </div>
-              <span className="text-2xl font-semibold text-foreground dark:text-gray-100">{data.contasVencendo}</span>
+              <span className="text-2xl font-semibold text-foreground dark:text-foreground">{data.contasVencendo}</span>
             </div>
             <p className="text-xs text-muted-foreground">
               {data.contasVencendo > 0 
@@ -186,7 +186,7 @@ export default function GeralTab() {
           
           <div>
             <div className="text-xs text-muted-foreground mb-1">Taxa de Reinvestimento</div>
-            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
+            <div className="text-2xl font-bold text-foreground dark:text-foreground">
               {data.valorCompras30Dias > 0 
                 ? ((data.lucro30Dias / data.valorCompras30Dias) * 100).toFixed(1)
                 : '0.0'}%

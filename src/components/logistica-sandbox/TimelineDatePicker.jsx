@@ -10,14 +10,14 @@ export default function TimelineDatePicker({ value, onChange, compact = false })
         </div>
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Simulador</p>
-          <p className="text-sm text-foreground dark:text-gray-100 font-medium">Ver situação em uma data projetada</p>
+          <p className="text-sm text-foreground dark:text-foreground font-medium">Ver situação em uma data projetada</p>
         </div>
       </div>
       <input autoComplete="off"
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl bg-muted/40 dark:bg-muted border-0 shadow-sm px-4 py-3 text-sm text-foreground dark:text-gray-100"
+        className="w-full rounded-2xl bg-muted/40 dark:bg-muted border-0 shadow-sm px-4 py-3 text-sm text-foreground dark:text-foreground"
       />
     </div>
   );

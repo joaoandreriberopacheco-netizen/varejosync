@@ -105,9 +105,19 @@ Objetivo: em **tablet (≥768px)** e **desktop (≥1024px)**, cada tela usar a m
 | **4** | Relatórios, config, admin, restantes em `src/pages` | ✅ tokens em massa |
 | **—** | PDV / AutoAtendimento / PDVCaixa | ⏸️ intocado (padrão F) |
 
-Ferramenta: `node scripts/p38-token-migrate.mjs [pastas…]` — substitui `gray-*`/`slate-*` por tokens shadcn P38.
+Ferramentas:
 
-Pendente fino (iteração futura): `allViewports` em listas só-mobile; TreeGrid/VendasGestao com revisão visual manual; alguns `gray-*` semânticos em relatórios densos.
+| Comando | Função |
+|---------|--------|
+| `npm run p38:color-audit` | Lista ficheiros com classes `gray-*` / `slate-*` legadas |
+| `npm run p38:color-fix` | Substitui por tokens P38 (`background`, `card`, `muted`, `foreground`, `primary`, `ring`) |
+| `npm run p38:token-migrate` | Migração literal em massa (script legado) |
+
+Código: `scripts/p38-color-audit.mjs` — mapeamento + correção. **Exclui** PDV fullscreen (`PDVCaixa`, `PDVVendedor`, `PDVSupermercado`, `AutoAtendimento`).
+
+Após `p38:color-fix` (2026-06): **0 ocorrências** gray/slate no âmbito auditado; PDV mantém classes próprias até pedido explícito.
+
+Pendente fino: `allViewports` em listas só-mobile; TreeGrid/VendasGestao revisão visual; PDV fullscreen.
 
 ## Checklist por tela
 

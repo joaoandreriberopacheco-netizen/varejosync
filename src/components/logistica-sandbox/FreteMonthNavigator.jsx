@@ -14,7 +14,7 @@ export default function FreteMonthNavigator({ currentMonth, onPrev, onNext }) {
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
           <Ship className="w-3.5 h-3.5" /> Fretes
         </div>
-        <p className="text-sm font-medium text-foreground dark:text-gray-100 capitalize">{label}</p>
+        <p className="text-sm font-medium text-foreground dark:text-foreground capitalize">{label}</p>
       </div>
       <Button onClick={onNext} variant="ghost" size="icon" className="h-12 w-12 -mr-2">
         <ChevronRight className="w-4 h-4 text-muted-foreground" />

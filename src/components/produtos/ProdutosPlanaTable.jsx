@@ -227,7 +227,7 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
                 </TableCell>
                 <TableCell className="sticky left-[50px] z-10 bg-card border-r border-border/40 p-1 text-center">
                   <div className="w-10 h-10 mx-auto bg-muted rounded-md flex items-center justify-center overflow-hidden">
-                    {produto.imagem_url ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-gray-300" />}
+                    {produto.imagem_url ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-muted-foreground" />}
                   </div>
                 </TableCell>
                 <TableCell className="sticky left-[110px] z-10 bg-card border-r border-border/40">

@@ -144,7 +144,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
                   onClick={() => setFormato(f)}
                   className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
                     formato === f
-                      ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground'
+                      ? 'bg-primary dark:bg-muted text-white dark:text-foreground'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -156,7 +156,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
 
           <Button
             onClick={handlePrint}
-            className="w-full bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-foreground text-white h-11 rounded-xl gap-2"
+            className="w-full bg-primary hover:bg-background dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-11 rounded-xl gap-2"
           >
             <Printer className="w-4 h-4" />
             Imprimir / Salvar PDF
@@ -175,7 +175,7 @@ function ItemCarrinho({ item, calcularPreco, onChangeQtd, onRemove }) {
       <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
         {item.produto.imagem_url
           ? <img src={item.produto.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-3.5 h-3.5 text-gray-300" />}
+          : <Package className="w-3.5 h-3.5 text-muted-foreground" />}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[11px] text-foreground/90 leading-snug uppercase truncate">{item.produto.nome}</p>
@@ -255,7 +255,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             onClick={() => setAba('buscar')}
             className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
               aba === 'buscar'
-                ? 'text-foreground border-b-2 border-gray-800 dark:border-border/40'
+                ? 'text-foreground border-b-2 border-border/40 dark:border-border/40'
                 : 'text-muted-foreground'
             }`}
           >
@@ -265,13 +265,13 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             onClick={() => setAba('carrinho')}
             className={`flex-1 py-2.5 text-xs font-medium transition-colors relative ${
               aba === 'carrinho'
-                ? 'text-foreground border-b-2 border-gray-800 dark:border-border/40'
+                ? 'text-foreground border-b-2 border-border/40 dark:border-border/40'
                 : 'text-muted-foreground'
             }`}
           >
             Orçamento
             {totalItens > 0 && (
-              <span className="ml-1.5 bg-primary dark:bg-gray-200 text-white dark:text-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="ml-1.5 bg-primary dark:bg-muted text-white dark:text-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                 {totalItens}
               </span>
             )}
@@ -294,7 +294,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                   />
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="flex-1 overflow-y-auto divide-y divide-border/40 dark:divide-border/40">
                 {produtosFiltrados.map(p => {
                   const noCarrinho = carrinho.find(i => i.produto.id === p.id);
                   const preco = calcularPreco(p);
@@ -302,12 +302,12 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                     <button
                       key={p.id}
                       onClick={() => addProduto(p)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 dark:hover:bg-muted/50 active:bg-gray-100 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 dark:hover:bg-muted/50 active:bg-muted transition-colors"
                     >
                       <div className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {p.imagem_url
                           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-                          : <Package className="w-4 h-4 text-gray-300 dark:text-muted-foreground" />}
+                          : <Package className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] font-normal text-foreground/90 uppercase leading-snug truncate">{p.nome}</p>
@@ -317,12 +317,12 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {preco > 0 && (
-                          <span className="text-[12px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums">
+                          <span className="text-[12px] font-semibold text-foreground tabular-nums">
                             R$ {fmtR(preco)}
                           </span>
                         )}
                         {noCarrinho ? (
-                          <span className="w-6 h-6 rounded-lg bg-primary dark:bg-gray-200 flex items-center justify-center text-[9px] font-bold text-white dark:text-foreground">
+                          <span className="w-6 h-6 rounded-lg bg-primary dark:bg-muted flex items-center justify-center text-[9px] font-bold text-white dark:text-foreground">
                             {noCarrinho.qtd}
                           </span>
                         ) : (
@@ -369,7 +369,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             </div>
             <Button
               onClick={() => setShowCupom(true)}
-              className="w-full bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-foreground text-white h-11 rounded-xl gap-2"
+              className="w-full bg-primary hover:bg-background dark:bg-muted dark:hover:bg-muted dark:text-foreground text-white h-11 rounded-xl gap-2"
             >
               <FileText className="w-4 h-4" />
               Gerar Orçamento

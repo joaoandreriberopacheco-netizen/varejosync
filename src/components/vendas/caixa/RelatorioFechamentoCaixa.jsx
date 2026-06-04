@@ -49,7 +49,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
         {/* Conteúdo imprimível */}
         <div id="relatorio-fechamento-caixa-print" className="p-6 space-y-6" style={{ fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace" }}>
           {/* Cabeçalho */}
-          <div className="text-center border-b-2 border-gray-900 dark:border-border/40 pb-4">
+          <div className="text-center border-b-2 border-border/40 dark:border-border/40 pb-4">
             <div className="text-2xl font-bold text-foreground mb-1">FECHAMENTO DE CAIXA</div>
             <div className="text-sm text-muted-foreground">Turno {turno.numero}</div>
           </div>
@@ -92,7 +92,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
               <span className="text-muted-foreground">- Sangrias:</span>
               <span className="font-mono font-medium text-foreground">{fmt(caixaData.sangrias)}</span>
             </div>
-            <div className="flex justify-between text-base font-bold border-t border-gray-300 dark:border-gray-600 pt-2">
+            <div className="flex justify-between text-base font-bold border-t border-border/40 dark:border-border/40 pt-2">
               <span className="text-foreground">Saldo do Turno:</span>
               <span className="font-mono text-foreground">{fmt(caixaData.saldoAtual)}</span>
             </div>
@@ -124,7 +124,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
           </div>
 
           {/* Conferência */}
-          <div className="border-t-2 border-gray-900 dark:border-border/40 pt-4 space-y-2">
+          <div className="border-t-2 border-border/40 dark:border-border/40 pt-4 space-y-2">
             <div className="text-sm font-semibold text-foreground/90 mb-2">CONFERÊNCIA</div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Dinheiro na Gaveta:</span>
@@ -134,7 +134,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
               <span className="text-foreground">Total Conferido:</span>
               <span className="font-mono text-foreground">{fmt(totalConferido)}</span>
             </div>
-            <div className={`flex justify-between text-base font-bold pt-2 border-t border-gray-300 dark:border-gray-600 ${
+            <div className={`flex justify-between text-base font-bold pt-2 border-t border-border/40 dark:border-border/40 ${
               Math.abs(diferenca) < 0.01 
                 ? 'text-green-600 dark:text-green-400' 
                 : 'text-red-600 dark:text-red-400'
@@ -172,7 +172,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
             onClick={onContinuar}
             isLoading={isContinuing}
             loadingText="Finalizando..."
-            className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-foreground hover:bg-primary"
+            className="flex-1 bg-background dark:bg-card text-white dark:text-foreground hover:bg-primary"
           >
             Continuar
           </SafeActionButton>

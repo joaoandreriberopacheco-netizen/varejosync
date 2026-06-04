@@ -8,7 +8,7 @@ function FilterChip({ active, icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-muted text-muted-foreground shadow-sm'}`}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
     >
       <Icon className="w-3.5 h-3.5" />
       {label}
@@ -22,18 +22,18 @@ function MultiSelectPopover({ icon: Icon, label, options, selected, onToggle, on
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-muted text-muted-foreground shadow-sm'}`}>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}>
           <Icon className="w-3.5 h-3.5" />
           {active ? `${selected.length} selecionado(s)` : label}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2 rounded-3xl border-0 bg-white dark:bg-card shadow-xl" align="start">
-        <button onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-foreground/90 hover:bg-muted/40 dark:hover:bg-slate-800">
+      <PopoverContent className="w-56 p-2 rounded-3xl border-0 bg-card dark:bg-card shadow-xl" align="start">
+        <button onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-foreground/90 hover:bg-muted/40 dark:hover:bg-card">
           {allLabel}
         </button>
         <div className="space-y-1 mt-1">
           {options.map((option) => (
-            <label key={option.value} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer hover:bg-muted/40 dark:hover:bg-slate-800">
+            <label key={option.value} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer hover:bg-muted/40 dark:hover:bg-card">
               <Checkbox checked={selected.includes(option.value)} onCheckedChange={() => onToggle(option.value)} className="w-4 h-4" />
               <span className="text-xs text-foreground/90">{option.label}</span>
             </label>

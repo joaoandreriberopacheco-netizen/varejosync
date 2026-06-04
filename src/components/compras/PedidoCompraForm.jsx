@@ -1134,7 +1134,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               Começar do zero
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground rounded-xl h-10"
+              className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl h-10"
               onClick={() => {
                 if (pendingDraft?.data) {
                   isRestoringDraftRef.current = true;
@@ -1414,7 +1414,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             <div className="pt-6 border-t border-border/40">
               <div className="text-right mb-8">
                 <span className="text-xs text-muted-foreground block mb-0.5">Total do Pedido</span>
-                <span className="text-2xl font-bold text-foreground dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                <span className="text-2xl font-bold text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
               </div>
 
               {/* Contas a pagar geradas para este pedido */}

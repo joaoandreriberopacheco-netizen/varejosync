@@ -104,14 +104,14 @@ export default function VendasPerdidasPage() {
         <TabsList className="bg-transparent border-b border-border/40 rounded-none h-auto p-0 w-full justify-start">
           <TabsTrigger 
             value="mix"
-            className="border-b-2 border-transparent data-[state=active]:border-gray-700 rounded-none py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="border-b-2 border-transparent data-[state=active]:border-border/40 rounded-none py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <Package className="w-4 h-4 mr-2" />
             Produtos do Mix ({vendasMix.length})
           </TabsTrigger>
           <TabsTrigger 
             value="nao-mix"
-            className="border-b-2 border-transparent data-[state=active]:border-gray-700 rounded-none py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="border-b-2 border-transparent data-[state=active]:border-border/40 rounded-none py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <PackagePlus className="w-4 h-4 mr-2" />
             Sugestões de Novos Produtos ({Object.keys(produtosNaoMixAgrupados).length})
@@ -124,7 +124,7 @@ export default function VendasPerdidasPage() {
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
           ) : vendasMix.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
               <p>Nenhum registro de venda perdida de produtos do mix</p>
             </div>
           ) : (
@@ -152,7 +152,7 @@ export default function VendasPerdidasPage() {
                       className={`text-xs ${
                         vp.motivo_perda === 'Sem Estoque' ? 'bg-red-100 text-red-700' :
                         vp.motivo_perda === 'Preço Alto' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-100 text-foreground/90'
+                        'bg-muted text-foreground/90'
                       }`}
                     >
                       {vp.motivo_perda}
@@ -170,7 +170,7 @@ export default function VendasPerdidasPage() {
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
           ) : Object.keys(produtosNaoMixAgrupados).length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <PackagePlus className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <PackagePlus className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
               <p>Nenhuma sugestão de novo produto registrada</p>
             </div>
           ) : (

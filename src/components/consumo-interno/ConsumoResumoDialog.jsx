@@ -11,11 +11,11 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexo
   return (
     <div className="fixed inset-0 z-[205] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
       <button type="button" aria-label="Fechar resumo" className="absolute inset-0" onClick={() => onOpenChange(false)} />
-      <div className="relative z-10 flex h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-background md:h-auto md:max-h-[88vh] md:rounded-[32px]">
+      <div className="relative z-10 flex h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[32px] bg-card shadow-2xl dark:bg-background md:h-auto md:max-h-[88vh] md:rounded-[32px]">
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
         >
           <X className="h-4 w-4" />
         </button>
@@ -41,7 +41,7 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexo
             </div>
             <div className="space-y-2">
               {(consumo.itens || []).map((item, index) => (
-                <div key={index} className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-background">
+                <div key={index} className="flex items-center justify-between rounded-2xl bg-card px-3 py-2 shadow-sm dark:bg-background">
                   <div>
                     <p className="text-sm font-medium text-foreground">{item.produto_nome}</p>
                     <p className="text-xs text-muted-foreground">{item.quantidade} {item.unidade_medida || 'UN'}</p>
@@ -59,7 +59,7 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexo
             </div>
             <div className="space-y-2">
               {anexos.length === 0 && (
-                <div className="rounded-2xl bg-white px-3 py-3 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
+                <div className="rounded-2xl bg-card px-3 py-3 text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
                   Nenhum anexo salvo.
                 </div>
               )}
@@ -73,10 +73,10 @@ export default function ConsumoResumoDialog({ open, onOpenChange, consumo, anexo
                     href={anexo.url_drive}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-100 dark:bg-background dark:hover:bg-gray-950"
+                    className="flex items-center justify-between rounded-2xl bg-card px-3 py-3 shadow-sm transition-colors hover:bg-muted dark:bg-muted dark:hover:bg-background"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90">
                         <Icone className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">

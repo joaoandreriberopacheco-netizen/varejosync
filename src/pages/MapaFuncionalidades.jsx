@@ -454,7 +454,7 @@ export default function MapaFuncionalidades() {
                     <CardContent>
                       <div className="space-y-2">
                         {modulo.items.map((item, idx) => (
-                          <div key={idx} className="flex items-start justify-between p-3 bg-muted/40 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div key={idx} className="flex items-start justify-between p-3 bg-muted/40 rounded-lg hover:bg-muted transition-colors">
                             <div className="flex-1">
                               <p className="font-medium text-foreground">{item.nome}</p>
                               <p className="text-sm text-muted-foreground mt-1">{item.obs}</p>

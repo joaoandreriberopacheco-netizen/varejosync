@@ -124,7 +124,7 @@ export default function TemplateBlockEditor({ blocks, onBlocksChange, previewDat
                 <select
                   value={selectedBlock.config.fontFamily}
                   onChange={(e) => updateBlockConfig(selectedBlock.id, { fontFamily: e.target.value })}
-                  className="w-full px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-card"
+                  className="w-full px-2 py-1 text-xs rounded border border-border/40 dark:border-border/40 bg-card"
                 >
                   <option value="monospace">Monospace</option>
                   <option value="sans-serif">Sans-Serif</option>
@@ -157,7 +157,7 @@ export default function TemplateBlockEditor({ blocks, onBlocksChange, previewDat
                       className={`px-2 py-1 text-xs rounded border transition ${
                         selectedBlock.config.align === align
                           ? 'bg-blue-500 text-white border-blue-600'
-                          : 'bg-card border-gray-300 dark:border-gray-600'
+                          : 'bg-card border-border/40 dark:border-border/40'
                       }`}
                     >
                       {align === 'left' ? '←' : align === 'center' ? '↔' : '→'}
@@ -176,7 +176,7 @@ export default function TemplateBlockEditor({ blocks, onBlocksChange, previewDat
                       className={`px-2 py-1 text-xs rounded border transition ${
                         selectedBlock.config.fontWeight === weight
                           ? 'bg-blue-500 text-white border-blue-600'
-                          : 'bg-card border-gray-300 dark:border-gray-600'
+                          : 'bg-card border-border/40 dark:border-border/40'
                       }`}
                     >
                       {weight === 'bold' ? 'Bold' : 'Normal'}
@@ -259,7 +259,7 @@ export default function TemplateBlockEditor({ blocks, onBlocksChange, previewDat
               <div
                 key={block.id}
                 style={style}
-                className="text-foreground dark:text-gray-100 whitespace-pre-wrap break-words"
+                className="text-foreground dark:text-foreground whitespace-pre-wrap break-words"
               >
                 {content}
               </div>

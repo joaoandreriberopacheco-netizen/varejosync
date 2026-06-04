@@ -247,7 +247,7 @@ export default function RecomecarDoZero() {
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5">
                     <div
-                      className="bg-primary dark:bg-white h-1.5 rounded-full transition-all duration-300"
+                      className="bg-primary dark:bg-card h-1.5 rounded-full transition-all duration-300"
                       style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
                     />
                   </div>
@@ -284,7 +284,7 @@ export default function RecomecarDoZero() {
                   </h4>
                   <button
                     onClick={handleSelectAll}
-                    className="text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300 underline underline-offset-2"
+                    className="text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground underline underline-offset-2"
                   >
                     {selectedEntities.length === ENTITIES.length ? 'Desmarcar tudo' : 'Marcar tudo'}
                   </button>
@@ -301,7 +301,7 @@ export default function RecomecarDoZero() {
                           <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{grupo.label}</span>
                           <button
                             onClick={() => handleSelectGroup(grupo.ids)}
-                            className="text-[11px] text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-300 underline underline-offset-2"
+                            className="text-[11px] text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground underline underline-offset-2"
                           >
                             {allSelected ? 'Desmarcar grupo' : 'Marcar grupo'}
                           </button>
@@ -352,7 +352,7 @@ export default function RecomecarDoZero() {
                 </Button>
                 <Button
                   onClick={handleInitiateDelete}
-                  className="bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground rounded-xl"
+                  className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground rounded-xl"
                   disabled={selectedEntities.length === 0 || isProcessing}
                 >
                   {isProcessing ? 'Processando...' : 'Zerar selecionados'}

@@ -38,7 +38,7 @@ function ThumbnailIcon({ anexo, large = false }) {
   const isPdf = anexo.mime_type?.includes('pdf');
   const isImage = anexo.mime_type?.startsWith('image/');
   return (
-    <div className={`${size} flex flex-none items-center justify-center bg-gray-200 dark:bg-muted`}>
+    <div className={`${size} flex flex-none items-center justify-center bg-muted dark:bg-muted`}>
       {isPdf ? (
         <FileText className={`${iconSize} text-muted-foreground dark:text-muted-foreground`} />
       ) : isImage ? (
@@ -67,7 +67,7 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
           href={anexo.url_drive}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-800 hover:text-foreground dark:text-foreground dark:hover:text-foreground"
+          className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
         >
           <span className="truncate">{anexo.nome_arquivo}</span>
           <ExternalLink className="h-3.5 w-3.5 flex-none text-muted-foreground dark:text-muted-foreground" />
@@ -177,7 +177,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
             type="button"
             onClick={handleExportPdf}
             disabled={exportingPdf || anexos.length === 0}
-            className="flex h-9 items-center justify-center gap-2 rounded-full bg-gray-200 px-3 transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-muted dark:hover:bg-muted/80"
+            className="flex h-9 items-center justify-center gap-2 rounded-full bg-muted px-3 transition-colors hover:bg-muted disabled:opacity-50 dark:bg-muted dark:hover:bg-muted/80"
           >
             {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
             <span className="text-xs font-medium text-muted-foreground dark:text-foreground">PDF</span>
@@ -185,17 +185,17 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 transition-colors hover:bg-gray-300 dark:bg-muted dark:hover:bg-muted/80"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted dark:bg-muted dark:hover:bg-muted/80"
           >
             <X className="h-4 w-4 text-muted-foreground dark:text-foreground" />
           </button>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-t-3xl bg-white px-5 py-5 shadow-inner dark:bg-card">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-t-3xl bg-card px-5 py-5 shadow-inner dark:bg-card">
         {anexos.length === 0 ? (
           <div className="flex h-full min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-muted">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted dark:bg-muted">
               <File className="h-7 w-7 text-muted-foreground dark:text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground dark:text-muted-foreground">Nenhum anexo ainda</p>
@@ -216,7 +216,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
               <div key={tipo}>
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">{tipo}</span>
-                  <span className="text-[0.65rem] text-gray-300 dark:text-muted-foreground/50">·</span>
+                  <span className="text-[0.65rem] text-muted-foreground dark:text-muted-foreground/50">·</span>
                   <span className="text-[0.65rem] text-muted-foreground dark:text-muted-foreground">{itens.length}</span>
                 </div>
                 <div className="space-y-2">

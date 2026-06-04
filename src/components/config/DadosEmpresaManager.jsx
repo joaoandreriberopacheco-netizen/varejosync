@@ -10,7 +10,7 @@ const Field = ({ label, value, onChange, placeholder, type = 'text', className =
   <div className={`space-y-1.5 ${className}`}>
     <Label className="text-xs text-muted-foreground font-medium">{label}</Label>
     <Input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="bg-muted/50 border-0 shadow-sm h-9 text-sm dark:text-gray-100" />
+      className="bg-muted/50 border-0 shadow-sm h-9 text-sm dark:text-foreground" />
   </div>
 );
 
@@ -91,7 +91,7 @@ export default function DadosEmpresaManager() {
     setIsSearching(false);
   };
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>;
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-5 mt-4">
@@ -112,7 +112,7 @@ export default function DadosEmpresaManager() {
             </Button>
           </div>
           <Button onClick={handleSave} disabled={isSaving} size="sm"
-            className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
+            className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Salvar
           </Button>
@@ -127,7 +127,7 @@ export default function DadosEmpresaManager() {
             <div className="flex gap-2">
               <Input value={empresa.cnpj || ''} onChange={e => set('cnpj')(e.target.value)}
                 placeholder="00.000.000/0000-00"
-                className="bg-muted/50 border-0 shadow-sm h-9 text-sm dark:text-gray-100" />
+                className="bg-muted/50 border-0 shadow-sm h-9 text-sm dark:text-foreground" />
               <Button size="icon" variant="ghost" onClick={handleConsultarCNPJ} disabled={isSearching}
                 className="h-9 w-9 flex-shrink-0 bg-muted/50 shadow-sm">
                 {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4 text-muted-foreground" />}

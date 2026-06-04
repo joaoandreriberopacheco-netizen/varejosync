@@ -252,7 +252,7 @@ export default function ItinerarioFluvial() {
               <div className="space-y-4">
                 <button
                   onClick={() => setSelectedEvento(null)}
-                  className="text-sm text-muted-foreground font-medium hover:text-foreground/90 dark:hover:text-gray-300"
+                  className="text-sm text-muted-foreground font-medium hover:text-foreground/90 dark:hover:text-muted-foreground"
                 >
                   ← Voltar
                 </button>

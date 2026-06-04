@@ -51,7 +51,7 @@ export default function QuickBudgetCartView({ items, summary, onClose, onShare, 
         >
           <Check className="w-4 h-4 mr-2" /> Concluir
         </Button>
-        <Button onClick={onShare} disabled={isSharing} className="h-12 rounded-2xl bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground shadow-none">
+        <Button onClick={onShare} disabled={isSharing} className="h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
           {isSharing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />} Compartilhar
         </Button>
       </div>

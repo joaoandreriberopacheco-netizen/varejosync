@@ -589,7 +589,7 @@ export default function AnexoCompartilhado() {
 
         {etapa === 'importar_pdf_conta' && arquivo?.file && (
           <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-gray-950"
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-background"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
@@ -599,7 +599,7 @@ export default function AnexoCompartilhado() {
               <button
                 type="button"
                 onClick={() => setEtapa('opcoes')}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
@@ -626,7 +626,7 @@ export default function AnexoCompartilhado() {
 
         {etapa === 'atualizar_boleto' && arquivo?.file && (
           <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-gray-950"
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-background"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
@@ -644,7 +644,7 @@ export default function AnexoCompartilhado() {
 
         {etapa === 'atualizar_boleto_import' && arquivo?.file && contaMesBoletoAlvo && (
           <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-gray-950"
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-background"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
@@ -657,7 +657,7 @@ export default function AnexoCompartilhado() {
                   setContaMesBoletoAlvo(null);
                   setEtapa('atualizar_boleto');
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
@@ -699,7 +699,7 @@ export default function AnexoCompartilhado() {
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -715,7 +715,7 @@ export default function AnexoCompartilhado() {
             <button
               type="button"
               onClick={() => setAjudaTorreAberta((v) => !v)}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-muted-foreground transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
               aria-expanded={ajudaTorreAberta}
               aria-label="Ajuda: tipo de documento"
             >
@@ -788,7 +788,7 @@ export default function AnexoCompartilhado() {
               type="button"
               onClick={() => setEtapa('opcoes')}
               disabled={!String(tipoDocumento || '').trim()}
-              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-2"
+              className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-background text-sm font-semibold text-white disabled:opacity-40 dark:bg-primary dark:text-primary-foreground md:mt-2"
             >
               Continuar para destinos
               <ChevronRight className="h-4 w-4" />
@@ -804,7 +804,7 @@ export default function AnexoCompartilhado() {
                 if (etapa === 'opcoes') setEtapa('torre_controle');
                 else window.history.back();
               }}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -902,7 +902,7 @@ function ArquivoPreview({ arquivo }) {
   if (!arquivo) {
     return (
       <div className={`flex flex-col items-center gap-3 rounded-3xl p-5 shadow-sm md:p-6 ${brandSurface.card}`}>
-        <File className="h-10 w-10 text-gray-300 dark:text-muted-foreground" />
+        <File className="h-10 w-10 text-muted-foreground dark:text-muted-foreground" />
         <p className={`text-sm ${brandSurface.textMuted}`}>Nenhum arquivo detectado</p>
       </div>
     );
@@ -943,7 +943,7 @@ function OpcaoCard({ icon: Icon, titulo, descricao, onClick, disabled }) {
         <p className="text-sm font-semibold text-foreground dark:text-foreground">{titulo}</p>
         <p className={`mt-0.5 text-xs ${brandSurface.textLabel}`}>{descricao}</p>
       </div>
-      <ArrowLeft className="h-4 w-4 shrink-0 rotate-180 text-gray-300 dark:text-muted-foreground" />
+      <ArrowLeft className="h-4 w-4 shrink-0 rotate-180 text-muted-foreground dark:text-muted-foreground" />
     </button>
   );
 }

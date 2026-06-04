@@ -119,7 +119,7 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
                 Motivo *
               </label>
               <textarea
-                className="w-full bg-muted/50 rounded-xl px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
+                className="w-full bg-muted/50 rounded-xl px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700 placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
                 rows={4}
                 placeholder={isAdmin
                   ? 'Ex: Correção de valores negociados com fornecedor...'
@@ -150,7 +150,7 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
                 <button
                   onClick={handleEnviar}
                   disabled={!motivo.trim() || loading}
-                  className="flex-1 h-12 rounded-xl bg-gray-900 dark:bg-muted text-white text-sm font-semibold disabled:opacity-40"
+                  className="flex-1 h-12 rounded-xl bg-background dark:bg-muted text-white text-sm font-semibold disabled:opacity-40"
                 >
                   {loading ? 'Enviando...' : 'Solicitar'}
                 </button>

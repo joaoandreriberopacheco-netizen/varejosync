@@ -43,25 +43,25 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
       icon: <Plus className="w-5 h-5" />,
       label: 'Novo Pedido',
       onClick: () => { onNovopedido(); setIsOpen(false); },
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'Importar NF',
       onClick: () => { onImportarNF(); setIsOpen(false); },
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
       icon: <Download className="w-5 h-5" />,
       label: 'Template Excel',
       onClick: () => { onDownloadTemplate(); setIsOpen(false); },
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
     },
     {
       icon: <FileBarChart2 className="w-5 h-5" />,
       label: 'Relatório PDF',
       onClick: handleGerarRelatorio,
-      color: 'bg-white dark:bg-muted text-foreground/90',
+      color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: gerando,
     },
   ];
@@ -121,7 +121,7 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
         <button
           onClick={() => setIsOpen(prev => !prev)}
           className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
-            isOpen ? 'bg-gray-600 dark:bg-muted/400 rotate-45' : 'bg-gray-900 dark:bg-muted'
+            isOpen ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
           } text-white`}
           style={{ position: 'absolute', left: 3, top: 3 }}
         >

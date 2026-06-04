@@ -57,7 +57,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
     <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent
         className={cn(
-          'z-[100] flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-background sm:w-full',
+          'z-[100] flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-card p-5 shadow-2xl dark:bg-background sm:w-full',
           '[&>button]:hidden'
         )}
       >
@@ -96,8 +96,8 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                 }}
                 className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors ${
                   prazoDias === p.dias && !dataSelecionada
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+                    ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
                 }`}
               >
                 {p.label}
@@ -107,8 +107,8 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               onClick={gerarDataAleatoria}
               className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 dataSelecionada
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
+                  ? 'bg-background dark:bg-card text-white dark:text-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
               }`}
             >
               <Dice5 className="w-4 h-4" />
@@ -137,7 +137,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                   setDataSelecionada(null);
                 }
               }}
-              className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               setValor(formatado);
             }}
             placeholder="Ex: R$ 100,00"
-            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
           />
         </div>
 
@@ -167,7 +167,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             placeholder="Ex: cliente conhece, vai pagar no final do mês..."
             rows={2}
             autoFocus={false}
-            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0 resize-none placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
+            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700 border-0 resize-none placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
           />
         </div>
 
@@ -189,7 +189,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
           </button>
           <button
             onClick={handleConfirmar}
-            className="flex-1 h-11 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
+            className="flex-1 h-11 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
           >
             Confirmar <ChevronRight className="w-4 h-4" />
           </button>

@@ -27,7 +27,7 @@ export default function MovimentosConsumoDialog({ open, onOpenChange, consumos }
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl rounded-[28px] border-0 bg-muted/40 p-0 shadow-2xl dark:bg-background">
-          <div className="flex items-center gap-3 border-b border-border/40 bg-white px-4 py-3 dark:border-border/40 dark:bg-background">
+          <div className="flex items-center gap-3 border-b border-border/40 bg-card px-4 py-3 dark:border-border/40 dark:bg-background">
             <button onClick={() => onOpenChange(false)} className="rounded-2xl p-2 hover:bg-muted">
               <ArrowLeft className="h-5 w-5 text-foreground/90" />
             </button>
@@ -39,7 +39,7 @@ export default function MovimentosConsumoDialog({ open, onOpenChange, consumos }
 
           <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
             {grupos.map((grupo) => (
-              <div key={grupo.destinacao} className="rounded-[26px] bg-white p-4 shadow-sm dark:bg-muted">
+              <div key={grupo.destinacao} className="rounded-[26px] bg-card p-4 shadow-sm dark:bg-muted">
                 <div className="mb-3 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-base font-semibold text-foreground">{grupo.destinacao}</p>
@@ -50,7 +50,7 @@ export default function MovimentosConsumoDialog({ open, onOpenChange, consumos }
 
                 <div className="space-y-2">
                   {grupo.items.map((item) => (
-                    <button key={item.id} onClick={() => setSelecionado(item)} className="flex w-full items-center justify-between rounded-2xl bg-muted/40 px-3 py-3 text-left shadow-sm transition hover:bg-gray-100 dark:bg-background dark:hover:bg-gray-950">
+                    <button key={item.id} onClick={() => setSelecionado(item)} className="flex w-full items-center justify-between rounded-2xl bg-muted/40 px-3 py-3 text-left shadow-sm transition hover:bg-muted dark:bg-muted dark:hover:bg-background">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                           <UserRound className="h-4 w-4 text-muted-foreground" />{item.usuario_solicitante_nome}

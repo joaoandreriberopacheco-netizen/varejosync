@@ -107,7 +107,7 @@ export default function FinanceiroTab() {
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Saldo em Caixa</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {formatCurrency(data.saldoCaixa)}
             </div>
           </div>
@@ -125,7 +125,7 @@ export default function FinanceiroTab() {
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Margem Líquida</div>
-            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
+            <div className="text-xl font-semibold text-foreground dark:text-foreground">
               {data.margemLiquida.toFixed(1)}%
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function FinanceiroTab() {
                       <div className="text-sm font-medium text-foreground truncate">{conta.descricao}</div>
                       <div className="text-xs text-muted-foreground">Venc: {formatDate(conta.data_vencimento)}</div>
                     </div>
-                    <div className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap">
+                    <div className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap">
                       {formatCurrency(conta.valor)}
                     </div>
                   </div>
@@ -176,7 +176,7 @@ export default function FinanceiroTab() {
                       <div className="text-sm font-medium text-foreground truncate">{conta.descricao}</div>
                       <div className="text-xs text-muted-foreground">Venc: {formatDate(conta.data_vencimento)}</div>
                     </div>
-                    <div className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap">
+                    <div className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap">
                       {formatCurrency(conta.valor)}
                     </div>
                   </div>
@@ -200,7 +200,7 @@ export default function FinanceiroTab() {
             <div className="text-xs text-muted-foreground">Saídas Previstas</div>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg text-center">
-            <div className="text-2xl font-bold text-foreground dark:text-gray-100 mb-1">{formatCurrency(data.fluxoProjetado.saldoProjetado)}</div>
+            <div className="text-2xl font-bold text-foreground dark:text-foreground mb-1">{formatCurrency(data.fluxoProjetado.saldoProjetado)}</div>
             <div className="text-xs text-muted-foreground">Saldo Projetado</div>
           </div>
         </div>

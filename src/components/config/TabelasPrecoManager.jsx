@@ -67,7 +67,7 @@ function PoliticasList({ tabela }) {
           Políticas Comerciais
         </div>
         <Button onClick={openNew} size="sm" variant="ghost"
-          className="h-6 px-2 text-[10px] text-muted-foreground hover:text-gray-800 dark:hover:text-gray-200 gap-1">
+          className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground gap-1">
           <PlusCircle className="w-3 h-3" /> Nova Política
         </Button>
       </div>
@@ -96,7 +96,7 @@ function PoliticasList({ tabela }) {
               </div>
               <div className="flex gap-0.5">
                 <Button variant="ghost" size="icon" onClick={() => openEdit(p)}
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200">
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground">
                   <Edit className="h-3 w-3" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(p)}
@@ -112,7 +112,7 @@ function PoliticasList({ tabela }) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Percent className="w-4 h-4 text-muted-foreground" />
               {selected ? 'Editar Política' : 'Nova Política de Desconto'}
             </DialogTitle>
@@ -169,7 +169,7 @@ function PoliticasList({ tabela }) {
           <DialogFooter className="gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
             <Button size="sm" onClick={handleSave}
-              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>
@@ -272,7 +272,7 @@ export default function TabelasPrecoManager() {
         <Button
           onClick={() => { resetForm(); setIsDialogOpen(true); }}
           size="sm"
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
         >
           <PlusCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Nova Tabela</span>
@@ -282,7 +282,7 @@ export default function TabelasPrecoManager() {
       {/* Lista */}
       {tabelas.length === 0 ? (
         <div className="text-center py-12 rounded-xl bg-muted/50/50">
-          <Tag className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <Tag className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-foreground/90" />
           <p className="text-sm text-muted-foreground mb-4">Nenhuma tabela cadastrada</p>
           <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} size="sm" className="bg-primary text-white gap-1.5">
             <PlusCircle className="w-3.5 h-3.5" /> Criar Primeira Tabela
@@ -313,7 +313,7 @@ export default function TabelasPrecoManager() {
                     className={`flex-shrink-0 transition-colors ${
                       tabela.is_default
                         ? 'text-yellow-400 cursor-default'
-                        : 'text-gray-200 dark:text-muted-foreground hover:text-yellow-400'
+                        : 'text-muted-foreground dark:text-muted-foreground hover:text-yellow-400'
                     }`}
                   >
                     <Star className={`w-4 h-4 ${tabela.is_default ? 'fill-yellow-400' : ''}`} />
@@ -322,7 +322,7 @@ export default function TabelasPrecoManager() {
                   {/* Nome + badges */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-sm font-medium truncate ${tabela.is_default ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}>
+                      <span className={`text-sm font-medium truncate ${tabela.is_default ? 'text-white' : 'text-foreground'}`}>
                         {tabela.nome_tabela}
                       </span>
                       {tabela.is_default && (
@@ -332,7 +332,7 @@ export default function TabelasPrecoManager() {
                         <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">inativa</span>
                       )}
                     </div>
-                    <div className={`text-xs mt-0.5 flex gap-3 flex-wrap ${tabela.is_default ? 'text-gray-300' : 'text-muted-foreground'}`}>
+                    <div className={`text-xs mt-0.5 flex gap-3 flex-wrap ${tabela.is_default ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                       <span>
                         Fator {tabela.fator_ajuste?.toFixed(2)} —{' '}
                         <span className={pctNum > 0 ? 'text-green-400' : pctNum < 0 ? 'text-red-400' : ''}>
@@ -350,14 +350,14 @@ export default function TabelasPrecoManager() {
                     <Button
                       variant="ghost" size="icon"
                       onClick={() => handleEdit(tabela)}
-                      className={`h-7 w-7 ${tabela.is_default ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200'}`}
+                      className={`h-7 w-7 ${tabela.is_default ? 'text-muted-foreground hover:text-white hover:bg-card/10' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground'}`}
                     >
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost" size="icon"
                       onClick={() => handleDelete(tabela.id)}
-                      className={`h-7 w-7 ${tabela.is_default ? 'text-gray-300 hover:text-red-300 hover:bg-white/10' : 'text-muted-foreground hover:text-red-500'}`}
+                      className={`h-7 w-7 ${tabela.is_default ? 'text-muted-foreground hover:text-red-300 hover:bg-card/10' : 'text-muted-foreground hover:text-red-500'}`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -365,7 +365,7 @@ export default function TabelasPrecoManager() {
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : tabela.id)}
                       className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
-                        tabela.is_default ? 'text-gray-300 hover:text-white hover:bg-white/10' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200'
+                        tabela.is_default ? 'text-muted-foreground hover:text-white hover:bg-card/10' : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground'
                       }`}
                       title="Políticas de Desconto"
                     >
@@ -400,7 +400,7 @@ export default function TabelasPrecoManager() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Tag className="w-4 h-4 text-muted-foreground" />
               {tabelaSelecionada ? 'Editar Tabela' : 'Nova Tabela de Preço'}
             </DialogTitle>
@@ -468,7 +468,7 @@ export default function TabelasPrecoManager() {
             <Button
               size="sm"
               onClick={handleSave}
-              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs"
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs"
             >
               Salvar
             </Button>

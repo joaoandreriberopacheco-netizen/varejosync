@@ -68,7 +68,7 @@ export default function TagsInput({ tags, onChange }) {
       {/* Tags selecionadas + input */}
       <div className="flex flex-wrap gap-1.5 min-h-[32px]">
         {tags.map(t => (
-          <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary dark:bg-gray-200 text-xs text-white dark:text-foreground">
+          <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary dark:bg-muted text-xs text-white dark:text-foreground">
             {t}
             <button onClick={() => removeTag(t)} className="ml-0.5 hover:opacity-70">
               <X className="w-2.5 h-2.5" />
@@ -93,7 +93,7 @@ export default function TagsInput({ tags, onChange }) {
             <button
               key={t}
               onMouseDown={(e) => { e.preventDefault(); addTag(t); }}
-              className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
             >
               + {t}
             </button>
@@ -110,7 +110,7 @@ export default function TagsInput({ tags, onChange }) {
               <button
                 key={t}
                 onClick={() => addTag(t)}
-                className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-colors"
               >
                 {t}
               </button>

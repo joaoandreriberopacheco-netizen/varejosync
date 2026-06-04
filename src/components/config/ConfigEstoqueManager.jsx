@@ -95,7 +95,7 @@ export default function ConfigEstoqueManager() {
 
       <div className="flex justify-end pt-2">
         <Button onClick={handleSave} disabled={isSaving}
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-2 h-9 text-sm">
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-2 h-9 text-sm">
           <Save className="w-4 h-4" />
           {isSaving ? 'Salvando...' : 'Salvar'}
         </Button>

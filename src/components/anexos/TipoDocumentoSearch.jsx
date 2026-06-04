@@ -82,7 +82,7 @@ export default function TipoDocumentoSearch({
           <button
             type="button"
             onClick={unlockAndFocus}
-            className="flex h-12 w-full items-center rounded-2xl border-0 bg-gray-100 pl-11 pr-4 text-left text-sm shadow-sm dark:bg-muted/60 dark:border dark:border-border"
+            className="flex h-12 w-full items-center rounded-2xl border-0 bg-muted pl-11 pr-4 text-left text-sm shadow-sm dark:bg-muted/60 dark:border dark:border-border"
           >
             <span className="text-muted-foreground dark:text-muted-foreground">Buscar tipo de documento (A-Z)</span>
           </button>
@@ -100,7 +100,7 @@ export default function TipoDocumentoSearch({
               blurTimer.current = setTimeout(() => setSearchFocused(false), 220);
             }}
             placeholder="Buscar tipo de documento (A-Z)"
-            className="h-12 rounded-2xl border-0 bg-gray-100 pl-11 shadow-sm dark:bg-muted/60 dark:border dark:border-border"
+            className="h-12 rounded-2xl border-0 bg-muted pl-11 shadow-sm dark:bg-muted/60 dark:border dark:border-border"
             autoComplete="off"
           />
         )}
@@ -118,7 +118,7 @@ export default function TipoDocumentoSearch({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={aplicarTipoPersonalizado}
-          className={`flex w-full items-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-white text-left text-sm text-foreground/90 shadow-sm transition-colors dark:border-border dark:bg-card dark:text-foreground ${rowPad}`}
+          className={`flex w-full items-center gap-3 rounded-2xl border border-dashed border-border/40 bg-card text-left text-sm text-foreground/90 shadow-sm transition-colors dark:border-border dark:bg-card dark:text-foreground ${rowPad}`}
         >
           <Plus className="h-4 w-4 flex-none text-lime-600 dark:text-lime-400" />
           <span>
@@ -145,7 +145,7 @@ export default function TipoDocumentoSearch({
                 className={`flex w-full items-center justify-between rounded-2xl text-left text-sm shadow-sm transition-colors ${rowPad} ${
                   selected
                     ? 'bg-primary/12 text-foreground ring-2 ring-primary/35 dark:bg-muted dark:text-foreground dark:ring-primary/45'
-                    : 'bg-gray-100 text-foreground/90 dark:border dark:border-border dark:bg-card dark:text-foreground'
+                    : 'bg-muted text-foreground/90 dark:border dark:border-border dark:bg-card dark:text-foreground'
                 }`}
               >
                 <span className="font-medium">{tipo}</span>
@@ -155,7 +155,7 @@ export default function TipoDocumentoSearch({
           })}
 
           {filtered.length === 0 && !showAdicionar && (
-            <div className="rounded-2xl bg-gray-100 px-4 py-4 text-sm text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground">
+            <div className="rounded-2xl bg-muted px-4 py-4 text-sm text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground">
               Nenhum tipo encontrado. Digite acima para sugerir um novo tipo.
             </div>
           )}

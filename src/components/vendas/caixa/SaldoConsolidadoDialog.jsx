@@ -48,7 +48,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 .font-semibold { font-weight: 600; }
                 .font-medium { font-weight: 500; }
                 .text-muted-foreground, .text-muted-foreground { color: #9ca3af; }
-                .text-foreground/90, .text-gray-800 { color: #374151; }
+                .text-foreground/90, .text-foreground { color: #374151; }
                 .text-foreground { color: #111827; }
                 .text-emerald-600 { color: #059669; }
                 .text-blue-600 { color: #2563eb; }
@@ -79,7 +79,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                   {turnoAtivo?.numero} · abertura {turnoAtivo?.data_abertura ? format(new Date(turnoAtivo.data_abertura), 'dd/MM HH:mm') : '-'}
                 </p>
               </div>
-              <div className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
+              <div className="px-5 py-3 flex justify-between items-center border-b border-border/30 dark:border-border/40/50">
                 <div>
                   <div className="text-sm text-foreground/90">Fundo de caixa (dinheiro)</div>
                   <div className="text-xs text-muted-foreground">Abertura do turno</div>
@@ -90,7 +90,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 const pagamentos = (v.pagamentos || []);
                 const temMultiplos = pagamentos.length > 1;
                 return (
-                  <div key={v.id} className="border-b border-gray-50 dark:border-border/40/50">
+                  <div key={v.id} className="border-b border-border/30 dark:border-border/40/50">
                     <div className="px-5 py-2.5 flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-foreground/90">{v.numero} · {v.cliente_nome}</div>
@@ -108,7 +108,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 );
               })}
               {(movimentos || []).filter(m => m.tipo === 'Reforço').map((m) => (
-                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
+                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-border/30 dark:border-border/40/50">
                   <div>
                     <div className="text-sm text-foreground/90">Reforço · {m.numero}</div>
                     <div className="text-xs text-muted-foreground">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
@@ -117,7 +117,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 </div>
               ))}
               {(movimentos || []).filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((m) => (
-                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
+                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-border/30 dark:border-border/40/50">
                   <div>
                     <div className="text-sm text-foreground/90">Recolhimento · {m.numero}</div>
                     <div className="text-xs text-muted-foreground">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
@@ -126,7 +126,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 </div>
               ))}
               {(caixaData.despesasLista || []).map((d) => (
-                <div key={d.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
+                <div key={d.id} className="px-5 py-3 flex justify-between items-center border-b border-border/30 dark:border-border/40/50">
                   <div>
                     <div className="text-sm text-foreground/90">Despesa · {d.descricao}</div>
                     <div className="text-xs text-muted-foreground">{d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''} · {d.categoria}</div>
@@ -146,7 +146,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
               </div>
             </div>
 
-            <div className="bg-card rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none print:border print:border-gray-300">
+            <div className="bg-card rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none print:border print:border-border/40">
               <div className="px-5 py-3 border-b border-border/40">
                 <h3 className="text-sm font-semibold text-foreground/90">O que esperar no caixa</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Baseado nas vendas do turno</p>
@@ -157,7 +157,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 { label: 'Cartão Débito', sub: 'maquininha — D+1', valor: caixaData.recebimentos.debito || 0 },
                 { label: 'Cartão Crédito', sub: 'maquininha — D+30', valor: caixaData.recebimentos.credito || 0 },
               ].map(({ label, sub, valor }) => (
-                <div key={label} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50 last:border-0">
+                <div key={label} className="px-5 py-3 flex justify-between items-center border-b border-border/30 dark:border-border/40/50 last:border-0">
                   <div>
                     <div className="text-sm text-foreground/90">{label}</div>
                     <div className="text-xs text-muted-foreground">{sub}</div>

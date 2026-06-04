@@ -354,7 +354,7 @@ export default function PainelConferencias() {
                 <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold block">
                   FOTO
                 </label>
-                <div className="relative bg-gray-900 rounded-xl overflow-hidden aspect-video">
+                <div className="relative bg-background rounded-xl overflow-hidden aspect-video">
                   <video
                     ref={videoRef}
                     autoPlay
@@ -373,7 +373,7 @@ export default function PainelConferencias() {
                   </Button>
                   <Button
                     onClick={tirarFoto}
-                    className="flex-1 bg-gray-900 hover:bg-primary"
+                    className="flex-1 bg-background hover:bg-primary"
                   >
                     CAPTURAR
                   </Button>
@@ -384,7 +384,7 @@ export default function PainelConferencias() {
                 <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold block">
                   FOTO CAPTURADA
                 </label>
-                <div className="relative bg-gray-100 dark:bg-background rounded-xl overflow-hidden aspect-video">
+                <div className="relative bg-muted dark:bg-muted rounded-xl overflow-hidden aspect-video">
                   <img src={foto} alt="Responsável" className="w-full h-full object-cover" />
                 </div>
                 <Button

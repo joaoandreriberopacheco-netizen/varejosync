@@ -275,7 +275,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                 <Wallet className="w-6 h-6 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-semibold text-foreground dark:text-gray-100 font-glacial">
+                <DialogTitle className="text-xl font-semibold text-foreground dark:text-foreground font-glacial">
                   Balanço do Caixa
                 </DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -297,7 +297,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                   <CardContent className="p-6">
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-2">Saldo Atual</p>
-                      <p className="text-4xl font-bold text-foreground dark:text-gray-100 font-glacial">
+                      <p className="text-4xl font-bold text-foreground dark:text-foreground font-glacial">
                         {formatValor(saldoAtual)}
                       </p>
                     </div>
@@ -314,7 +314,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                       Recebimentos do Turno
                     </h3>
                     <Card className="shadow-sm border-0 bg-card overflow-hidden">
-                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      <div className="divide-y divide-border/40 dark:divide-border/40">
                         {Object.entries(composicaoSaldo).map(([forma, valor]) => {
                           const Icon = getIconeFormaPagamento(forma);
                           return (
@@ -324,12 +324,12 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                                   {Icon}
                                 </div>
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium text-foreground dark:text-gray-100">
+                                  <p className="text-sm font-medium text-foreground dark:text-foreground">
                                     {forma}
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-base font-semibold text-foreground dark:text-gray-100">
+                                  <p className="text-base font-semibold text-foreground dark:text-foreground">
                                     {formatValor(valor)}
                                   </p>
                                 </div>
@@ -345,7 +345,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                               <ShoppingBag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-sm font-semibold text-foreground dark:text-gray-100">
+                              <p className="text-sm font-semibold text-foreground dark:text-foreground">
                                 Total Vendas
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -370,7 +370,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                       Movimentações do Turno
                     </h3>
                     <Card className="shadow-sm border-0 bg-card overflow-hidden">
-                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      <div className="divide-y divide-border/40 dark:divide-border/40">
                         {extratoTurno.map((item, idx) => {
                           const Icon = item.icone;
                           return (
@@ -381,12 +381,12 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-sm font-medium text-foreground dark:text-gray-100">
+                                    <span className="text-sm font-medium text-foreground dark:text-foreground">
                                       {item.tipo}
                                     </span>
                                     {item.horario && (
                                       <>
-                                        <span className="text-gray-300">•</span>
+                                        <span className="text-muted-foreground">•</span>
                                         <span className="text-xs text-muted-foreground">
                                           {formatHora(item.horario)}
                                         </span>
@@ -398,7 +398,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-foreground dark:text-gray-100'}`}>
+                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-foreground dark:text-foreground'}`}>
                                     {item.sinal && item.sinal} {formatValor(item.valor)}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-1">

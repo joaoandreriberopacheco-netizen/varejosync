@@ -145,8 +145,8 @@ export default function ReversaoDespesasSangrias() {
             onClick={() => setAbaSelecionada('despesas')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               abaSelecionada === 'despesas'
-                ? 'border-gray-900 dark:border-white text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-gray-300'
+                ? 'border-border/40 dark:border-white text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground'
             }`}>
             Despesas ({despesasProblematicas.length})
           </button>
@@ -154,8 +154,8 @@ export default function ReversaoDespesasSangrias() {
             onClick={() => setAbaSelecionada('movimentos')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               abaSelecionada === 'movimentos'
-                ? 'border-gray-900 dark:border-white text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-gray-300'
+                ? 'border-border/40 dark:border-white text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground'
             }`}>
             Movimentos ({movimentos.length})
           </button>

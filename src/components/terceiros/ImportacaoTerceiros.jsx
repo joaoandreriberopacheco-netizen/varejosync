@@ -39,7 +39,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
       toast({
         title: "Template baixado",
         description: "Use este arquivo como base para importação",
-        className: "bg-gray-100 text-gray-800"
+        className: "bg-muted text-foreground"
       });
     } catch (error) {
       toast({ title: "Erro ao gerar template", description: error.message, variant: "destructive" });
@@ -335,12 +335,12 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
               <div key={s} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                   step >= s 
-                    ? 'bg-primary dark:bg-white text-white dark:text-foreground shadow-md' 
+                    ? 'bg-primary dark:bg-card text-white dark:text-foreground shadow-md' 
                     : 'bg-muted text-muted-foreground'
                 }`}>
                   {step > s ? <CheckCircle className="w-5 h-5" /> : <span className="text-sm font-medium">{s}</span>}
                 </div>
-                {s < 3 && <div className={`w-16 h-0.5 ${step > s ? 'bg-primary dark:bg-white' : 'bg-muted'}`} />}
+                {s < 3 && <div className={`w-16 h-0.5 ${step > s ? 'bg-primary dark:bg-card' : 'bg-muted'}`} />}
               </div>
             ))}
           </div>
@@ -350,7 +350,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
             <div className="space-y-6">
               <div className="bg-muted/50 rounded-xl p-6">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-card dark:bg-muted flex items-center justify-center flex-shrink-0">
                     <Download className="w-6 h-6 text-muted-foreground" />
                   </div>
                   <div className="flex-1">
@@ -370,7 +370,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
 
               <div className="bg-muted/50 rounded-xl p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-card dark:bg-muted flex items-center justify-center flex-shrink-0">
                     <Upload className="w-6 h-6 text-muted-foreground" />
                   </div>
                   <div className="flex-1">
@@ -399,7 +399,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                         Selecionar Arquivo
                       </Button>
                     ) : (
-                      <div className="flex items-center gap-3 p-4 bg-white dark:bg-muted rounded-xl">
+                      <div className="flex items-center gap-3 p-4 bg-card dark:bg-muted rounded-xl">
                         <FileText className="w-5 h-5 text-muted-foreground" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-foreground">{file.name}</p>
@@ -439,7 +439,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                         </div>
                         <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                           <div
-                            className="bg-primary dark:bg-white h-full transition-all duration-500 rounded-full"
+                            className="bg-primary dark:bg-card h-full transition-all duration-500 rounded-full"
                             style={{ width: `${validationProgress.progress}%` }}
                           />
                         </div>
@@ -465,7 +465,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white dark:bg-muted rounded-xl p-4">
+                      <div className="bg-card dark:bg-muted rounded-xl p-4">
                         <p className="text-xs text-muted-foreground mb-1">Total de Linhas</p>
                         <p className="text-2xl font-semibold text-foreground">
                           {validationResult.totalLinhas}
@@ -548,7 +548,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                   Por favor, aguarde. Não feche esta página.
                 </p>
 
-                <div className="bg-white dark:bg-muted rounded-xl p-6">
+                <div className="bg-card dark:bg-muted rounded-xl p-6">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-sm font-medium text-foreground/90">
                       Progresso
@@ -557,9 +557,9 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                       {importProgress.current} / {importProgress.total}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
+                  <div className="w-full bg-muted dark:bg-muted rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-primary dark:bg-white h-full transition-all duration-300 rounded-full"
+                      className="bg-primary dark:bg-card h-full transition-all duration-300 rounded-full"
                       style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
                     />
                   </div>

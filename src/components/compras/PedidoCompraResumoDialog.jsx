@@ -53,7 +53,7 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
                 {pedido.fornecedor_nome || 'Fornecedor não informado'}
               </p>
             </div>
-            <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm">
+            <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm">
               {pedido.status || '—'}
             </Badge>
           </div>
@@ -65,25 +65,25 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
               <div className="rounded-2xl bg-muted/50/70 p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-2">
                   <Truck className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Cabeçalho</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Cabeçalho</h3>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Fornecedor</span><span className="text-right text-foreground dark:text-gray-100">{pedido.fornecedor_nome || '—'}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Emissão</span><span className="text-right text-foreground dark:text-gray-100">{formatDate(pedido.data_emissao || pedido.created_date)}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Prazo de entrega</span><span className="text-right text-foreground dark:text-gray-100">{formatDate(pedido.data_prevista_entrega)}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Forma de pagamento</span><span className="text-right text-foreground dark:text-gray-100">{formaPagamento}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Fornecedor</span><span className="text-right text-foreground dark:text-foreground">{pedido.fornecedor_nome || '—'}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Emissão</span><span className="text-right text-foreground dark:text-foreground">{formatDate(pedido.data_emissao || pedido.created_date)}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Prazo de entrega</span><span className="text-right text-foreground dark:text-foreground">{formatDate(pedido.data_prevista_entrega)}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Forma de pagamento</span><span className="text-right text-foreground dark:text-foreground">{formaPagamento}</span></div>
                 </div>
               </div>
 
               <div className="rounded-2xl bg-muted/50/70 p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-2">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Log</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Log</h3>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Criado por</span><span className="text-right text-foreground dark:text-gray-100 break-all">{criadoPorNome}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Criado em</span><span className="text-right text-foreground dark:text-gray-100">{formatDate(pedido.created_date)}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Atualizado em</span><span className="text-right text-foreground dark:text-gray-100">{formatDate(pedido.updated_date)}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Criado por</span><span className="text-right text-foreground dark:text-foreground break-all">{criadoPorNome}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Criado em</span><span className="text-right text-foreground dark:text-foreground">{formatDate(pedido.created_date)}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Atualizado em</span><span className="text-right text-foreground dark:text-foreground">{formatDate(pedido.updated_date)}</span></div>
                 </div>
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
             <div className="rounded-2xl bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Package className="w-4 h-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Itens</h3>
+                <h3 className="text-sm font-semibold text-foreground">Itens</h3>
               </div>
               <div className="space-y-2">
                 {itens.length === 0 ? (
@@ -103,12 +103,12 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
                     <div key={`${item.produto_id || item.produto_nome || 'item'}-${index}`} className="rounded-2xl bg-background/60 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground dark:text-gray-100">{item.produto_nome || 'Item'}</p>
+                          <p className="text-sm font-medium text-foreground dark:text-foreground">{item.produto_nome || 'Item'}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {formatNumber(item.quantidade)} {item.unidade_medida || 'UN'} × {formatCurrency(item.custo_unitario || 0)}
                           </p>
                         </div>
-                        <p className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap">{formatCurrency(item.total || 0)}</p>
+                        <p className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap">{formatCurrency(item.total || 0)}</p>
                       </div>
                     </div>
                   );})
@@ -120,14 +120,14 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
               <div className="rounded-2xl bg-card p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Totais</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Totais</h3>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground dark:text-gray-100">{formatCurrency(subtotal)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground dark:text-foreground">{formatCurrency(subtotal)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Descontos</span><span className="text-red-600 dark:text-red-400">{formatCurrency(desconto)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Acréscimos</span><span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(acrescimo)}</span></div>
                   <div className="pt-2 mt-2 border-t border-border/40 flex justify-between">
-                    <span className="font-semibold text-gray-800 dark:text-gray-100">Total</span>
+                    <span className="font-semibold text-foreground">Total</span>
                     <span className="font-bold text-lg text-foreground font-glacial">{formatCurrency(total)}</span>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
               <div className="rounded-2xl bg-card p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Observações</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Observações</h3>
                 </div>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
                   {pedido.observacoes || 'Sem observações.'}

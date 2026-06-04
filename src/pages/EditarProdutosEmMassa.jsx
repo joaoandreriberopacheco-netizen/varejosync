@@ -345,16 +345,16 @@ export default function EditarProdutosEmMassa() {
 
       <Tabs defaultValue="produtos" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted p-1 rounded-lg gap-1">
-          <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+          <TabsTrigger value="produtos" className="data-[state=active]:bg-card">
             Detalhes do Produto
           </TabsTrigger>
-          <TabsTrigger value="embalagens" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+          <TabsTrigger value="embalagens" className="data-[state=active]:bg-card">
             Embalagens
           </TabsTrigger>
-          <TabsTrigger value="estoque" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+          <TabsTrigger value="estoque" className="data-[state=active]:bg-card">
             Estoque em Massa
           </TabsTrigger>
-          <TabsTrigger value="desfazer" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+          <TabsTrigger value="desfazer" className="data-[state=active]:bg-card">
             Desfazer
           </TabsTrigger>
         </TabsList>
@@ -383,7 +383,7 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmar}
                 disabled={!podeConfirmar || salvando}
-                className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+                className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium"
               >
                 {salvando ? 'Sincronizando...' : `Confirmar Sincronização (${parsedData.alterados?.length ?? 0} registros)`}
               </Button>
@@ -413,7 +413,7 @@ export default function EditarProdutosEmMassa() {
               {processandoBackfillLegado ? 'Analisando e aplicando…' : 'Analisar e aplicar correção nos elegíveis'}
             </Button>
             {resumoBackfillLegado && (
-              <div className="mt-4 rounded-lg bg-white/70 dark:bg-background/30 border border-amber-100 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
+              <div className="mt-4 rounded-lg bg-card/70 dark:bg-background/30 border border-amber-100 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
                 <p>Total analisado: {resumoBackfillLegado.total}</p>
                 <p>Podem ser corrigidos: {resumoBackfillLegado.candidatos}</p>
                 <p>Conflitos (revisão manual): {resumoBackfillLegado.conflitos}</p>
@@ -450,7 +450,7 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmarEmbalagens}
                 disabled={!podeConfirmarEmbalagens || salvando}
-                className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+                className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium"
               >
                 {salvando
                   ? 'Gravando embalagens…'
@@ -524,7 +524,7 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmarEstoque}
                 disabled={!podeConfirmarEstoque || salvando}
-                className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+                className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium"
               >
                 {salvando ? 'Atualizando estoque...' : `Confirmar Atualização (${parsedEstoque.alterados?.length ?? 0} produtos)`}
               </Button>
@@ -561,7 +561,7 @@ export default function EditarProdutosEmMassa() {
           function StepLabel({ number, label }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-xs font-bold flex items-center justify-center">
+      <span className="w-6 h-6 rounded-full bg-background dark:bg-card text-white dark:text-foreground text-xs font-bold flex items-center justify-center">
         {number}
       </span>
       <span className="font-semibold text-foreground text-sm font-glacial">{label}</span>

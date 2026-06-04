@@ -45,7 +45,7 @@ export default function AuditoriaEstoque() {
   return (
     <div className="min-h-screen bg-card w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-background/80 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-card/80 dark:bg-background/80 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold font-glacial text-foreground">Auditoria de Estoque</h1>
           <p className="text-xs text-muted-foreground">{conferencias.length} conferência{conferencias.length !== 1 ? "s" : ""}</p>
@@ -88,10 +88,10 @@ export default function AuditoriaEstoque() {
             {conferencias.length === 0 && (
               <div className="text-center py-20">
                 <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                  <ClipboardList className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
+                  <ClipboardList className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
                 </div>
                 <p className="text-muted-foreground text-sm">Nenhuma conferência encontrada</p>
-                <p className="text-gray-300 dark:text-muted-foreground text-xs mt-1">Crie uma nova para começar</p>
+                <p className="text-muted-foreground dark:text-muted-foreground text-xs mt-1">Crie uma nova para começar</p>
               </div>
             )}
           </>

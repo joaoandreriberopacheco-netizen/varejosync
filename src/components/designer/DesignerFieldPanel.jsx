@@ -36,7 +36,7 @@ export default function DesignerFieldPanel({ campos }) {
     <div className="w-48 flex-shrink-0 bg-card border-r border-border/40 flex flex-col overflow-hidden">
       <div className="p-2 border-b border-border/40">
         <input autoComplete="off"
-          className="w-full text-xs border border-border/40 rounded px-2 py-1 bg-card text-foreground/90 placeholder-gray-400"
+          className="w-full text-xs border border-border/40 rounded px-2 py-1 bg-card text-foreground/90 placeholder:text-muted-foreground"
           placeholder="Buscar campo..."
           value={busca}
           onChange={e => setBusca(e.target.value)}
@@ -53,7 +53,7 @@ export default function DesignerFieldPanel({ campos }) {
                 key={campo.id}
                 draggable
                 onDragStart={e => handleDragStart(e, campo)}
-                className={`mx-1 mb-0.5 px-2 py-1 rounded text-[11px] cursor-grab active:cursor-grabbing select-none border border-transparent hover:border-border/40 dark:hover:border-gray-700 transition-colors ${SECAO_CORES[campo.secao] || SECAO_CORES.qualquer}`}
+                className={`mx-1 mb-0.5 px-2 py-1 rounded text-[11px] cursor-grab active:cursor-grabbing select-none border border-transparent hover:border-border/40 dark:hover:border-border/40 transition-colors ${SECAO_CORES[campo.secao] || SECAO_CORES.qualquer}`}
                 title={`Arraste para a seção: ${SECAO_LABEL[campo.secao] || campo.secao}`}
               >
                 {campo.label}

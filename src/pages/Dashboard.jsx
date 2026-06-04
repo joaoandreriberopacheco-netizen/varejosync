@@ -37,7 +37,7 @@ export default function DashboardPage() {
       {/* Header com logo alinhada à direita */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Dashboard</h1>
+          <h1 className="text-lg font-semibold text-foreground font-glacial">Dashboard</h1>
           <p className="text-xs text-muted-foreground">Visão geral do negócio</p>
         </div>
         <div className="hidden md:block">

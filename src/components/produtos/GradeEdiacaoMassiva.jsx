@@ -282,7 +282,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                         onClick={() => handleToggleBoolean(linha.id, col.key)}
                       >
                         <div className={`inline-flex items-center justify-center w-6 h-6 rounded cursor-pointer transition-colors ${
-                          valor ? 'bg-primary dark:bg-gray-200' : 'bg-muted border border-gray-300 dark:border-gray-600'
+                          valor ? 'bg-primary dark:bg-muted' : 'bg-muted border border-border/40 dark:border-border/40'
                         }`}>
                           {valor && <span className="text-white dark:text-foreground text-xs font-bold">✓</span>}
                         </div>
@@ -305,7 +305,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                               onClick={() => handleSetDecimais(linha.id, col.key, n)}
                               className={`w-7 h-6 text-xs rounded transition-colors ${
                                 (valor ?? 0) === n
-                                  ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground font-bold'
+                                  ? 'bg-primary dark:bg-muted text-white dark:text-foreground font-bold'
                                   : 'text-muted-foreground hover:bg-muted'
                               }`}
                             >
@@ -359,7 +359,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                           }}
                           onBlur={() => setCelulaEmEdicao(null)}
                           autoFocus
-                          className="w-full px-2 py-1 text-xs bg-white dark:bg-muted border border-blue-500 text-foreground rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1 text-xs bg-card dark:bg-muted border border-blue-500 text-foreground rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       ) : (
                         <input autoComplete="off"
@@ -401,7 +401,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
             Alterado
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary dark:bg-gray-200">
+            <div className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary dark:bg-muted">
               <span className="text-white dark:text-foreground text-[10px] font-bold">✓</span>
             </div>
             Preço Livre

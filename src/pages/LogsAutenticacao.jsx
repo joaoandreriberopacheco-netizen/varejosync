@@ -200,7 +200,7 @@ export default function LogsAutenticacaoPage() {
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="text-center py-16">
-            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-muted-foreground" />
+            <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground dark:text-muted-foreground" />
             <h3 className="text-lg font-medium text-foreground mb-2">Nenhum log encontrado</h3>
             <p className="text-sm text-muted-foreground">
               {searchTerm || filterInterveniente || filterDataInicio ? 'Tente ajustar os filtros' : 'Não há operações registradas'}
@@ -222,7 +222,7 @@ export default function LogsAutenticacaoPage() {
               {filteredLogs.map((log) => (
                 <TableRow 
                   key={log.id} 
-                  className="border-0 hover:bg-muted/40 dark:hover:bg-gray-900/50"
+                  className="border-0 hover:bg-muted/40 dark:hover:bg-muted/50"
                 >
                   <TableCell className="text-muted-foreground">
                     <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export default function LogsAutenticacaoPage() {
           </DialogHeader>
           {selectedLog && (
             <div className="space-y-4">
-              <div className="bg-gray-100 dark:bg-background rounded-lg p-4">
+              <div className="bg-muted dark:bg-muted rounded-lg p-4">
                 <img 
                   src={selectedLog.evidencia_url} 
                   alt="Evidência"

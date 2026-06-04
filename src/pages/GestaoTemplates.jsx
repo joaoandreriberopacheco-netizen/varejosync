@@ -23,7 +23,7 @@ function TemplateCard({ template, onEdit, onDelete, onSetDefault, onDuplicate })
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">{template.nome}</span>
+            <span className="font-semibold text-foreground text-sm truncate">{template.nome}</span>
             {template.is_default && (
               <Badge className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1.5 py-0">Padrão</Badge>
             )}
@@ -86,7 +86,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
   return (
     <div className="flex flex-col h-full gap-3">
       <div className="flex items-center justify-between gap-2 flex-shrink-0">
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+        <h2 className="text-sm font-semibold text-foreground">
           {template?.id ? 'Editar Template' : 'Novo Template'}
         </h2>
         <div className="flex gap-2">
@@ -125,7 +125,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
       <div className="flex-shrink-0">
         <button
           onClick={() => setShowRef(!showRef)}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground"
         >
           <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showRef ? 'rotate-180' : ''}`} />
           {showRef ? 'Ocultar' : 'Ver'} dicionário de tags disponíveis
@@ -136,7 +136,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
       <textarea
         value={htmlTemplate}
         onChange={e => setHtmlTemplate(e.target.value)}
-        className="flex-1 w-full min-h-[400px] font-mono text-xs border border-border/40 rounded-xl p-3 bg-muted/40 dark:bg-gray-950 text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
+        className="flex-1 w-full min-h-[400px] font-mono text-xs border border-border/40 rounded-xl p-3 bg-muted/40 dark:bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
         placeholder="Cole aqui o HTML do template..."
         spellCheck={false}
       />
@@ -147,7 +147,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
 function TagReference({ tipo }) {
   const tags = getTagsForTipo(tipo);
   return (
-    <div className="mt-2 bg-muted/40 dark:bg-gray-950 rounded-xl p-3 text-xs space-y-3 border border-border/40">
+    <div className="mt-2 bg-muted/40 dark:bg-background rounded-xl p-3 text-xs space-y-3 border border-border/40">
       {tags.map(grupo => (
         <div key={grupo.grupo}>
           <div className="font-semibold text-muted-foreground mb-1">{grupo.grupo}</div>
@@ -345,13 +345,13 @@ export default function GestaoTemplates() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Templates de Impressão</h1>
+          <h1 className="text-lg font-semibold text-foreground font-glacial">Templates de Impressão</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Edite o HTML dos documentos imprimíveis sem tocar no código do sistema</p>
         </div>
         <Button
           size="sm"
           onClick={() => setEditando('novo')}
-          className="h-9 text-xs gap-1.5 rounded-xl bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:text-foreground"
+          className="h-9 text-xs gap-1.5 rounded-xl bg-background hover:bg-primary dark:bg-muted dark:text-foreground"
         >
           <Plus className="w-3.5 h-3.5" /> Novo Template
         </Button>
@@ -361,7 +361,7 @@ export default function GestaoTemplates() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFiltroTipo('')}
-          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!filtroTipo ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!filtroTipo ? 'bg-background text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
         >
           Todos ({templates.length})
         </button>
@@ -372,7 +372,7 @@ export default function GestaoTemplates() {
             <button
               key={t.value}
               onClick={() => setFiltroTipo(t.value)}
-              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filtroTipo === t.value ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
+              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filtroTipo === t.value ? 'bg-background text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
             >
               {t.label} ({count})
             </button>

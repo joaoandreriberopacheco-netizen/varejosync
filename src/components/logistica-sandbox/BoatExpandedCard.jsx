@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 function StatusBadge({ status }) {
   const classes = status === 'ativa'
     ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-    : 'bg-gray-200 text-foreground/90 dark:bg-muted dark:text-foreground/90';
+    : 'bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90';
 
   return <Badge className={`border-0 shadow-none ${classes}`}>{status === 'ativa' ? 'Ativa' : 'Inativa'}</Badge>;
 }
@@ -17,7 +17,7 @@ function FreteBadge({ status }) {
     'Pago': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
     'Em aberto': 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   };
-  return <Badge className={`border-0 shadow-none ${map[status] || 'bg-gray-100 text-foreground/90'}`}>{status}</Badge>;
+  return <Badge className={`border-0 shadow-none ${map[status] || 'bg-muted text-foreground/90'}`}>{status}</Badge>;
 }
 
 export default function BoatExpandedCard({ transportadora }) {
@@ -36,7 +36,7 @@ export default function BoatExpandedCard({ transportadora }) {
               <Anchor className="w-5 h-5 text-foreground/90" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-foreground dark:text-gray-100 font-glacial truncate">{transportadora.nome}</h3>
+              <h3 className="text-base font-semibold text-foreground dark:text-foreground font-glacial truncate">{transportadora.nome}</h3>
               <p className="text-sm text-muted-foreground truncate">Próximo ETA: {transportadora.proximo_eta}</p>
             </div>
           </div>
@@ -63,7 +63,7 @@ export default function BoatExpandedCard({ transportadora }) {
                 {transportadora.timeline.map((item) => (
                   <div key={item.label} className="snap-start min-w-[220px] rounded-2xl bg-muted/40 dark:bg-muted p-4 shadow-sm">
                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                    <p className="mt-2 text-lg font-semibold text-foreground dark:text-gray-100">{item.data}</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground dark:text-foreground">{item.data}</p>
                   </div>
                 ))}
               </div>
@@ -74,7 +74,7 @@ export default function BoatExpandedCard({ transportadora }) {
                 {transportadora.fretes.map((frete) => (
                   <div key={frete.id} className="rounded-2xl bg-muted/40 dark:bg-muted p-3 shadow-sm flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground dark:text-gray-100">{frete.periodo}</p>
+                      <p className="text-sm font-medium text-foreground dark:text-foreground">{frete.periodo}</p>
                       <p className="text-xs text-muted-foreground">{frete.valor}</p>
                     </div>
                     <FreteBadge status={frete.status} />
@@ -87,15 +87,15 @@ export default function BoatExpandedCard({ transportadora }) {
               <div className="space-y-2">
                 <div className="rounded-2xl bg-muted/40 dark:bg-muted p-3 shadow-sm">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><FileText className="w-4 h-4" /> Nome</div>
-                  <p className="text-sm font-medium text-foreground dark:text-gray-100">{transportadora.nome}</p>
+                  <p className="text-sm font-medium text-foreground dark:text-foreground">{transportadora.nome}</p>
                 </div>
                 <div className="rounded-2xl bg-muted/40 dark:bg-muted p-3 shadow-sm">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><CalendarClock className="w-4 h-4" /> Recorrência</div>
-                  <p className="text-sm font-medium text-foreground dark:text-gray-100">{transportadora.recorrencia}</p>
+                  <p className="text-sm font-medium text-foreground dark:text-foreground">{transportadora.recorrencia}</p>
                 </div>
                 <div className="rounded-2xl bg-muted/40 dark:bg-muted p-3 shadow-sm">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Waves className="w-4 h-4" /> Status</div>
-                  <p className="text-sm font-medium text-foreground dark:text-gray-100">{transportadora.status === 'ativa' ? 'Ativa' : 'Inativa'}</p>
+                  <p className="text-sm font-medium text-foreground dark:text-foreground">{transportadora.status === 'ativa' ? 'Ativa' : 'Inativa'}</p>
                 </div>
               </div>
             </TabsContent>

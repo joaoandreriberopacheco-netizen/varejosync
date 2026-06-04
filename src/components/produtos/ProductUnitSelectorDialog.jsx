@@ -51,7 +51,7 @@ export default function ProductUnitSelectorDialog({
                 onClick={() => setSelectedUnit(option)}
                 className={`w-full rounded-2xl p-4 text-left transition-all shadow-sm ${
                   isSelected
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground'
+                    ? 'bg-background text-white dark:bg-card dark:text-foreground'
                     : 'bg-muted/40 text-foreground dark:bg-muted dark:text-white'
                 }`}
               >
@@ -60,7 +60,7 @@ export default function ProductUnitSelectorDialog({
                     <div className="flex items-center gap-2">
                       <span className="text-base font-semibold">{option.unidade}</span>
                       {option.is_primary && (
-                        <Badge className={`border-0 ${isSelected ? 'bg-white/15 text-white dark:bg-gray-200 dark:text-foreground' : 'bg-white text-foreground/90 dark:bg-background dark:text-foreground'}`}>
+                        <Badge className={`border-0 ${isSelected ? 'bg-card/15 text-white dark:bg-muted dark:text-foreground' : 'bg-card text-foreground/90 dark:bg-background dark:text-foreground'}`}>
                           Principal
                         </Badge>
                       )}

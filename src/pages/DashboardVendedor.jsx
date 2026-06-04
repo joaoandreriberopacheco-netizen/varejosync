@@ -102,7 +102,7 @@ export default function DashboardVendedor() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-border/40"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-border/40 dark:border-border/40"></div>
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function DashboardVendedor() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Vendas Hoje</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                <p className="text-2xl font-semibold text-foreground">
                   R$ {totalVendasHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -145,7 +145,7 @@ export default function DashboardVendedor() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Total do Mês</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                <p className="text-2xl font-semibold text-foreground">
                   R$ {totalVendasMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -164,7 +164,7 @@ export default function DashboardVendedor() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Meta Mensal</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                <p className="text-2xl font-semibold text-foreground">
                   {percentualMeta.toFixed(1)}%
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -204,7 +204,7 @@ export default function DashboardVendedor() {
             <div className="mt-4 p-3 bg-background/50 rounded-lg">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Meta do Mês</span>
-                <span className="font-semibold text-gray-800 dark:text-gray-100">
+                <span className="font-semibold text-foreground">
                   R$ {metaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -231,7 +231,7 @@ export default function DashboardVendedor() {
               <>
                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    <p className="text-sm font-medium text-foreground">
                       {tabelaPreco.nome_tabela}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -247,7 +247,7 @@ export default function DashboardVendedor() {
                       <Percent className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm text-foreground/90">Desconto Comercial</span>
                     </div>
-                    <span className="font-semibold text-gray-800 dark:text-gray-100">
+                    <span className="font-semibold text-foreground">
                       {tabelaPreco.permite_desconto_comercial ? 'Permitido' : 'Não Permitido'}
                     </span>
                   </div>
@@ -322,7 +322,7 @@ export default function DashboardVendedor() {
                         <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                        <p className="text-sm font-medium text-foreground">
                           {agenda.cliente_nome || 'Cliente'}
                         </p>
                         <p className="text-xs text-muted-foreground">

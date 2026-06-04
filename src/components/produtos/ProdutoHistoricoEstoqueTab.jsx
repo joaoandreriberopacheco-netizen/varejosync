@@ -114,11 +114,11 @@ export default function ProdutoHistoricoEstoqueTab({
       {/* Resumo PDV — mobile first */}
       <div className="shrink-0 rounded-[24px] bg-[#f0f2f5] p-3 shadow-sm dark:bg-[#1a1f2e]">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <div className="rounded-2xl bg-white px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
+          <div className="rounded-2xl bg-card px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Estoque (sistema)
             </p>
-            <p className="mt-0.5 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-gray-100">
+            <p className="mt-0.5 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-foreground">
               <Wallet className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
               {formatQtd(estoqueAtual)}
             </p>
@@ -128,11 +128,11 @@ export default function ProdutoHistoricoEstoqueTab({
               </p>
             )}
           </div>
-          <div className="rounded-2xl bg-white px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
+          <div className="rounded-2xl bg-card px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Movimentos
             </p>
-            <p className="mt-0.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-gray-100">
+            <p className="mt-0.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-foreground">
               {linhasParaExibir.length}
               <span className="text-xs font-normal text-muted-foreground">
                 {' '}
@@ -140,11 +140,11 @@ export default function ProdutoHistoricoEstoqueTab({
               </span>
             </p>
           </div>
-          <div className="col-span-2 rounded-2xl bg-white px-3 py-2.5 shadow-sm sm:col-span-1 dark:bg-[#151a26]">
+          <div className="col-span-2 rounded-2xl bg-card px-3 py-2.5 shadow-sm sm:col-span-1 dark:bg-[#151a26]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Saldo antes (est.)
             </p>
-            <p className="mt-0.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-gray-100">
+            <p className="mt-0.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-foreground">
               {formatQtd(extrato.saldoInicial)}
             </p>
           </div>
@@ -165,7 +165,7 @@ export default function ProdutoHistoricoEstoqueTab({
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Documento, cliente, origem…"
-            className="h-11 rounded-2xl border-0 bg-gray-100 pl-9 pr-3 text-sm shadow-inner dark:bg-[#151a26] dark:text-gray-100"
+            className="h-11 rounded-2xl border-0 bg-muted pl-9 pr-3 text-sm shadow-inner dark:bg-[#151a26] dark:text-foreground"
           />
           {busca ? (
             <button
@@ -182,7 +182,7 @@ export default function ProdutoHistoricoEstoqueTab({
           <Button
             type="button"
             variant="outline"
-            className="h-11 flex-1 rounded-2xl border-0 bg-gray-100 px-3 font-medium shadow-sm dark:bg-[#151a26] sm:flex-initial"
+            className="h-11 flex-1 rounded-2xl border-0 bg-muted px-3 font-medium shadow-sm dark:bg-[#151a26] sm:flex-initial"
             onClick={() => setOrdem((o) => (o === 'asc' ? 'desc' : 'asc'))}
           >
             {ordem === 'asc' ? <ArrowUp className="mr-1.5 h-4 w-4" /> : <ArrowDown className="mr-1.5 h-4 w-4" />}
@@ -191,7 +191,7 @@ export default function ProdutoHistoricoEstoqueTab({
           <Button
             type="button"
             variant="outline"
-            className="relative h-11 flex-1 rounded-2xl border-0 bg-gray-100 px-3 font-medium shadow-sm dark:bg-[#151a26] sm:flex-initial"
+            className="relative h-11 flex-1 rounded-2xl border-0 bg-muted px-3 font-medium shadow-sm dark:bg-[#151a26] sm:flex-initial"
             onClick={() => setFiltrosAbertos(true)}
           >
             <SlidersHorizontal className="mr-1.5 h-4 w-4" />
@@ -205,7 +205,7 @@ export default function ProdutoHistoricoEstoqueTab({
           <Button
             type="button"
             variant="outline"
-            className="h-11 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-[#151a26]"
+            className="h-11 rounded-2xl border-0 bg-muted px-3 shadow-sm dark:bg-[#151a26]"
             onClick={() => onRefresh?.()}
             disabled={loading}
             aria-label="Atualizar extrato"
@@ -216,15 +216,15 @@ export default function ProdutoHistoricoEstoqueTab({
       </div>
 
       <Drawer open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
-        <DrawerContent className="rounded-t-[24px] border-0 bg-white px-4 pb-8 dark:bg-[#0f1218]">
+        <DrawerContent className="rounded-t-[24px] border-0 bg-card px-4 pb-8 dark:bg-[#0f1218]">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-foreground dark:text-gray-100">Filtros do extrato</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground dark:text-foreground">Filtros do extrato</DrawerTitle>
           </DrawerHeader>
           <div className="max-h-[65vh] space-y-4 overflow-y-auto">
             <div>
               <Label className="text-xs text-muted-foreground">Tipo</Label>
               <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-                <SelectTrigger className="mt-1 h-12 rounded-2xl border-0 bg-gray-100 dark:bg-[#151a26]">
+                <SelectTrigger className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -237,7 +237,7 @@ export default function ProdutoHistoricoEstoqueTab({
             <div>
               <Label className="text-xs text-muted-foreground">Origem (referência)</Label>
               <Select value={refTipo} onValueChange={setRefTipo}>
-                <SelectTrigger className="mt-1 h-12 rounded-2xl border-0 bg-gray-100 dark:bg-[#151a26]">
+                <SelectTrigger className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -257,7 +257,7 @@ export default function ProdutoHistoricoEstoqueTab({
                   type="date"
                   value={dataIni}
                   onChange={(e) => setDataIni(e.target.value)}
-                  className="mt-1 h-12 rounded-2xl border-0 bg-gray-100 dark:bg-[#151a26]"
+                  className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]"
                 />
               </div>
               <div>
@@ -266,7 +266,7 @@ export default function ProdutoHistoricoEstoqueTab({
                   type="date"
                   value={dataFim}
                   onChange={(e) => setDataFim(e.target.value)}
-                  className="mt-1 h-12 rounded-2xl border-0 bg-gray-100 dark:bg-[#151a26]"
+                  className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]"
                 />
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function ProdutoHistoricoEstoqueTab({
               <Button
                 type="button"
                 variant="outline"
-                className="h-12 flex-1 rounded-2xl border-0 bg-gray-100 dark:bg-[#252a38]"
+                className="h-12 flex-1 rounded-2xl border-0 bg-muted dark:bg-[#252a38]"
                 onClick={limparFiltros}
               >
                 Limpar
@@ -293,7 +293,7 @@ export default function ProdutoHistoricoEstoqueTab({
         </div>
       ) : linhasParaExibir.length === 0 ? (
         <div className="flex min-h-[12rem] flex-1 flex-col justify-center rounded-[28px] bg-muted/40 py-14 text-center dark:bg-[#151a26]">
-          <History className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-muted-foreground" />
+          <History className="mx-auto mb-3 h-12 w-12 text-muted-foreground dark:text-muted-foreground" />
           <p className="text-sm font-medium text-foreground/90">
             {movimentacoes.length === 0 ? 'Nenhuma movimentação registrada' : 'Nenhum resultado com estes filtros'}
           </p>
@@ -304,57 +304,57 @@ export default function ProdutoHistoricoEstoqueTab({
           ) : null}
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40/90 bg-white shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40/90 bg-card shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
           <p className="shrink-0 border-b border-border/40 bg-muted/40 px-3 py-2 text-[10px] leading-snug text-muted-foreground dark:border-white/5 dark:bg-[#1a1f2e] dark:text-muted-foreground">
             Colunas fixas: data, documento e saldo. Deslize para a direita para ver origem, valores e responsável.
           </p>
           <div className="min-h-0 flex-1 overflow-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
             <table className="w-max min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
-              <TableHeader className="sticky top-0 z-30 bg-gray-100 shadow-sm dark:bg-[#252a38] [&_tr]:border-border/40 dark:[&_tr]:border-gray-700">
+              <TableHeader className="sticky top-0 z-30 bg-muted shadow-sm dark:bg-[#252a38] [&_tr]:border-border/40 dark:[&_tr]:border-border/40">
                 <TableRow className="border-b hover:bg-transparent">
                   <TableHead
-                    className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90`}
+                    className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90`}
                     style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
                   >
                     Data
                   </TableHead>
                   <TableHead
-                    className="sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90"
+                    className="sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90"
                     style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
                   >
                     Documento
                   </TableHead>
                   <TableHead
-                    className="sticky top-0 z-[45] h-10 border-b border-r border-border/40 bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground shadow-[4px_0_12px_-4px_rgba(0,0,0,0.2)] dark:border-gray-600 dark:bg-[#252a38] dark:text-foreground/90 dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]"
+                    className="sticky top-0 z-[45] h-10 border-b border-r border-border/40 bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground shadow-[4px_0_12px_-4px_rgba(0,0,0,0.2)] dark:border-border/40 dark:bg-[#252a38] dark:text-foreground/90 dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]"
                     style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
                   >
                     Saldo após
                   </TableHead>
-                  <TableHead className="h-10 min-w-[5.5rem] whitespace-nowrap border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[5.5rem] whitespace-nowrap border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Origem
                   </TableHead>
-                  <TableHead className="h-10 min-w-[7rem] border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[7rem] border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Cliente / terceiro
                   </TableHead>
-                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Tipo
                   </TableHead>
-                  <TableHead className="h-10 min-w-[4rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[4rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Movimento
                   </TableHead>
-                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     P. un.
                   </TableHead>
-                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Total R$
                   </TableHead>
-                  <TableHead className="h-10 min-w-[6rem] border-b bg-gray-100 px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[6rem] border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Responsável
                   </TableHead>
-                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Qtd
                   </TableHead>
-                  <TableHead className="h-10 min-w-[7rem] border-b bg-gray-100 px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
+                  <TableHead className="h-10 min-w-[7rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
                     Qtd (show)
                   </TableHead>
                 </TableRow>
@@ -369,7 +369,7 @@ export default function ProdutoHistoricoEstoqueTab({
                   const origem = textoReferenciaTipo(mov);
                   const rowKey = mov.id != null ? mov.id : `mov-${idx}`;
                   const stickyBg =
-                    'bg-white group-hover:bg-muted/40 dark:bg-[#151a26] dark:group-hover:bg-[#1c2230]';
+                    'bg-card group-hover:bg-muted/40 dark:bg-[#151a26] dark:group-hover:bg-[#1c2230]';
 
                   return (
                     <TableRow key={rowKey} className="group border-border/40">
@@ -382,7 +382,7 @@ export default function ProdutoHistoricoEstoqueTab({
                           : '—'}
                       </TableCell>
                       <TableCell
-                        className={`sticky z-20 max-w-[132px] truncate border-b border-border/40 px-2 py-2 font-medium text-foreground dark:border-border/40 dark:text-gray-100 ${stickyBg}`}
+                        className={`sticky z-20 max-w-[132px] truncate border-b border-border/40 px-2 py-2 font-medium text-foreground dark:border-border/40 dark:text-foreground ${stickyBg}`}
                         style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
                         title={String(documento)}
                       >
@@ -438,7 +438,7 @@ export default function ProdutoHistoricoEstoqueTab({
                       <TableCell className="max-w-[7rem] truncate border-b border-border/40 px-2 py-2 text-foreground/90 dark:border-border/40 dark:text-foreground/90">
                         {mov.usuario_responsavel || '—'}
                       </TableCell>
-                      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-gray-800 dark:border-border/40 dark:text-foreground">
+                      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-foreground dark:border-border/40 dark:text-foreground">
                         {formatQtd(mov.quantidade)}
                       </TableCell>
                       <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-foreground/90 dark:border-border/40 dark:text-foreground/90">

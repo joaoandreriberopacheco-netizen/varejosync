@@ -297,7 +297,7 @@ export default function AbaRecepção({ pedido }) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="self-start border-amber-300 bg-white text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/50"
+                      className="self-start border-amber-300 bg-card text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/50"
                       disabled={retificandoEmbId === embarque.id}
                       onClick={(e) => handleRetificarStockEmbarque(embarque, codigoExibicao, e)}
                     >
@@ -343,7 +343,7 @@ export default function AbaRecepção({ pedido }) {
                     <Play className="w-5 h-5 text-white fill-white" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted dark:hover:bg-muted transition-colors">
                     <Play className="w-5 h-5 text-muted-foreground fill-gray-600 dark:fill-gray-400" />
                   </div>
                 )}
@@ -391,7 +391,7 @@ export default function AbaRecepção({ pedido }) {
             </div>
             <Button
               onClick={() => setRecebimentoSucesso(null)}
-              className="w-full h-11 bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground hover:opacity-90 rounded-xl"
+              className="w-full h-11 bg-background dark:bg-muted text-white dark:text-foreground hover:opacity-90 rounded-xl"
             >
               Fechar
             </Button>

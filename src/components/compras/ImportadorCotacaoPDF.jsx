@@ -346,7 +346,7 @@ Retorne um JSON com:
                 {step === 'upload' && (
                     <div className="max-w-2xl mx-auto">
                         <div
-                            className="py-20 flex flex-col items-center justify-center bg-muted/50/50 rounded-2xl border-2 border-dashed border-gray-300 dark:border-border/40 cursor-pointer hover:bg-muted transition-colors"
+                            className="py-20 flex flex-col items-center justify-center bg-muted/50/50 rounded-2xl border-2 border-dashed border-border/40 dark:border-border/40 cursor-pointer hover:bg-muted transition-colors"
                             onClick={() => fileInputRef.current?.click()}
                             role="button"
                             tabIndex={0}
@@ -357,7 +357,7 @@ Retorne um JSON com:
                                 }
                             }}
                         >
-                            <Upload className="w-16 h-16 text-gray-300 dark:text-muted-foreground mb-6" />
+                            <Upload className="w-16 h-16 text-muted-foreground dark:text-muted-foreground mb-6" />
                             <h3 className="text-2xl font-light text-foreground mb-2">Upload do PDF da Cotação</h3>
                             <p className="text-muted-foreground mb-8 text-center max-w-md">
                                 A IA irá ler os itens, identificar marcas, preços e fornecedor
@@ -487,7 +487,7 @@ Retorne um JSON com:
                                             <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Correspondência</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                    <tbody className="divide-y divide-border/40 dark:divide-border/40">
                                         {mappings.map((m, idx) => (
                                             <tr key={idx} className={`${m.ignored ? 'opacity-40 bg-background/20' : 'hover:bg-muted/40/50 dark:hover:bg-muted/50'} transition-colors`}>
                                                 <td className="px-6 py-4">

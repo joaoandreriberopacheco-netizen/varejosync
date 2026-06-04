@@ -378,7 +378,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
             if (f?.name?.endsWith('.xlsx')) handleArquivo(f);
             else toast.error('Selecione um arquivo .xlsx');
           }}
-          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-muted/50/50 p-8"
+          className="relative rounded-xl border-2 border-dashed border-border/40 dark:border-border/40 bg-muted/50/50 p-8"
         >
           <input
             ref={inputRef}

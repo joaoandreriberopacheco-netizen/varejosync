@@ -39,7 +39,7 @@ function FilterSection({ label, icon: Icon, options, value, onChange }) {
               className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
                 active
                   ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
-                  : 'bg-gray-100 text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                  : 'bg-muted text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
               }`}
             >
               {opt.label}
@@ -177,7 +177,7 @@ export default function AgefinAtualizador({ onRefresh }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-700 dark:border-gray-600 dark:border-t-gray-200 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-border/40 border-t-gray-700 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" />
       </div>
     );
   }
@@ -201,7 +201,7 @@ export default function AgefinAtualizador({ onRefresh }) {
     <div className="space-y-3">
       <div className="rounded-[22px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-card px-3 dark:bg-card dark:ring-1 dark:ring-border">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground dark:text-muted-foreground" />
             <input
               autoComplete="off"
@@ -226,7 +226,7 @@ export default function AgefinAtualizador({ onRefresh }) {
           <button
             type="button"
             onClick={() => setFilterOpen(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-card dark:bg-card dark:ring-1 dark:ring-border"
           >
             <SlidersHorizontal className="h-4 w-4 text-foreground" />
             {hasActiveFilters ? (
@@ -242,7 +242,7 @@ export default function AgefinAtualizador({ onRefresh }) {
       </div>
 
       <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
-        <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
+        <DrawerContent className="rounded-t-[28px] border-0 bg-card px-4 pb-6 dark:bg-card">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground dark:text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
@@ -278,7 +278,7 @@ export default function AgefinAtualizador({ onRefresh }) {
                   setFilterOrigem('todos');
                   setFilterStatus('todos');
                 }}
-                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+                className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 Redefinir
               </button>
@@ -295,7 +295,7 @@ export default function AgefinAtualizador({ onRefresh }) {
       </Drawer>
 
       {filtradosBusca.length === 0 ? (
-        <div className="rounded-[24px] bg-white py-10 text-center text-sm text-muted-foreground shadow-sm dark:bg-card dark:ring-1 dark:ring-border dark:text-muted-foreground">
+        <div className="rounded-[24px] bg-card py-10 text-center text-sm text-muted-foreground shadow-sm dark:bg-card dark:ring-1 dark:ring-border dark:text-muted-foreground">
           Nenhum resultado com os filtros e a pesquisa atuais.
         </div>
       ) : (
@@ -314,14 +314,14 @@ export default function AgefinAtualizador({ onRefresh }) {
                       key={l.id}
                       type="button"
                       onClick={() => setSelected(l)}
-                      className="flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-all hover:shadow-md dark:bg-background"
+                      className="flex w-full items-center gap-3 rounded-xl bg-card px-4 py-3 text-left shadow-sm transition-all hover:shadow-md dark:bg-background"
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
                         <RefreshCw className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{l.descricao}</p>
+                          <p className="truncate text-sm font-medium text-foreground">{l.descricao}</p>
                           {origem === 'pdf' && (
                             <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
                               <FileText className="h-3 w-3" /> PDF
@@ -337,7 +337,7 @@ export default function AgefinAtualizador({ onRefresh }) {
                           <Calendar className="h-3 w-3 shrink-0" />
                           {l.data_vencimento}
                           {l.frequencia_recorrencia && (
-                            <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-muted-foreground dark:bg-muted dark:text-muted-foreground">
+                            <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-muted-foreground dark:bg-muted dark:text-muted-foreground">
                               {FREQ_LABEL[l.frequencia_recorrencia] || l.frequencia_recorrencia}
                             </span>
                           )}
@@ -362,7 +362,7 @@ export default function AgefinAtualizador({ onRefresh }) {
                           {l.status}
                         </span>
                       </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 dark:text-muted-foreground" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground dark:text-muted-foreground" />
                     </button>
                   );
                 })}

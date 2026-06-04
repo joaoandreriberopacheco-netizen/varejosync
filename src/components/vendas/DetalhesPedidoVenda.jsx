@@ -67,7 +67,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      'Orçamento': 'bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90',
+      'Orçamento': 'bg-muted text-foreground/90 dark:bg-muted dark:text-foreground/90',
       'Aguardando Aprovação': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       'Aguardando Pagamento': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
       'Aguardando Caixa': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -77,7 +77,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
       'Finalizado': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       'Cancelado': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
     };
-    return statusMap[status] || 'bg-gray-100 text-foreground/90';
+    return statusMap[status] || 'bg-muted text-foreground/90';
   };
 
   const handleCompartilhar = () => {
@@ -202,21 +202,21 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
               <div className="flex w-full">
                 <TabsTrigger 
                   value="detalhes" 
-                  className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-4 md:py-3 data-[state=active]:bg-transparent data-[state=active]:shadow-none min-h-[48px]"
+                  className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-4 md:py-3 data-[state=active]:bg-transparent data-[state=active]:shadow-none min-h-[48px]"
                 >
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   <span className="hidden md:inline text-sm font-normal text-muted-foreground">Detalhes</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="financeiro"
-                  className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-4 md:py-3 data-[state=active]:bg-transparent data-[state=active]:shadow-none min-h-[48px]"
+                  className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-4 md:py-3 data-[state=active]:bg-transparent data-[state=active]:shadow-none min-h-[48px]"
                 >
                   <Wallet className="w-4 h-4 text-muted-foreground" />
                   <span className="hidden md:inline text-sm font-normal text-muted-foreground">Financeiro</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="estoque"
-                  className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-4 md:py-3 data-[state=active]:bg-transparent data-[state=active]:shadow-none min-h-[48px]"
+                  className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-4 md:py-3 data-[state=active]:bg-transparent data-[state=active]:shadow-none min-h-[48px]"
                 >
                   <Package className="w-4 h-4 text-muted-foreground" />
                   <span className="hidden md:inline text-sm font-normal text-muted-foreground">Estoque</span>
@@ -390,7 +390,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                   </div>
                 ) : (
                   <div className="py-12 text-center bg-card rounded-xl">
-                    <CreditCard className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+                    <CreditCard className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
                     <p className="text-muted-foreground">Nenhuma forma de pagamento registrada</p>
                   </div>
                 )}
@@ -426,7 +426,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
 
               {lancamentosFinanceiros.length === 0 && (!pedido.pagamentos || pedido.pagamentos.length === 0) && (
                 <div className="py-12 text-center">
-                  <AlertCircle className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+                  <AlertCircle className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
                   <p className="text-muted-foreground">Nenhuma informação financeira disponível</p>
                 </div>
               )}
@@ -492,7 +492,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
 
               {movimentosEstoque.length === 0 && (
                 <div className="py-12 text-center bg-card rounded-xl">
-                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+                  <Package className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
                   <p className="text-muted-foreground">Nenhuma movimentação de estoque registrada</p>
                 </div>
               )}

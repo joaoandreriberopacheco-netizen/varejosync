@@ -21,7 +21,7 @@ import PainelConferencias from '../components/compras/PainelConferencias';
 
 const getStatusBadge = (status) => {
   const variants = {
-    'Rascunho': 'bg-gray-100 text-gray-800',
+    'Rascunho': 'bg-muted text-foreground',
     'Enviado': 'bg-blue-100 text-blue-800',
     'Aguardando Recepção': 'bg-yellow-100 text-yellow-800',
     'Recebido Parcialmente': 'bg-orange-100 text-orange-800',
@@ -29,7 +29,7 @@ const getStatusBadge = (status) => {
     'Recebido com Discrepância': 'bg-red-100 text-red-800',
     'Cancelado': 'bg-red-100 text-red-800'
   };
-  return variants[status] || 'bg-gray-100 text-gray-800';
+  return variants[status] || 'bg-muted text-foreground';
 };
 
 const PedidosCompraTab = () => {
@@ -168,13 +168,13 @@ const PedidosCompraTab = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Buscar por Nº ou fornecedor..." 
-                className="pl-9 bg-muted/40 border-transparent focus:bg-white transition-all dark:bg-background dark:text-foreground rounded-lg" 
+                className="pl-9 bg-muted/40 border-transparent focus:bg-card transition-all dark:bg-background dark:text-foreground rounded-lg" 
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
               />
             </div>
             <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-muted/40 border-transparent focus:bg-white transition-all dark:bg-background dark:text-foreground rounded-lg">
+              <SelectTrigger className="w-full sm:w-[180px] bg-muted/40 border-transparent focus:bg-card transition-all dark:bg-background dark:text-foreground rounded-lg">
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -186,11 +186,11 @@ const PedidosCompraTab = () => {
             </Select>
             
             <div className="ml-auto flex gap-2 w-full sm:w-auto">
-              <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 w-full sm:w-auto rounded-xl shadow-sm border-0 bg-muted text-foreground/90 hover:bg-gray-200 dark:hover:bg-primary/90">
+              <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 w-full sm:w-auto rounded-xl shadow-sm border-0 bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-primary/90">
                 <FileText className="w-4 h-4" />
                 Importar NF
               </Button>
-              <Button onClick={handleAddNew} className="bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground text-white gap-2 w-full sm:w-auto rounded-xl shadow-sm">
+              <Button onClick={handleAddNew} className="bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground text-white gap-2 w-full sm:w-auto rounded-xl shadow-sm">
                 <PlusCircle className="w-4 h-4" />
                 Novo Pedido
               </Button>
@@ -198,7 +198,7 @@ const PedidosCompraTab = () => {
           </div>
 
           {/* Filtros de Data Compactos */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 pt-3 border-t border-gray-50 dark:border-border/40">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 pt-3 border-t border-border/30 dark:border-border/40">
             <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
               <CalendarRange className="w-3 h-3" />
               Período
@@ -229,7 +229,7 @@ const PedidosCompraTab = () => {
 
       {/* Totais - Glacial: Texto grande e limpo */}
       <div className="flex items-baseline gap-4 px-1">
-        <h2 className="text-xl md:text-2xl font-light text-foreground dark:text-gray-100">
+        <h2 className="text-xl md:text-2xl font-light text-foreground dark:text-foreground">
           <span className="font-semibold">R$ {formatValor(subtotalFiltrado)}</span>
           <span className="text-xs md:text-sm text-muted-foreground ml-2 font-normal">em {quantidadeFiltrada} pedidos</span>
         </h2>
@@ -240,7 +240,7 @@ const PedidosCompraTab = () => {
         {/* Responsive: Cards for Mobile, Table for Desktop */}
         {pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12 rounded-xl border border-border bg-background shadow-sm overflow-auto">
-            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-foreground/90" />
             <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (
@@ -398,8 +398,8 @@ export default function ComprasPage() {
                 onClick={() => handleTabChange(tab.value)}
                 className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive
-                    ? 'bg-white dark:bg-muted text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300'
+                    ? 'bg-card dark:bg-muted text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground'
                 }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />

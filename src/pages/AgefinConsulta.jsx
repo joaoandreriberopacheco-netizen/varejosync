@@ -88,11 +88,11 @@ function CmvQuickToggle({ checked, onChange }) {
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 ${
-        checked ? 'bg-gray-900 dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'
+        checked ? 'bg-background dark:bg-card' : 'bg-muted dark:bg-muted'
       }`}
     >
       <span
-        className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+        className={`inline-block h-5 w-5 rounded-full bg-card shadow transform transition-transform ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
@@ -102,7 +102,7 @@ function CmvQuickToggle({ checked, onChange }) {
 
 function FilterChip({ active, onClick, children, tone = 'default' }) {
   const activeStyles = {
-    default: 'bg-gray-900 text-white dark:bg-white dark:text-foreground',
+    default: 'bg-background text-white dark:bg-card dark:text-foreground',
     success: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
     danger: 'bg-red-600 text-white dark:bg-red-500 dark:text-white',
   };
@@ -114,7 +114,7 @@ function FilterChip({ active, onClick, children, tone = 'default' }) {
       className={`h-9 px-3 rounded-2xl text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
         active
           ? activeStyles[tone]
-          : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'
+          : 'bg-muted text-muted-foreground dark:bg-muted dark:text-foreground/90'
       }`}
     >
       {children}
@@ -192,7 +192,7 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
               {conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground dark:text-muted-foreground md:mt-3 md:gap-2 md:text-xs">
-              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-background/80 dark:ring-1 dark:ring-border">
+              <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 shadow-sm dark:bg-background/80 dark:ring-1 dark:ring-border">
                 <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5" /> {formatarSoData(conta.data_vencimento)}
               </span>
               <span
@@ -203,7 +203,7 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
                       ? 'bg-pink-50 text-pink-800 dark:bg-red-950/35 dark:text-red-200'
                       : hasBoleto
                         ? 'bg-lime-50 text-lime-800 dark:bg-lime-950/30 dark:text-lime-200'
-                        : 'bg-white text-muted-foreground dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                        : 'bg-card text-muted-foreground dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
                 }`}
               >
                 {isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Atualizado' : 'Pendente'}
@@ -695,7 +695,7 @@ export default function AgefinConsulta() {
                   <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-2xl bg-muted">
                     <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                     {hasActiveFilters && (
-                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-gray-900" aria-hidden />
+                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-border/40" aria-hidden />
                     )}
                   </Button>
                 </DrawerTrigger>
@@ -789,7 +789,7 @@ export default function AgefinConsulta() {
               {(dateFrom || dateTo) && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
                   {dateFrom || '…'} → {dateTo || '…'}
-                  <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-primary/90" aria-label="Limpar datas">
+                  <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-muted dark:hover:bg-primary/90" aria-label="Limpar datas">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -806,7 +806,7 @@ export default function AgefinConsulta() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" /></div>
+          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" /></div>
         ) : contasOrdenadas.length === 0 ? (
           <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
             Nenhuma conta a pagar encontrada para esse mês e filtros.
@@ -856,7 +856,7 @@ export default function AgefinConsulta() {
       </div>
 
       {modoSelecao && (
-        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/40 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-border/40 dark:bg-gray-950/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/40 bg-card/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-border/40 dark:bg-muted/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Seleção para pagar</p>

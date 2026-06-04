@@ -203,7 +203,7 @@ function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange
             <button
               type="button"
               onClick={() => onToggleExpand(expandKey)}
-              className="flex h-7 w-7 flex-none items-center justify-center rounded-xl bg-gray-100 text-muted-foreground transition-colors hover:bg-gray-200 dark:bg-muted dark:text-muted-foreground dark:hover:bg-primary/90"
+              className="flex h-7 w-7 flex-none items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-muted dark:bg-muted dark:text-muted-foreground dark:hover:bg-primary/90"
             >
               {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
@@ -216,7 +216,7 @@ function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange
               <span className="truncate text-sm font-medium text-foreground/90">{item.label}</span>
               {temSubitens && (
                 <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
-                  childCount.ativas > 0 ? 'bg-primary text-white dark:bg-gray-200 dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-muted-foreground'
+                  childCount.ativas > 0 ? 'bg-primary text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
                 }`}>
                   {childCount.ativas}/{childCount.total}
                 </span>
@@ -232,7 +232,7 @@ function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange
               const novoModulo = setDeepValue(permissoes?.[moduloKey] || {}, caminhoCompleto, v);
               onChange({ ...permissoes, [moduloKey]: novoModulo });
             }}
-            className="data-[state=checked]:bg-primary dark:data-[state=checked]:bg-gray-200"
+            className="data-[state=checked]:bg-primary dark:data-[state=checked]:bg-muted"
           />
         </div>
       </div>
@@ -269,7 +269,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-muted">
+    <div className="overflow-hidden rounded-2xl bg-card shadow-sm dark:bg-muted">
       <button
         type="button"
         onClick={() => setExpandido(!expandido)}
@@ -281,7 +281,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
           </div>
           <span className="truncate text-sm font-semibold text-foreground">{modulo.label}</span>
           <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
-            ativas > 0 ? 'bg-primary text-white dark:bg-gray-200 dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-muted-foreground'
+            ativas > 0 ? 'bg-primary text-white dark:bg-muted dark:text-foreground' : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
           }`}>
             {ativas}/{total}
           </span>
@@ -352,7 +352,7 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
             size="sm"
             onClick={handleSalvar}
             disabled={!form.nome.trim()}
-            className="h-8 text-xs bg-primary hover:bg-gray-900 text-white dark:bg-gray-200 dark:text-foreground"
+            className="h-8 text-xs bg-primary hover:bg-background text-white dark:bg-muted dark:text-foreground"
           >
             {perfil ? 'Salvar Alterações' : 'Criar Perfil'}
           </Button>
@@ -389,7 +389,7 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
             <Switch
               checked={form.menu_compacto}
               onCheckedChange={v => setForm({ ...form, menu_compacto: v })}
-              className="data-[state=checked]:bg-primary dark:data-[state=checked]:bg-gray-200"
+              className="data-[state=checked]:bg-primary dark:data-[state=checked]:bg-muted"
             />
           </div>
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl shadow-sm">
@@ -400,20 +400,20 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
             <Switch
               checked={form.ativo}
               onCheckedChange={v => setForm({ ...form, ativo: v })}
-              className="data-[state=checked]:bg-primary dark:data-[state=checked]:bg-gray-200"
+              className="data-[state=checked]:bg-primary dark:data-[state=checked]:bg-muted"
             />
           </div>
 
           <div className="bg-muted/50 rounded-xl p-3 space-y-1.5 shadow-sm">
             <p className="text-xs text-muted-foreground font-medium">Legenda de permissões</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="w-4 h-4 rounded bg-primary dark:bg-gray-200 flex items-center justify-center">
+              <div className="w-4 h-4 rounded bg-primary dark:bg-muted flex items-center justify-center">
                 <svg className="w-2.5 h-2.5 text-white dark:text-foreground" fill="none" viewBox="0 0 12 12">
                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <span>Ativo</span>
-              <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-muted ml-2" />
+              <div className="w-4 h-4 rounded border border-border/40 dark:border-border/40 bg-card dark:bg-muted ml-2" />
               <span>Inativo</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">

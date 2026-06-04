@@ -164,28 +164,28 @@ export default function FinanceiroModuloPage() {
         <TabsList className="w-full bg-muted/50/50 rounded-2xl p-1.5 h-auto">
           <TabsTrigger
             value="contas"
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
           >
             <Wallet className="w-4 h-4" />
             <span className="hidden md:inline text-sm font-medium">Contas</span>
           </TabsTrigger>
           <TabsTrigger
             value="aprovacoes"
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
           >
             <AlertCircle className="w-4 h-4" />
             <span className="hidden md:inline text-sm font-medium">Aprovações</span>
           </TabsTrigger>
           <TabsTrigger
             value="pagamentos"
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
           >
             <CreditCard className="w-4 h-4" />
             <span className="hidden md:inline text-sm font-medium">Pagamentos</span>
           </TabsTrigger>
           <TabsTrigger
             value="orcamento"
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
           >
             <Target className="w-4 h-4" />
             <span className="hidden md:inline text-sm font-medium">Execução Orçamentária</span>
@@ -197,21 +197,21 @@ export default function FinanceiroModuloPage() {
             {/* KPI Saldo Total */}
             <div className="bg-card rounded-2xl shadow-sm p-5">
               <p className="text-xs text-muted-foreground mb-1">Saldo Total Consolidado</p>
-              <p className="text-3xl font-semibold text-gray-800 dark:text-gray-100">{formatCurrency(saldoTotal)}</p>
+              <p className="text-3xl font-semibold text-foreground">{formatCurrency(saldoTotal)}</p>
               <p className="text-xs text-muted-foreground mt-1">{accounts.filter(a => a.ativo).length} conta(s) ativa(s)</p>
             </div>
 
             {/* Header ação */}
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Contas e Caixas</p>
-              <Button onClick={handleAddNew} size="sm" className="gap-2 bg-primary hover:bg-primary/90 dark:bg-gray-600 dark:hover:bg-muted/400 rounded-full px-4">
+              <Button onClick={handleAddNew} size="sm" className="gap-2 bg-primary hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted/400 rounded-full px-4">
                 <PlusCircle className="w-4 h-4" /> Nova
               </Button>
             </div>
 
             {accounts.length === 0 ? (
               <div className="text-center py-16 bg-card rounded-2xl shadow-sm">
-                <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+                <Wallet className="w-12 h-12 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
                 <p className="text-muted-foreground mb-4">Nenhuma conta cadastrada</p>
                 <Button onClick={handleAddNew} className="gap-2 bg-primary hover:bg-primary/90 rounded-full px-6">
                   <PlusCircle className="w-4 h-4" /> Criar Primeira Conta
@@ -243,7 +243,7 @@ export default function FinanceiroModuloPage() {
                             {tipoIconMap[account.tipo] || <Wallet className="w-5 h-5" />}
                           </div>
                             <div>
-                              <p className="font-semibold text-gray-800 dark:text-gray-100 leading-tight">{account.nome}</p>
+                              <p className="font-semibold text-foreground leading-tight">{account.nome}</p>
                               <p className="text-xs text-muted-foreground">{account.tipo}</p>
                             </div>
                           </div>
@@ -259,7 +259,7 @@ export default function FinanceiroModuloPage() {
                         {/* Saldo */}
                         <div>
                           <p className="text-xs text-muted-foreground mb-0.5">Saldo Atual</p>
-                          <p className={`text-2xl font-semibold ${isNegativo ? 'text-red-500' : 'text-gray-800 dark:text-gray-100'}`}>
+                          <p className={`text-2xl font-semibold ${isNegativo ? 'text-red-500' : 'text-foreground'}`}>
                             {formatCurrency(saldo)}
                           </p>
                           {account.banco && (
@@ -285,13 +285,13 @@ export default function FinanceiroModuloPage() {
                         <div className="flex gap-2 pt-1 border-t border-border/40">
                           <button
                             onClick={() => window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted/40 dark:bg-muted hover:bg-gray-100 dark:hover:bg-gray-600 text-muted-foreground text-xs font-medium transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted/40 dark:bg-muted hover:bg-muted dark:hover:bg-muted text-muted-foreground text-xs font-medium transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" /> Extrato
                           </button>
                           <button
                             onClick={() => handleEditAccount(account)}
-                            className="flex items-center justify-center w-9 h-9 rounded-xl bg-muted/40 dark:bg-muted hover:bg-gray-100 dark:hover:bg-gray-600 text-muted-foreground transition-colors"
+                            className="flex items-center justify-center w-9 h-9 rounded-xl bg-muted/40 dark:bg-muted hover:bg-muted dark:hover:bg-muted text-muted-foreground transition-colors"
                           >
                             <Edit className="w-3.5 h-3.5" />
                           </button>
@@ -318,7 +318,7 @@ export default function FinanceiroModuloPage() {
                 Gerencie aprovações, histórico e solicitações em uma tela dedicada
               </p>
               <Link to={createPageUrl('FinanceiroAprovacoes')}>
-                <Button className="gap-2 bg-gray-700 hover:bg-gray-600">
+                <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
                   <FileText className="w-4 h-4" />
                   Ir para Aprovações
                 </Button>
@@ -373,13 +373,13 @@ export default function FinanceiroModuloPage() {
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   placeholder="Ex: Caixa Loja 1"
-                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground" />
+                  className="dark:bg-muted dark:border-border/40 dark:text-foreground" />
 
             </div>
             <div>
               <Label className="text-foreground/90">Tipo</Label>
               <Select value={formData.tipo} onValueChange={(v) => setFormData({ ...formData, tipo: v })}>
-                <SelectTrigger className="dark:bg-muted dark:border-gray-600 dark:text-foreground">
+                <SelectTrigger className="dark:bg-muted dark:border-border/40 dark:text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -398,15 +398,15 @@ export default function FinanceiroModuloPage() {
                   step="0.01"
                   value={formData.saldo_inicial}
                   onChange={(e) => setFormData({ ...formData, saldo_inicial: parseFloat(e.target.value) || 0 })}
-                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground" />
+                  className="dark:bg-muted dark:border-border/40 dark:text-foreground" />
 
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-muted dark:border-gray-600">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-muted dark:border-border/40">
               Cancelar
             </Button>
-            <Button onClick={handleSaveAccount} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600">
+            <Button onClick={handleSaveAccount} className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted">
               Salvar
             </Button>
           </DialogFooter>

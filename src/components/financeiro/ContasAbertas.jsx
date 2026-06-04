@@ -91,7 +91,7 @@ function KpiAbertas({ kpis }) {
       <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
         <div className={kpiCardTop}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-card sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <ArrowDownLeft className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
             </div>
             <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">A receber</p>
@@ -106,7 +106,7 @@ function KpiAbertas({ kpis }) {
         </div>
         <div className={kpiCardTop}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-card sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <ArrowUpRight className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
             </div>
             <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">A pagar</p>
@@ -159,7 +159,7 @@ function ContaRecorrenciaBadge({ l }) {
     ? `${l.parcela_atual}/${l.numero_parcelas_total ?? '—'}`
     : l.frequencia_recorrencia;
   return (
-    <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-muted-foreground dark:bg-muted">
+    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium text-muted-foreground dark:bg-muted">
       {label}
     </span>
   );
@@ -456,7 +456,7 @@ function useContasAbertasModel(onOpenImportador) {
       toast({
         title: qtd > 1 ? 'Pagamentos confirmados' : 'Pagamento confirmado',
         description: `${qtd} lançamento(s) marcado(s) como pago(s).`,
-        className: 'bg-gray-100 text-gray-800',
+        className: 'bg-muted text-foreground',
       });
 
       setShowPagamentoLote(false);
@@ -616,12 +616,12 @@ export function ContasAbertasChrome() {
 
       <div className="min-w-0 rounded-[20px] border border-transparent p-0 dark:border-transparent">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 sm:h-12 sm:rounded-[16px] sm:px-3 dark:border-slate-700/70 dark:bg-muted">
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-card px-2.5 sm:h-12 sm:rounded-[16px] sm:px-3 dark:border-border/70 dark:bg-muted">
             <Search className="h-3.5 w-3.5 flex-none shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
             <input autoComplete="off"
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar..."
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground sm:text-sm dark:text-gray-100"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground sm:text-sm dark:text-foreground"
             />
             {search && <button type="button" onClick={() => setSearch('')} aria-label="Limpar busca"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
           </div>
@@ -629,16 +629,16 @@ export function ContasAbertasChrome() {
           <button
             type="button"
             onClick={() => setShowFilters(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-white text-foreground sm:h-12 sm:w-12 sm:rounded-[16px] dark:border-slate-700/70 dark:bg-muted dark:text-foreground"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-card text-foreground sm:h-12 sm:w-12 sm:rounded-[16px] dark:border-border/70 dark:bg-muted dark:text-foreground"
           >
             <SlidersHorizontal className="h-4 w-4" />
             {(periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || cs || ce) && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-[10px] text-white dark:bg-white dark:text-slate-900">•</span>
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white dark:bg-card dark:text-foreground">•</span>
             )}
           </button>
         </div>
 
-        <div className="mt-2 flex flex-col gap-2 border-t border-white/70 pt-2 sm:mt-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-1.5 sm:pt-2.5 dark:border-slate-700/70">
+        <div className="mt-2 flex flex-col gap-2 border-t border-white/70 pt-2 sm:mt-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-1.5 sm:pt-2.5 dark:border-border/70">
           <p className="shrink-0 text-[10px] text-muted-foreground sm:text-[11px] dark:text-muted-foreground">
             <span className="sm:hidden">{filtrados.length} lç.</span>
             <span className="hidden sm:inline">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</span>
@@ -649,19 +649,19 @@ export function ContasAbertasChrome() {
                 setModoSelecaoLote((prev) => !prev);
                 setSelectedIds([]);
               }}
-              className={`px-2 py-1 rounded-full text-[10px] transition-colors ${modoSelecaoLote ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
+              className={`px-2 py-1 rounded-full text-[10px] transition-colors ${modoSelecaoLote ? 'bg-primary text-white dark:bg-primary dark:text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
             >
               {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
             </button>
-            <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90">{PERIODOS.find(p => p.v === periodo)?.l || 'Período'}</span>
-            {tipoFiltro !== 'todos' && <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90">{tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : 'Compras'}</span>}
+            <span className="px-2 py-1 rounded-full text-[10px] bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90">{PERIODOS.find(p => p.v === periodo)?.l || 'Período'}</span>
+            {tipoFiltro !== 'todos' && <span className="px-2 py-1 rounded-full text-[10px] bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90">{tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : 'Compras'}</span>}
             {mostrarPagas && <span className="px-2 py-1 rounded-full text-[10px] bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Pagas</span>}
           </div>
         </div>
       </div>
 
       <Drawer open={showFilters} onOpenChange={setShowFilters}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
             <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
@@ -671,7 +671,7 @@ export function ContasAbertasChrome() {
               <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Período</label>
               <div className="flex flex-wrap gap-2">
                 {PERIODOS.map(p => (
-                  <button key={p.v} onClick={() => setPeriodo(p.v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${periodo === p.v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
+                  <button key={p.v} onClick={() => setPeriodo(p.v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${periodo === p.v ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
                     {p.l}
                   </button>
                 ))}
@@ -680,8 +680,8 @@ export function ContasAbertasChrome() {
 
             {periodo === 'personalizado' && (
               <div className="flex gap-2">
-                <input autoComplete="off" type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-muted text-sm text-foreground/90 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
-                <input autoComplete="off" type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-muted text-sm text-foreground/90 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
+                <input autoComplete="off" type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-muted dark:bg-muted text-sm text-foreground/90 dark:text-foreground rounded-2xl px-3 py-3 outline-none border-0" />
+                <input autoComplete="off" type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-muted dark:bg-muted text-sm text-foreground/90 dark:text-foreground rounded-2xl px-3 py-3 outline-none border-0" />
               </div>
             )}
 
@@ -694,7 +694,7 @@ export function ContasAbertasChrome() {
                   { v: 'Despesa', l: 'A Pagar' },
                   { v: 'compras', l: 'Compras' },
                 ].map(({ v, l }) => (
-                  <button key={v} onClick={() => setTipoFiltro(v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${tipoFiltro === v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
+                  <button key={v} onClick={() => setTipoFiltro(v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${tipoFiltro === v ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
                     {l}
                   </button>
                 ))}
@@ -703,7 +703,7 @@ export function ContasAbertasChrome() {
 
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Exibição</label>
-              <button onClick={() => setMostrarPagas(p => !p)} className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
+              <button onClick={() => setMostrarPagas(p => !p)} className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
                 <CheckCircle2 className="w-3 h-3" /> Pagas
               </button>
             </div>
@@ -717,11 +717,11 @@ export function ContasAbertasChrome() {
                   setCs('');
                   setCe('');
                 }}
-                className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-muted text-sm text-muted-foreground"
+                className="flex-1 h-11 rounded-2xl bg-muted dark:bg-muted text-sm text-muted-foreground"
               >
                 Limpar
               </button>
-              <button onClick={() => setShowFilters(false)} className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900">
+              <button onClick={() => setShowFilters(false)} className="flex-1 h-11 rounded-2xl bg-primary dark:bg-muted text-sm text-white dark:text-foreground">
                 Aplicar
               </button>
             </div>
@@ -730,7 +730,7 @@ export function ContasAbertasChrome() {
       </Drawer>
 
       {modoSelecaoLote && (
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm dark:bg-muted">
+        <div className="min-w-0 overflow-hidden rounded-2xl bg-card p-4 shadow-sm dark:bg-muted">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
@@ -794,8 +794,8 @@ export function ContasAbertasListaPane() {
             ))}
           </div>
         ) : grupos.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-2xl bg-white py-16 shadow-sm dark:bg-muted">
-            <Scale className="h-9 w-9 text-gray-200 dark:text-foreground/90" />
+          <div className="flex flex-col items-center gap-2 rounded-2xl bg-card py-16 shadow-sm dark:bg-muted">
+            <Scale className="h-9 w-9 text-muted-foreground dark:text-foreground/90" />
             <p className="text-sm text-muted-foreground">Nenhuma conta em aberto</p>
           </div>
         ) : (
@@ -814,14 +814,14 @@ export function ContasAbertasListaPane() {
         )}
       </div>
 
-      {fabOpen && <div className="fixed inset-0 z-[54] bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
+      {fabOpen && <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
         {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label, action }) => (
           <button
             key={tipo}
             type="button"
             onClick={action}
-            className="flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg whitespace-nowrap transition-transform active:scale-95 dark:bg-slate-200 dark:text-slate-900"
+            className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-lg whitespace-nowrap transition-transform active:scale-95 dark:bg-primary dark:text-primary-foreground"
           >
             <Icon className="h-4 w-4" />{label}
           </button>
@@ -829,9 +829,9 @@ export function ContasAbertasListaPane() {
         <button
           type="button"
           onClick={() => setFabOpen(o => !o)}
-          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-slate-700' : 'bg-slate-900 dark:bg-slate-200'}`}
+          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-muted' : 'bg-primary dark:bg-muted'}`}
         >
-          <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-slate-900'}`} />
+          <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-foreground'}`} />
         </button>
       </div>
 

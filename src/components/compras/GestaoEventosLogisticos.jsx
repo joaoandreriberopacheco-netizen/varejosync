@@ -158,7 +158,7 @@ export default function GestaoEventosLogisticos() {
       "Concluído": "bg-green-100 text-green-800",
       "Cancelado": "bg-red-100 text-red-800"
     };
-    return variants[status] || "bg-gray-100 text-gray-800";
+    return variants[status] || "bg-muted text-foreground";
   };
 
   return (
@@ -181,14 +181,14 @@ export default function GestaoEventosLogisticos() {
               <Package className="w-4 h-4 text-teal-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-foreground dark:text-gray-100 text-sm">
+              <h3 className="font-medium text-foreground dark:text-foreground text-sm">
                 {pedidosDisponiveis.length} pedido(s) aguardando recepção
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Necessário agendar evento logístico para recebimento.
               </p>
             </div>
-            <Button size="sm" onClick={handleAbrirNovoEvento} className="bg-gray-900 text-white hover:bg-primary h-8 text-xs">
+            <Button size="sm" onClick={handleAbrirNovoEvento} className="bg-background text-white hover:bg-primary h-8 text-xs">
               Agendar
             </Button>
           </div>
@@ -205,14 +205,14 @@ export default function GestaoEventosLogisticos() {
                     <Truck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                  </div>
                  <div>
-                    <h3 className="font-medium text-foreground dark:text-gray-100">{evento.titulo}</h3>
+                    <h3 className="font-medium text-foreground dark:text-foreground">{evento.titulo}</h3>
                     <p className="text-xs text-muted-foreground">{evento.numero}</p>
                  </div>
               </div>
               <Badge className={`${getStatusBadge(evento.status)} border-0 font-normal`}>{evento.status}</Badge>
             </div>
 
-            <div className="flex flex-wrap gap-4 py-3 border-t border-gray-50 dark:border-border/40">
+            <div className="flex flex-wrap gap-4 py-3 border-t border-border/30 dark:border-border/40">
                <div>
                   <p className="text-[10px] text-muted-foreground uppercase mb-1">Previsão</p>
                   <div className="flex items-center gap-1.5 text-sm text-foreground/90">

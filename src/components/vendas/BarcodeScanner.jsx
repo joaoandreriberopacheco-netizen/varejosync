@@ -156,12 +156,12 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
           variant="ghost"
           size="icon"
           onClick={handleClose}
-          className="absolute top-3 right-3 z-20 text-white hover:bg-white/20"
+          className="absolute top-3 right-3 z-20 text-white hover:bg-card/20"
         >
           <X className="w-5 h-5" />
         </Button>
 
-        <div className="relative w-full aspect-[4/3] bg-gray-900">
+        <div className="relative w-full aspect-[4/3] bg-background">
           {error ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
               <AlertCircle className="w-12 h-12 mb-4 text-red-400" />
@@ -169,7 +169,7 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
               <Button
                 onClick={startCamera}
                 variant="outline"
-                className="mt-4 border-white/30 text-white hover:bg-white/10"
+                className="mt-4 border-white/30 text-white hover:bg-card/10"
               >
                 Tentar Novamente
               </Button>

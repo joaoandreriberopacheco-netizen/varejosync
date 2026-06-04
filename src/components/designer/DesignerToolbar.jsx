@@ -10,7 +10,7 @@ export default function DesignerToolbar({ templateNome, onNomeChange, onSalvar, 
       {onVoltar && (
         <button
           onClick={onVoltar}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gray-800 dark:hover:text-gray-200 mr-1"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground mr-1"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Documentos
@@ -62,7 +62,7 @@ export default function DesignerToolbar({ templateNome, onNomeChange, onSalvar, 
         onClick={onSalvar}
         disabled={salvando}
         size="sm"
-        className="h-7 text-xs bg-gray-900 dark:bg-gray-100 dark:text-foreground text-white gap-1 px-3"
+        className="h-7 text-xs bg-background dark:bg-muted dark:text-foreground text-white gap-1 px-3"
       >
         <Save className="w-3.5 h-3.5" />
         {salvando ? 'Salvando...' : 'Salvar'}

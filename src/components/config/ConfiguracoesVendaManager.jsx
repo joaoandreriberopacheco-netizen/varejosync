@@ -68,7 +68,7 @@ export default function ConfiguracoesVendaManager() {
               <button key={value} onClick={() => setConfig({ ...config, fluxo_venda_padrao: value })}
                 className={`text-left p-3 rounded-xl transition-all ${
                   ativo
-                    ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground shadow-sm'
+                    ? 'bg-primary dark:bg-muted text-white dark:text-foreground shadow-sm'
                     : 'bg-muted/50/60 text-muted-foreground hover:bg-muted/60'
                 }`}>
                 <div className="flex items-center gap-2 mb-1">
@@ -104,15 +104,15 @@ export default function ConfiguracoesVendaManager() {
               <Label className="text-xs font-medium text-foreground/90">Casas Decimais na Quantidade</Label>
               <p className="text-[11px] text-muted-foreground mt-0.5">Define o padrão global para quantidades no PDV (ex: 0 = inteiro, 2 = kg/m², 3 = litros)</p>
             </div>
-            <div className="flex items-center gap-1 bg-white dark:bg-muted rounded-lg border border-border/40 overflow-hidden flex-shrink-0">
+            <div className="flex items-center gap-1 bg-card dark:bg-muted rounded-lg border border-border/40 overflow-hidden flex-shrink-0">
               {[0, 1, 2, 3].map(n => (
                 <button
                   key={n}
                   onClick={() => setConfig({ ...config, casas_decimais_quantidade: n })}
                   className={`w-9 h-9 text-sm font-medium transition-colors ${
                     config.casas_decimais_quantidade === n
-                      ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground'
-                      : 'text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-600'
+                      ? 'bg-primary dark:bg-muted text-white dark:text-foreground'
+                      : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted'
                   }`}
                 >
                   {n}
@@ -132,7 +132,7 @@ export default function ConfiguracoesVendaManager() {
 
       <div className="flex justify-end pt-2">
         <Button onClick={handleSave}
-          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-2 h-9 text-sm">
+          className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white gap-2 h-9 text-sm">
           <Save className="w-4 h-4" /> Salvar
         </Button>
       </div>

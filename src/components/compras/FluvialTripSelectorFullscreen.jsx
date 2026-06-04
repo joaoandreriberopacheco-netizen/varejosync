@@ -151,7 +151,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
             </Button>
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Selecionar viagem</p>
-              <p className="text-lg font-semibold text-foreground dark:text-gray-100 font-glacial truncate">Itinerário Fluvial</p>
+              <p className="text-lg font-semibold text-foreground dark:text-foreground font-glacial truncate">Itinerário Fluvial</p>
             </div>
           </div>
 
@@ -169,7 +169,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
                     <select
                       value={viewMode}
                       onChange={(e) => setViewMode(e.target.value)}
-                      className="w-full text-xs px-3 py-2 rounded bg-muted text-foreground dark:text-gray-100 border-0 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                      className="w-full text-xs px-3 py-2 rounded bg-muted text-foreground dark:text-foreground border-0 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
                     >
                       <option value="saida_manaus">Saída Manaus</option>
                       <option value="chegada_manaus">Chegada Manaus</option>
@@ -205,7 +205,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
                     <Anchor className="w-5 h-5 text-muted-foreground dark:text-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-base font-semibold text-foreground dark:text-gray-100">{selectedEvento.embarcacao_nome}</p>
+                    <p className="text-base font-semibold text-foreground dark:text-foreground">{selectedEvento.embarcacao_nome}</p>
                     <p className="text-xs text-muted-foreground mt-1">{selectedEvento.codigo || 'Viagem logística'}</p>
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
                   <Button
                     type="button"
                     onClick={() => onSelect?.(selectedEvento)}
-                    className="flex-1 h-11 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-foreground shadow-sm"
+                    className="flex-1 h-11 rounded-2xl bg-background text-white dark:bg-card dark:text-foreground shadow-sm"
                   >
                     <Check className="w-4 h-4 mr-2" />
                     Usar viagem

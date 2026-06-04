@@ -102,7 +102,7 @@ export default function ConfirmarPagamentoDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-background">
+        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-4 pt-5 dark:border-border/40">
             <DialogTitle className="flex items-center justify-between">
@@ -206,12 +206,12 @@ export default function ConfirmarPagamentoDialog({
                   value={codigoVale}
                   onChange={(e) => setCodigoVale(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleBuscarVale(); }}
-                  className="flex-1 h-11 px-3 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0"
+                  className="flex-1 h-11 px-3 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700 border-0"
                 />
                 <button
                   onClick={handleBuscarVale}
                   disabled={buscandoVale}
-                  className="h-11 px-4 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl text-sm font-medium disabled:opacity-50"
+                  className="h-11 px-4 bg-background dark:bg-card text-white dark:text-foreground rounded-xl text-sm font-medium disabled:opacity-50"
                 >
                   {buscandoVale ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Buscar'}
                 </button>
@@ -279,7 +279,7 @@ export default function ConfirmarPagamentoDialog({
             <button
               onClick={handleFinalizarVenda}
               disabled={!pagamentoValido || processandoVenda}
-              className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {processandoVenda
                 ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
@@ -336,7 +336,7 @@ function InputPagamento({
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
           active
-            ? 'bg-muted ring-1 ring-gray-300 dark:ring-gray-600'
+            ? 'bg-muted ring-1 ring-border/40 dark:ring-border/40'
             : 'bg-muted/50/60 hover:bg-muted'
         }`}
         onClick={() => {
@@ -355,7 +355,7 @@ function InputPagamento({
               onFiadoButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-foreground dark:hover:bg-gray-100 dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-gray-500"
           >
             Prazo · fiado
           </button>
@@ -368,7 +368,7 @@ function InputPagamento({
               onMaquininhaButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-foreground dark:hover:bg-gray-100 dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-gray-500"
           >
             Maquininha / bandeira
           </button>
@@ -388,7 +388,7 @@ function InputPagamento({
       {badge && (
         <button
           onClick={onBadgeClick}
-          className="w-full text-left px-3 py-1 text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-300 transition-colors"
+          className="w-full text-left px-3 py-1 text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-colors"
         >
           {badge} · <span className="underline">trocar</span>
         </button>

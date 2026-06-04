@@ -177,7 +177,7 @@ export default function FinanceiroAprovacoesPage() {
         toast({
           title: "✓ Pagamento aprovado",
           description: "Pedido aprovado. Logística liberada.",
-          className: "bg-gray-100 text-gray-800"
+          className: "bg-muted text-foreground"
         });
       } else if (tipoAcao === 'reject') {
         const pedido = pedidoOverride ?? selectedTransaction;
@@ -262,7 +262,7 @@ export default function FinanceiroAprovacoesPage() {
       toast({
         title: "Edição liberada",
         description: "Parcelas em aberto foram canceladas. Compras pode corrigir o pedido e reenviar ao financeiro.",
-        className: "bg-gray-100 text-gray-800"
+        className: "bg-muted text-foreground"
       });
 
       loadData();
@@ -318,15 +318,15 @@ export default function FinanceiroAprovacoesPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex items-center justify-between mb-4">
           <TabsList className="bg-muted p-1 rounded-xl">
-            <TabsTrigger value="pendentes" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+            <TabsTrigger value="pendentes" className="rounded-lg data-[state=active]:bg-card">
               <Clock className="w-4 h-4 mr-2" />
               Pendentes
             </TabsTrigger>
-            <TabsTrigger value="aprovados" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+            <TabsTrigger value="aprovados" className="rounded-lg data-[state=active]:bg-card">
               <CheckCircle className="w-4 h-4 mr-2" />
               Aprovados
             </TabsTrigger>
-            <TabsTrigger value="rejeitados" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+            <TabsTrigger value="rejeitados" className="rounded-lg data-[state=active]:bg-card">
               <XCircle className="w-4 h-4 mr-2" />
               Rejeitados
             </TabsTrigger>
@@ -358,7 +358,7 @@ export default function FinanceiroAprovacoesPage() {
             </div>
           ) : filteredPedidos.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl shadow-sm">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-muted-foreground" />
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground dark:text-muted-foreground" />
               <h3 className="text-lg font-medium text-foreground mb-2">
                 {searchTerm ? 'Nenhum resultado encontrado' : `Nenhum pedido ${activeTab === 'pendentes' ? 'pendente' : activeTab === 'aprovados' ? 'aprovado' : 'rejeitado'}`}
               </h3>
@@ -388,7 +388,7 @@ export default function FinanceiroAprovacoesPage() {
                   <TableBody>
                     {filteredPedidos.map((pedido) => {
                       return (
-                        <TableRow key={pedido.id} className={`border-0 hover:bg-muted/40 dark:hover:bg-gray-900/50 ${
+                        <TableRow key={pedido.id} className={`border-0 hover:bg-muted/40 dark:hover:bg-muted/50 ${
                           activeTab === 'aprovados' ? 'bg-green-50/50 dark:bg-green-900/10' :
                           activeTab === 'rejeitados' ? 'bg-red-50/50 dark:bg-red-900/10' : ''
                         }`}>
@@ -440,7 +440,7 @@ export default function FinanceiroAprovacoesPage() {
                                   </Button>
                                   <Button 
                                     size="icon"
-                                    className="bg-gray-700 hover:bg-gray-600"
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                     onClick={() => handleApprove(pedido)}
                                     title="Aprovar"
                                   >
@@ -507,7 +507,7 @@ export default function FinanceiroAprovacoesPage() {
                               </Button>
                               <Button
                                 size="icon"
-                                className="h-8 w-8 bg-gray-700 hover:bg-gray-600"
+                                className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground"
                                 onClick={() => handleApprove(pedido)}
                               >
                                 <CheckCircle className="w-4 h-4" />
@@ -564,7 +564,7 @@ export default function FinanceiroAprovacoesPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-100 dark:bg-background rounded-lg p-4">
+              <div className="bg-muted dark:bg-muted rounded-lg p-4">
                 <div className="text-xs text-muted-foreground mb-1">Valor Total</div>
                 <div className="text-3xl font-bold text-foreground">
                   {formatCurrency(calcValorTotalPedidoCompra(selectedTransaction))}
@@ -606,7 +606,7 @@ export default function FinanceiroAprovacoesPage() {
             </Button>
             <Button 
               onClick={handleInitiateApproval}
-              className="bg-gray-700 hover:bg-gray-600"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={!contaSelecionada}
             >
               Autenticar e Aprovar
@@ -756,7 +756,7 @@ export default function FinanceiroAprovacoesPage() {
                     </Button>
                     <Button
                       size="icon"
-                      className="h-8 w-8 bg-gray-700 hover:bg-gray-600"
+                      className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground"
                       onClick={() => {
                         setSelectedSolicitacao(pedido);
                         void runOperacaoAuthBypass((authData) => handleLiberarEdicao(authData, pedido));

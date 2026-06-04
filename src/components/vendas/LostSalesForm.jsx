@@ -200,7 +200,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg bg-card border-0 shadow-xl">
         <DialogHeader className="pb-4">
-          <DialogTitle className="flex items-center gap-3 text-gray-800 dark:text-gray-100">
+          <DialogTitle className="flex items-center gap-3 text-foreground">
             <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
@@ -256,7 +256,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                 placeholder={formData.is_produto_do_mix ? "Buscar produto cadastrado..." : "Digite o nome do produto..."}
                 value={buscaProduto}
                 onChange={(e) => setBuscaProduto(e.target.value)}
-                className="pl-10 bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-gray-400 text-foreground dark:text-foreground placeholder:text-muted-foreground"
+                className="pl-10 bg-card dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-border/40 text-foreground dark:text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
@@ -265,7 +265,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                 {produtosSugeridos.map((produto, idx) => (
                   <div
                     key={produto.id || idx}
-                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/40 dark:hover:bg-muted/60 cursor-pointer border-b border-gray-50 dark:border-border/40 last:border-b-0 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/40 dark:hover:bg-muted/60 cursor-pointer border-b border-border/30 dark:border-border/40 last:border-b-0 transition-colors"
                     onClick={() => handleSelecionarProduto(produto)}
                   >
                     {formData.is_produto_do_mix && (
@@ -305,7 +305,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                 value={formData.quantidade_desejada}
                 onChange={(e) => setFormData({ ...formData, quantidade_desejada: parseInt(e.target.value) || 1 })}
                 onFocus={(e) => e.target.select()}
-                className="bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-gray-400 text-foreground dark:text-foreground"
+                className="bg-card dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-border/40 text-foreground dark:text-foreground"
               />
             </div>
 
@@ -319,7 +319,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                   value={formData.motivo_perda}
                   onValueChange={(v) => setFormData({ ...formData, motivo_perda: v })}
                 >
-                  <SelectTrigger className="bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 text-foreground dark:text-foreground">
+                  <SelectTrigger className="bg-card dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 text-foreground dark:text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border/40">
@@ -347,7 +347,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
               value={formData.observacao}
               onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
               rows={2}
-              className="bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-gray-400 text-foreground dark:text-foreground resize-none placeholder:text-muted-foreground"
+              className="bg-card dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-border/40 text-foreground dark:text-foreground resize-none placeholder:text-muted-foreground"
             />
           </div>
         </form>
@@ -356,7 +356,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full h-12 md:h-11 bg-gray-700 hover:bg-gray-600 text-white text-base font-medium"
+            className="w-full h-12 md:h-11 bg-primary hover:bg-primary/90 text-primary-foreground text-white text-base font-medium"
           >
             {isSubmitting ? 'Registrando...' : 'Registrar'}
           </Button>

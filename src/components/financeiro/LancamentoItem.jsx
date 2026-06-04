@@ -45,7 +45,7 @@ export default function LancamentoItem({ lancamento, onClick }) {
       {/* Descrição */}
       <div className="flex-1 min-w-0 overflow-hidden">
         <div className="flex items-center gap-1.5 overflow-hidden">
-          <p className={`text-sm font-medium truncate flex-1 min-w-0 ${isPrevisto ? 'text-muted-foreground' : 'text-gray-800 dark:text-gray-100'}`}>
+          <p className={`text-sm font-medium truncate flex-1 min-w-0 ${isPrevisto ? 'text-muted-foreground' : 'text-foreground'}`}>
             {lancamento.descricao}
           </p>
           {isPrevisto && (

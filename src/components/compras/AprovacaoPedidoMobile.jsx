@@ -36,7 +36,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-background z-[9999] flex flex-col overflow-hidden">
+      <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-card !dark:bg-background z-[9999] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-3 border-b border-border/40 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
@@ -50,7 +50,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
         </div>
 
         {/* Valor Total Destacado */}
-        <div className="flex-shrink-0 px-4 py-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+        <div className="flex-shrink-0 px-4 py-6 bg-gradient-to-br from-muted/40 to-muted/60 dark:from-muted/40 dark:to-muted/60">
           <div className="text-center">
             <div className="text-xs text-muted-foreground mb-1">Valor Total</div>
             <div className="text-4xl font-bold text-foreground mb-2">
@@ -67,7 +67,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
           {/* Informações do Pedido */}
           <div className="space-y-4">
             <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-card dark:bg-muted flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
@@ -79,7 +79,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
             </div>
 
             <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-card dark:bg-muted flex items-center justify-center flex-shrink-0">
                 <Package className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
             </div>
 
             <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-card dark:bg-muted flex items-center justify-center flex-shrink-0">
                 <Calendar className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
@@ -172,7 +172,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
               Rejeitar
             </Button>
             <Button
-              className="h-12 bg-primary hover:bg-primary/90 dark:bg-muted dark:hover:bg-gray-600 gap-2"
+              className="h-12 bg-primary hover:bg-primary/90 dark:bg-muted dark:hover:bg-muted gap-2"
               onClick={() => {
                 if (contaSelecionada) {
                   handleApproveClick();

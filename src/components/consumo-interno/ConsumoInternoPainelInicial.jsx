@@ -37,10 +37,10 @@ export default function ConsumoInternoPainelInicial({
             <p className="text-sm text-muted-foreground">Movimentações internas.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onRefresh} className="rounded-[24px] bg-white p-3 shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90" style={{ minWidth: '48px', minHeight: '48px' }}>
+            <button onClick={onRefresh} className="rounded-[24px] bg-card p-3 shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90" style={{ minWidth: '48px', minHeight: '48px' }}>
               <RefreshCw className="h-5 w-5 text-muted-foreground" />
             </button>
-            <div className="rounded-[24px] bg-white px-4 py-3 shadow-sm dark:bg-muted">
+            <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Total — {labelFiltro[filtroTemporal]}</p>
               <p className="text-lg font-semibold text-foreground">{formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}</p>
             </div>
@@ -55,8 +55,8 @@ export default function ConsumoInternoPainelInicial({
               onClick={() => setFiltroTemporal(key)}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 filtroTemporal === key
-                  ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground'
-                  : 'bg-white text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90'
+                  ? 'bg-background text-white dark:bg-card dark:text-foreground'
+                  : 'bg-card text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90'
               }`}
             >
               {label}
@@ -64,12 +64,12 @@ export default function ConsumoInternoPainelInicial({
           ))}
         </div>
 
-        <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-muted">
+        <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted">
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-lg font-semibold text-foreground">Histórico</p>
             <div className="relative w-full max-w-[220px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-gray-100 pl-9 shadow-sm dark:bg-background" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-muted pl-9 shadow-sm dark:bg-background" />
             </div>
           </div>
 
@@ -153,7 +153,7 @@ export default function ConsumoInternoPainelInicial({
 
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-3 p38-bottom-fab1 lg:bottom-10 lg:right-6">
         {showFabMenu && (
-          <div className="flex flex-col gap-2 rounded-[28px] bg-white p-2 shadow-2xl dark:bg-muted">
+          <div className="flex flex-col gap-2 rounded-[28px] bg-card p-2 shadow-2xl dark:bg-muted">
             <button
               type="button"
               onClick={onNovoFormulario}
@@ -174,7 +174,7 @@ export default function ConsumoInternoPainelInicial({
         <button
           type="button"
           onClick={() => setShowFabMenu((prev) => !prev)}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-foreground"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-background text-white shadow-2xl transition-transform hover:scale-105 dark:bg-card dark:text-foreground"
           aria-label="Novo consumo interno"
         >
           <Plus className="h-6 w-6" />

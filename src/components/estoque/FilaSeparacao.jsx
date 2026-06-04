@@ -169,7 +169,7 @@ export default function FilaSeparacao() {
 
   const getStatusBadge = (status) => {
     const config = {
-      "Pendente": { color: "bg-gray-100 text-muted-foreground border-border/40", icon: Clock },
+      "Pendente": { color: "bg-muted text-muted-foreground border-border/40", icon: Clock },
       "Em Separação": { color: "bg-blue-50 text-blue-700 border-blue-100", icon: Play },
       "Separado": { color: "bg-emerald-50 text-emerald-700 border-emerald-100", icon: CheckCircle }
     };
@@ -268,7 +268,7 @@ export default function FilaSeparacao() {
                           size="sm" 
                           onClick={() => handleIniciarSeparacao(ordem)}
                           variant="outline"
-                          className="bg-white border-border/40 text-foreground/90 hover:bg-muted/40 font-medium rounded-lg shadow-sm"
+                          className="bg-card border-border/40 text-foreground/90 hover:bg-muted/40 font-medium rounded-lg shadow-sm"
                         >
                           Iniciar
                         </Button>
@@ -282,7 +282,7 @@ export default function FilaSeparacao() {
                             setIsDialogOpen(true);
                           }}
                           variant="outline"
-                          className="border-gray-300 text-foreground/90 hover:bg-muted/40 font-medium rounded-lg"
+                          className="border-border/40 text-foreground/90 hover:bg-muted/40 font-medium rounded-lg"
                         >
                           Continuar
                         </Button>
@@ -307,20 +307,20 @@ export default function FilaSeparacao() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md h-screen m-0 p-0 rounded-none sm:rounded-lg sm:h-auto sm:max-h-[90vh]">
           {ordemSelecionada && itemAtual && (
-            <div className="flex flex-col h-full bg-white">
+            <div className="flex flex-col h-full bg-card">
               {/* Header Clean */}
-              <div className="bg-white text-foreground px-4 py-4 border-b border-border/40 flex items-center justify-between">
+              <div className="bg-card text-foreground px-4 py-4 border-b border-border/40 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">{progresso}</p>
                   <p className="text-base font-medium mt-0.5">Separação {ordemSelecionada.pedido_numero}</p>
                 </div>
-                <button onClick={() => setIsDialogOpen(false)} className="p-2 bg-muted/40 rounded-full hover:bg-gray-100 transition-colors text-muted-foreground">
+                <button onClick={() => setIsDialogOpen(false)} className="p-2 bg-muted/40 rounded-full hover:bg-muted transition-colors text-muted-foreground">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Barra de Progresso */}
-              <div className="h-1 bg-gray-200">
+              <div className="h-1 bg-muted">
                 <div 
                   className="h-full bg-blue-600 transition-all"
                   style={{ width: `${((itemAtualIndex + 1) / ordemSelecionada.itens.length) * 100}%` }}
@@ -356,13 +356,13 @@ export default function FilaSeparacao() {
                       inputMode="numeric"
                       value={itemAtual.quantidade_separada || ''}
                       onChange={(e) => handleItemChange(itemAtualIndex, 'quantidade_separada', parseFloat(e.target.value) || 0)}
-                      className="h-14 text-3xl font-light text-center pr-12 border-border/40 rounded-xl focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                      className="h-14 text-3xl font-light text-center pr-12 border-border/40 rounded-xl focus:ring-1 focus:ring-border/40 focus:border-border/40"
                       placeholder="0"
                       autoFocus
                     />
                     <button
                       onClick={handleScanBarcode}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-muted rounded-lg hover:bg-muted transition"
                     >
                       <Barcode className="w-5 h-5 text-muted-foreground" />
                     </button>
@@ -403,7 +403,7 @@ export default function FilaSeparacao() {
                 </Button>
                 <Button
                   onClick={handleConcluirSeparacao}
-                  className="h-11 text-sm font-medium bg-gray-100 text-foreground hover:bg-gray-200 rounded-xl"
+                  className="h-11 text-sm font-medium bg-muted text-foreground hover:bg-muted rounded-xl"
                 >
                   {itemAtualIndex < ordemSelecionada.itens.length - 1 ? (
                     <>Próximo Item</>

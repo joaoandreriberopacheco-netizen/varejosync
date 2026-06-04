@@ -107,7 +107,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
           <Button 
             onClick={onSkip}
             variant="ghost"
-            className="w-full h-12 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 hover:bg-muted rounded-xl"
+            className="w-full h-12 text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground hover:bg-muted rounded-xl"
           >
             Continuar sem identificação <ArrowRight className="w-4 h-4 ml-2" />
           </Button>

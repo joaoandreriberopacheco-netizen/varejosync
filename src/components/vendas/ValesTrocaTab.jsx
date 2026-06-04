@@ -70,7 +70,7 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
 
       {filteredVales.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <Ticket className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+          <Ticket className="w-10 h-10 mx-auto mb-3 text-muted-foreground dark:text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Nenhum vale troca encontrado</p>
         </div>
       ) : (

@@ -109,21 +109,21 @@ export default function HistoricoMovimentacoes() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground uppercase mb-1">Total Entradas</div>
-            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
+            <div className="text-2xl font-bold text-foreground dark:text-foreground">
               {movimentacoes.filter(m => m.tipo === 'Entrada').length}
             </div>
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground uppercase mb-1">Total Saídas</div>
-            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
+            <div className="text-2xl font-bold text-foreground dark:text-foreground">
               {movimentacoes.filter(m => m.tipo === 'Saída').length}
             </div>
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="text-xs text-muted-foreground uppercase mb-1">Total Movimentações</div>
-            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
+            <div className="text-2xl font-bold text-foreground dark:text-foreground">
               {movimentacoes.length}
             </div>
           </div>

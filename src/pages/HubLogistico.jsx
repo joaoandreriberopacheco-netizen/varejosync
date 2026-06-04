@@ -104,7 +104,7 @@ export default function HubLogistico() {
       'Recebido': 'bg-emerald-100 text-emerald-800',
       'Cancelado': 'bg-red-100 text-red-800'
     };
-    return variants[status] || 'bg-gray-100 text-gray-800';
+    return variants[status] || 'bg-muted text-foreground';
   };
 
   const manifestosFiltrados = manifestos.filter(m => 
@@ -134,7 +134,7 @@ export default function HubLogistico() {
           </Button>
           <Button
             onClick={() => navigate(createPageUrl('ConferenciaEntrada'))}
-            className="bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600 shadow-lg gap-2"
+            className="bg-background hover:bg-primary dark:bg-muted dark:hover:bg-muted shadow-lg gap-2"
             size="sm"
           >
             <QrCode className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function HubLogistico() {
 
       {manifestosFiltrados.length === 0 ? (
         <div className="text-center py-12 bg-card rounded-xl border border-border/40">
-          <Truck className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <Truck className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
           <p className="text-muted-foreground">Nenhum manifesto encontrado</p>
         </div>
       ) : (

@@ -63,7 +63,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <DialogTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Scale className="w-4 h-4 text-muted-foreground" />
             Ajuste de Saldo
           </DialogTitle>
@@ -72,7 +72,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
         <div className="space-y-4 py-2">
           <div className="rounded-2xl bg-muted/50 p-3 shadow-sm space-y-1">
             <p className="text-xs text-muted-foreground">Conta</p>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{conta.nome}</p>
+            <p className="text-sm font-medium text-foreground">{conta.nome}</p>
             <p className="text-xs text-muted-foreground">Saldo atual: {formatValor(saldoAtual)}</p>
           </div>
 
@@ -115,7 +115,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
 
         <DialogFooter className="gap-2 pt-1">
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-8 text-xs">Cancelar</Button>
-          <Button size="sm" onClick={handleSalvar} className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
+          <Button size="sm" onClick={handleSalvar} className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground text-white h-8 text-xs">
             Confirmar Ajuste
           </Button>
         </DialogFooter>

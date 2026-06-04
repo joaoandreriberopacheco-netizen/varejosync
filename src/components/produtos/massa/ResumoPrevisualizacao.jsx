@@ -52,7 +52,7 @@ export default function ResumoPrevisualizacao({ data }) {
             🔍 Vistoria de Campos - Erros Encontrados:
           </p>
           {erros.slice(0, 10).map((e, i) => (
-            <div key={i} className="flex items-start gap-2 p-2 bg-white dark:bg-red-900/30 rounded-lg">
+            <div key={i} className="flex items-start gap-2 p-2 bg-card dark:bg-red-900/30 rounded-lg">
               <span className="text-red-500 flex-shrink-0 mt-0.5">✗</span>
               <p className="text-xs text-red-700 dark:text-red-300 flex-1">{e.mensagem}</p>
             </div>
@@ -70,7 +70,7 @@ export default function ResumoPrevisualizacao({ data }) {
         <div>
           <button
             onClick={() => setMostrarDetalhes(v => !v)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300 mt-1"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground mt-1"
           >
             {mostrarDetalhes ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {mostrarDetalhes ? 'Ocultar detalhes' : 'Ver produtos alterados'}

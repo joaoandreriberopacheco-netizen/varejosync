@@ -78,30 +78,30 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
             <DialogHeader className="text-left space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-3xl bg-[#1f2937] flex items-center justify-center shadow-sm">
-                  <Ship className="w-5 h-5 text-slate-200" />
+                  <Ship className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div>
                   <DialogTitle className="text-xl font-semibold font-glacial text-white">Nova transportadora</DialogTitle>
-                  <p className="text-xs text-slate-400">Cadastro em estilo operacional glacial</p>
+                  <p className="text-xs text-muted-foreground">Cadastro em estilo operacional glacial</p>
                 </div>
               </div>
             </DialogHeader>
             <div className="grid gap-3">
               <div className="rounded-3xl bg-[#1f2937] p-4 space-y-2 shadow-sm">
-                <div className="flex items-center gap-2 text-sm text-slate-300"><Anchor className="w-4 h-4" /> Identificação</div>
-                <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da transportadora" className="h-12 rounded-2xl border-0 bg-[#253042] shadow-none text-white placeholder:text-slate-400" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Anchor className="w-4 h-4" /> Identificação</div>
+                <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da transportadora" className="h-12 rounded-2xl border-0 bg-[#253042] shadow-none text-white placeholder:text-muted-foreground" />
               </div>
               <div className="rounded-3xl bg-[#1f2937] p-4 space-y-2 shadow-sm">
-                <div className="flex items-center gap-2 text-sm text-slate-300"><Waves className="w-4 h-4" /> Ciclo base</div>
-                <p className="text-xs text-slate-400">Defina a saída de referência para criar automaticamente as datas da viagem.</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Waves className="w-4 h-4" /> Ciclo base</div>
+                <p className="text-xs text-muted-foreground">Defina a saída de referência para criar automaticamente as datas da viagem.</p>
                 <div className="flex items-center gap-2 rounded-2xl bg-[#253042] px-3">
-                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
                   <Input type="date" value={saidaReferencia} onChange={(e) => setSaidaReferencia(e.target.value)} className="h-12 border-0 bg-transparent shadow-none text-white" />
                 </div>
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSave} className="rounded-2xl bg-white text-slate-900 hover:bg-slate-200">Salvar transportadora</Button>
+              <Button onClick={handleSave} className="rounded-2xl bg-card text-foreground hover:bg-muted">Salvar transportadora</Button>
             </div>
           </div>
         </DialogContent>

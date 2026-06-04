@@ -28,7 +28,7 @@ export default function RetornoEdicaoDialog({ open, onOpenChange, motivo, onMoti
               value={motivo}
               onChange={(e) => onMotivoChange(e.target.value)}
               rows={3}
-              className="dark:bg-muted dark:text-foreground dark:border-gray-600"
+              className="dark:bg-muted dark:text-foreground dark:border-border/40"
               autoFocus
             />
           </div>
@@ -36,7 +36,7 @@ export default function RetornoEdicaoDialog({ open, onOpenChange, motivo, onMoti
             <Button
               variant="outline"
               onClick={() => { onOpenChange(false); onMotivoChange(''); }}
-              className="flex-1 border-gray-300 hover:bg-muted/40 text-foreground/90 dark:border-gray-600 dark:hover:bg-muted dark:text-foreground/90">
+              className="flex-1 border-border/40 hover:bg-muted/40 text-foreground/90 dark:border-border/40 dark:hover:bg-muted dark:text-foreground/90">
               Cancelar
             </Button>
             <Button

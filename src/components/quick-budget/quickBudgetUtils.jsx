@@ -42,7 +42,7 @@ export function PrecoVendaTabelaLinhas({
   produto,
   tabelaPreco,
   unitOption = null,
-  finalClassName = 'text-sm font-bold text-gray-800 dark:text-gray-100 tabular-nums',
+  finalClassName = 'text-sm font-bold text-foreground tabular-nums',
   labelBottom,
   variant = 'default',
 }) {

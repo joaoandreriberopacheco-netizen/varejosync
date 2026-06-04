@@ -161,7 +161,7 @@ ${pedido.valor_desconto > 0 ? `<div class="info" style="text-align:right">Descon
           <Button variant="outline" onClick={onClose} className="flex-1 h-11 border-border/40">
             <X className="w-4 h-4 mr-2" /> Pular
           </Button>
-          <Button onClick={imprimir} className="flex-1 h-11 bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground text-white">
+          <Button onClick={imprimir} className="flex-1 h-11 bg-background hover:bg-primary dark:bg-card dark:hover:bg-muted dark:text-foreground text-white">
             <Printer className="w-4 h-4 mr-2" /> Imprimir
           </Button>
         </div>
