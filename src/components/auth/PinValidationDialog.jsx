@@ -87,17 +87,17 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xs bg-white dark:bg-gray-900 border-none shadow-xl text-center">
+      <DialogContent className="sm:max-w-xs bg-card border-none shadow-xl text-center">
         <DialogHeader>
           <div className="flex justify-center mb-1">
-            <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
+              <Shield className="w-6 h-6 text-muted-foreground" />
             </div>
           </div>
-          <DialogTitle className="font-glacial text-gray-800 dark:text-white text-center">
+          <DialogTitle className="font-glacial text-foreground text-center">
             Confirmação de Segurança
           </DialogTitle>
-          <DialogDescription className="text-gray-400 text-xs text-center">
+          <DialogDescription className="text-muted-foreground text-xs text-center">
             {operationName}
           </DialogDescription>
         </DialogHeader>
@@ -110,8 +110,8 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
                 key={i}
                 className={`w-3 h-3 rounded-full transition-all duration-150 ${
                   filled
-                    ? 'bg-gray-800 dark:bg-white scale-110'
-                    : 'bg-gray-200 dark:bg-gray-700'
+                    ? 'bg-primary dark:bg-white scale-110'
+                    : 'bg-muted'
                 }`}
               />
             ))}
@@ -150,8 +150,8 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
                   key === ''
                     ? 'pointer-events-none'
                     : key === '⌫'
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
-                    : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-muted text-muted-foreground text-sm'
+                    : 'bg-muted/50 text-foreground hover:bg-muted'
                 }`}
               >
                 {key}
@@ -176,7 +176,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
           <Button
             onClick={handleValidar}
             disabled={loading || pin.length < 6}
-            className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white"
+            className="w-full bg-gray-900 dark:bg-white dark:text-foreground text-white"
           >
             {loading ? 'Verificando...' : 'Confirmar'}
           </Button>
@@ -184,7 +184,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
           <button
             onClick={handleResetEmail}
             disabled={enviandoEmail || emailEnviado}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center gap-1 w-full"
+            className="text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-200 flex items-center justify-center gap-1 w-full"
           >
             <Mail className="w-3 h-3" />
             {enviandoEmail ? 'Enviando...' : 'Esqueci meu PIN'}

@@ -280,7 +280,7 @@ export default function EventoEmbarquesPanel({ embarques = [] }) {
 
   if (!embarques.length) {
     return (
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm text-xs text-gray-500 dark:text-gray-400">
+      <div className="rounded-2xl bg-muted/40 dark:bg-muted p-3 shadow-sm text-xs text-muted-foreground">
         Nenhuma compra vinculada a este evento.
       </div>);
 

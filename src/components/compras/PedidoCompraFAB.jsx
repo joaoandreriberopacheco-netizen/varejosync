@@ -155,21 +155,21 @@ export default function PedidoCompraFAB({
       label: 'Anexos',
       onClick: () => { setShowAnexosModal(true); setIsExpanded(false); },
       disabled: !pedido?.id,
-      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      color: 'bg-white dark:bg-muted text-foreground/90',
     },
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'PDF',
       onClick: handlePrintPDF,
       disabled: !pedido?.id,
-      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      color: 'bg-white dark:bg-muted text-foreground/90',
     },
     {
       icon: <Save className="w-5 h-5" />,
       label: 'Salvar',
       onClick: () => { onSave(); setIsExpanded(false); },
       disabled: isDisabled || isSaving,
-      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      color: 'bg-white dark:bg-muted text-foreground/90',
     },
   ].filter(Boolean);
 
@@ -181,7 +181,7 @@ export default function PedidoCompraFAB({
             <button
               onClick={() => setIsExpanded(prev => !prev)}
               className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
+                isExpanded ? 'bg-gray-600 dark:bg-muted/400 rotate-45' : 'bg-gray-900 dark:bg-muted'
               } text-white`}
               title="Ações do pedido"
             >

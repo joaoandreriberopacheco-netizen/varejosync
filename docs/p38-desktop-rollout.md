@@ -96,14 +96,18 @@ Objetivo: em **tablet (≥768px)** e **desktop (≥1024px)**, cada tela usar a m
 
 ## Ondas de implementação
 
-| Onda | Escopo |
-|------|--------|
-| **0** | Shell + tokens globais (em curso) |
-| **1** | Financeiro + revisão VisualizadorCaixa desktop |
-| **2** | VendasGestao, ControleEntregas, DevolucaoTroca |
-| **3** | Produtos (tokens no grid), Movimentos, Conferências, Compras |
-| **4** | Relatórios restantes, Config, admin |
-| **—** | PDV / fullscreen sob pedido |
+| Onda | Escopo | Estado |
+|------|--------|--------|
+| **0** | Shell + tokens globais | ✅ |
+| **1** | Financeiro + componentes `financeiro/`, `agefin/` | ✅ tokens (`scripts/p38-token-migrate.mjs`) |
+| **2** | Vendas (exc. PDV fullscreen), `ControleEntregas`, `DevolucaoTroca` | ✅ tokens |
+| **3** | Produtos, estoque, compras, consumo interno | ✅ tokens + `TabelaDinamica` parcial |
+| **4** | Relatórios, config, admin, restantes em `src/pages` | ✅ tokens em massa |
+| **—** | PDV / AutoAtendimento / PDVCaixa | ⏸️ intocado (padrão F) |
+
+Ferramenta: `node scripts/p38-token-migrate.mjs [pastas…]` — substitui `gray-*`/`slate-*` por tokens shadcn P38.
+
+Pendente fino (iteração futura): `allViewports` em listas só-mobile; TreeGrid/VendasGestao com revisão visual manual; alguns `gray-*` semânticos em relatórios densos.
 
 ## Checklist por tela
 

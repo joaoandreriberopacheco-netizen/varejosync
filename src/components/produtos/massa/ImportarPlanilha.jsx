@@ -311,7 +311,7 @@ export default function ImportarPlanilha({ onParsed }) {
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-8 transition-colors hover:border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-muted/50/50 p-8 transition-colors hover:border-gray-400 hover:bg-muted"
         >
           <input
             ref={inputRef}
@@ -325,18 +325,18 @@ export default function ImportarPlanilha({ onParsed }) {
           <div className="flex flex-col items-center justify-center text-center pointer-events-none">
             {parsing ? (
               <>
-                <div className="w-12 h-12 rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-white animate-spin mb-3" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Processando arquivo...</p>
+                <div className="w-12 h-12 rounded-full border-4 border-border/40 border-t-gray-900 dark:border-t-white animate-spin mb-3" />
+                <p className="text-sm font-medium text-foreground">Processando arquivo...</p>
               </>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-3">
-                  <Upload className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                  <Upload className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                <p className="text-sm font-medium text-foreground mb-1">
                   Arraste o arquivo ou clique para selecionar
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Arquivos .xlsx apenas. Máximo 10 MB.
                 </p>
               </>

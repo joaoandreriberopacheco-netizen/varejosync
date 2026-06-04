@@ -106,12 +106,12 @@ export default function ListaUsuariosApp() {
 
   const getBadgePerfil = (user) => {
     if (user.perfil_acesso_nome) {
-      return <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border-0 font-normal text-xs">{user.perfil_acesso_nome}</Badge>;
+      return <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90 border-0 font-normal text-xs">{user.perfil_acesso_nome}</Badge>;
     }
     if (user.perfil) {
       return (
         <div className="flex items-center gap-1">
-          <Badge className={`border-0 font-normal text-xs ${MAPA_LEGADO[user.perfil] || 'bg-gray-100 text-gray-600'}`}>{user.perfil}</Badge>
+          <Badge className={`border-0 font-normal text-xs ${MAPA_LEGADO[user.perfil] || 'bg-gray-100 text-muted-foreground'}`}>{user.perfil}</Badge>
           <Badge className="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border-0 text-[10px]">legado</Badge>
         </div>
       );
@@ -121,7 +121,7 @@ export default function ListaUsuariosApp() {
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-12">
-      <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-border/40 border-t-gray-600 rounded-full animate-spin" />
     </div>
   );
 
@@ -157,11 +157,11 @@ export default function ListaUsuariosApp() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Usuários do Sistema</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-0.5">Vincule perfil de acesso e caixas autorizados</p>
+          <p className="text-xs text-muted-foreground font-light mt-0.5">Vincule perfil de acesso e caixas autorizados</p>
         </div>
         <Button
           size="sm"
-          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 px-3 text-xs"
+          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs"
           onClick={() => toast({ title: 'Para convidar usuários', description: 'Use a função convidarUsuarios no dashboard > functions', duration: 6000 })}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -170,10 +170,10 @@ export default function ListaUsuariosApp() {
       </div>
 
       {/* Tabela */}
-      <Card className="border-0 shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-        <CardHeader className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 pb-3 pt-3 px-4">
+      <Card className="border-0 shadow-sm bg-card overflow-hidden">
+        <CardHeader className="border-b border-border/40 bg-muted/50/50 pb-3 pt-3 px-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-foreground/90 flex items-center gap-2">
               <Users className="w-4 h-4" />
               Lista de Usuários
             </CardTitle>
@@ -184,26 +184,26 @@ export default function ListaUsuariosApp() {
                   Todos vinculados
                 </span>
               )}
-              <span className="text-xs text-gray-400">{usuarios.length} usuário{usuarios.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-muted-foreground">{usuarios.length} usuário{usuarios.length !== 1 ? 's' : ''}</span>
             </div>
           </div>
         </CardHeader>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
-                <TableHead className="text-xs text-gray-400 font-medium">Nome</TableHead>
-                <TableHead className="text-xs text-gray-400 font-medium hidden sm:table-cell">Email</TableHead>
-                <TableHead className="text-xs text-gray-400 font-medium">Perfil</TableHead>
-                <TableHead className="text-xs text-gray-400 font-medium hidden md:table-cell">Caixas</TableHead>
-                <TableHead className="text-xs text-gray-400 font-medium hidden lg:table-cell">Tabela Preço</TableHead>
-                <TableHead className="text-right text-xs text-gray-400 font-medium">Ações</TableHead>
+              <TableRow className="hover:bg-transparent border-border/40">
+                <TableHead className="text-xs text-muted-foreground font-medium">Nome</TableHead>
+                <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Email</TableHead>
+                <TableHead className="text-xs text-muted-foreground font-medium">Perfil</TableHead>
+                <TableHead className="text-xs text-muted-foreground font-medium hidden md:table-cell">Caixas</TableHead>
+                <TableHead className="text-xs text-muted-foreground font-medium hidden lg:table-cell">Tabela Preço</TableHead>
+                <TableHead className="text-right text-xs text-muted-foreground font-medium">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {usuarios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-gray-400 text-sm">
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground text-sm">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
@@ -211,44 +211,44 @@ export default function ListaUsuariosApp() {
                 usuarios.map(user => {
                   const caixasVinculadas = (user.caixas_pdv_autorizados_ids || []).length;
                   return (
-                    <TableRow key={user.id} className="border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <TableRow key={user.id} className="border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50">
                       <TableCell>
-                       <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{user.full_name || '-'}</div>
+                       <div className="font-medium text-foreground/90 text-sm">{user.full_name || '-'}</div>
                        {user.nickname && (
-                         <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
                            <AtSign className="w-2.5 h-2.5" />
                            {user.nickname}
                          </div>
                        )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <div className="text-xs text-gray-400">{user.email}</div>
+                        <div className="text-xs text-muted-foreground">{user.email}</div>
                       </TableCell>
                       <TableCell>{getBadgePerfil(user)}</TableCell>
                       <TableCell className="hidden md:table-cell">
                          {caixasVinculadas > 0 ? (
-                           <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                              <Monitor className="w-3 h-3" />
                              {caixasVinculadas} caixa{caixasVinculadas !== 1 ? 's' : ''}
                            </span>
                          ) : (
-                           <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                           <span className="text-xs text-gray-300 dark:text-muted-foreground">—</span>
                          )}
                        </TableCell>
                        <TableCell className="hidden lg:table-cell">
                          {user.tabela_preco_nome ? (
-                           <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                              <Tag className="w-3 h-3" />
                              {user.tabela_preco_nome}
                            </span>
                          ) : (
-                           <span className="text-[10px] text-gray-300 dark:text-gray-600 italic">usa padrão</span>
+                           <span className="text-[10px] text-gray-300 dark:text-muted-foreground italic">usa padrão</span>
                          )}
                        </TableCell>
                        <TableCell className="text-right">
                         <Button
                           size="sm" variant="ghost"
-                          className="h-7 w-7 p-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300"
                           onClick={() => handleEditar(user)}
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -265,13 +265,13 @@ export default function ListaUsuariosApp() {
 
       {/* Dialog de edição */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800">
+        <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-gray-400" />
+              <Shield className="w-4 h-4 text-muted-foreground" />
               Configurar Acesso
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               {editingUser?.full_name} — {editingUser?.email}
             </DialogDescription>
           </DialogHeader>
@@ -279,7 +279,7 @@ export default function ListaUsuariosApp() {
           <div className="space-y-4 py-2">
             {/* Nickname */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5">
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                 <AtSign className="w-3.5 h-3.5" />
                 Nickname (apelido nas operações)
               </label>
@@ -287,23 +287,23 @@ export default function ListaUsuariosApp() {
                 placeholder="Ex: João, Mari, Caixa 1..."
                 value={selectedNickname}
                 onChange={(e) => setSelectedNickname(e.target.value)}
-                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm"
+                className="bg-muted/50 border-0 shadow-sm h-9 text-sm"
               />
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 pl-1">
+              <p className="text-[10px] text-muted-foreground pl-1">
                 Usado para identificar o usuário em vendas, caixa e relatórios.
               </p>
             </div>
 
             {/* Perfil de acesso */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Perfil de Acesso</label>
+              <label className="text-xs text-muted-foreground font-medium">Perfil de Acesso</label>
               {perfisAcesso.length === 0 ? (
                 <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
                   Crie Perfis de Acesso primeiro na aba "Perfis de Acesso".
                 </p>
               ) : (
                 <Select value={selectedPerfilId} onValueChange={setSelectedPerfilId}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
+                  <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
                     <SelectValue placeholder="Selecione um perfil..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -319,7 +319,7 @@ export default function ListaUsuariosApp() {
 
             {/* Tabela de Preço */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5">
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5" />
                 Tabela de Preço
               </label>
@@ -329,12 +329,12 @@ export default function ListaUsuariosApp() {
                 </p>
               ) : (
                 <Select value={selectedTabelaId} onValueChange={setSelectedTabelaId}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
+                  <SelectTrigger className="bg-muted/50 border-0 shadow-sm h-9 text-sm">
                     <SelectValue placeholder="Usar tabela padrão do sistema" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={null}>
-                      <span className="text-gray-400 italic text-xs">Usar tabela padrão do sistema</span>
+                      <span className="text-muted-foreground italic text-xs">Usar tabela padrão do sistema</span>
                     </SelectItem>
                     {tabelasPreco.map(t => (
                       <SelectItem key={t.id} value={t.id}>
@@ -347,7 +347,7 @@ export default function ListaUsuariosApp() {
                   </SelectContent>
                 </Select>
               )}
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 pl-1">
+              <p className="text-[10px] text-muted-foreground pl-1">
                 Se não selecionada, usa a tabela marcada como padrão.
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function ListaUsuariosApp() {
             {/* Caixas PDV autorizados */}
             {contasCaixa.length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5">
+                <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                   <Monitor className="w-3.5 h-3.5" />
                   Caixas PDV Autorizados
                 </label>
@@ -369,15 +369,15 @@ export default function ListaUsuariosApp() {
                         onClick={() => toggleCaixa(conta.id)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                           ativo
-                            ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'bg-primary text-white dark:bg-gray-200 dark:text-foreground'
+                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
                         <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center ${
                           ativo ? 'bg-white/20 dark:bg-black/10' : 'border border-gray-300 dark:border-gray-600'
                         }`}>
                           {ativo && (
-                            <svg className="w-2.5 h-2.5 text-white dark:text-gray-900" fill="none" viewBox="0 0 12 12">
+                            <svg className="w-2.5 h-2.5 text-white dark:text-foreground" fill="none" viewBox="0 0 12 12">
                               <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
@@ -387,7 +387,7 @@ export default function ListaUsuariosApp() {
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 pl-1">
+                <p className="text-[10px] text-muted-foreground pl-1">
                   Se nenhum selecionado, o usuário verá todos os caixas disponíveis.
                 </p>
               </div>
@@ -400,7 +400,7 @@ export default function ListaUsuariosApp() {
             </Button>
             <Button
               size="sm"
-              className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs"
+              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs"
               onClick={handleSalvar}
             >
               Salvar

@@ -24,17 +24,17 @@ export default function Armazenagem() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-background w-full max-w-full overflow-x-hidden">
       <div className="p-4 md:p-6 space-y-6 w-full max-w-full overflow-x-hidden">
         <div>
-          <h1 className="text-2xl font-light text-gray-900 dark:text-white">Módulo de Estoque</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-light text-foreground">Módulo de Estoque</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Gerencie seu inventário, separação de pedidos, entradas, saídas e histórico completo
           </p>
         </div>
 
         <Tabs defaultValue="separacao" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm overflow-hidden gap-0.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-card rounded-xl p-1 shadow-sm overflow-hidden gap-0.5">
             <TabsTrigger
               value="separacao"
               title="Fila de Separação"
@@ -84,7 +84,7 @@ export default function Armazenagem() {
 
           <TabsContent value="auditoria" className="mt-6">
             <Tabs defaultValue="contagem" className="w-full">
-              <TabsList className="bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm mb-4 inline-flex w-full max-w-full overflow-hidden">
+              <TabsList className="bg-card rounded-xl p-1 shadow-sm mb-4 inline-flex w-full max-w-full overflow-hidden">
                 <TabsTrigger
                   value="contagem"
                   onClick={() => { setConferenciaAtiva(null); }}
@@ -119,7 +119,7 @@ export default function Armazenagem() {
               </TabsContent>
 
               <TabsContent value="auditoria-sub">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm w-full max-w-full overflow-x-hidden">
+                <div className="bg-card rounded-2xl p-4 shadow-sm w-full max-w-full overflow-x-hidden">
                   {conferenciaAuditoria ? (
                     <ConferenciaAuditoria
                       conferencia={conferenciaAuditoria}

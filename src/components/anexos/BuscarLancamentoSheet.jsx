@@ -113,7 +113,7 @@ function filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo }) {
 function FilterChipRow({ label, icon: Icon, options, value, onChange }) {
   return (
     <div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-muted-foreground">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
         <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
@@ -128,7 +128,7 @@ function FilterChipRow({ label, icon: Icon, options, value, onChange }) {
               className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
                 active
                   ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
-                  : 'bg-gray-100 text-gray-600 shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                  : 'bg-gray-100 text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
               }`}
             >
               {opt.label}
@@ -204,22 +204,22 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <p className="text-sm font-medium text-gray-700 dark:text-foreground">Selecionar lançamento</p>
+        <p className="text-sm font-medium text-foreground/90 dark:text-foreground">Selecionar lançamento</p>
       </div>
 
       <div className="shrink-0 rounded-[20px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
         <div className="flex items-center gap-2">
           <div className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
-            <Search className="h-4 w-4 flex-none text-gray-400 dark:text-muted-foreground" />
+            <Search className="h-4 w-4 flex-none text-muted-foreground dark:text-muted-foreground" />
             <input autoComplete="off"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Nome, valor, vencimento (dd/mm)…"
-              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-foreground dark:placeholder:text-muted-foreground"
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground dark:text-foreground dark:placeholder:text-muted-foreground"
             />
             {query ? (
               <button type="button" onClick={() => setQuery('')} className="shrink-0">
-                <X className="h-3.5 w-3.5 text-gray-400" />
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             ) : null}
           </div>
@@ -228,7 +228,7 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
             onClick={() => setFilterOpen(true)}
             className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
           >
-            <SlidersHorizontal className="h-4 w-4 text-gray-800 dark:text-foreground" />
+            <SlidersHorizontal className="h-4 w-4 text-foreground" />
             {hasActiveFilters ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
                 ·
@@ -237,11 +237,11 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
           </button>
         </div>
         <div className="flex items-center justify-between px-1 pt-2">
-          <p className="text-[11px] text-gray-500 dark:text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
             {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''}
           </p>
           {(hasActiveFilters || query) && (
-            <button type="button" onClick={limparFiltros} className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+            <button type="button" onClick={limparFiltros} className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
               <X className="h-3 w-3" /> Limpar
             </button>
           )}
@@ -256,10 +256,10 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
         )}
         {carregando ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : lancamentos.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400 dark:text-muted-foreground">
+          <p className="py-10 text-center text-sm text-muted-foreground dark:text-muted-foreground">
             {cache.length === 0
               ? 'Nenhum lançamento disponível. Crie ou importe contas no Financeiro.'
               : 'Nenhum lançamento corresponde à busca ou aos filtros.'}
@@ -400,10 +400,10 @@ function LancamentoItem({ lancamento, selecionado, onClick }) {
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`truncate text-sm font-medium ${selecionado ? 'text-foreground' : 'text-gray-800 dark:text-foreground'}`}>
+        <p className={`truncate text-sm font-medium ${selecionado ? 'text-foreground' : 'text-foreground'}`}>
           {lancamento.descricao || '—'}
         </p>
-        <p className={`mt-0.5 text-xs ${selecionado ? 'text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground'}`}>
+        <p className={`mt-0.5 text-xs ${selecionado ? 'text-muted-foreground' : 'text-muted-foreground dark:text-muted-foreground'}`}>
           {lancamento.data_vencimento ? formatVencimentoBR(lancamento.data_vencimento) : '—'}
           {lancamento.status && ` · ${lancamento.status}`}
         </p>

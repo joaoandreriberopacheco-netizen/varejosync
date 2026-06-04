@@ -14,7 +14,7 @@ export const isCadastroIncompleto = (produto) => {
 
 export const getStockStatusIndicator = (produto) => {
   if (!produto.ativo) {
-    return <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-xs"><div className="w-2 h-2 bg-gray-600 rounded-full" /> Inativo</div>;
+    return <div className="flex items-center gap-1.5 text-muted-foreground text-xs"><div className="w-2 h-2 bg-gray-600 rounded-full" /> Inativo</div>;
   }
   const estoque = produto.estoque_atual || 0;
   const minimo = produto.estoque_minimo || 0;

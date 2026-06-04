@@ -218,10 +218,10 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-card">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
           {dados.length} produto{dados.length !== 1 ? 's' : ''} •{' '}
           {Object.keys(alteracoes).length} alterado{Object.keys(alteracoes).length !== 1 ? 's' : ''}
         </div>
@@ -243,15 +243,15 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
       </div>
 
       {/* Grade */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-white dark:bg-gray-900">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-card">
         <table className="w-full border-collapse">
-          <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
+          <thead className="sticky top-0 z-10 bg-muted/50">
             <tr>
               {COLUNAS.map(col => (
                 <th
                   key={col.key}
                   style={{ width: col.largura }}
-                  className="px-3 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 whitespace-nowrap"
+                  className="px-3 py-2 text-left text-xs font-semibold text-foreground/90 border-r border-border/40 whitespace-nowrap"
                 >
                   {col.label}
                 </th>
@@ -262,7 +262,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
             {dados.map((linha) => (
               <tr
                 key={linha.id}
-                className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                className={`border-b border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50 ${
                   alteracoes[linha.id] ? 'bg-blue-50 dark:bg-blue-900/10' : ''
                 }`}
               >
@@ -278,13 +278,13 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                       <td
                         key={col.key}
                         style={{ width: col.largura }}
-                        className="px-3 py-2 border-r border-gray-200 dark:border-gray-700 text-center"
+                        className="px-3 py-2 border-r border-border/40 text-center"
                         onClick={() => handleToggleBoolean(linha.id, col.key)}
                       >
                         <div className={`inline-flex items-center justify-center w-6 h-6 rounded cursor-pointer transition-colors ${
-                          valor ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                          valor ? 'bg-primary dark:bg-gray-200' : 'bg-muted border border-gray-300 dark:border-gray-600'
                         }`}>
-                          {valor && <span className="text-white dark:text-gray-900 text-xs font-bold">✓</span>}
+                          {valor && <span className="text-white dark:text-foreground text-xs font-bold">✓</span>}
                         </div>
                       </td>
                     );
@@ -296,7 +296,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                       <td
                         key={col.key}
                         style={{ width: col.largura }}
-                        className="px-2 py-1.5 border-r border-gray-200 dark:border-gray-700"
+                        className="px-2 py-1.5 border-r border-border/40"
                       >
                         <div className="flex items-center gap-0.5">
                           {[0, 1, 2, 3].map(n => (
@@ -305,8 +305,8 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                               onClick={() => handleSetDecimais(linha.id, col.key, n)}
                               className={`w-7 h-6 text-xs rounded transition-colors ${
                                 (valor ?? 0) === n
-                                  ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-bold'
-                                  : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                  ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground font-bold'
+                                  : 'text-muted-foreground hover:bg-muted'
                               }`}
                             >
                               {n}
@@ -323,11 +323,11 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                       <td
                         key={col.key}
                         style={{ width: col.largura }}
-                        className={`px-3 py-2 border-r border-gray-200 dark:border-gray-700 ${
+                        className={`px-3 py-2 border-r border-border/40 ${
                           status === 'erro' ? 'bg-red-100 dark:bg-red-900/20' : status === 'aviso' ? 'bg-yellow-100 dark:bg-yellow-900/20' : ''
                         }`}
                       >
-                        <div className="text-xs text-gray-700 dark:text-gray-300">{valor}</div>
+                        <div className="text-xs text-foreground/90">{valor}</div>
                       </td>
                     );
                   }
@@ -337,7 +337,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                     <td
                       key={col.key}
                       style={{ width: col.largura }}
-                      className={`px-3 py-2 border-r border-gray-200 dark:border-gray-700 relative ${
+                      className={`px-3 py-2 border-r border-border/40 relative ${
                         status === 'erro' ? 'bg-red-100 dark:bg-red-900/20' : status === 'aviso' ? 'bg-yellow-100 dark:bg-yellow-900/20' : ''
                       }`}
                       onClick={() => setCelulaSelecionada({ produtoId: linha.id, chaveColuna: col.key })}
@@ -359,7 +359,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                           }}
                           onBlur={() => setCelulaEmEdicao(null)}
                           autoFocus
-                          className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-blue-500 text-gray-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1 text-xs bg-white dark:bg-muted border border-blue-500 text-foreground rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       ) : (
                         <input autoComplete="off"
@@ -368,7 +368,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                           readOnly
                           onKeyDown={(e) => handleKeyDown(e, linha.id, col.key)}
                           onFocus={() => setCelulaSelecionada({ produtoId: linha.id, chaveColuna: col.key })}
-                          className={`w-full px-2 py-1 text-xs bg-transparent border-0 cursor-pointer text-gray-900 dark:text-white ${
+                          className={`w-full px-2 py-1 text-xs bg-transparent border-0 cursor-pointer text-foreground ${
                             isSelected ? 'ring-1 ring-blue-500 rounded' : ''
                           }`}
                         />
@@ -386,7 +386,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
       </div>
 
       {/* Legenda */}
-      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 dark:text-gray-400 space-y-2">
+      <div className="px-4 py-3 border-t border-border/40 bg-muted/50/50 text-xs text-muted-foreground space-y-2">
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-100 dark:bg-red-900/20 rounded" />
@@ -401,13 +401,13 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
             Alterado
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-800 dark:bg-gray-200">
-              <span className="text-white dark:text-gray-900 text-[10px] font-bold">✓</span>
+            <div className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary dark:bg-gray-200">
+              <span className="text-white dark:text-foreground text-[10px] font-bold">✓</span>
             </div>
             Preço Livre
           </div>
         </div>
-        <div className="text-gray-600 dark:text-gray-300">
+        <div className="text-muted-foreground">
           <strong>Atalhos:</strong> Enter = editar | Esc = cancelar | Setas/Tab = navegar | Arraste canto = fill
         </div>
       </div>

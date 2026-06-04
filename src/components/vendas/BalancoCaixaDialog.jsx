@@ -147,7 +147,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
       valor: contaCaixa.saldo_inicial || 0,
       horario: null,
       icone: Wallet,
-      cor: 'text-gray-500'
+      cor: 'text-muted-foreground'
     });
 
     // Adicionar reforços
@@ -268,17 +268,17 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gray-50 dark:bg-gray-900">
-          <DialogHeader className="p-6 pb-4 bg-white dark:bg-gray-800 shadow-sm">
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-background">
+          <DialogHeader className="p-6 pb-4 bg-card shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg">
                 <Wallet className="w-6 h-6 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 font-glacial">
+                <DialogTitle className="text-xl font-semibold text-foreground dark:text-gray-100 font-glacial">
                   Balanço do Caixa
                 </DialogTitle>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {contaCaixa.nome} - {format(new Date(), 'dd/MM/yyyy')}
                 </p>
               </div>
@@ -288,7 +288,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
           <div className="overflow-y-auto p-6 space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-4 border-gray-200 border-t-emerald-500 rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-border/40 border-t-emerald-500 rounded-full animate-spin"></div>
               </div>
             ) : (
               <>
@@ -296,8 +296,8 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                 <Card className="shadow-sm border-0 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Saldo Atual</p>
-                      <p className="text-4xl font-bold text-gray-900 dark:text-gray-100 font-glacial">
+                      <p className="text-sm text-muted-foreground mb-2">Saldo Atual</p>
+                      <p className="text-4xl font-bold text-foreground dark:text-gray-100 font-glacial">
                         {formatValor(saldoAtual)}
                       </p>
                     </div>
@@ -309,27 +309,27 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                   
                   {/* Coluna Direita - Recebimentos do Turno */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground/90 mb-3 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4" />
                       Recebimentos do Turno
                     </h3>
-                    <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
+                    <Card className="shadow-sm border-0 bg-card overflow-hidden">
                       <div className="divide-y divide-gray-100 dark:divide-gray-700">
                         {Object.entries(composicaoSaldo).map(([forma, valor]) => {
                           const Icon = getIconeFormaPagamento(forma);
                           return (
-                            <div key={forma} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <div key={forma} className="p-4 hover:bg-muted/30 transition-colors">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
                                   {Icon}
                                 </div>
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  <p className="text-sm font-medium text-foreground dark:text-gray-100">
                                     {forma}
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                  <p className="text-base font-semibold text-foreground dark:text-gray-100">
                                     {formatValor(valor)}
                                   </p>
                                 </div>
@@ -345,10 +345,10 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                               <ShoppingBag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                              <p className="text-sm font-semibold text-foreground dark:text-gray-100">
                                 Total Vendas
                               </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                              <p className="text-xs text-muted-foreground">
                                 {vendas.length} pedidos
                               </p>
                             </div>
@@ -365,43 +365,43 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
 
                   {/* Coluna Esquerda - Movimentações do Turno */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground/90 mb-3 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       Movimentações do Turno
                     </h3>
-                    <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
+                    <Card className="shadow-sm border-0 bg-card overflow-hidden">
                       <div className="divide-y divide-gray-100 dark:divide-gray-700">
                         {extratoTurno.map((item, idx) => {
                           const Icon = item.icone;
                           return (
-                            <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <div key={idx} className="p-4 hover:bg-muted/30 transition-colors">
                               <div className="flex items-start gap-3">
-                                <div className={`w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${item.cor}`}>
+                                <div className={`w-8 h-8 rounded-lg bg-muted flex items-center justify-center ${item.cor}`}>
                                   <Icon className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    <span className="text-sm font-medium text-foreground dark:text-gray-100">
                                       {item.tipo}
                                     </span>
                                     {item.horario && (
                                       <>
                                         <span className="text-gray-300">•</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        <span className="text-xs text-muted-foreground">
                                           {formatHora(item.horario)}
                                         </span>
                                       </>
                                     )}
                                   </div>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                  <p className="text-xs text-muted-foreground truncate">
                                     {item.descricao}
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-foreground dark:text-gray-100'}`}>
                                     {item.sinal && item.sinal} {formatValor(item.valor)}
                                   </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  <p className="text-xs text-muted-foreground mt-1">
                                     Saldo: {formatValor(item.saldoAcumulado)}
                                   </p>
                                 </div>

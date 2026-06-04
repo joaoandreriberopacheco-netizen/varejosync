@@ -33,13 +33,13 @@ export default function RecorrenciaEscopoDialog({ open, onClose, onConfirm, mode
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="sm:max-w-xs p-0 gap-0 dark:bg-gray-900 dark:border-gray-700 rounded-2xl overflow-hidden">
+      <DialogContent className="sm:max-w-xs p-0 gap-0 dark:bg-background dark:border-border/40 rounded-2xl overflow-hidden">
         <div className="px-5 pt-5 pb-3 flex items-center gap-2">
-          <Icon className="w-4 h-4 text-gray-400" />
+          <Icon className="w-4 h-4 text-muted-foreground" />
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{titulo}</p>
         </div>
-        <p className="text-xs text-gray-400 px-5 pb-3">{subtitulo}</p>
-        <div className="h-px bg-gray-100 dark:bg-gray-800" />
+        <p className="text-xs text-muted-foreground px-5 pb-3">{subtitulo}</p>
+        <div className="h-px bg-muted" />
         <div className="divide-y divide-gray-50 dark:divide-gray-800">
           {opcoes.map(op => (
             <button
@@ -55,16 +55,16 @@ export default function RecorrenciaEscopoDialog({ open, onClose, onConfirm, mode
                   onClose();
                 }
               }}
-              className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-muted/40 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left disabled:opacity-50 disabled:pointer-events-none"
             >
               <div>
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{op.label}</p>
-                <p className="text-[0.65rem] text-gray-400 mt-0.5">{op.desc}</p>
+                <p className="text-[0.65rem] text-muted-foreground mt-0.5">{op.desc}</p>
               </div>
               {working ? (
-                <Loader2 className="w-4 h-4 text-gray-400 animate-spin flex-none" />
+                <Loader2 className="w-4 h-4 text-muted-foreground animate-spin flex-none" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-none" />
+                <ChevronRight className="w-4 h-4 text-gray-300 dark:text-muted-foreground flex-none" />
               )}
             </button>
           ))}

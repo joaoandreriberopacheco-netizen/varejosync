@@ -70,8 +70,8 @@ export default function SearchableSelect({
   return (
     <div ref={containerRef} className="relative flex-1 min-w-0 w-full">
       {/* Trigger */}
-      <div className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-gray-900 overflow-hidden">
-        <Search className="h-4 w-4 shrink-0 text-gray-400" />
+      <div className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-background overflow-hidden">
+        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input autoComplete="off"
           ref={inputRef}
           type="text"
@@ -80,7 +80,7 @@ export default function SearchableSelect({
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setIsOpen(true)}
           onClick={() => setIsOpen(true)}
-          className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none dark:text-white dark:placeholder-gray-400"
+          className="flex-1 min-w-0 bg-transparent text-sm text-foreground placeholder-gray-500 outline-none dark:text-white dark:placeholder-gray-400"
         />
         {selectedLabel && (
           <button
@@ -90,16 +90,16 @@ export default function SearchableSelect({
               e.stopPropagation();
               handleClear();
             }}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-800"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-muted"
           >
-            <X className="h-4 w-4 text-gray-500" />
+            <X className="h-4 w-4 text-muted-foreground" />
           </button>
         )}
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-[60] mt-1 max-h-60 overflow-y-auto rounded-2xl border-0 bg-white shadow-lg dark:bg-gray-800">
+        <div className="absolute top-full left-0 right-0 z-[60] mt-1 max-h-60 overflow-y-auto rounded-2xl border-0 bg-white shadow-lg dark:bg-muted">
           {filtered.length > 0 ? (
             <>
               {filtered.map((item) => (
@@ -107,7 +107,7 @@ export default function SearchableSelect({
                   key={item[idField]}
                   type="button"
                   onClick={() => handleSelect(item)}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-muted/40 dark:text-white dark:hover:bg-primary/90 border-b border-border/40 last:border-b-0"
                 >
                   {item[displayField]}
                 </button>
@@ -117,7 +117,7 @@ export default function SearchableSelect({
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleAddNew}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-t border-gray-100 dark:border-gray-700"
+                  className="w-full flex items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-t border-border/40"
                 >
                   <Plus className="h-4 w-4" />
                   Adicionar: "{search}"
@@ -134,7 +134,7 @@ export default function SearchableSelect({
               Adicionar: "{search}"
             </button>
           ) : (
-            <div className="px-4 py-3 text-center text-xs text-gray-400">
+            <div className="px-4 py-3 text-center text-xs text-muted-foreground">
               Nenhum resultado
             </div>
           )}

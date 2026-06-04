@@ -114,10 +114,10 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground dark:border-border/40">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
-            <Columns className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Columns className="w-5 h-5 text-muted-foreground" />
             Selecionar Colunas
           </DialogTitle>
         </DialogHeader>
@@ -128,13 +128,13 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
             <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Columns className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />
-                <Label className="text-sm font-medium text-gray-800 dark:text-gray-200">Ordem das colunas</Label>
+                <Label className="text-sm font-medium text-foreground">Ordem das colunas</Label>
               </div>
               <div className="space-y-1.5">
                 {orderedSelectedColumns.map((columnId, index) => (
-                  <div key={columnId} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded border border-indigo-100 dark:border-indigo-900/40">
-                    <span className="w-5 text-[10px] font-mono text-gray-400">{index + 1}</span>
-                    <span className="flex-1 min-w-0 truncate text-sm text-gray-700 dark:text-gray-300">{columnLabelById[columnId]}</span>
+                  <div key={columnId} className="flex items-center gap-2 p-2 bg-card rounded border border-indigo-100 dark:border-indigo-900/40">
+                    <span className="w-5 text-[10px] font-mono text-muted-foreground">{index + 1}</span>
+                    <span className="flex-1 min-w-0 truncate text-sm text-foreground/90">{columnLabelById[columnId]}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -160,18 +160,18 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">A ordem de cima para baixo vira esquerda para direita na tabela.</p>
+              <p className="mt-2 text-[11px] text-muted-foreground">A ordem de cima para baixo vira esquerda para direita na tabela.</p>
             </div>
           )}
 
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              <Label className="text-sm font-medium text-gray-800 dark:text-gray-200">Coluna Fixa</Label>
+              <Package className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-sm font-medium text-foreground">Coluna Fixa</Label>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded">
+            <div className="flex items-center gap-2 p-2 bg-white dark:bg-muted rounded">
               <Checkbox checked={true} disabled className="dark:border-gray-500" />
-              <Label className="text-sm text-gray-600 dark:text-gray-300">Produto (sempre visível)</Label>
+              <Label className="text-sm text-muted-foreground">Produto (sempre visível)</Label>
             </div>
           </div>
 
@@ -185,11 +185,11 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
             const allSelected = allColumns.every(col => tempColumns.includes(col));
             
             return (
-              <div key={groupKey} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div key={groupKey} className="p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <Label className="text-sm font-medium text-gray-800 dark:text-gray-200">{group.name}</Label>
+                    <Icon className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium text-foreground">{group.name}</Label>
                   </div>
                   <Button
                     variant="ghost"
@@ -201,7 +201,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                         setTempColumns(prev => [...new Set([...prev, ...allColumns])]);
                       }
                     }}
-                    className="h-7 text-xs dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="h-7 text-xs dark:text-foreground/90 dark:hover:bg-primary/90"
                   >
                     {allSelected ? 'Desmarcar todos' : 'Marcar todos'}
                   </Button>
@@ -212,7 +212,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                   {Array.isArray(group.columns) && group.columns.map(column => (
                     <div
                       key={column.id}
-                      className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                      className="flex items-center gap-2 p-2 bg-white dark:bg-muted rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
                       onClick={() => handleToggleColumn(column.id)}
                     >
                       <Checkbox
@@ -220,20 +220,20 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                         onCheckedChange={() => handleToggleColumn(column.id)}
                         className="dark:border-gray-500"
                       />
-                      <Label className="text-sm cursor-pointer text-gray-700 dark:text-gray-300">{column.label}</Label>
+                      <Label className="text-sm cursor-pointer text-foreground/90">{column.label}</Label>
                     </div>
                   ))}
                 </div>
 
                 {/* Subgrupos */}
                 {Array.isArray(group.subgroups) && group.subgroups.map((subgroup, idx) => (
-                  <div key={idx} className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{subgroup.name}</div>
+                  <div key={idx} className="mt-3 pt-3 border-t border-border/40">
+                    <div className="text-xs font-medium text-muted-foreground mb-2">{subgroup.name}</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {Array.isArray(subgroup.columns) && subgroup.columns.map(column => (
                         <div
                           key={column.id}
-                          className="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                          className="flex items-center gap-2 p-2 bg-white dark:bg-muted rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
                           onClick={() => handleToggleColumn(column.id)}
                         >
                           <Checkbox
@@ -241,7 +241,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
                             onCheckedChange={() => handleToggleColumn(column.id)}
                             className="dark:border-gray-500"
                           />
-                          <Label className="text-sm cursor-pointer text-gray-700 dark:text-gray-300">{column.label}</Label>
+                          <Label className="text-sm cursor-pointer text-foreground/90">{column.label}</Label>
                         </div>
                       ))}
                     </div>
@@ -257,7 +257,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
             type="button"
             variant="ghost"
             onClick={() => setTempColumns([...DEFAULT_CATALOG_PRODUTO_COLUMNS])}
-            className="dark:text-gray-300 dark:hover:bg-gray-800"
+            className="dark:text-foreground/90 dark:hover:bg-muted"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Resetar padrão
@@ -266,13 +266,13 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
           <Button
             variant="outline"
             onClick={onClose}
-            className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+            className="dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white"
+            className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-muted/400 text-white"
           >
             Aplicar
           </Button>

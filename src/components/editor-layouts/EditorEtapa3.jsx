@@ -73,13 +73,13 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 p-4 md:p-6 max-w-2xl mx-auto w-full">
+    <div className="flex-1 flex flex-col bg-card p-4 md:p-6 max-w-2xl mx-auto w-full">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-foreground">
           {isNovo ? 'Salvar Novo Layout' : 'Atualizar Layout'}
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           {isNovo ? 'Nomeie e adicione observações ao seu novo layout' : 'Atualize as informações do layout'}
         </p>
       </div>
@@ -88,17 +88,17 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
       <div className="flex-1 space-y-4">
         {/* Tipo Documento (read-only) */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
             Tipo de Documento
           </label>
-          <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700">
+          <div className="px-3 py-2 bg-muted rounded-lg text-foreground border border-border/40">
             {tipoDocumento.nome}
           </div>
         </div>
 
         {/* Nome do Layout */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
             Nome do Layout *
           </label>
           <Input
@@ -111,12 +111,12 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
 
         {/* Blocos Utilizados (info) */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
             Blocos Utilizados
           </label>
-          <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 text-sm">
+          <div className="px-3 py-2 bg-muted/50 rounded-lg text-foreground border border-border/40 text-sm">
             {blocksConfig.length} blocos configurados
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {blocksConfig.map(b => b.tipo).join(', ')}
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
 
         {/* Observações */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
             Observações (opcional)
           </label>
           <Textarea
@@ -138,7 +138,7 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
       </div>
 
       {/* Rodapé com Botões */}
-      <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex gap-3 mt-6 pt-4 border-t border-border/40">
         <Button variant="outline" onClick={onVoltar} className="flex items-center gap-2">
           <ChevronLeft className="w-4 h-4" />
           Voltar

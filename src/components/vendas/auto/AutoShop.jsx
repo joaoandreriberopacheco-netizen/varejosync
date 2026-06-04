@@ -195,7 +195,7 @@ export default function AutoShop({
 
   return (
     <motion.div 
-      className="flex-1 flex flex-col h-full bg-gray-100 dark:bg-gray-900 overflow-hidden"
+      className="flex-1 flex flex-col h-full bg-gray-100 dark:bg-background overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -215,9 +215,9 @@ export default function AutoShop({
       )}
 
       {/* Header Simples */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 shadow-sm z-20">
+      <div className="bg-card border-b border-border/40 p-4 shadow-sm z-20">
         <div className="flex items-center justify-between max-w-7xl mx-auto w-full gap-4">
-          <Button variant="ghost" onClick={onBack} className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 h-12 px-4 rounded-xl">
+          <Button variant="ghost" onClick={onBack} className="text-muted-foreground hover:bg-muted h-12 px-4 rounded-xl">
             <ArrowLeft className="w-6 h-6 mr-2" />
             <span className="text-lg font-medium">Voltar</span>
           </Button>
@@ -225,20 +225,20 @@ export default function AutoShop({
           <div className="flex-1 flex items-center justify-center">
             <div className="relative w-full max-w-2xl flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground" />
                 <Input 
                   placeholder="Buscar produtos..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-12 h-14 text-lg bg-gray-100 dark:bg-gray-700 border-transparent rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:text-white placeholder:text-gray-400 w-full shadow-inner"
+                  className="pl-12 h-14 text-lg bg-muted border-transparent rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:text-white placeholder:text-muted-foreground w-full shadow-inner"
                 />
               </div>
               <Button 
                 variant="ghost" 
-                className="md:hidden h-14 w-14 rounded-2xl bg-gray-100 dark:bg-gray-700"
+                className="md:hidden h-14 w-14 rounded-2xl bg-muted"
                 onClick={() => setShowMobileFilters(true)}
               >
-                <SlidersHorizontal className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                <SlidersHorizontal className="w-6 h-6 text-muted-foreground" />
               </Button>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function AutoShop({
               </div>
               <div className="overflow-hidden text-left">
                 <p className="text-xs text-indigo-600 dark:text-indigo-400 uppercase font-bold tracking-wider">Cliente</p>
-                <p className="text-base font-bold text-gray-800 dark:text-gray-200 truncate max-w-[150px]">{cliente.nome}</p>
+                <p className="text-base font-bold text-foreground truncate max-w-[150px]">{cliente.nome}</p>
               </div>
             </div>
           )}
@@ -267,13 +267,13 @@ export default function AutoShop({
       {/* Conteúdo Principal */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar de Filtros (Desktop) */}
-        <div className="hidden md:flex w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col overflow-y-auto p-4 gap-6 shrink-0">
+        <div className="hidden md:flex w-64 bg-card border-r border-border/40 flex-col overflow-y-auto p-4 gap-6 shrink-0">
           
           {/* Departamentos Hierárquicos */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <List className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-base font-bold text-gray-900 dark:text-white uppercase tracking-wide">Departamentos</h3>
+              <h3 className="text-base font-bold text-foreground uppercase tracking-wide">Departamentos</h3>
             </div>
             
             <div className="space-y-1">
@@ -282,7 +282,7 @@ export default function AutoShop({
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${
                   selectedCategory === 'Todos' 
                     ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' 
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    : 'text-muted-foreground hover:bg-muted/50'
                 }`}
               >
                 Todos os Produtos
@@ -298,7 +298,7 @@ export default function AutoShop({
                           toggleCategoryExpand(cat.name);
                           setSelectedCategory(cat.name);
                         }}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 hover:no-underline"
+                        className="px-3 py-2 text-sm font-medium text-foreground/90 hover:text-indigo-600 hover:no-underline"
                       >
                         <div className="flex items-center gap-2">
                           {cat.name}
@@ -323,7 +323,7 @@ export default function AutoShop({
                                     className={`w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
                                         selectedCategory === `${cat.name} > ${sub.name}`
                                         ? 'text-indigo-600 font-bold bg-indigo-50'
-                                        : 'text-gray-600 hover:text-indigo-600'
+                                        : 'text-muted-foreground hover:text-indigo-600'
                                     }`}
                                   >
                                     • {sub.name}
@@ -346,7 +346,7 @@ export default function AutoShop({
                                         className={`text-[11px] px-2.5 py-1 rounded-full transition-all border ${
                                         selectedTags.includes(tag)
                                             ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
-                                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-indigo-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'
+                                            : 'bg-muted/40 border-border/40 text-muted-foreground hover:border-indigo-300 dark:bg-muted dark:border-border/40 dark:text-foreground/90'
                                         }`}
                                     >
                                         {tag}
@@ -363,11 +363,11 @@ export default function AutoShop({
             </div>
           </div>
 
-          <div className="h-px bg-gray-200 dark:bg-gray-700" />
+          <div className="h-px bg-muted" />
 
           {/* Preço */}
           <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Preço</h3>
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">Preço</h3>
             <div className="px-2">
               <Slider
                 min={0}
@@ -377,19 +377,19 @@ export default function AutoShop({
                 onValueChange={setPriceRange}
                 className="mb-4"
               />
-              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 font-medium">
+              <div className="flex items-center justify-between text-sm text-muted-foreground font-medium">
                 <span>R$ {priceRange[0]}</span>
                 <span>R$ {priceRange[1]}</span>
               </div>
             </div>
           </div>
 
-          <div className="h-px bg-gray-200 dark:bg-gray-700" />
+          <div className="h-px bg-muted" />
 
           {/* Marcas */}
           {structure.brands.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3">Marcas</h3>
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">Marcas</h3>
               <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                 {structure.brands.map(brand => (
                   <div key={brand} className="flex items-center space-x-2">
@@ -400,7 +400,7 @@ export default function AutoShop({
                     />
                     <label
                       htmlFor={`brand-${brand}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-600 dark:text-gray-300"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-muted-foreground"
                     >
                       {brand}
                     </label>
@@ -427,10 +427,10 @@ export default function AutoShop({
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="md:hidden fixed left-0 top-0 bottom-0 w-4/5 max-w-sm bg-white dark:bg-gray-900 z-50 shadow-2xl flex flex-col"
+                className="md:hidden fixed left-0 top-0 bottom-0 w-4/5 max-w-sm bg-card z-50 shadow-2xl flex flex-col"
               >
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="p-4 border-b border-border/40 flex items-center justify-between bg-muted/50">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <Filter className="w-5 h-5" /> Filtros
                   </h2>
                   <Button variant="ghost" size="icon" onClick={() => setShowMobileFilters(false)}>
@@ -441,14 +441,14 @@ export default function AutoShop({
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
                   {/* Conteúdo Mobile */}
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3">Departamentos</h3>
+                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">Departamentos</h3>
                     <div className="space-y-1">
                       <button
                         onClick={() => setSelectedCategory('Todos')}
                         className={`w-full text-left px-3 py-3 rounded-lg text-base font-medium transition-all flex items-center justify-between ${
                           selectedCategory === 'Todos' 
                             ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' 
-                            : 'text-gray-600 dark:text-gray-400 active:bg-gray-100'
+                            : 'text-muted-foreground active:bg-gray-100'
                         }`}
                       >
                         Todos
@@ -465,7 +465,7 @@ export default function AutoShop({
                             className={`w-full text-left px-3 py-3 rounded-lg text-base font-medium transition-all flex items-center justify-between ${
                               selectedCategory === cat.name 
                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' 
-                                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100'
+                                : 'text-muted-foreground active:bg-gray-100'
                             }`}
                           >
                             {cat.name}
@@ -478,13 +478,13 @@ export default function AutoShop({
                                 <div 
                                   key={tag} 
                                   onClick={() => toggleTag(tag)}
-                                  className="flex items-center gap-3 p-2 rounded-lg active:bg-gray-50"
+                                  className="flex items-center gap-3 p-2 rounded-lg active:bg-muted/40"
                                 >
                                   <Checkbox 
                                     checked={selectedTags.includes(tag)}
                                     onCheckedChange={() => toggleTag(tag)}
                                   />
-                                  <span className="text-sm text-gray-700 dark:text-gray-300">{tag}</span>
+                                  <span className="text-sm text-foreground/90">{tag}</span>
                                 </div>
                               ))}
                             </div>
@@ -494,10 +494,10 @@ export default function AutoShop({
                     </div>
                   </div>
 
-                  <div className="h-px bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-px bg-muted" />
 
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Preço</h3>
+                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">Preço</h3>
                     <div className="px-2 pb-4">
                       <Slider
                         min={0}
@@ -508,12 +508,12 @@ export default function AutoShop({
                         className="mb-6"
                       />
                       <div className="flex gap-3">
-                        <div className="flex-1 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg text-center border border-gray-200 dark:border-gray-700">
-                          <span className="text-xs text-gray-500 block">Mínimo</span>
+                        <div className="flex-1 bg-muted/50 p-2 rounded-lg text-center border border-border/40">
+                          <span className="text-xs text-muted-foreground block">Mínimo</span>
                           <span className="font-bold">R$ {priceRange[0]}</span>
                         </div>
-                        <div className="flex-1 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg text-center border border-gray-200 dark:border-gray-700">
-                          <span className="text-xs text-gray-500 block">Máximo</span>
+                        <div className="flex-1 bg-muted/50 p-2 rounded-lg text-center border border-border/40">
+                          <span className="text-xs text-muted-foreground block">Máximo</span>
                           <span className="font-bold">R$ {priceRange[1]}</span>
                         </div>
                       </div>
@@ -522,9 +522,9 @@ export default function AutoShop({
 
                   {structure.brands.length > 0 && (
                     <>
-                      <div className="h-px bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-px bg-muted" />
                       <div>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3">Marcas</h3>
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-3">Marcas</h3>
                         <div className="space-y-3">
                           {structure.brands.map(brand => (
                             <div key={brand} className="flex items-center space-x-3">
@@ -536,7 +536,7 @@ export default function AutoShop({
                               />
                               <label
                                 htmlFor={`mobile-brand-${brand}`}
-                                className="text-base font-medium text-gray-700 dark:text-gray-300"
+                                className="text-base font-medium text-foreground/90"
                               >
                                 {brand}
                               </label>
@@ -548,7 +548,7 @@ export default function AutoShop({
                   )}
                 </div>
 
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <div className="p-4 border-t border-border/40 bg-muted/50">
                   <Button 
                     className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg"
                     onClick={() => setShowMobileFilters(false)}
@@ -562,16 +562,16 @@ export default function AutoShop({
         </AnimatePresence>
 
         {/* Grid de Produtos */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 bg-gray-100 dark:bg-gray-900">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 bg-gray-100 dark:bg-background">
           <div className="max-w-full mx-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                 {selectedCategory === 'Todos' ? 'Todos os Produtos' : selectedCategory}
               </h2>
               <Button 
                 variant="ghost" 
                 onClick={() => setShowLostSales(true)}
-                className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-gray-800 dark:text-muted-foreground dark:hover:text-gray-200"
               >
                 <Frown className="w-5 h-5 mr-2" />
                 Não encontrou?
@@ -591,10 +591,10 @@ export default function AutoShop({
                     setIsDetailOpen(true);
                   }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col h-full border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 group"
+                  className="bg-card rounded-3xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col h-full border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 group"
                 >
                   {/* Imagem do Produto com Fallback */}
-                  <div className="aspect-square bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4 flex items-center justify-center text-gray-300 dark:text-gray-600 overflow-hidden relative">
+                  <div className="aspect-square bg-muted/40 dark:bg-muted rounded-2xl mb-4 flex items-center justify-center text-gray-300 dark:text-muted-foreground overflow-hidden relative">
                     {produto.imagem_url ? (
                       <img 
                         src={produto.imagem_url} 
@@ -610,14 +610,14 @@ export default function AutoShop({
                       <Package className="w-16 h-16 md:w-20 md:h-20" />
                     </div>
                   </div>
-                  <h3 className="font-bold text-xl md:text-2xl text-gray-800 dark:text-gray-200 line-clamp-3 mb-4 leading-tight flex-1">
+                  <h3 className="font-bold text-xl md:text-2xl text-foreground line-clamp-3 mb-4 leading-tight flex-1">
                     {produto.nome}
                   </h3>
                   <div className="mt-auto pt-2">
                     <span className="block text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
                       R$ {(displayUnit.valor_unitario || 0).toFixed(2)}
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{displayUnit.unidade || 'UN'}</span>
+                    <span className="text-xs text-muted-foreground">{displayUnit.unidade || 'UN'}</span>
                   </div>
                 </motion.div>
                 );
@@ -627,9 +627,9 @@ export default function AutoShop({
             
             {produtosFiltrados.length === 0 && (
               <div className="text-center py-20">
-                <Package className="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-2">Nenhum produto encontrado</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-8">Tente buscar por outro termo ou categoria</p>
+                <Package className="w-24 h-24 mx-auto text-gray-300 dark:text-muted-foreground mb-4" />
+                <h3 className="text-2xl font-bold text-muted-foreground mb-2">Nenhum produto encontrado</h3>
+                <p className="text-muted-foreground mb-8">Tente buscar por outro termo ou categoria</p>
                 <Button 
                   onClick={() => setShowLostSales(true)}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 py-6 text-lg"
@@ -657,20 +657,20 @@ export default function AutoShop({
       <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col bg-gradient-to-t from-white/90 to-transparent dark:from-gray-900/90 pointer-events-none">
           {/* Cart Bar */}
           {carrinho.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.2)] pointer-events-auto">
+            <div className="bg-card border-t border-border/40 p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.2)] pointer-events-auto">
               <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowCartModal(true)}>
                   <div className="relative">
                     <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                       <ShoppingCart className="w-6 h-6" />
                     </div>
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-gray-800">
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-border/40">
                       {totalItens}
                     </span>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Total</p>
-                    <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total</p>
+                    <p className="text-2xl font-extrabold text-foreground">
                       R$ {totalCarrinho.toFixed(2)}
                     </p>
                   </div>
@@ -680,7 +680,7 @@ export default function AutoShop({
                   <Button 
                     variant="outline" 
                     onClick={() => setShowCartModal(true)}
-                    className="hidden md:flex h-12 px-6 font-bold border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl"
+                    className="hidden md:flex h-12 px-6 font-bold border-2 border-border/40 hover:bg-muted rounded-xl"
                   >
                     Revisar
                   </Button>
@@ -721,9 +721,9 @@ export default function AutoShop({
 
       {/* Modal Carrinho */}
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-3xl border-0 shadow-2xl p-0 gap-0">
-          <DialogHeader className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 sticky top-0 z-10 backdrop-blur-sm">
-            <DialogTitle className="text-2xl font-bold flex items-center gap-3 text-gray-900 dark:text-white">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card rounded-3xl border-0 shadow-2xl p-0 gap-0">
+          <DialogHeader className="p-6 border-b border-border/40 bg-muted/40/50 dark:bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-3 text-foreground">
               <ShoppingCart className="w-6 h-6 text-indigo-600" />
               Seu Carrinho
             </DialogTitle>
@@ -736,8 +736,8 @@ export default function AutoShop({
               </div>
             ) : (
               carrinho.map(item => (
-                <div key={item.produto_id} className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-                  <div className="w-16 h-16 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center text-gray-300 overflow-hidden relative">
+                <div key={item.produto_id} className="flex items-center gap-4 p-4 bg-muted/50 rounded-2xl border border-border/40">
+                  <div className="w-16 h-16 bg-white dark:bg-muted rounded-xl flex items-center justify-center text-gray-300 overflow-hidden relative">
                     {item.imagem ? (
                       <img src={item.imagem} alt={item.produto_nome} className="w-full h-full object-cover" />
                     ) : (
@@ -745,13 +745,13 @@ export default function AutoShop({
                     )}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-lg text-gray-900 dark:text-white leading-tight mb-1">{item.produto_nome}</h4>
+                    <h4 className="font-bold text-lg text-foreground leading-tight mb-1">{item.produto_nome}</h4>
                     <p className="text-indigo-600 font-bold">R$ {item.preco_unitario_praticado.toFixed(2)} / {item.unidade_medida || 'UN'}</p>
                   </div>
-                  <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <div className="flex items-center gap-3 bg-card rounded-xl p-1 border border-border/40 shadow-sm">
                     <button 
                       onClick={() => onUpdateQuantity(item.produto_id, -1)}
-                      className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                     >
                       <Minus className="w-5 h-5" />
                     </button>
@@ -774,10 +774,10 @@ export default function AutoShop({
             )}
           </div>
 
-          <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 sticky bottom-0 z-10">
+          <div className="p-6 border-t border-border/40 bg-muted/50/50 sticky bottom-0 z-10">
             <div className="flex justify-between items-center mb-6">
-              <span className="text-gray-500 text-lg font-medium">Total a Pagar</span>
-              <span className="text-3xl font-extrabold text-gray-900 dark:text-white">R$ {totalCarrinho.toFixed(2)}</span>
+              <span className="text-muted-foreground text-lg font-medium">Total a Pagar</span>
+              <span className="text-3xl font-extrabold text-foreground">R$ {totalCarrinho.toFixed(2)}</span>
             </div>
             <Button 
               onClick={() => { setShowCartModal(false); onProceed(); }}
@@ -846,10 +846,10 @@ function AutoLostSales({ open, onClose }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white dark:bg-gray-900 rounded-3xl border-0 p-8">
+      <DialogContent className="max-w-lg bg-card rounded-3xl border-0 p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center mb-2">Não encontrou?</DialogTitle>
-          <p className="text-center text-gray-500">Conta pra gente o que você estava procurando. Vamos providenciar!</p>
+          <p className="text-center text-muted-foreground">Conta pra gente o que você estava procurando. Vamos providenciar!</p>
         </DialogHeader>
         <div className="py-6 space-y-4">
           <div className="relative">
@@ -857,15 +857,15 @@ function AutoLostSales({ open, onClose }) {
               placeholder="Nome do produto (ex: Carrinho de mão)..." 
               value={msg}
               onChange={e => setMsg(e.target.value)}
-              className="h-14 text-lg bg-gray-50 dark:bg-gray-800 border-gray-200 rounded-xl pl-4"
+              className="h-14 text-lg bg-muted/50 border-border/40 rounded-xl pl-4"
               autoFocus
             />
             {filteredSugestoes.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+              <div className="absolute z-10 w-full mt-1 bg-card border border-border/40 rounded-xl shadow-lg overflow-hidden">
                 {filteredSugestoes.map((s, i) => (
                   <div 
                     key={i} 
-                    className="p-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer text-gray-700 dark:text-gray-200"
+                    className="p-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer text-foreground/90"
                     onClick={() => setMsg(s)}
                   >
                     {s}
@@ -877,13 +877,13 @@ function AutoLostSales({ open, onClose }) {
 
           <div className="flex items-center gap-4">
              <div className="w-1/3">
-                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Quantidade</label>
+                <label className="text-xs text-muted-foreground font-bold uppercase mb-1 block">Quantidade</label>
                 <Input 
                   type="number"
                   min="1"
                   value={qtd}
                   onChange={e => setQtd(e.target.value)}
-                  className="h-14 text-lg text-center bg-gray-50 dark:bg-gray-800 border-gray-200 rounded-xl"
+                  className="h-14 text-lg text-center bg-muted/50 border-border/40 rounded-xl"
                 />
              </div>
              <Button 
@@ -895,7 +895,7 @@ function AutoLostSales({ open, onClose }) {
               </Button>
           </div>
           
-          <Button variant="ghost" onClick={onClose} className="w-full h-12 text-gray-400">
+          <Button variant="ghost" onClick={onClose} className="w-full h-12 text-muted-foreground">
             Cancelar
           </Button>
         </div>
@@ -906,7 +906,7 @@ function AutoLostSales({ open, onClose }) {
 
 function SuggestedProductsSidebar({ recommendations, onAddRec }) {
   return (
-    <div className="hidden lg:flex w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-col overflow-y-auto shrink-0 pb-32">
+    <div className="hidden lg:flex w-64 bg-card border-l border-border/40 flex-col overflow-y-auto shrink-0 pb-32">
       <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800">
         <h3 className="text-sm font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wide flex items-center gap-2">
           <Plus className="w-4 h-4" /> Aproveite
@@ -922,11 +922,11 @@ function SuggestedProductsSidebar({ recommendations, onAddRec }) {
             key={rec.id}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="group relative bg-white dark:bg-gray-700 rounded-xl p-3 border border-gray-100 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm transition-all cursor-pointer"
+            className="group relative bg-white dark:bg-muted rounded-xl p-3 border border-border/40 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm transition-all cursor-pointer"
             onClick={() => onAddRec(rec)}
           >
             {/* Imagem do Produto Recomendado */}
-            <div className="aspect-video bg-gray-50 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative flex items-center justify-center">
+            <div className="aspect-video bg-muted/40 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative flex items-center justify-center">
               {rec.imagem_url ? (
                 <img 
                   src={rec.imagem_url} 
@@ -939,11 +939,11 @@ function SuggestedProductsSidebar({ recommendations, onAddRec }) {
                 />
               ) : null}
               <div className={`absolute inset-0 flex items-center justify-center ${rec.imagem_url ? 'hidden' : ''}`}>
-                <Package className="w-8 h-8 text-gray-300 dark:text-gray-500" />
+                <Package className="w-8 h-8 text-gray-300 dark:text-muted-foreground" />
               </div>
             </div>
             
-            <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-2 mb-1 leading-tight">
+            <h4 className="text-sm font-bold text-foreground line-clamp-2 mb-1 leading-tight">
               {rec.nome}
             </h4>
             <div className="flex items-center justify-between">
@@ -1016,7 +1016,7 @@ function WelcomeBanner({ config, onUpdateConfig, visible }) {
        </button>
 
        <Dialog open={isEditing} onOpenChange={setIsEditing}>
-         <DialogContent className="dark:bg-gray-900 dark:text-white dark:border-gray-700">
+         <DialogContent className="dark:bg-background dark:text-white dark:border-border/40">
            <DialogHeader>
              <DialogTitle>Editar Banner Promocional</DialogTitle>
            </DialogHeader>
@@ -1026,7 +1026,7 @@ function WelcomeBanner({ config, onUpdateConfig, visible }) {
                <Input 
                  value={editForm.titulo_boas_vindas || ''} 
                  onChange={e => setEditForm({...editForm, titulo_boas_vindas: e.target.value})}
-                 className="dark:bg-gray-800 dark:border-gray-700"
+                 className="dark:bg-muted dark:border-border/40"
                />
              </div>
              <div className="space-y-2">
@@ -1034,7 +1034,7 @@ function WelcomeBanner({ config, onUpdateConfig, visible }) {
                <Input 
                  value={editForm.subtitulo_boas_vindas || ''} 
                  onChange={e => setEditForm({...editForm, subtitulo_boas_vindas: e.target.value})}
-                 className="dark:bg-gray-800 dark:border-gray-700"
+                 className="dark:bg-muted dark:border-border/40"
                />
              </div>
              <div className="space-y-2">
@@ -1042,7 +1042,7 @@ function WelcomeBanner({ config, onUpdateConfig, visible }) {
                <Input 
                    value={editForm.imagem_fundo_url || ''} 
                    onChange={e => setEditForm({...editForm, imagem_fundo_url: e.target.value})}
-                   className="dark:bg-gray-800 dark:border-gray-700"
+                   className="dark:bg-muted dark:border-border/40"
                    placeholder="https://..."
                />
              </div>

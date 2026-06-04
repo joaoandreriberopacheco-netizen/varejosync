@@ -16,16 +16,16 @@ const getIcon = (anexo) => {
 export default function ConsumoAnexosDialog({ open, onOpenChange, anexos = [], consumoNumero }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
+      <DialogContent className="max-w-lg rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-background">
         <div className="p-5 md:p-6">
           <div className="mb-5">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">Anexos do consumo</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{consumoNumero || 'Consumo interno'} · arquivos abertos por link</p>
+            <p className="text-lg font-semibold text-foreground">Anexos do consumo</p>
+            <p className="text-sm text-muted-foreground">{consumoNumero || 'Consumo interno'} · arquivos abertos por link</p>
           </div>
 
           <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
             {anexos.length === 0 && (
-              <div className="rounded-[24px] bg-gray-50 p-5 text-sm text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
+              <div className="rounded-[24px] bg-muted/40 p-5 text-sm text-muted-foreground shadow-sm dark:bg-muted dark:text-muted-foreground">
                 Nenhum anexo encontrado.
               </div>
             )}
@@ -33,15 +33,15 @@ export default function ConsumoAnexosDialog({ open, onOpenChange, anexos = [], c
             {anexos.map((anexo) => {
               const Icon = getIcon(anexo);
               return (
-                <div key={anexo.id} className="flex items-center gap-3 rounded-[24px] bg-gray-50 p-4 shadow-sm dark:bg-gray-800">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-gray-600 shadow-sm dark:bg-gray-900 dark:text-gray-300">
+                <div key={anexo.id} className="flex items-center gap-3 rounded-[24px] bg-muted/40 p-4 shadow-sm dark:bg-muted">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{anexo.nome_arquivo || 'Arquivo'}</p>
-                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">{anexo.descricao || anexo.tipo_documento || 'Anexo'}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{anexo.nome_arquivo || 'Arquivo'}</p>
+                    <p className="truncate text-xs text-muted-foreground">{anexo.descricao || anexo.tipo_documento || 'Anexo'}</p>
                   </div>
-                  <Button asChild className="h-10 rounded-2xl bg-gray-900 px-3 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+                  <Button asChild className="h-10 rounded-2xl bg-gray-900 px-3 text-white hover:bg-primary dark:bg-white dark:text-foreground">
                     <a href={anexo.url_drive} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" />
                     </a>

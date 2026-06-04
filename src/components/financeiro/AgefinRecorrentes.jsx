@@ -67,7 +67,7 @@ function cardMatchesSearch({ recorrente, contaMes }, qRaw) {
 function FilterSection({ label, icon: Icon, options, value, onChange }) {
   return (
     <div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-muted-foreground">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
         <Icon className="h-3.5 w-3.5 shrink-0" />
         {label}
       </div>
@@ -82,7 +82,7 @@ function FilterSection({ label, icon: Icon, options, value, onChange }) {
               className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
                 active
                   ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
-                  : 'bg-gray-100 text-gray-600 shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                  : 'bg-gray-100 text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
               }`}
             >
               {opt.label}
@@ -123,7 +123,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
       }}
       className="w-full cursor-pointer rounded-[28px] bg-white p-1 text-left shadow-sm ring-1 ring-gray-200/90 dark:bg-card dark:ring-1 dark:ring-border"
     >
-      <div className="space-y-2.5 rounded-[24px] bg-gray-50/95 px-3.5 py-3 dark:bg-muted/35">
+      <div className="space-y-2.5 rounded-[24px] bg-muted/40/95 px-3.5 py-3 dark:bg-muted/35">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-2.5">
             {isOverdue && (
@@ -136,19 +136,19 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
                     {isPaid && (
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
                     )}
-                    <p className="line-clamp-2 text-[15px] font-semibold leading-5 text-gray-900 dark:text-foreground">{recorrente.nome_despesa}</p>
+                    <p className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground dark:text-foreground">{recorrente.nome_despesa}</p>
                   </div>
-                  <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-muted-foreground">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
+                  <p className="mt-1 line-clamp-1 text-xs text-muted-foreground dark:text-muted-foreground">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
                 </div>
                 <div className="shrink-0 pl-2 text-right">
                   <p
                     className={`text-[11px] ${
-                      isPaid ? 'font-medium text-emerald-700 dark:text-emerald-300' : 'text-gray-400 dark:text-muted-foreground'
+                      isPaid ? 'font-medium text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground dark:text-muted-foreground'
                     }`}
                   >
                     {isPaid ? 'Pago' : 'Previsto'}
                   </p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-foreground">{formatCurrency(recorrente.valor_previsto)}</p>
+                  <p className="text-sm font-semibold text-foreground dark:text-foreground">{formatCurrency(recorrente.valor_previsto)}</p>
                 </div>
               </div>
             </div>
@@ -156,7 +156,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
         </div>
 
         <div className="flex items-end justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground dark:text-muted-foreground">
             <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm dark:bg-card">
               <Repeat2 className="h-3 w-3" />
               {recorrente.frequencia}
@@ -171,11 +171,11 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
             <div
               className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white shadow-sm dark:bg-card ${iconRing}`}
             >
-              <FileText className="h-5 w-5 text-gray-500 dark:text-muted-foreground" />
+              <FileText className="h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
             </div>
             {hasBoleto && !isPaid && (
               <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white shadow-sm dark:bg-card">
-                <CheckCircle2 className="h-3.5 w-3.5 text-gray-500 dark:text-muted-foreground" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground dark:text-muted-foreground" />
               </span>
             )}
           </div>
@@ -322,8 +322,8 @@ export default function AgefinRecorrentes() {
   return (
     <div className="space-y-4 pb-24">
       <div className="rounded-[28px] bg-white p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
-        <div className="mb-3 rounded-2xl bg-gray-50 px-3 py-2 dark:bg-muted/40">
-          <p className="text-[11px] leading-4 text-gray-500 dark:text-muted-foreground">
+        <div className="mb-3 rounded-2xl bg-muted/40 px-3 py-2 dark:bg-muted/40">
+          <p className="text-[11px] leading-4 text-muted-foreground dark:text-muted-foreground">
             Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima no ícone = conta como boleto e lançamento marcado com PDF nesse mês; contorno verde-oliva no ícone = pago; check verde ao lado do título quando pago.
           </p>
         </div>
@@ -337,8 +337,8 @@ export default function AgefinRecorrentes() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="min-w-0 text-center">
-            <p className="text-sm font-semibold capitalize text-gray-900 dark:text-foreground">{currentMonthText}</p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">Atualize os boletos recorrentes do período</p>
+            <p className="text-sm font-semibold capitalize text-foreground dark:text-foreground">{currentMonthText}</p>
+            <p className="mt-1 text-xs text-muted-foreground dark:text-muted-foreground">Atualize os boletos recorrentes do período</p>
           </div>
           <Button
             onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
@@ -354,16 +354,16 @@ export default function AgefinRecorrentes() {
       <div className="rounded-[24px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
-            <Search className="h-4 w-4 shrink-0 text-gray-400 dark:text-muted-foreground" />
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground dark:text-muted-foreground" />
             <input autoComplete="off"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Nome, valor, vencimento…"
-              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-foreground dark:placeholder:text-muted-foreground"
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground dark:text-foreground dark:placeholder:text-muted-foreground"
             />
             {search ? (
               <button type="button" onClick={() => setSearch('')} className="shrink-0">
-                <X className="h-3.5 w-3.5 text-gray-400" />
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             ) : null}
           </div>
@@ -379,7 +379,7 @@ export default function AgefinRecorrentes() {
             onClick={() => setFilterOpen(true)}
             className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
           >
-            <SlidersHorizontal className="h-4 w-4 text-gray-800 dark:text-foreground" />
+            <SlidersHorizontal className="h-4 w-4 text-foreground" />
             {hasActiveFilters ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
                 ·
@@ -388,11 +388,11 @@ export default function AgefinRecorrentes() {
           </button>
         </div>
         <div className="flex items-center justify-between px-1 pt-2">
-          <p className="text-[11px] text-gray-500 dark:text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
             {filteredCards.length} conta{filteredCards.length !== 1 ? 's' : ''}
           </p>
           {(hasActiveFilters || search) && (
-            <button type="button" onClick={limparBuscaFiltros} className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+            <button type="button" onClick={limparBuscaFiltros} className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
               <X className="h-3 w-3" /> Limpar
             </button>
           )}
@@ -402,7 +402,7 @@ export default function AgefinRecorrentes() {
       <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
         <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-gray-900 dark:text-foreground">Filtros</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground dark:text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
           <div className="max-h-[70vh] space-y-5 overflow-y-auto">
             <FilterSection
@@ -446,7 +446,7 @@ export default function AgefinRecorrentes() {
                   setFilterPrazo('todos');
                   setFilterOrigem('todos');
                 }}
-                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-gray-600 dark:bg-muted dark:text-muted-foreground"
+                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 Redefinir
               </button>
@@ -460,21 +460,21 @@ export default function AgefinRecorrentes() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <div className="h-6 w-6 animate-spin rounded-full border-4 border-gray-300 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200" />
+          <div className="h-6 w-6 animate-spin rounded-full border-4 border-gray-300 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200" />
         </div>
       ) : filteredCards.length === 0 ? (
         <div className="rounded-[28px] bg-white py-12 text-center shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
-          <Repeat2 className="mx-auto mb-3 h-10 w-10 text-gray-400 dark:text-muted-foreground" />
-          <p className="mb-1 font-medium text-gray-800 dark:text-foreground">Nenhuma conta recorrente nesta visão</p>
-          <p className="text-sm text-gray-500 dark:text-muted-foreground">Altere o mês, a busca ou os filtros para ver outras contas.</p>
+          <Repeat2 className="mx-auto mb-3 h-10 w-10 text-muted-foreground dark:text-muted-foreground" />
+          <p className="mb-1 font-medium text-foreground">Nenhuma conta recorrente nesta visão</p>
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">Altere o mês, a busca ou os filtros para ver outras contas.</p>
         </div>
       ) : (
         <div className="mx-auto w-full max-w-3xl space-y-6 md:max-w-4xl">
           {gruposCards.map((grupo) => (
             <section key={grupo.key} className="space-y-2.5">
               <div className="flex items-baseline justify-between gap-2 px-0.5">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-muted-foreground">{grupo.label}</h3>
-                <span className="text-[11px] text-gray-400 dark:text-gray-500">{grupo.items.length}</span>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-muted-foreground">{grupo.label}</h3>
+                <span className="text-[11px] text-muted-foreground">{grupo.items.length}</span>
               </div>
               <div className="grid grid-cols-1 gap-2.5">
                 {grupo.items.map(({ recorrente, contaMes }) => (
@@ -492,9 +492,9 @@ export default function AgefinRecorrentes() {
       )}
 
       <Dialog open={Boolean(importAlvo)} onOpenChange={(open) => !open && setImportAlvo(null)}>
-        <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
-          <DialogHeader className="shrink-0 border-b border-gray-100 px-5 pb-3 pt-5 dark:border-gray-800">
-            <DialogTitle className="text-gray-900 dark:text-white">
+        <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
+          <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-3 pt-5 dark:border-border/40">
+            <DialogTitle className="text-foreground">
               {importAlvo ? `Atualizar boleto · ${importAlvo.recorrente?.nome_despesa || 'Recorrente'}` : 'Atualizar boleto'}
             </DialogTitle>
           </DialogHeader>

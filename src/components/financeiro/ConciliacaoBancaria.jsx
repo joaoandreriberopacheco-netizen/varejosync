@@ -170,11 +170,11 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   };
 
   const getStatusData = (dataStr) => {
-    if (!dataStr) return { cor: 'text-gray-400', label: 'Sem data' };
+    if (!dataStr) return { cor: 'text-muted-foreground', label: 'Sem data' };
     const d = parseISO(dataStr);
     if (isPast(d) && !isToday(d)) return { cor: 'text-red-500', label: 'Atrasado' };
     if (isToday(d)) return { cor: 'text-amber-500', label: 'Hoje' };
-    return { cor: 'text-gray-500', label: format(d, "dd/MM", { locale: ptBR }) };
+    return { cor: 'text-muted-foreground', label: format(d, "dd/MM", { locale: ptBR }) };
   };
 
   if (isLoading) {
@@ -191,8 +191,8 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         <div className="w-14 h-14 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mx-auto">
           <CheckCircle2 className="w-7 h-7 text-green-500" />
         </div>
-        <p className="font-medium text-gray-700 dark:text-gray-200">Nada pendente</p>
-        <p className="text-sm text-gray-400">Todos os lançamentos desta conta estão conciliados.</p>
+        <p className="font-medium text-foreground/90">Nada pendente</p>
+        <p className="text-sm text-muted-foreground">Todos os lançamentos desta conta estão conciliados.</p>
         <Button variant="ghost" size="sm" onClick={onClose}>Fechar</Button>
       </div>
     );
@@ -201,18 +201,18 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
     {/* Header Info */}
-    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-gray-100 dark:border-gray-700">
-        <Info className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          <p className="font-medium mb-1 text-gray-700 dark:text-gray-200">Como conciliar</p>
+    <div className="bg-muted/50/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-border/40">
+        <Info className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+        <div className="text-sm text-muted-foreground">
+          <p className="font-medium mb-1 text-foreground/90">Como conciliar</p>
           <p className="text-xs leading-relaxed">Selecione os lançamentos que você confirmou no extrato bancário. Você pode conciliar individualmente ou agrupar vários do mesmo dia. Se o valor real for diferente, informe o valor exato recebido.</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 mb-3 px-1">
         <div>
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{contaNome || 'Todas as contas'}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">{lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} pendente{lancamentos.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs font-semibold text-foreground/90">{contaNome || 'Todas as contas'}</p>
+          <p className="text-[11px] text-muted-foreground">{lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} pendente{lancamentos.length !== 1 ? 's' : ''}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={toggleSelecionarTodos} className="rounded-xl text-xs">
           {todosSelecionados ? 'Limpar tudo' : 'Selecionar tudo'}
@@ -230,10 +230,10 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
           const { cor, label } = getStatusData(data);
 
           return (
-            <div key={data} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div key={data} className="bg-card rounded-2xl shadow-sm overflow-hidden border border-border/40">
               {/* Header do grupo */}
               <div
-                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
                 onClick={() => toggleExpandido(data)}
               >
                 {/* Checkbox grupo */}
@@ -241,7 +241,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                   onClick={(e) => { e.stopPropagation(); toggleGrupo(data); }}
                   className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
                     todosSelecionados
-                      ? 'bg-gray-800 dark:bg-gray-300'
+                      ? 'bg-primary dark:bg-gray-300'
                       : algumSelecionado
                         ? 'bg-gray-400'
                         : 'border-2 border-gray-300 dark:border-gray-500'
@@ -255,18 +255,18 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className={`text-xs font-medium ${cor}`}>{label}</span>
-                    <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{items.length} lançamento{items.length > 1 ? 's' : ''}</span>
+                    <span className="text-xs text-gray-300 dark:text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">{items.length} lançamento{items.length > 1 ? 's' : ''}</span>
                   </div>
                   <p className="font-semibold text-gray-800 dark:text-gray-100">{fmt(totalGrupo)}</p>
                 </div>
 
-                {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </div>
 
               {/* Itens do grupo */}
               {isExpanded && (
-                <div className="border-t border-gray-100 dark:border-gray-700">
+                <div className="border-t border-border/40">
                   {items.map(l => {
                     const isSel = selecionados.includes(l.id);
                     return (
@@ -274,17 +274,17 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                         key={l.id}
                         onClick={() => toggleSelecionado(l.id)}
                         className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                          isSel ? 'bg-gray-50 dark:bg-gray-700/30' : 'hover:bg-gray-50/50 dark:hover:bg-gray-700/20'
+                          isSel ? 'bg-muted/40 dark:bg-muted/30' : 'hover:bg-muted/40/50 dark:hover:bg-primary/90/20'
                         }`}
                       >
                         <div className={`w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isSel ? 'bg-gray-800 dark:bg-gray-300' : 'border-2 border-gray-200 dark:border-gray-600'
+                          isSel ? 'bg-primary dark:bg-gray-300' : 'border-2 border-border/40'
                         }`}>
                           {isSel && <Check className="w-2.5 h-2.5 text-white dark:text-gray-800" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{l.descricao}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                          <p className="text-sm font-medium text-foreground/90 truncate">{l.descricao}</p>
+                          <p className="text-xs text-muted-foreground">
                             {l.forma_pagamento || l.forma_pagamento_tipo || '—'}
                             {l.referencia_numero ? ` • ${l.referencia_numero}` : ''}
                           </p>
@@ -304,14 +304,14 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
 
       {/* Footer com ação */}
       {selecionados.length > 0 && (
-        <div className="bg-gray-800 dark:bg-gray-700 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-lg">
+        <div className="bg-primary dark:bg-muted rounded-2xl p-4 flex items-center justify-between gap-4 shadow-lg">
           <div className="text-white">
-            <p className="text-xs text-gray-300 dark:text-gray-400">{selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-300 dark:text-muted-foreground">{selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}</p>
             <p className="text-xl font-bold">{fmt(totalSelecionado)}</p>
           </div>
           <Button
             onClick={abrirConciliacao}
-            className="bg-white text-gray-800 hover:bg-gray-50 gap-2 flex-shrink-0 rounded-xl font-medium shadow-sm"
+            className="bg-white text-gray-800 hover:bg-muted/40 gap-2 flex-shrink-0 rounded-xl font-medium shadow-sm"
           >
             <ArrowRightLeft className="w-4 h-4" />
             Conciliar
@@ -321,25 +321,25 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
 
       {/* Dialog de confirmação */}
       <Dialog open={dialogConfirm} onOpenChange={setDialogConfirm}>
-        <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-sm">
+        <DialogContent className="dark:bg-muted dark:border-border/40 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-200">Confirmar Conciliação</DialogTitle>
+            <DialogTitle className="text-foreground">Confirmar Conciliação</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 space-y-1">
-              <p className="text-xs text-gray-500">{selecionados.length} lançamento{selecionados.length > 1 ? 's' : ''} selecionado{selecionados.length > 1 ? 's' : ''}</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Total esperado: {fmt(totalSelecionado)}</p>
+            <div className="bg-muted/40 dark:bg-muted rounded-xl p-3 space-y-1">
+              <p className="text-xs text-muted-foreground">{selecionados.length} lançamento{selecionados.length > 1 ? 's' : ''} selecionado{selecionados.length > 1 ? 's' : ''}</p>
+              <p className="text-sm font-medium text-foreground/90">Total esperado: {fmt(totalSelecionado)}</p>
             </div>
 
             <div>
-              <Label className="text-gray-700 dark:text-gray-300 text-sm">Valor real recebido</Label>
+              <Label className="text-foreground/90 text-sm">Valor real recebido</Label>
               <Input
                 type="number"
                 step="0.01"
                 value={valorConfirmado}
                 onChange={e => setValorConfirmado(e.target.value)}
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600"
+                className="mt-1 dark:bg-muted dark:border-gray-600"
               />
               {parseFloat(valorConfirmado) !== totalSelecionado && (
                 <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
@@ -350,21 +350,21 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
             </div>
 
             <div>
-              <Label className="text-gray-700 dark:text-gray-300 text-sm">Data do recebimento</Label>
+              <Label className="text-foreground/90 text-sm">Data do recebimento</Label>
               <Input
                 type="date"
                 value={dataEfetiva}
                 onChange={e => setDataEfetiva(e.target.value)}
-                className="mt-1 dark:bg-gray-700 dark:border-gray-600"
+                className="mt-1 dark:bg-muted dark:border-gray-600"
               />
             </div>
 
             <div>
-              <Label className="text-gray-700 dark:text-gray-300 text-sm">Lançar na conta bancária</Label>
+              <Label className="text-foreground/90 text-sm">Lançar na conta bancária</Label>
               <select
                 value={contaBancariaDestino}
                 onChange={e => setContaBancariaDestino(e.target.value)}
-                className="mt-1 w-full h-10 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 text-gray-800 dark:text-gray-200"
+                className="mt-1 w-full h-10 rounded-md border border-border/40 bg-white dark:bg-muted text-sm px-3 text-foreground"
               >
                 <option value="">Não lançar (só marcar como conciliado)</option>
                 {contas.map(c => (
@@ -375,10 +375,10 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogConfirm(false)} disabled={processing} className="dark:bg-gray-700 dark:border-gray-600">
+            <Button variant="outline" onClick={() => setDialogConfirm(false)} disabled={processing} className="dark:bg-muted dark:border-gray-600">
               Cancelar
             </Button>
-            <Button onClick={confirmarConciliacao} disabled={processing} className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-300 dark:text-gray-800">
+            <Button onClick={confirmarConciliacao} disabled={processing} className="bg-primary hover:bg-gray-900 dark:bg-gray-300 dark:text-gray-800">
               {processing ? 'Processando...' : 'Confirmar'}
             </Button>
           </DialogFooter>

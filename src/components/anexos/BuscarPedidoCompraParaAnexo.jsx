@@ -59,20 +59,20 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
         <button
           type="button"
           onClick={onVoltar}
-          className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400"
+          className="w-9 h-9 rounded-full bg-gray-200 dark:bg-muted flex items-center justify-center text-muted-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Pedido de compra</p>
+        <p className="text-sm font-medium text-foreground/90">Pedido de compra</p>
       </div>
 
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input autoComplete="off"
           value={query}
           onChange={handleSearch}
           placeholder="Número, fornecedor ou status..."
-          className="w-full bg-white dark:bg-gray-900 rounded-2xl pl-10 pr-4 py-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 shadow-sm outline-none"
+          className="w-full bg-card rounded-2xl pl-10 pr-4 py-3 text-sm text-foreground placeholder-gray-400 shadow-sm outline-none"
         />
       </div>
 
@@ -84,10 +84,10 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
         )}
         {carregando ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
           </div>
         ) : pedidos.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-10">Nenhum pedido encontrado</p>
+          <p className="text-center text-sm text-muted-foreground py-10">Nenhum pedido encontrado</p>
         ) : (
           pedidos.map((p) => (
             <button
@@ -96,8 +96,8 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
               onClick={() => setSelecionado(p)}
               className={`w-full text-left rounded-2xl px-4 py-3 text-sm shadow-sm transition-colors ${
                 selecionado?.id === p.id
-                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                  : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+                  ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground'
+                  : 'bg-card text-foreground'
               }`}
             >
               <p className="font-semibold">{p.numero || p.id}</p>
@@ -112,7 +112,7 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
           type="button"
           onClick={() => onSelecionar(selecionado)}
           disabled={uploadando}
-          className="w-full h-14 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold flex items-center justify-center gap-2 mt-auto"
+          className="w-full h-14 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-semibold flex items-center justify-center gap-2 mt-auto"
         >
           {uploadando ? (
             <>

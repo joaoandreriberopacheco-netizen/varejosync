@@ -481,25 +481,25 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={`${isMobile ? '!max-w-[100vw] !w-[100vw] h-[100vh] !rounded-none p-0' : '!max-w-[95vw]'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader className={isMobile ? 'px-4 pt-4 pb-3' : ''}>
-          <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-            <DollarSign className="w-5 h-5 text-gray-800 dark:text-gray-200" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <DollarSign className="w-5 h-5 text-foreground" />
             Revisar Preços de Venda
           </DialogTitle>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+          <p className="text-sm text-foreground/90 mt-1">
             {qtdComDiferenca > 0
               ? `${qtdComDiferenca} produto(s) com alteração de custo detectada. Revise e selecione quais preços deseja atualizar.`
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
           </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-            Para cada produto, os valores monetários usam a <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade de compra definida no cadastro</strong> (alternativas e conversões, como no lançamento do pedido) — veja a coluna <strong className="font-semibold text-gray-800 dark:text-gray-200">Unidade</strong> para a sigla de cada linha.
-            Ao salvar, o sistema grava custos e preços na <strong className="font-semibold text-gray-800 dark:text-gray-200">unidade base</strong> do produto. Sem alternativa com conversão, a grade permanece na unidade base (fator 1).
+          <p className="text-xs text-muted-foreground mt-2">
+            Para cada produto, os valores monetários usam a <strong className="font-semibold text-foreground">unidade de compra definida no cadastro</strong> (alternativas e conversões, como no lançamento do pedido) — veja a coluna <strong className="font-semibold text-foreground">Unidade</strong> para a sigla de cada linha.
+            Ao salvar, o sistema grava custos e preços na <strong className="font-semibold text-foreground">unidade base</strong> do produto. Sem alternativa com conversão, a grade permanece na unidade base (fator 1).
           </p>
         </DialogHeader>
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
           {algumItemComConversao && (
             <div className={`flex flex-wrap items-center gap-2 mb-3 ${isMobile ? 'px-4' : ''}`}>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Alternar apenas a visualização:</span>
+              <span className="text-xs text-muted-foreground">Alternar apenas a visualização:</span>
               <Button
                 type="button"
                 variant={unidadeVisualizacao === 'comercial' ? 'default' : 'outline'}
@@ -521,10 +521,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             </div>
           )}
           <div className={`flex items-center justify-between mb-3 ${isMobile ? 'px-4' : ''}`}>
-            <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+            <p className="text-xs text-foreground/90 font-medium">
               {itensCalc.length} produto(s) no pedido
               {qtdComDiferenca > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded text-[10px] font-semibold">
+                <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-800 dark:bg-muted dark:text-foreground rounded text-[10px] font-semibold">
                   {qtdComDiferenca} com alteração
                 </span>
               )}
@@ -539,10 +539,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           {isMobile ? (
             <div className="space-y-3 px-4 pb-4">
               {itensCalc.map(item => (
-                <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 space-y-4">
-                  <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
+                <div key={item.produto_id} className="bg-card rounded-2xl shadow-md p-4 space-y-4">
+                  <div className={`rounded-lg border px-3 py-2 ${unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 ? 'bg-background/40 border-border/40' : 'bg-muted/50/50 border-border/40'}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Referência dos valores</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Referência dos valores</div>
                       {hasAlternativeUnits(item.produto) && buildPurchaseUnitOptions(item.produto).length > 1 && (
                         <button
                           type="button"
@@ -556,23 +556,23 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     </div>
                     {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                       <div className="mt-1">
-                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{item.unidadeComercialLegenda}</span>
-                        <span className="text-xs text-gray-600 dark:text-gray-400 ml-1.5">
+                        <span className="text-sm font-bold text-foreground dark:text-gray-100">{item.unidadeComercialLegenda}</span>
+                        <span className="text-xs text-muted-foreground ml-1.5">
                           {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                         </span>
                       </div>
                     ) : (
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mt-0.5">
+                      <div className="text-sm font-medium text-foreground mt-0.5">
                         {item.unidadeBase}
-                        <span className="text-xs font-normal text-gray-500 ml-1">(unidade base do cadastro)</span>
+                        <span className="text-xs font-normal text-muted-foreground ml-1">(unidade base do cadastro)</span>
                       </div>
                     )}
                   </div>
                   {/* Header do produto */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] uppercase text-gray-500 dark:text-gray-400 font-medium">Produto</div>
-                      <div className="font-semibold text-gray-900 dark:text-white text-sm leading-snug mt-0.5">{item.produto_nome}</div>
+                      <div className="text-[10px] uppercase text-muted-foreground font-medium">Produto</div>
+                      <div className="font-semibold text-foreground text-sm leading-snug mt-0.5">{item.produto_nome}</div>
                       {item.temDiferenca && (
                         <div className="flex items-center gap-1 text-xs mt-1">
                           {item.diferencaCusto > 0 ? (
@@ -585,7 +585,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     </div>
                     {item.temDiferenca && (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Atualizar</span>
+                        <span className="text-xs text-muted-foreground">Atualizar</span>
                         <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
                       </div>
                     )}
@@ -595,7 +595,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <div className="grid grid-cols-2 gap-3">
                     {/* Preço Compra */}
                     <div className="space-y-1">
-                      <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
                         Preço Compra
                         {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                         {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
@@ -616,7 +616,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         <Label className={`text-[11px] font-medium uppercase tracking-wide ${
                           (costs[item.produto_id]?.desconto_pct || 0) < 0
                             ? 'text-red-500 dark:text-red-400'
-                            : 'text-gray-500 dark:text-gray-400'
+                            : 'text-muted-foreground'
                         }`}>{(costs[item.produto_id]?.desconto_pct || 0) < 0 ? 'Acréscimo %' : 'Desconto %'}</Label>
                         <button
                           type="button"
@@ -666,7 +666,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       { label: 'Outros', field: 'custo_outros_padrao' },
                     ].map(({ label, field }) => (
                       <div key={field} className="space-y-1">
-                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
                           {label}
                           {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                           {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
@@ -685,18 +685,18 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   </div>
 
                   {/* Custo total + markup + preço venda */}
-                  <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
+                  <div className="rounded-xl bg-muted/50/60 p-3 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
                         Custo Total
                         {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                         {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
                       </span>
-                      <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
+                      <span className="text-base font-bold text-foreground">R$ {fmt(item.novoCusto * item.multDisplay)}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Markup %</Label>
+                        <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Markup %</Label>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -708,7 +708,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
                           Preço Venda
                           {unidadeVisualizacao === 'comercial' && item.fatorExibicao > 1 && item.unidadeComercialLegenda ? ` (${item.unidadeComercialLegenda})` : ''}
                           {unidadeVisualizacao === 'base' ? ` (${item.unidadeBase})` : ''}
@@ -731,50 +731,50 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           ) : (
             <div className="rounded-lg overflow-hidden shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-gray-100 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200">
+                <thead className="bg-muted/90 text-foreground/90">
                   <tr>
                     <th className="w-8 p-2"></th>
                     <th className="text-left p-2 w-[96px] min-w-[88px]">Unidade</th>
                     <th className="text-left p-2 min-w-[200px]">Produto</th>
                     <th className="text-center p-2 w-[100px]">
                       <span className="block">Preço compra</span>
-                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                      <span className="block text-[10px] font-normal text-muted-foreground">
                         {unidadeVisualizacao === 'comercial' ? 'unidade de compra' : 'unidade base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">Desc/Acrésc %</th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Frete</span>
-                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                      <span className="block text-[10px] font-normal text-muted-foreground">
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Imp 1</span>
-                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                      <span className="block text-[10px] font-normal text-muted-foreground">
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Imp 2</span>
-                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                      <span className="block text-[10px] font-normal text-muted-foreground">
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[90px]">
                       <span className="block">Outros</span>
-                      <span className="block text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                      <span className="block text-[10px] font-normal text-muted-foreground">
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'base'}
                       </span>
                     </th>
-                    <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">
+                    <th className="text-center p-2 w-[110px] bg-muted font-bold">
                       <span className="block">Custo total</span>
                       <span className="block text-[10px] font-normal opacity-90">
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'unidade base'}
                       </span>
                     </th>
                     <th className="text-center p-2 w-[80px]">Markup %</th>
-                    <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">
+                    <th className="text-center p-2 w-[110px] bg-muted font-bold">
                       <span className="block">Preço venda</span>
                       <span className="block text-[10px] font-normal opacity-90">
                         {unidadeVisualizacao === 'comercial' ? 'unid. compra' : 'unidade base'}
@@ -784,13 +784,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 </thead>
                 <tbody>
                   {itensCalc.map(item => (
-                    <tr key={item.produto_id} className="border-b border-gray-100 dark:border-gray-800/70 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr key={item.produto_id} className="border-b border-border/40/70 hover:bg-muted/40 dark:hover:bg-muted/50">
                       <td className="p-2 text-center">
                         {item.temDiferenca && (
                           <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
                         )}
                       </td>
-                      <td className="p-2 align-top bg-gray-50/90 dark:bg-gray-900/35 border-r border-gray-200 dark:border-gray-700">
+                      <td className="p-2 align-top bg-muted/40/90 dark:bg-background/35 border-r border-border/40">
                         {hasAlternativeUnits(item.produto) && buildPurchaseUnitOptions(item.produto).length > 1 && (
                           <button
                             type="button"
@@ -802,17 +802,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         )}
                         {item.fatorExibicao > 1 && item.unidadeComercialLegenda ? (
                           <div>
-                            <div className="text-xs font-bold text-gray-900 dark:text-gray-100">{item.unidadeComercialLegenda}</div>
-                            <div className="text-[10px] text-gray-600 dark:text-gray-400 leading-snug mt-1">
+                            <div className="text-xs font-bold text-foreground dark:text-gray-100">{item.unidadeComercialLegenda}</div>
+                            <div className="text-[10px] text-muted-foreground leading-snug mt-1">
                               {formatUnitConversion({ unidade: item.unidadeComercialLegenda, fator_conversao: item.fatorExibicao }, item.unidadeBase)}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300">{item.unidadeBase}</div>
+                          <div className="text-xs font-medium text-foreground/90">{item.unidadeBase}</div>
                         )}
                       </td>
                       <td className="p-2">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">{item.produto_nome}</div>
+                        <div className="font-medium text-foreground dark:text-gray-100">{item.produto_nome}</div>
                         {item.temDiferenca && (
                           <div className="flex items-center gap-1 text-xs mt-0.5">
                             {item.diferencaCusto > 0 ? (
@@ -890,8 +890,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           />
                         </td>
                       ))}
-                      <td className="p-2 bg-gray-50 dark:bg-gray-800">
-                        <div className="text-center font-bold text-gray-900 dark:text-gray-100">R$ {fmt(item.novoCusto * item.multDisplay)}</div>
+                      <td className="p-2 bg-muted/50">
+                        <div className="text-center font-bold text-foreground dark:text-gray-100">R$ {fmt(item.novoCusto * item.multDisplay)}</div>
                       </td>
                       <td className="p-2">
                         <Input
@@ -903,7 +903,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           className="h-8 text-center text-sm bg-background border border-input shadow-sm"
                         />
                       </td>
-                      <td className="p-2 bg-gray-50 dark:bg-gray-800">
+                      <td className="p-2 bg-muted/50">
                         <Input
                           type="text"
                           value={inp(item.produto_id, 'preco')}
@@ -921,7 +921,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           )}
         </div>
 
-        <div className={`flex items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 ${isMobile ? 'px-4 pb-4' : ''}`}>
+        <div className={`flex items-center justify-between gap-3 mt-6 pt-4 border-t border-border/40 ${isMobile ? 'px-4 pb-4' : ''}`}>
           <Button variant="outline" onClick={() => onClose(false)} disabled={processando} className="border-0 shadow-sm">
             {qtdComDiferenca > 0 ? 'Ignorar' : 'Fechar'}
           </Button>

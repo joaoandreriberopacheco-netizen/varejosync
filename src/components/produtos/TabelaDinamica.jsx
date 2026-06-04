@@ -27,24 +27,24 @@ function GroupRow({ label, count, valorEstoque, abaixoMin, estoqueTotal, depth, 
   const indent = depth * 16;
   return (
     <tr
-      className="cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800"
+      className="cursor-pointer select-none hover:bg-muted/40 dark:hover:bg-muted/40 border-b border-border/40"
       onClick={onToggle}
     >
-      <td className="p-0 w-8 sticky left-0 z-10 bg-white dark:bg-gray-900" />
+      <td className="p-0 w-8 sticky left-0 z-10 bg-card" />
       <td
         className="py-2 pr-3"
         style={{ paddingLeft: 12 + indent }}
         colSpan={3}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-gray-400 dark:text-gray-500">
+          <span className="text-muted-foreground">
             {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </span>
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">{label}</span>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500">{count} SKU{count !== 1 ? 's' : ''}</span>
+          <span className="text-xs font-semibold text-foreground/90 uppercase tracking-wide">{label}</span>
+          <span className="text-[10px] text-muted-foreground">{count} SKU{count !== 1 ? 's' : ''}</span>
           {/* Estoque somado — visível no mobile também */}
           {estoqueTotal > 0 && (
-            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
               ∑ {formatarNumero(estoqueTotal)}
             </span>
           )}
@@ -53,14 +53,14 @@ function GroupRow({ label, count, valorEstoque, abaixoMin, estoqueTotal, depth, 
           )}
         </div>
       </td>
-      <td className="py-2 px-3 text-right text-[10px] text-gray-400 dark:text-gray-500 hidden md:table-cell">
+      <td className="py-2 px-3 text-right text-[10px] text-muted-foreground hidden md:table-cell">
         R$ {formatarNumero(valorEstoque)}
       </td>
       <td className="py-2 px-3 text-right text-[10px] hidden md:table-cell">
         {abaixoMin > 0 ? (
           <span className="text-red-500 dark:text-red-400">{abaixoMin} abaixo mín.</span>
         ) : (
-          <span className="text-gray-300 dark:text-gray-600">—</span>
+          <span className="text-gray-300 dark:text-muted-foreground">—</span>
         )}
       </td>
       <td colSpan={99} />
@@ -80,23 +80,23 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
   const unidadeExibicao = estoqueApresent ? estoqueApresent.sigla : (produto.unidade_principal || 'UN');
 
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/30 border-b border-gray-50 dark:border-gray-800/60 group">
+    <tr className="hover:bg-muted/40 dark:hover:bg-muted/30 border-b border-gray-50 dark:border-border/40/60 group">
       {/* Ações */}
-      <td className="p-1 w-8 sticky left-0 z-10 bg-white dark:bg-gray-900">
+      <td className="p-1 w-8 sticky left-0 z-10 bg-card">
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-              <MoreHorizontal className="h-3.5 w-3.5 text-gray-500" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700 z-50">
-            <DropdownMenuItem onClick={() => onEdit(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+          <DropdownMenuContent align="start" className="dark:bg-muted dark:border-border/40 z-50">
+            <DropdownMenuItem onClick={() => onEdit(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs">
               <Edit className="mr-2 h-3.5 w-3.5" />Editar
             </DropdownMenuItem>
-            <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+            <DropdownMenuItem className="dark:text-foreground dark:hover:bg-primary/90 text-xs">
               <Copy className="mr-2 h-3.5 w-3.5" />Duplicar
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs">
+            <DropdownMenuItem className="text-red-600 dark:text-red-400 dark:hover:bg-primary/90 text-xs">
               <Archive className="mr-2 h-3.5 w-3.5" />Inativar
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -105,10 +105,10 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
 
       {/* Imagem */}
       <td className="p-1 w-10">
-        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center overflow-hidden mx-auto">
+        <div className="w-8 h-8 bg-muted rounded flex items-center justify-center overflow-hidden mx-auto">
           {produto.imagem_url
             ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-            : <Package className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
+            : <Package className="w-3.5 h-3.5 text-gray-300 dark:text-muted-foreground" />
           }
         </div>
       </td>
@@ -116,12 +116,12 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       {/* Nome */}
       <td className="py-2 pr-3" style={{ paddingLeft: 12 + indent }}>
         <div
-          className="text-xs font-medium text-gray-700 dark:text-gray-200 uppercase leading-tight cursor-pointer hover:text-gray-900 dark:hover:text-white"
+          className="text-xs font-medium text-foreground/90 uppercase leading-tight cursor-pointer hover:text-foreground dark:hover:text-white"
           onClick={() => onEdit(produto)}
         >
           {produto.nome || [produto.campo_hierarquico_1, produto.campo_hierarquico_2, produto.campo_hierarquico_3, produto.campo_hierarquico_4, produto.campo_hierarquico_5].filter(Boolean).join(' | ')}
         </div>
-        <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+        <div className="text-[10px] text-muted-foreground mt-0.5">
           {produto.codigo_interno && <span className="mr-2">{produto.codigo_interno}</span>}
           {produto.marca && <span className="italic">{produto.marca}</span>}
         </div>
@@ -132,7 +132,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
         <td className="px-3 py-2">
           <div className="flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${getStockDot(produto)}`} />
-            <span className="text-[10px] text-gray-500 dark:text-gray-400">
+            <span className="text-[10px] text-muted-foreground">
               {!produto.ativo ? 'Inativo' : produto.estoque_atual <= 0 ? 'Crítico' : produto.estoque_atual <= produto.estoque_minimo ? 'Baixo' : 'OK'}
             </span>
           </div>
@@ -141,14 +141,14 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
 
       {/* Fornecedor */}
       {visibleColumns.includes('fornecedor') && (
-        <td className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell">
+        <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">
           {fornecedorMap[produto.fornecedor_padrao_id] || <span className="text-gray-300">—</span>}
         </td>
       )}
 
       {/* Preço Venda */}
       {visibleColumns.includes('preco_venda') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-700 dark:text-gray-200 hidden md:table-cell">
+        <td className="px-3 py-2 text-right text-xs text-foreground/90 hidden md:table-cell">
           R$ {formatarNumero(produto.preco_venda_padrao)}
         </td>
       )}
@@ -164,29 +164,29 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
 
       {/* Estoque */}
       {visibleColumns.includes('estoque_atual') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-600 dark:text-gray-300 hidden md:table-cell">
-          {formatarNumero(estoqueExibicao)} <span className="text-gray-400 text-[10px]">{unidadeExibicao}</span>
+        <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden md:table-cell">
+          {formatarNumero(estoqueExibicao)} <span className="text-muted-foreground text-[10px]">{unidadeExibicao}</span>
         </td>
       )}
 
       {/* Outros campos extras */}
       {visibleColumns.includes('preco_custo') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-600 dark:text-gray-300 hidden md:table-cell">
+        <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden md:table-cell">
           R$ {formatarNumero(produto.preco_custo_calculado)}
         </td>
       )}
       {visibleColumns.includes('markup') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-600 dark:text-gray-300 hidden md:table-cell">
+        <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden md:table-cell">
           {formatarNumero(produto.preco_venda_percentual || 0)}%
         </td>
       )}
       {visibleColumns.includes('categoria') && (
-        <td className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell">
+        <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">
           {produto.categoria_nome || '—'}
         </td>
       )}
       {visibleColumns.includes('estoque_minimo') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_minimo')}>
+        <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_minimo')}>
           {editingField === 'estoque_minimo' ? (
             <CamposEdicaoSistema
               produto={produto}
@@ -211,7 +211,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
 
       {/* Campos de Sistema (Casas Decimais, Tempo Reposição, Estoque, etc) */}
       {visibleColumns.includes('sistema_casas_decimais') && (
-        <td className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('casas_decimais')}>
+        <td className="px-3 py-2 text-center text-xs text-muted-foreground hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('casas_decimais')}>
           {editingField === 'casas_decimais' ? (
             <CamposEdicaoSistema
               produto={produto}
@@ -235,7 +235,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       )}
 
       {visibleColumns.includes('sistema_tempo_reposicao') && (
-        <td className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('tempo_reposicao_dias')}>
+        <td className="px-3 py-2 text-center text-xs text-muted-foreground hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('tempo_reposicao_dias')}>
           {editingField === 'tempo_reposicao_dias' ? (
             <CamposEdicaoSistema
               produto={produto}
@@ -259,7 +259,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       )}
 
       {visibleColumns.includes('sistema_estoque_ideal') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_ideal')}>
+        <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_ideal')}>
           {editingField === 'estoque_ideal' ? (
             <CamposEdicaoSistema
               produto={produto}
@@ -283,7 +283,7 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
       )}
 
       {visibleColumns.includes('sistema_estoque_maximo') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_maximo')}>
+        <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_maximo')}>
           {editingField === 'estoque_maximo' ? (
             <CamposEdicaoSistema
               produto={produto}
@@ -366,27 +366,27 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
   const activeCols = cols.filter(c => visibleColumns.includes(c));
 
   return (
-    <div className="border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+    <div className="border border-border/40 rounded-lg overflow-hidden bg-card">
       <div className="overflow-auto">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-20">
+          <thead className="bg-muted/50 sticky top-0 z-20">
             <tr>
-              <th className="w-8 p-1 sticky left-0 z-30 bg-gray-50 dark:bg-gray-800" />
-              <th className="w-10 p-1 text-[10px] text-gray-400 dark:text-gray-500 uppercase text-center">Img</th>
-              <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold min-w-[220px]">Produto</th>
-              {visibleColumns.includes('status') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold min-w-[80px]">Status</th>}
-              {visibleColumns.includes('fornecedor') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold min-w-[130px] hidden md:table-cell">Fornecedor</th>}
-              {visibleColumns.includes('preco_venda') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[100px] hidden md:table-cell">Preço Venda</th>}
-              {visibleColumns.includes('margem') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Margem</th>}
-              {visibleColumns.includes('estoque_atual') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[90px] hidden md:table-cell">Estoque</th>}
-              {visibleColumns.includes('preco_custo') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[100px] hidden md:table-cell">Custo Total</th>}
-              {visibleColumns.includes('markup') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Markup</th>}
-              {visibleColumns.includes('categoria') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold min-w-[120px] hidden md:table-cell">Categoria</th>}
-              {visibleColumns.includes('estoque_minimo') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Mín.</th>}
-              {visibleColumns.includes('sistema_casas_decimais') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-center min-w-[70px] hidden md:table-cell">Casas</th>}
-              {visibleColumns.includes('sistema_tempo_reposicao') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-center min-w-[70px] hidden md:table-cell">Repos (d)</th>}
-              {visibleColumns.includes('sistema_estoque_ideal') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Ideal</th>}
-              {visibleColumns.includes('sistema_estoque_maximo') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Máx.</th>}
+              <th className="w-8 p-1 sticky left-0 z-30 bg-muted/50" />
+              <th className="w-10 p-1 text-[10px] text-muted-foreground uppercase text-center">Img</th>
+              <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold min-w-[220px]">Produto</th>
+              {visibleColumns.includes('status') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold min-w-[80px]">Status</th>}
+              {visibleColumns.includes('fornecedor') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold min-w-[130px] hidden md:table-cell">Fornecedor</th>}
+              {visibleColumns.includes('preco_venda') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[100px] hidden md:table-cell">Preço Venda</th>}
+              {visibleColumns.includes('margem') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Margem</th>}
+              {visibleColumns.includes('estoque_atual') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[90px] hidden md:table-cell">Estoque</th>}
+              {visibleColumns.includes('preco_custo') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[100px] hidden md:table-cell">Custo Total</th>}
+              {visibleColumns.includes('markup') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Markup</th>}
+              {visibleColumns.includes('categoria') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold min-w-[120px] hidden md:table-cell">Categoria</th>}
+              {visibleColumns.includes('estoque_minimo') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Mín.</th>}
+              {visibleColumns.includes('sistema_casas_decimais') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-center min-w-[70px] hidden md:table-cell">Casas</th>}
+              {visibleColumns.includes('sistema_tempo_reposicao') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-center min-w-[70px] hidden md:table-cell">Repos (d)</th>}
+              {visibleColumns.includes('sistema_estoque_ideal') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Ideal</th>}
+              {visibleColumns.includes('sistema_estoque_maximo') && <th className="py-2 px-3 text-[10px] text-muted-foreground uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Máx.</th>}
             </tr>
           </thead>
           <tbody>
@@ -473,16 +473,16 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
 
         {produtos.length === 0 && (
           <div className="py-16 text-center">
-            <Package className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
-            <p className="text-xs text-gray-400 dark:text-gray-500">Nenhum produto encontrado</p>
+            <Package className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">Nenhum produto encontrado</p>
           </div>
         )}
       </div>
 
       {/* Paginação */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <span className="text-[11px] text-gray-400 dark:text-gray-500">
+        <div className="flex items-center justify-between px-4 py-2 border-t border-border/40 bg-card">
+          <span className="text-[11px] text-muted-foreground">
             {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, produtos.length)} de {produtos.length}
           </span>
           <div className="flex items-center gap-1">
@@ -501,8 +501,8 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                 onClick={() => setPage(i)}
                 className={`h-6 w-6 text-[11px] rounded transition-colors ${
                   i === page
-                    ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-semibold'
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground font-semibold'
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
               >
                 {i + 1}

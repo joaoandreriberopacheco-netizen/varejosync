@@ -119,7 +119,7 @@ export default function LiberacaoEntrega({ open, onClose, pedido }) {
                 });
               }}
               size="sm"
-              className="h-8 bg-black text-white hover:bg-gray-800"
+              className="h-8 bg-black text-white hover:bg-primary"
             >
               <Printer className="w-4 h-4 mr-2" /> Imprimir
             </Button>

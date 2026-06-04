@@ -32,7 +32,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
 
   const handleSalvar = async () => {
     if (diferenca === 0) {
-      toast({ title: 'Nenhum ajuste necessário', className: 'bg-white dark:bg-gray-800' });
+      toast({ title: 'Nenhum ajuste necessário', className: 'bg-card' });
       onOpenChange(false);
       return;
     }
@@ -52,7 +52,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
 
     toast({
       title: isReforco ? 'Ajuste para mais registrado' : 'Ajuste para menos registrado',
-      className: 'bg-white dark:bg-gray-800'
+      className: 'bg-card'
     });
 
     onSaved();
@@ -61,53 +61,53 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800">
+      <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <Scale className="w-4 h-4 text-gray-400" />
+            <Scale className="w-4 h-4 text-muted-foreground" />
             Ajuste de Saldo
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-3 shadow-sm space-y-1">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Conta</p>
+          <div className="rounded-2xl bg-muted/50 p-3 shadow-sm space-y-1">
+            <p className="text-xs text-muted-foreground">Conta</p>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{conta.nome}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Saldo atual: {formatValor(saldoAtual)}</p>
+            <p className="text-xs text-muted-foreground">Saldo atual: {formatValor(saldoAtual)}</p>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Novo saldo real</Label>
+            <Label className="text-xs text-muted-foreground font-medium">Novo saldo real</Label>
             <Input
               type="number"
               step="0.01"
               value={saldoInformado}
               onChange={(e) => setSaldoInformado(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-10 text-sm"
+              className="bg-muted/50 border-0 shadow-sm h-10 text-sm"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Observação</Label>
+            <Label className="text-xs text-muted-foreground font-medium">Observação</Label>
             <Input
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-10 text-sm"
+              className="bg-muted/50 border-0 shadow-sm h-10 text-sm"
             />
           </div>
 
-          <div className="rounded-2xl bg-white dark:bg-gray-800 p-3 shadow-sm">
+          <div className="rounded-2xl bg-card p-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-gray-500 dark:text-gray-400">Diferença</span>
+              <span className="text-xs text-muted-foreground">Diferença</span>
               <div className="flex items-center gap-2">
                 {isReforco && <ArrowUpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                 {isSangria && <ArrowDownCircle className="w-4 h-4 text-red-600 dark:text-red-400" />}
-                <span className={`text-sm font-semibold ${isReforco ? 'text-emerald-600 dark:text-emerald-400' : isSangria ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                <span className={`text-sm font-semibold ${isReforco ? 'text-emerald-600 dark:text-emerald-400' : isSangria ? 'text-red-600 dark:text-red-400' : 'text-foreground/90'}`}>
                   {diferenca >= 0 ? '+' : '-'}{formatValor(Math.abs(diferenca))}
                 </span>
               </div>
             </div>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+            <p className="text-[11px] text-muted-foreground mt-2">
               Será criado um movimento de {isReforco ? 'reforço' : isSangria ? 'sangria' : 'ajuste zero'}.
             </p>
           </div>
@@ -115,7 +115,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
 
         <DialogFooter className="gap-2 pt-1">
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-8 text-xs">Cancelar</Button>
-          <Button size="sm" onClick={handleSalvar} className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs">
+          <Button size="sm" onClick={handleSalvar} className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
             Confirmar Ajuste
           </Button>
         </DialogFooter>

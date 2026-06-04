@@ -36,12 +36,12 @@ export default function AgefinNaturezaSelector({ value = 'Único', onChange }) {
             onClick={() => onChange(option.id)}
             className={`relative rounded-2xl px-3 py-4 text-center transition-all ${
               isActive
-                ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900'
-                : 'bg-gray-100 text-gray-500 shadow-sm hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-950'
+                ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-foreground'
+                : 'bg-gray-100 text-muted-foreground shadow-sm hover:bg-gray-200 dark:bg-background dark:text-muted-foreground dark:hover:bg-gray-950'
             }`}
           >
             <div className="mb-2 flex justify-center">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isActive ? 'bg-white/10 dark:bg-gray-200' : 'bg-white dark:bg-gray-800'}`}>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isActive ? 'bg-white/10 dark:bg-gray-200' : 'bg-card'}`}>
                 <Icon className="h-5 w-5" />
               </div>
             </div>

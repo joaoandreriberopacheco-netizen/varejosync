@@ -36,14 +36,14 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-gray-900 z-[9999] flex flex-col overflow-hidden">
+      <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-background z-[9999] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex-shrink-0 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+        <div className="flex-shrink-0 px-4 py-3 border-b border-border/40 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
             <ChevronDown className="w-5 h-5 rotate-90" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-medium text-gray-900 dark:text-white truncate">
+            <h2 className="text-base font-medium text-foreground truncate">
               Aprovar Pagamento
             </h2>
           </div>
@@ -52,11 +52,11 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
         {/* Valor Total Destacado */}
         <div className="flex-shrink-0 px-4 py-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
           <div className="text-center">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
-            <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            <div className="text-xs text-muted-foreground mb-1">Valor Total</div>
+            <div className="text-4xl font-bold text-foreground mb-2">
               {formatCurrency(pedido.valor_total)}
             </div>
-            <Badge className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-0">
+            <Badge className="bg-muted text-foreground/90 border-0">
               {pedido.numero}
             </Badge>
           </div>
@@ -66,37 +66,37 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
           {/* Informações do Pedido */}
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Fornecedor</div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="text-xs text-muted-foreground mb-1">Fornecedor</div>
+                <div className="text-sm font-medium text-foreground">
                   {pedido.fornecedor_nome}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                <Package className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <Package className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Itens no Pedido</div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="text-xs text-muted-foreground mb-1">Itens no Pedido</div>
+                <div className="text-sm font-medium text-foreground">
                   {pedido.itens?.length || 0} {pedido.itens?.length === 1 ? 'item' : 'itens'}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Data de Criação</div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="text-xs text-muted-foreground mb-1">Data de Criação</div>
+                <div className="text-sm font-medium text-foreground">
                   {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : '-'}
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
                   <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                   <div className="text-xs font-medium text-blue-800 dark:text-blue-300">Observações</div>
                 </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300">
+                <div className="text-sm text-foreground/90">
                   {pedido.observacoes}
                 </div>
               </div>
@@ -117,19 +117,19 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
 
           {/* Seleção de Conta */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Label className="text-sm font-medium text-foreground/90">
               Conta de Pagamento *
             </Label>
             <Select value={contaSelecionada} onValueChange={setContaSelecionada}>
-              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm">
+              <SelectTrigger className="bg-muted/50 border-0 h-12 shadow-sm">
                 <SelectValue placeholder="Selecione a conta..." />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[10000]">
+              <SelectContent className="dark:bg-muted border-0 shadow-lg z-[10000]">
                 {contas.map(conta => (
                   <SelectItem key={conta.id} value={conta.id}>
                     <div className="flex items-center justify-between w-full gap-4">
                       <span className="font-medium">{conta.nome}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {formatCurrency(conta.saldo_atual)}
                       </span>
                     </div>
@@ -141,12 +141,12 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
 
           {/* Área de Rejeição */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Label className="text-sm font-medium text-foreground/90">
               Motivo da Rejeição (opcional)
             </Label>
             <Textarea
               placeholder="Informe o motivo caso vá rejeitar..."
-              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none"
+              className="bg-muted/50 border-0 shadow-sm resize-none"
               rows={3}
               value={motivoRejeicao}
               onChange={(e) => setMotivoRejeicao(e.target.value)}
@@ -155,11 +155,11 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
         </div>
 
         {/* Footer com Botões de Ação */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex-shrink-0 p-4 border-t border-border/40 bg-card">
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              className="h-12 border-0 shadow-sm bg-gray-50 dark:bg-gray-800 gap-2"
+              className="h-12 border-0 shadow-sm bg-muted/50 gap-2"
               onClick={() => {
                 if (motivoRejeicao.trim()) {
                   handleRejectClick();
@@ -172,7 +172,7 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
               Rejeitar
             </Button>
             <Button
-              className="h-12 bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 gap-2"
+              className="h-12 bg-primary hover:bg-primary/90 dark:bg-muted dark:hover:bg-gray-600 gap-2"
               onClick={() => {
                 if (contaSelecionada) {
                   handleApproveClick();
@@ -189,15 +189,15 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
 
         {/* Dialog de Alerta - Conta não selecionada */}
         <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
-          <DialogContent className="!max-w-sm mx-4 dark:bg-gray-800">
+          <DialogContent className="!max-w-sm mx-4 dark:bg-muted">
             <div className="p-4 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
                   <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-1">Conta obrigatória</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <h3 className="font-medium text-foreground mb-1">Conta obrigatória</h3>
+                  <p className="text-sm text-muted-foreground">
                     Selecione uma conta de pagamento antes de aprovar.
                   </p>
                 </div>
@@ -211,15 +211,15 @@ export default function AprovacaoPedidoMobile({ pedido, contas, onApprove, onRej
 
         {/* Dialog de Alerta - Motivo não informado */}
         <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-          <DialogContent className="!max-w-sm mx-4 dark:bg-gray-800">
+          <DialogContent className="!max-w-sm mx-4 dark:bg-muted">
             <div className="p-4 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
                   <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-1">Motivo obrigatório</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <h3 className="font-medium text-foreground mb-1">Motivo obrigatório</h3>
+                  <p className="text-sm text-muted-foreground">
                     Informe o motivo da rejeição para feedback ao setor de compras.
                   </p>
                 </div>

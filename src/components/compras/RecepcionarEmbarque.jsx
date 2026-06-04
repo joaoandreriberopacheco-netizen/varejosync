@@ -383,21 +383,21 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl w-[calc(100vw-1rem)] md:w-full h-[calc(100vh-1rem)] md:h-[90vh] bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl w-[calc(100vw-1rem)] md:w-full h-[calc(100vh-1rem)] md:h-[90vh] bg-card border-0 rounded-3xl p-0 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-border/40/50 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
                 <Package className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
-                <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Receber Embarque</h2>
+                <h2 className="font-quicksand text-lg font-semibold text-foreground">Receber Embarque</h2>
                 {isReadOnly && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Somente leitura</p>
+                  <p className="text-xs text-muted-foreground mt-1">Somente leitura</p>
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-gray-200 dark:hover:bg-primary/90">
               <X className="w-5 h-5" />
             </Button>
           </div>
@@ -405,13 +405,13 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 space-y-6">
             {/* Info do embarque - Grid de 2 colunas */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Transportadora</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{embarque?.transportadora_nome || '-'}</p>
+              <div className="bg-muted/50/50 rounded-2xl p-4">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Transportadora</p>
+                <p className="text-sm font-semibold text-foreground">{embarque?.transportadora_nome || '-'}</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">ETA Prevista</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="bg-muted/50/50 rounded-2xl p-4">
+                <p className="text-xs text-muted-foreground font-medium mb-1">ETA Prevista</p>
+                <p className="text-sm font-semibold text-foreground">
                   {embarque?.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-'}
                 </p>
               </div>
@@ -420,14 +420,14 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             {/* Itens - PDV Style */}
             <div className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-1 mb-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Itens do Embarque</h3>
+                <h3 className="text-sm font-semibold text-foreground">Itens do Embarque</h3>
                 {!isReadOnly && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={copiarQuantidadesEmbarcado}
-                    className="h-9 rounded-xl border-0 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 shrink-0"
+                    className="h-9 rounded-xl border-0 bg-muted text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 shrink-0"
                   >
                     <Copy className="w-3.5 h-3.5 mr-1.5" />
                     Igual ao embarcado
@@ -436,22 +436,22 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               </div>
               {!isReadOnly &&
                 (!embarque?.status_recebimento || embarque.status_recebimento === 'Pendente') && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 px-1 -mt-2 mb-1">
+                  <p className="text-xs text-muted-foreground px-1 -mt-2 mb-1">
                     Por defeito, a quantidade recebida iguala ao embarcado — ajuste só em caso de falta ou divergência.
                   </p>
                 )}
               {itens.map((item, idx) => {
                 const hasDivergencia = item.divergencia_tipo !== 'Nenhuma';
                 return (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 space-y-4 shadow-sm">
+                  <div key={idx} className="bg-muted/50/50 rounded-2xl p-5 space-y-4 shadow-sm">
                     {/* Produto */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-semibold text-gray-900 dark:text-white leading-snug">
+                        <p className="text-base font-semibold text-foreground leading-snug">
                           {item.produto_nome}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Embarcado: <span className="font-medium text-gray-900 dark:text-white">{formatQuantity(item.quantidade_embarcada)} {item.unidade_medida}</span>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Embarcado: <span className="font-medium text-foreground">{formatQuantity(item.quantidade_embarcada)} {item.unidade_medida}</span>
                         </p>
                       </div>
                       {hasDivergencia && (
@@ -461,7 +461,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
                     {/* Quantidade Recebida */}
                     <div>
-                      <Label className="text-xs text-gray-600 dark:text-gray-400 font-semibold block mb-2">Quantidade Recebida</Label>
+                      <Label className="text-xs text-muted-foreground font-semibold block mb-2">Quantidade Recebida</Label>
                       <Input
                         type="number"
                         min="0"
@@ -469,7 +469,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                         value={item.quantidade_recebida || ''}
                         onChange={e => handleQuantidadeChange(idx, e.target.value)}
                         disabled={isReadOnly}
-                        className="h-14 text-lg bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm font-semibold text-gray-900 dark:text-white text-center placeholder:text-gray-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="h-14 text-lg bg-card border-0 rounded-xl shadow-sm font-semibold text-foreground text-center placeholder:text-muted-foreground disabled:opacity-60 disabled:cursor-not-allowed"
                         placeholder="0"
                       />
                     </div>
@@ -483,7 +483,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                         isReadOnly ? 'opacity-60 cursor-not-allowed' :
                         hasDivergencia
                           ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-0'
-                          : 'border-0 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          : 'border-0 bg-muted text-foreground/90 hover:bg-gray-300 dark:hover:bg-gray-600'
                       }`}
                     >
                       <AlertTriangle className="w-4 h-4 mr-2" />
@@ -508,16 +508,16 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </div>
 
           {/* Footer com Data e Botão */}
-          <div className="shrink-0 border-t border-gray-200 dark:border-gray-700/50 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-6 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-border/40/50 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-6 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             {/* Data de Entrada */}
             <div>
-              <Label className="text-xs text-gray-700 dark:text-gray-300 font-semibold block mb-2">Data de Entrada</Label>
+              <Label className="text-xs text-foreground/90 font-semibold block mb-2">Data de Entrada</Label>
               <Input
                 type="date"
                 value={dataEntrada}
                 onChange={e => setDataEntrada(e.target.value)}
                 disabled={isReadOnly}
-                className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm text-gray-900 dark:text-white placeholder:text-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="h-12 bg-card border-0 rounded-xl shadow-sm text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-60 disabled:cursor-not-allowed"
               />
               </div>
 
@@ -553,18 +553,18 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
       {/* Dialog de Divergência - PDV Style */}
       <Dialog open={showDivergenciaDialog} onOpenChange={setShowDivergenciaDialog}>
-        <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden">
+        <DialogContent className="max-w-lg bg-card border-0 rounded-3xl p-0 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50">
-            <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Registrar Divergência</h2>
+          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-border/40/50">
+            <h2 className="font-quicksand text-lg font-semibold text-foreground">Registrar Divergência</h2>
           </div>
 
           <div className="px-6 py-6 space-y-4">
             {selectedItemIndex !== null && (
               <>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Produto</p>
-                  <p className="text-base font-semibold text-gray-900 dark:text-white">
+                <div className="bg-muted/50/50 rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Produto</p>
+                  <p className="text-base font-semibold text-foreground">
                     {itens[selectedItemIndex]?.produto_nome}
                   </p>
                 </div>
@@ -572,28 +572,28 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 {/* Buscar produto diferente */}
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-xs text-gray-600 dark:text-gray-400 font-semibold block mb-2">Buscar Produto Correto</Label>
+                    <Label className="text-xs text-muted-foreground font-semibold block mb-2">Buscar Produto Correto</Label>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         placeholder="Nome ou código..."
                         value={searchProduto}
                         onChange={e => setSearchProduto(e.target.value)}
-                        className="pl-10 h-11 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm"
+                        className="pl-10 h-11 bg-card border-0 rounded-xl shadow-sm text-sm"
                       />
                     </div>
                   </div>
 
                   {filteredProdutos.length > 0 && (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+                    <div className="border border-border/40 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
                       {filteredProdutos.map(p => (
                         <button
                           key={p.id}
                           onClick={() => handleAceitarTroca(p.id, p.nome)}
-                          className="w-full text-left px-4 py-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 border-b border-gray-200 dark:border-gray-700 last:border-0 transition-colors"
+                          className="w-full text-left px-4 py-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 border-b border-border/40 last:border-0 transition-colors"
                         >
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{p.nome}</p>
-                          {p.codigo_interno && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.codigo_interno}</p>}
+                          <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                          {p.codigo_interno && <p className="text-xs text-muted-foreground mt-0.5">{p.codigo_interno}</p>}
                         </button>
                       ))}
                     </div>
@@ -603,25 +603,25 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                     type="button"
                     variant="outline"
                     onClick={() => setShowNovoProduct(!showNovoProduct)}
-                    className="w-full h-11 text-sm font-semibold border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl"
+                    className="w-full h-11 text-sm font-semibold border-0 bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-primary/90 rounded-xl"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Criar Novo Produto
                   </Button>
 
                   {showNovoProduct && (
-                    <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <div className="space-y-3 p-4 bg-muted/50/50 rounded-xl">
                       <Input
                         placeholder="Nome do produto"
                         value={novoProduto.nome}
                         onChange={e => setNovoProduto({...novoProduto, nome: e.target.value})}
-                        className="h-11 bg-white dark:bg-gray-900 border-0 rounded-lg text-sm shadow-sm"
+                        className="h-11 bg-card border-0 rounded-lg text-sm shadow-sm"
                       />
                       <Input
                         placeholder="Categoria"
                         value={novoProduto.hierarquico_1}
                         onChange={e => setNovoProduto({...novoProduto, hierarquico_1: e.target.value})}
-                        className="h-11 bg-white dark:bg-gray-900 border-0 rounded-lg text-sm shadow-sm"
+                        className="h-11 bg-card border-0 rounded-lg text-sm shadow-sm"
                       />
                       <Button
                         onClick={handleNovoProduct}
@@ -644,10 +644,10 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 dark:border-gray-700/50 px-6 py-4">
+          <div className="border-t border-border/40/50 px-6 py-4">
             <Button
               onClick={() => setShowDivergenciaDialog(false)}
-              className="w-full h-11 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="w-full h-11 bg-muted text-foreground border-0 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-primary/90"
             >
               Fechar
             </Button>
@@ -657,55 +657,55 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
       {/* Dialog Seleção de Modo */}
       <AlertDialog open={showModoDialog} onOpenChange={setShowModoDialog}>
-        <AlertDialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-3xl">
+        <AlertDialogContent className="max-w-lg bg-card border-0 rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">Como deseja proceder?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg font-semibold text-foreground">Como deseja proceder?</AlertDialogTitle>
           </AlertDialogHeader>
           <div className="space-y-3 py-4">
             <button
               onClick={() => confirmarModo('simplificado')}
-              className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-4 transition-colors"
+              className="w-full text-left bg-muted/50/50 hover:bg-muted rounded-2xl p-4 transition-colors"
             >
-              <p className="font-semibold text-gray-900 dark:text-white">✓ Recepção Simplificada</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Confirmar recebimento direto (modelo atual)</p>
+              <p className="font-semibold text-foreground">✓ Recepção Simplificada</p>
+              <p className="text-sm text-muted-foreground mt-1">Confirmar recebimento direto (modelo atual)</p>
             </button>
             <button
               onClick={() => confirmarModo('conferencia')}
-              className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-4 transition-colors"
+              className="w-full text-left bg-muted/50/50 hover:bg-muted rounded-2xl p-4 transition-colors"
             >
-              <p className="font-semibold text-gray-900 dark:text-white"><Search className="w-4 h-4 inline mr-1" /> Conferência Cega</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Enviar para conferência com senha de acesso</p>
+              <p className="font-semibold text-foreground"><Search className="w-4 h-4 inline mr-1" /> Conferência Cega</p>
+              <p className="text-sm text-muted-foreground mt-1">Enviar para conferência com senha de acesso</p>
             </button>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl font-semibold">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="border-0 bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-primary/90 rounded-xl font-semibold">Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Dialog Código Conferência Cega */}
       <Dialog open={showCodigoConferencia} onOpenChange={setShowCodigoConferencia}>
-        <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden">
-          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50">
-            <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Código Conferência Cega</h2>
+        <DialogContent className="max-w-lg bg-card border-0 rounded-3xl p-0 overflow-hidden">
+          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-border/40/50">
+            <h2 className="font-quicksand text-lg font-semibold text-foreground">Código Conferência Cega</h2>
           </div>
           <div className="px-6 py-8 space-y-6">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Compartilhe este código com o conferente para acessar a conferência cega em outro dispositivo.
             </p>
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 text-center">
-              <div className="flex items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                <span className="text-2xl font-bold tracking-widest text-gray-900 dark:text-white font-mono">
+            <div className="bg-muted/50/50 rounded-2xl p-6 text-center">
+              <div className="flex items-center justify-between gap-3 bg-card rounded-xl p-4 border border-border/40">
+                <span className="text-2xl font-bold tracking-widest text-foreground font-mono">
                   {showCodigoDecrypt ? codigoConferencia : '••••••••••••••'}
                 </span>
                 <button
                   onClick={() => setShowCodigoDecrypt(!showCodigoDecrypt)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
                 >
                   {showCodigoDecrypt ? (
-                    <EyeOff className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <EyeOff className="w-5 h-5 text-muted-foreground" />
                   ) : (
-                    <Eye className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <Eye className="w-5 h-5 text-muted-foreground" />
                   )}
                 </button>
               </div>
@@ -725,7 +725,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 setShowCodigoConferencia(false);
                 onClose();
               }}
-              className="w-full h-12 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="w-full h-12 bg-muted text-foreground font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors"
             >
               Fechar
             </button>

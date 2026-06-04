@@ -31,14 +31,14 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
       <div className="relative flex-1">
         <button
           onClick={() => setShowCriteria(!showCriteria)}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-muted/50/50 hover:bg-muted border border-border/40 transition"
         >
-          <CurrentIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-          <span className="text-sm font-medium text-gray-900 dark:text-white">{currentOption?.label}</span>
+          <CurrentIcon className="w-4 h-4 text-foreground/90" />
+          <span className="text-sm font-medium text-foreground">{currentOption?.label}</span>
         </button>
 
         {showCriteria && (
-          <div className="absolute top-full left-0 mt-2 w-56 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 p-2 space-y-1 z-20 shadow-lg">
+          <div className="absolute top-full left-0 mt-2 w-56 rounded-lg bg-muted/50/50 border border-border/40 p-2 space-y-1 z-20 shadow-lg">
             {sortOptions.map((opt) => {
               const Icon = opt.icon;
               return (
@@ -50,8 +50,8 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition rounded-md ${
                     sortField === opt.field
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-muted text-foreground font-medium'
+                      : 'text-foreground/90 hover:bg-muted'
                   }`}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
@@ -67,15 +67,15 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
       <div className="relative">
         <button
           onClick={() => setShowDirection(!showDirection)}
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition"
+          className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted/50/50 hover:bg-muted border border-border/40 transition"
         >
-          <ChevronDown className={`w-4 h-4 text-gray-700 dark:text-gray-300 transition ${
+          <ChevronDown className={`w-4 h-4 text-foreground/90 transition ${
             sortOrder === 'desc' ? 'rotate-180' : ''
           }`} />
         </button>
 
         {showDirection && (
-          <div className="absolute top-full right-0 mt-2 w-32 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 p-1 space-y-1 z-20 shadow-lg">
+          <div className="absolute top-full right-0 mt-2 w-32 rounded-lg bg-muted/50/50 border border-border/40 p-1 space-y-1 z-20 shadow-lg">
             {sortField === 'nome' ? (
               <>
                 <button
@@ -85,8 +85,8 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-md transition text-left ${
                     sortOrder === 'asc'
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-muted text-foreground font-medium'
+                      : 'text-foreground/90 hover:bg-muted'
                   }`}
                 >
                   A → Z
@@ -98,8 +98,8 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-md transition text-left ${
                     sortOrder === 'desc'
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-muted text-foreground font-medium'
+                      : 'text-foreground/90 hover:bg-muted'
                   }`}
                 >
                   Z → A
@@ -114,8 +114,8 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-md transition text-left ${
                     sortOrder === 'desc'
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-muted text-foreground font-medium'
+                      : 'text-foreground/90 hover:bg-muted'
                   }`}
                 >
                   ↓ Maior
@@ -127,8 +127,8 @@ export default function SortSelector({ sortField, setSortField, sortOrder, setSo
                   }}
                   className={`w-full px-3 py-2 text-sm rounded-md transition text-left ${
                     sortOrder === 'asc'
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-muted text-foreground font-medium'
+                      : 'text-foreground/90 hover:bg-muted'
                   }`}
                 >
                   ↑ Menor

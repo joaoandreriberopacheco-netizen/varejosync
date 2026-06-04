@@ -50,11 +50,11 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
   return (
     <div 
       ref={scrollRef}
-      className="overflow-x-auto overflow-y-auto h-full bg-white dark:bg-gray-900"
+      className="overflow-x-auto overflow-y-auto h-full bg-card"
     >
       <table className="w-full border-collapse">
-        <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
-          <tr className="border-b border-gray-200 dark:border-gray-700">
+        <thead className="sticky top-0 z-10 bg-muted/50">
+          <tr className="border-b border-border/40">
             <th className="w-12 px-4 py-3 text-left">
               <input type="checkbox" className="rounded" />
             </th>
@@ -62,7 +62,7 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
               <th 
                 key={campo.key}
                 style={{ width: campo.width, minWidth: campo.width }}
-                className="px-3 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap"
+                className="px-3 py-3 text-left text-xs font-medium text-foreground/90 whitespace-nowrap"
               >
                 {campo.label}
                 {campo.obrigatorio && <span className="text-red-500">*</span>}
@@ -77,7 +77,7 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
             return (
               <tr 
                 key={produto.id}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                className={`hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors ${
                   hasAlteracoes ? 'bg-blue-50 dark:bg-blue-900/10' : ''
                 }`}
               >
@@ -108,10 +108,10 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
                             type={campo.tipo}
                             value={valor}
                             onChange={(e) => onAlteracao(produto.id, campo.key, e.target.value)}
-                            className={`w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border transition-colors ${
+                            className={`w-full px-2 py-1 text-xs bg-white dark:bg-muted text-foreground rounded border transition-colors ${
                               temErro
                                 ? 'border-red-300 dark:border-red-600'
-                                : 'border-gray-200 dark:border-gray-600 focus:border-blue-500'
+                                : 'border-border/40 focus:border-blue-500'
                             } focus:outline-none focus:ring-1 focus:ring-blue-500`}
                           />
                           {temErro && (
@@ -126,7 +126,7 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
                 })}
                 <td className="px-4 py-2 text-center">
                   {produto.id.startsWith('novo_') && (
-                    <button className="text-gray-400 hover:text-red-500 transition-colors">
+                    <button className="text-muted-foreground hover:text-red-500 transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}

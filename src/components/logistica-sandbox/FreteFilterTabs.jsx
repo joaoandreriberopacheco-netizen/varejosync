@@ -35,7 +35,7 @@ export default function FreteFilterTabs({
     <div className="space-y-5 pt-2">
       {filterSections.map((section) => (
         <div key={section.title} className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {section.title}
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -45,8 +45,8 @@ export default function FreteFilterTabs({
                 onClick={() => onFilterChange(filter.id)}
                 className={`rounded-2xl px-3 py-2.5 text-xs font-medium transition-colors ${
                   selectedFilter === filter.id
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                    : 'bg-gray-100/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    ? 'bg-muted text-foreground shadow-sm'
+                    : 'bg-gray-100/80 dark:bg-muted text-muted-foreground'
                 }`}
               >
                 {filter.label}

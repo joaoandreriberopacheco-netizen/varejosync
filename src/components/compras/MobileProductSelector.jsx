@@ -300,24 +300,24 @@ export default function MobileProductSelector({
     const isDesconto = tipoDesconto === 'desconto';
 
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
+      <div className="fixed inset-0 bg-card z-[60] flex flex-col">
         {/* Header */}
-        <div className="flex items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+        <div className="flex items-center px-4 py-3 border-b border-border/40 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <span className="ml-2 font-semibold text-gray-900 dark:text-white">Desconto / Acréscimo Global</span>
+          <span className="ml-2 font-semibold text-foreground">Desconto / Acréscimo Global</span>
         </div>
 
         <div className="flex-1 flex flex-col px-6 pt-8 pb-6 gap-6">
           {/* Toggle Desconto / Acréscimo */}
-          <div className="flex rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+          <div className="flex rounded-2xl bg-muted p-1 gap-1">
             <button
               onClick={() => setTipoDesconto('desconto')}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${
                 isDesconto
-                  ? 'bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400'
+                  ? 'bg-white dark:bg-muted text-emerald-700 dark:text-emerald-400 shadow-sm'
+                  : 'text-muted-foreground'
               }`}
             >
               <TrendingDown className="w-4 h-4" />
@@ -327,8 +327,8 @@ export default function MobileProductSelector({
               onClick={() => setTipoDesconto('acrescimo')}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${
                 !isDesconto
-                  ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400'
+                  ? 'bg-white dark:bg-muted text-red-600 dark:text-red-400 shadow-sm'
+                  : 'text-muted-foreground'
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -337,8 +337,8 @@ export default function MobileProductSelector({
           </div>
 
           {/* Visor com input nativo */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-6 py-8 flex flex-col items-center shadow-sm gap-3">
-            <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+          <div className="bg-muted/50 rounded-2xl px-6 py-8 flex flex-col items-center shadow-sm gap-3">
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">
               {isDesconto ? 'Desconto sobre todos os itens' : 'Acréscimo sobre todos os itens'}
             </span>
             <div className="flex items-center gap-2">
@@ -361,10 +361,10 @@ export default function MobileProductSelector({
                 }`}
                 style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
               />
-              <span className="text-3xl font-medium text-gray-400">%</span>
+              <span className="text-3xl font-medium text-muted-foreground">%</span>
             </div>
             {numVal > 0 && (
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Ex: R$ 100,00 → <strong className={isDesconto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
                   R$ {(isDesconto ? 100 - numVal : 100 + numVal).toFixed(2)}
                 </strong>
@@ -403,31 +403,31 @@ export default function MobileProductSelector({
   // Menu Principal
   if (view === 'menu') {
     return (
-      <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="flex flex-col h-full bg-card">
         <div className="flex-1 flex flex-col p-4 space-y-3">
           {/* Buscar Produtos */}
           <button
             onClick={() => setView('discount-entry')}
-            className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
             disabled={isLocked}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
-              <Search className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm">
+              <Search className="w-6 h-6 text-foreground/90" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-gray-900 dark:text-white">Buscar Produtos</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Adicionar itens ao pedido</div>
+              <div className="font-medium text-foreground">Buscar Produtos</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Adicionar itens ao pedido</div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
           </button>
 
           {/* Resumo do Pedido */}
           <button
             onClick={() => setView('cart')}
-            className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm relative">
-              <ShoppingCart className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm relative">
+              <ShoppingCart className="w-6 h-6 text-foreground/90" />
               {items.length > 0 && (
                 <div className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
                   {items.length}
@@ -435,28 +435,28 @@ export default function MobileProductSelector({
               )}
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-gray-900 dark:text-white">Resumo do Pedido</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <div className="font-medium text-foreground">Resumo do Pedido</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
                 {items.length > 0 ? `${items.length} ${items.length === 1 ? 'item' : 'itens'}` : 'Nenhum item adicionado'}
               </div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
           </button>
 
           {/* Importar itens */}
           <button
             onClick={() => onOpenImporter?.()}
-            className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            className="bg-muted/50 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
             disabled={isLocked}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
-              <Plus className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm">
+              <Plus className="w-6 h-6 text-foreground/90" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-gray-900 dark:text-white">Importar Itens</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Abre já em PDF — ou escolha foto</div>
+              <div className="font-medium text-foreground">Importar Itens</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Abre já em PDF — ou escolha foto</div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
           </button>
 
           {/* Ajustar Preços */}
@@ -465,20 +465,20 @@ export default function MobileProductSelector({
             disabled={items.length === 0}
             className={`rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4 ${
               items.length === 0 
-                ? 'bg-gray-100 dark:bg-gray-800/50 opacity-50' 
-                : 'bg-gray-50 dark:bg-gray-800'
+                ? 'bg-muted/50 opacity-50' 
+                : 'bg-muted/50'
             }`}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
-              <DollarSign className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <div className="w-12 h-12 rounded-full bg-white dark:bg-muted flex items-center justify-center shadow-sm">
+              <DollarSign className="w-6 h-6 text-foreground/90" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-gray-900 dark:text-white">Ajustar Preços</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <div className="font-medium text-foreground">Ajustar Preços</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
                 {items.length === 0 ? 'Adicione itens primeiro' : 'Atualizar custos dos produtos'}
               </div>
             </div>
-            <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180" />
           </button>
         </div>
       </div>
@@ -491,8 +491,8 @@ export default function MobileProductSelector({
     const editHasAltUnits = editProduct && buildPurchaseUnitOptions(editProduct).length > 1;
     return (
       <>
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
-        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
+      <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+        <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => {
             setEditingItem(null);
             setEditingIndex(-1);
@@ -500,7 +500,7 @@ export default function MobileProductSelector({
           }} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <div className="ml-2 font-medium truncate flex-1 text-gray-900 dark:text-white">{editingItem.produto_nome}</div>
+          <div className="ml-2 font-medium truncate flex-1 text-foreground">{editingItem.produto_nome}</div>
           {editHasAltUnits ? (
             <button
               type="button"
@@ -508,13 +508,13 @@ export default function MobileProductSelector({
               onClick={() => setEditUnitSelector({ open: true })}
               className="flex items-center gap-1 shrink-0"
             >
-              <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border-0 shadow-sm">
+              <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm">
                 {editingItem.unidade_medida || 'UN'}
               </Badge>
               <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400">trocar</span>
             </button>
           ) : (
-            <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border-0 shadow-sm shrink-0">
+            <Badge className="bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm shrink-0">
               {editingItem.unidade_medida || 'UN'}
             </Badge>
           )}
@@ -532,8 +532,8 @@ export default function MobileProductSelector({
             </div>
           )}
           {/* Quantity Stepper */}
-          <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-             <Label className="mb-3 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quantidade ({editingItem.unidade_medida})</Label>
+          <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-xl">
+             <Label className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Quantidade ({editingItem.unidade_medida})</Label>
              <div className="flex items-center gap-5">
                 <Button 
                  variant="outline" size="icon" className="h-11 w-11 rounded-full border-gray-300 dark:border-gray-600"
@@ -550,7 +550,7 @@ export default function MobileProductSelector({
                 ref={quantidadeInputRef}
                 type="text"
                 inputMode="decimal"
-                className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
                 value={quantidadeInput}
                 onChange={e => {
                   const val = e.target.value;
@@ -594,14 +594,14 @@ export default function MobileProductSelector({
 
           {/* Pricing Field */}
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 block">
+            <Label className="text-xs text-muted-foreground mb-2.5 block">
               Preço de Compra (R$ / {editingItem.unidade_medida || 'UN'})
             </Label>
             <Input 
               ref={custoInputRef}
               type="text"
               inputMode="decimal"
-              className="h-13 text-xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+              className="h-13 text-xl font-bold bg-muted/50 border-0 shadow-sm text-center text-foreground placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
               value={custoInput}
               onChange={e => {
                 const val = e.target.value;
@@ -673,7 +673,7 @@ export default function MobileProductSelector({
                 </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelPct}</Label>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">{labelPct}</Label>
                   <Input
                     ref={descontoPctInputRef}
                     type="text"
@@ -700,12 +700,12 @@ export default function MobileProductSelector({
                       setEditingItem(prev => syncDescontoFromPct(prev, custoApres, pct));
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descontoValorInputRef.current?.focus(); descontoValorInputRef.current?.select(); } }}
-                    className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
+                    className="h-11 text-center bg-muted/50 border-0 shadow-sm text-sm rounded-xl"
                     disabled={isLocked}
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelVal}</Label>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">{labelVal}</Label>
                   <Input
                     ref={descontoValorInputRef}
                     type="text"
@@ -733,7 +733,7 @@ export default function MobileProductSelector({
                       setEditingItem(prev => syncDescontoFromValor(prev, custoApres, desc));
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(); } }}
-                    className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
+                    className="h-11 text-center bg-muted/50 border-0 shadow-sm text-sm rounded-xl"
                     disabled={isLocked}
                   />
                 </div>
@@ -748,19 +748,19 @@ export default function MobileProductSelector({
             const isAcrescimo = isItemAcrescimoCompra(editingItem);
             return (parseFloat(editingItem?.valor_desconto_item) || 0) !== 0 ? (
               <div className="flex justify-between items-center text-sm px-1">
-                <span className="text-gray-500 dark:text-gray-400">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
+                <span className="text-muted-foreground">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
                 <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>
               </div>
             ) : null;
           })()}
 
-          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg flex justify-between items-center">
-             <span className="font-medium text-gray-600 dark:text-gray-400 text-sm">Total do Item</span>
-             <span className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(total)}</span>
+          <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
+             <span className="font-medium text-muted-foreground text-sm">Total do Item</span>
+             <span className="text-xl font-bold text-foreground">{formatCurrency(total)}</span>
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="p-4 border-t border-border/40">
           {editingIndex >= 0 ? (
             <div className="space-y-2">
               <Button 
@@ -840,12 +840,12 @@ export default function MobileProductSelector({
   if (view === 'catalog') {
     return (
       <>
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
-          <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
+        <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+          <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
             <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
+            <div className="ml-2 font-medium flex-1 text-foreground">Buscar Produtos</div>
             {items.length > 0 && (
               <Button 
                 variant="ghost" 
@@ -853,7 +853,7 @@ export default function MobileProductSelector({
                 onClick={() => setView('cart')}
                 className="h-10 w-10 relative"
               >
-                <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <ShoppingCart className="w-5 h-5 text-foreground/90" />
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
                   {items.length}
                 </div>
@@ -862,7 +862,7 @@ export default function MobileProductSelector({
           </div>
 
           <div ref={catalogScrollRef} className="flex-1 overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+            <div className="sticky top-0 bg-card z-10 p-4 pb-3 border-b border-border/40">
               {/* Badge de desconto global ativo */}
               {descontoGlobalPct !== 0 && (
                 <button
@@ -876,10 +876,10 @@ export default function MobileProductSelector({
                 </button>
               )}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar produto..."
-                  className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
+                  className="pl-11 bg-muted/50 border-0 shadow-sm h-12 rounded-xl text-foreground placeholder:text-muted-foreground"
                   value={search}
                   onChange={e => { setSearch(e.target.value); setSelectedIndex(-1); }}
                   onKeyDown={e => {
@@ -897,7 +897,7 @@ export default function MobileProductSelector({
 
             <div className="p-4 space-y-2">
               {search.trim() === '' ? (
-                <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+                <div className="text-center py-16 text-muted-foreground">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="font-medium">Digite para buscar</p>
                   <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
@@ -919,7 +919,7 @@ export default function MobileProductSelector({
                           ? 'bg-indigo-100 border-2 border-indigo-400 dark:bg-indigo-900/40 dark:border-indigo-600'
                           : inCart
                           ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800'
-                          : 'bg-gray-50 dark:bg-gray-800'
+                          : 'bg-muted/50'
                       } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
                     >
                       <div className="flex items-start gap-3">
@@ -927,11 +927,11 @@ export default function MobileProductSelector({
                           <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
                             {product.nome}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          <div className="text-sm text-muted-foreground mt-1">
                             <span className="truncate block">{product.codigo_interno || 'S/ Cód'} • {formatCurrency(custoApresentacao)}</span>
                             {variasUnidades && (
                               <span className="mt-1 flex items-center gap-2 flex-wrap">
-                                <Boxes className="w-3.5 h-3.5 text-gray-400 shrink-0" aria-hidden />
+                                <Boxes className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden />
                                 <button
                                   type="button"
                                   className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
@@ -962,7 +962,7 @@ export default function MobileProductSelector({
                   );
                 })
               ) : (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-muted-foreground">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="font-medium">Nenhum produto encontrado</p>
                   <p className="text-sm mt-1">para "{search}"</p>
@@ -977,7 +977,7 @@ export default function MobileProductSelector({
                 document.activeElement?.blur();
                 setShowNovoProduto(true);
               }}
-              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg transition-shadow hover:shadow-xl dark:bg-white dark:text-gray-900 p38-bottom-fab1"
+              className="fixed right-6 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-shadow hover:shadow-xl dark:bg-white dark:text-foreground p38-bottom-fab1"
               title="Criar novo produto"
             >
               <Plus className="w-6 h-6" />
@@ -1015,17 +1015,17 @@ export default function MobileProductSelector({
   );
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
-      <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
+    <div className="fixed inset-0 bg-card z-[60] flex flex-col">
+      <div className="flex items-center p-4 border-b border-border/40 flex-shrink-0 gap-2">
         <Button variant="ghost" size="icon" onClick={() => setView('catalog')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Carrinho</div>
+        <div className="ml-2 font-medium flex-1 text-foreground">Carrinho</div>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <ShoppingCart className="w-16 h-16 mb-4 opacity-20" />
             <p className="font-medium mb-1">Nenhum item adicionado</p>
             <p className="text-sm mb-6">Adicione produtos ao pedido</p>
@@ -1048,19 +1048,19 @@ export default function MobileProductSelector({
                 onClick={() => {
                   if (!isLocked) handleEditItem(originalIndex);
                 }}
-                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                className="bg-muted/50 p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2">
+                    <div className="font-medium text-foreground mb-2 line-clamp-2">
                       {item.produto_nome || "Produto"}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="text-sm text-muted-foreground mb-1">
                       {item.quantidade} {item.unidade_medida} × {formatCurrency(getCustoApresentacaoItem(item))}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Total</span>
-                      <span className="font-bold text-gray-900 dark:text-white">
+                      <span className="text-xs text-muted-foreground">Total</span>
+                      <span className="font-bold text-foreground">
                         {formatCurrency(item.total || 0)}
                       </span>
                     </div>
@@ -1086,12 +1086,12 @@ export default function MobileProductSelector({
         )}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div className="bg-card border-t border-border/40 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600 dark:text-gray-400">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
+          <span className="text-sm text-muted-foreground">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
           <div className="text-right">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
+            <div className="text-xs text-muted-foreground mb-0.5">Total</div>
+            <div className="text-2xl font-bold text-foreground">{formatCurrency(totalValue)}</div>
           </div>
         </div>
       </div>

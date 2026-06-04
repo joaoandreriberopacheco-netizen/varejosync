@@ -40,8 +40,8 @@ function BuscarPedidoStep({ onFound, onClose }) {
 
   return (
     <div className="flex flex-col gap-5 p-5">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Informe o número do pedido de venda</p>
+      <div className="bg-card rounded-2xl p-5 shadow-sm">
+        <p className="text-sm text-muted-foreground mb-3">Informe o número do pedido de venda</p>
         <div className="flex gap-2">
           <Input
             autoFocus
@@ -49,9 +49,9 @@ function BuscarPedidoStep({ onFound, onClose }) {
             value={numeroPedido}
             onChange={e => setNumeroPedido(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && buscar()}
-            className="text-lg font-mono uppercase border-0 border-b border-gray-200 dark:border-gray-700 rounded-none bg-transparent focus-visible:ring-0"
+            className="text-lg font-mono uppercase border-0 border-b border-border/40 rounded-none bg-transparent focus-visible:ring-0"
           />
-          <Button onClick={buscar} disabled={buscando} className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl px-5">
+          <Button onClick={buscar} disabled={buscando} className="bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl px-5">
             {buscando ? '...' : <Search className="w-4 h-4" />}
           </Button>
         </div>
@@ -83,45 +83,45 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   return (
     <div className="flex flex-col gap-4 p-4 overflow-y-auto max-h-[65vh]">
       {/* Cabeçalho do pedido */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm">
+      <div className="bg-card rounded-2xl px-4 py-3 shadow-sm">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">{pedido.numero}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{pedido.cliente_nome}</div>
+            <div className="text-sm font-semibold text-foreground">{pedido.numero}</div>
+            <div className="text-xs text-muted-foreground">{pedido.cliente_nome}</div>
           </div>
-          <div className="text-sm font-bold text-gray-700 dark:text-gray-300">{formatValor(pedido.valor_total)}</div>
+          <div className="text-sm font-bold text-foreground/90">{formatValor(pedido.valor_total)}</div>
         </div>
       </div>
 
       {/* Itens */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Selecione os itens a devolver</p>
+      <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-4 py-2 border-b border-border/40">
+          <p className="text-xs text-muted-foreground">Selecione os itens a devolver</p>
         </div>
         {(pedido.itens || []).map(item => {
           const key = item.produto_id + '_' + item.produto_nome;
           const qtd = qtds[key] || 0;
           return (
-            <div key={key} className="px-4 py-3 flex items-center gap-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+            <div key={key} className="px-4 py-3 flex items-center gap-3 border-b border-gray-50 dark:border-border/40/50 last:border-0">
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.produto_nome}</div>
-                <div className="text-xs text-gray-400">
+                <div className="text-sm font-medium text-foreground truncate">{item.produto_nome}</div>
+                <div className="text-xs text-muted-foreground">
                   {item.quantidade}x · {formatValor(item.preco_unitario_praticado)}/un
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setQtds(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - 1) }))}
-                  className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"
                   style={{ minWidth: 32, minHeight: 32 }}>
-                  <Minus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+                  <Minus className="w-3 h-3 text-muted-foreground" />
                 </button>
-                <span className={`w-6 text-center text-sm font-bold tabular-nums ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}>{qtd}</span>
+                <span className={`w-6 text-center text-sm font-bold tabular-nums ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>{qtd}</span>
                 <button
                   onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
-                  className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"
                   style={{ minWidth: 32, minHeight: 32 }}>
-                  <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+                  <Plus className="w-3 h-3 text-muted-foreground" />
                 </button>
               </div>
             </div>
@@ -130,14 +130,14 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
       </div>
 
       {/* Forma de reembolso */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-4 shadow-sm space-y-3">
+      <div className="bg-card rounded-2xl px-4 py-4 shadow-sm space-y-3">
         <div>
-          <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Forma de reembolso</label>
+          <label className="text-xs text-muted-foreground block mb-1">Forma de reembolso</label>
           <Select value={formaReembolso} onValueChange={setFormaReembolso}>
-            <SelectTrigger className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl h-11">
+            <SelectTrigger className="bg-muted/40 dark:bg-muted border-0 rounded-xl h-11">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800">
+            <SelectContent className="dark:bg-muted">
               <SelectItem value="Vale Compra">Vale Compra (crédito na loja)</SelectItem>
               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
               <SelectItem value="PIX">PIX</SelectItem>
@@ -146,20 +146,20 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
           </Select>
         </div>
         <div>
-          <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Motivo</label>
+          <label className="text-xs text-muted-foreground block mb-1">Motivo</label>
           <Input
             placeholder="Ex: Produto com defeito, cliente desistiu..."
             value={motivo}
             onChange={e => setMotivo(e.target.value)}
-            className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl h-11"
+            className="bg-muted/40 dark:bg-muted border-0 rounded-xl h-11"
           />
         </div>
       </div>
 
       {/* Total */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-4 shadow-sm">
+      <div className="bg-card rounded-2xl px-4 py-4 shadow-sm">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Total a reembolsar</span>
+          <span className="text-sm text-muted-foreground">Total a reembolsar</span>
           <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValor(totalDevolvido)}</span>
         </div>
       </div>
@@ -167,7 +167,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
       <Button
         disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
         onClick={() => onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido })}
-        className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-base"
+        className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-2xl font-semibold text-base"
         style={{ minHeight: 56 }}>
         Confirmar {tipo}
       </Button>
@@ -213,10 +213,10 @@ function ComprovanteStep({ resultado, onClose }) {
         <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
       </div>
 
-      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
-        <div className="px-5 py-4 text-center border-b-2 border-dashed border-gray-200 dark:border-gray-700">
-          <div className="text-sm font-bold text-gray-900 dark:text-white">VAREJOSYNC</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">Comprovante de {resultado.tipo}</div>
+      <div className="w-full max-w-sm bg-card rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
+        <div className="px-5 py-4 text-center border-b-2 border-dashed border-border/40">
+          <div className="text-sm font-bold text-foreground">VAREJOSYNC</div>
+          <div className="text-xs text-muted-foreground">Comprovante de {resultado.tipo}</div>
         </div>
         <div className="px-5 py-3 space-y-2">
           {[
@@ -226,38 +226,38 @@ function ComprovanteStep({ resultado, onClose }) {
             { l: 'Data/Hora', v: format(new Date(), 'dd/MM/yyyy HH:mm') },
           ].map(({ l, v }) => (
             <div key={l} className="flex justify-between text-xs">
-              <span className="text-gray-400">{l}:</span>
-              <span className="font-semibold text-gray-800 dark:text-gray-200">{v}</span>
+              <span className="text-muted-foreground">{l}:</span>
+              <span className="font-semibold text-foreground">{v}</span>
             </div>
           ))}
         </div>
-        <div className="px-5 py-3 border-t-2 border-b-2 border-dashed border-gray-200 dark:border-gray-700 space-y-2">
+        <div className="px-5 py-3 border-t-2 border-b-2 border-dashed border-border/40 space-y-2">
           <div className="flex justify-between">
-            <span className="text-xs text-gray-400">Valor reembolsado:</span>
+            <span className="text-xs text-muted-foreground">Valor reembolsado:</span>
             <span className="text-lg font-bold text-red-600 dark:text-red-400 font-glacial">−{`R$ ${(resultado.valorTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-gray-400">Forma:</span>
-            <span className="font-semibold text-gray-800 dark:text-gray-200">{resultado.formaReembolso}</span>
+            <span className="text-muted-foreground">Forma:</span>
+            <span className="font-semibold text-foreground">{resultado.formaReembolso}</span>
           </div>
         </div>
         {resultado.valeCode && (
           <div className="px-5 py-4 bg-emerald-50 dark:bg-emerald-900/20 text-center space-y-1">
             <p className="text-xs text-emerald-600 dark:text-emerald-400">Vale Compra Gerado</p>
             <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300 font-mono">{resultado.valeCode}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Apresente na próxima compra</p>
+            <p className="text-xs text-muted-foreground">Apresente na próxima compra</p>
           </div>
         )}
         <div className="px-5 py-3 text-center">
-          <p className="text-xs text-gray-400">Não é documento fiscal</p>
+          <p className="text-xs text-muted-foreground">Não é documento fiscal</p>
         </div>
       </div>
 
       <div className="w-full max-w-sm flex gap-3">
-        <button onClick={onClose} className="flex-1 h-12 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium" style={{ minHeight: 48 }}>
+        <button onClick={onClose} className="flex-1 h-12 bg-muted text-foreground/90 rounded-2xl font-medium" style={{ minHeight: 48 }}>
           Fechar
         </button>
-        <button onClick={imprimir} className="flex-1 h-12 rounded-2xl font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 flex items-center justify-center gap-2" style={{ minHeight: 48 }}>
+        <button onClick={imprimir} className="flex-1 h-12 rounded-2xl font-medium text-white bg-gray-900 dark:bg-white dark:text-foreground flex items-center justify-center gap-2" style={{ minHeight: 48 }}>
           <Printer className="w-4 h-4" /> Imprimir
         </button>
       </div>
@@ -434,16 +434,16 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+        <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={step === 'itens' ? () => setStep('buscar') : handleClose}
-            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: 44, minHeight: 44 }}>
-            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <ArrowLeft className="w-6 h-6 text-foreground/90" />
           </button>
-          <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+          <h2 className="flex-1 text-center text-lg font-semibold text-foreground font-glacial">
             {tipo === 'Troca' ? 'Troca de Produto' : tipo === 'Cancelamento' ? 'Cancelamento de Venda' : 'Devolução de Produto'}
           </h2>
           <div className="w-10" />
@@ -451,7 +451,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
 
         <div className="flex-1 overflow-auto">
           {processando && (
-            <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-white/80 dark:bg-background/80 flex items-center justify-center z-50">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 dark:border-white" />
             </div>
           )}

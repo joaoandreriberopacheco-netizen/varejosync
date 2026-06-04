@@ -53,7 +53,7 @@ export default function TabelasPrecoPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 min-w-0">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-gray-800">Tabelas de Preço</h1>
-            <p className="text-gray-600">Gerencie diferentes políticas de precificação para seus clientes.</p>
+            <p className="text-muted-foreground">Gerencie diferentes políticas de precificação para seus clientes.</p>
           </div>
           <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 shrink-0 w-full sm:w-auto">
             <PlusCircle className="h-4 w-4" /> Nova Tabela
@@ -158,10 +158,10 @@ function TabelaPrecoForm({ tabela, onSave, onClose }) {
             onChange={e => handleChange('fator_ajuste', parseFloat(e.target.value))}
             required
           />
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {ajustePercentual > 0 ? `+${ajustePercentual}%` : `${ajustePercentual}%`} sobre o preço padrão
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Exemplo: 1.1 = +10% | 0.9 = -10% | 1.0 = Preço padrão
           </p>
         </div>

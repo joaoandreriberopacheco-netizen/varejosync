@@ -89,33 +89,33 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
   return (
     <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-3xl w-full md:max-w-md shadow-2xl overflow-hidden">
+      <div className="relative bg-card rounded-t-3xl md:rounded-3xl w-full md:max-w-md shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border/40">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            <div className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center">
+              <CreditCard className="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">Simulador de Taxa</h3>
-              <p className="text-xs text-gray-400">Venda de R$ {valorTotal.toFixed(2).replace('.', ',')}</p>
+              <h3 className="text-base font-semibold text-foreground font-glacial">Simulador de Taxa</h3>
+              <p className="text-xs text-muted-foreground">Venda de R$ {valorTotal.toFixed(2).replace('.', ',')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
           {loading ? (
-            <div className="text-center py-8 text-sm text-gray-400">Carregando maquininhas...</div>
+            <div className="text-center py-8 text-sm text-muted-foreground">Carregando maquininhas...</div>
           ) : maquininhas.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-400">Nenhuma maquininha cadastrada.</div>
+            <div className="text-center py-8 text-sm text-muted-foreground">Nenhuma maquininha cadastrada.</div>
           ) : (
             <>
               {/* Seleção de Maquininha */}
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-gray-400 mb-1.5 block font-medium">Maquininha</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block font-medium">Maquininha</label>
                 <div className="grid gap-2">
                   {maquininhas.map(m => (
                     <button
@@ -123,14 +123,14 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                       onClick={() => setMaquininhaSel(m)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all ${
                         maquininhaSel?.id === m.id
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                          : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                       }`}
                     >
                       <CreditCard className="w-4 h-4 flex-shrink-0" />
                       <div>
                         <div className="text-sm font-medium">{m.nome}</div>
-                        <div className={`text-[10px] ${maquininhaSel?.id === m.id ? 'text-gray-400 dark:text-gray-500' : 'text-gray-400'}`}>{m.adquirente || '—'}</div>
+                        <div className={`text-[10px] ${maquininhaSel?.id === m.id ? 'text-muted-foreground' : 'text-muted-foreground'}`}>{m.adquirente || '—'}</div>
                       </div>
                     </button>
                   ))}
@@ -139,7 +139,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
 
               {/* Bandeira */}
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-gray-400 mb-1.5 block font-medium">Bandeira</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block font-medium">Bandeira</label>
                 <div className="flex flex-wrap gap-2">
                   {BANDEIRAS.filter(b => (maquininhaSel?.bandeiras || []).some(cfg => cfg.bandeira === b)).map(b => (
                     <button
@@ -147,8 +147,8 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                       onClick={() => setBandeira(b)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                         bandeira === b
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {b}
@@ -159,7 +159,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
 
               {/* Modalidade */}
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-gray-400 mb-1.5 block font-medium">Modalidade</label>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block font-medium">Modalidade</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Débito', 'Crédito à Vista', 'Crédito Parcelado'].map(mod => (
                     <button
@@ -170,8 +170,8 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                       }}
                       className={`px-2 py-2.5 rounded-xl text-xs font-medium transition-all text-center ${
                         modalidade === mod
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {mod}
@@ -183,7 +183,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
               {/* Parcelas */}
               {modalidade === 'Crédito Parcelado' && (
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider text-gray-400 mb-1.5 block font-medium">Parcelas</label>
+                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block font-medium">Parcelas</label>
                   <div className="flex flex-wrap gap-2">
                     {[2,3,4,5,6,7,8,9,10,11,12].map(n => (
                       <button
@@ -191,8 +191,8 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                         onClick={() => setParcelas(n)}
                         className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
                           parcelas === n
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {n}x
@@ -207,7 +207,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                 <div className={`rounded-2xl p-4 space-y-3 ${
                   calculo.taxa_consome_desconto
                     ? 'bg-red-50 dark:bg-red-900/15'
-                    : 'bg-gray-50 dark:bg-gray-800/60'
+                    : 'bg-muted/50/60'
                 }`}>
                   {/* Alerta taxa > desconto */}
                   {calculo.taxa_consome_desconto && (
@@ -219,7 +219,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                     </div>
                   )}
                   {!calculo.taxa_consome_desconto && valorDesconto > 0 && (
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2 pb-2 border-b border-border/40">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                       <p className="text-xs text-emerald-600 dark:text-emerald-400">
                         Taxa dentro do desconto concedido.
@@ -229,17 +229,17 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
 
                   {/* Breakdown de taxas */}
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>Intermediação</span>
                       <span>{calculo.taxa_intermediacao.toFixed(2)}% = R$ {(valorTotal * calculo.taxa_intermediacao / 100).toFixed(2).replace('.', ',')}</span>
                     </div>
                     {calculo.taxa_parcelamento > 0 && (
-                      <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                      <div className="flex justify-between text-muted-foreground">
                         <span>Parcelamento vendedor</span>
                         <span>{calculo.taxa_parcelamento.toFixed(2)}% = R$ {(valorTotal * calculo.taxa_parcelamento / 100).toFixed(2).replace('.', ',')}</span>
                       </div>
                     )}
-                    <div className="flex justify-between font-semibold text-gray-700 dark:text-gray-300 pt-1 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between font-semibold text-foreground/90 pt-1 border-t border-border/40">
                       <span>Taxa total</span>
                       <span className={calculo.taxa_consome_desconto ? 'text-red-500' : ''}>
                         {calculo.taxa_total.toFixed(2)}% = R$ {calculo.valor_taxa.toFixed(2).replace('.', ',')}
@@ -248,25 +248,25 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                   </div>
 
                   {/* Valor líquido em destaque */}
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-between">
                     <div>
-                      <div className="text-[10px] text-gray-400 uppercase tracking-wider">Você receberá</div>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Você receberá</div>
+                      <div className="text-2xl font-bold text-foreground">
                         R$ {calculo.valor_liquido.toFixed(2).replace('.', ',')}
                       </div>
                     </div>
                     {modalidade !== 'Débito' && (
                       <div className="text-right">
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wider">Prazo</div>
-                        <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Prazo</div>
+                        <div className="text-sm font-semibold text-muted-foreground">
                           D+{modalidade === 'Crédito à Vista' ? maquininhaSel?.prazo_credito_vista_dias ?? 30 : maquininhaSel?.prazo_credito_parcelado_dias ?? 30}
                         </div>
                       </div>
                     )}
                     {modalidade === 'Débito' && (
                       <div className="text-right">
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wider">Prazo</div>
-                        <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Prazo</div>
+                        <div className="text-sm font-semibold text-muted-foreground">
                           D+{maquininhaSel?.prazo_debito_dias ?? 1}
                         </div>
                       </div>
@@ -275,7 +275,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
 
                   {/* Parcela do cliente */}
                   {modalidade === 'Crédito Parcelado' && (
-                    <div className="text-xs text-center text-gray-400 pt-1">
+                    <div className="text-xs text-center text-muted-foreground pt-1">
                       {parcelas}x R$ {(valorTotal / parcelas).toFixed(2).replace('.', ',')} para o cliente
                     </div>
                   )}
@@ -286,7 +286,7 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
         </div>
 
         <div className="px-5 pb-5">
-          <Button onClick={onClose} className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-medium shadow-none border-0">
+          <Button onClick={onClose} className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-2xl font-medium shadow-none border-0">
             Fechar
           </Button>
         </div>

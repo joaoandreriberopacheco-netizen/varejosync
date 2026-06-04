@@ -26,11 +26,11 @@ export default function PontoEquilibrio({ atual, meta, isLoading }) {
           <>
             <Progress value={percentual} className="w-full" />
             <div className="flex justify-between items-center text-sm">
-              <div className="text-gray-600">
+              <div className="text-muted-foreground">
                 <span className="font-bold text-lg text-indigo-700">{formatCurrency(atual)}</span> faturado
               </div>
-              <div className="text-gray-500 text-right">
-                Meta: <span className="font-semibold text-gray-700">{formatCurrency(meta)}</span>
+              <div className="text-muted-foreground text-right">
+                Meta: <span className="font-semibold text-foreground/90">{formatCurrency(meta)}</span>
               </div>
             </div>
             <div className="text-center font-medium text-lg mt-2">

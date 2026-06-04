@@ -44,19 +44,19 @@ export default function RelatorioCatalogoEstoquePrint({
   return (
     <div
       id="relatorio-catalogo-estoque-print"
-      className="hidden print:block bg-white text-gray-900 text-[11px] leading-snug"
+      className="hidden print:block bg-white text-foreground text-[11px] leading-snug"
       aria-hidden="true"
     >
       <header className="mb-4 pb-3 border-b border-gray-300">
-        <h1 className="text-lg font-bold text-gray-900 m-0">Relatório de estoque</h1>
-        <p className="text-xs text-gray-600 mt-1 mb-0">
+        <h1 className="text-lg font-bold text-foreground m-0">Relatório de estoque</h1>
+        <p className="text-xs text-muted-foreground mt-1 mb-0">
           Hierarquia do catálogo · {produtos?.length ?? 0} SKU(s) filtrado(s)
         </p>
-        <p className="text-xs text-gray-600 mt-0.5 mb-0">
+        <p className="text-xs text-muted-foreground mt-0.5 mb-0">
           Emitido em {generatedAt}
         </p>
         {filtersSummary ? (
-          <p className="text-xs text-gray-700 mt-2 mb-0">
+          <p className="text-xs text-foreground/90 mt-2 mb-0">
             <span className="font-semibold">Filtros:</span> {filtersSummary}
           </p>
         ) : null}
@@ -88,7 +88,7 @@ export default function RelatorioCatalogoEstoquePrint({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-8 text-center text-gray-500">
+              <td colSpan={5} className="py-8 text-center text-muted-foreground">
                 Nenhum produto encontrado.
               </td>
             </tr>
@@ -97,10 +97,10 @@ export default function RelatorioCatalogoEstoquePrint({
               if (row.type === 'group') {
                 const indent = (row.level - 1) * 12;
                 return (
-                  <tr key={row.key} className="border-b border-gray-200 bg-gray-50">
+                  <tr key={row.key} className="border-b border-border/40 bg-muted/40">
                     <td className="py-1 pr-2 font-semibold text-gray-800" style={{ paddingLeft: indent }}>
                       {row.label}
-                      <span className="font-normal text-gray-500 ml-1">({row.count})</span>
+                      <span className="font-normal text-muted-foreground ml-1">({row.count})</span>
                     </td>
                     <td className="text-right py-1 px-1 tabular-nums">{printGroupEstoque(row)}</td>
                     <td className="text-right py-1 px-1 tabular-nums">
@@ -120,11 +120,11 @@ export default function RelatorioCatalogoEstoquePrint({
               const cat = getCatalogoComercialView(p);
               const indent = 8 + (row.level - 1) * 12;
               return (
-                <tr key={row.key} className="border-b border-gray-100">
-                  <td className="py-0.5 pr-2 text-gray-700" style={{ paddingLeft: indent }}>
+                <tr key={row.key} className="border-b border-border/40">
+                  <td className="py-0.5 pr-2 text-foreground/90" style={{ paddingLeft: indent }}>
                     <span className="uppercase">{p.nome || '—'}</span>
                     {p.codigo_interno ? (
-                      <span className="text-gray-500 font-mono text-[10px] ml-1">{p.codigo_interno}</span>
+                      <span className="text-muted-foreground font-mono text-[10px] ml-1">{p.codigo_interno}</span>
                     ) : null}
                   </td>
                   <td className="text-right py-0.5 px-1 tabular-nums">{printEstoqueCell(p)}</td>
@@ -145,16 +145,16 @@ export default function RelatorioCatalogoEstoquePrint({
       </table>
 
       <footer className="mt-4 pt-3 border-t border-gray-300 flex flex-wrap justify-between gap-4">
-        <p className="text-[10px] text-gray-600 max-w-md m-0">
+        <p className="text-[10px] text-muted-foreground max-w-md m-0">
           Totais dos SKUs filtrados: estoque (vitrine quando activa) × valor de compra ou custo total.
         </p>
         <div className="text-right space-y-1">
           <div>
-            <span className="text-[10px] uppercase text-gray-500">Inventário (valor de compra)</span>
+            <span className="text-[10px] uppercase text-muted-foreground">Inventário (valor de compra)</span>
             <div className="text-base font-bold tabular-nums">R$ {fmtR(roundToTwoDecimals(totals.totalCompra))}</div>
           </div>
           <div>
-            <span className="text-[10px] uppercase text-gray-500">Inventário (custo total)</span>
+            <span className="text-[10px] uppercase text-muted-foreground">Inventário (custo total)</span>
             <div className="text-base font-bold tabular-nums">R$ {fmtR(roundToTwoDecimals(totals.totalCusto))}</div>
           </div>
         </div>

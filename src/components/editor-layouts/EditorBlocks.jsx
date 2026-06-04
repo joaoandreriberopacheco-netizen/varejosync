@@ -26,7 +26,7 @@ export default function EditorBlocks({ blocks, onBlocksChange }) {
   return (
     <div className="space-y-3 max-w-2xl">
       {/* Botões de Adicionar */}
-      <div className="flex gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-2 mb-4 pb-4 border-b border-border/40">
         <Button
           size="sm"
           variant="outline"
@@ -57,12 +57,12 @@ export default function EditorBlocks({ blocks, onBlocksChange }) {
       {blocks.map((block) => (
         <div
           key={block.id}
-          className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-sm transition"
+          className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border/40 hover:shadow-sm transition"
         >
-          <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-xs font-medium text-muted-foreground mb-1">
               {block.tipo.charAt(0).toUpperCase() + block.tipo.slice(1)}
             </div>
             <Input

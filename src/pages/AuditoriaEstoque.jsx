@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const statusConfig = {
-  "Rascunho": { icon: Clock, color: "text-gray-400", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
+  "Rascunho": { icon: Clock, color: "text-muted-foreground", bg: "bg-muted", label: "Rascunho" },
   "Em Andamento": { icon: Play, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", label: "Em Andamento" },
   "Aguardando Auditoria": { icon: AlertCircle, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/20", label: "Aguardando Auditoria" },
   "Concluída": { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", label: "Concluída" },
@@ -43,12 +43,12 @@ export default function AuditoriaEstoque() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-card w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-white/80 dark:bg-background/80 backdrop-blur-sm border-b border-border/40 px-4 py-3 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold font-glacial text-gray-900 dark:text-white">Auditoria de Estoque</h1>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{conferencias.length} conferência{conferencias.length !== 1 ? "s" : ""}</p>
+          <h1 className="text-lg font-semibold font-glacial text-foreground">Auditoria de Estoque</h1>
+          <p className="text-xs text-muted-foreground">{conferencias.length} conferência{conferencias.length !== 1 ? "s" : ""}</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export default function AuditoriaEstoque() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
+              <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : (
@@ -64,7 +64,7 @@ export default function AuditoriaEstoque() {
             {/* Ativas */}
             {grupos.ativas.length > 0 && (
               <section>
-                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">Ativas</p>
                 <P38MobileLineList>
                   {grupos.ativas.map((conf, index) => (
                     <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} striped={index % 2 === 1} />
@@ -76,7 +76,7 @@ export default function AuditoriaEstoque() {
             {/* Concluídas */}
             {grupos.concluidas.length > 0 && (
               <section>
-                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">Histórico</p>
                 <P38MobileLineList>
                   {grupos.concluidas.map((conf, index) => (
                     <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} striped={index % 2 === 1} />
@@ -87,11 +87,11 @@ export default function AuditoriaEstoque() {
 
             {conferencias.length === 0 && (
               <div className="text-center py-20">
-                <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-                  <ClipboardList className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+                <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                  <ClipboardList className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
                 </div>
-                <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhuma conferência encontrada</p>
-                <p className="text-gray-300 dark:text-gray-600 text-xs mt-1">Crie uma nova para começar</p>
+                <p className="text-muted-foreground text-sm">Nenhuma conferência encontrada</p>
+                <p className="text-gray-300 dark:text-muted-foreground text-xs mt-1">Crie uma nova para começar</p>
               </div>
             )}
           </>

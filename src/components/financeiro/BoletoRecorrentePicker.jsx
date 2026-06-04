@@ -19,25 +19,25 @@ function PickerCard({ recorrente, contaMes, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect({ recorrente, contaMes })}
-      className="w-full rounded-[28px] bg-white p-1 text-left shadow-sm transition-all hover:shadow-md dark:bg-gray-900"
+      className="w-full rounded-[28px] bg-white p-1 text-left shadow-sm transition-all hover:shadow-md dark:bg-background"
     >
-      <div className="space-y-2.5 rounded-[24px] bg-gray-50/95 px-3.5 py-3 dark:bg-gray-800/70">
+      <div className="space-y-2.5 rounded-[24px] bg-muted/40/95 px-3.5 py-3 dark:bg-muted/70">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-[15px] font-semibold leading-5 text-gray-900 dark:text-white">{recorrente.nome_despesa}</p>
-            <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
+            <p className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground">{recorrente.nome_despesa}</p>
+            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
           </div>
           <div className="shrink-0 pl-2 text-right">
-            <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+            <p className="text-[11px] text-muted-foreground">Previsto</p>
+            <p className="text-sm font-semibold text-foreground">{formatCurrency(recorrente.valor_previsto)}</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm dark:bg-gray-900">
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm dark:bg-background">
             <Repeat2 className="h-3 w-3" />
             {recorrente.frequencia}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm dark:bg-gray-900">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm dark:bg-background">
             <Calendar className="h-3 w-3" />
             Dia {recorrente.dia_vencimento}
           </span>
@@ -124,28 +124,28 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
 
   const chip = (active) =>
     `px-3 py-2 rounded-full whitespace-nowrap text-xs font-medium transition-all md:text-sm ${
-      active ? 'bg-gray-900 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-white text-gray-600 shadow-sm dark:bg-gray-900 dark:text-gray-300'
+      active ? 'bg-gray-900 text-white dark:bg-gray-200 dark:text-foreground' : 'bg-white text-muted-foreground shadow-sm dark:bg-background dark:text-foreground/90'
     }`;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50 dark:bg-gray-950">
-      <div className="shrink-0 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-muted/40 dark:bg-gray-950">
+      <div className="shrink-0 border-b border-border/40 px-4 py-3 dark:border-border/40">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onVoltar}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Atualizar boleto</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Mude o mês, filtre e toque no card certo</p>
+            <p className="text-sm font-medium text-foreground">Atualizar boleto</p>
+            <p className="text-xs text-muted-foreground">Mude o mês, filtre e toque no card certo</p>
           </div>
         </div>
       </div>
 
-      <div className="shrink-0 space-y-3 border-b border-gray-100 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+      <div className="shrink-0 space-y-3 border-b border-border/40 bg-white px-4 py-3 dark:border-border/40 dark:bg-background">
         <div className="flex items-center justify-between gap-2">
           <Button
             type="button"
@@ -156,7 +156,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <p className="min-w-0 flex-1 text-center text-sm font-semibold capitalize text-gray-900 dark:text-white">{currentMonthText}</p>
+          <p className="min-w-0 flex-1 text-center text-sm font-semibold capitalize text-foreground">{currentMonthText}</p>
           <Button
             type="button"
             variant="ghost"
@@ -169,7 +169,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
         </div>
 
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-gray-400">Pagamento</p>
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Pagamento</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={chip(filterPagamento === 'todos')} onClick={() => setFilterPagamento('todos')}>
               Todas
@@ -183,7 +183,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
           </div>
         </div>
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-gray-400">Prazo</p>
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Prazo</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={chip(filterPrazo === 'todos')} onClick={() => setFilterPrazo('todos')}>
               Todas
@@ -197,7 +197,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
           </div>
         </div>
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-gray-400">Origem</p>
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Origem</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={chip(filterOrigem === 'todos')} onClick={() => setFilterOrigem('todos')}>
               Todas
@@ -218,7 +218,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-800 dark:border-gray-600 dark:border-t-gray-200" />
           </div>
         ) : filteredCards.length === 0 ? (
-          <div className="rounded-[28px] bg-white py-12 text-center text-sm text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-400">
+          <div className="rounded-[28px] bg-white py-12 text-center text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
             Nenhuma conta neste mês com estes filtros.
           </div>
         ) : (

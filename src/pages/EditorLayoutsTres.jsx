@@ -17,7 +17,7 @@ export default function EditorLayoutsTres() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-card flex flex-col">
       {/* Etapa 1: Seletor */}
       {etapa === 1 && (
         <EditorEtapa1

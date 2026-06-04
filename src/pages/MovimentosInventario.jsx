@@ -143,7 +143,7 @@ function StepPill({ number, title, description, active = false, done = false, on
     <button type="button" onClick={onClick} className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${
       active
         ? 'border-blue-500/40 bg-blue-50 text-blue-950 dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-50'
-        : 'border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
+        : 'border-border/40 bg-white text-foreground/90 dark:border-border/40 dark:bg-background dark:text-foreground/90'
     }`}>
       <div className="flex items-start gap-3">
         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
@@ -151,7 +151,7 @@ function StepPill({ number, title, description, active = false, done = false, on
             ? 'bg-emerald-600 text-white'
             : active
               ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-500 dark:bg-gray-800'
+              : 'bg-gray-100 text-muted-foreground dark:bg-muted'
         }`}>
           {done ? <CheckCircle2 className="h-4 w-4" /> : number}
         </div>
@@ -209,10 +209,10 @@ function SelectedProductEditor({
 }) {
   if (!product) {
     return (
-      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-800 dark:bg-gray-900/60">
+      <div className="rounded-2xl border border-dashed border-border/40 bg-muted/40 p-8 text-center dark:border-border/40 dark:bg-background/60">
         <Package className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-        <p className="font-medium text-gray-700 dark:text-gray-300">Escolha um produto na lista</p>
-        <p className="mt-1 text-sm text-gray-500">Depois informe unidade e quantidade no mesmo painel.</p>
+        <p className="font-medium text-foreground/90">Escolha um produto na lista</p>
+        <p className="mt-1 text-sm text-muted-foreground">Depois informe unidade e quantidade no mesmo painel.</p>
       </div>
     );
   }
@@ -226,14 +226,14 @@ function SelectedProductEditor({
     : 0;
 
   return (
-    <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm dark:border-blue-900/60 dark:bg-gray-900">
+    <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm dark:border-blue-900/60 dark:bg-background">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
             Produto selecionado
           </p>
           <h3 className="mt-1 line-clamp-2 font-semibold text-gray-950 dark:text-white">{getProdutoNome(product)}</h3>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Estoque atual: {formatCommercialQuantity(product.estoque_atual, unidadeBase)} {unidadeBase}
           </p>
         </div>
@@ -263,7 +263,7 @@ function SelectedProductEditor({
             <button
               type="button"
               onClick={() => onIncrement(-1)}
-              className="flex h-full w-12 items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              className="flex h-full w-12 items-center justify-center text-muted-foreground hover:text-foreground dark:hover:text-white"
             >
               <Minus className="h-4 w-4" />
             </button>
@@ -277,7 +277,7 @@ function SelectedProductEditor({
             <button
               type="button"
               onClick={() => onIncrement(1)}
-              className="flex h-full w-12 items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              className="flex h-full w-12 items-center justify-center text-muted-foreground hover:text-foreground dark:hover:text-white"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -285,10 +285,10 @@ function SelectedProductEditor({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 rounded-xl bg-gray-50 p-3 text-sm dark:bg-gray-950 md:flex-row md:items-center md:justify-between">
+      <div className="mt-4 flex flex-col gap-3 rounded-xl bg-muted/40 p-3 text-sm dark:bg-gray-950 md:flex-row md:items-center md:justify-between">
         <div>
-          <span className="block text-xs uppercase tracking-wide text-gray-500">Conversão para estoque</span>
-          <strong className="text-gray-900 dark:text-white">
+          <span className="block text-xs uppercase tracking-wide text-muted-foreground">Conversão para estoque</span>
+          <strong className="text-foreground">
             {formatCommercialQuantity(qtd, selectedUnit?.unidade)} {selectedUnit?.unidade} = {formatCommercialQuantity(quantidadeBase, unidadeBase)} {unidadeBase}
           </strong>
         </div>
@@ -310,10 +310,10 @@ function SelectedProductEditor({
 function CartPanel({ items, tipo, onEdit, onRemove }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center dark:border-gray-800">
+      <div className="rounded-2xl border border-dashed border-border/40 p-8 text-center dark:border-border/40">
         <ShoppingCart className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-        <p className="font-medium text-gray-700 dark:text-gray-300">Carrinho vazio</p>
-        <p className="mt-1 text-sm text-gray-500">Adicione produtos para montar o ajuste.</p>
+        <p className="font-medium text-foreground/90">Carrinho vazio</p>
+        <p className="mt-1 text-sm text-muted-foreground">Adicione produtos para montar o ajuste.</p>
       </div>
     );
   }
@@ -354,7 +354,7 @@ function CartPanel({ items, tipo, onEdit, onRemove }) {
 function ReviewPanel({ rows, tipo }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-gray-800">
+      <div className="rounded-2xl border border-dashed border-border/40 p-6 text-center text-sm text-muted-foreground dark:border-border/40">
         A prévia aparece depois que o carrinho tiver itens.
       </div>
     );
@@ -397,7 +397,7 @@ function ReviewPanel({ rows, tipo }) {
 function RecentMovements({ movimentos }) {
   if (movimentos.length === 0) return null;
   return (
-    <Card className="border-gray-200 dark:border-gray-800">
+    <Card className="border-border/40">
       <CardHeader>
         <CardTitle className="text-base">Últimos ajustes</CardTitle>
       </CardHeader>
@@ -434,11 +434,11 @@ function StepFooter({ activeStep, canGoNext, onPrevious, onNext }) {
   const isFirst = activeStep === 'setup';
   const isLast = activeStep === 'review';
   return (
-    <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-6 flex flex-col gap-3 border-t border-border/40 pt-4 dark:border-border/40 sm:flex-row sm:items-center sm:justify-between">
       <Button variant="outline" onClick={onPrevious} disabled={isFirst} className="rounded-2xl">
         Anterior
       </Button>
-      <div className="text-center text-xs text-gray-500">
+      <div className="text-center text-xs text-muted-foreground">
         {isFirst ? 'Configure o ajuste' : isLast ? 'Confira e conclua' : 'Adicione os produtos ao carrinho'}
       </div>
       <Button onClick={onNext} disabled={isLast || !canGoNext} className="rounded-2xl">
@@ -717,19 +717,19 @@ export default function MovimentosInventario() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 md:p-8">
+    <div className="min-h-screen bg-muted/40 p-4 dark:bg-gray-950 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">Estoque</p>
             <h1 className="text-2xl font-semibold text-gray-950 dark:text-white">Movimentos de Inventário</h1>
-            <p className="mt-1 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
               Ajuste pontual com caminho único: configure o tipo, adicione produtos ao carrinho, confira antes/depois e conclua.
             </p>
           </div>
@@ -766,7 +766,7 @@ export default function MovimentosInventario() {
         </div>
 
         {activeStep === 'setup' && (
-        <Card className="border-gray-200 dark:border-gray-800">
+        <Card className="border-border/40">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <ClipboardCheck className="h-5 w-5 text-blue-600" />
@@ -775,15 +775,15 @@ export default function MovimentosInventario() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <div className="rounded-2xl bg-gray-100 p-1 dark:bg-gray-900">
+              <div className="rounded-2xl bg-gray-100 p-1 dark:bg-background">
                 <div className="grid grid-cols-2 gap-1">
                   <button
                     type="button"
                     onClick={() => setTipo('Entrada')}
                     className={`flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
                       tipo === 'Entrada'
-                        ? 'bg-white text-emerald-700 shadow-sm dark:bg-gray-800 dark:text-emerald-400'
-                        : 'text-gray-500'
+                        ? 'bg-white text-emerald-700 shadow-sm dark:bg-muted dark:text-emerald-400'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     <ArrowUpCircle className="h-4 w-4" />
@@ -794,8 +794,8 @@ export default function MovimentosInventario() {
                     onClick={() => setTipo('Saída')}
                     className={`flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
                       tipo === 'Saída'
-                        ? 'bg-white text-red-700 shadow-sm dark:bg-gray-800 dark:text-red-400'
-                        : 'text-gray-500'
+                        ? 'bg-white text-red-700 shadow-sm dark:bg-muted dark:text-red-400'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     <ArrowDownCircle className="h-4 w-4" />
@@ -808,7 +808,7 @@ export default function MovimentosInventario() {
                 <div>
                   <Label className="mb-1.5 block text-xs">Motivo</Label>
                   <Select value={motivo} onValueChange={setMotivo}>
-                    <SelectTrigger className="h-12 rounded-2xl bg-white dark:bg-gray-900">
+                    <SelectTrigger className="h-12 rounded-2xl bg-card">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -825,7 +825,7 @@ export default function MovimentosInventario() {
                     value={documentoReferencia}
                     onChange={(event) => setDocumentoReferencia(event.target.value)}
                     placeholder="Ex: ajuste balcão, OS, romaneio"
-                    className="h-12 rounded-2xl bg-white dark:bg-gray-900"
+                    className="h-12 rounded-2xl bg-card"
                   />
                 </div>
               </div>
@@ -842,7 +842,7 @@ export default function MovimentosInventario() {
 
         {activeStep === 'items' && (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
-          <Card className="border-gray-200 dark:border-gray-800">
+          <Card className="border-border/40">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Search className="h-5 w-5 text-blue-600" />
@@ -851,27 +851,27 @@ export default function MovimentosInventario() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Buscar produto por nome, código ou marca..."
-                  className="h-13 rounded-2xl border-gray-200 bg-white pl-12 text-base shadow-sm dark:border-gray-800 dark:bg-gray-900"
+                  className="h-13 rounded-2xl border-border/40 bg-white pl-12 text-base shadow-sm dark:border-border/40 dark:bg-background"
                 />
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
                 <div className="min-h-[420px] space-y-2">
                   {!searchTerm.trim() ? (
-                    <div className="flex min-h-[360px] flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
+                    <div className="flex min-h-[360px] flex-col items-center justify-center rounded-3xl border border-dashed border-border/40 bg-white p-8 text-center dark:border-border/40 dark:bg-background">
                       <Search className="mb-4 h-14 w-14 text-gray-300" />
-                      <p className="font-semibold text-gray-800 dark:text-gray-200">Digite para buscar um produto</p>
-                      <p className="mt-1 max-w-sm text-sm text-gray-500">
+                      <p className="font-semibold text-foreground">Digite para buscar um produto</p>
+                      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                         O próximo passo aparece no painel ao lado: unidade, quantidade e botão para adicionar ao carrinho.
                       </p>
                     </div>
                   ) : filteredProdutos.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-8 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="rounded-3xl border border-dashed border-border/40 bg-white p-8 text-center text-muted-foreground dark:border-border/40 dark:bg-background">
                       Nenhum produto encontrado para "{searchTerm}".
                     </div>
                   ) : (
@@ -916,7 +916,7 @@ export default function MovimentosInventario() {
           </Card>
 
           <div className="space-y-6 xl:sticky xl:top-4 xl:self-start">
-            <Card className="border-gray-200 dark:border-gray-800">
+            <Card className="border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-lg">
                   <span className="flex items-center gap-2">
@@ -947,7 +947,7 @@ export default function MovimentosInventario() {
 
         {activeStep === 'review' && (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
-            <Card className="border-gray-200 dark:border-gray-800">
+            <Card className="border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ShoppingCart className="h-5 w-5 text-blue-600" />
@@ -975,7 +975,7 @@ export default function MovimentosInventario() {
               </CardContent>
             </Card>
 
-            <Card className="border-gray-200 dark:border-gray-800 xl:sticky xl:top-4 xl:self-start">
+            <Card className="border-border/40 xl:sticky xl:top-4 xl:self-start">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-lg">
                   <span>Antes e depois</span>

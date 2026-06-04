@@ -414,13 +414,13 @@ export default function CotacoesManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex justify-between items-center pb-4 border-b border-border/40">
         <div>
-          <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-light text-foreground flex items-center gap-2">
+            <FileText className="w-5 h-5 text-muted-foreground" />
             Cotações
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
+          <p className="text-sm text-muted-foreground font-light">
             Análise de preços e concorrência
           </p>
         </div>
@@ -490,49 +490,49 @@ export default function CotacoesManager() {
 
       <div className="grid gap-3">
         {cotacoes.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-            <FileText className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhuma cotação encontrada</p>
+          <div className="text-center py-12 bg-card rounded-xl border border-border/40">
+            <FileText className="w-12 h-12 mx-auto text-gray-300 dark:text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">Nenhuma cotação encontrada</p>
           </div>
         ) : (
           cotacoes.map(cotacao => (
-            <div key={cotacao.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 transition-all hover:border-teal-200">
+            <div key={cotacao.id} className="bg-card rounded-xl border border-border/40 p-4 transition-all hover:border-teal-200">
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-start">
                   <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100">{cotacao.titulo}</h4>
+                          <h4 className="font-medium text-foreground dark:text-gray-100">{cotacao.titulo}</h4>
                       </div>
-                      <span className="text-xs font-mono text-gray-400 mt-0.5">{cotacao.numero}</span>
+                      <span className="text-xs font-mono text-muted-foreground mt-0.5">{cotacao.numero}</span>
                   </div>
                   <Badge className={`border-0 font-normal px-2 py-0.5 text-[10px] ${
                       cotacao.status === 'Finalizada' ? 'bg-emerald-50 text-emerald-700' : 
                       cotacao.status === 'Em Análise' ? 'bg-blue-50 text-blue-700' : 
-                      'bg-gray-100 text-gray-600'
+                      'bg-gray-100 text-muted-foreground'
                   }`}>{cotacao.status}</Badge>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 py-3 border-t border-gray-50 dark:border-gray-700">
+              <div className="grid grid-cols-3 gap-2 py-3 border-t border-gray-50 dark:border-border/40">
                   <div className="text-center sm:text-left">
-                      <p className="text-[10px] text-gray-400 uppercase mb-0.5">Produtos</p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{cotacao.itens?.length || 0}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Produtos</p>
+                      <p className="text-sm text-foreground/90">{cotacao.itens?.length || 0}</p>
                   </div>
                   <div className="text-center sm:text-left">
-                      <p className="text-[10px] text-gray-400 uppercase mb-0.5">Fornecedores</p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{cotacao.fornecedores?.length || 0}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Fornecedores</p>
+                      <p className="text-sm text-foreground/90">{cotacao.fornecedores?.length || 0}</p>
                   </div>
                   <div className="text-center sm:text-left">
-                      <p className="text-[10px] text-gray-400 uppercase mb-0.5">Data</p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Data</p>
+                      <p className="text-sm text-foreground/90">
                            {cotacao.data_abertura ? format(new Date(cotacao.data_abertura), 'dd/MM/yyyy') : '-'}
                       </p>
                   </div>
               </div>
 
-              <div className="pt-2 border-t border-gray-50 dark:border-gray-700">
+              <div className="pt-2 border-t border-gray-50 dark:border-border/40">
                   <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" className="w-full border-gray-200 text-gray-600 hover:text-teal-600 hover:bg-teal-50 h-9 text-sm font-normal" onClick={() => handleOpenAnaliseCotacao(cotacao)}>
+                          <Button variant="outline" className="w-full border-border/40 text-muted-foreground hover:text-teal-600 hover:bg-teal-50 h-9 text-sm font-normal" onClick={() => handleOpenAnaliseCotacao(cotacao)}>
                                 <Trophy className="w-4 h-4 mr-2" />
                                 {cotacao.status === 'Rascunho' ? 'Montar Lista' : 'Analisar & Preços'}
                             </Button>
@@ -545,11 +545,11 @@ export default function CotacoesManager() {
                             </DialogHeader>
                             
                             {selectedCotacao?.status === 'Rascunho' && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 bg-muted/40 p-3 rounded-lg border border-border/40">
                                 <div className="space-y-2">
                                     <Label className="text-xs">Selecionar Produto</Label>
                                     <div className="relative">
-                                      <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                      <Search className="w-4 h-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
                                       <Input
                                         value={manualSearch}
                                         onChange={(e) => setManualSearch(e.target.value)}
@@ -559,17 +559,17 @@ export default function CotacoesManager() {
                                     </div>
                                     <div className="max-h-72 overflow-y-auto rounded-md border bg-white">
                                       {filteredManualProducts.length === 0 ? (
-                                        <p className="text-xs text-gray-400 p-3">Digite para buscar produtos.</p>
+                                        <p className="text-xs text-muted-foreground p-3">Digite para buscar produtos.</p>
                                       ) : (
                                         filteredManualProducts.map((produto) => (
                                           <button
                                             key={produto.id}
                                             type="button"
-                                            className="w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-gray-50"
+                                            className="w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-muted/40"
                                             onClick={() => handleAddManualProduct(produto)}
                                           >
                                             <p className="text-sm text-gray-800">{produto.nome}</p>
-                                            <p className="text-[11px] text-gray-500">
+                                            <p className="text-[11px] text-muted-foreground">
                                               {(produto.codigo_interno || produto.codigo_barras || 'Sem código')} • {produto.unidade_principal || 'UN'}
                                             </p>
                                           </button>
@@ -580,11 +580,11 @@ export default function CotacoesManager() {
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between">
                                     <Label className="text-xs">Carrinho da Cotação</Label>
-                                    <span className="text-xs text-gray-500">{manualCart.length} itens</span>
+                                    <span className="text-xs text-muted-foreground">{manualCart.length} itens</span>
                                   </div>
                                   <div className="max-h-72 overflow-y-auto rounded-md border bg-white">
                                     {manualCart.length === 0 ? (
-                                      <p className="text-xs text-gray-400 p-3">Nenhum item adicionado.</p>
+                                      <p className="text-xs text-muted-foreground p-3">Nenhum item adicionado.</p>
                                     ) : (
                                       manualCart.map((item) => (
                                         <div key={item.produto_id} className="px-3 py-2 border-b last:border-b-0">
@@ -604,7 +604,7 @@ export default function CotacoesManager() {
                                               className="h-7 text-xs w-20"
                                               onChange={(e) => handleManualQtyChange(item.produto_id, e.target.value)}
                                             />
-                                            <span className="text-xs text-gray-500">{item.unidade || 'UN'}</span>
+                                            <span className="text-xs text-muted-foreground">{item.unidade || 'UN'}</span>
                                             <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleManualQtyChange(item.produto_id, (parseFloat(item.quantidade) || 0) + 1)}>
                                               <Plus className="w-3 h-3" />
                                             </Button>
@@ -623,7 +623,7 @@ export default function CotacoesManager() {
                             {selectedCotacao?.status !== 'Rascunho' ? (
                             <div className="border rounded-lg overflow-x-auto mt-4 min-w-0">
                               <Table>
-                                  <TableHeader className="bg-gray-50">
+                                  <TableHeader className="bg-muted/40">
                                       <TableRow>
                                           <TableHead className="w-[300px]">Produto</TableHead>
                                           {cotacao.fornecedores?.map(f => (
@@ -638,7 +638,7 @@ export default function CotacoesManager() {
                                           <TableRow key={item.produto_id}>
                                               <TableCell>
                                                   <div className="font-medium">{item.produto_nome}</div>
-                                                  <div className="text-xs text-gray-500">{item.quantidade} {item.unidade}</div>
+                                                  <div className="text-xs text-muted-foreground">{item.quantidade} {item.unidade}</div>
                                               </TableCell>
                                               {cotacao.fornecedores?.map(f => {
                                                   const resposta = cotacao.respostas?.find(r => r.fornecedor_id === f.fornecedor_id && r.produto_id === item.produto_id);
@@ -651,10 +651,10 @@ export default function CotacoesManager() {
 
                                                   return (
                                                       <TableCell key={f.fornecedor_id} className="text-center p-2">
-                                                          <div className={`p-2 rounded border transition-colors ${isVencedor ? 'bg-green-50 border-green-200' : 'border-transparent hover:bg-gray-50'}`}>
+                                                          <div className={`p-2 rounded border transition-colors ${isVencedor ? 'bg-green-50 border-green-200' : 'border-transparent hover:bg-muted/40'}`}>
                                                               <Input 
                                                                   type="number" 
-                                                                  className={`h-8 text-center bg-transparent border-gray-200 ${isMenor && !isVencedor ? 'text-green-600 font-bold' : ''}`}
+                                                                  className={`h-8 text-center bg-transparent border-border/40 ${isMenor && !isVencedor ? 'text-green-600 font-bold' : ''}`}
                                                                   placeholder="R$ 0,00"
                                                                   value={precosInput[`${f.fornecedor_id}_${item.produto_id}`] || ''}
                                                                   onChange={(e) => handleUpdatePreco(f.fornecedor_id, item.produto_id, e.target.value)}
@@ -669,7 +669,7 @@ export default function CotacoesManager() {
                                                                   <Button 
                                                                       variant="ghost" 
                                                                       size="sm" 
-                                                                      className={`mt-1 h-6 w-full text-[10px] ${isVencedor ? 'bg-green-200 text-green-800' : 'text-gray-400 hover:text-green-600'}`}
+                                                                      className={`mt-1 h-6 w-full text-[10px] ${isVencedor ? 'bg-green-200 text-green-800' : 'text-muted-foreground hover:text-green-600'}`}
                                                                       onClick={() => toggleVencedor(cotacao, {fornecedor_id: f.fornecedor_id, produto_id: item.produto_id})}
                                                                   >
                                                                       {isVencedor ? 'Vencedor' : 'Marcar Vencedor'}
@@ -690,7 +690,7 @@ export default function CotacoesManager() {
                               </div>
                             )}
 
-                            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mt-6 pt-4 border-t border-gray-100">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mt-6 pt-4 border-t border-border/40">
                                 {selectedCotacao?.status === 'Rascunho' ? (
                                   <>
                                     <Button

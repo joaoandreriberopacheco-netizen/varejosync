@@ -17,17 +17,17 @@ export default function DashboardCaixa() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] font-glacial">
       <div className="text-center space-y-3 mb-10">
-        <p className="text-xs text-gray-400 dark:text-gray-500 tracking-wide">VarejoSync</p>
+        <p className="text-xs text-muted-foreground tracking-wide">VarejoSync</p>
         <h1 className="text-3xl md:text-4xl font-semibold text-gray-800 dark:text-gray-100">
           Olá, {primeiroNome}!
         </h1>
-        <p className="text-sm text-gray-400 dark:text-gray-500 font-light">
+        <p className="text-sm text-muted-foreground font-light">
           Pronto para começar o turno?
         </p>
       </div>
 
       <Link to={createPageUrl('PDV?mode=caixa')}>
-        <Button className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-2 h-12 px-8 text-base shadow-sm">
+        <Button className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-2 h-12 px-8 text-base shadow-sm">
           <Monitor className="w-5 h-5" />
           Abrir PDV — Caixa
           <ArrowRight className="w-4 h-4" />

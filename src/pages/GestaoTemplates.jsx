@@ -19,7 +19,7 @@ const TIPOS = [
 function TemplateCard({ template, onEdit, onDelete, onSetDefault, onDuplicate }) {
   const tipoLabel = TIPOS.find(t => t.value === template.tipo)?.label || template.tipo;
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+    <div className="bg-card rounded-2xl p-4 shadow-sm flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -28,19 +28,19 @@ function TemplateCard({ template, onEdit, onDelete, onSetDefault, onDuplicate })
               <Badge className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1.5 py-0">Padrão</Badge>
             )}
           </div>
-          <div className="text-xs text-gray-400 mt-0.5">{tipoLabel}</div>
-          {template.descricao && <div className="text-xs text-gray-500 mt-1 line-clamp-2">{template.descricao}</div>}
+          <div className="text-xs text-muted-foreground mt-0.5">{tipoLabel}</div>
+          {template.descricao && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.descricao}</div>}
         </div>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <Button size="sm" variant="outline" onClick={() => onEdit(template)} className="h-8 text-xs gap-1 rounded-xl">
           <FileText className="w-3.5 h-3.5" /> Editar HTML
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => onDuplicate(template)} className="h-8 text-xs gap-1 rounded-xl text-gray-500">
+        <Button size="sm" variant="ghost" onClick={() => onDuplicate(template)} className="h-8 text-xs gap-1 rounded-xl text-muted-foreground">
           <Copy className="w-3.5 h-3.5" />
         </Button>
         {!template.is_default && (
-          <Button size="sm" variant="ghost" onClick={() => onSetDefault(template)} className="h-8 text-xs gap-1 rounded-xl text-gray-500" title="Definir como padrão">
+          <Button size="sm" variant="ghost" onClick={() => onSetDefault(template)} className="h-8 text-xs gap-1 rounded-xl text-muted-foreground" title="Definir como padrão">
             <Star className="w-3.5 h-3.5" />
           </Button>
         )}
@@ -108,7 +108,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
         <select
           value={tipo}
           onChange={e => setTipo(e.target.value)}
-          className="h-9 text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"
+          className="h-9 text-sm border border-border/40 rounded-xl px-3 bg-card text-foreground"
         >
           {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
@@ -125,7 +125,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
       <div className="flex-shrink-0">
         <button
           onClick={() => setShowRef(!showRef)}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300"
         >
           <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showRef ? 'rotate-180' : ''}`} />
           {showRef ? 'Ocultar' : 'Ver'} dicionário de tags disponíveis
@@ -136,7 +136,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
       <textarea
         value={htmlTemplate}
         onChange={e => setHtmlTemplate(e.target.value)}
-        className="flex-1 w-full min-h-[400px] font-mono text-xs border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
+        className="flex-1 w-full min-h-[400px] font-mono text-xs border border-border/40 rounded-xl p-3 bg-muted/40 dark:bg-gray-950 text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
         placeholder="Cole aqui o HTML do template..."
         spellCheck={false}
       />
@@ -147,23 +147,23 @@ function TemplateEditor({ template, onSave, onCancel }) {
 function TagReference({ tipo }) {
   const tags = getTagsForTipo(tipo);
   return (
-    <div className="mt-2 bg-gray-50 dark:bg-gray-950 rounded-xl p-3 text-xs space-y-3 border border-gray-100 dark:border-gray-800">
+    <div className="mt-2 bg-muted/40 dark:bg-gray-950 rounded-xl p-3 text-xs space-y-3 border border-border/40">
       {tags.map(grupo => (
         <div key={grupo.grupo}>
-          <div className="font-semibold text-gray-600 dark:text-gray-400 mb-1">{grupo.grupo}</div>
+          <div className="font-semibold text-muted-foreground mb-1">{grupo.grupo}</div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
             {grupo.tags.map(tag => (
               <div key={tag.tag} className="flex flex-col">
                 <code className="text-blue-600 dark:text-blue-400 font-mono">{tag.tag}</code>
-                <span className="text-gray-500 text-[10px]">{tag.desc}</span>
+                <span className="text-muted-foreground text-[10px]">{tag.desc}</span>
               </div>
             ))}
           </div>
         </div>
       ))}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-        <div className="font-semibold text-gray-600 dark:text-gray-400 mb-1">Sintaxe de Loop e Condicionais</div>
-        <div className="space-y-1 text-gray-500">
+      <div className="border-t border-border/40 pt-2">
+        <div className="font-semibold text-muted-foreground mb-1">Sintaxe de Loop e Condicionais</div>
+        <div className="space-y-1 text-muted-foreground">
           <div><code className="text-purple-600 dark:text-purple-400">{'{{#itens}}...{{/itens}}'}</code> → repete para cada item</div>
           <div><code className="text-purple-600 dark:text-purple-400">{'{{#tem_desconto}}...{{/tem_desconto}}'}</code> → só mostra se houver desconto</div>
           <div><code className="text-purple-600 dark:text-purple-400">{'{{^tem_cliente}}...{{/tem_cliente}}'}</code> → só mostra se NÃO houver cliente</div>
@@ -346,12 +346,12 @@ export default function GestaoTemplates() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Templates de Impressão</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Edite o HTML dos documentos imprimíveis sem tocar no código do sistema</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Edite o HTML dos documentos imprimíveis sem tocar no código do sistema</p>
         </div>
         <Button
           size="sm"
           onClick={() => setEditando('novo')}
-          className="h-9 text-xs gap-1.5 rounded-xl bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900"
+          className="h-9 text-xs gap-1.5 rounded-xl bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:text-foreground"
         >
           <Plus className="w-3.5 h-3.5" /> Novo Template
         </Button>
@@ -361,7 +361,7 @@ export default function GestaoTemplates() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFiltroTipo('')}
-          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!filtroTipo ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}
+          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${!filtroTipo ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
         >
           Todos ({templates.length})
         </button>
@@ -372,7 +372,7 @@ export default function GestaoTemplates() {
             <button
               key={t.value}
               onClick={() => setFiltroTipo(t.value)}
-              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filtroTipo === t.value ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}
+              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${filtroTipo === t.value ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-foreground' : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
             >
               {t.label} ({count})
             </button>
@@ -383,12 +383,12 @@ export default function GestaoTemplates() {
       {/* Lista */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : templatesFiltrados.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 text-sm">
+        <div className="text-center py-12 text-muted-foreground text-sm">
           Nenhum template encontrado.<br />
-          <button onClick={() => setEditando('novo')} className="underline mt-2 text-gray-500">Criar o primeiro</button>
+          <button onClick={() => setEditando('novo')} className="underline mt-2 text-muted-foreground">Criar o primeiro</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

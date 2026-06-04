@@ -30,22 +30,22 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
-          <button onClick={() => onOpenChange(false)} className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
-            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+        <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
+          <button onClick={() => onOpenChange(false)} className="p-2 -ml-2 hover:bg-muted rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
+            <ArrowLeft className="w-6 h-6 text-foreground/90" />
           </button>
-          <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Comprovante</h2>
-          <button onClick={printComprovante} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
-            <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          <h2 className="flex-1 text-center text-lg font-semibold text-foreground font-glacial">Comprovante</h2>
+          <button onClick={printComprovante} className="p-2 hover:bg-muted rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
+            <Printer className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-full max-w-xs bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
-            <div className="px-6 py-5 text-center border-b-2 border-dashed border-gray-200 dark:border-gray-700">
-              <div className="text-base font-bold text-gray-900 dark:text-white">VAREJOSYNC</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Comprovante de Despesa</div>
+          <div className="w-full max-w-xs bg-card rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
+            <div className="px-6 py-5 text-center border-b-2 border-dashed border-border/40">
+              <div className="text-base font-bold text-foreground">VAREJOSYNC</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Comprovante de Despesa</div>
             </div>
             <div className="px-6 py-4 space-y-2">
               {[
@@ -55,26 +55,26 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
                 { l: 'Descrição', v: despesaCriada?.descricao },
               ].map(({ l, v }) => (
                 <div key={l} className="flex justify-between text-xs">
-                  <span className="text-gray-500 dark:text-gray-400">{l}:</span>
-                  <span className="font-semibold text-gray-800 dark:text-gray-200 text-right max-w-[60%]">{v}</span>
+                  <span className="text-muted-foreground">{l}:</span>
+                  <span className="font-semibold text-foreground text-right max-w-[60%]">{v}</span>
                 </div>
               ))}
             </div>
-            <div className="px-6 py-4 border-t-2 border-b-2 border-dashed border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4 border-t-2 border-b-2 border-dashed border-border/40">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">VALOR</span>
+                <span className="text-sm font-bold text-foreground/90">VALOR</span>
                 <span className="text-2xl font-bold font-glacial text-red-600 dark:text-red-400">
                   −{formatValor(despesaCriada?.valor)}
                 </span>
               </div>
             </div>
             <div className="px-6 py-4 text-center">
-              <p className="text-xs text-gray-400 dark:text-gray-500">Não é comprovante fiscal</p>
+              <p className="text-xs text-muted-foreground">Não é comprovante fiscal</p>
             </div>
           </div>
 
           <div className="mt-6 flex gap-3 w-full max-w-xs">
-            <button onClick={() => onOpenChange(false)} className="flex-1 h-12 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium" style={{ minHeight: '48px' }}>
+            <button onClick={() => onOpenChange(false)} className="flex-1 h-12 bg-muted text-foreground/90 rounded-2xl font-medium" style={{ minHeight: '48px' }}>
               Fechar
             </button>
             <button onClick={printComprovante} className="flex-1 h-12 rounded-2xl font-medium text-white bg-red-600" style={{ minHeight: '48px' }}>

@@ -33,17 +33,17 @@ function MiniCal({ base, rangeStart, rangeEnd, hover, onDay, onHover, onPrev, on
     <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-2">
         {onPrev
-          ? <button onClick={onPrev} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"><ChevronLeft className="w-3.5 h-3.5" /></button>
+          ? <button onClick={onPrev} className="p-1 rounded-lg hover:bg-muted text-muted-foreground"><ChevronLeft className="w-3.5 h-3.5" /></button>
           : <span className="w-6" />}
-        <span className="text-[0.72rem] font-semibold text-gray-700 dark:text-gray-200 capitalize">
+        <span className="text-[0.72rem] font-semibold text-foreground/90 capitalize">
           {format(first, 'MMMM yyyy', { locale: ptBR })}
         </span>
         {onNext
-          ? <button onClick={onNext} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"><ChevronRight className="w-3.5 h-3.5" /></button>
+          ? <button onClick={onNext} className="p-1 rounded-lg hover:bg-muted text-muted-foreground"><ChevronRight className="w-3.5 h-3.5" /></button>
           : <span className="w-6" />}
       </div>
       <div className="grid grid-cols-7 gap-px mb-0.5">
-        {DIAS_SEMANA.map((d, i) => <div key={i} className="text-center text-[0.6rem] font-medium text-gray-400 py-0.5">{d}</div>)}
+        {DIAS_SEMANA.map((d, i) => <div key={i} className="text-center text-[0.6rem] font-medium text-muted-foreground py-0.5">{d}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-px">
         {Array(pad).fill(null).map((_, i) => <div key={'p' + i} />)}
@@ -57,9 +57,9 @@ function MiniCal({ base, rangeStart, rangeEnd, hover, onDay, onHover, onPrev, on
               onClick={() => onDay(d)}
               onMouseEnter={() => onHover(d)}
               className={`text-center text-[0.7rem] py-1 rounded-lg transition-colors
-                ${isS || isE ? 'bg-gray-500 text-white dark:bg-gray-100 dark:text-gray-900 font-bold' : ''}
-                ${in_ && !isS && !isE ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200' : ''}
-                ${!isS && !isE && !in_ ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
+                ${isS || isE ? 'bg-muted/400 text-white dark:bg-gray-100 dark:text-foreground font-bold' : ''}
+                ${in_ && !isS && !isE ? 'bg-muted text-foreground/90' : ''}
+                ${!isS && !isE && !in_ ? 'text-muted-foreground hover:bg-muted' : ''}
               `}>
               {d.getDate()}
             </button>
@@ -111,7 +111,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
     <button key={c.v}
       onClick={() => { onPeriodo(c.v); if (c.v === 'periodo') setShowCal(s => !s); else setShowCal(false); }}
       className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-        ${periodo === c.v ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+        ${periodo === c.v ? 'bg-muted/400 dark:bg-gray-200 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
       {chipLabel(c)}
       {c.v === 'periodo' && periodo === 'periodo' && (rs || re) && (
         <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
@@ -129,14 +129,14 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
         <div className="flex gap-1.5">{row3.map(renderChip)}</div>
       </div>
       {showCal && periodo === 'periodo' && (
-        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl border border-gray-100 dark:border-gray-700">
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-card rounded-2xl p-3 shadow-xl border border-border/40">
           <MiniCal base={baseLeft} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={() => setOffset(o => o + 1)} />
           {rs && re && (
-            <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-2 flex items-center justify-between bg-muted/40 dark:bg-muted rounded-xl px-3 py-2">
+              <span className="text-xs text-muted-foreground">
                 {format(rs, 'dd MMM yyyy', { locale: ptBR })} → {format(re, 'dd MMM yyyy', { locale: ptBR })}
               </span>
-              <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 px-3 py-1 rounded-lg">OK</button>
+              <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-muted/400 dark:bg-gray-200 text-white dark:text-foreground px-3 py-1 rounded-lg">OK</button>
             </div>
           )}
         </div>
@@ -157,21 +157,21 @@ function ContasFiltro({ contas, sel, onSel }) {
         <button className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all shadow-sm
           ${!todasSel
             ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-            : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'}`}>
+            : 'bg-gray-100 dark:bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-slate-700'}`}>
           <Wallet className="w-3.5 h-3.5" />
           <span>{todasSel ? 'Todas as contas' : `${sel.length} selecionada${sel.length > 1 ? 's' : ''}`}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2.5 border-0 shadow-xl rounded-3xl bg-white dark:bg-slate-900" align="start">
+      <PopoverContent className="w-64 p-2.5 border-0 shadow-xl rounded-3xl bg-white dark:bg-card" align="start">
         <div className="mb-2 px-2 pt-1">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">Contas financeiras</p>
+          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Contas financeiras</p>
         </div>
         <button
           onClick={handleTodas}
           className={`w-full text-left px-3 py-2 rounded-2xl text-xs mb-1.5 transition-colors ${todasSel
-            ? 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white font-medium shadow-sm'
-            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+            ? 'bg-gray-100 dark:bg-muted text-foreground font-medium shadow-sm'
+            : 'text-muted-foreground hover:bg-muted/40 dark:hover:bg-slate-800'}`}
         >
           Todas as contas
         </button>
@@ -180,12 +180,12 @@ function ContasFiltro({ contas, sel, onSel }) {
             <label
               key={c.id}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${sel.includes(c.id)
-                ? 'bg-gray-100 dark:bg-slate-800 shadow-sm'
-                : 'hover:bg-gray-50 dark:hover:bg-slate-800/70'}`}
+                ? 'bg-gray-100 dark:bg-muted shadow-sm'
+                : 'hover:bg-muted/40 dark:hover:bg-slate-800/70'}`}
             >
               <Checkbox checked={sel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-4 h-4" />
               <span className="w-2.5 h-2.5 rounded-full flex-none shadow-sm" style={{ background: c.cor || '#10B981' }} />
-              <span className="text-xs truncate text-gray-700 dark:text-gray-200">{c.nome}</span>
+              <span className="text-xs truncate text-foreground/90">{c.nome}</span>
             </label>
           ))}
         </div>
@@ -204,20 +204,20 @@ function StatusFiltro({ sel, onSel }) {
     <Popover>
       <PopoverTrigger asChild>
         <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? 'bg-gray-500 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+          ${!todasSel ? 'bg-muted/400 dark:bg-gray-100 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
           <RefreshCw className="w-3 h-3" />
           {label}
           <ChevronDown className="w-3 h-3" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-44 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
-        <button onClick={() => onSel([])} className={`w-full text-left px-2 py-1.5 rounded text-xs mb-1 ${todasSel ? 'bg-gray-100 dark:bg-gray-700 font-medium' : 'hover:bg-gray-50 dark:hover:bg-gray-700'} text-gray-700 dark:text-gray-200`}>
+      <PopoverContent className="w-44 p-2 dark:bg-muted dark:border-border/40" align="start">
+        <button onClick={() => onSel([])} className={`w-full text-left px-2 py-1.5 rounded text-xs mb-1 ${todasSel ? 'bg-muted font-medium' : 'hover:bg-muted'} text-foreground/90`}>
           Todos
         </button>
         {ALL.map(t => (
-          <label key={t} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+          <label key={t} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer">
             <Checkbox checked={sel.includes(t)} onCheckedChange={() => toggle(t)} className="w-3.5 h-3.5" />
-            <span className="text-xs text-gray-700 dark:text-gray-200">{t}</span>
+            <span className="text-xs text-foreground/90">{t}</span>
           </label>
         ))}
       </PopoverContent>
@@ -234,17 +234,17 @@ function TipoFiltro({ sel, onSel }) {
     <Popover>
       <PopoverTrigger asChild>
         <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? 'bg-gray-500 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+          ${!todasSel ? 'bg-muted/400 dark:bg-gray-100 text-white dark:text-foreground' : 'bg-muted text-muted-foreground dark:text-foreground/90'}`}>
           <BarChart3 className="w-3 h-3" />
           {todasSel ? 'Tipo' : sel.join(', ')}
           <ChevronDown className="w-3 h-3" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-44 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
+      <PopoverContent className="w-44 p-2 dark:bg-muted dark:border-border/40" align="start">
         {ALL.map(t => (
-          <label key={t} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+          <label key={t} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer">
             <Checkbox checked={sel.length === 0 || sel.includes(t)} onCheckedChange={() => toggle(t)} className="w-3.5 h-3.5" />
-            <span className="text-xs text-gray-700 dark:text-gray-200">{t}</span>
+            <span className="text-xs text-foreground/90">{t}</span>
           </label>
         ))}
       </PopoverContent>
@@ -256,7 +256,7 @@ function CmvFiltro({ cmvOnly, onToggle }) {
   return (
     <button
       onClick={() => onToggle(!cmvOnly)}
-      className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${cmvOnly ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}
+      className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${cmvOnly ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
     >
       <Layers className="w-3 h-3" /> CMV
     </button>
@@ -267,15 +267,15 @@ function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300">
+        <button className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90">
           <Clock className="w-3 h-3" /> Conciliar em lote
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
-        <p className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Escolha a conta</p>
+      <PopoverContent className="w-56 p-2 dark:bg-muted dark:border-border/40" align="start">
+        <p className="px-2 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">Escolha a conta</p>
         <button
           onClick={() => onOpenConciliacao?.(null)}
-          className="w-full text-left px-2 py-2 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+          className="w-full text-left px-2 py-2 rounded text-xs hover:bg-muted text-foreground/90"
         >
           Todas as contas
         </button>
@@ -283,7 +283,7 @@ function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
           <button
             key={c.id}
             onClick={() => onOpenConciliacao?.(c)}
-            className="w-full text-left px-2 py-2 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            className="w-full text-left px-2 py-2 rounded text-xs hover:bg-muted text-foreground/90"
           >
             {c.nome}
           </button>
@@ -314,20 +314,20 @@ export default function FiltrosFluxoCaixa({
     <>
       <div className={`${surfaceClass} min-w-0`}>
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 dark:border-slate-700/70 dark:bg-slate-800 sm:h-12 sm:rounded-[16px] sm:px-3">
-            <Search className="h-3.5 w-3.5 shrink-0 text-gray-400 sm:h-4 sm:w-4" />
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-white px-2.5 dark:border-slate-700/70 dark:bg-muted sm:h-12 sm:rounded-[16px] sm:px-3">
+            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
             <input autoComplete="off"
               value={search} onChange={e => onSearch(e.target.value)}
               placeholder="Buscar lançamento, categoria, tag..."
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-gray-900 outline-none placeholder:text-gray-500 dark:text-gray-100 sm:text-sm"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground dark:text-gray-100 sm:text-sm"
             />
-            {search && <button type="button" onClick={() => onSearch('')}><X className="h-3.5 w-3.5 text-gray-400" /></button>}
+            {search && <button type="button" onClick={() => onSearch('')}><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
           </div>
 
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-white text-gray-900 dark:border-slate-700/70 dark:bg-slate-800 dark:text-gray-200 sm:h-12 sm:w-12 sm:rounded-[16px]"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-white text-foreground dark:border-slate-700/70 dark:bg-muted dark:text-foreground sm:h-12 sm:w-12 sm:rounded-[16px]"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {hasActiveFilters && (
@@ -337,9 +337,9 @@ export default function FiltrosFluxoCaixa({
         </div>
 
         <div className="mt-2.5 flex items-center justify-between border-t border-white/70 px-1.5 pt-2.5 dark:border-slate-700/70">
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
+          <p className="text-[11px] text-muted-foreground">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
           {hasActiveFilters && (
-            <button onClick={onLimparFiltros} className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1">
+            <button onClick={onLimparFiltros} className="text-[11px] text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 flex items-center gap-1">
               <X className="w-3 h-3" /> Limpar
             </button>
           )}
@@ -347,14 +347,14 @@ export default function FiltrosFluxoCaixa({
       </div>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Período</label>
+              <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Período</label>
               <PeriodoPicker
                 periodo={periodo} onPeriodo={onPeriodo}
                 customStart={customStart} customEnd={customEnd}
@@ -369,7 +369,7 @@ export default function FiltrosFluxoCaixa({
               <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
               <button
                 onClick={() => onPendentes(!pendentes)}
-                className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}
+                className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
               >
                 <Clock className="w-3 h-3" /> Conciliação
               </button>
@@ -377,7 +377,7 @@ export default function FiltrosFluxoCaixa({
             </div>
 
             <div className="flex gap-2 pt-2">
-              <button onClick={onLimparFiltros} className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-slate-800 text-sm text-gray-600 dark:text-gray-300">
+              <button onClick={onLimparFiltros} className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-muted text-sm text-muted-foreground">
                 Limpar
               </button>
               <button onClick={() => setOpen(false)} className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900">

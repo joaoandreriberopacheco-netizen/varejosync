@@ -56,29 +56,29 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
   return (
     <div className="space-y-4">
       {/* Cabeçalho */}
-      <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4">
+      <div className="rounded-2xl bg-card shadow-sm p-4">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white font-glacial">{pedido.numero}</h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{pedido.fornecedor_nome} · {formatarDataHora(pedido.created_date)}</p>
+            <h2 className="text-base font-bold text-foreground font-glacial">{pedido.numero}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{pedido.fornecedor_nome} · {formatarDataHora(pedido.created_date)}</p>
           </div>
-          <span className="text-[10px] px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full font-medium whitespace-nowrap">
+          <span className="text-[10px] px-2.5 py-1 bg-muted text-muted-foreground rounded-full font-medium whitespace-nowrap">
             {pedido.status}
           </span>
         </div>
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/40">
           <div>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Data Prevista</p>
+            <p className="text-[10px] text-muted-foreground mb-0.5">Data Prevista</p>
             <p className="text-xs font-medium text-gray-800 dark:text-gray-100">
               {pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : '—'}
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Total do Pedido</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">R$ {fmtR(pedido.valor_total)}</p>
+            <p className="text-[10px] text-muted-foreground mb-0.5">Total do Pedido</p>
+            <p className="text-sm font-bold text-foreground tabular-nums">R$ {fmtR(pedido.valor_total)}</p>
           </div>
           <div>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Itens</p>
+            <p className="text-[10px] text-muted-foreground mb-0.5">Itens</p>
             <p className="text-xs font-medium text-gray-800 dark:text-gray-100">{itens_consolidados.length} produto(s)</p>
           </div>
         </div>
@@ -89,11 +89,11 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
         {itens_consolidados.map((rawItem, idx) => {
           const item = normalizeItemCompraParaExibicao(rawItem, produtosMap[rawItem?.produto_id]);
           return (
-          <div key={idx} className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+          <div key={idx} className="rounded-2xl bg-card shadow-sm overflow-hidden">
             {/* Nome do produto */}
-            <div className="px-4 pt-3 pb-2 border-b border-gray-50 dark:border-gray-700/50">
+            <div className="px-4 pt-3 pb-2 border-b border-gray-50 dark:border-border/40/50">
               <div className="flex items-center gap-2">
-                <Package className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <Package className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                 <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 uppercase">{item.nome_produto}</p>
               </div>
             </div>
@@ -101,32 +101,32 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
             {/* Linha de valores principais */}
             <div className="grid grid-cols-3 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 px-0">
               <div className="px-4 py-2.5">
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Qtd</p>
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">{fmtQtd(item.quantidade, item.unidade_medida)} {item.unidade_medida || 'UN'}</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">Qtd</p>
+                <p className="text-xs font-medium text-foreground/90 tabular-nums">{fmtQtd(item.quantidade, item.unidade_medida)} {item.unidade_medida || 'UN'}</p>
               </div>
               <div className="px-4 py-2.5">
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">V. Unit.</p>
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(item.valor_unitario_compra)}</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">V. Unit.</p>
+                <p className="text-xs font-medium text-foreground/90 tabular-nums">R$ {fmtR(item.valor_unitario_compra)}</p>
               </div>
               <div className="px-4 py-2.5">
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Total</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">Total</p>
                 <p className="text-xs font-bold text-gray-800 dark:text-gray-100 tabular-nums">R$ {fmtR(item.valor_total_item)}</p>
               </div>
             </div>
 
             {/* Custo e Preço de Venda */}
-            <div className="grid grid-cols-2 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 border-t border-gray-50 dark:border-gray-700/50">
+            <div className="grid grid-cols-2 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 border-t border-gray-50 dark:border-border/40/50">
               <div className="px-4 py-2.5">
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Custo Calculado</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">Custo Calculado</p>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(item.custo_calculado)}</p>
+                  <p className="text-xs font-medium text-foreground/90 tabular-nums">R$ {fmtR(item.custo_calculado)}</p>
                   <VariacaoIndicador valor={item.variacao_custo_pct} />
                 </div>
               </div>
               <div className="px-4 py-2.5">
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Preço de Venda</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">Preço de Venda</p>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(item.preco_venda_atual)}</p>
+                  <p className="text-xs font-medium text-foreground/90 tabular-nums">R$ {fmtR(item.preco_venda_atual)}</p>
                   <VariacaoIndicador valor={item.variacao_preco_venda_pct} />
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
 
             {/* Detalhes de custos (expansível) */}
             <details className="group">
-              <summary className="px-4 py-2 text-[10px] text-gray-400 dark:text-gray-500 cursor-pointer select-none border-t border-gray-50 dark:border-gray-700/50 list-none flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-300">
+              <summary className="px-4 py-2 text-[10px] text-muted-foreground cursor-pointer select-none border-t border-gray-50 dark:border-border/40/50 list-none flex items-center gap-1 hover:text-muted-foreground dark:hover:text-gray-300">
                 <span className="group-open:hidden">▸</span>
                 <span className="hidden group-open:inline">▾</span>
                 Ver composição de custos
@@ -147,13 +147,13 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
                   { label: item.nome_custo3, val: item.custo_outros },
                 ].filter(r => r.val > 0).map((r, i) => (
                   <div key={i} className="flex justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400">{r.label}</span>
-                    <span className="font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(r.val)}</span>
+                    <span className="text-muted-foreground">{r.label}</span>
+                    <span className="font-medium text-foreground/90 tabular-nums">R$ {fmtR(r.val)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between pt-2 border-t border-gray-100 dark:border-gray-700 text-xs">
-                  <span className="font-semibold text-gray-700 dark:text-gray-200">Custo Total</span>
-                  <span className="font-bold text-gray-900 dark:text-white tabular-nums">R$ {fmtR(item.custo_calculado)}</span>
+                <div className="flex justify-between pt-2 border-t border-border/40 text-xs">
+                  <span className="font-semibold text-foreground/90">Custo Total</span>
+                  <span className="font-bold text-foreground tabular-nums">R$ {fmtR(item.custo_calculado)}</span>
                 </div>
               </div>
             </details>

@@ -33,26 +33,26 @@ export default function NovaConferenciaDialog({ open, onClose, onCriada }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm rounded-3xl border-0 shadow-xl dark:bg-gray-900 p-6">
+      <DialogContent className="max-w-sm rounded-3xl border-0 shadow-xl dark:bg-background p-6">
         <DialogHeader>
-          <DialogTitle className="font-glacial text-gray-900 dark:text-white text-base">Nova Conferência</DialogTitle>
+          <DialogTitle className="font-glacial text-foreground text-base">Nova Conferência</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3 mt-2">
           <div>
-            <label className="text-xs text-gray-400 dark:text-gray-500 mb-1 block">Nome / Identificação</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Nome / Identificação</label>
             <Input
               placeholder="Ex: Inventário Corredor A"
               value={form.nome_conferencia}
               onChange={e => setForm(f => ({ ...f, nome_conferencia: e.target.value }))}
-              className="rounded-xl border-0 bg-gray-50 dark:bg-gray-800 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
+              className="rounded-xl border-0 bg-muted/50 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
             />
           </div>
 
           <div>
-            <label className="text-xs text-gray-400 dark:text-gray-500 mb-1 block">Tipo</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Tipo</label>
             <Select value={form.tipo_conferencia} onValueChange={v => setForm(f => ({ ...f, tipo_conferencia: v }))}>
-              <SelectTrigger className="rounded-xl border-0 bg-gray-50 dark:bg-gray-800 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700">
+              <SelectTrigger className="rounded-xl border-0 bg-muted/50 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -64,13 +64,13 @@ export default function NovaConferenciaDialog({ open, onClose, onCriada }) {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button variant="ghost" onClick={onClose} className="flex-1 rounded-xl text-gray-500 dark:text-gray-400">
+            <Button variant="ghost" onClick={onClose} className="flex-1 rounded-xl text-muted-foreground">
               Cancelar
             </Button>
             <Button
               onClick={handleCriar}
               disabled={loading || !form.nome_conferencia.trim()}
-              className="flex-1 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-none"
+              className="flex-1 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-foreground shadow-none"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Iniciar"}
             </Button>

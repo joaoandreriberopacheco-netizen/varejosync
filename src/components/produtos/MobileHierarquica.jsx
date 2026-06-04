@@ -81,13 +81,13 @@ function PricingLine({ label, value, tone = 'default', hint }) {
       ? 'text-orange-600 dark:text-orange-300'
       : tone === 'danger'
         ? 'text-red-600 dark:text-red-400'
-        : 'text-gray-900 dark:text-gray-100';
+        : 'text-foreground dark:text-gray-100';
 
   return (
-    <div className="flex items-start justify-between gap-2 py-1.5 border-b border-gray-100 last:border-b-0 dark:border-gray-800/70">
+    <div className="flex items-start justify-between gap-2 py-1.5 border-b border-border/40 last:border-b-0 dark:border-border/40/70">
       <div className="min-w-0">
-        <div className="text-[9px] uppercase tracking-wide text-gray-500 dark:text-gray-500">{label}</div>
-        {hint && <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">{hint}</div>}
+        <div className="text-[9px] uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">{label}</div>
+        {hint && <div className="text-[9px] text-muted-foreground truncate">{hint}</div>}
       </div>
       <div className={`text-xs font-semibold tabular-nums text-right ${toneClass}`}>{value}</div>
     </div>
@@ -96,8 +96,8 @@ function PricingLine({ label, value, tone = 'default', hint }) {
 
 function PricingSection({ title, children }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
-      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{title}</div>
+    <div className="rounded-2xl border border-border/40 bg-white px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
+      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
       {children}
     </div>
   );
@@ -125,29 +125,29 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-gray-200 bg-gray-50 p-3 text-gray-900 shadow-2xl dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
+      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-border/40 bg-muted/40 p-3 text-foreground shadow-2xl dark:border-border/40 dark:bg-gray-950 dark:text-gray-100">
         <DialogHeader className="text-left space-y-1 pr-8">
-          <DialogTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <DialogTitle className="text-base font-semibold text-foreground dark:text-gray-100 flex items-center gap-2">
             <span className="w-8 h-8 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </span>
             Precificação
           </DialogTitle>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 uppercase leading-snug line-clamp-1">{produto.nome}</p>
+          <p className="text-[11px] text-muted-foreground uppercase leading-snug line-clamp-1">{produto.nome}</p>
         </DialogHeader>
 
         <div className="space-y-2">
-          <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-none">
+          <div className="rounded-2xl border border-border/40 bg-white px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[9px] uppercase tracking-wide text-gray-500 dark:text-gray-500">Unidade</div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-300 truncate">consulta, sem editar</div>
+                <div className="text-[9px] uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">Unidade</div>
+                <div className="text-[11px] text-muted-foreground dark:text-foreground/90 truncate">consulta, sem editar</div>
               </div>
               <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                <SelectTrigger className="h-8 w-24 rounded-xl border-gray-200 bg-gray-50 text-xs text-gray-900 focus:ring-0 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100">
+                <SelectTrigger className="h-8 w-24 rounded-xl border-border/40 bg-muted/40 text-xs text-foreground focus:ring-0 dark:border-border/40 dark:bg-gray-950 dark:text-gray-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="z-[80] border-gray-200 bg-white text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
+                <SelectContent className="z-[80] border-border/40 bg-white text-foreground dark:border-border/40 dark:bg-background dark:text-gray-100">
                   {unitOptions.map((option) => (
                     <SelectItem key={option.sigla} value={option.sigla} className="text-xs">
                       {option.sigla}
@@ -196,47 +196,47 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
 
   return (
     <div className={cn(p38Table.mobileLine, "grid grid-cols-[40px_minmax(0,1fr)_44px] gap-3 border-l-transparent w-full min-w-0 max-w-full box-border")}>
-      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
+      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
+          : <Package className="w-4 h-4 text-gray-300 dark:text-muted-foreground" />}
       </div>
 
       <button type="button" className="min-w-0 overflow-hidden text-left" onClick={() => onEdit(p)}>
-        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-3">
+        <p className="text-[12px] font-normal text-foreground/90 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-3">
           {p.nome}
         </p>
         <div className="mt-1.5 min-w-0 max-w-full">
           <div className="grid grid-cols-3 gap-2 min-w-0">
             <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Estoque</div>
-              <div className="text-[11px] font-medium text-gray-600 dark:text-gray-300 tabular-nums truncate">
+              <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Estoque</div>
+              <div className="text-[11px] font-medium text-muted-foreground tabular-nums truncate">
                 {fmtN(estoqueExibicao)} {unidadeExibicao}
               </div>
               {apresent && (
-                <div className="text-[9px] text-gray-400 dark:text-gray-600 truncate">
+                <div className="text-[9px] text-muted-foreground truncate">
                   {apresent.rotulo || 'unidade de exibição'}
                 </div>
               )}
             </div>
             <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Preço venda</div>
+              <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Preço venda</div>
               <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-100 tabular-nums truncate">
                 {cat.precoVenda > 0 ? (
-                  <>R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-gray-400">/{cat.sigla}</span></>
+                  <>R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-muted-foreground">/{cat.sigla}</span></>
                 ) : '-'}
               </div>
             </div>
             <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Status</div>
+              <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Status</div>
               <div className="flex items-center gap-1 min-w-0">
                 <P38StatusDot tone={stockTone} />
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
+                <span className="text-[11px] text-muted-foreground truncate">{statusLabel}</span>
               </div>
             </div>
           </div>
           {p.codigo_interno && (
-            <div className="mt-1 text-[10px] text-gray-400 dark:text-gray-600 font-mono truncate">
+            <div className="mt-1 text-[10px] text-muted-foreground font-mono truncate">
               #{p.codigo_interno}
             </div>
           )}
@@ -277,12 +277,12 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       )}
     >
       <ChevronRight
-        className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+        className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
       />
       <span className={`flex-1 min-w-0 truncate ${
         isRoot
           ? 'text-[12px] font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide'
-          : 'text-[11px] font-medium text-gray-500 dark:text-gray-300 uppercase'
+          : 'text-[11px] font-medium text-muted-foreground dark:text-foreground/90 uppercase'
       }`}>
         {row.label}
       </span>
@@ -297,7 +297,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
           className={`h-5 px-1.5 text-[10px] font-medium flex-shrink-0 ${
             isRoot
               ? 'border-gray-700 text-gray-800 dark:border-gray-500 dark:text-gray-100'
-              : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300'
+              : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-foreground/90'
           }`}
         >
           {row.count}
@@ -339,11 +339,11 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   if (produtos.length === 0) {
     return (
       <div className="py-16 text-center px-8">
-        <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
-          <Package className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <Package className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nenhum produto encontrado</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tente ajustar os filtros de busca</p>
+        <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
+        <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
       </div>
     );
   }

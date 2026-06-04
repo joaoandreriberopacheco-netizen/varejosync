@@ -83,23 +83,23 @@ export default function IntervenientesPage() {
         <div className="container mx-auto p-6 max-w-5xl space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold font-glacial text-gray-900 dark:text-white">Intervenientes</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Gerencie as pessoas autorizadas e seus PINs de segurança.</p>
+                    <h1 className="text-3xl font-bold font-glacial text-foreground">Intervenientes</h1>
+                    <p className="text-muted-foreground">Gerencie as pessoas autorizadas e seus PINs de segurança.</p>
                 </div>
                 <Button onClick={() => { setEditingItem(null); setIsDialogOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                     <Plus className="w-4 h-4 mr-2" /> Novo Interveniente
                 </Button>
             </div>
 
-            <Card className="border-none shadow-sm bg-white dark:bg-gray-800">
+            <Card className="border-none shadow-sm bg-card">
                 <CardHeader className="pb-2">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                             placeholder="Buscar por nome ou descrição..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50"
+                            className="pl-9 border-border/40 bg-background/50"
                         />
                     </div>
                 </CardHeader>
@@ -107,7 +107,7 @@ export default function IntervenientesPage() {
                     {isLoading ? (
                         <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
                     ) : filteredItems.length === 0 ? (
-                        <p className="text-center py-8 text-gray-500">Nenhum interveniente encontrado.</p>
+                        <p className="text-center py-8 text-muted-foreground">Nenhum interveniente encontrado.</p>
                     ) : (
                         <>
                             <P38MobileLineList className="md:hidden">
@@ -187,7 +187,7 @@ export default function IntervenientesPage() {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-800">
+                <DialogContent className="sm:max-w-[425px] bg-card">
                     <DialogHeader>
                         <DialogTitle>{editingItem ? 'Editar Interveniente' : 'Novo Interveniente'}</DialogTitle>
                     </DialogHeader>
@@ -199,7 +199,7 @@ export default function IntervenientesPage() {
                         <div className="space-y-2">
                             <Label htmlFor="pin">PIN de Segurança (4-6 dígitos)</Label>
                             <div className="relative">
-                                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input id="pin" name="pin" defaultValue={editingItem?.pin} maxLength={6} minLength={4} className="pl-9 font-mono" required />
                             </div>
                         </div>
@@ -207,10 +207,10 @@ export default function IntervenientesPage() {
                             <Label htmlFor="description">Cargo / Descrição</Label>
                             <Input id="description" name="description" defaultValue={editingItem?.description} />
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg">
                             <div className="space-y-0.5">
                                 <Label htmlFor="active" className="text-base">Ativo</Label>
-                                <p className="text-xs text-gray-500">Permitir autenticação com este PIN</p>
+                                <p className="text-xs text-muted-foreground">Permitir autenticação com este PIN</p>
                             </div>
                             <Switch id="active" name="active" defaultChecked={editingItem ? editingItem.active : true} />
                         </div>

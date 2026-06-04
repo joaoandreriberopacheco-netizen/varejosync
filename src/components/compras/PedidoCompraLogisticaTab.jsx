@@ -68,17 +68,17 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+    <div className="rounded-2xl bg-card shadow-sm overflow-hidden">
       {/* Header do card */}
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
           <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">N{nivel}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+          <p className="text-sm font-medium text-foreground truncate">
             {codigoExibicao} • {embarque.transportadora_nome || 'Transportadora não informada'}
           </p>
-          <p className="text-[10px] text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+          <p className="text-[10px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
             {dataEmb && <span>Emb: {format(dataEmb, 'dd/MM/yy')}</span>}
             {eta && !editandoEta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
             {editandoEta && (
@@ -87,11 +87,11 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
                   type="date"
                   value={etaValue}
                   onChange={e => setEtaValue(e.target.value)}
-                  className="text-[0.75rem] border border-gray-300 dark:border-gray-500 rounded-lg px-1 py-0 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-teal-400"
+                  className="text-[0.75rem] border border-gray-300 dark:border-gray-500 rounded-lg px-1 py-0 bg-white dark:bg-muted text-foreground focus:outline-none focus:border-teal-400"
                   autoFocus
                 />
                 <button onClick={handleSalvarEta} disabled={salvandoEta} className="text-emerald-500 font-bold text-xs">{salvandoEta ? '…' : '✓'}</button>
-                <button onClick={() => setEditandoEta(false)} className="text-gray-400 text-xs">✕</button>
+                <button onClick={() => setEditandoEta(false)} className="text-muted-foreground text-xs">✕</button>
               </div>
             )}
             {Array.isArray(embarque.volumes_detalhados) && embarque.volumes_detalhados.length > 0 && (
@@ -99,7 +99,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
             )}
             {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
             <span>{statusRecebimento}</span>
-            <span className="text-gray-500">{formatQuantity(totalItens)} un. embarcadas</span>
+            <span className="text-muted-foreground">{formatQuantity(totalItens)} un. embarcadas</span>
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
@@ -114,41 +114,41 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
              </Button>
            )}
            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
-             <Edit3 className="w-3.5 h-3.5 text-gray-400" />
+             <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
            </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
-            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
           </Button>
         </div>
       </div>
 
       {/* Itens expandidos */}
       {expanded &&
-      <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 space-y-1.5">
+      <div className="border-t border-border/40 px-4 py-2 space-y-1.5">
           {itensEmbarque.map((item) =>
         <div key={item.produto_id} className="flex items-center justify-between">
-              <span className="text-xs text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{item.produto_nome}</span>
-              <span className="text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
+              <span className="text-xs text-muted-foreground truncate flex-1 mr-2">{item.produto_nome}</span>
+              <span className="text-xs font-medium text-foreground whitespace-nowrap">
                 {formatQuantity(item.quantidade_embarcada)} / {formatQuantity(item.quantidade_pedida)} {item.unidade_medida}
               </span>
             </div>
         )}
           {embarque.observacoes &&
-        <p className="text-[10px] text-gray-400 italic mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">{embarque.observacoes}</p>
+        <p className="text-[10px] text-muted-foreground italic mt-1 pt-1 border-t border-border/40">{embarque.observacoes}</p>
         }
         </div>
       }
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-gray-900 max-w-sm">
+        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-background max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="dark:text-white">Excluir embarque?</AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-gray-400">
+            <AlertDialogDescription className="dark:text-muted-foreground">
               O embarque <strong>{codigoExibicao}</strong> será removido da logística deste pedido.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-0 shadow-sm dark:bg-gray-800 dark:text-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-0 shadow-sm dark:bg-muted dark:text-foreground">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-700 text-white">
               {deleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
@@ -162,21 +162,21 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
 function ItensOrfaos({ itens, onAcordo }) {
   if (!itens.length) return null;
   return (
-    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+    <div className="rounded-2xl bg-muted/50 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40">
         <span className="relative flex h-2 w-2 flex-shrink-0">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
         </span>
         <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Itens aguardando despacho</span>
-        <span className="ml-auto text-xs text-gray-400">{itens.length} produto(s)</span>
+        <span className="ml-auto text-xs text-muted-foreground">{itens.length} produto(s)</span>
       </div>
       <div className="px-4 py-3 space-y-2.5">
         {itens.map((item) =>
         <div key={item.produto_id} className="flex items-start justify-between gap-3">
-            <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-tight">{item.produto_nome}</span>
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap flex-shrink-0">
-              {formatQuantity(item.qtd_pendente)} <span className="text-gray-400 font-normal">{item.unidade_medida}</span> <span className="text-xs text-gray-400">pend.</span>
+            <span className="text-sm text-foreground flex-1 leading-tight">{item.produto_nome}</span>
+            <span className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap flex-shrink-0">
+              {formatQuantity(item.qtd_pendente)} <span className="text-muted-foreground font-normal">{item.unidade_medida}</span> <span className="text-xs text-muted-foreground">pend.</span>
             </span>
           </div>
         )}
@@ -184,7 +184,7 @@ function ItensOrfaos({ itens, onAcordo }) {
       {onAcordo &&
       <div className="px-4 pb-3">
           <Button variant="ghost" size="sm" onClick={onAcordo}
-        className="w-full h-9 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-dashed border-gray-200 dark:border-gray-600 rounded-xl">
+        className="w-full h-9 text-sm text-muted-foreground hover:bg-muted border border-dashed border-border/40 rounded-xl">
             <Handshake className="w-4 h-4 mr-2" /> Registrar Acordo Financeiro
           </Button>
         </div>
@@ -250,22 +250,22 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 px-4 py-4 shadow-sm">
+      <div className="rounded-2xl bg-muted/50/60 px-4 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Dashboard de embarques</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Dashboard de embarques</p>
             <div className="mt-1 flex items-center gap-2 flex-wrap">
-              <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{temEmbarqueReal ? percentualEmbarcado.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}%</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">despachado</span>
+              <span className="text-2xl font-semibold text-foreground dark:text-gray-100">{temEmbarqueReal ? percentualEmbarcado.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}%</span>
+              <span className="text-sm text-muted-foreground">despachado</span>
               <span className="text-sm text-emerald-600 dark:text-emerald-400">{temEmbarqueReal ? percentualConcluido.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}% concluído</span>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400">Status agregado</p>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{statusEmbarqueAgregado}</p>
+            <p className="text-xs text-muted-foreground">Status agregado</p>
+            <p className="text-sm font-medium text-foreground/90">{statusEmbarqueAgregado}</p>
           </div>
         </div>
-        <div className="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex">
+        <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden flex">
           <div className="h-full bg-emerald-500 transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualConcluido)) : 0}%` }} />
           <div className="h-full bg-cyan-500 transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualEmbarcado - percentualConcluido)) : 0}%` }} />
           <div className="h-full bg-gray-300 dark:bg-gray-600 transition-all" style={{ width: `${temEmbarqueReal ? Math.max(0, Math.min(100, percentualPendente)) : 100}%` }} />
@@ -275,12 +275,12 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
       {/* Header da aba com status e botões de ação */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Truck className="w-4 h-4 text-gray-400" />
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 font-quicksand">
+          <Truck className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground/90 font-quicksand">
             Despachos
           </span>
           {embarques.length > 0 &&
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
               {embarques.length} nível(is)
             </span>
           }
@@ -301,7 +301,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
             size="sm"
             variant="outline"
             onClick={handleNovoEmbarque}
-            className="h-8 px-3 text-xs border-0 shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            className="h-8 px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted">
             <Plus className="w-3.5 h-3.5 mr-1" />
             Informar Despacho
           </Button>
@@ -310,10 +310,10 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
 
       {/* Estado vazio */}
       {semEmbarques &&
-      <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-center space-y-2">
-          <Clock className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum despacho registrado</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Use o botão acima para registrar o primeiro embarque</p>
+      <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-muted/50/50 text-center space-y-2">
+          <Clock className="w-8 h-8 text-gray-300 dark:text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Nenhum despacho registrado</p>
+          <p className="text-xs text-muted-foreground">Use o botão acima para registrar o primeiro embarque</p>
         </div>
       }
 

@@ -61,22 +61,22 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
     <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent
         className={cn(
-          'z-[100] flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-gray-900 sm:w-full',
+          'z-[100] flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-background sm:w-full',
           '[&>button]:hidden'
         )}
       >
         <div className="flex items-center gap-3 mb-1">
-          <CreditCard className="w-5 h-5 text-gray-500" />
+          <CreditCard className="w-5 h-5 text-muted-foreground" />
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
+            <h3 className="text-base font-semibold text-foreground font-glacial">
               {modalidade === 'debito' ? 'Cartão Débito' : `Cartão Crédito${parcelas > 1 ? ` ${parcelas}x` : ''}`}
             </h3>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Maquininha e bandeira</p>
+            <p className="text-xs text-muted-foreground">Maquininha e bandeira</p>
           </div>
         </div>
 
         {loading && (
-          <div className="py-6 text-center text-gray-400 text-sm">Carregando maquininhas...</div>
+          <div className="py-6 text-center text-muted-foreground text-sm">Carregando maquininhas...</div>
         )}
 
         {!loading && maquininhas.length === 0 && (
@@ -93,7 +93,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             {/* Parcelas — só para crédito */}
             {modalidade === 'credito' && (
               <div className="space-y-1">
-                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Parcelas</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Parcelas</p>
                 <div className="flex gap-1.5 flex-wrap">
                   {[1,2,3,4,5,6,7,8,9,10,11,12].map(p => (
                     <button
@@ -101,8 +101,8 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                       onClick={() => setParcelas(p)}
                       className={`w-10 h-9 rounded-xl text-sm font-semibold transition-colors ${
                         parcelas === p
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
                       }`}
                     >
                       {p}x
@@ -114,15 +114,15 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
 
             {/* Maquininhas */}
             <div className="space-y-1">
-              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Maquininha</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Maquininha</p>
               {maquininhas.map(maq => (
                 <button
                   key={maq.id}
                   onClick={() => { setSelecionada(maq); setBandeiraSelecionada(''); }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-left ${
                     selecionada?.id === maq.id
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                      : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                   }`}
                 >
                   <div>
@@ -141,7 +141,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             {/* Bandeiras */}
             {selecionada && (
               <div className="space-y-1">
-                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Bandeira</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Bandeira</p>
                 <div className="grid grid-cols-3 gap-2">
                   {bandeirasDisponiveis.map(b => {
                     const taxa = getTaxaParaMaquininha(selecionada, b);
@@ -151,8 +151,8 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                         onClick={() => setBandeiraSelecionada(b)}
                         className={`flex flex-col items-center py-2 px-1 rounded-xl transition-colors text-sm ${
                           bandeiraSelecionada === b
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                            : 'bg-muted/50 text-foreground/90 hover:bg-muted'
                         }`}
                       >
                         <span className="font-medium">{b}</span>
@@ -169,10 +169,10 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
               const taxa = getTaxaParaMaquininha(selecionada, bandeiraSelecionada);
               const prazo = getPrazoDias(selecionada);
               return (
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-xs text-gray-500 dark:text-gray-400 flex justify-between">
-                  <span>Taxa: <b className="text-gray-700 dark:text-gray-200">{taxa}%</b></span>
-                  <span>Recebimento: <b className="text-gray-700 dark:text-gray-200">D+{prazo}</b></span>
-                  <span>Conta: <b className="text-gray-700 dark:text-gray-200">{selecionada.conta_destino_nome || '—'}</b></span>
+                <div className="p-3 bg-muted/50 rounded-xl text-xs text-muted-foreground flex justify-between">
+                  <span>Taxa: <b className="text-foreground/90">{taxa}%</b></span>
+                  <span>Recebimento: <b className="text-foreground/90">D+{prazo}</b></span>
+                  <span>Conta: <b className="text-foreground/90">{selecionada.conta_destino_nome || '—'}</b></span>
                 </div>
               );
             })()}
@@ -181,14 +181,14 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             <div className="flex gap-2 pt-1">
               <button
                 onClick={onCancel}
-                className="flex-1 h-11 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium"
+                className="flex-1 h-11 bg-muted text-foreground/90 rounded-xl text-sm font-medium"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmar}
                 disabled={!selecionada || !bandeiraSelecionada}
-                className="flex-1 h-11 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
+                className="flex-1 h-11 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1"
               >
                 Confirmar <ChevronRight className="w-4 h-4" />
               </button>

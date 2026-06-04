@@ -198,7 +198,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg bg-white dark:bg-gray-800 border-0 shadow-xl">
+      <DialogContent className="max-w-lg bg-card border-0 shadow-xl">
         <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-3 text-gray-800 dark:text-gray-100">
             <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -206,7 +206,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
             </div>
             <div>
               <h2 className="text-lg font-medium">Venda Perdida</h2>
-              <p className="text-xs font-normal text-gray-500 dark:text-gray-400">Registre para análise de estoque e mix</p>
+              <p className="text-xs font-normal text-muted-foreground">Registre para análise de estoque e mix</p>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -225,10 +225,10 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
         <form onSubmit={handleSubmit} className="space-y-5 py-2">
           {/* Switch Produto do Mix / Não Mix */}
-          <div className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+          <div className="flex items-center justify-between py-3 px-4 bg-muted/40 dark:bg-muted/30 rounded-lg">
             <div className="flex items-center gap-2">
-              <Package className="w-4 h-4 text-gray-500" />
-              <span className={`text-sm ${formData.is_produto_do_mix ? 'font-medium text-gray-800 dark:text-gray-200' : 'text-gray-400'}`}>
+              <Package className="w-4 h-4 text-muted-foreground" />
+              <span className={`text-sm ${formData.is_produto_do_mix ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                 Produto Cadastrado
               </span>
             </div>
@@ -237,48 +237,48 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
               onCheckedChange={(checked) => handleToggleTipoProduto(!checked)}
             />
             <div className="flex items-center gap-2">
-              <span className={`text-sm ${!formData.is_produto_do_mix ? 'font-medium text-gray-800 dark:text-gray-200' : 'text-gray-400'}`}>
+              <span className={`text-sm ${!formData.is_produto_do_mix ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                 Produto Novo
               </span>
-              <PackagePlus className="w-4 h-4 text-gray-500" />
+              <PackagePlus className="w-4 h-4 text-muted-foreground" />
             </div>
           </div>
 
           {/* Busca de Produto */}
           <div className="relative">
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+            <Label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
               {formData.is_produto_do_mix ? <Package className="w-3 h-3" /> : <PackagePlus className="w-3 h-3" />}
               {formData.is_produto_do_mix ? 'Produto do Mix *' : 'Nome do Produto *'}
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={formData.is_produto_do_mix ? "Buscar produto cadastrado..." : "Digite o nome do produto..."}
                 value={buscaProduto}
                 onChange={(e) => setBuscaProduto(e.target.value)}
-                className="pl-10 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none focus:ring-0 focus:border-gray-400 text-gray-900 dark:text-gray-200 placeholder:text-gray-400"
+                className="pl-10 bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-gray-400 text-foreground dark:text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             {showSuggestions && produtosSugeridos.length > 0 && (
-              <div className="absolute z-50 w-full mt-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-72 overflow-y-auto border border-gray-100 dark:border-gray-800">
+              <div className="absolute z-50 w-full mt-1.5 bg-card rounded-2xl shadow-xl max-h-72 overflow-y-auto border border-border/40">
                 {produtosSugeridos.map((produto, idx) => (
                   <div
                     key={produto.id || idx}
-                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer border-b border-gray-50 dark:border-gray-800 last:border-b-0 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/40 dark:hover:bg-muted/60 cursor-pointer border-b border-gray-50 dark:border-border/40 last:border-b-0 transition-colors"
                     onClick={() => handleSelecionarProduto(produto)}
                   >
                     {formData.is_produto_do_mix && (
                       produto.imagem_url
                         ? <img src={produto.imagem_url} alt={produto.nome} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                        : <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                            <Package className="w-4 h-4 text-gray-400" />
+                        : <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                            <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{produto.nome}</p>
+                      <p className="font-medium text-sm text-foreground truncate">{produto.nome}</p>
                       {formData.is_produto_do_mix && produto.estoque_atual !== undefined && (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           Estoque: {produto.estoque_atual} · #{produto.codigo_interno}
                         </p>
                       )}
@@ -295,7 +295,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
           {/* Quantidade e Motivo em linha */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+              <Label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
                 <Hash className="w-3 h-3" />
                 Quantidade *
               </Label>
@@ -305,12 +305,12 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                 value={formData.quantidade_desejada}
                 onChange={(e) => setFormData({ ...formData, quantidade_desejada: parseInt(e.target.value) || 1 })}
                 onFocus={(e) => e.target.select()}
-                className="bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none focus:ring-0 focus:border-gray-400 text-gray-900 dark:text-gray-200"
+                className="bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-gray-400 text-foreground dark:text-foreground"
               />
             </div>
 
             <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+              <Label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
                 <AlertTriangle className="w-3 h-3" />
                 Motivo *
               </Label>
@@ -319,10 +319,10 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                   value={formData.motivo_perda}
                   onValueChange={(v) => setFormData({ ...formData, motivo_perda: v })}
                 >
-                  <SelectTrigger className="bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none focus:ring-0 text-gray-900 dark:text-gray-200">
+                  <SelectTrigger className="bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 text-foreground dark:text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <SelectContent className="bg-card border-border/40">
                     <SelectItem value="Sem Estoque">Sem Estoque</SelectItem>
                     <SelectItem value="Preço Alto">Preço Alto</SelectItem>
                     <SelectItem value="Outro">Outro</SelectItem>
@@ -338,7 +338,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
           {/* Observações */}
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+            <Label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
               <MessageSquare className="w-3 h-3" />
               Observações
             </Label>
@@ -347,7 +347,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
               value={formData.observacao}
               onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
               rows={2}
-              className="bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none focus:ring-0 focus:border-gray-400 text-gray-900 dark:text-gray-200 resize-none placeholder:text-gray-400"
+              className="bg-white dark:bg-muted/50 border-0 border-b border-border/40 rounded-none focus:ring-0 focus:border-gray-400 text-foreground dark:text-foreground resize-none placeholder:text-muted-foreground"
             />
           </div>
         </form>
@@ -364,7 +364,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
             type="button"
             variant="ghost"
             onClick={handleClose}
-            className="w-full h-11 md:h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="w-full h-11 md:h-10 text-muted-foreground hover:text-foreground/90 hover:bg-muted"
           >
             Cancelar
           </Button>

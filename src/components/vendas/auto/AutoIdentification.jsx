@@ -51,20 +51,20 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
 
   return (
     <motion.div 
-      className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 p-6 md:p-12"
+      className="flex-1 flex flex-col bg-background p-6 md:p-12"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
     >
       <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Identificação</h2>
-          <p className="text-gray-500 dark:text-gray-400">Informe seu CPF ou Telefone para continuar</p>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Identificação</h2>
+          <p className="text-muted-foreground">Informe seu CPF ou Telefone para continuar</p>
         </div>
 
-        <form onSubmit={handleSearch} className="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
+        <form onSubmit={handleSearch} className="space-y-6 bg-card p-8 rounded-2xl shadow-xl">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
               CPF, CNPJ ou Telefone
             </label>
             <div className="relative">
@@ -73,7 +73,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
                 value={documento}
                 onChange={(e) => setDocumento(e.target.value)}
                 placeholder="Digite apenas números"
-                className="h-14 text-lg bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 rounded-xl"
+                className="h-14 text-lg bg-muted/40 dark:bg-muted border-border/40 rounded-xl"
                 autoFocus
               />
               <button 
@@ -87,9 +87,9 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
           </div>
 
           <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
-            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OU</span>
-            <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+            <div className="flex-grow border-t border-border/40"></div>
+            <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm">OU</span>
+            <div className="flex-grow border-t border-border/40"></div>
           </div>
 
           <Button 
@@ -107,7 +107,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
           <Button 
             onClick={onSkip}
             variant="ghost"
-            className="w-full h-12 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl"
+            className="w-full h-12 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 hover:bg-muted rounded-xl"
           >
             Continuar sem identificação <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
@@ -115,7 +115,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
           <Button 
             onClick={onBack}
             variant="ghost"
-            className="w-full text-gray-400 hover:text-gray-600"
+            className="w-full text-muted-foreground hover:text-muted-foreground"
           >
             Voltar ao início
           </Button>

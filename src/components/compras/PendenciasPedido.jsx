@@ -121,11 +121,11 @@ export default function PendenciasPedido({ pedido }) {
   if (!conferencia) {
     return (
       <Card className="border-0 shadow-sm">
-        <CardContent className="py-12 text-center text-gray-500 dark:text-gray-400">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <FileText className="w-8 h-8 text-gray-400" />
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <FileText className="w-8 h-8 text-muted-foreground" />
           </div>
-          <p className="font-semibold text-lg text-gray-700 dark:text-gray-300">Aguardando Resultado da Conferência</p>
+          <p className="font-semibold text-lg text-foreground/90">Aguardando Resultado da Conferência</p>
           <p className="text-sm mt-1">A conferência ainda não foi finalizada</p>
         </CardContent>
       </Card>
@@ -142,8 +142,8 @@ export default function PendenciasPedido({ pedido }) {
       <Card className="border-0 shadow-sm">
         <CardContent className="py-12 text-center">
           <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
-          <p className="font-semibold text-lg text-gray-900 dark:text-gray-100">Nenhuma Pendência</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Todos os itens foram conferidos sem divergências</p>
+          <p className="font-semibold text-lg text-foreground dark:text-gray-100">Nenhuma Pendência</p>
+          <p className="text-sm text-muted-foreground mb-6">Todos os itens foram conferidos sem divergências</p>
           
           {pedido.status !== 'Concluído' && (
             <Button 
@@ -204,23 +204,23 @@ export default function PendenciasPedido({ pedido }) {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Esperado:</span>
+                  <span className="text-muted-foreground">Esperado:</span>
                   <span className="ml-2 font-semibold">{div.quantidade_esperada}</span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Recebido:</span>
+                  <span className="text-muted-foreground">Recebido:</span>
                   <span className="ml-2 font-semibold">{div.quantidade_recebida}</span>
                 </div>
                 {div.quantidade_avariada > 0 && (
                   <div>
-                    <span className="text-gray-500">Avariado:</span>
+                    <span className="text-muted-foreground">Avariado:</span>
                     <span className="ml-2 font-semibold text-red-600">{div.quantidade_avariada}</span>
                   </div>
                 )}
               </div>
 
               {div.descricao && (
-                <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                <div className="text-sm text-muted-foreground bg-muted/40 p-2 rounded">
                   {div.descricao}
                 </div>
               )}
@@ -254,7 +254,7 @@ export default function PendenciasPedido({ pedido }) {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-muted/40 rounded-lg">
               <h4 className="font-semibold mb-2">{selectedDiv?.produto_nome}</h4>
               <Badge className={getTipoColor(selectedDiv?.tipo)}>{selectedDiv?.tipo}</Badge>
             </div>

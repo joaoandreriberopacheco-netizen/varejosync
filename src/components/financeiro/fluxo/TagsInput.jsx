@@ -59,16 +59,16 @@ export default function TagsInput({ tags, onChange }) {
   const tagsSugeridas = todasTags.filter(t => !tags.includes(t)).slice(0, 8);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+    <div className="bg-card rounded-2xl shadow-sm p-4">
       <div className="flex items-center gap-2 mb-2">
-        <Tag className="w-3.5 h-3.5 text-gray-400" />
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider">Tags</p>
+        <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tags</p>
       </div>
 
       {/* Tags selecionadas + input */}
       <div className="flex flex-wrap gap-1.5 min-h-[32px]">
         {tags.map(t => (
-          <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-800 dark:bg-gray-200 text-xs text-white dark:text-gray-900">
+          <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary dark:bg-gray-200 text-xs text-white dark:text-foreground">
             {t}
             <button onClick={() => removeTag(t)} className="ml-0.5 hover:opacity-70">
               <X className="w-2.5 h-2.5" />
@@ -82,7 +82,7 @@ export default function TagsInput({ tags, onChange }) {
           onFocus={() => setShowSugestoes(true)}
           onBlur={() => setTimeout(() => setShowSugestoes(false), 150)}
           placeholder={tags.length === 0 ? 'Adicionar tag...' : '+'}
-          className="flex-1 min-w-[80px] bg-transparent text-xs text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none"
+          className="flex-1 min-w-[80px] bg-transparent text-xs text-foreground/90 placeholder:text-muted-foreground outline-none"
         />
       </div>
 
@@ -93,7 +93,7 @@ export default function TagsInput({ tags, onChange }) {
             <button
               key={t}
               onMouseDown={(e) => { e.preventDefault(); addTag(t); }}
-              className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               + {t}
             </button>
@@ -104,13 +104,13 @@ export default function TagsInput({ tags, onChange }) {
       {/* Tags populares quando input vazio */}
       {!input && !showSugestoes && tagsSugeridas.length > 0 && (
         <div className="mt-2">
-          <p className="text-[0.58rem] text-gray-400 mb-1 uppercase tracking-wider">Tags recentes</p>
+          <p className="text-[0.58rem] text-muted-foreground mb-1 uppercase tracking-wider">Tags recentes</p>
           <div className="flex flex-wrap gap-1">
             {tagsSugeridas.map(t => (
               <button
                 key={t}
                 onClick={() => addTag(t)}
-                className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 {t}
               </button>
@@ -119,7 +119,7 @@ export default function TagsInput({ tags, onChange }) {
         </div>
       )}
 
-      <p className="text-[0.6rem] text-gray-400 mt-1.5">Enter ou vírgula para adicionar</p>
+      <p className="text-[0.6rem] text-muted-foreground mt-1.5">Enter ou vírgula para adicionar</p>
     </div>
   );
 }

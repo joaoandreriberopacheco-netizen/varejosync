@@ -59,10 +59,10 @@ export default function EditorEtapa1({ onSelecionado }) {
       <div className="flex-1 flex flex-col p-4 md:p-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            <h1 className="text-3xl font-bold text-foreground mb-1">
               Novo Documento
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               Escolha o tipo base
             </p>
           </div>
@@ -76,11 +76,11 @@ export default function EditorEtapa1({ onSelecionado }) {
             <button
               key={tipo.id}
               onClick={() => onSelecionado({ ...tipo, isNovo: true })}
-              className="p-4 text-left rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition"
+              className="p-4 text-left rounded-lg bg-muted/50 hover:bg-muted border border-border/40 transition"
             >
               <div className="text-2xl mb-2">{ICON_CATEGORIA[tipo.id]}</div>
-              <h3 className="font-medium text-gray-900 dark:text-white">{tipo.nome}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{tipo.descricao}</p>
+              <h3 className="font-medium text-foreground">{tipo.nome}</h3>
+              <p className="text-xs text-muted-foreground">{tipo.descricao}</p>
             </button>
           ))}
         </div>
@@ -93,10 +93,10 @@ export default function EditorEtapa1({ onSelecionado }) {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+          <h1 className="text-3xl font-bold text-foreground mb-1">
             Editor de Layouts
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Selecione um documento para editar
           </p>
         </div>
@@ -119,12 +119,12 @@ export default function EditorEtapa1({ onSelecionado }) {
       {/* Lista de Documentos */}
       <div className="flex-1 space-y-2 overflow-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-32 text-gray-400">
+          <div className="flex items-center justify-center h-32 text-muted-foreground">
             <Loader className="w-5 h-5 animate-spin mr-2" />
             Carregando...
           </div>
         ) : filtrados.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
+          <div className="text-center text-muted-foreground py-8">
             <p className="mb-2">Nenhum documento encontrado</p>
             <Button variant="outline" size="sm" onClick={handleNovoDocumento}>
               Criar primeiro documento
@@ -135,20 +135,20 @@ export default function EditorEtapa1({ onSelecionado }) {
             <button
               key={doc.id}
               onClick={() => onSelecionado(doc)}
-              className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition flex items-center justify-between group"
+              className="w-full text-left p-4 rounded-lg bg-muted/50 hover:bg-muted border border-border/40 transition flex items-center justify-between group"
             >
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">{ICON_CATEGORIA[doc.categoria] || '📄'}</span>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
+                  <h3 className="font-medium text-foreground">
                     {doc.nome}
                   </h3>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {doc.descricao}
                 </p>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground dark:group-hover:text-gray-300" />
             </button>
           ))
         )}

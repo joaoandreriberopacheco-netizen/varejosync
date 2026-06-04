@@ -77,18 +77,18 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
   return (
     <div className="fixed inset-0 z-[210] flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center">
       <button type="button" aria-label="Fechar assinatura" className="absolute inset-0" onClick={() => onOpenChange(false)} />
-      <div className="relative z-10 flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-gray-900 md:h-auto md:max-h-[90vh] md:rounded-[32px]">
+      <div className="relative z-10 flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-[32px] bg-white shadow-2xl dark:bg-background md:h-auto md:max-h-[90vh] md:rounded-[32px]">
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-300"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90"
         >
           <X className="h-4 w-4" />
         </button>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-5">
           <div>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">Assinatura do recolhedor</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Assine na tela para anexar a minuta.</p>
+            <p className="text-lg font-semibold text-foreground">Assinatura do recolhedor</p>
+            <p className="text-sm text-muted-foreground">Assine na tela para anexar a minuta.</p>
           </div>
 
           <div className="space-y-2">
@@ -96,11 +96,11 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Nome do recolhedor"
-              className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-800"
+              className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-muted"
             />
           </div>
 
-          <div ref={wrapperRef} className="overflow-hidden rounded-[24px] bg-gray-50 p-2 shadow-inner dark:bg-gray-800">
+          <div ref={wrapperRef} className="overflow-hidden rounded-[24px] bg-muted/40 p-2 shadow-inner dark:bg-muted">
             <canvas
               ref={canvasRef}
               className="w-full touch-none rounded-[20px] bg-white"
@@ -118,7 +118,7 @@ export default function AssinaturaConsumoDialog({ open, onOpenChange, onConfirm 
             <Button type="button" variant="outline" onClick={clearCanvas} className="flex-1 rounded-2xl border-0 shadow-sm">
               <RotateCcw className="mr-2 h-4 w-4" />Limpar
             </Button>
-            <Button type="button" onClick={handleConfirm} disabled={!nome.trim()} className="flex-1 rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+            <Button type="button" onClick={handleConfirm} disabled={!nome.trim()} className="flex-1 rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground">
               <Check className="mr-2 h-4 w-4" />Confirmar
             </Button>
           </div>

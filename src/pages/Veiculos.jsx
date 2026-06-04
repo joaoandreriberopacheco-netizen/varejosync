@@ -54,7 +54,7 @@ export default function VeiculosPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 min-w-0">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-gray-800">Frota de Veículos</h1>
-            <p className="text-gray-600">Gerencie os veículos utilizados para entrega e transporte.</p>
+            <p className="text-muted-foreground">Gerencie os veículos utilizados para entrega e transporte.</p>
           </div>
           <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 shrink-0 w-full sm:w-auto">
             <PlusCircle className="h-4 w-4" /> Novo Veículo
@@ -81,7 +81,7 @@ export default function VeiculosPage() {
                     <TableCell className="font-medium">{veiculo.placa}</TableCell>
                     <TableCell>
                       <div>{veiculo.tipo}</div>
-                      <div className="text-sm text-gray-500">{veiculo.modelo}</div>
+                      <div className="text-sm text-muted-foreground">{veiculo.modelo}</div>
                     </TableCell>
                     <TableCell>{veiculo.capacidade_peso_kg} kg</TableCell>
                     <TableCell>{veiculo.capacidade_volume_m3 || 'N/A'} m³</TableCell>

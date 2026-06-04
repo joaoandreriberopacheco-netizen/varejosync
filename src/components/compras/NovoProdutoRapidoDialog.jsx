@@ -27,7 +27,7 @@ export default function NovoProdutoRapidoDialog({ isOpen, onClose, onSuccess, no
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative max-w-3xl w-full h-[90vh] mx-4 overflow-hidden bg-white dark:bg-gray-900 shadow-2xl rounded-2xl">
+      <div className="relative max-w-3xl w-full h-[90vh] mx-4 overflow-hidden bg-card shadow-2xl rounded-2xl">
         <ProdutoFormCompleto
           produto={produtoSemente}
           onSave={handleSave}

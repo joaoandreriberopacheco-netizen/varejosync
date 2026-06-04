@@ -22,32 +22,32 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            <h2 className="text-2xl font-bold text-foreground mb-1">
               Gerar Contas a Pagar
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {item.descricao || item.nome_despesa}
             </p>
           </div>
 
           {/* Period Selector */}
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-8 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Quantos períodos?</p>
+            <p className="text-sm text-muted-foreground mb-4">Quantos períodos?</p>
 
             <div className="flex items-center justify-center gap-4 mb-6">
               <button
                 onClick={handleDecrement}
                 disabled={periodos <= 1}
-                className="w-14 h-14 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 transition-all active:scale-95"
+                className="w-14 h-14 rounded-full bg-white dark:bg-muted flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 transition-all active:scale-95"
               >
-                <ChevronDown className="w-6 h-6 text-gray-900 dark:text-white" />
+                <ChevronDown className="w-6 h-6 text-foreground" />
               </button>
 
               <div className="text-center">
-                <p className="text-5xl font-bold text-gray-900 dark:text-white mb-2">
+                <p className="text-5xl font-bold text-foreground mb-2">
                   {periodos}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                <p className="text-sm text-muted-foreground capitalize">
                   {periodoLabel}
                 </p>
               </div>
@@ -55,15 +55,15 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
               <button
                 onClick={handleIncrement}
                 disabled={periodos >= 12}
-                className="w-14 h-14 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 transition-all active:scale-95"
+                className="w-14 h-14 rounded-full bg-white dark:bg-muted flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 transition-all active:scale-95"
               >
-                <ChevronUp className="w-6 h-6 text-gray-900 dark:text-white" />
+                <ChevronUp className="w-6 h-6 text-foreground" />
               </button>
             </div>
 
-            <div className="border-t border-gray-300 dark:border-gray-700 pt-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Valor Total</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="border-t border-gray-300 dark:border-border/40 pt-4">
+              <p className="text-sm text-muted-foreground mb-1">Valor Total</p>
+              <p className="text-3xl font-bold text-foreground">
                 R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
@@ -71,7 +71,7 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
 
           {/* Quick Period Selection */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Atalhos</p>
+            <p className="text-sm font-medium text-foreground/90">Atalhos</p>
             <div className="grid grid-cols-4 gap-2">
               {[1, 3, 6, 12].map((p) => (
                 <button
@@ -80,7 +80,7 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
                   className={`py-3 rounded-2xl font-semibold text-sm transition-all ${
                     periodos === p
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+                      : 'bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
                   }`}
                 >
                   {p}
@@ -91,14 +91,14 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
 
           {/* Update Mode */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Como atualizar?</p>
+            <p className="text-sm font-medium text-foreground/90">Como atualizar?</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setUpdateMode('periodo')}
                 className={`p-3 rounded-2xl font-medium transition-all ${
                   updateMode === 'periodo'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                    : 'bg-muted text-foreground'
                 }`}
               >
                 Período Atual
@@ -108,7 +108,7 @@ export default function AgefinAtualizacaoDialog({ open, lancamento, recorrencia,
                 className={`p-3 rounded-2xl font-medium transition-all ${
                   updateMode === 'multiplos'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                    : 'bg-muted text-foreground'
                 }`}
               >
                 Todos os Períodos

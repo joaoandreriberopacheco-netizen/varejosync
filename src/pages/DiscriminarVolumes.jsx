@@ -156,8 +156,8 @@ export default function DiscriminarVolumes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-gray-500 dark:text-gray-400">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-muted-foreground">Carregando...</div>
       </div>
     );
   }
@@ -167,24 +167,24 @@ export default function DiscriminarVolumes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800">
+      <div className="bg-card">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(createPageUrl('Compras'))}
-              className="text-gray-400 hover:text-gray-600 dark:text-gray-500"
+              className="text-muted-foreground hover:text-muted-foreground dark:text-muted-foreground"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-medium text-gray-700 dark:text-gray-300">
+              <h1 className="text-xl font-medium text-foreground/90">
                 Discriminar Volumes
               </h1>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {manifesto.numero}
               </p>
             </div>
@@ -195,20 +195,20 @@ export default function DiscriminarVolumes() {
       {/* Form */}
       <div className={`mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-6 ${volumes.length > 0 ? 'pb-[calc(8rem+68px+env(safe-area-inset-bottom,0px))]' : ''}`}>
         {/* Input de Descrição */}
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4">
+        <div className="bg-muted rounded-2xl p-4">
           <Input
             ref={descricaoRef}
             placeholder="Nome, código ou descrição do volume"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, quantidadeRef)}
-            className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-gray-400"
+            className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Quantidade e Peso */}
         <div className="flex gap-3">
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex-1">
+          <div className="bg-muted rounded-2xl p-4 flex-1">
             <Input
               ref={quantidadeRef}
               type="number"
@@ -217,11 +217,11 @@ export default function DiscriminarVolumes() {
               value={quantidade}
               onChange={(e) => setQuantidade(e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, pesoRef)}
-              className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-gray-400 text-center font-medium"
+              className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground text-center font-medium"
             />
           </div>
           
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex-1">
+          <div className="bg-muted rounded-2xl p-4 flex-1">
             <Input
               ref={pesoRef}
               type="number"
@@ -231,7 +231,7 @@ export default function DiscriminarVolumes() {
               value={peso}
               onChange={(e) => setPeso(e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, 'add')}
-              className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-gray-400 text-center"
+              className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground text-center"
             />
           </div>
         </div>
@@ -239,7 +239,7 @@ export default function DiscriminarVolumes() {
         {/* Botão Adicionar */}
         <Button
           onClick={handleAddVolume}
-          className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl py-6 text-base font-medium"
+          className="w-full bg-gray-900 hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
         >
           Adicionar
         </Button>
@@ -247,13 +247,13 @@ export default function DiscriminarVolumes() {
         {/* Resumo */}
         {volumes.length > 0 && (
           <div className="flex items-center justify-between px-2 py-4">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+            <span className="text-sm text-muted-foreground">Total</span>
             <div className="text-right">
-              <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <div className="text-2xl font-semibold text-foreground">
                 {totalVolumes} {totalVolumes === 1 ? 'volume' : 'volumes'}
               </div>
               {pesoTotal > 0 && (
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <div className="text-sm text-muted-foreground mt-1">
                   {pesoTotal.toFixed(2)} kg
                 </div>
               )}
@@ -267,16 +267,16 @@ export default function DiscriminarVolumes() {
             {volumes.map((vol, index) => (
               <div
                 key={index}
-                className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-4"
+                className="bg-muted rounded-2xl p-4 flex items-center gap-4"
               >
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                  <Package className="w-5 h-5 text-gray-400" />
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                  <Package className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium text-foreground">
                     {vol.descricao}
                   </p>
-                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span>{vol.quantidade} un.</span>
                     {vol.peso_kg && <span>• {vol.peso_kg} kg</span>}
                   </div>
@@ -285,7 +285,7 @@ export default function DiscriminarVolumes() {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveVolume(index)}
-                  className="text-gray-400 hover:text-red-500 hover:bg-transparent"
+                  className="text-muted-foreground hover:text-red-500 hover:bg-transparent"
                 >
                   Remover
                 </Button>
@@ -294,8 +294,8 @@ export default function DiscriminarVolumes() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Package className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-400 dark:text-gray-500">
+            <Package className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-muted-foreground" />
+            <p className="text-muted-foreground">
               Nenhum volume adicionado ainda
             </p>
           </div>
@@ -303,12 +303,12 @@ export default function DiscriminarVolumes() {
 
         {/* Botão Salvar Fixo */}
         {volumes.length > 0 && (
-          <div className="fixed left-0 right-0 z-[55] border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 p38-bottom-dock">
+          <div className="fixed left-0 right-0 z-[55] border-t border-border/40 bg-white p-4 dark:border-border/40 dark:bg-muted p38-bottom-dock">
             <div className="max-w-2xl mx-auto">
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl py-6 text-base font-medium"
+                className="w-full bg-gray-900 hover:bg-primary text-white rounded-xl py-6 text-base font-medium"
               >
                 <Save className="w-5 h-5 mr-2" />
                 Salvar Volumes

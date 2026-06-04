@@ -155,10 +155,10 @@ function Regua({ largura }) {
 // ── Painel de Propriedades ────────────────────────────────────────────────────
 function PropriedadesPanel({ campo, onChange, onDelete }) {
   return (
-    <div className="w-52 flex-shrink-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-y-auto">
-      <div className="p-3 border-b border-gray-100 dark:border-gray-800">
-        <div className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate">{campo.label}</div>
-        <div className="text-[10px] text-gray-400">{campo.campo_id}</div>
+    <div className="w-52 flex-shrink-0 bg-card border-l border-border/40 overflow-y-auto">
+      <div className="p-3 border-b border-border/40">
+        <div className="text-xs font-bold text-foreground/90 truncate">{campo.label}</div>
+        <div className="text-[10px] text-muted-foreground">{campo.campo_id}</div>
       </div>
       <div className="p-3 space-y-3">
         {/* Posição */}
@@ -189,7 +189,7 @@ function PropriedadesPanel({ campo, onChange, onDelete }) {
           </PropRow>
           <PropRow label="Alinha.">
             <select
-              className="text-xs border border-gray-200 dark:border-gray-700 rounded px-1 py-0.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 w-full"
+              className="text-xs border border-border/40 rounded px-1 py-0.5 bg-card text-foreground/90 w-full"
               value={campo.align || 'left'}
               onChange={e => onChange({ align: e.target.value })}
             >
@@ -220,7 +220,7 @@ function PropriedadesPanel({ campo, onChange, onDelete }) {
 function Grupo({ label, children }) {
   return (
     <div>
-      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</div>
+      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{label}</div>
       <div className="space-y-1">{children}</div>
     </div>
   );
@@ -229,7 +229,7 @@ function Grupo({ label, children }) {
 function PropRow({ label, children }) {
   return (
     <div className="flex items-center justify-between gap-1">
-      <span className="text-[11px] text-gray-500 dark:text-gray-400 w-12 flex-shrink-0">{label}</span>
+      <span className="text-[11px] text-muted-foreground w-12 flex-shrink-0">{label}</span>
       <div className="flex-1">{children}</div>
     </div>
   );
@@ -239,7 +239,7 @@ function NumInput({ value, onChange, min, max }) {
   return (
     <input autoComplete="off"
       type="number"
-      className="w-full text-xs border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200"
+      className="w-full text-xs border border-border/40 rounded px-1.5 py-0.5 bg-card text-foreground/90"
       value={value}
       min={min}
       max={max}

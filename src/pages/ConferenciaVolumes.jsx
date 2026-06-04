@@ -302,24 +302,24 @@ export default function ConferenciaVolumes() {
 
   if (carregando) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div className="bg-card rounded-2xl shadow-lg p-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Package className="w-7 h-7 text-gray-700 dark:text-gray-300" />
+            <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
+              <Package className="w-7 h-7 text-foreground/90" />
             </div>
             <div className="flex-1">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Conferência de Volumes</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Registre os volumes recebidos</p>
+              <h1 className="text-xl font-semibold text-foreground">Conferência de Volumes</h1>
+              <p className="text-sm text-muted-foreground">Registre os volumes recebidos</p>
             </div>
           </div>
 
@@ -339,19 +339,19 @@ export default function ConferenciaVolumes() {
         {/* Formulário de Volumes */}
         <div className="space-y-3">
           {volumes.map((volume, index) => (
-            <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <div key={index} className="bg-card rounded-xl shadow-sm p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
+                    <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 block">
                       Tipo de Volume
                     </label>
-                    <div className="bg-gray-100 dark:bg-gray-900 rounded-lg px-4 h-11 flex items-center text-gray-700 dark:text-gray-300 font-medium">
+                    <div className="bg-gray-100 dark:bg-background rounded-lg px-4 h-11 flex items-center text-foreground/90 font-medium">
                       {volume.descricao || 'Volume sem descrição'}
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
+                    <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 block">
                       Quantidade Recebida
                     </label>
                     <Input
@@ -360,7 +360,7 @@ export default function ConferenciaVolumes() {
                       placeholder="Informe a quantidade"
                       value={volume.quantidade}
                       onChange={(e) => handleVolumeChange(index, 'quantidade', e.target.value)}
-                      className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm h-11"
+                      className="bg-background border-0 shadow-sm h-11"
                       autoFocus={index === 0}
                     />
                   </div>
@@ -374,12 +374,12 @@ export default function ConferenciaVolumes() {
         {/* Ocorrências */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">OCORRÊNCIAS (OPCIONAL)</h3>
+            <h3 className="text-sm font-semibold text-foreground/90">OCORRÊNCIAS (OPCIONAL)</h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleAdicionarOcorrencia}
-              className="text-gray-600 dark:text-gray-400"
+              className="text-muted-foreground"
             >
               <Camera className="w-4 h-4 mr-1" />
               Registrar Ocorrência
@@ -387,12 +387,12 @@ export default function ConferenciaVolumes() {
           </div>
 
           {ocorrencias.map((ocorrencia, index) => (
-            <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-3">
+            <div key={index} className="bg-card rounded-xl shadow-sm p-4 space-y-3">
               <Textarea
                 placeholder="Descreva a ocorrência (ex: Caixa avariada, volume faltando...)"
                 value={ocorrencia.descricao}
                 onChange={(e) => handleOcorrenciaChange(index, e.target.value)}
-                className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm min-h-[80px]"
+                className="bg-background border-0 shadow-sm min-h-[80px]"
               />
               
               <div className="flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function ConferenciaVolumes() {
               {ocorrencia.midias.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {ocorrencia.midias.map((url, idx) => (
-                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
+                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-background">
                       <img src={url} alt="Evidência" className="w-full h-full object-cover" />
                     </div>
                   ))}
@@ -449,7 +449,7 @@ export default function ConferenciaVolumes() {
         </div>
 
         {/* Ações */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div className="bg-card rounded-2xl shadow-lg p-6">
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -461,7 +461,7 @@ export default function ConferenciaVolumes() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando}
-              className="flex-1 h-12 bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg"
+              className="flex-1 h-12 bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600 shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -526,7 +526,7 @@ export default function ConferenciaVolumes() {
                       ))}
                     </ul>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Você pode salvar com divergências ou recontar os volumes.
                   </p>
                 </div>
@@ -544,7 +544,7 @@ export default function ConferenciaVolumes() {
                 )}
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-gray-900 hover:bg-gray-800 dark:bg-gray-700"
+                  className="flex-1 bg-gray-900 hover:bg-primary dark:bg-muted"
                 >
                   {divergencias.length > 0 ? 'Salvar com Divergências' : 'Prosseguir'}
                 </Button>
@@ -561,7 +561,7 @@ export default function ConferenciaVolumes() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 block">
                   Senha
                 </label>
                 <Input
@@ -569,7 +569,7 @@ export default function ConferenciaVolumes() {
                   placeholder="Digite sua senha"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="bg-gray-50 dark:bg-gray-900"
+                  className="bg-background"
                   autoFocus
                 />
               </div>
@@ -584,7 +584,7 @@ export default function ConferenciaVolumes() {
                 </Button>
                 <Button
                   onClick={handleAvancarEtapa}
-                  className="flex-1 bg-gray-900 hover:bg-gray-800"
+                  className="flex-1 bg-gray-900 hover:bg-primary"
                 >
                   Avançar
                 </Button>
@@ -612,7 +612,7 @@ export default function ConferenciaVolumes() {
                   </div>
                   <Button
                     onClick={tirarFoto}
-                    className="w-full bg-gray-900 hover:bg-gray-800"
+                    className="w-full bg-gray-900 hover:bg-primary"
                   >
                     <Camera className="w-4 h-4 mr-2" />
                     Tirar Foto
@@ -620,7 +620,7 @@ export default function ConferenciaVolumes() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="relative bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden aspect-video">
+                  <div className="relative bg-gray-100 dark:bg-background rounded-xl overflow-hidden aspect-video">
                     <img src={foto} alt="Foto do conferente" className="w-full h-full object-cover" />
                   </div>
                   <Button

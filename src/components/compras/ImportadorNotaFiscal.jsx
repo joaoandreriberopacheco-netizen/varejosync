@@ -231,7 +231,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
 
         {step === 'upload' && (
           <div
-            className="py-10 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+            className="py-10 text-center border-2 border-dashed border-gray-300 rounded-xl bg-muted/40 cursor-pointer hover:bg-gray-100 transition-colors"
             onClick={() => fileInputRef.current?.click()}
             role="button"
             tabIndex={0}
@@ -245,12 +245,12 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
             {isProcessing ? (
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-                <p className="text-gray-500">Processando arquivo e extraindo dados...</p>
+                <p className="text-muted-foreground">Processando arquivo e extraindo dados...</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4">
-                <Upload className="w-12 h-12 text-gray-400" />
-                <p className="text-gray-600">Arraste seu arquivo PDF ou Imagem aqui</p>
+                <Upload className="w-12 h-12 text-muted-foreground" />
+                <p className="text-muted-foreground">Arraste seu arquivo PDF ou Imagem aqui</p>
                 <Input 
                   ref={fileInputRef}
                   type="file" 
@@ -262,7 +262,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
                 <Button onClick={() => fileInputRef.current?.click()}>
                   Selecionar Arquivo
                 </Button>
-                <p className="text-xs text-gray-400">Dica: também pode colar arquivo com Ctrl+V.</p>
+                <p className="text-xs text-muted-foreground">Dica: também pode colar arquivo com Ctrl+V.</p>
               </div>
             )}
           </div>
@@ -270,17 +270,17 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
 
         {step === 'review' && extractedData && (
           <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-3 gap-4 bg-muted/40 p-4 rounded-lg">
               <div>
-                <p className="text-xs text-gray-500 uppercase">Fornecedor</p>
+                <p className="text-xs text-muted-foreground uppercase">Fornecedor</p>
                 <p className="font-medium">{extractedData.fornecedor_nome}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Nota Fiscal</p>
+                <p className="text-xs text-muted-foreground uppercase">Nota Fiscal</p>
                 <p className="font-medium">{extractedData.numero_nota}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Valor Total</p>
+                <p className="text-xs text-muted-foreground uppercase">Valor Total</p>
                 <p className="font-medium text-emerald-600">R$ {extractedData.valor_total_nota?.toFixed(2)}</p>
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
                     <TableRow key={idx} className={item.novo_cadastro ? "bg-yellow-50" : ""}>
                       <TableCell>
                         <div className="text-sm font-medium">{item.descricao}</div>
-                        <div className="text-xs text-gray-500">{item.codigo_produto}</div>
+                        <div className="text-xs text-muted-foreground">{item.codigo_produto}</div>
                       </TableCell>
                       <TableCell>
                         {item.sistema_produto_nome ? (

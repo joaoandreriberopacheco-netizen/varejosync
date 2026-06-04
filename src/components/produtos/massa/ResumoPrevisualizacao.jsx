@@ -10,15 +10,15 @@ export default function ResumoPrevisualizacao({ data }) {
     <div className="space-y-3">
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{alterados.length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">A importar (com mudança)</p>
+        <div className="rounded-xl bg-card p-4 shadow-sm text-center">
+          <p className="text-2xl font-bold text-foreground">{alterados.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">A importar (com mudança)</p>
         </div>
-        <div className={`rounded-xl p-4 shadow-sm text-center ${erros.length > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-white dark:bg-gray-900'}`}>
-          <p className={`text-2xl font-bold ${erros.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+        <div className={`rounded-xl p-4 shadow-sm text-center ${erros.length > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-card'}`}>
+          <p className={`text-2xl font-bold ${erros.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
             {erros.length}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">Erros de validação</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Erros de validação</p>
         </div>
       </div>
 
@@ -38,7 +38,7 @@ export default function ResumoPrevisualizacao({ data }) {
       )}
 
       {alterados.length === 0 && erros.length === 0 && (
-        <p className="text-sm text-gray-400 text-center">
+        <p className="text-sm text-muted-foreground text-center">
           {linhasIgnoradasSemMudanca > 0
             ? `Nada a sincronizar: ${linhasIgnoradasSemMudanca} linha(s) sem diferença em relação ao cadastro atual.`
             : 'Nenhuma alteração detectada na planilha.'}
@@ -70,7 +70,7 @@ export default function ResumoPrevisualizacao({ data }) {
         <div>
           <button
             onClick={() => setMostrarDetalhes(v => !v)}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mt-1"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300 mt-1"
           >
             {mostrarDetalhes ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {mostrarDetalhes ? 'Ocultar detalhes' : 'Ver produtos alterados'}

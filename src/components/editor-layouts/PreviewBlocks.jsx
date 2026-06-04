@@ -8,14 +8,14 @@ const LOREM_IPSUM = {
 
 export default function PreviewBlocks({ blocks }) {
   return (
-    <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+    <div className="bg-white rounded-lg p-8 shadow-sm border border-border/40 dark:bg-muted">
       {blocks.map((block) => {
         const loremContent = LOREM_IPSUM[block.tipo] || block.conteudo;
         
         if (block.tipo === 'header') {
           return (
             <div key={block.id} className="border-b-2 border-gray-900 dark:border-white pb-3 mb-4 text-center">
-              <p className="font-bold text-gray-900 dark:text-white text-sm">
+              <p className="font-bold text-foreground text-sm">
                 {loremContent}
               </p>
             </div>
@@ -25,7 +25,7 @@ export default function PreviewBlocks({ blocks }) {
         if (block.tipo === 'footer') {
           return (
             <div key={block.id} className="border-t border-gray-400 dark:border-gray-500 pt-3 mt-6 text-center">
-              <p className="text-xs text-gray-600 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {loremContent}
               </p>
             </div>
@@ -34,7 +34,7 @@ export default function PreviewBlocks({ blocks }) {
 
         return (
           <div key={block.id} className="mb-3">
-            <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+            <p className="text-sm text-foreground leading-relaxed">
               {loremContent}
             </p>
           </div>

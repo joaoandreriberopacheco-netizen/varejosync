@@ -261,8 +261,8 @@ export default function ConferenciaItens() {
 
   if (carregando) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -270,17 +270,17 @@ export default function ConferenciaItens() {
   const itemAtual = modalLote.itemIndex !== null ? itensConferidos[modalLote.itemIndex] : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <div className="bg-card rounded-2xl shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Package className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+              <Package className="w-6 h-6 text-foreground/90" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">CONFERÊNCIA DE ITENS</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Registre o que está recebendo</p>
+              <h1 className="text-lg font-semibold text-foreground">CONFERÊNCIA DE ITENS</h1>
+              <p className="text-xs text-muted-foreground">Registre o que está recebendo</p>
             </div>
           </div>
 
@@ -296,11 +296,11 @@ export default function ConferenciaItens() {
 
         {/* Itens a Conferir */}
         {itensConferidos.map((item, index) => (
-          <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-3">
+          <div key={index} className="bg-card rounded-xl shadow-sm p-4 space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="font-medium text-sm text-gray-900 dark:text-white">{item.produto_nome}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div className="font-medium text-sm text-foreground">{item.produto_nome}</div>
+                <div className="text-xs text-muted-foreground mt-1">
                   Esperado: {item.quantidade_esperada}
                 </div>
                 {item.lotes.length > 0 && (
@@ -313,14 +313,14 @@ export default function ConferenciaItens() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">QUANTIDADE</label>
+                <label className="text-xs text-muted-foreground mb-1 block">QUANTIDADE</label>
                 <Input
                   type="number"
                   step="0.01"
                   placeholder="0"
                   value={item.quantidade_conferida}
                   onChange={(e) => handleQuantidadeChange(index, e.target.value)}
-                  className="h-12 text-base bg-gray-50 dark:bg-gray-900 border-0 shadow-sm"
+                  className="h-12 text-base bg-background border-0 shadow-sm"
                 />
               </div>
               <div className="flex items-end gap-2">
@@ -331,7 +331,7 @@ export default function ConferenciaItens() {
                     className="hidden"
                     onChange={(e) => handleUploadFoto(index, e.target.files[0])}
                   />
-                  <Button type="button" className="w-full h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">
+                  <Button type="button" className="w-full h-12 bg-muted hover:bg-gray-200 dark:hover:bg-gray-600 text-foreground/90">
                     <Camera className="w-5 h-5" />
                     {item.fotos.length > 0 && (
                       <span className="ml-2 text-xs">({item.fotos.length})</span>
@@ -355,7 +355,7 @@ export default function ConferenciaItens() {
         ))}
 
         {/* Ações */}
-        <div className="sticky bottom-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4">
+        <div className="sticky bottom-4 bg-card rounded-2xl shadow-lg p-4">
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -367,7 +367,7 @@ export default function ConferenciaItens() {
             <Button
               onClick={handleFinalizar}
               disabled={finalizando || itensConferidos.length === 0}
-              className="flex-1 h-14 text-base bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg"
+              className="flex-1 h-14 text-base bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600 shadow-lg"
             >
               {finalizando ? (
                 <>
@@ -397,14 +397,14 @@ export default function ConferenciaItens() {
 
           <div className="space-y-4">
             {itemAtual?.lotes.map((lote, loteIndex) => (
-              <div key={loteIndex} className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-3">
+              <div key={loteIndex} className="p-4 bg-background rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">LOTE {loteIndex + 1}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">LOTE {loteIndex + 1}</span>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => removerLote(loteIndex)}
-                    className="h-8 w-8 text-gray-400 hover:text-red-600"
+                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -412,7 +412,7 @@ export default function ConferenciaItens() {
 
                 {itemAtual.produto?.controla_lote && (
                   <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">NÚMERO DO LOTE *</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">NÚMERO DO LOTE *</label>
                     <Input
                       placeholder="Ex: L20260203"
                       value={lote.numero_lote}
@@ -424,7 +424,7 @@ export default function ConferenciaItens() {
 
                 {itemAtual.produto?.controla_validade && (
                   <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">DATA DE VALIDADE *</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">DATA DE VALIDADE *</label>
                     <Input
                       type="date"
                       value={lote.data_validade}
@@ -435,7 +435,7 @@ export default function ConferenciaItens() {
                 )}
 
                 <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">QUANTIDADE NESTE LOTE *</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">QUANTIDADE NESTE LOTE *</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -448,7 +448,7 @@ export default function ConferenciaItens() {
 
                 {itemAtual.produto?.controla_serial && (
                   <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">NÚMEROS DE SÉRIE (separados por vírgula)</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">NÚMEROS DE SÉRIE (separados por vírgula)</label>
                     <Input
                       placeholder="S001, S002, S003"
                       value={lote.numeros_serie}
@@ -471,7 +471,7 @@ export default function ConferenciaItens() {
 
             <Button
               onClick={() => setModalLote({ ...modalLote, open: false })}
-              className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
+              className="w-full h-12 bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               CONFIRMAR LOTES

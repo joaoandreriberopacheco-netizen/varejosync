@@ -69,7 +69,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
   const visibleMonths = [month, addMonths(month, 1)];
   
   return (
-    <div className={`${isModal ? 'w-full max-w-[760px] mx-auto' : 'absolute top-full left-0 mt-1 w-[min(760px,calc(100vw-2rem))]'} rounded-[28px] bg-white dark:bg-gray-800 shadow-xl z-50 border border-gray-200 dark:border-gray-700 overflow-hidden`}>
+    <div className={`${isModal ? 'w-full max-w-[760px] mx-auto' : 'absolute top-full left-0 mt-1 w-[min(760px,calc(100vw-2rem))]'} rounded-[28px] bg-card shadow-xl z-50 border border-border/40 overflow-hidden`}>
       <style>{`
         .rdp { margin: 0; --rdp-cell-size: 34px; --rdp-accent-color: #1f2937; --rdp-background-color: #dcfce7; }
         .rdp-caption, .rdp-nav { display: none !important; }
@@ -104,25 +104,25 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
                     <button
                       type="button"
                       onClick={handlePrevious}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
+                      className="p-2 hover:bg-muted rounded-xl transition"
                       aria-label="Mês anterior"
                     >
-                      <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                      <ChevronLeft className="w-5 h-5 text-foreground/90" />
                     </button>
                   ) : (
                     <span className="w-9" />
                   )}
-                  <p className="text-base font-semibold text-gray-900 dark:text-white capitalize tracking-tight">
+                  <p className="text-base font-semibold text-foreground capitalize tracking-tight">
                     {format(visibleMonth, 'MMMM yyyy', { locale: ptBR })}
                   </p>
                   {index === visibleMonths.length - 1 ? (
                     <button
                       type="button"
                       onClick={handleNext}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition"
+                      className="p-2 hover:bg-muted rounded-xl transition"
                       aria-label="Próximo mês"
                     >
-                      <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                      <ChevronRight className="w-5 h-5 text-foreground/90" />
                     </button>
                   ) : (
                     <span className="w-9" />
@@ -142,10 +142,10 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
           </div>
         </div>
 
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 p-3">
+        <div className="rounded-2xl bg-background/40 border border-border/40 p-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="block">
-              <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
                 Data inicial
               </span>
               <input
@@ -154,11 +154,11 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
                 value={manualFrom}
                 onChange={handleManualFromChange}
                 onBlur={() => commitManualRange(manualFrom, manualTo)}
-                className="w-full h-11 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20"
+                className="w-full h-11 rounded-xl border border-border/40 bg-card px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20"
               />
             </label>
             <label className="block">
-              <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
                 Data final
               </span>
               <input
@@ -167,16 +167,16 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
                 value={manualTo}
                 onChange={handleManualToChange}
                 onBlur={() => commitManualRange(manualFrom, manualTo)}
-                className="w-full h-11 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20"
+                className="w-full h-11 rounded-xl border border-border/40 bg-card px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20"
               />
             </label>
           </div>
-          <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-[11px] text-muted-foreground">
             Digite manualmente ou selecione no calendário.
           </p>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-3 text-center text-xs text-gray-600 dark:text-gray-400">
+        <div className="border-t border-border/40 pt-3 text-center text-xs text-muted-foreground">
           {dateRange.from ? (
             <p className="font-medium">{format(dateRange.from, 'dd/MM/yyyy')}{dateRange.to ? ` até ${format(dateRange.to, 'dd/MM/yyyy')}` : ''}</p>
           ) : (
@@ -189,8 +189,8 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
           disabled={!dateRange.from || !dateRange.to}
           className={`w-full py-2.5 rounded-xl font-semibold text-sm transition ${
             dateRange.from && dateRange.to
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground hover:opacity-90'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >
           {dateRange.from && dateRange.to ? 'Pronto' : 'Selecione intervalo'}

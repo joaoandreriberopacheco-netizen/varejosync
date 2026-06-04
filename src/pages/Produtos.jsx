@@ -386,7 +386,7 @@ function ProdutosPageContent() {
     toast({
       title: "Catálogo exportado!",
       description: `${produtos.length} produtos exportados com todos os campos.`,
-      className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
+      className: "bg-white border border-gray-300 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
   };
@@ -499,7 +499,7 @@ function ProdutosPageContent() {
     toast({
       title: "✓ Template baixado!",
       description: "Preencha produtos e custos conforme os comentários no arquivo.",
-      className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
+      className: "bg-white border border-gray-300 dark:bg-muted dark:text-foreground dark:border-border/40",
       duration: 3000
     });
   };
@@ -1060,7 +1060,7 @@ function ProdutosPageContent() {
   const headerStats = filteredStats;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-card">
       <ProdutosHeader
         stats={headerStats}
         filters={filters}
@@ -1123,7 +1123,7 @@ function ProdutosPageContent() {
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
+        <div className="fixed inset-0 z-50 bg-card">
           <ProdutoFormCompleto
             produto={selectedProduto}
             produtoSimilarBase={produtoSimilarBase}
@@ -1135,13 +1135,13 @@ function ProdutosPageContent() {
 
       {/* Dialog de Upload Unificado (Produtos + Custos) */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+        <DialogContent className="sm:max-w-md dark:bg-background dark:text-foreground dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-gray-800 dark:text-gray-200">Importar Produtos e Custos</DialogTitle>
+            <DialogTitle className="text-base font-medium text-foreground">Importar Produtos e Custos</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-3">
             <div>
-              <Label htmlFor="importFile" className="text-sm mb-2 block dark:text-gray-200">
+              <Label htmlFor="importFile" className="text-sm mb-2 block dark:text-foreground">
                 Arquivo CSV (.csv, .xlsx)
               </Label>
               <Input 
@@ -1149,11 +1149,11 @@ function ProdutosPageContent() {
                 type="file" 
                 accept=".csv,.xlsx,.xls" 
                 onChange={(e) => setImportFile(e.target.files[0])} 
-                className="border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 text-sm"
+                className="border-gray-300 dark:border-border/40 dark:bg-muted dark:text-foreground text-sm"
               />
               {importFile && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-300">
-                  <CheckCircle className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                  <CheckCircle className="w-4 h-4 text-foreground/90 dark:text-muted-foreground" />
                   {importFile.name}
                 </div>
               )}
@@ -1166,14 +1166,14 @@ function ProdutosPageContent() {
                 setIsImportDialogOpen(false);
                 setImportFile(null);
               }}
-              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="text-sm dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90"
             >
               Cancelar
             </Button>
             <Button 
               onClick={handleProcessarImportacaoUnificada} 
               disabled={isProcessingImport || !importFile}
-              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-gray-500"
+              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-muted/400"
             >
               {isProcessingImport && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Processar
@@ -1184,29 +1184,29 @@ function ProdutosPageContent() {
 
       {/* Dialog de Preview de Importação Unificada */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-gray-800 dark:text-gray-200">Confirmar Importação de Produtos e Custos</DialogTitle>
+            <DialogTitle className="text-base font-medium text-foreground">Confirmar Importação de Produtos e Custos</DialogTitle>
           </DialogHeader>
           
           {previewData && (
             <div className="space-y-4 py-4">
               {/* Resumo */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="text-center p-3 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                <div className="text-center p-3 border border-border/40 rounded-lg dark:border-border/40 dark:bg-muted">
                   <div className="text-xl font-semibold text-green-700 dark:text-green-400">
                     {previewData.resumo.novos}
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Novos</div>
+                  <div className="text-xs text-muted-foreground">Novos</div>
                 </div>
-                <div className="text-center p-3 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                <div className="text-center p-3 border border-border/40 rounded-lg dark:border-border/40 dark:bg-muted">
                   <div className="text-xl font-semibold text-blue-700 dark:text-blue-400">
                     {previewData.resumo.atualizados}
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Atualizações</div>
+                  <div className="text-xs text-muted-foreground">Atualizações</div>
                 </div>
                 {previewData.resumo.erros.length > 0 && (
-                  <div className="text-center p-3 border border-gray-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-900">
+                  <div className="text-center p-3 border border-border/40 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-900">
                     <div className="text-xl font-semibold text-red-700 dark:text-red-300">
                       {previewData.resumo.erros.length}
                     </div>
@@ -1227,22 +1227,22 @@ function ProdutosPageContent() {
 
               {/* Preview dos Produtos */}
               {previewData.produtos.length > 0 && (
-                <div className="border rounded-lg dark:border-gray-700 min-w-0">
+                <div className="border rounded-lg dark:border-border/40 min-w-0">
                   <div className="max-h-96 overflow-auto">
                     <Table>
-                      <TableHeader className="bg-gray-50 sticky top-0 dark:bg-gray-800">
+                      <TableHeader className="bg-muted/40 sticky top-0 dark:bg-muted">
                         <TableRow>
-                          <TableHead className="dark:text-gray-400 text-xs">Nome</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Custo Calculado</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Preço de venda</TableHead>
+                          <TableHead className="dark:text-muted-foreground text-xs">Nome</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Custo Calculado</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Preço de venda</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {previewData.produtos.map((produto, index) => (
-                          <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <TableCell className="font-medium text-xs dark:text-gray-200">{produto.nome}</TableCell>
-                            <TableCell className="text-right text-xs dark:text-gray-200">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>
-                            <TableCell className="text-right font-medium text-xs dark:text-gray-200">R$ {formatarNumero(produto.preco_venda_padrao)}</TableCell>
+                          <TableRow key={index} className="hover:bg-muted/40 dark:hover:bg-muted/50">
+                            <TableCell className="font-medium text-xs dark:text-foreground">{produto.nome}</TableCell>
+                            <TableCell className="text-right text-xs dark:text-foreground">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>
+                            <TableCell className="text-right font-medium text-xs dark:text-foreground">R$ {formatarNumero(produto.preco_venda_padrao)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -1271,7 +1271,7 @@ function ProdutosPageContent() {
                 setIsPreviewDialogOpen(false);
                 setPreviewData(null);
               }}
-              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="text-sm dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90"
             >
               Cancelar
             </Button>
@@ -1282,7 +1282,7 @@ function ProdutosPageContent() {
                 !previewData || 
                 previewData.produtos.length === 0
               }
-              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-gray-500"
+              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-muted/400"
             >
               {isProcessingImport && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirmar Importação ({previewData?.produtos.length || 0})
@@ -1294,9 +1294,9 @@ function ProdutosPageContent() {
 
       {/* Dialog de Upload de Custos (Existing) */}
       <Dialog open={isImportCustosDialogOpen} onOpenChange={setIsImportCustosDialogOpen}>
-        <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+        <DialogContent className="sm:max-w-md dark:bg-background dark:text-foreground dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-medium text-gray-800 dark:text-gray-200">
+            <DialogTitle className="flex items-center gap-2 text-base font-medium text-foreground">
               <RefreshCw className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               Importar Atualização de Custos
             </DialogTitle>
@@ -1313,7 +1313,7 @@ function ProdutosPageContent() {
             </div>
 
             <div>
-              <Label htmlFor="importCustosFile" className="text-sm font-semibold mb-2 block dark:text-gray-200">
+              <Label htmlFor="importCustosFile" className="text-sm font-semibold mb-2 block dark:text-foreground">
                 Arquivo CSV (.csv, .xlsx)
               </Label>
               <Input
@@ -1321,7 +1321,7 @@ function ProdutosPageContent() {
                 type="file"
                 accept=".csv,.xlsx,.xls"
                 onChange={(e) => setImportCustosFile(e.target.files[0])}
-                className="dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 text-sm"
+                className="dark:border-border/40 dark:bg-muted dark:text-foreground text-sm"
               />
               {importCustosFile && (
                 <div className="flex items-center gap-2 mt-2 text-sm text-green-600 dark:text-green-300">
@@ -1338,7 +1338,7 @@ function ProdutosPageContent() {
                 setIsImportCustosDialogOpen(false);
                 setImportCustosFile(null);
               }}
-              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="text-sm dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90"
             >
               Cancelar
             </Button>
@@ -1383,9 +1383,9 @@ function ProdutosPageContent() {
 
       {/* Dialog de Preview de Custos (Existing) */}
       <Dialog open={isPreviewCustosDialogOpen} onOpenChange={setIsPreviewCustosDialogOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-medium text-gray-800 dark:text-gray-200">
+            <DialogTitle className="flex items-center gap-2 text-base font-medium text-foreground">
               <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               Confirmar Atualização de Custos
             </DialogTitle>
@@ -1440,35 +1440,35 @@ function ProdutosPageContent() {
 
               {/* Tabela de Preview */}
               {previewCustosData.atualizacoes.length > 0 && (
-                <div className="border rounded-lg dark:border-gray-700 min-w-0">
+                <div className="border rounded-lg dark:border-border/40 min-w-0">
                   <div className="max-h-96 overflow-auto">
                     <Table>
-                      <TableHeader className="bg-gray-50 sticky top-0 dark:bg-gray-800">
+                      <TableHeader className="bg-muted/40 sticky top-0 dark:bg-muted">
                         <TableRow>
-                          <TableHead className="w-[150px] dark:text-gray-400 text-xs">Produto</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Custo Atual</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo Valor Compra</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo Custo Total</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo preço de venda</TableHead>
-                          <TableHead className="text-right dark:text-gray-400 text-xs">Variação</TableHead>
+                          <TableHead className="w-[150px] dark:text-muted-foreground text-xs">Produto</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Custo Atual</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Novo Valor Compra</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Novo Custo Total</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Novo preço de venda</TableHead>
+                          <TableHead className="text-right dark:text-muted-foreground text-xs">Variação</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {previewCustosData.atualizacoes.map((item, index) => {
                           const isAumento = item.variacao_custo > 0;
                           return (
-                            <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <TableRow key={index} className="hover:bg-muted/40 dark:hover:bg-muted/50">
                               <TableCell>
-                                <div className="font-medium text-xs dark:text-gray-200">{item.nome}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">{item.codigo_interno}</div>
+                                <div className="font-medium text-xs dark:text-foreground">{item.nome}</div>
+                                <div className="text-xs text-muted-foreground">{item.codigo_interno}</div>
                               </TableCell>
-                              <TableCell className="text-right text-xs text-gray-600 dark:text-gray-300">
+                              <TableCell className="text-right text-xs text-muted-foreground">
                                 R$ {formatarNumero(item.valor_compra_anterior)}
                               </TableCell>
                               <TableCell className="text-right font-semibold text-orange-600 dark:text-orange-400 text-xs">
                                 R$ {formatarNumero(item.novo_valor_compra)}
                               </TableCell>
-                              <TableCell className="text-right font-semibold dark:text-gray-200 text-xs">
+                              <TableCell className="text-right font-semibold dark:text-foreground text-xs">
                                 R$ {formatarNumero(item.novo_custo_total)}
                               </TableCell>
                               <TableCell className="text-right font-semibold text-green-600 dark:text-green-400 text-xs">
@@ -1481,7 +1481,7 @@ function ProdutosPageContent() {
                                       ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
                                       : item.variacao_custo < 0
                                         ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                        : 'bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90'
                                   }`}
                                 >
                                   {isAumento ? '↑' : item.variacao_custo < 0 ? '↓' : '='}
@@ -1516,7 +1516,7 @@ function ProdutosPageContent() {
                 setIsPreviewCustosDialogOpen(false);
                 setPreviewCustosData(null);
               }}
-              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="text-sm dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90"
             >
               Cancelar
             </Button>

@@ -182,8 +182,8 @@ JSON:
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-10 bg-card border-b border-border/40">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10">
@@ -192,19 +192,19 @@ JSON:
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-600" />
-                <h1 className="text-lg font-medium text-gray-900 dark:text-white">Estimativa de Embalagens com IA</h1>
+                <h1 className="text-lg font-medium text-foreground">Estimativa de Embalagens com IA</h1>
               </div>
-              <p className="text-sm text-gray-500">Unidades por pacote de compra</p>
+              <p className="text-sm text-muted-foreground">Unidades por pacote de compra</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-gray-600" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Escopo da Análise</h3>
+            <Package className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-medium text-foreground">Escopo da Análise</h3>
           </div>
           
           <div className="flex gap-3">
@@ -213,11 +213,11 @@ JSON:
               className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                 modoAnalise === 'sem_info' 
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  : 'border-border/40 hover:border-gray-300'
               }`}
             >
-              <div className="font-medium text-sm text-gray-900 dark:text-white mb-1">Apenas Sem Info</div>
-              <div className="text-xs text-gray-500">{produtos.length} produtos</div>
+              <div className="font-medium text-sm text-foreground mb-1">Apenas Sem Info</div>
+              <div className="text-xs text-muted-foreground">{produtos.length} produtos</div>
             </button>
             
             <button
@@ -225,18 +225,18 @@ JSON:
               className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                 modoAnalise === 'todos' 
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  : 'border-border/40 hover:border-gray-300'
               }`}
             >
-              <div className="font-medium text-sm text-gray-900 dark:text-white mb-1">Todos os Produtos</div>
-              <div className="text-xs text-gray-500">{produtosTodos.length} produtos</div>
+              <div className="font-medium text-sm text-foreground mb-1">Todos os Produtos</div>
+              <div className="text-xs text-muted-foreground">{produtosTodos.length} produtos</div>
             </button>
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl p-6">
-          <h3 className="font-medium text-gray-900 dark:text-white mb-3">Como Funciona</h3>
-          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <h3 className="font-medium text-foreground mb-3">Como Funciona</h3>
+          <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
               <div className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
               <p>Analisa nome, categoria e características de cada produto</p>
@@ -262,7 +262,7 @@ JSON:
               processedItems={progress.current}
               totalItems={progress.total}
             />
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400 pb-6">A IA está estimando as embalagens...</p>
+            <p className="text-center text-sm text-muted-foreground pb-6">A IA está estimando as embalagens...</p>
           </div>
         )}
 
@@ -279,24 +279,24 @@ JSON:
 
         {!isProcessing && Object.keys(estimativas).length > 0 && (
           <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border/40">
                 <h3 className="font-medium">Estimativas Geradas</h3>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-96 overflow-y-auto">
                {Object.entries(estimativas).map(([produtoId, est]) => {
                  const produto = produtosTodos.find(p => p.id === produtoId);
                  return (
-                    <div key={produtoId} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <div key={produtoId} className="p-4 hover:bg-muted/50">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-gray-900 dark:text-white">{produto?.nome}</span>
+                            <span className="font-medium text-foreground">{produto?.nome}</span>
                             <Badge className="bg-blue-100 text-blue-700">
                               {est.unidades_por_pacote} UN/pacote
                             </Badge>
                           </div>
-                          <p className="text-xs text-gray-500">{est.justificativa}</p>
+                          <p className="text-xs text-muted-foreground">{est.justificativa}</p>
                         </div>
                       </div>
                     </div>

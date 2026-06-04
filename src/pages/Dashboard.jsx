@@ -38,7 +38,7 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Dashboard</h1>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Visão geral do negócio</p>
+          <p className="text-xs text-muted-foreground">Visão geral do negócio</p>
         </div>
         <div className="hidden md:block">
           <P38Logo surface="dashboard.header" />

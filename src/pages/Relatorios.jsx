@@ -181,23 +181,23 @@ export default function RelatoriosPage() {
             <div className={`p-2 rounded-lg ${
               relatorio.highlight 
                 ? 'bg-green-100 dark:bg-green-900/30' 
-                : 'bg-gray-100 dark:bg-gray-800'
+                : 'bg-muted'
             }`}>
               <Icon className={`w-5 h-5 ${
                 relatorio.highlight 
                   ? 'text-green-600 dark:text-green-400' 
-                  : 'text-gray-600 dark:text-gray-400'
+                  : 'text-muted-foreground'
               }`} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-sm md:text-base text-gray-900 dark:text-white">
+              <h3 className="font-medium text-sm md:text-base text-foreground">
                 {relatorio.nome}
               </h3>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-2">
                 {relatorio.descricao}
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0 mt-1" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
           </div>
         </CardContent>
       </Card>
@@ -207,20 +207,20 @@ export default function RelatoriosPage() {
   return (
     <div className="w-full pb-6">
       {/* Header */}
-      <div className="px-4 md:px-6 py-6 md:py-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+      <div className="px-4 md:px-6 py-6 md:py-8 bg-card border-b border-border/40">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
           Relatórios
         </h1>
-        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+        <p className="text-sm md:text-base text-muted-foreground">
           Acesse análises estratégicas e operacionais do seu negócio.
         </p>
       </div>
 
       {/* Tabs Navigation */}
       <Tabs defaultValue="vendas" className="w-full">
-        <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <div className="sticky top-0 z-20 bg-card border-b border-border/40">
           <div className="px-4 md:px-6">
-            <TabsList className="w-full h-auto justify-start gap-2 md:gap-4 bg-transparent p-0 border-b border-gray-200 dark:border-gray-800">
+            <TabsList className="w-full h-auto justify-start gap-2 md:gap-4 bg-transparent p-0 border-b border-border/40">
               <TabsTrigger 
                 value="vendas" 
                 className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"

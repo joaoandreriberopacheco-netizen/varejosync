@@ -21,7 +21,7 @@ const R = (v) => {
 };
 
 const STATUS_CONFIG = {
-  'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
+  'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-muted text-muted-foreground' },
   'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
   'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Cancelado': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
+  'Cancelado': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-muted text-muted-foreground' },
 };
 
 // Adiciona animação de piscar ao CSS global
@@ -61,7 +61,7 @@ function EmbarquesInfo({ pedido }) {
   if (embarqueDormindo) return null;
 
   return (
-    <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
+    <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-muted-foreground">
       <span className="flex items-center gap-1.5">
         <Truck className="w-3 h-3 flex-none" />
         <span>{embarque?.transportadora_nome || 'Sem transportadora'}</span>
@@ -70,7 +70,7 @@ function EmbarquesInfo({ pedido }) {
         <CalendarClock className="w-3 h-3 flex-none" />
         <span>{embarque?.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
       </span>
-      <span className="text-gray-400 dark:text-gray-500">
+      <span className="text-muted-foreground">
         {pedido._display_ordinal || '#01'}
       </span>
       {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
@@ -171,7 +171,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative w-full min-w-0 box-border bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
+        className="group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
@@ -184,7 +184,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
-                <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
+                <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-muted'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
                   {selecionado && <Check className="w-3 h-3" />}
                 </div>
               )}
@@ -203,10 +203,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden" style={{maxWidth: '55%'}}>
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-foreground leading-none font-mono tracking-[0.01em]">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
-                    <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight">
+                    <p className="mt-1 text-[0.78rem] font-medium text-muted-foreground leading-tight">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-1">
@@ -221,10 +221,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
             {/* Valor + data */}
             <div className="flex-none text-right shrink-0 flex flex-col justify-center gap-0.5 pl-1">
-              <p className="text-[0.92rem] font-bold text-gray-900 dark:text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+              <p className="text-[0.92rem] font-bold text-foreground leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+              <p className="text-[0.64rem] text-muted-foreground whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
@@ -233,7 +233,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           {/* Linha de metadados */}
           <div className="mt-3 flex flex-col gap-2 text-[0.7rem]">
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Package2 className="w-3 h-3 flex-none" />
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
@@ -260,7 +260,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
         {pedido.status === 'Rascunho' && !modoSelecao && (
           <button
             onClick={e => { e.stopPropagation(); setShowConfirm(true); }}
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
             title="Excluir rascunho"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -269,15 +269,15 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
       </div>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-gray-900 max-w-sm">
+        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-background max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="dark:text-white">Excluir rascunho?</AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-gray-400">
+            <AlertDialogDescription className="dark:text-muted-foreground">
               O pedido <strong className="font-mono tracking-[0.08em]">{pedido.numero}</strong> será excluído permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-0 shadow-sm dark:bg-gray-800 dark:text-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-0 shadow-sm dark:bg-muted dark:text-foreground">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-700 text-white">
               {deleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
@@ -303,12 +303,12 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
   return (
     <div className={`w-full space-y-2 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-1 gap-2 group">
-        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 truncate min-w-0 flex-1">
+        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-muted-foreground truncate min-w-0 flex-1">
           {label}
         </p>
         <div className="flex items-center gap-1.5 flex-none shrink-0">
-          <span className="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap">{R(valorTotal)}</span>
-          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+          <span className="text-[0.65rem] font-bold text-muted-foreground whitespace-nowrap">{R(valorTotal)}</span>
+          <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
         </div>
       </button>
       {open && (
@@ -335,16 +335,16 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
+        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />)}
       </div>
     );
   }
 
   if (grupos.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
-        <Package2 className="w-9 h-9 text-gray-200 dark:text-gray-700" />
-        <p className="text-sm text-gray-400">Nenhum embarque encontrado</p>
+      <div className="bg-card rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
+        <Package2 className="w-9 h-9 text-gray-200 dark:text-foreground/90" />
+        <p className="text-sm text-muted-foreground">Nenhum embarque encontrado</p>
       </div>
     );
   }

@@ -9,7 +9,7 @@ const tabs = [
 
 export default function ItinerarioMobileTopTabs({ value, onChange }) {
   return (
-    <div className="sticky top-0 z-20 -mx-3 px-3 py-2 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm">
+    <div className="sticky top-0 z-20 -mx-3 px-3 py-2 bg-muted/40/95 dark:bg-background/95 backdrop-blur-sm">
       <div className="grid grid-cols-3 gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -19,7 +19,7 @@ export default function ItinerarioMobileTopTabs({ value, onChange }) {
               key={tab.value}
               type="button"
               onClick={() => onChange(tab.value)}
-              className={`min-w-0 rounded-2xl px-2 py-2.5 shadow-sm transition-all ${active ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-300'}`}
+              className={`min-w-0 rounded-2xl px-2 py-2.5 shadow-sm transition-all ${active ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-foreground' : 'bg-white text-muted-foreground dark:bg-muted dark:text-foreground/90'}`}
             >
               <div className="flex flex-col items-center justify-center gap-1">
                 <Icon className="w-4 h-4" />

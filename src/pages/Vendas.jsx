@@ -86,7 +86,7 @@ const PedidosTab = () => {
     <Card className="border-0 shadow-none">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-0 pt-0 pb-4">
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar por Nº ou cliente..." className="pl-9 bg-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto shrink-0">
@@ -96,7 +96,7 @@ const PedidosTab = () => {
       <CardContent className="p-0">
         <div className="border rounded-lg bg-white min-w-0 overflow-x-auto">
           <Table>
-            <TableHeader className="bg-gray-50">
+            <TableHeader className="bg-muted/40">
               <TableRow>
                 <TableHead>Número</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -109,7 +109,7 @@ const PedidosTab = () => {
             </TableHeader>
             <TableBody>
               {filteredPedidos.map(pedido => (
-                <TableRow key={pedido.id} className="hover:bg-gray-50">
+                <TableRow key={pedido.id} className="hover:bg-muted/40">
                   <TableCell className="font-medium">{pedido.numero}</TableCell>
                   <TableCell>{pedido.cliente_nome}</TableCell>
                   <TableCell>{formatarSoData(pedido.created_date)}</TableCell>
@@ -122,7 +122,7 @@ const PedidosTab = () => {
                         <Eye className="h-4 w-4 text-blue-500" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} title="Editar">
-                        <Edit className="h-4 w-4 text-gray-500" />
+                        <Edit className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </div>
                   </TableCell>
@@ -150,22 +150,22 @@ const PedidosTab = () => {
               <div className="flex items-center justify-between pb-4 border-b">
                 <div>
                   <h2 className="text-2xl font-bold">{pedidoParaVer.numero}</h2>
-                  <p className="text-sm text-gray-500">{formatarDataHora(pedidoParaVer.created_date)}</p>
+                  <p className="text-sm text-muted-foreground">{formatarDataHora(pedidoParaVer.created_date)}</p>
                 </div>
                 <Badge className={getStatusBadge(pedidoParaVer.status)}>{pedidoParaVer.status}</Badge>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500">Cliente</p>
+                  <p className="text-xs text-muted-foreground">Cliente</p>
                   <p className="font-semibold">{pedidoParaVer.cliente_nome}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Vendedor</p>
+                  <p className="text-xs text-muted-foreground">Vendedor</p>
                   <p className="font-semibold">{pedidoParaVer.vendedor_nome}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Método de Entrega</p>
+                  <p className="text-xs text-muted-foreground">Método de Entrega</p>
                   <p className="font-semibold">{pedidoParaVer.metodo_entrega || 'Retirada'}</p>
                 </div>
               </div>
@@ -224,7 +224,7 @@ const PedidosTab = () => {
 
               {pedidoParaVer.observacoes && (
                 <div className="border-t pt-4">
-                  <p className="text-xs text-gray-500 mb-1">Observações</p>
+                  <p className="text-xs text-muted-foreground mb-1">Observações</p>
                   <p className="text-sm">{pedidoParaVer.observacoes}</p>
                 </div>
               )}
@@ -251,10 +251,10 @@ export default function VendasPage() {
 
   // Caso contrário, renderizar tabs normais
   return (
-    <div className="p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-background">
+    <div className="p-6 lg:p-8 min-h-screen bg-muted/40 dark:bg-background">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-foreground mb-2">Módulo de Vendas</h1>
-        <p className="text-gray-600 dark:text-muted-foreground mb-8">Gerencie orçamentos, pedidos e ponto de venda com fluxos especializados.</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Módulo de Vendas</h1>
+        <p className="text-muted-foreground dark:text-muted-foreground mb-8">Gerencie orçamentos, pedidos e ponto de venda com fluxos especializados.</p>
 
         <Tabs value={activeTab} className="space-y-4">
           <TabsList>

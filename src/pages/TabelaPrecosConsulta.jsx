@@ -36,18 +36,18 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       style={{ boxSizing: 'border-box' }}
     >
       {/* Thumbnail */}
-      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-5 h-5 text-gray-300 dark:text-gray-600" />}
+          : <Package className="w-5 h-5 text-gray-300 dark:text-muted-foreground" />}
       </div>
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-snug break-words flex items-center gap-1.5 flex-wrap">
+        <p className="text-sm font-medium text-foreground/90 leading-snug break-words flex items-center gap-1.5 flex-wrap">
           {hasAlternativeUnits(p) && (
             <span title="Várias unidades de venda" className="inline-flex flex-shrink-0">
-              <Boxes className="w-3.5 h-3.5 text-gray-400" aria-hidden />
+              <Boxes className="w-3.5 h-3.5 text-muted-foreground" aria-hidden />
             </span>
           )}
           <span>{p.nome}</span>
@@ -56,14 +56,14 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
           {/* Status estoque */}
           <div className="flex items-center gap-1.5">
             <P38StatusDot tone={!p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success'} />
-            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
               {fmtN(estoqueExibicao)} {unidadeExibicao}
-              {apresentEstoque && <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">(show comercial)</span>}
+              {apresentEstoque && <span className="text-[10px] text-muted-foreground ml-1">(show comercial)</span>}
             </span>
           </div>
           {/* Código */}
           {p.codigo_interno && (
-            <span className="text-xs text-gray-400 dark:text-gray-600 font-mono whitespace-nowrap">
+            <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
               #{p.codigo_interno}
             </span>
           )}
@@ -73,14 +73,14 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       {/* Preço — direita */}
       <div className="flex-shrink-0 text-right">
         {temAjuste && precoOriginal > 0 && (
-          <div className="text-xs text-gray-400 line-through whitespace-nowrap tabular-nums">
+          <div className="text-xs text-muted-foreground line-through whitespace-nowrap tabular-nums">
             R$ {fmtR(precoOriginal)}
           </div>
         )}
         {precoFinal > 0 && (
           <div className="text-base font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap tabular-nums">
             R$ {fmtR(precoFinal)}
-            <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400 ml-0.5">/{siglaVitrine}</span>
+            <span className="text-[10px] font-normal text-muted-foreground ml-0.5">/{siglaVitrine}</span>
           </div>
         )}
         {e <= 0 && (
@@ -147,27 +147,27 @@ export default function TabelaPrecosConsulta() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900 relative">
+    <div className="flex flex-col h-full overflow-hidden w-full bg-card relative">
 
       {/* Header fixo */}
-      <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 space-y-3">
+      <div className="flex-none bg-card border-b border-border/40 px-4 py-3 space-y-3">
 
         {/* Título + contagem */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Tabela de Preços</h1>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
               {searchTerm && ` · "${searchTerm}"`}
             </p>
           </div>
-          <span className="px-3 py-2 rounded-2xl text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+          <span className="px-3 py-2 rounded-2xl text-xs font-medium bg-muted text-muted-foreground">
             Ordem alfabética (A→Z)
           </span>
         </div>
@@ -197,7 +197,7 @@ export default function TabelaPrecosConsulta() {
 
         {/* Busca */}
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Buscar produto, código, EAN..."
             value={searchTerm}
@@ -210,10 +210,10 @@ export default function TabelaPrecosConsulta() {
       {/* FAB Orçamento */}
       <button
         onClick={() => setShowOrcamento(true)}
-        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 shadow-xl transition-all hover:bg-gray-700 active:scale-95 dark:bg-gray-100 dark:hover:bg-gray-200 p38-bottom-fab1 lg:right-6"
+        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-gray-100 dark:hover:bg-gray-200 p38-bottom-fab1 lg:right-6"
         title="Novo Orçamento"
       >
-        <Calculator className="w-6 h-6 text-white dark:text-gray-900" />
+        <Calculator className="w-6 h-6 text-white dark:text-foreground" />
       </button>
 
       {/* Orçamento Sheet */}
@@ -230,12 +230,12 @@ export default function TabelaPrecosConsulta() {
       {/* Lista simples em ordem alfabética */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {produtosFiltrados.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-            <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-3">
-              <Package className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mb-3">
+              <Package className="w-7 h-7 text-gray-300 dark:text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nenhum produto encontrado</p>
-            {searchTerm && <p className="text-xs text-gray-400 mt-1">Tente outros termos de busca</p>}
+            <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
+            {searchTerm && <p className="text-xs text-muted-foreground mt-1">Tente outros termos de busca</p>}
           </div>
         ) : (
           <P38MobileLineList>

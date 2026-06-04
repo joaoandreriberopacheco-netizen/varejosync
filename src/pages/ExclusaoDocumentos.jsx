@@ -155,29 +155,29 @@ export default function ExclusaoDocumentosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-10">
+    <div className="min-h-screen bg-background pb-10">
       <div className="max-w-2xl mx-auto px-4 pt-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">Exclusão de Documentos</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Busque e exclua um documento e todos os seus registros relacionados.</p>
+          <h1 className="text-2xl font-semibold text-foreground font-glacial">Exclusão de Documentos</h1>
+          <p className="text-sm text-muted-foreground mt-1">Busque e exclua um documento e todos os seus registros relacionados.</p>
         </div>
 
         {/* Tipo + Busca */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 mb-4 space-y-3">
+        <div className="bg-card rounded-2xl shadow-sm p-4 mb-4 space-y-3">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Tipo de documento</label>
+            <label className="text-xs text-muted-foreground block mb-1">Tipo de documento</label>
             <Select value={tipoSelecionado} onValueChange={v => { setTipoSelecionado(v); resetar(); }}>
-              <SelectTrigger className="h-11 bg-gray-50 dark:bg-gray-700 border-0 rounded-xl">
+              <SelectTrigger className="h-11 bg-muted/40 dark:bg-muted border-0 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800">
+              <SelectContent className="dark:bg-muted">
                 {TIPOS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Número / descrição / ID</label>
+            <label className="text-xs text-muted-foreground block mb-1">Número / descrição / ID</label>
             <div className="flex gap-2">
               <Input
                 autoFocus
@@ -185,9 +185,9 @@ export default function ExclusaoDocumentosPage() {
                 value={termo}
                 onChange={e => setTermo(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && buscar()}
-                className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl h-11 uppercase font-mono"
+                className="bg-muted/40 dark:bg-muted border-0 rounded-xl h-11 uppercase font-mono"
               />
-              <Button onClick={buscar} disabled={buscando} className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl px-5 h-11">
+              <Button onClick={buscar} disabled={buscando} className="bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl px-5 h-11">
                 {buscando ? '...' : <Search className="w-4 h-4" />}
               </Button>
             </div>
@@ -196,33 +196,33 @@ export default function ExclusaoDocumentosPage() {
 
         {/* Resultado */}
         {excluido && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 flex flex-col items-center gap-3">
+          <div className="bg-card rounded-2xl shadow-sm p-6 flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
               <CheckCircle2 className="w-7 h-7 text-[#4A5D23] dark:text-[#a4ce33]" />
             </div>
-            <p className="text-base font-semibold text-gray-900 dark:text-white">Excluído com sucesso</p>
-            <button onClick={resetar} className="text-sm text-gray-500 dark:text-gray-400 underline">Excluir outro documento</button>
+            <p className="text-base font-semibold text-foreground">Excluído com sucesso</p>
+            <button onClick={resetar} className="text-sm text-muted-foreground underline">Excluir outro documento</button>
           </div>
         )}
 
         {documento && !excluido && (
           <div className="space-y-3">
             {/* Card do documento principal */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                {React.createElement(tipoConfig.icon, { className: 'w-4 h-4 text-gray-500 dark:text-gray-400' })}
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{tipoConfig.label} — Documento Principal</span>
+            <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/40 flex items-center gap-2">
+                {React.createElement(tipoConfig.icon, { className: 'w-4 h-4 text-muted-foreground' })}
+                <span className="text-xs font-semibold text-foreground/90">{tipoConfig.label} — Documento Principal</span>
               </div>
               <div className="px-4 py-4 space-y-1">
-                <div className="text-base font-bold text-gray-900 dark:text-white font-mono">{getDocLabel(documento)}</div>
-                {documento.cliente_nome && <div className="text-sm text-gray-500 dark:text-gray-400">{documento.cliente_nome}</div>}
-                {documento.fornecedor_nome && <div className="text-sm text-gray-500 dark:text-gray-400">{documento.fornecedor_nome}</div>}
-                {documento.valor_total != null && <div className="text-sm text-gray-700 dark:text-gray-300">{formatValor(documento.valor_total)}</div>}
-                {documento.valor != null && <div className="text-sm text-gray-700 dark:text-gray-300">{formatValor(documento.valor)}</div>}
-                {documento.observacao && <div className="text-sm text-gray-500 dark:text-gray-400">{documento.observacao}</div>}
-                {documento.status && <div className="text-xs text-gray-400 dark:text-gray-500">{documento.status}</div>}
-                {documento.status_registro && <div className="text-xs text-gray-400 dark:text-gray-500">{documento.status_registro}</div>}
-                {documento.created_date && <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(documento.created_date), 'dd/MM/yyyy HH:mm')}</div>}
+                <div className="text-base font-bold text-foreground font-mono">{getDocLabel(documento)}</div>
+                {documento.cliente_nome && <div className="text-sm text-muted-foreground">{documento.cliente_nome}</div>}
+                {documento.fornecedor_nome && <div className="text-sm text-muted-foreground">{documento.fornecedor_nome}</div>}
+                {documento.valor_total != null && <div className="text-sm text-foreground/90">{formatValor(documento.valor_total)}</div>}
+                {documento.valor != null && <div className="text-sm text-foreground/90">{formatValor(documento.valor)}</div>}
+                {documento.observacao && <div className="text-sm text-muted-foreground">{documento.observacao}</div>}
+                {documento.status && <div className="text-xs text-muted-foreground">{documento.status}</div>}
+                {documento.status_registro && <div className="text-xs text-muted-foreground">{documento.status_registro}</div>}
+                {documento.created_date && <div className="text-xs text-muted-foreground">{format(new Date(documento.created_date), 'dd/MM/yyyy HH:mm')}</div>}
               </div>
             </div>
 
@@ -249,7 +249,7 @@ export default function ExclusaoDocumentosPage() {
             )}
 
             {filhos.length === 0 && (
-              <div className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">Nenhum registro relacionado encontrado.</div>
+              <div className="px-4 py-2 text-xs text-muted-foreground">Nenhum registro relacionado encontrado.</div>
             )}
 
             {/* Botão confirmar */}
@@ -275,7 +275,7 @@ export default function ExclusaoDocumentosPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setConfirmando(false)}
-                    className="flex-1 h-11 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium text-sm">
+                    className="flex-1 h-11 bg-muted text-foreground/90 rounded-xl font-medium text-sm">
                     Cancelar
                   </button>
                   <button
@@ -289,7 +289,7 @@ export default function ExclusaoDocumentosPage() {
               </div>
             )}
 
-            <button onClick={resetar} className="w-full text-sm text-gray-400 dark:text-gray-500 py-2">
+            <button onClick={resetar} className="w-full text-sm text-muted-foreground py-2">
               Cancelar e limpar
             </button>
           </div>

@@ -589,15 +589,15 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-gray-100 dark:bg-gray-950">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border/40 flex-shrink-0">
         <button
           onClick={onClose}
-          className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 py-1"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gray-800 dark:hover:text-gray-200 py-1"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar
         </button>
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">Comprovante</span>
+        <span className="text-sm font-semibold text-foreground font-glacial">Comprovante</span>
         <div className="flex items-center gap-2">
           <Button
             onClick={handlePrint}
@@ -613,7 +613,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             onClick={handleShare}
             disabled={gerando}
             size="sm"
-            className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+            className="bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
           >
             {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
             {gerando ? 'Gerando...' : 'PDF'}
@@ -622,9 +622,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       </div>
 
       {/* Opções de formato e impressora térmica */}
-      <div className="px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 space-y-2">
+      <div className="px-4 py-2 bg-card border-b border-border/40 flex-shrink-0 space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Formato:</span>
+          <span className="text-xs font-medium text-muted-foreground">Formato:</span>
           <Button
             onClick={() => setFormato('80mm')}
             size="sm"

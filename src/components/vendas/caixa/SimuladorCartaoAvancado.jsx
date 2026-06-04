@@ -45,34 +45,34 @@ export default function SimuladorCartaoAvancado() {
   return (
     <div className="space-y-6 p-4 max-w-2xl mx-auto">
       {/* Entrada de dados */}
-      <Card className="p-5 bg-white dark:bg-gray-900 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-glacial">
+      <Card className="p-5 bg-card shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground mb-4 font-glacial">
           Simulador de Cartão de Crédito
         </h2>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <label className="block text-sm text-muted-foreground mb-2">
               Valor da Venda (R$)
             </label>
             <Input
               type="number"
               value={valorBruto}
               onChange={(e) => setValorBruto(Number(e.target.value))}
-              className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+              className="bg-muted/50 border-border/40"
               step="0.01"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <label className="block text-sm text-muted-foreground mb-2">
                 Parcelas
               </label>
               <select
                 value={parcelas}
                 onChange={(e) => setParcelas(Number(e.target.value))}
-                className="w-full h-10 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
+                className="w-full h-10 px-3 bg-muted/50 border border-border/40 rounded-lg text-sm text-foreground"
               >
                 {[1, 2, 3, 4, 5, 6, 12].map((p) => (
                   <option key={p} value={p}>
@@ -83,14 +83,14 @@ export default function SimuladorCartaoAvancado() {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <label className="block text-sm text-muted-foreground mb-2">
                 Taxa (%)
               </label>
               <Input
                 type="number"
                 value={taxa}
                 onChange={(e) => setTaxa(Number(e.target.value))}
-                className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                className="bg-muted/50 border-border/40"
                 step="0.01"
               />
             </div>
@@ -99,28 +99,28 @@ export default function SimuladorCartaoAvancado() {
       </Card>
 
       {/* Memória de Cálculo */}
-      <Card className="p-5 bg-white dark:bg-gray-900 shadow-sm">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 font-glacial">
+      <Card className="p-5 bg-card shadow-sm">
+        <h3 className="text-base font-semibold text-foreground mb-4 font-glacial">
           Memória de Cálculo
         </h3>
 
-        <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300 font-mono">
+        <div className="space-y-3 text-sm text-foreground/90 font-mono">
           {/* Passo 1 */}
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">
+          <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+            <p className="text-xs text-muted-foreground uppercase font-semibold">
               Passo 1: Valor Bruto
             </p>
-            <p className="text-base font-semibold text-gray-900 dark:text-white">
+            <p className="text-base font-semibold text-foreground">
               {formatValor(calculos.vBruto)}
             </p>
           </div>
 
           {/* Passo 2 */}
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">
+          <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+            <p className="text-xs text-muted-foreground uppercase font-semibold">
               Passo 2: Calcular Taxa da Operadora
             </p>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-muted-foreground">
               {formatValor(calculos.vBruto)} × {calculos.tPerc}% = {formatValor(calculos.valorTaxa)}
             </p>
           </div>
@@ -151,7 +151,7 @@ export default function SimuladorCartaoAvancado() {
       </Card>
 
       {/* Resumo Final */}
-      <Card className="p-5 bg-gray-900 dark:bg-gray-800 shadow-sm">
+      <Card className="p-5 bg-gray-900 dark:bg-muted shadow-sm">
         <h3 className="text-base font-semibold text-white mb-4 font-glacial">
           Resumo da Operação
         </h3>
@@ -165,7 +165,7 @@ export default function SimuladorCartaoAvancado() {
 
           {/* Linha 2 */}
           <div className="flex items-center justify-between pb-3 border-b border-gray-700">
-            <span className="text-gray-400">Taxa de Operadora ({calculos.tPerc}%)</span>
+            <span className="text-muted-foreground">Taxa de Operadora ({calculos.tPerc}%)</span>
             <span className="text-lg font-semibold text-red-400">−{formatValor(calculos.valorTaxa)}</span>
           </div>
 
@@ -177,40 +177,40 @@ export default function SimuladorCartaoAvancado() {
 
           {/* Linha 4 */}
           <div className="flex items-center justify-between pt-3">
-            <span className="text-gray-400 text-sm">Por parcela: {formatValor(calculos.valorLiquidoPorParcela)} (+ {formatValor(calculos.taxaPorParcela)} taxa)</span>
+            <span className="text-muted-foreground text-sm">Por parcela: {formatValor(calculos.valorLiquidoPorParcela)} (+ {formatValor(calculos.taxaPorParcela)} taxa)</span>
           </div>
         </div>
       </Card>
 
       {/* Cronograma de Parcelas */}
-      <Card className="p-5 bg-white dark:bg-gray-900 shadow-sm">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 font-glacial">
+      <Card className="p-5 bg-card shadow-sm">
+        <h3 className="text-base font-semibold text-foreground mb-4 font-glacial">
           Cronograma de Recebimento
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2 text-gray-600 dark:text-gray-400 font-semibold">Parcela</th>
-                <th className="text-right py-2 text-gray-600 dark:text-gray-400 font-semibold">Valor Bruto</th>
-                <th className="text-right py-2 text-gray-600 dark:text-gray-400 font-semibold">Taxa</th>
-                <th className="text-right py-2 text-gray-600 dark:text-gray-400 font-semibold">Valor Líquido</th>
-                <th className="text-left py-2 text-gray-600 dark:text-gray-400 font-semibold">Previsão</th>
+              <tr className="border-b border-border/40">
+                <th className="text-left py-2 text-muted-foreground font-semibold">Parcela</th>
+                <th className="text-right py-2 text-muted-foreground font-semibold">Valor Bruto</th>
+                <th className="text-right py-2 text-muted-foreground font-semibold">Taxa</th>
+                <th className="text-right py-2 text-muted-foreground font-semibold">Valor Líquido</th>
+                <th className="text-left py-2 text-muted-foreground font-semibold">Previsão</th>
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: calculos.nParcelas }).map((_, i) => {
                 const diasAposBandeira = (i + 1) * 30; // Aproximação: 30 dias por parcela
                 return (
-                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800">
-                    <td className="py-2.5 font-semibold text-gray-900 dark:text-white">{i + 1}/{calculos.nParcelas}</td>
-                    <td className="text-right text-gray-600 dark:text-gray-300">{formatValor(calculos.valorPorParcela)}</td>
+                  <tr key={i} className="border-b border-border/40">
+                    <td className="py-2.5 font-semibold text-foreground">{i + 1}/{calculos.nParcelas}</td>
+                    <td className="text-right text-muted-foreground">{formatValor(calculos.valorPorParcela)}</td>
                     <td className="text-right text-red-500">−{formatValor(calculos.taxaPorParcela)}</td>
                     <td className="text-right font-semibold text-green-600 dark:text-green-400">
                       {formatValor(calculos.valorLiquidoPorParcela)}
                     </td>
-                    <td className="text-left text-gray-500 dark:text-gray-400 text-xs">
+                    <td className="text-left text-muted-foreground text-xs">
                       +{diasAposBandeira} dias
                     </td>
                   </tr>

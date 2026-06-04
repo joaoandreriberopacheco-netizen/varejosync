@@ -260,34 +260,34 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-400 dark:text-gray-500" />
+    <div className="min-h-screen bg-card flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-card flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-5 pb-3 flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900">
-        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
+      <div className="flex items-center gap-3 px-4 pt-5 pb-3 flex-shrink-0 bg-card border-b border-border/40 dark:border-gray-900">
+        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold font-glacial text-gray-900 dark:text-white truncate">{conferenciaInicial?.nome_conferencia}</h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <h2 className="text-sm font-semibold font-glacial text-foreground truncate">{conferenciaInicial?.nome_conferencia}</h2>
+          <p className="text-xs text-muted-foreground">
             {itensAgrupados.length} produto{itensAgrupados.length !== 1 ? "s" : ""} contados
-            {saving && <span className="ml-2 text-gray-400 dark:text-gray-600">· salvando...</span>}
+            {saving && <span className="ml-2 text-muted-foreground">· salvando...</span>}
           </p>
         </div>
-        {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-400 dark:text-gray-600 flex-shrink-0" />}
+        {saving && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground flex-shrink-0" />}
       </div>
 
       {/* Banner bloqueio */}
       {bloqueada && (
-        <div className="mx-4 mb-3 flex items-center gap-2.5 bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3">
-          <Lock className="w-4 h-4 text-gray-500 dark:text-gray-600 flex-shrink-0" />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Conferência <strong className="text-gray-700 dark:text-gray-300">{conferenciaInicial.status}</strong> — somente visualização.
+        <div className="mx-4 mb-3 flex items-center gap-2.5 bg-gray-100 dark:bg-background rounded-2xl px-4 py-3">
+          <Lock className="w-4 h-4 text-muted-foreground dark:text-muted-foreground flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Conferência <strong className="text-foreground/90">{conferenciaInicial.status}</strong> — somente visualização.
           </p>
         </div>
       )}
@@ -297,24 +297,24 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
         <div className="px-4 pb-3 relative flex-shrink-0">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 ref={buscaRef}
                 placeholder="Buscar produto por nome ou código..."
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
-                className="pl-9 pr-9 rounded-xl border-0 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 h-11 focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
+                className="pl-9 pr-9 rounded-xl border-0 bg-gray-100 dark:bg-background text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground h-11 focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
                 autoComplete="off"
               />
               {busca && (
-                <button onClick={() => setBusca("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
+                <button onClick={() => setBusca("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-gray-500 dark:text-gray-500 flex-shrink-0"
+              className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-background flex items-center justify-center text-muted-foreground dark:text-muted-foreground flex-shrink-0"
             >
               <Camera className="w-4 h-4" />
             </button>
@@ -341,7 +341,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             />
           </div>
           {produtosFiltrados.length > 0 && (
-            <div className="absolute top-full left-4 right-4 z-30 mt-1 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto border border-gray-100 dark:border-gray-800">
+            <div className="absolute top-full left-4 right-4 z-30 mt-1 bg-card rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto border border-border/40">
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {produtosFiltrados.map(prod => {
                   const nome = resolveInventoryProductName(prod);
@@ -349,11 +349,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                   const totalBase = contagens.reduce((s, i) => s + getEntryBaseQuantity(i, prod), 0);
                   const totalDisplay = getGroupDisplayFromBase(prod, totalBase);
                   return (
-                    <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 dark:hover:bg-muted transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{nome}</p>
                         {(prod.codigo_interno || prod.codigo_barras) && (
-                          <p className="text-xs text-gray-400 dark:text-gray-600">{prod.codigo_interno || prod.codigo_barras}</p>
+                          <p className="text-xs text-muted-foreground">{prod.codigo_interno || prod.codigo_barras}</p>
                         )}
                       </div>
                       {contagens.length > 0 && (
@@ -364,7 +364,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                           </span>
                         </div>
                       )}
-                      <Plus className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                      <Plus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     </button>
                   );
                 })}
@@ -377,25 +377,25 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       {/* Lista itens scrollável */}
       <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-4">
         {itensAgrupados.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-300 dark:text-gray-700">
+          <div className="flex flex-col items-center justify-center py-16 text-gray-300 dark:text-foreground/90">
             <Package className="w-10 h-10 mb-3" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum produto conferido</p>
-            {!bloqueada && <p className="text-xs mt-1 text-gray-300 dark:text-gray-700">Busque ou escaneie produtos acima</p>}
+            <p className="text-sm text-muted-foreground">Nenhum produto conferido</p>
+            {!bloqueada && <p className="text-xs mt-1 text-gray-300 dark:text-foreground/90">Busque ou escaneie produtos acima</p>}
           </div>
         )}
 
         {itensAgrupados.map((grupo) => (
-          <div key={grupo.produto_id} className="bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
+          <div key={grupo.produto_id} className="bg-background rounded-2xl overflow-hidden shadow-sm">
             <button
               onClick={() => setItemExpandido(prev => prev === grupo.produto_id ? null : grupo.produto_id)}
               className="w-full flex items-start gap-3 p-3.5 text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Package className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Package className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words">{grupo.produto_nome}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+                <p className="text-sm font-medium text-foreground leading-snug break-words">{grupo.produto_nome}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}
                   {grupo.display?.fator_conversao > 1 && (
                     <span> · base {formatCountQuantity(grupo.totalBase)} {grupo.display.unidade_base}</span>
@@ -404,32 +404,32 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
                 <div className="text-right">
-                  <span className="text-xl font-bold font-glacial text-gray-900 dark:text-white">
+                  <span className="text-xl font-bold font-glacial text-foreground">
                     {formatCountQuantity(grupo.display?.quantidade ?? grupo.totalBase)}
                   </span>
-                  <span className="ml-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                  <span className="ml-1 text-xs font-semibold text-muted-foreground">
                     {grupo.display?.unidade || "UN"}
                   </span>
                 </div>
-                {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-600" />}
+                {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </div>
             </button>
 
             {itemExpandido === grupo.produto_id && (
-              <div className="border-t border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+              <div className="border-t border-border/40 divide-y divide-gray-100 dark:divide-gray-800">
                 {grupo.entradas.map((entrada, eIdx) => (
                   <div key={entrada.idx} className="flex items-center gap-2 px-3 py-2.5 min-w-0">
-                    <span className="text-xs text-gray-400 dark:text-gray-600 w-14 flex-shrink-0">Entrada {eIdx + 1}</span>
+                    <span className="text-xs text-muted-foreground w-14 flex-shrink-0">Entrada {eIdx + 1}</span>
                     <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                       {!bloqueada && (
-                        <button onClick={() => atualizarQtd(entrada.idx, -1)} className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <Minus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                        <button onClick={() => atualizarQtd(entrada.idx, -1)} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                          <Minus className="w-3 h-3 text-muted-foreground" />
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => abrirSeletorUnidadeItem(entrada.idx)}
-                        className="h-7 inline-flex items-center gap-1 rounded-lg bg-white dark:bg-gray-800 px-2 text-[11px] font-semibold text-gray-600 dark:text-gray-300 shadow-sm"
+                        className="h-7 inline-flex items-center gap-1 rounded-lg bg-card px-2 text-[11px] font-semibold text-muted-foreground shadow-sm"
                         title="Trocar unidade"
                       >
                         <Boxes className="w-3 h-3" />
@@ -440,12 +440,12 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                         value={entrada.qtd}
                         readOnly={bloqueada}
                         onChange={e => !bloqueada && definirQtd(entrada.idx, e.target.value)}
-                        className="w-14 text-center text-sm font-medium border-0 bg-transparent text-gray-900 dark:text-white focus-visible:ring-0 p-0 h-7"
+                        className="w-14 text-center text-sm font-medium border-0 bg-transparent text-foreground focus-visible:ring-0 p-0 h-7"
                       />
                       {!bloqueada && (
                         <>
-                          <button onClick={() => atualizarQtd(entrada.idx, 1)} className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                            <Plus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                          <button onClick={() => atualizarQtd(entrada.idx, 1)} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                            <Plus className="w-3 h-3 text-muted-foreground" />
                           </button>
                           <button onClick={() => removerItem(entrada.idx)} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/60 flex items-center justify-center ml-1">
                             <Trash2 className="w-3 h-3 text-red-500" />
@@ -458,7 +458,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 {!bloqueada && (
                   <button
                     onClick={() => { const prod = produtos.find(p => p.id === grupo.produto_id); if (prod) selecionarProduto(prod); }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground"
                   >
                     <Plus className="w-3 h-3" /> Adicionar outra entrada
                   </button>
@@ -471,11 +471,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Footer — botão finalizar */}
       {!bloqueada && (
-        <div className="flex-shrink-0 px-4 pb-4 pt-3 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-900" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div className="flex-shrink-0 px-4 pb-4 pt-3 bg-card border-t border-border/40 dark:border-gray-900" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <Button
             onClick={abrirConfirmacao}
             disabled={verificandoDivergencias || itens.length === 0}
-            className="w-full h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none font-semibold disabled:opacity-30"
+            className="w-full h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-primary/90 dark:hover:bg-gray-100 text-white dark:text-foreground shadow-none font-semibold disabled:opacity-30"
           >
             {verificandoDivergencias
               ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -489,7 +489,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       {modalConfirmar && (
         <div className="fixed inset-0 z-50 flex items-center md:items-end justify-center p-4 md:p-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !finalizando && setModalConfirmar(false)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl max-h-[80vh] md:max-h-[85vh] flex flex-col">
+          <div className="relative bg-card rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl max-h-[80vh] md:max-h-[85vh] flex flex-col">
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${divergencias.length > 0 ? 'bg-amber-50 dark:bg-amber-950/40' : 'bg-green-50 dark:bg-green-950/40'}`}>
                 {divergencias.length > 0
@@ -498,10 +498,10 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 }
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <p className="text-sm font-semibold text-foreground">
                   {divergencias.length > 0 ? `${divergencias.length} item${divergencias.length > 1 ? 's' : ''} com diferença` : 'Contagem sem divergências'}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {itensAgrupados.length} produto{itensAgrupados.length !== 1 ? 's' : ''} contados
                 </p>
               </div>
@@ -516,15 +516,15 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                   {divergencias.map(div => (
                     <div key={div.produto_id} className="flex items-center gap-3 bg-amber-50/70 dark:bg-amber-950/20 rounded-xl px-3 py-2.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                      <p className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{div.produto_nome}</p>
+                      <p className="text-xs text-foreground/90 flex-1 truncate">{div.produto_nome}</p>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-xs font-semibold text-gray-900 dark:text-white">
+                        <span className="text-xs font-semibold text-foreground">
                           {formatCountQuantity(div.contado_display ?? div.contado)} {div.unidade_display || ""}
                         </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-600">vs saldo</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{formatCountQuantity(div.sistema)}</span>
+                        <span className="text-xs text-muted-foreground">vs saldo</span>
+                        <span className="text-xs text-muted-foreground line-through">{formatCountQuantity(div.sistema)}</span>
                         {div.sistema_cadastro != null && (
-                          <span className="text-[10px] text-gray-500 dark:text-gray-600">cad. {div.sistema_cadastro}</span>
+                          <span className="text-[10px] text-muted-foreground dark:text-muted-foreground">cad. {div.sistema_cadastro}</span>
                         )}
                       </div>
                     </div>
@@ -534,7 +534,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             )}
 
             {divergencias.length === 0 && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+              <p className="text-xs text-muted-foreground mb-4">
                 Tudo certo! A contagem será enviada para revisão do auditor.
               </p>
             )}
@@ -544,14 +544,14 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 variant="ghost"
                 onClick={() => setModalConfirmar(false)}
                 disabled={finalizando}
-                className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="flex-1 h-11 rounded-2xl bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Revisar
               </Button>
               <Button
                 onClick={finalizar}
                 disabled={finalizando}
-                className="flex-1 h-11 rounded-2xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none font-semibold"
+                className="flex-1 h-11 rounded-2xl bg-gray-900 dark:bg-white hover:bg-primary/90 dark:hover:bg-gray-100 text-white dark:text-foreground shadow-none font-semibold"
               >
                 {finalizando
                   ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -567,39 +567,39 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       {modalQtd && (
         <div className="fixed inset-0 z-50 flex items-center md:items-end justify-center p-4 md:p-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalQtd(null)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl">
-            <p className="text-xs text-gray-400 dark:text-gray-600 mb-1">Produto selecionado</p>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-5 leading-snug">{modalQtd.produto.nome}</p>
+          <div className="relative bg-card rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl">
+            <p className="text-xs text-muted-foreground mb-1">Produto selecionado</p>
+            <p className="text-sm font-semibold text-foreground mb-5 leading-snug">{modalQtd.produto.nome}</p>
             <div className="flex items-center justify-between gap-3 mb-2">
-              <label className="text-xs text-gray-400 dark:text-gray-600 block">Quantidade contada</label>
+              <label className="text-xs text-muted-foreground block">Quantidade contada</label>
               <button
                 type="button"
                 onClick={() => setUnitSelector({ open: true, context: "modal", itemIdx: null, product: modalQtd.produto })}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-muted px-3 py-1.5 text-xs font-semibold text-foreground/90"
               >
                 <Boxes className="w-3.5 h-3.5" />
                 {modalQtd.unitOption?.unidade || "UN"}
-                <ChevronDown className="w-3 h-3 text-gray-400" />
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
               </button>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <Minus className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
+                <Minus className="w-5 h-5 text-muted-foreground dark:text-foreground/90" />
               </button>
               <Input
                 ref={qtdInputRef} type="number" inputMode="numeric"
                 value={modalQtd.qtdStr}
                 onChange={e => setModalQtd(m => ({ ...m, qtdStr: e.target.value }))}
                 onKeyDown={e => e.key === "Enter" && confirmarQtd()}
-                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
+                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-muted text-foreground rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
               />
-              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
+                <Plus className="w-5 h-5 text-muted-foreground dark:text-foreground/90" />
               </button>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">Cancelar</Button>
-              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none font-semibold">
+              <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90">Cancelar</Button>
+              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-primary/90 dark:hover:bg-gray-100 text-white dark:text-foreground shadow-none font-semibold">
                 <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirmar
               </Button>
             </div>

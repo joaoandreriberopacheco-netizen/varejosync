@@ -57,35 +57,35 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
     <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent
         className={cn(
-          'z-[100] flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-gray-900 sm:w-full',
+          'z-[100] flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-white p-5 shadow-2xl dark:bg-background sm:w-full',
           '[&>button]:hidden'
         )}
       >
         {/* Header */}
         <div className="flex items-center gap-3 mb-1">
-          <FileText className="w-5 h-5 text-gray-400" />
+          <FileText className="w-5 h-5 text-muted-foreground" />
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">Fiado — Conta a Pagar</h3>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Configure o prazo de vencimento</p>
+            <h3 className="text-base font-semibold text-foreground font-glacial">Fiado — Conta a Pagar</h3>
+            <p className="text-xs text-muted-foreground">Configure o prazo de vencimento</p>
           </div>
         </div>
 
         {/* Cliente + Valor */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+        <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-xl">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
+            <User className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground/90 font-medium">
               {clienteNome || 'Avulso'}
             </span>
           </div>
-          <span className="text-base font-bold text-gray-900 dark:text-white tabular-nums">
+          <span className="text-base font-bold text-foreground tabular-nums">
             {formatValor(valorTotal)}
           </span>
         </div>
 
         {/* Seletor de prazo */}
         <div className="space-y-1.5">
-          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Prazo de vencimento</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Prazo de vencimento</p>
           <div className="flex gap-2 flex-wrap">
             {PRAZOS.map(p => (
               <button
@@ -96,8 +96,8 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                 }}
                 className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors ${
                   prazoDias === p.dias && !dataSelecionada
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
                 }`}
               >
                 {p.label}
@@ -107,8 +107,8 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               onClick={gerarDataAleatoria}
               className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 dataSelecionada
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
               }`}
             >
               <Dice5 className="w-4 h-4" />
@@ -117,15 +117,15 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
           </div>
 
           {/* Data calculada */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl mt-1">
-            <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Vencimento em</span>
-            <span className="text-sm font-semibold text-gray-900 dark:text-white ml-auto">{dataVencimento}</span>
+          <div className="flex items-center gap-2 px-3 py-2 bg-muted/50/60 rounded-xl mt-1">
+            <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-sm text-muted-foreground">Vencimento em</span>
+            <span className="text-sm font-semibold text-foreground ml-auto">{dataVencimento}</span>
           </div>
 
           {/* Input customizado de data (opcional) */}
           <div className="space-y-1.5 mt-2">
-            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Ou selecione uma data específica</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Ou selecione uma data específica</p>
             <input autoComplete="off"
               type="date"
               value={dataSelecionada ? format(dataSelecionada, 'yyyy-MM-dd') : ''}
@@ -137,14 +137,14 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                   setDataSelecionada(null);
                 }
               }}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             />
           </div>
         </div>
 
         {/* Valor (opcional) */}
         <div className="space-y-1.5">
-          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Valor (opcional)</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Valor (opcional)</p>
           <input autoComplete="off"
             type="text"
             value={valor}
@@ -154,27 +154,27 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               setValor(formatado);
             }}
             placeholder="Ex: R$ 100,00"
-            className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
           />
         </div>
 
         {/* Observação */}
         <div className="space-y-1.5">
-          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Observação (opcional)</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Observação (opcional)</p>
           <textarea
             value={observacao}
             onChange={e => setObservacao(e.target.value)}
             placeholder="Ex: cliente conhece, vai pagar no final do mês..."
             rows={2}
             autoFocus={false}
-            className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0 resize-none placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Aviso */}
-        <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/60 rounded-xl">
-          <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-start gap-2 px-3 py-2 bg-muted/50/60 rounded-xl">
+          <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
             Um lançamento financeiro de <strong>Receita Em Aberto</strong> será criado automaticamente com o prazo selecionado.
           </p>
         </div>
@@ -183,13 +183,13 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
         <div className="flex gap-2 pt-1">
           <button
             onClick={onCancel}
-            className="flex-1 h-11 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium"
+            className="flex-1 h-11 bg-muted text-foreground/90 rounded-xl text-sm font-medium"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirmar}
-            className="flex-1 h-11 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
+            className="flex-1 h-11 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl text-sm font-semibold flex items-center justify-center gap-1"
           >
             Confirmar <ChevronRight className="w-4 h-4" />
           </button>

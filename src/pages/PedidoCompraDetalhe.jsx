@@ -127,14 +127,14 @@ export default function PedidoCompraDetalhe() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-700 rounded-full animate-spin" />
+      <div className="fixed inset-0 flex items-center justify-center bg-card">
+        <div className="w-8 h-8 border-4 border-border/40 border-t-gray-700 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 overflow-hidden z-50">
+    <div className="fixed inset-0 flex flex-col bg-card overflow-hidden z-50">
       <PedidoCompraForm
         pedido={pedido}
         onSave={handleSave}

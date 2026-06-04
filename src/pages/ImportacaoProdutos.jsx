@@ -209,21 +209,21 @@ export default function ImportacaoProdutosPage() {
   const podeConfirmarEstoque = parsedEstoque && parsedEstoque.alterados?.length > 0 && parsedEstoque.erros?.length === 0;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
+    <div className="min-h-screen bg-card p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white font-glacial mb-2">
+          <h1 className="text-3xl font-semibold text-foreground font-glacial mb-2">
             Importação de Produtos
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Produtos, embalagens/unidades, estoque e histórico de importações.
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="produtos" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted p-1 rounded-xl gap-1">
             <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Produtos</span>
@@ -245,32 +245,32 @@ export default function ImportacaoProdutosPage() {
           {/* TAB: Produtos */}
           <TabsContent value="produtos" className="space-y-6 mt-8">
             {/* Step 1: Download */}
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                <h2 className="text-lg font-semibold text-foreground font-glacial">
                   Baixar planilha de produtos
                 </h2>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Gera um <strong>.xlsx</strong> com todos os produtos (sem Emb.1–5 — use a aba Embalagens). Colunas editáveis desbloqueadas; IDs e calculados somente leitura.
               </p>
               <ExportarPlanilha />
             </div>
 
             {/* Step 2: Upload */}
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                <h2 className="text-lg font-semibold text-foreground font-glacial">
                   Subir planilha editada
                 </h2>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Selecione o arquivo <strong>.xlsx</strong> modificado. Colunas extras ou não reconhecidas serão ignoradas.
               </p>
               <ImportarPlanilha onParsed={handleParsed} />
@@ -278,12 +278,12 @@ export default function ImportacaoProdutosPage() {
 
             {/* Step 3: Preview */}
             {parsedData && (
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  <h2 className="text-lg font-semibold text-foreground font-glacial">
                     Validar e confirmar
                   </h2>
                 </div>
@@ -291,17 +291,17 @@ export default function ImportacaoProdutosPage() {
 
                 {salvando && progresso.total > 0 && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Lote {progresso.lote} de {progresso.totalLotes}</span>
                       <span>{progresso.atual} / {progresso.total} produtos</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-center text-muted-foreground">
                       {Math.round((progresso.atual / progresso.total) * 100)}% concluído — não feche esta página
                     </p>
                   </div>
@@ -310,7 +310,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmar}
                   disabled={!podeConfirmar || salvando}
-                  className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                  className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -333,52 +333,52 @@ export default function ImportacaoProdutosPage() {
 
           {/* TAB: Embalagens */}
           <TabsContent value="embalagens" className="space-y-6 mt-8">
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                <h2 className="text-lg font-semibold text-foreground font-glacial">
                   Baixar planilha de embalagens
                 </h2>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-2 mb-2">
+              <p className="text-xs text-muted-foreground flex items-start gap-2 mb-2">
                 <BookOpen className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
                 <span>
                   Documentação da migração (no clone Git):{' '}
-                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-gray-700/80 px-1 py-0.5">docs/migration/README.md</code>
+                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-muted/80 px-1 py-0.5">docs/migration/README.md</code>
                   {' · '}
-                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-gray-700/80 px-1 py-0.5">docs/migration/A29_VS_VAREJO_EMBALAGENS_GAP.md</code>
+                  <code className="text-[11px] rounded bg-gray-200/80 dark:bg-muted/80 px-1 py-0.5">docs/migration/A29_VS_VAREJO_EMBALAGENS_GAP.md</code>
                 </span>
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Slots Emb.1–5 e unidade de apresentação PDV em planilha separada da importação geral de produtos.
               </p>
               <ExportarEmbalagensPlanilha />
             </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                <h2 className="text-lg font-semibold text-foreground font-glacial">
                   Subir planilha editada
                 </h2>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Identificação por <strong>ID</strong> ou <strong>Cód. Interno</strong>. Cabeçalhos devem coincidir com o export desta aba.
               </p>
               <ImportarEmbalagensPlanilha onParsed={handleParsedEmbalagens} />
             </div>
 
             {parsedEmbalagens && (
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  <h2 className="text-lg font-semibold text-foreground font-glacial">
                     Validar e confirmar
                   </h2>
                 </div>
@@ -386,17 +386,17 @@ export default function ImportacaoProdutosPage() {
 
                 {salvando && progresso.total > 0 && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Lote {progresso.lote} de {progresso.totalLotes}</span>
                       <span>{progresso.atual} / {progresso.total} produtos</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-center text-muted-foreground">
                       {Math.round((progresso.atual / progresso.total) * 100)}% concluído — não feche esta página
                     </p>
                   </div>
@@ -405,7 +405,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmarEmbalagens}
                   disabled={!podeConfirmarEmbalagens || salvando}
-                  className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                  className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -429,32 +429,32 @@ export default function ImportacaoProdutosPage() {
           {/* TAB: Estoque */}
           <TabsContent value="estoque" className="space-y-6 mt-8">
             {/* Step 1: Download */}
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                <h2 className="text-lg font-semibold text-foreground font-glacial">
                   Baixar template de estoque
                 </h2>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Gera um <strong>.xlsx</strong> com ID, Nome e Estoque Atual de todos os produtos.
               </p>
               <ExportarEstoque />
             </div>
 
             {/* Step 2: Upload */}
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                   2
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                <h2 className="text-lg font-semibold text-foreground font-glacial">
                   Subir planilha de inventário
                 </h2>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Importe o arquivo <strong>.xlsx</strong> com as quantidades atualizadas. Movimentações de estoque serão geradas automaticamente.
               </p>
               <ImportarEstoque onParsed={handleParsedEstoque} />
@@ -462,12 +462,12 @@ export default function ImportacaoProdutosPage() {
 
             {/* Step 3: Preview */}
             {parsedEstoque && (
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-sm font-bold flex items-center justify-center">
                     3
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  <h2 className="text-lg font-semibold text-foreground font-glacial">
                     Validar e confirmar ajustes
                   </h2>
                 </div>
@@ -508,17 +508,17 @@ export default function ImportacaoProdutosPage() {
 
                 {salvando && progresso.total > 0 && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Lote {progresso.lote} de {progresso.totalLotes}</span>
                       <span>{progresso.atual} / {progresso.total} produtos</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-center text-muted-foreground">
                       {Math.round((progresso.atual / progresso.total) * 100)}% concluído — não feche esta página
                     </p>
                   </div>
@@ -527,7 +527,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmarEstoque}
                   disabled={!podeConfirmarEstoque || salvando}
-                  className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                  className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Atualizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -550,12 +550,12 @@ export default function ImportacaoProdutosPage() {
 
           {/* TAB: Desfazer */}
           <TabsContent value="desfazer" className="mt-8">
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/50 p-6 shadow-sm space-y-4">
               <div className="mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-2">
+                <h2 className="text-lg font-semibold text-foreground font-glacial mb-2">
                   Histórico de Importações
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   Restaure produtos para o estado anterior a uma importação realizada.
                 </p>
               </div>

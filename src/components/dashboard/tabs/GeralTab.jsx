@@ -105,22 +105,22 @@ export default function GeralTab() {
     <div className="space-y-6">
       {/* KPIs - SEM BORDAS - apenas fundo */}
       <div>
-        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">Indicadores do Mês</h3>
+        <h3 className="text-sm font-medium text-foreground mb-4">Indicadores do Mês</h3>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Faturamento</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(data.receitaMes)}</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Faturamento</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">{formatCurrency(data.receitaMes)}</div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Margem Bruta</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{data.margemBruta.toFixed(1)}%</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Margem Bruta</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">{data.margemBruta.toFixed(1)}%</div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ticket Médio</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(data.ticketMedio)}</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Ticket Médio</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">{formatCurrency(data.ticketMedio)}</div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Lucro (30d)</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Lucro (30d)</div>
             <div className="text-xl font-semibold text-green-600 dark:text-green-500">{formatCurrency(data.lucro30Dias)}</div>
           </div>
         </div>
@@ -128,32 +128,32 @@ export default function GeralTab() {
 
       {/* Alertas - SEM BORDAS */}
       <div>
-        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">Requer Atenção</h3>
+        <h3 className="text-sm font-medium text-foreground mb-4">Requer Atenção</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-          <button className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left">
+          <button className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-left">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Baixo Estoque</span>
+                <Package className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Baixo Estoque</span>
               </div>
-              <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{data.produtosAbaixoMinimo}</span>
+              <span className="text-2xl font-semibold text-foreground dark:text-gray-100">{data.produtosAbaixoMinimo}</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               {data.produtosAbaixoMinimo > 0 
                 ? 'Produtos precisam reposição' 
                 : 'Nenhum produto crítico'}
             </p>
           </button>
 
-          <button className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left">
+          <button className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-left">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Contas Vencendo</span>
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Contas Vencendo</span>
               </div>
-              <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{data.contasVencendo}</span>
+              <span className="text-2xl font-semibold text-foreground dark:text-gray-100">{data.contasVencendo}</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               {data.contasVencendo > 0 
                 ? 'Próximos 7 dias' 
                 : 'Nenhuma conta vencendo'}
@@ -166,32 +166,32 @@ export default function GeralTab() {
       <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 rounded-lg">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-500" />
-          <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Eficiência Operacional</h3>
+          <h3 className="text-sm font-medium text-foreground">Eficiência Operacional</h3>
         </div>
         
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Lucro Gerado (30d)</div>
+            <div className="text-xs text-muted-foreground mb-1">Lucro Gerado (30d)</div>
             <div className="text-lg font-semibold text-green-600 dark:text-green-500">
               {formatCurrency(data.lucro30Dias)}
             </div>
           </div>
           
           <div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Novas Compras (30d)</div>
-            <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+            <div className="text-xs text-muted-foreground mb-1">Novas Compras (30d)</div>
+            <div className="text-lg font-semibold text-foreground">
               {formatCurrency(data.valorCompras30Dias)}
             </div>
           </div>
           
           <div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Taxa de Reinvestimento</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="text-xs text-muted-foreground mb-1">Taxa de Reinvestimento</div>
+            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
               {data.valorCompras30Dias > 0 
                 ? ((data.lucro30Dias / data.valorCompras30Dias) * 100).toFixed(1)
                 : '0.0'}%
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Do lucro usado em estoque
             </p>
           </div>

@@ -222,7 +222,7 @@ export default function SugestaoCompra() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-gray-400" /></div>;
+    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
   const activeFiltersCount = [
@@ -260,7 +260,7 @@ export default function SugestaoCompra() {
       {selectedTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selectedTags.map(tag => (
-            <Badge key={tag} className="bg-gray-800 text-white px-2 py-1 flex items-center gap-1 rounded-lg">
+            <Badge key={tag} className="bg-primary text-white px-2 py-1 flex items-center gap-1 rounded-lg">
               {tag}
               <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))} />
             </Badge>
@@ -273,15 +273,15 @@ export default function SugestaoCompra() {
           placeholder="Buscar tag..."
           value={tagSearch}
           onChange={(e) => setTagSearch(e.target.value)}
-          className="bg-gray-100 dark:bg-gray-800 border-0 h-12 rounded-xl"
+          className="bg-muted border-0 h-12 rounded-xl"
         />
         {tagSearch && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 max-h-40 overflow-y-auto z-10">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-card rounded-xl shadow-lg border border-border/40 max-h-40 overflow-y-auto z-10">
             {allTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(t)).slice(0, 10).map(tag => (
               <button
                 key={tag}
                 onClick={() => { setSelectedTags([...selectedTags, tag]); setTagSearch(''); }}
-                className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm"
+                className="w-full text-left px-3 py-2 hover:bg-muted/40 dark:hover:bg-muted text-sm"
               >
                 {tag}
               </button>
@@ -290,18 +290,18 @@ export default function SugestaoCompra() {
         )}
       </div>
 
-      <Button onClick={() => setHidePending(!hidePending)} variant="outline" className="w-full h-12 justify-start border-0 bg-gray-100 dark:bg-gray-800 rounded-xl">
+      <Button onClick={() => setHidePending(!hidePending)} variant="outline" className="w-full h-12 justify-start border-0 bg-muted rounded-xl">
         <FilterX className="w-4 h-4 mr-2" />
         {hidePending ? 'Mostrar' : 'Ocultar'} Pendentes
       </Button>
 
-      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl">
+      <div className="bg-muted p-4 rounded-2xl">
         <div className="flex items-center gap-3 mb-3">
-          <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Otimização de Pacotes</span>
+          <Package className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Otimização de Pacotes</span>
         </div>
         <Select value={roundingMode} onValueChange={setRoundingMode}>
-          <SelectTrigger className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl">
+          <SelectTrigger className="h-12 bg-card border-0 rounded-xl">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -315,7 +315,7 @@ export default function SugestaoCompra() {
 
       <Button
         variant="ghost"
-        className="w-full h-11 rounded-xl text-gray-500 dark:text-gray-400"
+        className="w-full h-11 rounded-xl text-muted-foreground"
         onClick={() => {
           setCategoryFilter('all');
           setSupplierFilter('all');
@@ -333,14 +333,14 @@ export default function SugestaoCompra() {
   return (
     <div className="space-y-4 -mx-2 md:mx-0">
       <div className="px-2 md:px-0">
-        <div className="rounded-[28px] bg-slate-900 dark:bg-slate-900/95 text-white p-4 md:p-5 shadow-sm space-y-4">
+        <div className="rounded-[28px] bg-slate-900 dark:bg-card/95 text-white p-4 md:p-5 shadow-sm space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-lg md:text-xl font-semibold font-glacial flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-gray-300" />
                 Sugestões de Compra
               </h3>
-              <p className="text-sm text-gray-400 mt-1">Reposição baseada em estoque mínimo</p>
+              <p className="text-sm text-muted-foreground mt-1">Reposição baseada em estoque mínimo</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button onClick={loadData} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white border-0">
@@ -358,12 +358,12 @@ export default function SugestaoCompra() {
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
               placeholder="Buscar produto..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-800 text-white placeholder:text-gray-500 border-0 h-12 rounded-2xl"
+              className="pl-9 bg-slate-800 text-white placeholder:text-muted-foreground border-0 h-12 rounded-2xl"
             />
           </div>
 
@@ -384,9 +384,9 @@ export default function SugestaoCompra() {
       </div>
 
       <Drawer open={showFilters} onOpenChange={setShowFilters}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
             <DrawerDescription>Refine as sugestões sem ocupar a tela principal.</DrawerDescription>
           </DrawerHeader>
           {filtersPanel}
@@ -394,48 +394,48 @@ export default function SugestaoCompra() {
       </Drawer>
 
       <div className="hidden md:block px-2 md:px-0">
-        <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+        <div className="rounded-2xl bg-card p-4 shadow-sm">
           {filtersPanel}
         </div>
       </div>
 
       {produtos.length === 0 ? (
-        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl mx-2 md:mx-0">
+        <div className="text-center py-16 bg-card rounded-xl mx-2 md:mx-0">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500">Estoque saudável. Nenhuma sugestão no momento.</p>
+          <p className="text-muted-foreground">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
       ) : (
-        <div className="hidden md:block rounded-xl min-w-0 overflow-x-auto bg-white dark:bg-gray-800 shadow-sm">
+        <div className="hidden md:block rounded-xl min-w-0 overflow-x-auto bg-card shadow-sm">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr className="border-b border-gray-100 dark:border-gray-700">
+            <thead className="bg-muted/50">
+              <tr className="border-b border-border/40">
                 <th className="w-12 p-3 text-left">
                   <Checkbox checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedItems[p.id])} onCheckedChange={handleSelectAll} />
                 </th>
-                <th className="p-3 text-left text-xs font-normal text-gray-500">Produto</th>
-                <th className="p-3 text-left text-xs font-normal text-gray-500 w-48">Fornecedor</th>
-                <th className="p-3 text-center text-xs font-normal text-gray-500">Estoque</th>
-                <th className="p-3 text-center text-xs font-normal text-gray-500">Pendente</th>
-                <th className="p-3 text-right text-xs font-normal text-gray-500">Qtd Sugerida</th>
+                <th className="p-3 text-left text-xs font-normal text-muted-foreground">Produto</th>
+                <th className="p-3 text-left text-xs font-normal text-muted-foreground w-48">Fornecedor</th>
+                <th className="p-3 text-center text-xs font-normal text-muted-foreground">Estoque</th>
+                <th className="p-3 text-center text-xs font-normal text-muted-foreground">Pendente</th>
+                <th className="p-3 text-right text-xs font-normal text-muted-foreground">Qtd Sugerida</th>
               </tr>
             </thead>
             <tbody>
               {filteredProducts.map(p => (
-                <tr key={p.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/50">
+                <tr key={p.id} className="border-b border-border/40 hover:bg-muted/40/50">
                   <td className="p-3">
                     <Checkbox checked={!!selectedItems[p.id]} onCheckedChange={(c) => setSelectedItems(prev => c ? {...prev, [p.id]: true} : {...prev, [p.id]: undefined})} />
                   </td>
                   <td className="p-3">
-                    <div className="font-medium text-gray-700 dark:text-gray-200">{p.nome}</div>
+                    <div className="font-medium text-foreground/90">{p.nome}</div>
                     {p.quantidade_pendente > 0 && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                         <Truck className="w-3 h-3" />Em andamento
                       </div>
                     )}
                   </td>
                   <td className="p-3">
                     <select 
-                      className="w-full h-8 text-xs bg-transparent border-0 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
+                      className="w-full h-8 text-xs bg-transparent border-0 hover:bg-muted/40 dark:hover:bg-muted rounded"
                       value={fornecedorPorProduto[p.id] || p.fornecedor_padrao_id || ''}
                       onChange={(e) => setFornecedorPorProduto({...fornecedorPorProduto, [p.id]: e.target.value})}
                     >
@@ -445,17 +445,17 @@ export default function SugestaoCompra() {
                   </td>
                   <td className="p-3 text-center">
                     <span className="font-medium">{p.estoque_atual || 0}</span>
-                    <span className="text-gray-400 mx-1">/</span>
-                    <span className="text-gray-500 text-xs">{p.estoque_minimo || 0}</span>
+                    <span className="text-muted-foreground mx-1">/</span>
+                    <span className="text-muted-foreground text-xs">{p.estoque_minimo || 0}</span>
                   </td>
                   <td className="p-3 text-center">
                     {p.quantidade_pendente > 0 ? (
-                      <Badge variant="outline" className="bg-gray-50 text-gray-600 font-normal">{p.quantidade_pendente}</Badge>
+                      <Badge variant="outline" className="bg-muted/40 text-muted-foreground font-normal">{p.quantidade_pendente}</Badge>
                     ) : '-'}
                   </td>
                   <td className="p-3 text-right">
-                    <span className="font-bold text-gray-700 dark:text-gray-200">{sugestaoDisplay(p).quantidade}</span>
-                    <span className="text-gray-400 text-xs ml-2">{sugestaoDisplay(p).unidade}</span>
+                    <span className="font-bold text-foreground/90">{sugestaoDisplay(p).quantidade}</span>
+                    <span className="text-muted-foreground text-xs ml-2">{sugestaoDisplay(p).unidade}</span>
                   </td>
                 </tr>
               ))}

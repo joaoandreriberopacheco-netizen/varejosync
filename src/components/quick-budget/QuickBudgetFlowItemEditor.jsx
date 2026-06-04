@@ -36,7 +36,7 @@ export default function QuickBudgetFlowItemEditor({
 
   if (!selectedProduct) {
     return (
-      <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm px-4 py-10 text-center text-sm text-gray-400">
+      <div className="rounded-3xl bg-card shadow-sm px-4 py-10 text-center text-sm text-muted-foreground">
         Pesquise e selecione um produto para seguir o fluxo.
       </div>
     );
@@ -47,14 +47,14 @@ export default function QuickBudgetFlowItemEditor({
   const siglaAtiva = selectedUnit?.unidade || selectedProduct.unidade_principal || 'UN';
 
   return (
-    <div className="rounded-3xl bg-white dark:bg-gray-900 shadow-sm p-4 space-y-4">
+    <div className="rounded-3xl bg-card shadow-sm p-4 space-y-4">
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-          <Package className="w-4 h-4 text-gray-500" />
+        <div className="w-11 h-11 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+          <Package className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white break-words">{selectedProduct.nome}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm font-semibold text-foreground break-words">{selectedProduct.nome}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>Estoque: {Number(selectedProduct.estoque_atual || 0)}</span>
             {selectedProduct.codigo_interno && <span>#{selectedProduct.codigo_interno}</span>}
             {isFreePrice && <span className="text-emerald-600 dark:text-emerald-400">Preço livre</span>}
@@ -73,8 +73,8 @@ export default function QuickBudgetFlowItemEditor({
       </div>
 
       {unitOptions.length > 1 && (
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm p-3">
-          <p className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">Embalagem</p>
+        <div className="rounded-2xl bg-muted/50 shadow-sm p-3">
+          <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Embalagem</p>
           <div className="flex flex-wrap gap-2">
             {unitOptions.map((opt) => {
               const active = opt.unidade === siglaAtiva;
@@ -85,8 +85,8 @@ export default function QuickBudgetFlowItemEditor({
                   onClick={() => onUnitChange?.(opt)}
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                     active
-                      ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200'
+                      ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-foreground'
+                      : 'border-border/40 bg-white text-foreground/90 hover:border-gray-400 dark:border-gray-600 dark:bg-background dark:text-foreground'
                   }`}
                 >
                   {opt.unidade}
@@ -98,10 +98,10 @@ export default function QuickBudgetFlowItemEditor({
       )}
 
       <div className="space-y-3">
-        <div className={`rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm p-3 ${stage !== 'quantity' ? 'opacity-60' : ''}`}>
-          <p className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">Quantidade</p>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
-            Unidade: <span className="font-semibold text-gray-700 dark:text-gray-200">{siglaAtiva}</span>
+        <div className={`rounded-2xl bg-muted/50 shadow-sm p-3 ${stage !== 'quantity' ? 'opacity-60' : ''}`}>
+          <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Quantidade</p>
+          <p className="text-[10px] text-muted-foreground mb-2">
+            Unidade: <span className="font-semibold text-foreground/90">{siglaAtiva}</span>
           </p>
           <Input
             ref={quantityInputRef}
@@ -112,13 +112,13 @@ export default function QuickBudgetFlowItemEditor({
             onChange={(e) => onQuantityChange(e.target.value)}
             onKeyDown={handleQuantityKeyDown}
             enterKeyHint="next"
-            className="h-14 border-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm text-lg text-center font-semibold"
+            className="h-14 border-0 bg-card rounded-2xl shadow-sm text-lg text-center font-semibold"
           />
         </div>
 
         {isFreePrice && (
-          <div className={`rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm p-3 ${stage !== 'price' ? 'opacity-60' : ''}`}>
-            <p className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">Preço livre</p>
+          <div className={`rounded-2xl bg-muted/50 shadow-sm p-3 ${stage !== 'price' ? 'opacity-60' : ''}`}>
+            <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Preço livre</p>
             <Input
               ref={priceInputRef}
               type="number"
@@ -129,7 +129,7 @@ export default function QuickBudgetFlowItemEditor({
               onChange={(e) => onPriceChange(e.target.value)}
               onKeyDown={handlePriceKeyDown}
               enterKeyHint="go"
-              className="h-14 border-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm text-lg text-center font-semibold"
+              className="h-14 border-0 bg-card rounded-2xl shadow-sm text-lg text-center font-semibold"
             />
           </div>
         )}
@@ -137,17 +137,17 @@ export default function QuickBudgetFlowItemEditor({
 
       <div className="flex gap-3">
         {stage === 'quantity' && (
-          <Button onClick={onNext} className="flex-1 h-12 rounded-2xl bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 shadow-none">
+          <Button onClick={onNext} className="flex-1 h-12 rounded-2xl bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground shadow-none">
             <ArrowRight className="w-4 h-4 mr-2" /> Próximo
           </Button>
         )}
         {stage === 'price' && (
-          <Button onClick={onSave} className="flex-1 h-12 rounded-2xl bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 shadow-none">
+          <Button onClick={onSave} className="flex-1 h-12 rounded-2xl bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground shadow-none">
             <ShoppingCart className="w-4 h-4 mr-2" /> Salvar carrinho
           </Button>
         )}
         {!isFreePrice && stage === 'quantity' && (
-          <Button onClick={onSave} variant="outline" className="h-12 rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-none text-gray-700 dark:text-gray-200">
+          <Button onClick={onSave} variant="outline" className="h-12 rounded-2xl border-0 bg-muted shadow-none text-foreground/90">
             <ShoppingCart className="w-4 h-4 mr-2" /> Salvar
           </Button>
         )}

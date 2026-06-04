@@ -69,10 +69,10 @@ export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo,
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900">
+      <div className="flex-1 flex items-center justify-center bg-card">
         <div className="text-center">
-          <Loader className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
-          <p className="text-gray-500">Carregando editor...</p>
+          <Loader className="w-8 h-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+          <p className="text-muted-foreground">Carregando editor...</p>
         </div>
       </div>
     );
@@ -80,20 +80,20 @@ export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo,
 
   if (showPreview) {
     return (
-      <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 p-4 md:p-6">
+      <div className="flex-1 flex flex-col bg-card p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-foreground">
             Preview: {tipoDocumento.nome}
           </h2>
           <button
             onClick={() => setShowPreview(false)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+            className="p-2 hover:bg-muted rounded-lg"
           >
-            <EyeOff className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <EyeOff className="w-5 h-5 text-foreground/90" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="flex-1 overflow-auto bg-muted/50 rounded-lg p-4">
           <PreviewBlocks blocks={blocksConfig} />
         </div>
 
@@ -107,23 +107,23 @@ export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo,
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 p-4 md:p-6">
+    <div className="flex-1 flex flex-col bg-card p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             Editar: {tipoDocumento.nome}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Arraste, adicione e customize os blocos
           </p>
         </div>
         <button
           onClick={() => setShowPreview(true)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+          className="p-2 hover:bg-muted rounded-lg transition"
           title="Visualizar preview"
         >
-          <Eye className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <Eye className="w-5 h-5 text-foreground/90" />
         </button>
       </div>
 
@@ -133,7 +133,7 @@ export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo,
       </div>
 
       {/* Footer com Botões */}
-      <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex gap-3 mt-6 pt-4 border-t border-border/40">
         <Button variant="outline" onClick={onVoltar} className="flex items-center gap-2">
           <ChevronLeft className="w-4 h-4" />
           Voltar

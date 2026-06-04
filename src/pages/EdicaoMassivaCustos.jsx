@@ -344,7 +344,7 @@ export default function EdicaoMassivaCustos() {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-800">Edição Massiva de Custos</h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Exporte uma planilha com todos os custos detalhados por produto, edite os valores no Excel e importe para atualizar o sistema em massa.
           </p>
         </div>
@@ -393,7 +393,7 @@ export default function EdicaoMassivaCustos() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 <p className="mb-2">A planilha exportada conterá:</p>
                 <ul className="list-disc ml-4 space-y-1">
                   <li>Uma linha para cada produto selecionado</li>
@@ -422,7 +422,7 @@ export default function EdicaoMassivaCustos() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 <p className="mb-2">Após editar a planilha:</p>
                 <ul className="list-disc ml-4 space-y-1">
                   <li>Mantenha as colunas de ID e Nome</li>
@@ -452,7 +452,7 @@ export default function EdicaoMassivaCustos() {
           <CardContent>
             <div className="min-w-0 overflow-x-auto border rounded-lg">
               <Table>
-                <TableHeader className="bg-gray-50">
+                <TableHeader className="bg-muted/40">
                   <TableRow>
                     <TableHead>Nome do Produto</TableHead>
                     <TableHead>Categoria</TableHead>
@@ -480,7 +480,7 @@ export default function EdicaoMassivaCustos() {
                   ))}
                   {produtosFiltrados.length > 5 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-gray-500">
+                      <TableCell colSpan={4} className="text-center text-muted-foreground">
                         ... e mais {produtosFiltrados.length - 5} produtos
                       </TableCell>
                     </TableRow>

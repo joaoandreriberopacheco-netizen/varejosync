@@ -24,7 +24,7 @@ function grupoDomId(key) {
 function FilterSection({ label, icon: Icon, options, value, onChange }) {
   return (
     <div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-muted-foreground">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
         <Icon className="h-3.5 w-3.5 shrink-0" />
         {label}
       </div>
@@ -39,7 +39,7 @@ function FilterSection({ label, icon: Icon, options, value, onChange }) {
               className={`rounded-full px-3 py-2 text-xs font-medium transition-all md:text-sm ${
                 active
                   ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 dark:bg-muted dark:ring-primary/45'
-                  : 'bg-gray-100 text-gray-600 shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                  : 'bg-gray-100 text-muted-foreground shadow-sm dark:bg-card dark:text-muted-foreground dark:ring-1 dark:ring-border'
               }`}
             >
               {opt.label}
@@ -184,11 +184,11 @@ export default function AgefinAtualizador({ onRefresh }) {
 
   if (lancamentos.length === 0) {
     return (
-      <div className="text-center py-12 text-sm text-gray-400 dark:text-gray-500">
+      <div className="text-center py-12 text-sm text-muted-foreground">
         <Repeat className="w-8 h-8 mx-auto mb-3 opacity-30" />
         <p className="mb-2">
-          Nenhum lançamento com tag <strong className="text-gray-600 dark:text-gray-300">conta_pagar</strong> ou com{' '}
-          <strong className="text-gray-600 dark:text-gray-300">recorrência</strong> encontrado.
+          Nenhum lançamento com tag <strong className="text-muted-foreground">conta_pagar</strong> ou com{' '}
+          <strong className="text-muted-foreground">recorrência</strong> encontrado.
         </p>
         <p className="text-xs max-w-sm mx-auto">
           Inclui contas pontuais e séries recorrentes. A sincronização mensal das parcelas continua ao abrir o fluxo de caixa (Contas abertas / recorrentes).
@@ -202,17 +202,17 @@ export default function AgefinAtualizador({ onRefresh }) {
       <div className="rounded-[22px] bg-[#EEF1F4] p-2.5 dark:bg-muted/40">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 dark:bg-card dark:ring-1 dark:ring-border">
-            <Search className="h-4 w-4 shrink-0 text-gray-400 dark:text-muted-foreground" />
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground dark:text-muted-foreground" />
             <input
               autoComplete="off"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Descrição, favorecido, data…"
-              className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500 dark:text-foreground dark:placeholder:text-muted-foreground"
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground dark:text-foreground dark:placeholder:text-muted-foreground"
             />
             {search ? (
               <button type="button" onClick={() => setSearch('')} className="shrink-0">
-                <X className="h-3.5 w-3.5 text-gray-400" />
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             ) : null}
           </div>
@@ -228,7 +228,7 @@ export default function AgefinAtualizador({ onRefresh }) {
             onClick={() => setFilterOpen(true)}
             className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-card dark:ring-1 dark:ring-border"
           >
-            <SlidersHorizontal className="h-4 w-4 text-gray-800 dark:text-foreground" />
+            <SlidersHorizontal className="h-4 w-4 text-foreground" />
             {hasActiveFilters ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
                 ·
@@ -236,7 +236,7 @@ export default function AgefinAtualizador({ onRefresh }) {
             ) : null}
           </button>
         </div>
-        <p className="mt-2 px-1 text-[11px] text-gray-500 dark:text-muted-foreground">
+        <p className="mt-2 px-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
           {filtradosBusca.length} de {lancamentos.length} lançamento{filtradosBusca.length !== 1 ? 's' : ''}
         </p>
       </div>
@@ -244,7 +244,7 @@ export default function AgefinAtualizador({ onRefresh }) {
       <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
         <DrawerContent className="rounded-t-[28px] border-0 bg-white px-4 pb-6 dark:bg-card">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-gray-900 dark:text-foreground">Filtros</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground dark:text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
           <div className="max-h-[70vh] space-y-5 overflow-y-auto">
             <FilterSection
@@ -278,7 +278,7 @@ export default function AgefinAtualizador({ onRefresh }) {
                   setFilterOrigem('todos');
                   setFilterStatus('todos');
                 }}
-                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-gray-600 dark:bg-muted dark:text-muted-foreground"
+                className="h-11 flex-1 rounded-2xl bg-gray-100 text-sm text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 Redefinir
               </button>
@@ -295,7 +295,7 @@ export default function AgefinAtualizador({ onRefresh }) {
       </Drawer>
 
       {filtradosBusca.length === 0 ? (
-        <div className="rounded-[24px] bg-white py-10 text-center text-sm text-gray-500 shadow-sm dark:bg-card dark:ring-1 dark:ring-border dark:text-muted-foreground">
+        <div className="rounded-[24px] bg-white py-10 text-center text-sm text-muted-foreground shadow-sm dark:bg-card dark:ring-1 dark:ring-border dark:text-muted-foreground">
           Nenhum resultado com os filtros e a pesquisa atuais.
         </div>
       ) : (
@@ -303,8 +303,8 @@ export default function AgefinAtualizador({ onRefresh }) {
           {grupos.map((grupo) => (
             <section key={grupo.key} id={grupoDomId(grupo.key)} className="scroll-mt-20 space-y-2">
               <div className="flex items-baseline justify-between gap-2 px-0.5">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-muted-foreground">{grupo.label}</h3>
-                <span className="text-[11px] text-gray-400 dark:text-gray-500">{grupo.items.length}</span>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-muted-foreground">{grupo.label}</h3>
+                <span className="text-[11px] text-muted-foreground">{grupo.items.length}</span>
               </div>
               <div className="space-y-2">
                 {grupo.items.map((l) => {
@@ -314,10 +314,10 @@ export default function AgefinAtualizador({ onRefresh }) {
                       key={l.id}
                       type="button"
                       onClick={() => setSelected(l)}
-                      className="flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-all hover:shadow-md dark:bg-gray-900"
+                      className="flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-all hover:shadow-md dark:bg-background"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                        <RefreshCw className="h-4 w-4 text-gray-400" />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <RefreshCw className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -333,11 +333,11 @@ export default function AgefinAtualizador({ onRefresh }) {
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                        <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3 shrink-0" />
                           {l.data_vencimento}
                           {l.frequencia_recorrencia && (
-                            <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                            <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-muted-foreground dark:bg-muted dark:text-muted-foreground">
                               {FREQ_LABEL[l.frequencia_recorrencia] || l.frequencia_recorrencia}
                             </span>
                           )}
@@ -345,7 +345,7 @@ export default function AgefinAtualizador({ onRefresh }) {
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        <p className="text-sm font-semibold text-foreground/90">
                           R$ {(l.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                         <span
@@ -356,13 +356,13 @@ export default function AgefinAtualizador({ onRefresh }) {
                                 ? 'text-red-500'
                                 : l.status === 'Pago'
                                   ? 'text-green-600'
-                                  : 'text-gray-400'
+                                  : 'text-muted-foreground'
                           }`}
                         >
                           {l.status}
                         </span>
                       </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 dark:text-muted-foreground" />
                     </button>
                   );
                 })}

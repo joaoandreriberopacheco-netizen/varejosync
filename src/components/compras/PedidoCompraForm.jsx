@@ -1069,20 +1069,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 dark:text-gray-200 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden">
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && <BannerStatusPedido pedido={pedido} isMobile={false} />}
       {/* Header compacto */}
-      <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 relative">
+      <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/40 relative">
         <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
         <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10">
           <X className="w-5 h-5" />
         </Button>
         <div className="flex-1 flex items-center justify-between min-w-0">
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+          <span className="text-sm font-semibold text-foreground truncate">
             {pedido?.numero || 'Novo Pedido'}
           </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap ml-4">
+          <span className="text-sm text-muted-foreground whitespace-nowrap ml-4">
             {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
           </span>
         </div>
@@ -1093,7 +1093,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                 <Printer className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="dark:bg-gray-800">
+            <DropdownMenuContent align="end" className="dark:bg-muted">
               <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
                 Relatório do Pedido
               </DropdownMenuItem>
@@ -1112,10 +1112,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
       {/* Dialog de rascunho */}
       <AlertDialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
-        <AlertDialogContent className="max-w-sm rounded-2xl bg-white dark:bg-gray-900 border-0 shadow-2xl">
+        <AlertDialogContent className="max-w-sm rounded-2xl bg-card border-0 shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-900 dark:text-white">Rascunho encontrado</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
+            <AlertDialogTitle className="text-foreground">Rascunho encontrado</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               Existe um rascunho salvo localmente
               {pendingDraft?.data?.fornecedor_nome ? ` para ${pendingDraft.data.fornecedor_nome}` : ''}
               {pendingDraft?.savedAt ? ` (${new Date(pendingDraft.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})` : ''}.
@@ -1124,7 +1124,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel
-              className="border-0 shadow-sm rounded-xl h-10 text-gray-600 dark:text-gray-300"
+              className="border-0 shadow-sm rounded-xl h-10 text-muted-foreground"
               onClick={() => {
                 localStorage.removeItem(draftKey);
                 setPendingDraft(null);
@@ -1134,7 +1134,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               Começar do zero
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 rounded-xl h-10"
+              className="bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground rounded-xl h-10"
               onClick={() => {
                 if (pendingDraft?.data) {
                   isRestoringDraftRef.current = true;
@@ -1166,7 +1166,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs value={abaPedidoDesktop} onValueChange={setAbaPedidoDesktop} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex w-full">
+          <TabsList className="flex-shrink-0 bg-transparent border-b border-border/40 rounded-none h-auto p-0 flex w-full">
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
@@ -1180,7 +1180,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                 key={tab.value}
                 value={tab.value}
                 disabled={tab.disabled}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-gray-400 dark:text-gray-500 disabled:opacity-30 transition-colors min-w-0"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-muted-foreground disabled:opacity-30 transition-colors min-w-0"
               >
                 {tab.icon}
                 <span className="text-[9px] font-semibold tracking-wider hidden xs:block" style={{display: 'none'}}>{tab.short}</span>
@@ -1199,18 +1199,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Fornecedor *</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white">
+                    <SelectTrigger className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground">
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999] max-h-[300px]">
-                      <div className="sticky top-0 bg-gray-50 dark:bg-gray-800 p-2 border-b border-gray-200 dark:border-gray-700 z-10">
+                    <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999] max-h-[300px]">
+                      <div className="sticky top-0 bg-muted/50 p-2 border-b border-border/40 z-10">
                         <div className="relative">
-                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                           <Input
                             placeholder="Buscar..."
-                            className="pl-8 h-8 text-xs bg-white dark:bg-gray-900 border-0"
+                            className="pl-8 h-8 text-xs bg-card border-0"
                             value={searchFornecedor}
                             onChange={e => {
                               setSearchFornecedor(e.target.value);
@@ -1254,11 +1254,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                           {f.nome}
                         </SelectItem>
                       ))}
-                      <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+                      <div className="border-t border-border/40 p-2">
                         <Button
                           type="button"
                           variant="ghost"
-                          className="w-full justify-start text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-8"
+                          className="w-full justify-start text-xs text-muted-foreground hover:bg-muted h-8"
                           onClick={() => {
                             handleFornecedorChange('novo');
                             setSearchFornecedor('');
@@ -1274,9 +1274,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
                 {/* Tags */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Tags</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Tags</Label>
                   <Input 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400" 
+                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground placeholder:text-muted-foreground" 
                     placeholder="Ex: Urgente, Reposição..."
                     value={formData.tags?.join(', ') || ''} 
                     onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -1285,10 +1285,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                 </div>
                 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Data do Pedido</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Data do Pedido</Label>
                   <Input
                     type="date"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white"
+                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
                     value={formData.data_emissao || ''}
                     onChange={e => handleChange('data_emissao', e.target.value)}
                     disabled={isLocked}
@@ -1296,10 +1296,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
                 </div>
 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Previsão de Entrega</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Previsão de Entrega</Label>
                   <Input
                     type="date"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white"
+                    className="bg-muted/50 border-0 h-12 text-sm shadow-sm rounded-xl text-foreground"
                     value={formData.data_prevista_entrega || ''}
                     onChange={e => handleChange('data_prevista_entrega', e.target.value)}
                     disabled={isLocked}
@@ -1308,9 +1308,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
                 {/* Observação em linha inteira */}
                 <div className="col-span-12">
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Observações</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Observações</Label>
                   <Textarea 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400" 
+                    className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl text-foreground placeholder:text-muted-foreground" 
                     placeholder="Observações do pedido..."
                     rows={3}
                     value={formData.observacoes} 
@@ -1345,12 +1345,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
           <TabsContent value="pagamento" className="mt-0 space-y-8">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Forma de Pagamento *</Label>
+                <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Forma de Pagamento *</Label>
                 <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl">
+                  <SelectTrigger className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+                  <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
                     <SelectItem value="À Vista">À Vista</SelectItem>
                     <SelectItem value="Parcelado">Parcelado</SelectItem>
                   </SelectContent>
@@ -1358,12 +1358,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               </div>
               
               <div>
-                <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">
+                <Label className="text-sm font-semibold text-muted-foreground mb-2 block">
                   {formData.forma_pagamento_compra === 'À Vista' ? 'Data de Pagamento' : 'Primeiro Vencimento'}
                 </Label>
                 <Input 
                   type="date" 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl"
+                  className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl"
                   value={formData.data_primeiro_vencimento} 
                   onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
                   disabled={isLocked}
@@ -1374,22 +1374,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             {formData.forma_pagamento_compra === 'Parcelado' && (
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Número de Parcelas</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Número de Parcelas</Label>
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl"
+                    className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl"
                     value={formData.num_parcelas} 
                     onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
                     disabled={isLocked}
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Intervalo entre Parcelas (dias)</Label>
+                  <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Intervalo entre Parcelas (dias)</Label>
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl" 
+                    className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl" 
                     value={formData.intervalo_parcelas_dias} 
                     onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
                     disabled={isLocked}
@@ -1399,9 +1399,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             )}
 
             <div>
-              <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Observações de Pagamento</Label>
+              <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Observações de Pagamento</Label>
               <Textarea 
-                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none rounded-xl" 
+                className="bg-muted/50 border-0 shadow-sm resize-none rounded-xl" 
                 placeholder="Ex: Pagar via PIX, transferência, observações sobre o pagamento..."
                 rows={3}
                 value={formData.condicoes_pagamento} 
@@ -1411,10 +1411,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             </div>
 
             {/* Total */}
-            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="pt-6 border-t border-border/40">
               <div className="text-right mb-8">
-                <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total do Pedido</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                <span className="text-xs text-muted-foreground block mb-0.5">Total do Pedido</span>
+                <span className="text-2xl font-bold text-foreground dark:text-gray-100">{formatCurrency(valorTotal)}</span>
               </div>
 
               {/* Contas a pagar geradas para este pedido */}
@@ -1450,7 +1450,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-sm text-gray-400">Salve o pedido primeiro para registrar embarques.</p>
+                <p className="text-sm text-muted-foreground">Salve o pedido primeiro para registrar embarques.</p>
               </div>
             )}
           </TabsContent>
@@ -1461,7 +1461,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               <AbaRecepção pedido={pedidoLogistica || pedido} />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-sm text-gray-400">Salve o pedido primeiro para registrar recebimentos.</p>
+                <p className="text-sm text-muted-foreground">Salve o pedido primeiro para registrar recebimentos.</p>
               </div>
             )}
           </TabsContent>
@@ -1582,45 +1582,45 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
 
        {/* Dialog Novo Fornecedor */}
        <Dialog open={isNovoFornecedorOpen} onOpenChange={setIsNovoFornecedorOpen}>
-         <DialogContent className="max-w-sm bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-2xl">
+         <DialogContent className="max-w-sm bg-card border-0 shadow-2xl rounded-2xl">
            <DialogHeader>
-             <DialogTitle className="text-gray-900 dark:text-white">Novo Fornecedor</DialogTitle>
+             <DialogTitle className="text-foreground">Novo Fornecedor</DialogTitle>
            </DialogHeader>
            <div className="space-y-4">
              <div>
-               <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Nome *</Label>
+               <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Nome *</Label>
                <Input
                  placeholder="Nome do fornecedor"
                  value={novoFornecedor.nome}
                  onChange={e => setNovoFornecedor({...novoFornecedor, nome: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Email</Label>
+                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Email</Label>
                  <Input
                  placeholder="email@fornecedor.com"
                  value={novoFornecedor.email}
                  onChange={e => setNovoFornecedor({...novoFornecedor, email: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Telefone</Label>
+                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Telefone</Label>
                <Input
                  placeholder="(00) 00000-0000"
                  value={novoFornecedor.telefone}
                  onChange={e => setNovoFornecedor({...novoFornecedor, telefone: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
                  />
                  </div>
                  <div>
-                 <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Endereço</Label>
+                 <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Endereço</Label>
                  <Input
                  placeholder="Endereço completo"
                  value={novoFornecedor.endereco}
                  onChange={e => setNovoFornecedor({...novoFornecedor, endereco: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 className="bg-muted/50 border-0 h-12 shadow-sm rounded-xl text-foreground"
                  />
                  </div>
                  </div>

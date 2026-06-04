@@ -717,7 +717,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     toast({
       title: 'Produto similar aplicado',
       description: 'Agora ajuste descrição, modelo, cor, tamanho e demais campos.',
-      className: 'bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200',
+      className: 'bg-white border border-gray-300 dark:bg-muted dark:text-foreground',
     });
   };
 
@@ -1034,7 +1034,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       toast({
         title: "✓ Produto salvo!",
         description: `${formData.nome} foi ${produto?.id ? 'atualizado' : 'criado'} com sucesso.`,
-        className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200",
+        className: "bg-white border border-gray-300 dark:bg-muted dark:text-foreground",
         duration: 3000
       });
 
@@ -1088,16 +1088,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   ]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full overflow-hidden bg-card">
       {/* Header */}
-      <div className="flex-none border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <div className="flex-none border-b border-border/40 bg-card">
         <div className="p-4 md:p-6">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg md:text-xl font-medium text-gray-800 dark:text-gray-200 truncate">
+              <h2 className="text-lg md:text-xl font-medium text-foreground truncate">
                 {produto?.id ? 'Editar:' : 'Novo Produto'}
               </h2>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
+              <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
                 {formData.nome || 'Sem nome'}
               </p>
             </div>
@@ -1122,7 +1122,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 className="h-10 w-10"
                 title="Desfazer (Ctrl+Z)"
               >
-                <Undo2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Undo2 className="w-5 h-5 text-muted-foreground" />
               </Button>
               <Button 
                 variant="ghost" 
@@ -1132,10 +1132,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 className="h-10 w-10"
                 title="Refazer (Ctrl+Y / F4)"
               >
-                <Redo2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Redo2 className="w-5 h-5 text-muted-foreground" />
               </Button>
               <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </Button>
               <Button size="icon" onClick={handleSave} disabled={isSaving} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white h-10 w-10">
                 <Save className="w-5 h-5" />
@@ -1147,21 +1147,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
       {vendasUnitOptions.length > 0 && (
         <div
-          className="flex-none border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-gray-50/95 to-gray-100/60 dark:from-gray-950/80 dark:to-gray-900/50 px-4 md:px-6 py-3"
+          className="flex-none border-b border-border/40 bg-gradient-to-r from-gray-50/95 to-gray-100/60 dark:from-gray-950/80 dark:to-gray-900/50 px-4 md:px-6 py-3"
           title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Estação de venda
               </span>
-              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <span className="text-sm font-semibold text-foreground dark:text-gray-100">
                 {precoCatalogo.sigla}
               </span>
-              <span className="text-xs tabular-nums text-gray-600 dark:text-gray-300">
+              <span className="text-xs tabular-nums text-muted-foreground">
                 R$ {formatarNumero(precoCatalogo.valor)}
               </span>
-              <span className="text-[11px] text-gray-400 dark:text-gray-500 hidden sm:inline max-w-md truncate">
+              <span className="text-[11px] text-muted-foreground hidden sm:inline max-w-md truncate">
                 Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
               </span>
             </div>
@@ -1180,8 +1180,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     title={opt.is_primary ? 'Precificação na unidade base' : `Precificação em ${opt.unidade}`}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                       active
-                        ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500'
+                        ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-foreground'
+                        : 'border-border/40 bg-white text-foreground/90 hover:border-gray-400 dark:border-gray-600 dark:bg-muted dark:text-foreground dark:hover:border-gray-500'
                     }`}
                   >
                     {opt.unidade}
@@ -1193,7 +1193,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 gap-1.5 rounded-xl border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-900"
+                  className="h-9 gap-1.5 rounded-xl border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-background"
                   onClick={() => setUnitSelectorOpen(true)}
                   title="Lista completa com conversão e preço sugerido"
                 >
@@ -1207,26 +1207,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       )}
 
       <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="grid grid-cols-5 w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex-shrink-0">
+        <TabsList className="grid grid-cols-5 w-full bg-transparent border-b border-border/40 rounded-none h-auto p-0 flex-shrink-0">
           <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
-            <Package className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Identificação</span>
+            <Package className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
+            <span className="hidden sm:inline ml-2 text-foreground/90">Identificação</span>
           </TabsTrigger>
           <TabsTrigger value="comercial" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
-            <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Precificação</span>
+            <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
+            <span className="hidden sm:inline ml-2 text-foreground/90">Precificação</span>
           </TabsTrigger>
           <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
-            <Warehouse className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Embalagens e logística</span>
+            <Warehouse className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
+            <span className="hidden sm:inline ml-2 text-foreground/90">Embalagens e logística</span>
           </TabsTrigger>
           <TabsTrigger value="historico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm" disabled={!produto?.id}>
-            <History className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Histórico</span>
+            <History className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
+            <span className="hidden sm:inline ml-2 text-foreground/90">Histórico</span>
           </TabsTrigger>
           <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
-            <Settings className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Avançado</span>
+            <Settings className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
+            <span className="hidden sm:inline ml-2 text-foreground/90">Avançado</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1234,16 +1234,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           {/* ABA IDENTIFICAÇÃO — `descritivo` no estado interno das abas */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
             {!produto?.id && (
-              <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5 shadow-sm space-y-3">
+              <div className="rounded-3xl bg-muted/50/50 p-4 md:p-5 shadow-sm space-y-3">
                 <div className="flex items-center gap-2">
-                  <Copy className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                  <Label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Produto similar</Label>
+                  <Copy className="w-4 h-4 text-muted-foreground" />
+                  <Label className="text-sm font-semibold text-foreground/90">Produto similar</Label>
                 </div>
                 <Input
                   value={similarSearch}
                   onChange={(e) => setSimilarSearch(e.target.value)}
                   placeholder="Buscar produto irmão para usar como base"
-                  className="h-12 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-sm text-sm text-gray-900 dark:text-white"
+                  className="h-12 rounded-2xl border-0 bg-card shadow-sm text-sm text-foreground"
                 />
                 <div className="space-y-2">
                   {produtosSimilaresFiltrados.map((item) => (
@@ -1251,32 +1251,32 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       key={item.id}
                       type="button"
                       onClick={() => applyProdutoSimilar(item)}
-                      className="w-full rounded-2xl bg-white dark:bg-gray-900 px-4 py-3 text-left shadow-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-950"
+                      className="w-full rounded-2xl bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-950"
                     >
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.nome}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
+                      <p className="text-sm font-medium text-foreground">{item.nome}</p>
+                      <p className="text-xs text-muted-foreground">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 items-start p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="w-28 h-28 shrink-0 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+            <div className="flex flex-col sm:flex-row gap-4 items-start p-4 bg-muted/50/50 rounded-lg">
+              <div className="w-28 h-28 shrink-0 bg-white dark:bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                 {formData.imagem_url ? (
                   <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="text-gray-300 dark:text-gray-500 text-xs text-center p-2">Sem imagem</div>
+                  <div className="text-gray-300 dark:text-muted-foreground text-xs text-center p-2">Sem imagem</div>
                 )}
               </div>
               <div className="flex-1 w-full space-y-3">
-                <Label className="text-xs text-gray-600 dark:text-gray-400 block">URL da Imagem</Label>
+                <Label className="text-xs text-muted-foreground block">URL da Imagem</Label>
                 <div className="flex gap-2">
                   <Input 
                     value={formData.imagem_url || ''} 
                     onChange={e => handleChange('imagem_url', e.target.value)} 
                     placeholder="https://..." 
-                    className="flex-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 h-10 text-sm"
+                    className="flex-1 bg-card border-gray-300 dark:border-gray-600 h-10 text-sm"
                   />
                   <div className="relative">
                     <input
@@ -1291,7 +1291,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="h-10 px-4 text-sm border-gray-300 dark:border-gray-600 dark:text-gray-200"
+                      className="h-10 px-4 text-sm border-gray-300 dark:border-gray-600 dark:text-foreground"
                       disabled={isUploading}
                       onClick={() => document.getElementById('image-upload').click()}
                     >
@@ -1304,7 +1304,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Cole a URL ou faça upload de uma imagem do seu computador.
                 </p>
               </div>
@@ -1313,14 +1313,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             {/* Campos Hierárquicos */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-3">
-                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Descrição Hierárquica</Label>
+                <Label className="text-sm font-semibold text-foreground/90">Descrição Hierárquica</Label>
               </div>
 
               {/* Preview do nome gerado */}
               {formData.nome && (
-                <div className="mb-4 px-3 py-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg">
-                  <p className="text-[10px] text-gray-400 uppercase mb-1">Preview da Descrição Completa</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 font-glacial">{formData.nome}</p>
+                <div className="mb-4 px-3 py-2 bg-muted/50/60 rounded-lg">
+                  <p className="text-[10px] text-muted-foreground uppercase mb-1">Preview da Descrição Completa</p>
+                  <p className="text-sm font-medium text-foreground font-glacial">{formData.nome}</p>
                 </div>
               )}
 
@@ -1332,14 +1332,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 { field: 'campo_hierarquico_5', label: 'Campo 5 (Marca / Variante)', placeholder: 'Ex: Knauf, Votorantim' },
               ].map(({ field, label, placeholder }, idx) => (
                 <div key={field} className="grid grid-cols-[20px_1fr] items-center gap-3 py-1">
-                  <span className="text-xs font-bold text-gray-400 dark:text-gray-500 text-center">{idx + 1}</span>
+                  <span className="text-xs font-bold text-muted-foreground text-center">{idx + 1}</span>
                   <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{label}</Label>
+                    <Label className="text-xs text-muted-foreground mb-1 block">{label}</Label>
                     <Input
                       value={formData[field] || ''}
                       onChange={e => handleChange(field, e.target.value)}
                       placeholder={placeholder}
-                      className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                      className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-9 text-sm text-foreground focus:border-gray-500"
                     />
                   </div>
                 </div>
@@ -1348,64 +1348,64 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
             {/* Marca (campo independente) */}
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Marca Oficial (campo independente)</Label>
+              <Label className="text-sm text-muted-foreground mb-2 block">Marca Oficial (campo independente)</Label>
               <Input
                 value={formData.marca || ''}
                 onChange={e => handleChange('marca', e.target.value)}
                 placeholder="Ex: Knauf, Placo, Eternit"
-                className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Código Interno</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Código Interno</Label>
                 <Input 
                   value={formData.codigo_interno} 
                   placeholder="Gerado ao salvar"
                   disabled 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
+                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                 />
               </div>
 
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Código de Barras</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Código de Barras</Label>
                 <Input 
                   value={formData.codigo_barras} 
                   onChange={e => handleChange('codigo_barras', e.target.value)} 
                   placeholder="7891234567890" 
-                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Categoria (opcional)</Label>
+              <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
               <Select value={formData.categoria_id} onValueChange={v => handleChange('categoria_id', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
+                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-foreground">
                   <SelectValue placeholder="Selecione a categoria..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="dark:bg-muted dark:border-border/40">
                   {categorias.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id} className="dark:text-gray-200 dark:hover:bg-gray-700">{cat.nome}</SelectItem>
+                    <SelectItem key={cat.id} value={cat.id} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Fornecedor padrão (opcional)</Label>
+              <Label className="text-sm text-muted-foreground mb-2 block">Fornecedor padrão (opcional)</Label>
               <Select value={formData.fornecedor_padrao_id} onValueChange={v => {
                 const forn = fornecedores.find(f => f.id === v);
                 handleChange('fornecedor_padrao_id', v);
                 handleChange('fornecedor_padrao_codigo', forn?.codigo_interno || '');
               }}>
-                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
+                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-foreground">
                   <SelectValue placeholder="Selecione o fornecedor..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="dark:bg-muted dark:border-border/40">
                   {fornecedores.map(f => (
-                    <SelectItem key={f.id} value={f.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
+                    <SelectItem key={f.id} value={f.id} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                       {f.nome}
                     </SelectItem>
                   ))}
@@ -1415,7 +1415,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm text-gray-600 dark:text-gray-400 block">Tags de Agrupamento</Label>
+                <Label className="text-sm text-muted-foreground block">Tags de Agrupamento</Label>
                 <TagGenerator 
                   produtoNome={formData.nome} 
                   produtoDescricao={formData.descricao}
@@ -1431,17 +1431,17 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                   placeholder="Ex: torneira, banheiro" 
-                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                 />
                 <Button type="button" onClick={handleAddTag} size="sm" variant="ghost" className="h-10 px-3">
-                  <Plus className="w-5 h-5 text-gray-700 dark:text-gray-400" />
+                  <Plus className="w-5 h-5 text-foreground/90 dark:text-muted-foreground" />
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
                 {formData.tags.map(tag => (
-                  <Badge key={tag} className="bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 text-sm py-1 px-3">
+                  <Badge key={tag} className="bg-gray-100 text-foreground/90 border border-gray-300 dark:bg-muted dark:text-foreground/90 dark:border-gray-600 text-sm py-1 px-3">
                     #{tag}
-                    <button onClick={() => handleRemoveTag(tag)} className="ml-2 hover:text-gray-900 dark:hover:text-gray-100">
+                    <button onClick={() => handleRemoveTag(tag)} className="ml-2 hover:text-foreground dark:hover:text-gray-100">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </Badge>
@@ -1454,21 +1454,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="comercial" className="mt-0">
             {false && vendasUnitOptions.length > 0 && (
               <div
-                className="mb-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50/95 to-gray-100/60 dark:from-gray-950/80 dark:to-gray-900/50 px-4 py-3"
+                className="mb-6 rounded-2xl border border-border/40 bg-gradient-to-r from-gray-50/95 to-gray-100/60 dark:from-gray-950/80 dark:to-gray-900/50 px-4 py-3"
                 title="Escolha a embalagem para ver preço e custo escalados — alinha com unidade_vitrine e o catálogo."
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Embalagem
                     </span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <span className="text-sm font-semibold text-foreground dark:text-gray-100">
                       {precoCatalogo.sigla}
                     </span>
-                    <span className="text-xs tabular-nums text-gray-600 dark:text-gray-300">
+                    <span className="text-xs tabular-nums text-muted-foreground">
                       R$ {formatarNumero(precoCatalogo.valor)}
                     </span>
-                    <span className="text-[11px] text-gray-400 dark:text-gray-500 hidden sm:inline max-w-md truncate">
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline max-w-md truncate">
                       Preço e margem na embalagem escolhida; cadastro em base continua por unidade fator 1.
                     </span>
                   </div>
@@ -1487,8 +1487,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                           title={opt.is_primary ? 'Vitrine na unidade base' : `Vitrine em ${opt.unidade}`}
                           className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                             active
-                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500'
+                              ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-foreground'
+                              : 'border-border/40 bg-white text-foreground/90 hover:border-gray-400 dark:border-gray-600 dark:bg-muted dark:text-foreground dark:hover:border-gray-500'
                           }`}
                         >
                           {opt.unidade}
@@ -1500,7 +1500,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 gap-1.5 rounded-xl border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-900"
+                        className="h-9 gap-1.5 rounded-xl border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-background"
                         onClick={() => setUnitSelectorOpen(true)}
                         title="Lista completa com conversão e preço sugerido"
                       >
@@ -1514,26 +1514,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             )}
 
             {/* KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-gray-200 dark:border-gray-700">
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-border/40">
+              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+                <div className="text-xs text-muted-foreground uppercase mb-1">
                   Custo Total{custoCatalogoScale !== 1 && precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
                 </div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCatalogo)}</div>
+                <div className="text-lg font-semibold text-foreground">R$ {formatarNumero(precoCustoCatalogo)}</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">
+              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+                <div className="text-xs text-muted-foreground uppercase mb-1">
                   Preço de venda{precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
                 </div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCatalogo.valor)}</div>
+                <div className="text-lg font-semibold text-foreground">R$ {formatarNumero(precoCatalogo.valor)}</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Markup</div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">{formatarNumero(markupCatalogo)}%</div>
+              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+                <div className="text-xs text-muted-foreground uppercase mb-1">Markup</div>
+                <div className="text-lg font-semibold text-foreground">{formatarNumero(markupCatalogo)}%</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Margem</div>
-                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">{formatarNumero(margemContribuicao)}%</div>
+              <div className="text-center p-4 bg-muted/50/50 rounded-lg">
+                <div className="text-xs text-muted-foreground uppercase mb-1">Margem</div>
+                <div className="text-lg font-semibold text-foreground">{formatarNumero(margemContribuicao)}%</div>
               </div>
             </div>
 
@@ -1542,12 +1542,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               {/* Composição de Custos - direto dos campos do produto */}
               <div className="relative">
                 <div className="flex items-center gap-2 mb-2">
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Composição de Custos</h3>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-base font-semibold text-foreground">Composição de Custos</h3>
                 </div>
                 {custoCatalogoScale !== 1 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
-                    Valores por embalagem <strong className="text-gray-700 dark:text-gray-300">{precoCatalogo.sigla}</strong>
+                  <p className="text-xs text-muted-foreground mb-4 max-w-xl">
+                    Valores por embalagem <strong className="text-foreground/90">{precoCatalogo.sigla}</strong>
                     {' '}(×{formatarNumero(custoCatalogoScale)} vs. base {formData.unidade_principal || 'UN'}). Na base de dados continuam por unidade base.
                   </p>
                 )}
@@ -1564,9 +1564,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     const baseVal = parseFloat(formData[field]) || 0;
                     const displayVal = baseVal * sc;
                     return (
-                      <div key={field} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          <span className="text-gray-400">{icon}</span>
+                      <div key={field} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-border/40 last:border-0">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="text-muted-foreground">{icon}</span>
                           <span className="whitespace-nowrap">{label}</span>
                         </div>
                         <div className="flex items-center justify-end gap-2">
@@ -1576,11 +1576,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                             dataIndex={field}
                             navIndex={custoIdx}
                             placeholder="0,00"
-                            className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
+                            className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-gray-500 font-glacial"
                           />
-                          <span className="text-xs text-gray-400 w-8">(R$)</span>
+                          <span className="text-xs text-muted-foreground w-8">(R$)</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap">
+                        <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap">
                           {isNegativo ? '-' : ''}R$ {formatarNumero(displayVal)}
                         </span>
                       </div>
@@ -1589,8 +1589,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
                   {/* TOTAL */}
                   <div className="flex items-center justify-between pt-6 mt-4 border-t-2 border-gray-300 dark:border-gray-600">
-                    <span className="text-base font-bold text-gray-800 dark:text-gray-200">CUSTO TOTAL</span>
-                    <span className="text-xl font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCatalogo)}</span>
+                    <span className="text-base font-bold text-foreground">CUSTO TOTAL</span>
+                    <span className="text-xl font-bold text-foreground">R$ {formatarNumero(precoCustoCatalogo)}</span>
                   </div>
                 </div>
               </div>
@@ -1598,14 +1598,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               {/* Preço de venda */}
               <div className="relative">
                 <div className="flex items-center gap-2 mb-4">
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preço de venda</h3>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-base font-semibold text-foreground">Preço de venda</h3>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <span className="text-gray-400"><DollarSign className="w-3.5 h-3.5" /></span>
+                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-border/40">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="text-muted-foreground"><DollarSign className="w-3.5 h-3.5" /></span>
                       <span className="whitespace-nowrap">
                         Preço de venda{precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
                       </span>
@@ -1616,18 +1616,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         onChange={aplicarPrecoVendaCatalogo}
                         dataIndex="preco_venda"
                         placeholder="0,00"
-                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
+                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-gray-500 font-glacial"
                       />
-                      <span className="text-xs text-gray-400 w-8">(R$)</span>
+                      <span className="text-xs text-muted-foreground w-8">(R$)</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap invisible">
                       R$ 0,00
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <span className="text-gray-400"><TrendingUp className="w-3.5 h-3.5" /></span>
+                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-border/40">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="text-muted-foreground"><TrendingUp className="w-3.5 h-3.5" /></span>
                       <span className="whitespace-nowrap">Markup</span>
                     </div>
                     <div className="flex items-center justify-end gap-2">
@@ -1640,18 +1640,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         dataIndex="markup"
                         placeholder="0,00"
                         isPercentage={true}
-                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-20 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
+                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-20 text-right text-foreground focus:border-gray-500 font-glacial"
                       />
-                      <span className="text-xs text-gray-400 w-8">%</span>
+                      <span className="text-xs text-muted-foreground w-8">%</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap invisible">
                       R$ 0,00
                     </span>
                   </div>
 
                   <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <span className="text-gray-400"><Target className="w-3.5 h-3.5" /></span>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="text-muted-foreground"><Target className="w-3.5 h-3.5" /></span>
                       <span className="whitespace-nowrap">Margem de Contribuição</span>
                     </div>
                     <div className="flex items-center justify-end gap-2">
@@ -1659,11 +1659,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         type="text"
                         value={formatarNumero(margemContribuicao)}
                         disabled
-                        className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none px-0 h-8 text-sm w-20 text-right text-gray-500 dark:text-gray-400 tabular-nums font-glacial"
+                        className="bg-muted/50 border-0 border-b border-border/40 rounded-none px-0 h-8 text-sm w-20 text-right text-muted-foreground tabular-nums font-glacial"
                       />
-                      <span className="text-xs text-gray-400 w-8">%</span>
+                      <span className="text-xs text-muted-foreground w-8">%</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap invisible">
                       R$ 0,00
                     </span>
                   </div>
@@ -1676,58 +1676,58 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           <TabsContent value="logistico" className="space-y-6 mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Dimensões (AxLxP cm)</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Dimensões (AxLxP cm)</Label>
                 <Input
                   value={formData.dimensoes_cm}
                   onChange={(e) => handleChange('dimensoes_cm', e.target.value)}
                   placeholder="30x20x15"
-                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                 />
               </div>
 
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Volume (L)</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Volume (L)</Label>
                 <Input
                   value={formData.volume_cm3 ? formatarNumero(formData.volume_cm3 / 1000) : '0,00'}
                   disabled
                   placeholder="Calculado"
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
+                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                 />
               </div>
 
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Peso (kg)</Label>
                 <Input
                   type="number"
                   step="0.001"
                   value={formData.peso_kg}
                   onChange={(e) => handleChange('peso_kg', parseFloat(e.target.value) || 0)}
                   placeholder="0,000"
-                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                 />
               </div>
 
               <div>
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Tempo Reposição (dias)</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Tempo Reposição (dias)</Label>
                 <Input
                   type="number"
                   value={formData.tempo_reposicao_dias}
                   onChange={(e) => handleChange('tempo_reposicao_dias', parseInt(e.target.value, 10) || 0)}
                   placeholder="0"
-                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade base (fator 1)</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Unidade base (fator 1)</Label>
                 <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                   <Input
                     value={formData.unidade_principal}
                     onChange={(e) => handleChange('unidade_principal', e.target.value.toUpperCase())}
                     placeholder="UN, M2, KG…"
-                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200 flex-1 min-w-0"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground flex-1 min-w-0"
                   />
-                  <div className="flex items-center gap-2 shrink-0 pb-1 rounded-full bg-gray-100/90 dark:bg-gray-900/50 px-3 py-1.5 border border-gray-200/80 dark:border-gray-600/80">
+                  <div className="flex items-center gap-2 shrink-0 pb-1 rounded-full bg-gray-100/90 dark:bg-background/50 px-3 py-1.5 border border-border/40/80 dark:border-gray-600/80">
                     <Switch
                       id="catalogo-unidade-principal"
                       className="scale-90"
@@ -1747,31 +1747,31 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     />
                     <Label
                       htmlFor="catalogo-unidade-principal"
-                      className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer whitespace-nowrap select-none"
+                      className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap select-none"
                     >
                       Vitrine
                     </Label>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
-                  Coluna <code className="text-[10px] rounded bg-gray-100 dark:bg-gray-900 px-1 py-0.5">unidade_principal</code>
+                <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+                  Coluna <code className="text-[10px] rounded bg-gray-100 dark:bg-background px-1 py-0.5">unidade_principal</code>
                   {' '}— custo, preço padrão e stock contabilizados na base (eixo fator&nbsp;1).
                 </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5 space-y-4">
+            <div className="rounded-2xl border border-border/40 bg-muted/50/50 p-4 md:p-5 space-y-4">
               <div>
                 {/* Princípio vitrine (truth only): formulário = tradução da escolha gravada; fallbacks visíveis. */}
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Embalagens e unidades de venda</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
+                <p className="text-xs text-muted-foreground mt-1 max-w-xl">
                   Alterações ficam no formulário até guardar o produto (ícone de disquete no topo).
                   «Vitrine» define a sigla de exibição em listagens e fluxos de venda (uma de cada vez: base ou embalagem).
-                  Ao salvar, o espelho canónico <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidades[]</code> valida o pacote sem alterar os nomes de colunas enviados ao Base44.
+                  Ao salvar, o espelho canónico <code className="text-[10px] rounded bg-white/80 dark:bg-background/80 px-1 py-0.5">unidades[]</code> valida o pacote sem alterar os nomes de colunas enviados ao Base44.
                 </p>
               </div>
 
-              <div className="flex items-start gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div className="flex items-start gap-3 border-t border-border/40 pt-4">
                 <Checkbox
                   id="unidade_show_ativa"
                   checked={formData.unidade_show_ativa !== false}
@@ -1779,10 +1779,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   className="mt-0.5"
                 />
                 <div>
-                  <Label htmlFor="unidade_show_ativa" className="text-sm text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="unidade_show_ativa" className="text-sm text-foreground/90">
                     Usar unidade de vitrine no catálogo
                   </Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Coluna <code className="text-[10px]">unidade_show_ativa</code>. Desligado: listagens usam só a base (fator&nbsp;1), sem converter para a vitrine.
                   </p>
                 </div>
@@ -1804,12 +1804,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 }}
               />
 
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+              <div className="border-t border-border/40 pt-4 space-y-3">
                 <div>
-                  <Label className="text-sm text-gray-700 dark:text-gray-300">Unidade de vitrine (lista)</Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
+                  <Label className="text-sm text-foreground/90">Unidade de vitrine (lista)</Label>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xl">
                     Alternativa aos interruptores «Vitrine»; grava a coluna{' '}
-                    <code className="text-[10px] rounded bg-white/80 dark:bg-gray-900/80 px-1 py-0.5">unidade_vitrine</code>
+                    <code className="text-[10px] rounded bg-white/80 dark:bg-background/80 px-1 py-0.5">unidade_vitrine</code>
                     {' '}(sigla da embalagem; vazio = unidade base).
                   </p>
                 </div>
@@ -1818,7 +1818,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   onValueChange={(v) => applyCommercialUnitSelection(v)}
                 >
                   <SelectTrigger
-                    className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl max-w-md h-11"
+                    className="bg-muted/40 dark:bg-gray-950 border border-border/40 rounded-xl max-w-md h-11"
                     disabled={formData.unidade_show_ativa === false}
                   >
                     <SelectValue placeholder="Selecione a sigla da vitrine" />
@@ -1847,15 +1847,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   </p>
                 ) : null}
                 {formData.unidade_show_ativa !== false && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                  <div className="text-xs text-muted-foreground space-y-1">
                     <p>
                       Pré-visualização: base{' '}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.base}</span>
+                      <span className="font-medium text-foreground/90">{catalogUnitsPreview.base}</span>
                       {catalogUnitsPreview.base !== catalogUnitsPreview.comercial && (
                         <>
                           {' · '}
                           vitrine{' '}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">{catalogUnitsPreview.comercial}</span>
+                          <span className="font-medium text-foreground/90">{catalogUnitsPreview.comercial}</span>
                         </>
                       )}
                     </p>
@@ -1870,54 +1870,54 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 )}
               </div>
 
-              <p className="text-xs text-gray-500 dark:text-gray-400 px-1 border-t border-gray-200 dark:border-gray-700 pt-3">
+              <p className="text-xs text-muted-foreground px-1 border-t border-border/40 pt-3">
                 Sem embalagem extra no catálogo: o sistema usa a unidade base. A lista de siglas é a base + embalagens com sigla preenchida.
               </p>
             </div>
 
-            <div className="border-t pt-6 dark:border-gray-700">
-              <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Níveis de Estoque</h3>
+            <div className="border-t pt-6 dark:border-border/40">
+              <h3 className="text-base font-semibold mb-4 text-foreground">Níveis de Estoque</h3>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Mínimo</Label>
+                  <Label className="text-sm text-muted-foreground mb-2 block">Mínimo</Label>
                   <Input
                     type="number"
                     step="0.0001"
                     value={formData.estoque_minimo}
                     onChange={(e) => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
-                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Ideal</Label>
+                  <Label className="text-sm text-muted-foreground mb-2 block">Ideal</Label>
                   <Input
                     type="number"
                     step="0.0001"
                     value={formData.estoque_ideal}
                     onChange={(e) => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
-                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Máximo</Label>
+                  <Label className="text-sm text-muted-foreground mb-2 block">Máximo</Label>
                   <Input
                     type="number"
                     step="0.0001"
                     value={formData.estoque_maximo}
                     onChange={(e) => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
-                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-foreground"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Atual (sistema)</Label>
+                  <Label className="text-sm text-muted-foreground mb-2 block">Atual (sistema)</Label>
                   <Input
                     type="number"
                     value={formData.estoque_atual}
                     disabled
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
+                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -1938,14 +1938,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           {/* ABA AVANÇADO — tipo, PDV, rastreio */}
           <TabsContent value="sistema" className="space-y-6 mt-0">
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Tipo de Produto *</Label>
+              <Label className="text-sm text-muted-foreground mb-2 block">Tipo de Produto *</Label>
               <Select value={formData.tipo} onValueChange={v => handleChange('tipo', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
+                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                  <SelectItem value="Produto" className="dark:text-gray-200 dark:hover:bg-gray-700">Produto (0)</SelectItem>
-                  <SelectItem value="Serviço" className="dark:text-gray-200 dark:hover:bg-gray-700">Serviço (1)</SelectItem>
+                <SelectContent className="dark:bg-muted dark:border-border/40">
+                  <SelectItem value="Produto" className="dark:text-foreground dark:hover:bg-primary/90">Produto (0)</SelectItem>
+                  <SelectItem value="Serviço" className="dark:text-foreground dark:hover:bg-primary/90">Serviço (1)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1957,12 +1957,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 id="ativo"
                 className="dark:border-gray-500 h-5 w-5"
               />
-              <Label htmlFor="ativo" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Produto Ativo</Label>
+              <Label htmlFor="ativo" className="cursor-pointer text-sm text-foreground/90">Produto Ativo</Label>
             </div>
 
             {/* Preço Livre e Casas Decimais */}
-            <div className="border-t pt-6 dark:border-gray-700">
-              <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Comportamento no PDV</h3>
+            <div className="border-t pt-6 dark:border-border/40">
+              <h3 className="text-base font-semibold mb-4 text-foreground">Comportamento no PDV</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Checkbox
@@ -1972,13 +1972,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     className="dark:border-gray-500 h-5 w-5"
                   />
                   <div>
-                    <Label htmlFor="preco_livre" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Preço Livre</Label>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Permite ao vendedor alterar o preço unitário no PDV (respeitando o custo mínimo)</p>
+                    <Label htmlFor="preco_livre" className="cursor-pointer text-sm text-foreground/90">Preço Livre</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Permite ao vendedor alterar o preço unitário no PDV (respeitando o custo mínimo)</p>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Casas Decimais na Quantidade</Label>
-                  <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden w-fit">
+                  <Label className="text-sm text-muted-foreground mb-2 block">Casas Decimais na Quantidade</Label>
+                  <div className="flex items-center gap-1 bg-muted/50 rounded-lg border border-border/40 overflow-hidden w-fit">
                     {[0, 1, 2, 3].map(n => (
                       <button
                         key={n}
@@ -1986,23 +1986,23 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         onClick={() => handleChange('casas_decimais', n)}
                         className={`w-10 h-9 text-sm font-medium transition-colors ${
                           (formData.casas_decimais ?? 0) === n
-                            ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900'
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground'
+                            : 'text-muted-foreground hover:bg-muted'
                         }`}
                       >
                         {n}
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Exemplo: {(formData.casas_decimais ?? 0) === 0 ? '1, 2, 10' : (formData.casas_decimais ?? 0) === 1 ? '1,5 · 2,0' : (formData.casas_decimais ?? 0) === 2 ? '1,50 · 2,75' : '1,500 · 2,750'}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="border-t pt-6 dark:border-gray-700">
-              <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Rastreabilidade</h3>
+            <div className="border-t pt-6 dark:border-border/40">
+              <h3 className="text-base font-semibold mb-4 text-foreground">Rastreabilidade</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Checkbox
@@ -2011,7 +2011,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     id="serial"
                     className="dark:border-gray-500 h-5 w-5"
                   />
-                  <Label htmlFor="serial" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Número de Série</Label>
+                  <Label htmlFor="serial" className="cursor-pointer text-sm text-foreground/90">Controla Número de Série</Label>
                 </div>
                 <div className="flex items-center gap-3">
                   <Checkbox
@@ -2020,7 +2020,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     id="lote"
                     className="dark:border-gray-500 h-5 w-5"
                   />
-                  <Label htmlFor="lote" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Lote</Label>
+                  <Label htmlFor="lote" className="cursor-pointer text-sm text-foreground/90">Controla Lote</Label>
                 </div>
                 <div className="flex items-center gap-3">
                   <Checkbox
@@ -2029,7 +2029,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     id="validade"
                     className="dark:border-gray-500 h-5 w-5"
                   />
-                  <Label htmlFor="validade" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Validade</Label>
+                  <Label htmlFor="validade" className="cursor-pointer text-sm text-foreground/90">Controla Validade</Label>
                 </div>
               </div>
             </div>

@@ -775,8 +775,8 @@ export default function PedidosCompraPage() {
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
-          <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Embarques</p>
-          <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xl font-medium text-foreground font-glacial">Embarques</p>
+          <p className="text-xs text-muted-foreground">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
           <p className="text-xs text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
         <PedidosCompraOrganizer

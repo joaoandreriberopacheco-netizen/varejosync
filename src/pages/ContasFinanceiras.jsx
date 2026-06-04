@@ -86,18 +86,18 @@ export default function ContasFinanceirasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
+    <div className="min-h-screen bg-background pb-20 md:pb-6">
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+            <h1 className="text-2xl font-semibold text-foreground font-glacial">
               Contas Financeiras
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Saldo total: {formatCurrency(saldoTotal)}
             </p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)} className="bg-gray-900 dark:bg-white dark:text-gray-900 gap-2 rounded-2xl">
+          <Button onClick={() => setIsDialogOpen(true)} className="bg-gray-900 dark:bg-white dark:text-foreground gap-2 rounded-2xl">
             <PlusCircle className="w-4 h-4" />
             Nova Conta
           </Button>
@@ -112,25 +112,25 @@ export default function ContasFinanceirasPage() {
             return (
               <div
                 key={account.id}
-                className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm overflow-hidden border-l-4"
+                className="bg-card rounded-3xl shadow-sm overflow-hidden border-l-4"
                 style={{ borderLeftColor: account.cor || '#10B981' }}
               >
                 <div className="p-5 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                      <div className="w-10 h-10 rounded-2xl bg-muted/40 dark:bg-muted flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">{account.nome}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{account.tipo}</p>
+                        <p className="font-semibold text-foreground">{account.nome}</p>
+                        <p className="text-xs text-muted-foreground">{account.tipo}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo Atual</p>
-                    <p className={`text-2xl font-bold font-glacial ${isNegativo ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
+                    <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
+                    <p className={`text-2xl font-bold font-glacial ${isNegativo ? 'text-red-600' : 'text-foreground'}`}>
                       {formatCurrency(saldo)}
                     </p>
                   </div>
@@ -150,16 +150,16 @@ export default function ContasFinanceirasPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 text-gray-700 dark:text-gray-300 text-sm"
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-muted/40 dark:bg-muted hover:bg-gray-100 text-foreground/90 text-sm"
                     >
                       <Eye className="w-4 h-4" />
                       Extrato
                     </button>
                     <button
                       onClick={() => { setSelectedAccount(account); setFormData(account); setIsDialogOpen(true); }}
-                      className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 flex items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-muted/40 dark:bg-muted hover:bg-gray-100 flex items-center justify-center"
                     >
-                      <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <Edit className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </div>
                 </div>
@@ -169,7 +169,7 @@ export default function ContasFinanceirasPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="dark:bg-gray-800">
+          <DialogContent className="dark:bg-muted">
             <DialogHeader>
               <DialogTitle>{selectedAccount ? 'Editar' : 'Nova'} Conta</DialogTitle>
             </DialogHeader>

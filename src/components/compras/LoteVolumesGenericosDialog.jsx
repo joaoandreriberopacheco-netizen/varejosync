@@ -62,58 +62,58 @@ export default function LoteVolumesGenericosDialog({ isOpen, onClose, manifestos
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white dark:bg-gray-800 border-0 rounded-3xl shadow-lg">
+      <DialogContent className="max-w-md bg-card border-0 rounded-3xl shadow-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
-            <Boxes className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          <DialogTitle className="flex items-center gap-2 text-foreground dark:text-gray-100">
+            <Boxes className="w-5 h-5 text-foreground/90" />
             Criar volumes genéricos em lote
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-2xl bg-gray-100 dark:bg-gray-700/70 p-3 text-sm text-gray-600 dark:text-gray-300">
+          <div className="rounded-2xl bg-muted/70 p-3 text-sm text-muted-foreground">
             {manifestos.length} manifesto(s) serão atualizados.
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-gray-500 dark:text-gray-400">Descrição</Label>
+            <Label className="text-xs text-muted-foreground">Descrição</Label>
             <Input
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Ex: Volume Genérico"
-              className="h-11 rounded-2xl border-0 bg-gray-100 dark:bg-gray-700/70 shadow-sm"
+              className="h-11 rounded-2xl border-0 bg-muted/70 shadow-sm"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs text-gray-500 dark:text-gray-400">Quantidade por manifesto</Label>
+              <Label className="text-xs text-muted-foreground">Quantidade por manifesto</Label>
               <Input
                 type="number"
                 value={quantidadePorManifesto}
                 onChange={(e) => setQuantidadePorManifesto(e.target.value)}
-                className="h-11 rounded-2xl border-0 bg-gray-100 dark:bg-gray-700/70 shadow-sm"
+                className="h-11 rounded-2xl border-0 bg-muted/70 shadow-sm"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-gray-500 dark:text-gray-400">Peso (kg) opcional</Label>
+              <Label className="text-xs text-muted-foreground">Peso (kg) opcional</Label>
               <Input
                 type="number"
                 step="0.01"
                 value={pesoPorManifesto}
                 onChange={(e) => setPesoPorManifesto(e.target.value)}
                 placeholder="Ex: 12.5"
-                className="h-11 rounded-2xl border-0 bg-gray-100 dark:bg-gray-700/70 shadow-sm"
+                className="h-11 rounded-2xl border-0 bg-muted/70 shadow-sm"
               />
             </div>
           </div>
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={saving} className="border-0 bg-gray-100 dark:bg-gray-700 rounded-2xl shadow-sm">
+          <Button variant="outline" onClick={onClose} disabled={saving} className="border-0 bg-muted rounded-2xl shadow-sm">
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={saving || manifestos.length === 0} className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 rounded-2xl shadow-sm gap-2">
+          <Button onClick={handleConfirm} disabled={saving || manifestos.length === 0} className="bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-foreground rounded-2xl shadow-sm gap-2">
             <Package2 className="w-4 h-4" />
             {saving ? 'Criando...' : 'Criar em lote'}
           </Button>

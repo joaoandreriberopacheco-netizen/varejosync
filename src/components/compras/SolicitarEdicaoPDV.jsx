@@ -77,27 +77,27 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
 
-      <div className="relative w-full sm:max-w-md bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full sm:max-w-md bg-card rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border/40">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
               <Wrench className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-mono uppercase tracking-wider">{pedido?.numero}</p>
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Solicitar Reabertura</h2>
+              <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">{pedido?.numero}</p>
+              <h2 className="text-sm font-semibold text-foreground">Solicitar Reabertura</h2>
             </div>
           </div>
-          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800">
-            <X className="w-4 h-4 text-gray-400" />
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted">
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         {done ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <CheckCircle className="w-12 h-12 text-green-500" />
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-muted-foreground">
               {isAdmin ? 'Pedido reaberto!' : 'Solicitação enviada!'}
             </p>
           </div>
@@ -115,11 +115,11 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
 
             {/* Campo de motivo — estilo PDV */}
             <div>
-              <label className="text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-semibold block mb-2">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold block mb-2">
                 Motivo *
               </label>
               <textarea
-                className="w-full bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                className="w-full bg-muted/50 rounded-xl px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
                 rows={4}
                 placeholder={isAdmin
                   ? 'Ex: Correção de valores negociados com fornecedor...'
@@ -133,7 +133,7 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium"
+                className="flex-1 h-12 rounded-xl bg-muted text-muted-foreground text-sm font-medium"
               >
                 Cancelar
               </button>
@@ -150,7 +150,7 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
                 <button
                   onClick={handleEnviar}
                   disabled={!motivo.trim() || loading}
-                  className="flex-1 h-12 rounded-xl bg-gray-900 dark:bg-gray-700 text-white text-sm font-semibold disabled:opacity-40"
+                  className="flex-1 h-12 rounded-xl bg-gray-900 dark:bg-muted text-white text-sm font-semibold disabled:opacity-40"
                 >
                   {loading ? 'Enviando...' : 'Solicitar'}
                 </button>

@@ -42,24 +42,24 @@ function escapeHtml(value) {
 
 function KpiCard({ label, value, tone = 'default' }) {
   const toneMap = {
-    default: `${brandSurface.card} text-gray-900 dark:text-white`,
-    danger: `${brandSurface.card} text-gray-900 dark:text-white`,
-    success: `${brandSurface.card} text-gray-900 dark:text-white`,
-    muted: `${brandSurface.card} text-gray-900 dark:text-white`,
+    default: `${brandSurface.card} text-foreground`,
+    danger: `${brandSurface.card} text-foreground`,
+    success: `${brandSurface.card} text-foreground`,
+    muted: `${brandSurface.card} text-foreground`,
   };
 
   const labelToneMap = {
-    default: 'text-gray-500 dark:text-muted-foreground',
+    default: 'text-muted-foreground dark:text-muted-foreground',
     success: 'text-emerald-700/80 dark:text-emerald-300/90',
     danger: 'text-red-700/80 dark:text-red-300/90',
-    muted: 'text-gray-500 dark:text-muted-foreground',
+    muted: 'text-muted-foreground dark:text-muted-foreground',
   };
 
   const iconToneMap = {
-    default: 'text-gray-500 dark:text-muted-foreground',
+    default: 'text-muted-foreground dark:text-muted-foreground',
     success: 'text-emerald-700/80 dark:text-emerald-300/90',
     danger: 'text-red-700/80 dark:text-red-300/90',
-    muted: 'text-gray-500 dark:text-muted-foreground',
+    muted: 'text-muted-foreground dark:text-muted-foreground',
   };
 
   const Icon = {
@@ -102,7 +102,7 @@ function CmvQuickToggle({ checked, onChange }) {
 
 function FilterChip({ active, onClick, children, tone = 'default' }) {
   const activeStyles = {
-    default: 'bg-gray-900 text-white dark:bg-white dark:text-gray-900',
+    default: 'bg-gray-900 text-white dark:bg-white dark:text-foreground',
     success: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
     danger: 'bg-red-600 text-white dark:bg-red-500 dark:text-white',
   };
@@ -114,7 +114,7 @@ function FilterChip({ active, onClick, children, tone = 'default' }) {
       className={`h-9 px-3 rounded-2xl text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
         active
           ? activeStyles[tone]
-          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+          : 'bg-gray-100 text-muted-foreground dark:bg-muted dark:text-foreground/90'
       }`}
     >
       {children}
@@ -137,7 +137,7 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
       ? 'w-4 h-4 text-pink-500 shrink-0'
       : hasBoleto
         ? 'w-4 h-4 text-lime-500 shrink-0'
-        : 'w-4 h-4 text-gray-400 shrink-0';
+        : 'w-4 h-4 text-muted-foreground shrink-0';
   const ehCmv = lancamentoEhCmv(conta);
   const ehFrete = lancamentoEhFreteItinerario(conta);
 
@@ -159,16 +159,16 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
             <div className="mb-1.5 flex flex-wrap items-center gap-1.5 md:mb-2 md:gap-2">
               {modoSelecao && (
                 <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-200 dark:border-gray-600 ${
-                    selecionado ? 'border-emerald-500 bg-emerald-500 text-white' : 'bg-white dark:bg-gray-900'
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-border/40 ${
+                    selecionado ? 'border-emerald-500 bg-emerald-500 text-white' : 'bg-card'
                   }`}
                 >
                   {selecionado ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
                 </span>
               )}
               {isPaid ? <CheckCircle2 className={iconClass} /> : isOverdue ? <CircleAlert className={iconClass} /> : <Wallet className={iconClass} />}
-              <p className="line-clamp-2 text-[14px] font-semibold text-gray-900 dark:text-white md:text-[15px]">{conta.descricao}</p>
-              <Paperclip className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-muted-foreground md:h-4 md:w-4" />
+              <p className="line-clamp-2 text-[14px] font-semibold text-foreground md:text-[15px]">{conta.descricao}</p>
+              <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground dark:text-muted-foreground md:h-4 md:w-4" />
               {ehFrete && (
                 <span className="inline-flex items-center gap-0.5 rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-900 dark:bg-sky-950/50 dark:text-sky-200">
                   <Anchor className="h-3 w-3" /> Frete
@@ -188,10 +188,10 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
                 </span>
               )}
             </div>
-            <p className="line-clamp-1 text-[11px] text-gray-500 dark:text-muted-foreground md:text-xs">
+            <p className="line-clamp-1 text-[11px] text-muted-foreground dark:text-muted-foreground md:text-xs">
               {conta.terceiro_nome || 'Sem favorecido'} · {conta.categoria || 'Sem categoria'}
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-muted-foreground md:mt-3 md:gap-2 md:text-xs">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground dark:text-muted-foreground md:mt-3 md:gap-2 md:text-xs">
               <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-background/80 dark:ring-1 dark:ring-border">
                 <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5" /> {formatarSoData(conta.data_vencimento)}
               </span>
@@ -203,7 +203,7 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
                       ? 'bg-pink-50 text-pink-800 dark:bg-red-950/35 dark:text-red-200'
                       : hasBoleto
                         ? 'bg-lime-50 text-lime-800 dark:bg-lime-950/30 dark:text-lime-200'
-                        : 'bg-white text-gray-600 dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                        : 'bg-white text-muted-foreground dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
                 }`}
               >
                 {isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Atualizado' : 'Pendente'}
@@ -211,8 +211,8 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
             </div>
           </div>
           <div className="shrink-0 pl-1 text-right md:pl-2">
-            <p className="text-[10px] text-gray-400 dark:text-muted-foreground md:text-xs">Valor</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-white md:text-lg">{formatCurrency(conta.valor)}</p>
+            <p className="text-[10px] text-muted-foreground dark:text-muted-foreground md:text-xs">Valor</p>
+            <p className="text-base font-semibold text-foreground md:text-lg">{formatCurrency(conta.valor)}</p>
           </div>
         </div>
       </div>
@@ -660,15 +660,15 @@ export default function AgefinConsulta() {
         <div className={`rounded-[24px] p-4 md:rounded-[28px] md:p-5 ${brandSurface.card}`}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Consulta financeira</p>
-              <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white font-glacial">Agefin</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-[0.18em]">Consulta financeira</p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-foreground font-glacial">Agefin</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Contas do mês por vencimento (padrão). Agrupe pelo ícone; toque em &quot;Somar&quot; para escolher contas e ver o total.
               </p>
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 px-3 py-2 md:max-w-sm">
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-muted/50/60 px-3 py-2 md:max-w-sm">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-800 dark:text-gray-200">CMV na lista</p>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Desligue para ocultar sem abrir filtros</p>
+                  <p className="text-xs font-medium text-foreground">CMV na lista</p>
+                  <p className="text-[11px] text-muted-foreground">Desligue para ocultar sem abrir filtros</p>
                 </div>
                 <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
               </div>
@@ -685,30 +685,30 @@ export default function AgefinConsulta() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setModoSelecao((v) => !v)}
-                className={`h-10 gap-1.5 rounded-2xl px-3 text-xs font-medium ${modoSelecao ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
+                className={`h-10 gap-1.5 rounded-2xl px-3 text-xs font-medium ${modoSelecao ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' : 'bg-muted text-foreground/90'}`}
               >
                 <Calculator className="h-4 w-4" />
                 {modoSelecao ? 'Somando' : 'Somar'}
               </Button>
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                    <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-2xl bg-muted">
+                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                     {hasActiveFilters && (
                       <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-gray-900" aria-hidden />
                     )}
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent className="border-0 rounded-t-[32px] bg-white dark:bg-gray-900 px-4 pb-6">
+                <DrawerContent className="border-0 rounded-t-[32px] bg-card px-4 pb-6">
                   <DrawerHeader className="px-0 text-left">
-                    <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
-                    <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">
+                    <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
+                    <DrawerDescription className="text-sm text-muted-foreground">
                       Ajuste a lista do mês selecionado. Toque fora ou arraste para fechar.
                     </DrawerDescription>
                   </DrawerHeader>
                   <div className="space-y-5 px-0 max-h-[65vh] overflow-y-auto">
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Pagamento</p>
+                      <p className="text-xs text-muted-foreground mb-2">Pagamento</p>
                       <div className="flex flex-wrap gap-2">
                         <FilterChip active={pagamentoFilter === 'todos'} onClick={() => setPagamentoFilter('todos')}>Todos</FilterChip>
                         <FilterChip active={pagamentoFilter === 'pagos'} onClick={() => setPagamentoFilter('pagos')} tone="success">Pagos</FilterChip>
@@ -716,7 +716,7 @@ export default function AgefinConsulta() {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Prazo (vencimento)</p>
+                      <p className="text-xs text-muted-foreground mb-2">Prazo (vencimento)</p>
                       <div className="flex flex-wrap gap-2">
                         <FilterChip active={prazoFilter === 'todos'} onClick={() => setPrazoFilter('todos')}>Todos</FilterChip>
                         <FilterChip active={prazoFilter === 'vencidas'} onClick={() => setPrazoFilter('vencidas')} tone="danger">Vencidas</FilterChip>
@@ -724,7 +724,7 @@ export default function AgefinConsulta() {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Tipo</p>
+                      <p className="text-xs text-muted-foreground mb-2">Tipo</p>
                       <div className="flex flex-wrap gap-2">
                         <FilterChip active={cmvFilter === 'todos'} onClick={() => setCmvFilter('todos')}>Todos</FilterChip>
                         <FilterChip active={cmvFilter === 'cmv'} onClick={() => setCmvFilter('cmv')}>CMV</FilterChip>
@@ -732,36 +732,36 @@ export default function AgefinConsulta() {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Itinerário / fretes</p>
+                      <p className="text-xs text-muted-foreground mb-2">Itinerário / fretes</p>
                       <div className="flex flex-wrap gap-2">
                         <FilterChip active={freteFilter === 'todos'} onClick={() => setFreteFilter('todos')}>Todos</FilterChip>
                         <FilterChip active={freteFilter === 'fretes'} onClick={() => setFreteFilter('fretes')}>Fretes</FilterChip>
                         <FilterChip active={freteFilter === 'sem_fretes'} onClick={() => setFreteFilter('sem_fretes')}>Sem fretes</FilterChip>
                       </div>
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2 leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
                         Fretes: lançamentos com referência ao evento logístico (aba Fretes do Itinerário Fluvial) ou tags frete / conta_frete.
                       </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Data inicial (opcional)</p>
-                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
+                        <p className="text-xs text-muted-foreground">Data inicial (opcional)</p>
+                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
                       </div>
                       <div className="space-y-1.5">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Data final (opcional)</p>
-                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
+                        <p className="text-xs text-muted-foreground">Data final (opcional)</p>
+                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
                       </div>
                     </div>
                   </div>
                   <DrawerFooter className="px-0 pb-0 pt-5">
-                    <Button variant="ghost" onClick={limparFiltros} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">
+                    <Button variant="ghost" onClick={limparFiltros} className="w-full rounded-2xl h-12 bg-muted">
                       Limpar filtros
                     </Button>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
-              <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                <Printer className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-muted">
+                <Printer className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
           </div>
@@ -771,8 +771,8 @@ export default function AgefinConsulta() {
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="text-center min-w-0">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{formatMonth(currentMonth)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Período civil do mês · {monthData.length} conta{monthData.length !== 1 ? 's' : ''} a pagar</p>
+              <p className="text-sm font-semibold text-foreground capitalize">{formatMonth(currentMonth)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Período civil do mês · {monthData.length} conta{monthData.length !== 1 ? 's' : ''} a pagar</p>
             </div>
             <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-10 w-10 p-0">
               <ChevronRight className="w-5 h-5" />
@@ -780,16 +780,16 @@ export default function AgefinConsulta() {
           </div>
 
           {hasActiveFilters && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-              <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-1">Filtros ativos</span>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <span className="rounded-full bg-muted px-2.5 py-1">Filtros ativos</span>
               {pagamentoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Pag.: {pagamentoFilter}</span>}
               {prazoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Prazo: {prazoFilter}</span>}
               {cmvFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Tipo: {cmvFilter}</span>}
               {freteFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Frete: {freteFilter}</span>}
               {(dateFrom || dateTo) && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
                   {dateFrom || '…'} → {dateTo || '…'}
-                  <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Limpar datas">
+                  <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-primary/90" aria-label="Limpar datas">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -806,7 +806,7 @@ export default function AgefinConsulta() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" /></div>
+          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" /></div>
         ) : contasOrdenadas.length === 0 ? (
           <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
             Nenhuma conta a pagar encontrada para esse mês e filtros.
@@ -816,8 +816,8 @@ export default function AgefinConsulta() {
             {grupos.map((grupo) => (
               <section key={grupo.key} id={grupoDomId(grupo.key)} className="scroll-mt-24 space-y-2 md:space-y-3">
                 <div className="flex items-baseline justify-between gap-2 px-0.5">
-                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-muted-foreground">{grupo.label}</h2>
-                  <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-muted-foreground">{grupo.label}</h2>
+                  <span className="text-[11px] text-muted-foreground">
                     {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
                   </span>
                 </div>
@@ -856,11 +856,11 @@ export default function AgefinConsulta() {
       </div>
 
       {modoSelecao && (
-        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/40 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-border/40 dark:bg-gray-950/95 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto flex max-w-lg flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Seleção para pagar</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Seleção para pagar</p>
+              <p className="text-lg font-semibold text-foreground">
                 {selecionadosIds.length} conta{selecionadosIds.length !== 1 ? 's' : ''} · {formatCurrency(somaSelecionados)}
               </p>
             </div>

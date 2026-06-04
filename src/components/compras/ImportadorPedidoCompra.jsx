@@ -393,16 +393,16 @@ Retorne JSON:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] bg-white dark:bg-gray-900 overflow-y-auto">
-      <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur px-4 py-3 shadow-sm">
+    <div className="fixed inset-0 z-[80] bg-card overflow-y-auto">
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-background/95 backdrop-blur px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10 rounded-full">
               <X className="w-4 h-4" />
             </Button>
             <div>
-              <p className="font-glacial text-lg text-gray-900 dark:text-white">Importar novo pedido</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Lê PDF e boas imagens para preencher os itens</p>
+              <p className="font-glacial text-lg text-foreground">Importar novo pedido</p>
+              <p className="text-xs text-muted-foreground">Lê PDF e boas imagens para preencher os itens</p>
             </div>
           </div>
           {step === 'review' && (
@@ -438,7 +438,7 @@ Retorne JSON:
               </Button>
             </div>
             <div
-              className="rounded-3xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:bg-gray-800 md:p-14"
+              className="rounded-3xl border-2 border-dashed border-gray-300 bg-muted/40 p-8 text-center shadow-sm transition-colors hover:bg-gray-100 dark:border-border/40 dark:bg-muted/60 dark:hover:bg-muted md:p-14"
               onClick={() => fileInputRef.current?.click()}
               role="button"
               tabIndex={0}
@@ -449,13 +449,13 @@ Retorne JSON:
                 }
               }}
             >
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm">
-                {mode === 'pdf' ? <FileText className="w-8 h-8 text-gray-600" /> : <Sparkles className="w-8 h-8 text-gray-600" />}
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-card shadow-sm">
+                {mode === 'pdf' ? <FileText className="w-8 h-8 text-muted-foreground" /> : <Sparkles className="w-8 h-8 text-muted-foreground" />}
               </div>
-              <p className="font-glacial text-xl text-gray-900 dark:text-white mb-2">
+              <p className="font-glacial text-xl text-foreground mb-2">
                 {mode === 'pdf' ? 'Enviar PDF do fornecedor' : 'Enviar imagem da lista'}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">A importação vai preencher os itens do pedido.</p>
+              <p className="text-sm text-muted-foreground mb-6">A importação vai preencher os itens do pedido.</p>
               <div className="relative inline-block">
                 <input
                   ref={fileInputRef}
@@ -473,7 +473,7 @@ Retorne JSON:
                   <Upload className="w-4 h-4 mr-2" />Selecionar arquivo
                 </Button>
               </div>
-              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Dica: também pode usar Ctrl+V para colar um PDF/imagem.</p>
+              <p className="mt-3 text-xs text-muted-foreground">Dica: também pode usar Ctrl+V para colar um PDF/imagem.</p>
             </div>
           </div>
         )}
@@ -481,13 +481,13 @@ Retorne JSON:
         {step === 'discount' && (
           <div className="flex flex-col h-[calc(100vh-80px)]">
             {/* Tab switcher */}
-            <div className="rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 flex gap-1 mb-6">
+            <div className="rounded-2xl bg-muted p-1 flex gap-1 mb-6">
               <button
                 onClick={() => setAdjustMode('desconto')}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
                   adjustMode === 'desconto'
-                    ? 'bg-white dark:bg-gray-900 shadow-sm text-emerald-700 dark:text-emerald-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                    ? 'bg-card shadow-sm text-emerald-700 dark:text-emerald-400'
+                    : 'text-muted-foreground'
                 }`}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12 L14 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
@@ -497,8 +497,8 @@ Retorne JSON:
                 onClick={() => setAdjustMode('acrescimo')}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
                   adjustMode === 'acrescimo'
-                    ? 'bg-white dark:bg-gray-900 shadow-sm text-amber-700 dark:text-amber-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                    ? 'bg-card shadow-sm text-amber-700 dark:text-amber-400'
+                    : 'text-muted-foreground'
                 }`}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12 L14 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" transform="rotate(180 8 8)"/></svg>
@@ -508,8 +508,8 @@ Retorne JSON:
 
             {/* Spinner central */}
             <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 shadow-sm w-full max-w-xl py-10 flex flex-col items-center gap-2">
-                <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-4">
+              <div className="rounded-2xl bg-muted/50/60 shadow-sm w-full max-w-xl py-10 flex flex-col items-center gap-2">
+                <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase mb-4">
                   {adjustMode === 'desconto' ? 'Desconto sobre todos os itens' : 'Acréscimo sobre todos os itens'}
                 </p>
                 <div className="flex items-center gap-6">
@@ -532,18 +532,18 @@ Retorne JSON:
                     <div className="flex flex-col items-center gap-0.5">
                       <button
                         onClick={() => setDiscountValue(v => String((parseFloat(v) || 0) + 1))}
-                        className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1"
+                        className="text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors p-1"
                       >
                         <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 7L6 2L11 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                       <button
                         onClick={() => setDiscountValue(v => String(Math.max(0, (parseFloat(v) || 0) - 1)))}
-                        className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1"
+                        className="text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors p-1"
                       >
                         <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                     </div>
-                    <span className="text-3xl text-gray-400 font-light">%</span>
+                    <span className="text-3xl text-muted-foreground font-light">%</span>
                   </div>
                 </div>
               </div>
@@ -551,7 +551,7 @@ Retorne JSON:
 
             {/* Barra de ação */}
             <div className="flex items-center justify-between gap-4 py-4">
-              <p className="text-sm text-gray-400 dark:text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {discountNumber === 0
                   ? 'Sem desc./acrés.'
                   : isAcrescimo
@@ -562,7 +562,7 @@ Retorne JSON:
                 <Button variant="outline" onClick={() => { selectedFileRef.current = null; setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-gray-900 dark:bg-white dark:text-gray-900 text-white gap-2">
+                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-gray-900 dark:bg-white dark:text-foreground text-white gap-2">
                   Buscar Itens
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </Button>
@@ -573,10 +573,10 @@ Retorne JSON:
 
         {step === 'processing' && (
           <div className="py-20 flex flex-col items-center justify-center text-center max-w-md mx-auto">
-            <Loader2 className="w-12 h-12 animate-spin text-gray-700 dark:text-gray-300 mb-4" />
-            <p className="font-glacial text-xl text-gray-900 dark:text-white">{processingStatus}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Passo {processingStep} de 5</p>
-            <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shadow-sm">
+            <Loader2 className="w-12 h-12 animate-spin text-foreground/90 mb-4" />
+            <p className="font-glacial text-xl text-foreground">{processingStatus}</p>
+            <p className="text-sm text-muted-foreground mb-4">Passo {processingStep} de 5</p>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden shadow-sm">
               <div className="h-full bg-gray-700 dark:bg-gray-300 transition-all duration-300" style={{ width: progressWidth }} />
             </div>
           </div>
@@ -585,10 +585,10 @@ Retorne JSON:
         {step === 'review' && (
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/60 p-5 shadow-sm md:col-span-2">
-                <Label className="text-xs text-gray-500 mb-2 block">Fornecedor</Label>
+              <div className="rounded-3xl bg-muted/50/60 p-5 shadow-sm md:col-span-2">
+                <Label className="text-xs text-muted-foreground mb-2 block">Fornecedor</Label>
                 <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
-                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-white dark:bg-gray-900 shadow-sm text-base text-gray-950 dark:text-white">
+                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-card shadow-sm text-base text-gray-950 dark:text-white">
                     <SelectValue placeholder="Selecionar fornecedor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -599,20 +599,20 @@ Retorne JSON:
               </div>
               {fornecedorInfo.id === 'new' && (
                 <>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 shadow-sm">
-                    <Label className="text-xs text-gray-500 mb-2 block">Nome</Label>
-                    <Input value={fornecedorInfo.nome} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, nome: e.target.value }))} className="border-0 bg-white dark:bg-gray-900 shadow-sm" />
+                  <div className="rounded-2xl bg-muted/50/60 p-4 shadow-sm">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Nome</Label>
+                    <Input value={fornecedorInfo.nome} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, nome: e.target.value }))} className="border-0 bg-card shadow-sm" />
                   </div>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 shadow-sm">
-                    <Label className="text-xs text-gray-500 mb-2 block">CNPJ</Label>
-                    <Input value={fornecedorInfo.cnpj} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, cnpj: e.target.value }))} className="border-0 bg-white dark:bg-gray-900 shadow-sm" />
+                  <div className="rounded-2xl bg-muted/50/60 p-4 shadow-sm">
+                    <Label className="text-xs text-muted-foreground mb-2 block">CNPJ</Label>
+                    <Input value={fornecedorInfo.cnpj} onChange={(e) => setFornecedorInfo(prev => ({ ...prev, cnpj: e.target.value }))} className="border-0 bg-card shadow-sm" />
                   </div>
                 </>
               )}
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 px-1">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
                 <Package className="w-4 h-4" />
                 <span>{items.length} itens identificados</span>
               </div>
@@ -620,7 +620,7 @@ Retorne JSON:
                 <div key={index} className={`rounded-2xl transition-all ${
                   item.ignored ? 'opacity-40' : ''
                 } ${
-                  index % 2 === 0 ? 'bg-white dark:bg-gray-800/60' : 'bg-gray-50/80 dark:bg-gray-900/60'
+                  index % 2 === 0 ? 'bg-card/60' : 'bg-muted/40/80 dark:bg-background/60'
                 } shadow-sm`}>
                   {/* Card inner padding */}
                   <div className="p-4">
@@ -630,8 +630,8 @@ Retorne JSON:
                         <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{item.descricao}</p>
-                        <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-gray-400 dark:text-gray-500">
+                        <p className="text-sm font-semibold text-foreground leading-tight">{item.descricao}</p>
+                        <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
                           {item.codigo ? <span>Cód: {item.codigo}</span> : null}
                           {item.marca ? <span>{item.marca}</span> : null}
                           {item.confianca ? <span className="text-emerald-600 dark:text-emerald-400">{item.confianca}</span> : null}
@@ -639,13 +639,13 @@ Retorne JSON:
                       </div>
                       <div className="text-right flex-none">
                         {discountNumber > 0 && (
-                          <p className="text-xs text-gray-400 line-through">{item.quantidade || 1}× R$ {formatCurrency(item.preco_unitario)}</p>
+                          <p className="text-xs text-muted-foreground line-through">{item.quantidade || 1}× R$ {formatCurrency(item.preco_unitario)}</p>
                         )}
                         {discountNumber > 0 && isAcrescimo && (
                           <span className="text-[10px] text-amber-600 dark:text-amber-400">+{discountNumber}%</span>
                         )}
-                        <p className={`text-sm font-semibold ${isAcrescimo ? 'text-amber-700 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
-                        <p className="text-xs text-gray-500">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
+                        <p className={`text-sm font-semibold ${isAcrescimo ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
+                        <p className="text-xs text-muted-foreground">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
                       </div>
                     </div>
                     {/* Linha inferior: busca no catálogo (desktop: alinhada; mobile: full width) */}
@@ -665,8 +665,8 @@ Retorne JSON:
                         const opt = resolverUnidadeCompra(p, item.unidade_medida_documento);
                         const eq = textoEquivEstoque(p, item.quantidade || 1, opt);
                         return (
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                            Comprar em: <span className="font-medium text-gray-700 dark:text-gray-300">{opt?.unidade || p.unidade_principal || 'UN'}</span>
+                          <p className="text-[11px] text-muted-foreground">
+                            Comprar em: <span className="font-medium text-foreground/90">{opt?.unidade || p.unidade_principal || 'UN'}</span>
                             {eq ? <span className="block mt-0.5">{eq}</span> : null}
                           </p>
                         );

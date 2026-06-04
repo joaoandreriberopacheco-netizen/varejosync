@@ -289,7 +289,7 @@ export default function AssistenteRecepcao({ evento, onConcluir, onCancelar }) {
           </DialogTitle>
           <div className="mt-4">
             <Progress value={progresso} className="h-2" />
-            <div className="flex justify-between mt-2 text-xs text-gray-600">
+            <div className="flex justify-between mt-2 text-xs text-muted-foreground">
               <span className={etapa === 1 ? 'font-bold text-emerald-600' : ''}>1. Diário de Bordo</span>
               <span className={etapa === 2 ? 'font-bold text-emerald-600' : ''}>2. Gateway de Recepção</span>
               <span className={etapa === 3 ? 'font-bold text-emerald-600' : ''}>3. Veredito Final</span>
@@ -411,7 +411,7 @@ export default function AssistenteRecepcao({ evento, onConcluir, onCancelar }) {
                             <div className="flex items-center justify-between">
                               <div>
                                 <div className="font-semibold">{item.produto_nome}</div>
-                                <div className="text-sm text-gray-600">Esperado: {item.quantidade_esperada}</div>
+                                <div className="text-sm text-muted-foreground">Esperado: {item.quantidade_esperada}</div>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
@@ -482,25 +482,25 @@ export default function AssistenteRecepcao({ evento, onConcluir, onCancelar }) {
                     <Label className="text-base font-bold mb-4 block">🎯 VEREDITO FINAL: O material está em conformidade?</Label>
                     <RadioGroup value={veredito} onValueChange={setVeredito}>
                       <div className="space-y-3">
-                        <Card className={veredito === 'Tudo em Ordem' ? 'border-2 border-emerald-500 bg-emerald-50' : 'border-2 border-gray-200'}>
+                        <Card className={veredito === 'Tudo em Ordem' ? 'border-2 border-emerald-500 bg-emerald-50' : 'border-2 border-border/40'}>
                           <CardContent className="p-4">
                             <div className="flex items-center space-x-3">
                               <RadioGroupItem value="Tudo em Ordem" id="veredito-ok" />
                               <Label htmlFor="veredito-ok" className="cursor-pointer flex-1">
                                 <div className="font-bold text-emerald-700">✓ SIM, TUDO EM ORDEM</div>
-                                <div className="text-sm text-gray-600">Liberar estoque e pagamento</div>
+                                <div className="text-sm text-muted-foreground">Liberar estoque e pagamento</div>
                               </Label>
                             </div>
                           </CardContent>
                         </Card>
 
-                        <Card className={veredito === 'Há Discrepância' ? 'border-2 border-red-500 bg-red-50' : 'border-2 border-gray-200'}>
+                        <Card className={veredito === 'Há Discrepância' ? 'border-2 border-red-500 bg-red-50' : 'border-2 border-border/40'}>
                           <CardContent className="p-4">
                             <div className="flex items-center space-x-3">
                               <RadioGroupItem value="Há Discrepância" id="veredito-nok" />
                               <Label htmlFor="veredito-nok" className="cursor-pointer flex-1">
                                 <div className="font-bold text-red-700">✗ NÃO, HÁ UMA DISCREPÂNCIA</div>
-                                <div className="text-sm text-gray-600">Bloquear pagamento e criar tarefa urgente</div>
+                                <div className="text-sm text-muted-foreground">Bloquear pagamento e criar tarefa urgente</div>
                               </Label>
                             </div>
                           </CardContent>

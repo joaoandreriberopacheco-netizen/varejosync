@@ -29,7 +29,7 @@ function Toggle({ checked, onChange }) {
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-none ${checked ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-none ${checked ? 'bg-primary dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`}
     >
       <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
     </button>
@@ -347,29 +347,29 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   };
 
   let Icon = ArrowRightLeft;
-  let iconClass = 'text-gray-400';
+  let iconClass = 'text-muted-foreground';
   if (!isTransf) {
     Icon = isReceita ? ArrowDownLeft : ArrowUpRight;
-    iconClass = isPagoOriginal ? (isReceita ? 'text-green-500' : 'text-red-500') : 'text-gray-400';
+    iconClass = isPagoOriginal ? (isReceita ? 'text-green-500' : 'text-red-500') : 'text-muted-foreground';
   }
 
   return (
     <>
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-gray-700 dark:bg-gray-900 sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-white/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
+      <DialogContent className="flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-white/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
 
         <div className="shrink-0">
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1 pr-3">{lancamento.descricao}</p>
-          <button onClick={onClose} className="w-7 h-7 flex-none flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400">
+          <button onClick={onClose} className="w-7 h-7 flex-none flex items-center justify-center rounded-full bg-muted text-muted-foreground">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Valor principal */}
         <div className="px-5 pb-4 flex items-center gap-3">
-          <span className="w-10 h-10 flex-none rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <span className="w-10 h-10 flex-none rounded-xl bg-muted flex items-center justify-center">
             <Icon className={`w-5 h-5 ${iconClass}`} />
           </span>
           <div>
@@ -378,12 +378,12 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
               </p>
               {lancamento.is_recorrente && lancamento.data_vencimento && (
-                <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
                   {mesAnoLabel(lancamento.data_vencimento)}
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {lancamento.categoria || 'Sem categoria'}
               {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
               {data ? ` · ${formatarSoData(data)}` : ''}
@@ -394,18 +394,18 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         {/* Status chips */}
         <div className="flex gap-2 px-5 pb-4 flex-wrap">
           {lancamento.referencia_numero && (
-            <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+            <span className="text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               Ref: {lancamento.referencia_numero}
             </span>
           )}
           {isPendente && (
-            <span className="flex items-center gap-1 text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+            <span className="flex items-center gap-1 text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               <Clock className="w-2.5 h-2.5" /> Aguard. Conciliação
             </span>
           )}
         </div>
 
-        <div className="h-px bg-gray-100 dark:bg-gray-800" />
+        <div className="h-px bg-muted" />
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
@@ -413,32 +413,32 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         {ehDespesaEditavel && (
           <>
             <div className="px-5 pt-4 space-y-3">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-200">Editar conta a pagar</p>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 leading-snug">
+              <p className="text-xs font-medium text-foreground/90">Editar conta a pagar</p>
+              <p className="text-[11px] text-muted-foreground leading-snug">
                 Inclui lançamentos criados por importação de PDF. Alterar vencimento ou valor não regista pagamento.
               </p>
               <div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Descrição</p>
+                <p className="text-[11px] text-muted-foreground mb-1">Descrição</p>
                 <input
                   autoComplete="off"
                   value={cadDescricao}
                   onChange={(e) => setCadDescricao(e.target.value)}
-                  className="w-full h-10 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Vencimento</p>
+                  <p className="text-[11px] text-muted-foreground mb-1">Vencimento</p>
                   <input
                     autoComplete="off"
                     type="date"
                     value={cadVencimento}
                     onChange={(e) => setCadVencimento(e.target.value)}
-                    className="w-full h-10 px-2 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                    className="w-full h-10 px-2 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                   />
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Valor</p>
+                  <p className="text-[11px] text-muted-foreground mb-1">Valor</p>
                   <input
                     autoComplete="off"
                     type="number"
@@ -446,43 +446,43 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                     min="0"
                     value={cadValor}
                     onChange={(e) => setCadValor(e.target.value)}
-                    className="w-full h-10 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                    className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                   />
                 </div>
               </div>
               <div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Observações</p>
+                <p className="text-[11px] text-muted-foreground mb-1">Observações</p>
                 <textarea
                   value={cadObs}
                   onChange={(e) => setCadObs(e.target.value)}
                   rows={2}
-                  className="w-full resize-none rounded-xl bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleSalvarCadastro}
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary dark:bg-gray-200 text-white dark:text-foreground text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {saving ? 'A guardar…' : 'Guardar alterações'}
               </button>
             </div>
-            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+            <div className="h-px bg-muted" />
           </>
         )}
 
         {isCartaoReceber && !isCancelado && (
           <div className="px-5 pt-4">
-            <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Valor a receber</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Valor a receber</p>
             <input autoComplete="off"
               type="number"
               step="0.01"
               min="0"
               value={valorEditavel}
               onChange={(e) => setValorEditavel(e.target.value)}
-              className="w-full h-10 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             />
           </div>
         )}
@@ -493,8 +493,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             {/* Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Marcar como pago</p>
-                <p className="text-xs text-gray-400">{isPagoLocal ? 'Pago' : 'Em aberto'}</p>
+                <p className="text-sm font-medium text-foreground/90">Marcar como pago</p>
+                <p className="text-xs text-muted-foreground">{isPagoLocal ? 'Pago' : 'Em aberto'}</p>
               </div>
               <Toggle checked={isPagoLocal} onChange={setIsPagoLocal} />
             </div>
@@ -502,22 +502,22 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             {/* Campos Data e Conta */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Data</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Data</p>
                 <input autoComplete="off"
                   type="date"
                   value={dataPagamento}
                   onChange={(e) => setDataPagamento(e.target.value)}
                   disabled={!isPagoLocal}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Conta</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Conta</p>
                 <Select value={contaId} onValueChange={setContaId}>
-                  <SelectTrigger className="h-9 text-sm bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-gray-300">
+                  <SelectTrigger className="h-9 text-sm bg-muted border-0 rounded-xl text-foreground focus:ring-2 focus:ring-gray-300">
                     <SelectValue placeholder="Selecionar..." />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="dark:bg-muted dark:border-border/40">
                     {contas.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -528,7 +528,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             <button
               onClick={handleSalvarPagamento}
               disabled={saving}
-              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-transform disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground text-base font-semibold active:scale-95 transition-transform disabled:opacity-50">
               <Save className="w-5 h-5" />
               Salvar
             </button>
@@ -538,15 +538,15 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         {/* Cancelado - Detalhes e Ações */}
         {isCancelado && (
           <>
-            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+            <div className="h-px bg-muted" />
             <div className="px-5 py-4 space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-                <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50/50 border border-border/40">
+                <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Cancelado</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Este lançamento foi cancelado e não contribui para cálculos de saldo.</p>
+                  <p className="text-xs font-medium text-muted-foreground">Cancelado</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Este lançamento foi cancelado e não contribui para cálculos de saldo.</p>
                   {lancamento.observacoes && (
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1.5 font-medium">Motivo: {lancamento.observacoes.replace(/\[CANCELADO.*?\]/gs, '').trim()}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5 font-medium">Motivo: {lancamento.observacoes.replace(/\[CANCELADO.*?\]/gs, '').trim()}</p>
                   )}
                 </div>
               </div>
@@ -564,25 +564,25 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         {/* Conciliar (se pago e pendente) */}
         {isPagoOriginal && isPendente && !isCancelado && (
           <>
-            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+            <div className="h-px bg-muted" />
             <div className="px-5 py-4 space-y-3">
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Conciliar</p>
-                <p className="text-xs text-gray-400">Confirmar data de liquidação</p>
+                <p className="text-sm font-medium text-foreground/90">Conciliar</p>
+                <p className="text-xs text-muted-foreground">Confirmar data de liquidação</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Data de liquidação</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Data de liquidação</p>
                 <input autoComplete="off"
                   type="date"
                   value={dataLiquidacao}
                   onChange={(e) => setDataLiquidacao(e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                 />
               </div>
               <button
                 onClick={handleConciliar}
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary dark:bg-gray-200 text-white dark:text-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
                 <CheckCircle2 className="w-4 h-4" />
                 Salvar Conciliação
               </button>
@@ -593,8 +593,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         </div>
 
         {/* Footer: clipe + botão cancelar */}
-        <div className="shrink-0 border-t border-gray-100 bg-gray-50/90 dark:border-gray-800 dark:bg-gray-900/95">
-        <div className="h-px bg-gray-100 dark:bg-gray-800" />
+        <div className="shrink-0 border-t border-border/40 bg-muted/40/90 dark:border-border/40 dark:bg-background/95">
+        <div className="h-px bg-muted" />
         <div className="px-5 py-4 flex items-center justify-between gap-3">
           {!isCancelado && (
             <button

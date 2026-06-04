@@ -46,7 +46,7 @@ export default function ConfiguracoesPage() {
           <ShieldAlert className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">Acesso Restrito</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+        <p className="text-sm text-muted-foreground max-w-xs">
           Você não tem permissão para acessar as configurações do sistema. Solicite acesso ao administrador.
         </p>
       </div>
@@ -57,7 +57,7 @@ export default function ConfiguracoesPage() {
     <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
       <div>
         <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Configurações</h1>
-        <p className="text-xs text-gray-400 dark:text-gray-500">Regras de negócio e parâmetros do sistema</p>
+        <p className="text-xs text-muted-foreground">Regras de negócio e parâmetros do sistema</p>
       </div>
 
       {/* Tabs principais */}
@@ -146,49 +146,49 @@ export default function ConfiguracoesPage() {
         {tab === 'sistema' && (
           <div className="space-y-6 pt-2">
             <div className="flex items-center gap-2 mb-2">
-              <Wrench className="w-4 h-4 text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Ferramentas de Sistema</h2>
+              <Wrench className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-foreground/90">Ferramentas de Sistema</h2>
             </div>
 
             {/* Documentos */}
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Documentos</p>
+            <div className="rounded-2xl bg-muted/50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Documentos</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                   to={createPageUrl('ReimpressaoDocumentos')}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-900/60 shadow-sm hover:shadow transition-shadow"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
                 >
-                  <Printer className="w-5 h-5 text-gray-400" />
+                  <Printer className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Reimpressão</p>
-                    <p className="text-xs text-gray-400">Reimprimir cupons e pedidos</p>
+                    <p className="text-sm font-medium text-foreground/90">Reimpressão</p>
+                    <p className="text-xs text-muted-foreground">Reimprimir cupons e pedidos</p>
                   </div>
                 </Link>
                 <Link
                   to={createPageUrl('ExclusaoDocumentos')}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-900/60 shadow-sm hover:shadow transition-shadow"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
                 >
                   <Trash2 className="w-5 h-5 text-red-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Excluir Documentos</p>
-                    <p className="text-xs text-gray-400">Remoção permanente de registros</p>
+                    <p className="text-sm font-medium text-foreground/90">Excluir Documentos</p>
+                    <p className="text-xs text-muted-foreground">Remoção permanente de registros</p>
                   </div>
                 </Link>
               </div>
             </div>
 
             {/* Auditoria de Código */}
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Manutenção</p>
+            <div className="rounded-2xl bg-muted/50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Manutenção</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                   to="/AuditoriaCodigoProjeto"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-900/60 shadow-sm hover:shadow transition-shadow"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/60 shadow-sm hover:shadow transition-shadow"
                 >
-                  <BarChart3 className="w-5 h-5 text-gray-400" />
+                  <BarChart3 className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Auditoria de Código</p>
-                    <p className="text-xs text-gray-400">Checklist de código morto e detritos</p>
+                    <p className="text-sm font-medium text-foreground/90">Auditoria de Código</p>
+                    <p className="text-xs text-muted-foreground">Checklist de código morto e detritos</p>
                   </div>
                 </Link>
               </div>

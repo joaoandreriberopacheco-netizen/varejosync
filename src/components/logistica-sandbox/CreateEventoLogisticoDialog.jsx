@@ -110,34 +110,34 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-11 rounded-2xl border-0 shadow-sm bg-gray-800 hover:bg-gray-700 text-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 gap-2">
+        <Button className="h-11 rounded-2xl border-0 shadow-sm bg-primary hover:bg-primary/90 text-gray-100 dark:bg-muted dark:text-gray-100 dark:hover:bg-primary/90 gap-2">
           <Plus className="w-4 h-4" />
           Adicionar
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[calc(100vw-1.5rem)] max-w-xl max-h-[calc(100vh-1.5rem)] rounded-3xl border-0 shadow-xl p-0 overflow-hidden flex flex-col">
-        <div className="p-4 md:p-6 bg-white dark:bg-gray-900 overflow-y-auto overscroll-contain max-h-[calc(100vh-1.5rem)]">
+        <div className="p-4 md:p-6 bg-card overflow-y-auto overscroll-contain max-h-[calc(100vh-1.5rem)]">
           <DialogHeader>
-            <DialogTitle className="font-glacial text-2xl text-gray-900 dark:text-gray-100">Nova transportadora recorrente</DialogTitle>
+            <DialogTitle className="font-glacial text-2xl text-foreground dark:text-gray-100">Nova transportadora recorrente</DialogTitle>
             <DialogDescription>Você está cadastrando a transportadora e o ciclo da recorrência. A partir dele, cada evento logístico gerado terá chegada em Manaus, saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Ship className="w-4 h-4" /> Embarcação</div>
-                <Input value={form.embarcacao_nome} onChange={(e) => handleChange('embarcacao_nome', e.target.value)} placeholder="Nome do barco" className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl" required />
+              <div className="rounded-2xl bg-muted/50 p-4 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Ship className="w-4 h-4" /> Embarcação</div>
+                <Input value={form.embarcacao_nome} onChange={(e) => handleChange('embarcacao_nome', e.target.value)} placeholder="Nome do barco" className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl" required />
               </div>
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Route className="w-4 h-4" /> Saída de Manaus</div>
-                <Input type="date" value={form.data_saida_origem} onChange={(e) => handleChange('data_saida_origem', e.target.value)} className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl" required />
+              <div className="rounded-2xl bg-muted/50 p-4 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Route className="w-4 h-4" /> Saída de Manaus</div>
+                <Input type="date" value={form.data_saida_origem} onChange={(e) => handleChange('data_saida_origem', e.target.value)} className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl" required />
               </div>
             </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm space-y-3">
+            <div className="rounded-2xl bg-muted/50 p-4 shadow-sm space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Usar ciclo padrão da recorrência</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">O ciclo considera chegada em Manaus, saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.</p>
+                  <p className="text-sm font-medium text-foreground dark:text-gray-100">Usar ciclo padrão da recorrência</p>
+                  <p className="text-xs text-muted-foreground">O ciclo considera chegada em Manaus, saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.</p>
                 </div>
                 <button
                   type="button"
@@ -150,39 +150,39 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
 
               {!form.usar_ciclo_padrao && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input value={form.ciclo_personalizado_nome} onChange={(e) => handleChange('ciclo_personalizado_nome', e.target.value)} placeholder="Nome da lógica" className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl" />
-                  <Input type="number" value={form.ciclo_personalizado_duracao} onChange={(e) => handleChange('ciclo_personalizado_duracao', e.target.value)} placeholder="Duração em dias" className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl" min="1" />
+                  <Input value={form.ciclo_personalizado_nome} onChange={(e) => handleChange('ciclo_personalizado_nome', e.target.value)} placeholder="Nome da lógica" className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl" />
+                  <Input type="number" value={form.ciclo_personalizado_duracao} onChange={(e) => handleChange('ciclo_personalizado_duracao', e.target.value)} placeholder="Duração em dias" className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl" min="1" />
                 </div>
               )}
 
-              <div className="rounded-2xl bg-white dark:bg-gray-700 p-4 shadow-sm space-y-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ciclo projetado</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Chegada em Manaus: {cicloProjetado.chegadaManaus || '-'}</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Saída de Manaus: {cicloProjetado.saidaManaus || '-'}</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">ETA Tabatinga: {cicloProjetado.etaTabatinga || '-'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Se a saída for em 10/03, o ciclo projetado entende chegada em Manaus em 03/03 e ETA em Tabatinga em 17/03.</p>
+              <div className="rounded-2xl bg-white dark:bg-muted p-4 shadow-sm space-y-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Ciclo projetado</p>
+                <p className="text-sm font-semibold text-foreground dark:text-gray-100">Chegada em Manaus: {cicloProjetado.chegadaManaus || '-'}</p>
+                <p className="text-sm font-semibold text-foreground dark:text-gray-100">Saída de Manaus: {cicloProjetado.saidaManaus || '-'}</p>
+                <p className="text-sm font-semibold text-foreground dark:text-gray-100">ETA Tabatinga: {cicloProjetado.etaTabatinga || '-'}</p>
+                <p className="text-xs text-muted-foreground">Se a saída for em 10/03, o ciclo projetado entende chegada em Manaus em 03/03 e ETA em Tabatinga em 17/03.</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><User className="w-4 h-4" /> Contato do viajante</div>
-                <Input value={form.contato_viajante} onChange={(e) => handleChange('contato_viajante', e.target.value)} placeholder="Nome do contato" className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl" />
+              <div className="rounded-2xl bg-muted/50 p-4 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><User className="w-4 h-4" /> Contato do viajante</div>
+                <Input value={form.contato_viajante} onChange={(e) => handleChange('contato_viajante', e.target.value)} placeholder="Nome do contato" className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl" />
               </div>
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Phone className="w-4 h-4" /> Telefone</div>
-                <Input value={form.telefone_viajante} onChange={(e) => handleChange('telefone_viajante', e.target.value)} placeholder="WhatsApp / telefone" className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl" />
+              <div className="rounded-2xl bg-muted/50 p-4 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Phone className="w-4 h-4" /> Telefone</div>
+                <Input value={form.telefone_viajante} onChange={(e) => handleChange('telefone_viajante', e.target.value)} placeholder="WhatsApp / telefone" className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl" />
               </div>
             </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><StickyNote className="w-4 h-4" /> Observações</div>
-              <Textarea value={form.observacoes} onChange={(e) => handleChange('observacoes', e.target.value)} placeholder="Detalhes importantes da transportadora e do ciclo recorrente" className="border-0 bg-white dark:bg-gray-700 shadow-sm rounded-2xl min-h-[100px]" />
+            <div className="rounded-2xl bg-muted/50 p-4 shadow-sm space-y-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground"><StickyNote className="w-4 h-4" /> Observações</div>
+              <Textarea value={form.observacoes} onChange={(e) => handleChange('observacoes', e.target.value)} placeholder="Detalhes importantes da transportadora e do ciclo recorrente" className="border-0 bg-white dark:bg-muted shadow-sm rounded-2xl min-h-[100px]" />
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-2xl border-0 shadow-sm bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200">Cancelar</Button>
-              <Button type="submit" disabled={saving} className="rounded-2xl border-0 shadow-sm bg-gray-800 hover:bg-gray-700 text-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-2xl border-0 shadow-sm bg-gray-100 hover:bg-gray-200 text-foreground/90 dark:bg-muted dark:hover:bg-primary/90 dark:text-foreground">Cancelar</Button>
+              <Button type="submit" disabled={saving} className="rounded-2xl border-0 shadow-sm bg-primary hover:bg-primary/90 text-gray-100 dark:bg-muted dark:text-gray-100 dark:hover:bg-primary/90">
                 {saving ? 'Salvando...' : 'Salvar transportadora e ciclo'}
               </Button>
             </DialogFooter>

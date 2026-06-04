@@ -31,20 +31,20 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
   return (
     <>
       <Drawer open={open && !showRefreshImport} onOpenChange={onClose}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-card px-4 pb-6">
         <DrawerHeader className="px-0 pb-2 text-left">
-          <DrawerTitle className="font-glacial text-gray-900 dark:text-white">{recorrente.nome_despesa}</DrawerTitle>
-          <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <DrawerTitle className="font-glacial text-foreground">{recorrente.nome_despesa}</DrawerTitle>
+          <DrawerDescription className="text-sm text-muted-foreground mt-1">
             {recorrente.terceiro_nome || 'Sem beneficiário'}
           </DrawerDescription>
         </DrawerHeader>
 
         <div className="space-y-3">
-          <div className="rounded-[22px] bg-gray-50 dark:bg-gray-800/70 p-4 space-y-3 shadow-sm">
+          <div className="rounded-[22px] bg-muted/50/70 p-4 space-y-3 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Valor previsto</p>
-                <p className="text-xl font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+                <p className="text-xs text-muted-foreground">Valor previsto</p>
+                <p className="text-xl font-semibold text-foreground">{formatCurrency(recorrente.valor_previsto)}</p>
               </div>
               {isPaid ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
@@ -62,33 +62,33 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                <p className="text-xs text-gray-400 dark:text-gray-500">Vencimento</p>
-                <p className="mt-1 font-medium text-gray-900 dark:text-white">{formatDate(contaMes?.data_vencimento)}</p>
+              <div className="rounded-2xl bg-card p-3 shadow-sm">
+                <p className="text-xs text-muted-foreground">Vencimento</p>
+                <p className="mt-1 font-medium text-foreground">{formatDate(contaMes?.data_vencimento)}</p>
               </div>
-              <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                <p className="text-xs text-gray-400 dark:text-gray-500">Pago em</p>
-                <p className="mt-1 font-medium text-gray-900 dark:text-white">{formatDate(contaMes?.data_pagamento)}</p>
+              <div className="rounded-2xl bg-card p-3 shadow-sm">
+                <p className="text-xs text-muted-foreground">Pago em</p>
+                <p className="mt-1 font-medium text-foreground">{formatDate(contaMes?.data_pagamento)}</p>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-              <p className="text-xs text-gray-400 dark:text-gray-500">Descrição da conta</p>
-              <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">{contaMes?.descricao || recorrente.nome_despesa}</p>
+            <div className="rounded-2xl bg-card p-3 shadow-sm">
+              <p className="text-xs text-muted-foreground">Descrição da conta</p>
+              <p className="mt-1 text-sm text-foreground/90">{contaMes?.descricao || recorrente.nome_despesa}</p>
             </div>
 
-            <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm space-y-3">
+            <div className="rounded-2xl bg-card p-3 shadow-sm space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Status do boleto</p>
-                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-xs text-muted-foreground">Status do boleto</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {!hasBoleto ? 'Sem boleto anexado' : boletoVencido ? 'Boleto vencido' : 'Boleto válido'}
                   </p>
                 </div>
                 <Button
                   type="button"
                   onClick={() => setShowRefreshImport(true)}
-                  className="h-10 rounded-2xl bg-gray-900 px-3 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+                  className="h-10 rounded-2xl bg-gray-900 px-3 text-sm font-medium text-white hover:bg-primary dark:bg-gray-100 dark:text-foreground dark:hover:bg-white"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {hasBoleto ? 'Atualizar' : 'Importar'}
@@ -100,14 +100,14 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
             </div>
           </div>
 
-          <div className="rounded-[22px] bg-gray-50 dark:bg-gray-800/70 p-4 shadow-sm space-y-3">
+          <div className="rounded-[22px] bg-muted/50/70 p-4 shadow-sm space-y-3">
             <div className="flex items-center gap-2">
-              <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Anexos da conta</p>
+              <Paperclip className="w-4 h-4 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">Anexos da conta</p>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                <Receipt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <div className="flex items-center justify-between rounded-2xl bg-card p-3 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-foreground/90">
+                <Receipt className="w-4 h-4 text-muted-foreground" />
                 Ver boleto, comprovante e demais anexos
               </div>
               <AnexosPanel
@@ -124,7 +124,7 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
 
       <Dialog open={showRefreshImport} onOpenChange={setShowRefreshImport}>
         <DialogContent className="z-[120] flex min-h-0 max-h-[90vh] max-w-3xl flex-col overflow-hidden border-0 bg-transparent p-0 shadow-none">
-          <div className="flex min-h-0 max-h-[85vh] flex-1 flex-col overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-950">
+          <div className="flex min-h-0 max-h-[85vh] flex-1 flex-col overflow-hidden rounded-[28px] bg-muted/40 dark:bg-gray-950">
             <AgefinImportador
               modoAtualizacao
               contaPrevistaId={contaMes?.referencia_id || undefined}

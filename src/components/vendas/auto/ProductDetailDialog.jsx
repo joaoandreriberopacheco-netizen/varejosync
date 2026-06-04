@@ -22,12 +22,12 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden">
-        <div className="relative h-64 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+      <DialogContent className="max-w-2xl bg-card border-0 rounded-3xl p-0 overflow-hidden">
+        <div className="relative h-64 bg-muted flex items-center justify-center">
           {product.imagem_url ? (
             <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-cover" />
           ) : (
-            <div className="text-gray-300 dark:text-gray-600">
+            <div className="text-gray-300 dark:text-muted-foreground">
               <ShoppingCart className="w-24 h-24 opacity-20" />
             </div>
           )}
@@ -43,34 +43,34 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
 
         <div className="p-6 space-y-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight mb-2">
+            <h2 className="text-2xl font-bold text-foreground leading-tight mb-2">
               {product.nome}
             </h2>
             <div className="flex items-center gap-3">
                <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
                  R$ {(displayUnit.valor_unitario || 0).toFixed(2)}
                </span>
-               <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+               <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-lg">
                  {displayUnit.unidade || 'UN'}
                </span>
             </div>
             {product.descricao && (
-               <p className="text-gray-600 dark:text-gray-300 mt-3 text-sm leading-relaxed">
+               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
                  {product.descricao}
                </p>
             )}
           </div>
 
-          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl flex items-center justify-between">
-            <span className="text-gray-600 dark:text-gray-300 font-medium">Quantidade</span>
-            <div className="flex items-center gap-4 bg-white dark:bg-gray-900 rounded-xl p-1 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-muted/50/50 p-4 rounded-2xl flex items-center justify-between">
+            <span className="text-muted-foreground font-medium">Quantidade</span>
+            <div className="flex items-center gap-4 bg-card rounded-xl p-1 shadow-sm border border-border/40">
               <button 
                 onClick={handleDecrement}
-                className="w-12 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="w-12 h-12 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-colors"
               >
                 <Minus className="w-5 h-5" />
               </button>
-              <span className="w-8 text-center font-bold text-xl text-gray-900 dark:text-white">{quantity}</span>
+              <span className="w-8 text-center font-bold text-xl text-foreground">{quantity}</span>
               <button 
                 onClick={handleIncrement}
                 className="w-12 h-12 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
@@ -84,7 +84,7 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
             <Button 
               variant="outline" 
               onClick={onClose}
-              className="h-14 px-6 rounded-xl text-gray-500 hover:text-gray-700 border-gray-200"
+              className="h-14 px-6 rounded-xl text-muted-foreground hover:text-foreground/90 border-border/40"
             >
               Desistir
             </Button>

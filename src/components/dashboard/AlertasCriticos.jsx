@@ -14,7 +14,7 @@ export default function AlertasCriticos({ alertas, isLoading }) {
           <AlertTriangle className="w-5 h-5 text-red-600" />
           Alertas Críticos
         </CardTitle>
-        <p className="text-sm text-gray-500">Itens que requerem sua atenção imediata.</p>
+        <p className="text-sm text-muted-foreground">Itens que requerem sua atenção imediata.</p>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {isLoading ? (
@@ -33,7 +33,7 @@ export default function AlertasCriticos({ alertas, isLoading }) {
               <div className="space-y-1 text-sm text-orange-700 max-h-32 overflow-y-auto">
                 {baixoEstoque.length > 0 ? baixoEstoque.map(p => (
                   <p key={p.id}>- {p.nome} (Atual: {p.estoque_atual})</p>
-                )) : <p className="text-gray-500">Nenhum produto com baixo estoque.</p>}
+                )) : <p className="text-muted-foreground">Nenhum produto com baixo estoque.</p>}
               </div>
             </div>
 
@@ -46,7 +46,7 @@ export default function AlertasCriticos({ alertas, isLoading }) {
                 <div className="space-y-1 text-sm text-red-700 max-h-32 overflow-y-auto">
                     {contasVencendo.length > 0 ? contasVencendo.map(c => (
                         <p key={c.id}>- {c.descricao} (Vence: {new Date(c.data_vencimento).toLocaleDateString('pt-BR')})</p>
-                    )) : <p className="text-gray-500">Nenhuma conta vencendo nos próximos 7 dias.</p>}
+                    )) : <p className="text-muted-foreground">Nenhuma conta vencendo nos próximos 7 dias.</p>}
                 </div>
             </div>
           </>

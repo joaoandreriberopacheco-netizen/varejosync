@@ -67,12 +67,12 @@ export default function LancamentoAnexos() {
         <button
           type="button"
           onClick={voltar}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-foreground">Anexos do lançamento</h1>
+          <h1 className="truncate text-lg font-semibold text-foreground dark:text-foreground">Anexos do lançamento</h1>
           {carregando ? (
             <p className={`mt-0.5 flex items-center gap-2 text-xs ${brandSurface.textLabel}`}>
               <Loader2 className="h-3 w-3 animate-spin" /> Carregando…

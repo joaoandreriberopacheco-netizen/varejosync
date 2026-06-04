@@ -120,48 +120,48 @@ ${pedido.valor_desconto > 0 ? `<div class="info" style="text-align:right">Descon
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm dark:bg-gray-900">
+      <DialogContent className="max-w-sm dark:bg-background">
         {/* Preview card */}
         <div className="flex flex-col items-center gap-1 pt-2 pb-1">
-          <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-1">
-            <FileText className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+          <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-1">
+            <FileText className="w-6 h-6 text-muted-foreground" />
           </div>
-          <p className="text-base font-semibold text-gray-900 dark:text-white">Promissória / Fiado</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+          <p className="text-base font-semibold text-foreground">Promissória / Fiado</p>
+          <p className="text-xs text-muted-foreground text-center">
             {numeroPedido} · {nomeCliente}
           </p>
         </div>
 
         {/* Resumo mini */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 space-y-2">
+        <div className="bg-muted/50 rounded-2xl p-4 space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Valor a prazo</span>
-            <span className="text-lg font-bold text-gray-900 dark:text-white">{valorStr}</span>
+            <span className="text-xs text-muted-foreground">Valor a prazo</span>
+            <span className="text-lg font-bold text-foreground">{valorStr}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Data</span>
-            <span className="text-xs text-gray-700 dark:text-gray-300">{dataHoje}</span>
+            <span className="text-xs text-muted-foreground">Data</span>
+            <span className="text-xs text-foreground/90">{dataHoje}</span>
           </div>
           {pedido.itens?.length > 0 && (
-            <div className="border-t border-gray-100 dark:border-white/10 pt-2 space-y-1">
+            <div className="border-t border-border/40 dark:border-white/10 pt-2 space-y-1">
               {pedido.itens.slice(0, 4).map((item, i) => (
                 <div key={i} className="flex justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[160px]">{item.produto_nome}</span>
-                  <span className="text-xs text-gray-600 dark:text-gray-300 ml-2">{item.quantidade}x</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[160px]">{item.produto_nome}</span>
+                  <span className="text-xs text-muted-foreground ml-2">{item.quantidade}x</span>
                 </div>
               ))}
               {pedido.itens.length > 4 && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 text-right">+{pedido.itens.length - 4} itens</p>
+                <p className="text-xs text-muted-foreground text-right">+{pedido.itens.length - 4} itens</p>
               )}
             </div>
           )}
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button variant="outline" onClick={onClose} className="flex-1 h-11 border-gray-200 dark:border-gray-700">
+          <Button variant="outline" onClick={onClose} className="flex-1 h-11 border-border/40">
             <X className="w-4 h-4 mr-2" /> Pular
           </Button>
-          <Button onClick={imprimir} className="flex-1 h-11 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white">
+          <Button onClick={imprimir} className="flex-1 h-11 bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground text-white">
             <Printer className="w-4 h-4 mr-2" /> Imprimir
           </Button>
         </div>

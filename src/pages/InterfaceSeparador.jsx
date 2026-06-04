@@ -161,12 +161,12 @@ export default function InterfaceSeparador() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">SEPARAÇÃO DE PEDIDOS</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">ESCANEIE O QR CODE PARA INICIAR</p>
+          <h1 className="text-2xl font-bold text-foreground">SEPARAÇÃO DE PEDIDOS</h1>
+          <p className="text-sm text-muted-foreground">ESCANEIE O QR CODE PARA INICIAR</p>
         </div>
 
         {/* Scanner QR */}
@@ -175,24 +175,24 @@ export default function InterfaceSeparador() {
             {!scannerAtivo ? (
               <form onSubmit={handleScanQR} className="space-y-4">
                 <div className="flex items-center justify-center mb-4">
-                  <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <QrCode className="w-10 h-10 text-gray-400" />
+                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+                    <QrCode className="w-10 h-10 text-muted-foreground" />
                   </div>
                 </div>
                 
                 <Button
                   type="button"
                   onClick={iniciarScanner}
-                  className="w-full h-14 bg-gray-800 hover:bg-gray-700 text-white gap-2"
+                  className="w-full h-14 bg-primary hover:bg-primary/90 text-white gap-2"
                 >
                   <Camera className="w-5 h-5" />
                   ESCANEAR QR CODE
                 </Button>
 
                 <div className="relative flex items-center gap-2">
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                  <span className="text-xs text-gray-400">OU</span>
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                  <div className="flex-1 h-px bg-muted" />
+                  <span className="text-xs text-muted-foreground">OU</span>
+                  <div className="flex-1 h-px bg-muted" />
                 </div>
                 
                 <div className="relative">
@@ -218,7 +218,7 @@ export default function InterfaceSeparador() {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <h3 className="text-sm font-semibold text-foreground/90">
                     POSICIONE O QR CODE NA CÂMERA
                   </h3>
                   <Button
@@ -244,11 +244,11 @@ export default function InterfaceSeparador() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                    <h2 className="text-xl font-bold text-foreground">
                       {pedidoAtual.numero}
                     </h2>
                     {pedidoAtual.senha_atendimento && (
-                      <p className="text-sm text-gray-500">SENHA: {pedidoAtual.senha_atendimento}</p>
+                      <p className="text-sm text-muted-foreground">SENHA: {pedidoAtual.senha_atendimento}</p>
                     )}
                   </div>
                   <Badge className={pedidoAtual.metodo_entrega === 'Delivery' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}>
@@ -267,20 +267,20 @@ export default function InterfaceSeparador() {
                 </div>
 
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="w-4 h-4" />
                     <span className="font-medium">{pedidoAtual.cliente_nome}</span>
                   </div>
                   
                   {clienteAtual?.telefone && (
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <span className="text-xs">📞</span>
                       <span>{clienteAtual.telefone}</span>
                     </div>
                   )}
 
                   {pedidoAtual.metodo_entrega === 'Delivery' && clienteAtual?.endereco && (
-                    <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
+                    <div className="flex items-start gap-2 text-muted-foreground">
                       <MapPin className="w-4 h-4 mt-0.5" />
                       <div className="text-xs">
                         <p>{clienteAtual.endereco}</p>
@@ -300,14 +300,14 @@ export default function InterfaceSeparador() {
             <Card className="shadow-lg">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <span className="text-sm font-medium text-foreground/90">
                     PROGRESSO DA SEPARAÇÃO
                   </span>
-                  <span className="text-sm font-bold text-gray-800 dark:text-white">
+                  <span className="text-sm font-bold text-foreground">
                     {itensSeparados.length}/{pedidoAtual.itens.length}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                   <div 
                     className="bg-green-500 h-full transition-all duration-300 rounded-full"
                     style={{ width: `${progressoSeparacao}%` }}
@@ -319,7 +319,7 @@ export default function InterfaceSeparador() {
             {/* Lista de Itens */}
             <Card className="shadow-lg">
               <CardContent className="p-4">
-                <h3 className="text-sm font-semibold text-gray-500 mb-3">ITENS PARA SEPARAR</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">ITENS PARA SEPARAR</h3>
                 <P38MobileLineList>
                   {pedidoAtual.itens.map((item, index) => {
                     const separado = itensSeparados.includes(index);

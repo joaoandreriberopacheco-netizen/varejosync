@@ -18,27 +18,27 @@ export default function EnvioFinanceiroLoteDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl border-0 shadow-2xl bg-white dark:bg-gray-900">
+      <DialogContent className="max-w-md rounded-3xl border-0 shadow-2xl bg-card">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-white font-glacial">
+          <DialogTitle className="text-foreground font-glacial">
             Enviar para o financeiro
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {quantidadeSelecionados} pedido(s) selecionado(s)
           </p>
 
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">
+            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
               Forma de pagamento
             </Label>
             <Select value={formaPagamento} onValueChange={onFormaPagamentoChange}>
-              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm">
+              <SelectTrigger className="bg-muted/50 border-0 h-11 shadow-sm">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+              <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
                 <SelectItem value="À Vista">À Vista</SelectItem>
                 <SelectItem value="Parcelado">Parcelado</SelectItem>
               </SelectContent>
@@ -46,14 +46,14 @@ export default function EnvioFinanceiroLoteDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">
+            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
               {formaPagamento === 'À Vista' ? 'Data de pagamento' : 'Primeiro vencimento'}
             </Label>
             <Input
               type="date"
               value={dataPrimeiroVencimento}
               onChange={(e) => onDataPrimeiroVencimentoChange(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm"
+              className="bg-muted/50 border-0 h-11 shadow-sm"
             />
           </div>
         </div>

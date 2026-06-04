@@ -354,11 +354,11 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
               <CardContent className="pt-6 space-y-4">
                 {modo === 'cega' ? (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Confira os produtos recebidos sem consultar o pedido original
                     </p>
                     {itensConferidos.map((item, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-3 p-4 bg-gray-50 rounded-lg">
+                      <div key={idx} className="grid grid-cols-12 gap-3 p-4 bg-muted/40 rounded-lg">
                         <div className="col-span-4">
                           <Label>Produto</Label>
                           <Input
@@ -428,7 +428,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Confira cada item do pedido marcando quantidade e condição
                     </p>
                     {itensConferidos.map((item, idx) => {
@@ -437,12 +437,12 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                       const precisaSerial = produto?.controla_serial;
 
                       return (
-                        <div key={idx} className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                        <div key={idx} className="space-y-3 p-4 bg-muted/40 rounded-lg border">
                           <div className="grid grid-cols-12 gap-3">
                             <div className="col-span-4">
                               <Label>Produto</Label>
                               <div className="font-medium">{item.produto_nome}</div>
-                              <div className="text-xs text-gray-500">Esperado: {item.quantidade_pedido}</div>
+                              <div className="text-xs text-muted-foreground">Esperado: {item.quantidade_pedido}</div>
                             </div>
                             <div className="col-span-2">
                               <Label>Recebido</Label>
@@ -599,19 +599,19 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                     <div className="text-3xl font-bold text-green-600">
                       {itensConferidos.filter(i => !i.divergencia).length}
                     </div>
-                    <div className="text-sm text-gray-600">Itens OK</div>
+                    <div className="text-sm text-muted-foreground">Itens OK</div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-red-600">
                       {itensConferidos.filter(i => i.divergencia).length}
                     </div>
-                    <div className="text-sm text-gray-600">Divergências</div>
+                    <div className="text-sm text-muted-foreground">Divergências</div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-indigo-600">
                       {itensConferidos.length}
                     </div>
-                    <div className="text-sm text-gray-600">Total de Itens</div>
+                    <div className="text-sm text-muted-foreground">Total de Itens</div>
                   </div>
                 </div>
               </CardContent>
@@ -628,7 +628,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                     <div key={idx} className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
                       <div className="font-medium">{item.produto_nome}</div>
                       <div className="text-sm text-red-600">{item.tipo_divergencia}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         Esperado: {item.quantidade_pedido || 'N/A'} | Recebido: {item.quantidade_conferida}
                       </div>
                       {item.fotos?.length > 0 && (
@@ -671,7 +671,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                     type="file"
                     accept="image/*"
                     onChange={handleUploadAssinatura}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                   />
                   {assinaturaFile && (
                     <img src={assinaturaFile} className="mt-2 w-32 h-20 object-contain border rounded" />

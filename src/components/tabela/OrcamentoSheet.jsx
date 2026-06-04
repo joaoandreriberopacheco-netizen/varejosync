@@ -116,27 +116,27 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-white font-glacial">Gerar Orçamento</h3>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-            <X className="w-4 h-4 text-gray-500" />
+      <div className="bg-card rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+          <h3 className="text-sm font-semibold text-foreground font-glacial">Gerar Orçamento</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg">
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {/* Resumo */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{itens.length} produto{itens.length !== 1 ? 's' : ''} no orçamento</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white font-glacial">R$ {fmtR(total)}</p>
+          <div className="bg-muted/50 rounded-xl p-3">
+            <p className="text-xs text-muted-foreground mb-2">{itens.length} produto{itens.length !== 1 ? 's' : ''} no orçamento</p>
+            <p className="text-xl font-bold text-foreground font-glacial">R$ {fmtR(total)}</p>
             {tabelaSelecionada && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Tabela: {tabelaSelecionada.nome_tabela}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Tabela: {tabelaSelecionada.nome_tabela}</p>
             )}
           </div>
 
           {/* Seleção de formato */}
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Formato de impressão</p>
+            <p className="text-xs text-muted-foreground mb-2 font-medium">Formato de impressão</p>
             <div className="grid grid-cols-2 gap-2">
               {['80mm', 'A4'].map(f => (
                 <button
@@ -144,8 +144,8 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
                   onClick={() => setFormato(f)}
                   className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
                     formato === f
-                      ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {f === '80mm' ? '🧾 Cupom 80mm' : '📄 Folha A4'}
@@ -156,7 +156,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
 
           <Button
             onClick={handlePrint}
-            className="w-full bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-gray-900 text-white h-11 rounded-xl gap-2"
+            className="w-full bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-foreground text-white h-11 rounded-xl gap-2"
           >
             <Printer className="w-4 h-4" />
             Imprimir / Salvar PDF
@@ -171,23 +171,23 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
 function ItemCarrinho({ item, calcularPreco, onChangeQtd, onRemove }) {
   const preco = calcularPreco(item.produto);
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 border-b border-gray-100 dark:border-gray-800">
-      <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+    <div className="flex items-center gap-3 py-2.5 px-3 border-b border-border/40">
+      <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
         {item.produto.imagem_url
           ? <img src={item.produto.imagem_url} alt="" className="w-full h-full object-cover" />
           : <Package className="w-3.5 h-3.5 text-gray-300" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-gray-700 dark:text-gray-200 leading-snug uppercase truncate">{item.produto.nome}</p>
-        <p className="text-[10px] text-gray-400 dark:text-gray-500">R$ {fmtR(preco)} × {fmtN(item.qtd)} = <span className="font-semibold text-gray-600 dark:text-gray-300">R$ {fmtR(preco * item.qtd)}</span></p>
+        <p className="text-[11px] text-foreground/90 leading-snug uppercase truncate">{item.produto.nome}</p>
+        <p className="text-[10px] text-muted-foreground">R$ {fmtR(preco)} × {fmtN(item.qtd)} = <span className="font-semibold text-muted-foreground">R$ {fmtR(preco * item.qtd)}</span></p>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        <button onClick={() => onChangeQtd(item.produto.id, item.qtd - 1)} className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-          <Minus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+        <button onClick={() => onChangeQtd(item.produto.id, item.qtd - 1)} className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
+          <Minus className="w-3 h-3 text-muted-foreground" />
         </button>
-        <span className="text-[11px] font-medium w-6 text-center text-gray-700 dark:text-gray-200">{item.qtd}</span>
-        <button onClick={() => onChangeQtd(item.produto.id, item.qtd + 1)} className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-          <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+        <span className="text-[11px] font-medium w-6 text-center text-foreground/90">{item.qtd}</span>
+        <button onClick={() => onChangeQtd(item.produto.id, item.qtd + 1)} className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
+          <Plus className="w-3 h-3 text-muted-foreground" />
         </button>
         <button onClick={() => onRemove(item.produto.id)} className="w-6 h-6 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center ml-1">
           <Trash2 className="w-3 h-3 text-red-500" />
@@ -235,28 +235,28 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-card shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 flex-shrink-0">
           <div>
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-white font-glacial">Orçamento</h2>
+            <h2 className="text-sm font-semibold text-foreground font-glacial">Orçamento</h2>
             {tabelaSelecionada && (
-              <p className="text-[11px] text-gray-400 dark:text-gray-500">{tabelaSelecionada.nome_tabela}</p>
+              <p className="text-[11px] text-muted-foreground">{tabelaSelecionada.nome_tabela}</p>
             )}
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-            <X className="w-4 h-4 text-gray-500" />
+          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg">
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+        <div className="flex border-b border-border/40 flex-shrink-0">
           <button
             onClick={() => setAba('buscar')}
             className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
               aba === 'buscar'
-                ? 'text-gray-900 dark:text-white border-b-2 border-gray-800 dark:border-gray-200'
-                : 'text-gray-400 dark:text-gray-500'
+                ? 'text-foreground border-b-2 border-gray-800 dark:border-border/40'
+                : 'text-muted-foreground'
             }`}
           >
             Buscar Produtos
@@ -265,13 +265,13 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             onClick={() => setAba('carrinho')}
             className={`flex-1 py-2.5 text-xs font-medium transition-colors relative ${
               aba === 'carrinho'
-                ? 'text-gray-900 dark:text-white border-b-2 border-gray-800 dark:border-gray-200'
-                : 'text-gray-400 dark:text-gray-500'
+                ? 'text-foreground border-b-2 border-gray-800 dark:border-border/40'
+                : 'text-muted-foreground'
             }`}
           >
             Orçamento
             {totalItens > 0 && (
-              <span className="ml-1.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="ml-1.5 bg-primary dark:bg-gray-200 text-white dark:text-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                 {totalItens}
               </span>
             )}
@@ -284,13 +284,13 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             <>
               <div className="px-3 py-2 flex-shrink-0">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Buscar produto..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     autoFocus
-                    className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 shadow-none focus-visible:ring-0 rounded-xl text-gray-700 dark:text-gray-200"
+                    className="border-none bg-muted h-10 text-sm pl-9 shadow-none focus-visible:ring-0 rounded-xl text-foreground/90"
                   />
                 </div>
               </div>
@@ -302,17 +302,17 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                     <button
                       key={p.id}
                       onClick={() => addProduto(p)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 active:bg-gray-100 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 dark:hover:bg-muted/50 active:bg-gray-100 transition-colors"
                     >
-                      <div className="w-9 h-9 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <div className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {p.imagem_url
                           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-                          : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
+                          : <Package className="w-4 h-4 text-gray-300 dark:text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-normal text-gray-700 dark:text-gray-200 uppercase leading-snug truncate">{p.nome}</p>
+                        <p className="text-[11px] font-normal text-foreground/90 uppercase leading-snug truncate">{p.nome}</p>
                         {p.codigo_interno && (
-                          <p className="text-[9px] text-gray-400 font-mono">#{p.codigo_interno}</p>
+                          <p className="text-[9px] text-muted-foreground font-mono">#{p.codigo_interno}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -322,12 +322,12 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                           </span>
                         )}
                         {noCarrinho ? (
-                          <span className="w-6 h-6 rounded-lg bg-gray-800 dark:bg-gray-200 flex items-center justify-center text-[9px] font-bold text-white dark:text-gray-900">
+                          <span className="w-6 h-6 rounded-lg bg-primary dark:bg-gray-200 flex items-center justify-center text-[9px] font-bold text-white dark:text-foreground">
                             {noCarrinho.qtd}
                           </span>
                         ) : (
-                          <div className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                            <Plus className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                          <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
+                            <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                           </div>
                         )}
                       </div>
@@ -335,7 +335,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
                   );
                 })}
                 {produtosFiltrados.length === 0 && (
-                  <div className="py-12 text-center text-gray-400 text-xs">Nenhum produto encontrado</div>
+                  <div className="py-12 text-center text-muted-foreground text-xs">Nenhum produto encontrado</div>
                 )}
               </div>
             </>
@@ -343,7 +343,7 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
             <>
               <div className="flex-1 overflow-y-auto">
                 {carrinho.length === 0 ? (
-                  <div className="py-16 text-center text-gray-400 text-xs">Nenhum produto adicionado</div>
+                  <div className="py-16 text-center text-muted-foreground text-xs">Nenhum produto adicionado</div>
                 ) : (
                   carrinho.map(item => (
                     <ItemCarrinho
@@ -362,14 +362,14 @@ export default function OrcamentoSheet({ produtos, calcularPreco, tabelaSelecion
 
         {/* Rodapé — total + gerar */}
         {carrinho.length > 0 && (
-          <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 space-y-2">
+          <div className="flex-shrink-0 px-4 py-3 border-t border-border/40 bg-card space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-gray-400">{totalItens} {totalItens === 1 ? 'item' : 'itens'}</span>
-              <span className="text-lg font-bold text-gray-900 dark:text-white font-glacial">R$ {fmtR(total)}</span>
+              <span className="text-xs text-muted-foreground">{totalItens} {totalItens === 1 ? 'item' : 'itens'}</span>
+              <span className="text-lg font-bold text-foreground font-glacial">R$ {fmtR(total)}</span>
             </div>
             <Button
               onClick={() => setShowCupom(true)}
-              className="w-full bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-gray-900 text-white h-11 rounded-xl gap-2"
+              className="w-full bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-100 dark:text-foreground text-white h-11 rounded-xl gap-2"
             >
               <FileText className="w-4 h-4" />
               Gerar Orçamento

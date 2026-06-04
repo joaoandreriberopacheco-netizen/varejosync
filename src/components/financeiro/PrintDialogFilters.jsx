@@ -8,7 +8,7 @@ function FilterChip({ active, icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 shadow-sm'}`}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-muted text-muted-foreground shadow-sm'}`}
     >
       <Icon className="w-3.5 h-3.5" />
       {label}
@@ -22,20 +22,20 @@ function MultiSelectPopover({ icon: Icon, label, options, selected, onToggle, on
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 shadow-sm'}`}>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-muted text-muted-foreground shadow-sm'}`}>
           <Icon className="w-3.5 h-3.5" />
           {active ? `${selected.length} selecionado(s)` : label}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2 rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl" align="start">
-        <button onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800">
+      <PopoverContent className="w-56 p-2 rounded-3xl border-0 bg-white dark:bg-card shadow-xl" align="start">
+        <button onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-foreground/90 hover:bg-muted/40 dark:hover:bg-slate-800">
           {allLabel}
         </button>
         <div className="space-y-1 mt-1">
           {options.map((option) => (
-            <label key={option.value} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800">
+            <label key={option.value} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer hover:bg-muted/40 dark:hover:bg-slate-800">
               <Checkbox checked={selected.includes(option.value)} onCheckedChange={() => onToggle(option.value)} className="w-4 h-4" />
-              <span className="text-xs text-gray-700 dark:text-gray-200">{option.label}</span>
+              <span className="text-xs text-foreground/90">{option.label}</span>
             </label>
           ))}
         </div>
@@ -82,8 +82,8 @@ export default function PrintDialogFilters({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[24px] bg-gray-50 dark:bg-slate-800/60 p-3">
-        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-2">
+      <div className="rounded-[24px] bg-muted/40 dark:bg-muted/60 p-3">
+        <div className="flex items-center gap-2 text-muted-foreground mb-2">
           <CalendarDays className="w-4 h-4" />
           <span className="text-[11px] uppercase tracking-wide">Período</span>
         </div>

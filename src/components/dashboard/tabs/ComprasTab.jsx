@@ -100,29 +100,29 @@ export default function ComprasTab() {
     <div className="space-y-6">
       {/* KPIs - SEM BORDAS */}
       <div>
-        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">Resumo de Compras</h3>
+        <h3 className="text-sm font-medium text-foreground mb-4">Resumo de Compras</h3>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Compras do Mês</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Compras do Mês</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
               {formatCurrency(data.valorComprasMes)}
             </div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pedidos Abertos</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Pedidos Abertos</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
               {data.pedidosAbertos}
             </div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Atrasados</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Atrasados</div>
             <div className="text-xl font-semibold text-red-600 dark:text-red-500">
               {data.pedidosAtrasados}
             </div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Principal</div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Principal</div>
+            <div className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">
               {data.fornecedorPrincipal}
             </div>
           </div>
@@ -131,38 +131,38 @@ export default function ComprasTab() {
 
       {/* Status e Entregas - SEM BORDAS */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
-            <ShoppingCart className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Pedidos por Status</h3>
+            <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-foreground">Pedidos por Status</h3>
           </div>
           <div className="space-y-2">
             {Object.entries(data.statusCounts).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{status}</span>
-                <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{count}</span>
+                <span className="text-sm font-medium text-foreground/90">{status}</span>
+                <span className="text-lg font-semibold text-foreground dark:text-gray-100">{count}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Próximas Entregas</h3>
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-foreground">Próximas Entregas</h3>
           </div>
           <div className="space-y-2">
             {data.proximasEntregas.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nenhuma entrega agendada</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma entrega agendada</p>
             ) : (
               data.proximasEntregas.map(pedido => (
-                <div key={pedido.id} className="py-2 border-b last:border-0 border-gray-200 dark:border-gray-700">
+                <div key={pedido.id} className="py-2 border-b last:border-0 border-border/40">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{pedido.numero}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{pedido.fornecedor_nome}</div>
+                      <div className="text-sm font-medium text-foreground truncate">{pedido.numero}</div>
+                      <div className="text-xs text-muted-foreground truncate">{pedido.fornecedor_nome}</div>
                     </div>
-                    <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    <div className="text-xs text-foreground/90 whitespace-nowrap">
                       {formatDate(pedido.data_prevista_entrega)}
                     </div>
                   </div>

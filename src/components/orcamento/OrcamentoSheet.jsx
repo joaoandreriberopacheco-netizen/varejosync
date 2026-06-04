@@ -58,24 +58,24 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
 
       {/* Sheet */}
       <div
-      className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl"
+      className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full" />
+          <div className="w-10 h-1 bg-muted rounded-full" />
         </div>
 
         <div className="px-5 pb-2 pt-1">
           {/* Produto info */}
           <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-0.5">{produto.nome}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">
+          <p className="text-[11px] text-muted-foreground mb-2">
             R$ {fmtR(unitPrice)} / {selectedUnit?.unidade || produto.unidade_principal || 'UN'}
           </p>
           {unitOptions.length > 1 && (
             <div className="mb-4">
               <Select value={selectedUnitCode} onValueChange={setSelectedUnitCode}>
-                <SelectTrigger className="h-10 bg-gray-50 dark:bg-gray-800 border-0 rounded-xl">
+                <SelectTrigger className="h-10 bg-muted/50 border-0 rounded-xl">
                   <SelectValue placeholder="Selecione a unidade" />
                 </SelectTrigger>
                 <SelectContent>
@@ -96,9 +96,9 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
                 const n = Math.max(0, (parseFloat(prev.replace(',', '.')) || 0) - 1);
                 return String(n % 1 === 0 ? n : n.toFixed(2));
               })}
-              className="w-11 h-11 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center active:bg-gray-200 dark:active:bg-gray-700 flex-shrink-0"
+              className="w-11 h-11 rounded-full bg-muted flex items-center justify-center active:bg-gray-200 dark:active:bg-gray-700 flex-shrink-0"
             >
-              <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              <Minus className="w-4 h-4 text-muted-foreground" />
             </button>
 
             <Input
@@ -109,7 +109,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
               onChange={e => setQtd(e.target.value)}
               onFocus={e => e.target.select()}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); }}
-              className="flex-1 text-center text-2xl font-bold h-12 bg-gray-50 dark:bg-gray-800 border-0 shadow-none focus-visible:ring-0 text-gray-900 dark:text-white rounded-2xl"
+              className="flex-1 text-center text-2xl font-bold h-12 bg-muted/50 border-0 shadow-none focus-visible:ring-0 text-foreground rounded-2xl"
               placeholder="0"
             />
 
@@ -120,7 +120,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
               })}
               className="w-11 h-11 rounded-full bg-gray-900 dark:bg-gray-100 flex items-center justify-center active:opacity-70 flex-shrink-0"
             >
-              <Plus className="w-4 h-4 text-white dark:text-gray-900" />
+              <Plus className="w-4 h-4 text-white dark:text-foreground" />
             </button>
           </div>
 
@@ -129,7 +129,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
             <div className="mb-4">
               <p className="text-[10px] text-amber-500 font-medium uppercase tracking-wide mb-1.5">Preço livre</p>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
                 <input autoComplete="off"
                   ref={precoRef}
                   type="number" step="0.01" inputMode="decimal"
@@ -148,8 +148,8 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
           {/* Total */}
           {qtdNum > 0 && (
             <div className="flex items-baseline justify-between mb-4">
-              <span className="text-xs text-gray-400 dark:text-gray-500">Total</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">R$ {fmtR(total)}</span>
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-xl font-bold text-foreground tabular-nums">R$ {fmtR(total)}</span>
             </div>
           )}
 
@@ -165,14 +165,14 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
             )}
             <button
               onClick={onClose}
-              className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium active:bg-gray-200"
+              className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground text-sm font-medium active:bg-gray-200"
             >
               Cancelar
             </button>
             <button
               onClick={handleConfirm}
               disabled={qtdNum <= 0}
-              className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
+              className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
             >
               <Check className="w-4 h-4" />
               Confirmar
@@ -198,13 +198,13 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
   return (
     <div
       onClick={() => onSelect(produto, preco)}
-      className="flex items-center gap-3 mx-3 my-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl active:bg-gray-100 dark:active:bg-gray-700/60 cursor-pointer shadow-sm"
+      className="flex items-center gap-3 mx-3 my-1.5 px-4 py-3 bg-muted/50/60 rounded-2xl active:bg-gray-100 dark:active:bg-gray-700/60 cursor-pointer shadow-sm"
     >
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
 
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{produto.nome}</p>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5">
           R$ {fmtR(preco)} / {unidadeSelecionada?.unidade || produto.unidade_principal || 'UN'} · {e.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
           {apresent ? ` · ~${apresent.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${apresent.sigla}` : ''}
           {unitOptions?.length > 1 ? ` · ${unitOptions.length} unidades` : ''}
@@ -216,8 +216,8 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
           <span className="text-[10px] font-bold text-white">{qtdNoCarrinho}</span>
         </div>
       ) : (
-        <div className="w-6 h-6 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
-          <Plus className="w-3 h-3 text-gray-400" />
+        <div className="w-6 h-6 rounded-full border border-border/40 flex items-center justify-center flex-shrink-0">
+          <Plus className="w-3 h-3 text-muted-foreground" />
         </div>
       )}
     </div>
@@ -273,23 +273,23 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
   return (
     <div className="flex flex-col h-full relative">
       {/* Barra de busca */}
-      <div className="px-4 pt-3 pb-3 bg-white dark:bg-gray-900 flex-shrink-0">
+      <div className="px-4 pt-3 pb-3 bg-card flex-shrink-0">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
           <Input
             ref={searchRef}
             placeholder="Buscar produto, código..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="border-none bg-gray-100 dark:bg-gray-800 h-12 text-base pl-11 rounded-2xl shadow-none focus-visible:ring-0 w-full"
+            className="border-none bg-muted h-12 text-base pl-11 rounded-2xl shadow-none focus-visible:ring-0 w-full"
             autoFocus
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-primary/90"
             >
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="w-4 h-4 text-muted-foreground" />
             </button>
           )}
         </div>
@@ -298,14 +298,14 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
       {/* Resultados */}
       <div className="flex-1 overflow-y-auto">
         {search.trim() === '' ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-600 gap-2">
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
             <Search className="w-10 h-10 opacity-30" />
             <p className="text-sm">Digite para buscar produtos</p>
           </div>
         ) : filtrados.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-600 gap-2">
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
             <p className="text-sm">Nenhum produto encontrado</p>
-            <p className="text-xs text-gray-300 dark:text-gray-700">para "{search}"</p>
+            <p className="text-xs text-gray-300 dark:text-foreground/90">para "{search}"</p>
           </div>
         ) : (
           filtrados.map(p => {
@@ -333,7 +333,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
         <div className="absolute bottom-4 left-4 right-4">
           <button
             onClick={onVerCarrinho}
-            className="w-full flex items-center justify-between bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-5 py-4 rounded-2xl shadow-xl active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-between bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground px-5 py-4 rounded-2xl shadow-xl active:scale-[0.98] transition-all"
           >
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -371,22 +371,22 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 // ── Item no carrinho ──────────────────────────────────────────────────────────
 function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
   return (
-    <div className="mx-3 my-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl shadow-sm">
+    <div className="mx-3 my-1.5 px-4 py-3 bg-muted/50/60 rounded-2xl shadow-sm">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(item)}>
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{item.nome}</p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-[11px] text-muted-foreground mt-0.5">
             {item.qtd} {item.unidade} × R$ {fmtR(item.preco_unit)}
           </p>
         </div>
-        <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums flex-shrink-0">
+        <span className="text-sm font-bold text-foreground tabular-nums flex-shrink-0">
           R$ {fmtR(item.preco_unit * item.qtd)}
         </span>
         <button
           onClick={e => { e.stopPropagation(); onRemove(item.id); }}
           className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
         >
-          <Trash2 className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors" />
+          <Trash2 className="w-3.5 h-3.5 text-gray-300 dark:text-muted-foreground hover:text-red-400 transition-colors" />
         </button>
       </div>
       {item.preco_livre && (
@@ -441,12 +441,12 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
       {/* Campo cliente */}
       <div className="px-4 pt-3 pb-2 flex-shrink-0">
         <div className="relative">
-          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Nome do cliente (opcional)"
             value={clienteNome}
             onChange={e => setClienteNome(e.target.value)}
-            className="border-none bg-gray-100 dark:bg-gray-800 h-11 text-sm pl-10 rounded-2xl shadow-none focus-visible:ring-0"
+            className="border-none bg-muted h-11 text-sm pl-10 rounded-2xl shadow-none focus-visible:ring-0"
           />
         </div>
       </div>
@@ -454,7 +454,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
       {/* Lista de itens */}
       <div className="flex-1 overflow-y-auto">
         {itens.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-600 gap-2">
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
             <ShoppingCart className="w-10 h-10 opacity-30" />
             <p className="text-sm">Carrinho vazio</p>
           </div>
@@ -473,7 +473,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
 
       {/* Rodapé */}
       {itens.length > 0 && (
-        <div className="flex-shrink-0 px-4 pb-6 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
+        <div className="flex-shrink-0 px-4 pb-6 pt-4 border-t border-border/40 space-y-3">
           {/* Venda Perdida */}
           <button
             onClick={onVendaPerdida}
@@ -484,20 +484,20 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           </button>
 
           {/* Desconto */}
-          <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-2.5 space-y-2">
+          <div className="bg-muted/50/60 rounded-xl p-2.5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
             </div>
             <div className="flex gap-1.5 items-center">
               <div className="relative flex-1">
                 <Input type="number" min="0" step="0.01"
                   value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
-                  className="pr-5 h-8 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                  className="pr-5 h-8 bg-card border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
                   placeholder="0" />
-                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">{tipoDesconto === 'percentual' ? '%' : 'R$'}</span>
+                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{tipoDesconto === 'percentual' ? '%' : 'R$'}</span>
               </div>
               <button onClick={() => setTipoDesconto(tipoDesconto === 'percentual' ? 'fixo' : 'percentual')}
-                className="h-8 px-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-[10px] font-semibold text-gray-700 dark:text-gray-300">
+                className="h-8 px-2 bg-muted rounded-lg text-[10px] font-semibold text-foreground/90">
                 {tipoDesconto === 'percentual' ? '%' : 'R$'}
               </button>
             </div>
@@ -509,16 +509,16 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
               placeholder="Observações (opcional)"
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              className="border-0 bg-gray-100 dark:bg-gray-800 h-10 text-sm rounded-2xl shadow-none focus-visible:ring-0"
+              className="border-0 bg-muted h-10 text-sm rounded-2xl shadow-none focus-visible:ring-0"
             />
           </div>
 
           {/* Total */}
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
+            <span className="text-sm text-muted-foreground">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
             <div className="flex flex-col items-end gap-1">
-              {valorDesconto > 0 && <span className="text-xs text-gray-400 line-through">R$ {fmtR(subtotal)}</span>}
-              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">R$ {fmtR(total)}</span>
+              {valorDesconto > 0 && <span className="text-xs text-muted-foreground line-through">R$ {fmtR(subtotal)}</span>}
+              <span className="text-2xl font-bold text-foreground font-glacial tabular-nums">R$ {fmtR(total)}</span>
             </div>
           </div>
 
@@ -530,8 +530,8 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
                 onClick={() => setFormatoCupom(fmt)}
                 className={`flex-1 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                   formatoCupom === fmt
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground'
+                    : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {fmt === '80mm' ? '🧾 Cupom 80mm' : '📄 Folha A4'}
@@ -542,7 +542,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           {/* Botão simulador de taxa */}
           <button
             onClick={onSimularCartao}
-            className="w-full flex items-center justify-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-3 rounded-2xl text-xs font-medium active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-muted/50 text-muted-foreground py-3 rounded-2xl text-xs font-medium active:scale-[0.98] transition-all"
           >
             <CreditCard className="w-4 h-4" />
             Simular taxa no cartão
@@ -551,7 +551,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           {/* Botão gerar */}
           <button
             onClick={onGerar}
-            className="w-full flex items-center justify-center gap-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 py-4 rounded-2xl text-sm font-bold shadow-lg active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground py-4 rounded-2xl text-sm font-bold shadow-lg active:scale-[0.98] transition-all"
           >
             <Printer className="w-5 h-5" />
             Gerar Orçamento
@@ -680,30 +680,30 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-gray-900">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-card">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/40 flex-shrink-0">
         <button
           onClick={tela === 'carrinho' ? () => setTela('busca') : handleClose}
-          className="p-2 -ml-1 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+          className="p-2 -ml-1 rounded-2xl hover:bg-muted transition-colors flex-shrink-0"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
 
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial">
+          <h2 className="text-sm font-semibold text-foreground font-glacial">
             {tela === 'carrinho' ? 'Revisar Orçamento' : 'Novo Orçamento'}
           </h2>
-          {nomeTabela && <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{nomeTabela}</p>}
+          {nomeTabela && <p className="text-[11px] text-muted-foreground truncate">{nomeTabela}</p>}
         </div>
 
         {/* Botão carrinho no header quando na tela de busca */}
         {tela === 'busca' && itens.length > 0 && (
           <button
             onClick={() => setTela('carrinho')}
-            className="relative p-2 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="relative p-2 rounded-2xl hover:bg-muted transition-colors"
           >
-            <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ShoppingCart className="w-5 h-5 text-muted-foreground" />
             <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-green-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
               {itens.reduce((s, i) => s + i.qtd, 0)}
             </span>
@@ -711,8 +711,8 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         )}
 
         {tela === 'busca' && (
-          <button onClick={handleClose} className="p-2 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+          <button onClick={handleClose} className="p-2 rounded-2xl hover:bg-muted transition-colors">
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         )}
       </div>

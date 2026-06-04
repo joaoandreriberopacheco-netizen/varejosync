@@ -121,27 +121,27 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
       <button
         type="button"
         onClick={() => { setOpen(o => !o); setQuery(''); }}
-        className="w-full h-12 rounded-xl bg-gray-50 dark:bg-gray-800 shadow-sm px-4 flex items-center gap-3 text-left"
+        className="w-full h-12 rounded-xl bg-muted/50 shadow-sm px-4 flex items-center gap-3 text-left"
       >
-        <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
-        <span className={`flex-1 text-sm truncate ${selected ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400'}`}>
+        <Truck className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <span className={`flex-1 text-sm truncate ${selected ? 'text-gray-800 dark:text-gray-100' : 'text-muted-foreground'}`}>
           {selected ? selected.nome : 'Selecione ou busque...'}
         </span>
-        {value && <button type="button" onClick={e => { e.stopPropagation(); onChange(''); }} className="p-1"><X className="w-3.5 h-3.5 text-gray-400" /></button>}
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        {value && <button type="button" onClick={e => { e.stopPropagation(); onChange(''); }} className="p-1"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute z-50 top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0 overflow-hidden">
+        <div className="absolute z-50 top-[calc(100%+4px)] left-0 right-0 bg-card rounded-2xl shadow-2xl border-0 overflow-hidden">
           {/* busca */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-            <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/40">
+            <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
             <input autoComplete="off"
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Buscar transportadora..."
-              className="flex-1 text-sm bg-transparent outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400"
+              className="flex-1 text-sm bg-transparent outline-none text-gray-800 dark:text-gray-100 placeholder:text-muted-foreground"
             />
           </div>
           {/* lista */}
@@ -151,15 +151,15 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
                 key={t.id}
                 type="button"
                 onClick={() => { onChange(t.id); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 dark:hover:bg-muted text-left"
               >
-                <Truck className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-800 dark:text-gray-200 flex-1">{t.nome}</span>
-                {t.id === value && <Check className="w-3.5 h-3.5 text-gray-500" />}
+                <Truck className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm text-foreground flex-1">{t.nome}</span>
+                {t.id === value && <Check className="w-3.5 h-3.5 text-muted-foreground" />}
               </button>
             ))}
             {filtered.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-4">Nenhuma encontrada</p>
+              <p className="text-xs text-muted-foreground text-center py-4">Nenhuma encontrada</p>
             )}
           </div>
           {/* criar nova */}
@@ -167,27 +167,27 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
             <button
               type="button"
               onClick={() => { setCriando(true); setNomeNova(query); }}
-              className="w-full flex items-center gap-2 px-4 py-3 border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-gray-600 dark:text-gray-300"
+              className="w-full flex items-center gap-2 px-4 py-3 border-t border-border/40 hover:bg-muted/40 dark:hover:bg-muted text-sm text-muted-foreground"
             >
               <Plus className="w-3.5 h-3.5" /> Cadastrar nova transportadora
             </button>
           ) : (
-            <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+            <div className="px-4 py-3 border-t border-border/40 space-y-2">
               <input autoComplete="off"
                 autoFocus
                 value={nomeNova}
                 onChange={e => setNomeNova(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSalvarNova()}
                 placeholder="Nome da transportadora..."
-                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2 outline-none text-gray-800 dark:text-gray-100"
+                className="w-full text-sm bg-muted/50 rounded-xl px-3 py-2 outline-none text-gray-800 dark:text-gray-100"
               />
               <div className="flex gap-2">
                 <Button type="button" size="sm" onClick={handleSalvarNova} disabled={salvando || !nomeNova.trim()}
-                  className="flex-1 h-9 text-xs bg-gray-900 dark:bg-white dark:text-gray-900 text-white border-0">
+                  className="flex-1 h-9 text-xs bg-gray-900 dark:bg-white dark:text-foreground text-white border-0">
                   {salvando ? 'Salvando...' : 'Salvar'}
                 </Button>
                 <Button type="button" size="sm" variant="outline" onClick={() => setCriando(false)}
-                  className="h-9 text-xs border-0 bg-gray-100 dark:bg-gray-700">
+                  className="h-9 text-xs border-0 bg-muted">
                   Cancelar
                 </Button>
               </div>
@@ -654,7 +654,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <label className="text-sm text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
                       Data Despacho
                     </label>
@@ -666,7 +666,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <label className="text-sm text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
                       ETA — Chegada <span className="text-red-400">*</span>
                     </label>
@@ -680,8 +680,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                 </div>
 
                 <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
-                  <label className="text-sm text-gray-500 dark:text-gray-400">
-                    Transportadora <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+                  <label className="text-sm text-muted-foreground">
+                    Transportadora <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                   </label>
                   <TransportadoraSearch
                     transportadoras={transportadoras}
@@ -692,8 +692,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                 </div>
 
                 <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
-                  <label className="text-sm text-gray-500 dark:text-gray-400">
-                    Viagem vinculada <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+                  <label className="text-sm text-muted-foreground">
+                    Viagem vinculada <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                   </label>
                   <button
                     type="button"
@@ -707,7 +707,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     <span className={`flex-1 truncate ${eventoSelecionado ? 'text-white' : 'text-slate-400'}`}>
                       {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Informar viagem no itinerário'}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </button>
                   {eventoSelecionado ? (
                     <div className="flex items-center justify-between gap-3 px-1">
@@ -722,7 +722,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                 </div>
 
                 <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
-                  <label className="text-sm text-gray-500 dark:text-gray-400">Observações</label>
+                  <label className="text-sm text-muted-foreground">Observações</label>
                   <Input
                     placeholder="Observações sobre este embarque..."
                     value={observacoes}
@@ -734,11 +734,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
               <TabsContent value="itens" className="space-y-4 mt-0">
                 <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
-                  statusPreview === 'Total' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300' :
-                  statusPreview === 'Parcial' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300' :
-                  'bg-gray-100 dark:bg-gray-800 text-gray-400'
+                  statusPreview === 'Total' ? 'bg-muted/50 text-muted-foreground' :
+                  statusPreview === 'Parcial' ? 'bg-muted/50 text-muted-foreground' :
+                  'bg-muted text-muted-foreground'
                 }`}>
-                  {statusPreview === 'Total' && <CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                  {statusPreview === 'Total' && <CheckCircle2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
                   {statusPreview === 'Parcial' && <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />}
                   {statusPreview === 'Nenhum' && <Package className="w-4 h-4 text-gray-300 flex-shrink-0" />}
                   <span>
@@ -760,7 +760,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     return (
                       <div
                         key={item.produto_id}
-                        className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors border ${selecionado ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50/40 dark:bg-gray-900/40 border-gray-100 dark:border-gray-800 opacity-60'}`}
+                        className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors border ${selecionado ? 'bg-muted/50 border-border/40' : 'bg-muted/40/40 dark:bg-background/40 border-border/40 opacity-60'}`}
                       >
                         <div className="flex items-start gap-3">
                           <button
@@ -768,15 +768,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                             onClick={() => toggleItem(item.produto_id)}
                             className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-gray-700 dark:bg-gray-300' : 'bg-gray-200 dark:bg-gray-600'}`}
                           >
-                            {selecionado && <Check className="w-3 h-3 text-white dark:text-gray-900" />}
+                            {selecionado && <Check className="w-3 h-3 text-white dark:text-foreground" />}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{item.produto_nome}</p>
+                            <p className="text-sm font-medium text-foreground leading-tight">{item.produto_nome}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between gap-3 pl-8">
-                          <p className="text-xs text-gray-400 dark:text-gray-500 flex-1">
+                          <p className="text-xs text-muted-foreground flex-1">
                             Ped: <span className="font-medium">{pedida}</span> {item.unidade_medida}
                             {anterior > 0 && <span className="ml-1.5">· já emb: {anterior}</span>}
                             {excede && selecionado && <span className="ml-1.5 text-red-400">· excede!</span>}
@@ -788,10 +788,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                               disabled={!selecionado}
                               value={qtdEmbarque[item.produto_id] ?? ''}
                               onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                              className={`w-14 h-8 text-xs text-right rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-40 placeholder:text-gray-300 px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
+                              className={`w-14 h-8 text-xs text-right rounded-lg bg-white dark:bg-muted text-foreground dark:text-gray-100 disabled:opacity-40 placeholder:text-gray-300 px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
                               placeholder="0"
                             />
-                            <span className="text-[9px] text-gray-400 uppercase">{item.unidade_medida}</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">{item.unidade_medida}</span>
                           </div>
                         </div>
                       </div>
@@ -805,11 +805,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           {/* Footer — fixo na base do modal; corpo acima rola com respiro (evita “fim seco”) */}
           <div className="flex flex-shrink-0 justify-end gap-3 px-6 pt-4 pb-6 border-t border-white/10 bg-gradient-to-r from-[#0f172a] to-[#111827]">
             <Button variant="outline" onClick={onClose} disabled={loading}
-              className="h-12 px-6 rounded-xl border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50">
+              className="h-12 px-6 rounded-xl border-0 shadow-sm bg-muted/50 text-foreground/90 disabled:opacity-50">
               Cancelar
             </Button>
             <Button onClick={handleSalvar} disabled={loading}
-              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
+              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-gray-900 hover:bg-primary dark:bg-white dark:text-foreground text-white min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />

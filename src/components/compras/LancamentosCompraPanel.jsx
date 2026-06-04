@@ -14,8 +14,8 @@ const formatDateSafe = (value, mask) => {
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 const STATUS_CONFIG = {
-  'Em Aberto': { icon: Clock,         color: 'text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700',  label: 'Em Aberto' },
-  'Pago':      { icon: CheckCircle2,  color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-700',  label: 'Pago' },
+  'Em Aberto': { icon: Clock,         color: 'text-muted-foreground', bg: 'bg-muted',  label: 'Em Aberto' },
+  'Pago':      { icon: CheckCircle2,  color: 'text-muted-foreground', bg: 'bg-muted',  label: 'Pago' },
   'Vencido':   { icon: AlertTriangle, color: 'text-red-400',  bg: 'bg-red-50 dark:bg-red-900/20',  label: 'Vencido' },
 };
 
@@ -45,14 +45,14 @@ export default function LancamentosCompraPanel({ pedidoId }) {
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2].map(i => <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />)}
+        {[1, 2].map(i => <div key={i} className="h-12 bg-muted rounded-xl animate-pulse" />)}
       </div>
     );
   }
 
   if (lancs.length === 0) {
     return (
-      <div className="text-center py-6 text-sm text-gray-400 dark:text-gray-500">
+      <div className="text-center py-6 text-sm text-muted-foreground">
         Nenhuma conta a pagar gerada ainda.
       </div>
     );
@@ -67,26 +67,26 @@ export default function LancamentosCompraPanel({ pedidoId }) {
     <div className="space-y-3">
       {/* Resumo */}
       <div className="flex items-center justify-between px-1">
-        <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
           Contas a Pagar · {lancamentosCompra.length} parcela{lancamentosCompra.length !== 1 ? 's' : ''}
         </p>
-        <p className="text-[10px] text-gray-400 dark:text-gray-500">
+        <p className="text-[10px] text-muted-foreground">
           {qtdPago}/{lancamentosCompra.length} pago{qtdPago !== 1 ? 's' : ''}
         </p>
       </div>
 
       {/* Barra de progresso */}
       {totalTotal > 0 && (
-        <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
-            className="h-full bg-gray-400 dark:bg-gray-500 rounded-full transition-all"
+            className="h-full bg-gray-400 dark:bg-muted/400 rounded-full transition-all"
             style={{ width: `${Math.min((totalPago / totalTotal) * 100, 100)}%` }}
           />
         </div>
       )}
 
       {/* Lista de parcelas */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
+      <div className="bg-card rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
         {lancamentosCompra
           .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
           .map(l => {
@@ -102,7 +102,7 @@ export default function LancamentosCompraPanel({ pedidoId }) {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-[0.8rem] font-medium text-gray-800 dark:text-gray-100 truncate">{l.descricao}</p>
-                  <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5">
+                  <p className="text-[0.68rem] text-muted-foreground mt-0.5">
                     {formatDateSafe(l.data_vencimento, "dd 'de' MMM yyyy") || 'Sem vencimento'}
                     {formatDateSafe(l.data_pagamento, 'dd/MM/yyyy') ? ` · Pago em ${formatDateSafe(l.data_pagamento, 'dd/MM/yyyy')}` : ''}
                     {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
@@ -111,11 +111,11 @@ export default function LancamentosCompraPanel({ pedidoId }) {
 
                 {/* Valor + comprovante */}
                 <div className="flex-none flex flex-col items-end gap-0.5">
-                  <span className={`text-sm font-bold ${l.status === 'Pago' ? 'text-gray-600 dark:text-gray-300' : l.status === 'Vencido' ? 'text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                  <span className={`text-sm font-bold ${l.status === 'Pago' ? 'text-muted-foreground' : l.status === 'Vencido' ? 'text-red-400' : 'text-foreground/90'}`}>
                     {R(l.valor)}
                   </span>
                   {l.status === 'Pago' && (
-                    <span className="text-[0.6rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded px-1.5 py-0.5 font-medium flex items-center gap-0.5">
+                    <span className="text-[0.6rem] bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-medium flex items-center gap-0.5">
                       <CheckCircle2 className="w-2.5 h-2.5" /> Pago
                     </span>
                   )}
@@ -127,12 +127,12 @@ export default function LancamentosCompraPanel({ pedidoId }) {
 
       {/* Totalizador */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs text-gray-400 dark:text-gray-500">Total</span>
+        <span className="text-xs text-muted-foreground">Total</span>
         <div className="flex items-center gap-3">
           {totalPago > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{R(totalPago)} pago</span>
+            <span className="text-xs text-muted-foreground font-medium">{R(totalPago)} pago</span>
           )}
-          <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{R(totalTotal)}</span>
+          <span className="text-xs font-bold text-foreground/90">{R(totalTotal)}</span>
         </div>
       </div>
     </div>

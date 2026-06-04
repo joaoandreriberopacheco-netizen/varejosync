@@ -12,22 +12,22 @@ export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaI
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl border-0 bg-white dark:bg-gray-900 shadow-xl">
+      <DialogContent className="max-w-md rounded-3xl border-0 bg-card shadow-xl">
         <DialogHeader>
-          <DialogTitle className="font-glacial text-gray-900 dark:text-white">Pagar em lote</DialogTitle>
+          <DialogTitle className="font-glacial text-foreground">Pagar em lote</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 space-y-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{selecionados.length} lançamento(s)</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Total selecionado</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">{R(total)}</p>
+          <div className="rounded-2xl bg-muted/50 p-4 space-y-1">
+            <p className="text-sm font-medium text-foreground">{selecionados.length} lançamento(s)</p>
+            <p className="text-xs text-muted-foreground">Total selecionado</p>
+            <p className="text-lg font-semibold text-foreground">{R(total)}</p>
           </div>
 
           <div>
-            <Label className="text-xs text-gray-500 mb-2 block">Conta de entrada/saída</Label>
+            <Label className="text-xs text-muted-foreground mb-2 block">Conta de entrada/saída</Label>
             <Select value={contaId} onValueChange={setContaId}>
-              <SelectTrigger className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800">
+              <SelectTrigger className="rounded-2xl border-0 bg-muted">
                 <SelectValue placeholder="Selecione a conta" />
               </SelectTrigger>
               <SelectContent>
@@ -39,12 +39,12 @@ export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaI
           </div>
 
           <div>
-            <Label className="text-xs text-gray-500 mb-2 block">Data do pagamento</Label>
+            <Label className="text-xs text-muted-foreground mb-2 block">Data do pagamento</Label>
             <input autoComplete="off"
               type="date"
               value={dataPagamento}
               onChange={(e) => setDataPagamento(e.target.value)}
-              className="w-full h-11 px-4 rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 text-sm text-gray-900 dark:text-white outline-none"
+              className="w-full h-11 px-4 rounded-2xl border-0 bg-muted text-sm text-foreground outline-none"
             />
           </div>
         </div>

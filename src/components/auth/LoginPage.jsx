@@ -40,10 +40,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+        className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-card p-6 shadow-sm"
       >
         <div className="space-y-1">
           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Entrar</h1>

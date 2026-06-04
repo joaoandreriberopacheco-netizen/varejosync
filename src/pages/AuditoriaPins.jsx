@@ -69,8 +69,8 @@ export default function AuditoriaPins() {
         <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
           <Shield className="w-8 h-8 text-red-400" />
         </div>
-        <p className="text-gray-700 dark:text-gray-300 font-medium">Acesso restrito</p>
-        <p className="text-xs text-gray-400 mt-1">Apenas administradores podem acessar esta página.</p>
+        <p className="text-foreground/90 font-medium">Acesso restrito</p>
+        <p className="text-xs text-muted-foreground mt-1">Apenas administradores podem acessar esta página.</p>
       </div>
     );
   }
@@ -80,39 +80,39 @@ export default function AuditoriaPins() {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <Shield className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+          <Shield className="w-5 h-5 text-muted-foreground" />
         </div>
         <div>
-          <h1 className="text-lg font-glacial font-semibold text-gray-800 dark:text-white">Auditoria de PINs</h1>
-          <p className="text-xs text-gray-400">Gerencie os PINs de segurança dos usuários</p>
+          <h1 className="text-lg font-glacial font-semibold text-foreground">Auditoria de PINs</h1>
+          <p className="text-xs text-muted-foreground">Gerencie os PINs de segurança dos usuários</p>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800 dark:text-white">{usuarios.length}</p>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center justify-center gap-1"><Users className="w-3 h-3" /> Total</p>
+        <div className="bg-card/50 rounded-2xl p-4 shadow-sm text-center">
+          <p className="text-2xl font-bold text-foreground">{usuarios.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center justify-center gap-1"><Users className="w-3 h-3" /> Total</p>
         </div>
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 shadow-sm text-center">
+        <div className="bg-card/50 rounded-2xl p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-green-600">{comPin}</p>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center justify-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Com PIN</p>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center justify-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Com PIN</p>
         </div>
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 shadow-sm text-center">
+        <div className="bg-card/50 rounded-2xl p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-red-500">{semPin}</p>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center justify-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> Sem PIN</p>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center justify-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> Sem PIN</p>
         </div>
       </div>
 
       {/* Busca */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Buscar usuário..."
           value={busca}
           onChange={e => setBusca(e.target.value)}
-          className="pl-9 border-0 bg-white dark:bg-gray-800/50 shadow-sm"
+          className="pl-9 border-0 bg-card/50 shadow-sm"
         />
       </div>
 
@@ -120,14 +120,14 @@ export default function AuditoriaPins() {
       {loading ? (
         <div className="space-y-3">
           {[1,2,3,4].map(i => (
-            <div key={i} className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 shadow-sm animate-pulse">
-              <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded w-40 mb-2" />
-              <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded w-56" />
+            <div key={i} className="bg-card/50 rounded-2xl p-4 shadow-sm animate-pulse">
+              <div className="h-4 bg-muted rounded w-40 mb-2" />
+              <div className="h-3 bg-muted rounded w-56" />
             </div>
           ))}
         </div>
       ) : usuariosFiltrados.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 text-sm">
+        <div className="text-center py-10 text-muted-foreground text-sm">
           Nenhum usuário encontrado.
         </div>
       ) : (

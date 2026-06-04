@@ -142,16 +142,16 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
   /* Portal em document.body + z alto: o modal de despacho (Radix z-50) ficava por cima quando o seletor era filho de #root */
   return createPortal(
-    <div className="fixed inset-0 z-[10050] bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="fixed inset-0 z-[10050] bg-background overflow-hidden">
       <div className="flex h-full flex-col w-full md:max-w-2xl md:mx-auto">
-        <div className="sticky top-0 z-30 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-3 pt-3 pb-2 space-y-3">
+        <div className="sticky top-0 z-30 bg-muted/40/95 dark:bg-background/95 backdrop-blur-sm px-3 pt-3 pb-2 space-y-3">
           <div className="flex items-center gap-3">
-            <Button type="button" size="icon" variant="ghost" onClick={onClose} className="h-10 w-10 rounded-2xl bg-white dark:bg-gray-800 shadow-sm">
+            <Button type="button" size="icon" variant="ghost" onClick={onClose} className="h-10 w-10 rounded-2xl bg-card shadow-sm">
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Selecionar viagem</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 font-glacial truncate">Itinerário Fluvial</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Selecionar viagem</p>
+              <p className="text-lg font-semibold text-foreground dark:text-gray-100 font-glacial truncate">Itinerário Fluvial</p>
             </div>
           </div>
 
@@ -161,15 +161,15 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
             <>
               <FluvialSearchBar value={searchQuery} onChange={setSearchQuery} onToggleFilters={() => setShowFilters((prev) => !prev)} filtersOpen={showFilters} />
               {showFilters && (
-                <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-3 space-y-3 border border-gray-200 dark:border-gray-700">
+                <div className="rounded-2xl bg-card shadow-sm p-3 space-y-3 border border-border/40">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2 uppercase tracking-wide">
+                    <label className="text-xs font-semibold text-muted-foreground block mb-2 uppercase tracking-wide">
                       Visualização
                     </label>
                     <select
                       value={viewMode}
                       onChange={(e) => setViewMode(e.target.value)}
-                      className="w-full text-xs px-3 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-0 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                      className="w-full text-xs px-3 py-2 rounded bg-muted text-foreground dark:text-gray-100 border-0 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
                     >
                       <option value="saida_manaus">Saída Manaus</option>
                       <option value="chegada_manaus">Chegada Manaus</option>
@@ -184,7 +184,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
                       onChange={(e) => setOnlyLinked(e.target.checked)}
                       className="w-4 h-4 cursor-pointer"
                     />
-                    <label htmlFor="onlyLinked" className="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <label htmlFor="onlyLinked" className="text-xs text-foreground/90 cursor-pointer">
                       Apenas com embarques
                     </label>
                   </div>
@@ -196,32 +196,32 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
         <div className="flex-1 overflow-y-auto px-3 pb-6">
           {routeType !== 'Fluvial' ? (
-            <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-5 text-sm text-gray-500 dark:text-gray-400">Use a aba Fluvial para selecionar uma viagem.</div>
+            <div className="rounded-3xl bg-card shadow-sm p-5 text-sm text-muted-foreground">Use a aba Fluvial para selecionar uma viagem.</div>
           ) : selectedEvento ? (
             <div className="space-y-4 pt-2">
-              <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-4 space-y-3">
+              <div className="rounded-3xl bg-card shadow-sm p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="h-11 w-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <Anchor className="w-5 h-5 text-gray-600 dark:text-gray-200" />
+                  <div className="h-11 w-11 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+                    <Anchor className="w-5 h-5 text-muted-foreground dark:text-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{selectedEvento.embarcacao_nome}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{selectedEvento.codigo || 'Viagem logística'}</p>
+                    <p className="text-base font-semibold text-foreground dark:text-gray-100">{selectedEvento.embarcacao_nome}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{selectedEvento.codigo || 'Viagem logística'}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-2 text-sm text-gray-600 dark:text-gray-300">
+                <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
                   <div>Transportadora: {selectedEvento.transportadora_nome || '—'}</div>
                   <div>Saída: {selectedEvento.data_saida_origem || '—'}</div>
                   <div>ETA: {selectedEvento.previsao_chegada || selectedEvento.data_chegada_destino || '—'}</div>
                 </div>
                 <div className="flex gap-3">
-                  <Button type="button" variant="outline" onClick={() => setSelectedEvento(null)} className="flex-1 h-11 rounded-2xl border-0 bg-gray-100 dark:bg-gray-700 shadow-sm">
+                  <Button type="button" variant="outline" onClick={() => setSelectedEvento(null)} className="flex-1 h-11 rounded-2xl border-0 bg-muted shadow-sm">
                     Voltar
                   </Button>
                   <Button
                     type="button"
                     onClick={() => onSelect?.(selectedEvento)}
-                    className="flex-1 h-11 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-sm"
+                    className="flex-1 h-11 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-foreground shadow-sm"
                   >
                     <Check className="w-4 h-4 mr-2" />
                     Usar viagem
@@ -247,7 +247,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-5 text-sm text-gray-500 dark:text-gray-400 mt-2">Nenhuma viagem encontrada neste período.</div>
+            <div className="rounded-3xl bg-card shadow-sm p-5 text-sm text-muted-foreground mt-2">Nenhuma viagem encontrada neste período.</div>
           )}
         </div>
       </div>

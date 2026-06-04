@@ -14,18 +14,18 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
 
   const renderItem = (key, label, valor) => (
     <div key={key} className="flex items-center justify-between gap-3">
-      <span className="text-sm text-gray-700 dark:text-gray-300 w-24">{label}</span>
+      <span className="text-sm text-foreground/90 w-24">{label}</span>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm"
           onClick={() => setCedulas(prev => ({ ...prev, [key]: Math.max(0, prev[key] - 1) }))}
           className="h-8 w-8 p-0"><Minus className="w-4 h-4" /></Button>
         <Input type="number" value={cedulas[key]}
           onChange={(e) => setCedulas(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
-          className="h-8 w-16 text-center dark:bg-gray-700" />
+          className="h-8 w-16 text-center dark:bg-muted" />
         <Button variant="outline" size="sm"
           onClick={() => setCedulas(prev => ({ ...prev, [key]: prev[key] + 1 }))}
           className="h-8 w-8 p-0"><Plus className="w-4 h-4" /></Button>
-        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-24 text-right">
+        <span className="text-sm font-semibold text-foreground/90 w-24 text-right">
           {formatValor(cedulas[key] * valor)}
         </span>
       </div>
@@ -34,13 +34,13 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
+      <DialogContent className="max-w-md dark:bg-background dark:text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">Calculadora de Cédulas e Moedas</DialogTitle>
+          <DialogTitle className="text-lg text-foreground">Calculadora de Cédulas e Moedas</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notas</h4>
+            <h4 className="text-sm font-semibold text-foreground/90">Notas</h4>
             {[
               { key: 'nota200', label: 'R$ 200,00', valor: 200 },
               { key: 'nota100', label: 'R$ 100,00', valor: 100 },
@@ -52,7 +52,7 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
             ].map(({ key, label, valor }) => renderItem(key, label, valor))}
           </div>
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Moedas</h4>
+            <h4 className="text-sm font-semibold text-foreground/90">Moedas</h4>
             {[
               { key: 'moeda1', label: 'R$ 1,00', valor: 1 },
               { key: 'moeda050', label: 'R$ 0,50', valor: 0.50 },
@@ -61,9 +61,9 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
               { key: 'moeda005', label: 'R$ 0,05', valor: 0.05 },
             ].map(({ key, label, valor }) => renderItem(key, label, valor))}
           </div>
-          <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-3 border-t border-border/40">
             <div className="flex justify-between items-center">
-              <span className="font-semibold text-gray-800 dark:text-gray-200">Total Calculado:</span>
+              <span className="font-semibold text-foreground">Total Calculado:</span>
               <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatValor(calcularTotal())}</span>
             </div>
           </div>

@@ -205,31 +205,31 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
   return (
     <>
       <Dialog open={open && !showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-2xl dark:bg-gray-900" hideClose>
+        <DialogContent className="max-w-2xl dark:bg-background" hideClose>
           <DialogHeader className="relative">
             <button
               onClick={() => onClose ? onClose() : navigate(-1)}
-              className="absolute left-0 top-0 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="absolute left-0 top-0 p-1.5 rounded-xl hover:bg-muted transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
             </button>
             <DialogTitle className="text-xl text-center font-glacial">Selecione o Caixa</DialogTitle>
           </DialogHeader>
           
           {loading ? (
-            <div className="py-12 text-center text-gray-500">Carregando caixas...</div>
+            <div className="py-12 text-center text-muted-foreground">Carregando caixas...</div>
           ) : caixasDisponiveis.length === 0 ? (
             <div className="py-12 text-center">
-              <Lock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600 dark:text-gray-400">
+              <Lock className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">
                 Você não tem permissão para acessar nenhum caixa.
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2">
                 Entre em contato com o administrador.
               </p>
               <button
                 onClick={() => onClose ? onClose() : navigate(-1)}
-                className="mt-6 px-6 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="mt-6 px-6 py-2.5 bg-muted text-foreground/90 rounded-2xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors"
               >
                 Voltar
               </button>
@@ -243,14 +243,14 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                   <button
                     key={caixa.id}
                     onClick={() => handleSelecionarCaixa(caixa)}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                    className="bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-border/40 dark:hover:border-gray-700"
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <Monitor className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                        <Monitor className="w-6 h-6 text-foreground/90" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
+                        <h3 className="text-lg font-semibold text-foreground font-glacial mb-1">
                           {caixa.nome}
                         </h3>
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
@@ -258,12 +258,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                               Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               Saldo Inicial: R$ {(liquidezPorCaixa[caixa.id].saldoInicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Sem turno aberto</p>
+                          <p className="text-sm text-muted-foreground">Sem turno aberto</p>
                         )}
                         {!podeOperar && (
                           <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
@@ -282,20 +282,20 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
       </Dialog>
 
       <Dialog open={showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-sm dark:bg-gray-900 border-0 p-0 shadow-2xl" hideClose>
+        <DialogContent className="max-w-sm dark:bg-background border-0 p-0 shadow-2xl" hideClose>
           <div className="flex flex-col h-full">
             {/* Header com abas */}
-            <div className="flex items-center justify-between px-4 pt-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 pt-4 border-b border-border/40">
               <button
                 onClick={() => setShowSaldoDialog(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
               
               <div className="flex gap-2">
                 <button
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full text-sm font-medium"
+                  className="px-4 py-2 bg-muted text-foreground/90 rounded-full text-sm font-medium"
                 >
                   Abertura
                 </button>
@@ -318,21 +318,21 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 space-y-8">
               {/* Label VALOR */}
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-widest mb-4">
+                <p className="text-xs font-medium text-muted-foreground tracking-widest mb-4">
                   VALOR
                 </p>
 
                 {/* Display do valor com cursor fino */}
                 <div className="relative inline-block">
-                  <div className="text-6xl font-bold text-gray-900 dark:text-gray-800 font-mono mb-2 flex items-center justify-center gap-0.5">
-                    <span className={saldoInicial ? 'text-gray-900 dark:text-gray-800' : 'text-gray-300 dark:text-gray-600'}>
+                  <div className="text-6xl font-bold text-foreground dark:text-gray-800 font-mono mb-2 flex items-center justify-center gap-0.5">
+                    <span className={saldoInicial ? 'text-foreground dark:text-gray-800' : 'text-gray-300 dark:text-muted-foreground'}>
                       {saldoInicial || '0,00'}
                     </span>
-                    <span className="animate-pulse w-0.5 h-16 bg-gray-600 dark:bg-gray-700"></span>
+                    <span className="animate-pulse w-0.5 h-16 bg-gray-600 dark:bg-muted"></span>
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-500 dark:text-gray-400">R$</p>
+                <p className="text-sm text-muted-foreground">R$</p>
               </div>
 
               {/* Campo de descrição */}
@@ -342,7 +342,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                   placeholder="Descrição (opcional)"
                   value={descricaoSaldo}
                   onChange={(e) => setDescricaoSaldo(e.target.value)}
-                  className="text-center text-gray-500 dark:text-gray-400 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-0 bg-transparent focus:ring-0 focus:border-b-2 focus:border-gray-400"
+                  className="text-center text-muted-foreground border-0 border-b-2 border-border/40 rounded-0 bg-transparent focus:ring-0 focus:border-b-2 focus:border-gray-400"
                 />
               </div>
             </div>
@@ -351,7 +351,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
             <div className="px-6 pb-6">
               <Button
                 onClick={handleAbrirTurno}
-                className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold rounded-3xl hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+                className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-foreground font-semibold rounded-3xl hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
               >
                 <span>Abrir Turno</span>
                 <ChevronRight className="w-5 h-5" />

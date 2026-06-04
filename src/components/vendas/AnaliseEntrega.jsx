@@ -27,7 +27,7 @@ export default function AnaliseEntrega({ pedido }) {
   const capacidadeExcedida = pesoTotalProjetado > veiculoSelecionado.capacidade_kg;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4 bg-gray-50 rounded-lg border">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4 bg-muted/40 rounded-lg border">
       {/* Painel Esquerdo: Rota e Alocação */}
       <div className="lg:col-span-3 space-y-6">
         {/* Rota */}
@@ -40,7 +40,7 @@ export default function AnaliseEntrega({ pedido }) {
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
             <div className="h-48 bg-gray-200 rounded-md flex items-center justify-center">
-              <p className="text-gray-500">[Mapa da Rota]</p>
+              <p className="text-muted-foreground">[Mapa da Rota]</p>
             </div>
             <div className="space-y-3">
               <div>
@@ -98,7 +98,7 @@ export default function AnaliseEntrega({ pedido }) {
             <div>
               <Label>Ocupação Projetada</Label>
               <Progress value={(pesoTotalProjetado / veiculoSelecionado.capacidade_kg) * 100} className={capacidadeExcedida ? "bg-red-200 [&>*]:bg-red-600" : "[&>*]:bg-green-600"} />
-              <p className={`text-right text-sm font-medium mt-1 ${capacidadeExcedida ? 'text-red-600' : 'text-gray-600'}`}>
+              <p className={`text-right text-sm font-medium mt-1 ${capacidadeExcedida ? 'text-red-600' : 'text-muted-foreground'}`}>
                 {pesoTotalProjetado.toFixed(1)} / {veiculoSelecionado.capacidade_kg.toFixed(1)} kg
               </p>
             </div>
@@ -123,7 +123,7 @@ export default function AnaliseEntrega({ pedido }) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="h-64 bg-gray-200 rounded-md flex items-center justify-center">
-              <p className="text-gray-500">[Mini-calendário com horários]</p>
+              <p className="text-muted-foreground">[Mini-calendário com horários]</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

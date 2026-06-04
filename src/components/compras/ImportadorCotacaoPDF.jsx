@@ -311,9 +311,9 @@ Retorne um JSON com:
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-card z-50 overflow-y-auto">
             {/* Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
+            <div className="sticky top-0 bg-card border-b border-border/40 z-10">
                 <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-start gap-3 md:items-center md:gap-4">
@@ -321,8 +321,8 @@ Retorne um JSON com:
                                 <X className="w-5 h-5" />
                             </Button>
                             <div>
-                                <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">Importar Cotação via PDF</h2>
-                                <p className="text-xs md:text-sm text-gray-500">A IA irá extrair itens, preços e marcas automaticamente</p>
+                                <h2 className="text-lg md:text-xl font-medium text-foreground">Importar Cotação via PDF</h2>
+                                <p className="text-xs md:text-sm text-muted-foreground">A IA irá extrair itens, preços e marcas automaticamente</p>
                             </div>
                         </div>
                         {step === 'review' && (
@@ -346,7 +346,7 @@ Retorne um JSON com:
                 {step === 'upload' && (
                     <div className="max-w-2xl mx-auto">
                         <div
-                            className="py-20 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            className="py-20 flex flex-col items-center justify-center bg-muted/50/50 rounded-2xl border-2 border-dashed border-gray-300 dark:border-border/40 cursor-pointer hover:bg-muted transition-colors"
                             onClick={() => fileInputRef.current?.click()}
                             role="button"
                             tabIndex={0}
@@ -357,9 +357,9 @@ Retorne um JSON com:
                                 }
                             }}
                         >
-                            <Upload className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-6" />
-                            <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Upload do PDF da Cotação</h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-md">
+                            <Upload className="w-16 h-16 text-gray-300 dark:text-muted-foreground mb-6" />
+                            <h3 className="text-2xl font-light text-foreground mb-2">Upload do PDF da Cotação</h3>
+                            <p className="text-muted-foreground mb-8 text-center max-w-md">
                                 A IA irá ler os itens, identificar marcas, preços e fornecedor
                             </p>
                             <div className="relative">
@@ -379,8 +379,8 @@ Retorne um JSON com:
                                     )}
                                 </Button>
                             </div>
-                            {isUploading && <p className="text-sm text-gray-400 mt-6">Isso pode levar alguns segundos...</p>}
-                            {!isUploading && <p className="text-xs text-gray-400 mt-6">Dica: também pode colar o PDF com Ctrl+V.</p>}
+                            {isUploading && <p className="text-sm text-muted-foreground mt-6">Isso pode levar alguns segundos...</p>}
+                            {!isUploading && <p className="text-xs text-muted-foreground mt-6">Dica: também pode colar o PDF com Ctrl+V.</p>}
                         </div>
                     </div>
                 )}
@@ -388,27 +388,27 @@ Retorne um JSON com:
                 {step === 'processing' && (
                     <div className="max-w-2xl mx-auto py-20 flex flex-col items-center justify-center">
                         <Loader2 className="w-20 h-20 text-teal-600 animate-spin mb-6" />
-                        <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Processando com IA...</h3>
-                        <p className="text-gray-500 dark:text-gray-400">Extraindo dados, marcas e buscando correspondências</p>
+                        <h3 className="text-2xl font-light text-foreground mb-2">Processando com IA...</h3>
+                        <p className="text-muted-foreground">Extraindo dados, marcas e buscando correspondências</p>
                     </div>
                 )}
 
                 {step === 'review' && aiData && (
                     <div className="space-y-8">
                         {/* Supplier Info */}
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl">
+                        <div className="bg-muted/50/50 p-6 rounded-2xl">
                             <div className="flex items-center gap-3 mb-6">
-                                <FileText className="w-5 h-5 text-gray-400" />
-                                <h4 className="font-medium text-gray-900 dark:text-white">Dados do Fornecedor Identificado</h4>
+                                <FileText className="w-5 h-5 text-muted-foreground" />
+                                <h4 className="font-medium text-foreground">Dados do Fornecedor Identificado</h4>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2">Fornecedor no Sistema</Label>
+                                    <Label className="text-sm text-muted-foreground mb-2">Fornecedor no Sistema</Label>
                                     <Select 
                                         value={fornecedorInfo.id} 
                                         onValueChange={(v) => setFornecedorInfo({...fornecedorInfo, id: v})}
                                     >
-                                        <SelectTrigger className="bg-white dark:bg-gray-900">
+                                        <SelectTrigger className="bg-card">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -422,19 +422,19 @@ Retorne um JSON com:
                                 {fornecedorInfo.id === 'new' && (
                                     <>
                                         <div>
-                                            <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2">Nome Identificado</Label>
+                                            <Label className="text-sm text-muted-foreground mb-2">Nome Identificado</Label>
                                             <Input 
                                                 value={fornecedorInfo.nome} 
                                                 onChange={e => setFornecedorInfo({...fornecedorInfo, nome: e.target.value})} 
-                                                className="bg-white dark:bg-gray-900"
+                                                className="bg-card"
                                             />
                                         </div>
                                         <div>
-                                            <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2">CNPJ Identificado</Label>
+                                            <Label className="text-sm text-muted-foreground mb-2">CNPJ Identificado</Label>
                                             <Input 
                                                 value={fornecedorInfo.cnpj} 
                                                 onChange={e => setFornecedorInfo({...fornecedorInfo, cnpj: e.target.value})} 
-                                                className="bg-white dark:bg-gray-900"
+                                                className="bg-card"
                                             />
                                         </div>
                                     </>
@@ -444,9 +444,9 @@ Retorne um JSON com:
 
                         {/* Financial Summary */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Subtotal (Itens)</p>
-                                <p className="text-2xl font-light text-gray-900 dark:text-white">
+                            <div className="p-6 bg-muted/50/50 rounded-2xl">
+                                <p className="text-sm text-muted-foreground mb-2">Subtotal (Itens)</p>
+                                <p className="text-2xl font-light text-foreground">
                                     R$ {formatCurrency(aiData.financeiro?.subtotal || 0)}
                                 </p>
                             </div>
@@ -464,7 +464,7 @@ Retorne um JSON com:
                             </div>
                         </div>
                         {(aiData.financeiro?.desconto_global || 0) > 0 && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 italic -mt-4">
+                            <p className="text-sm text-muted-foreground italic -mt-4">
                                 * O desconto global será rateado proporcionalmente no preço unitário de cada item importado.
                             </p>
                         )}
@@ -479,17 +479,17 @@ Retorne um JSON com:
                             </div>
                             <P38TableShell className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
-                                    <thead className="bg-gray-50 dark:bg-gray-900/50">
+                                    <thead className="bg-background/50">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">Imp.</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item / Código / Marca</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qtd / Preço</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correspondência</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">Imp.</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Item / Código / Marca</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Qtd / Preço</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Correspondência</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                         {mappings.map((m, idx) => (
-                                            <tr key={idx} className={`${m.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50'} transition-colors`}>
+                                            <tr key={idx} className={`${m.ignored ? 'opacity-40 bg-background/20' : 'hover:bg-muted/40/50 dark:hover:bg-muted/50'} transition-colors`}>
                                                 <td className="px-6 py-4">
                                                     <Checkbox 
                                                         checked={!m.ignored} 
@@ -501,10 +501,10 @@ Retorne um JSON com:
                                                     />
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="font-medium text-gray-900 dark:text-white mb-1">{m.descricao_pdf}</div>
+                                                    <div className="font-medium text-foreground mb-1">{m.descricao_pdf}</div>
                                                     <div className="flex items-center gap-2 text-xs">
                                                         {m.codigo_pdf && (
-                                                            <span className="text-gray-500 dark:text-gray-400">Cód: {m.codigo_pdf}</span>
+                                                            <span className="text-muted-foreground">Cód: {m.codigo_pdf}</span>
                                                         )}
                                                         {m.marca_pdf && (
                                                             <span className="px-2 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 rounded-md font-medium">
@@ -514,10 +514,10 @@ Retorne um JSON com:
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="text-gray-700 dark:text-gray-300 mb-1">
+                                                    <div className="text-foreground/90 mb-1">
                                                         {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
                                                     </div>
-                                                    <div className="font-medium text-gray-900 dark:text-white">
+                                                    <div className="font-medium text-foreground">
                                                         Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
                                                     </div>
                                                 </td>
@@ -533,7 +533,7 @@ Retorne um JSON com:
                                                         onProductCreated={(novoProduto) => setProdutosSistema((prev) => [...prev, novoProduto])}
                                                     />
                                                     {!m.ignored && m.selected_product_id && (
-                                                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                        <div className="mt-2 text-xs text-muted-foreground">
                                                             {getProdutoLabel(produtosSistema.find((produto) => produto.id === m.selected_product_id))}
                                                         </div>
                                                     )}

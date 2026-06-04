@@ -162,7 +162,7 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
           {/* Header */}
           <div className="bg-gray-900 text-white px-3 py-2 flex items-center justify-between flex-shrink-0">
             <div>
-              <p className="text-[10px] text-gray-400">EXPEDIÇÃO</p>
+              <p className="text-[10px] text-muted-foreground">EXPEDIÇÃO</p>
               <p className="text-sm font-bold">Confirmar Entrega: {pedido?.numero}</p>
             </div>
             <button onClick={onClose} className="text-white">
@@ -222,7 +222,7 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
                     onClick={() => setShowAssinaturaMenu(!showAssinaturaMenu)}
                     className="p-2 bg-gray-100 rounded-md hover:bg-gray-200 transition"
                   >
-                    <Paperclip className="w-4 h-4 text-gray-600" />
+                    <Paperclip className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
                 
@@ -230,32 +230,32 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
                   <div className="absolute right-0 top-12 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
                     <button
                       onClick={() => handleAssinaturaOption('camera')}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left"
                     >
                       <Camera className="w-5 h-5 text-blue-600" />
                       <div>
                         <p className="text-sm font-semibold">Câmera</p>
-                        <p className="text-xs text-gray-500">Tirar foto</p>
+                        <p className="text-xs text-muted-foreground">Tirar foto</p>
                       </div>
                     </button>
                     <button
                       onClick={() => handleAssinaturaOption('galeria')}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left border-t"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left border-t"
                     >
                       <ImageIcon className="w-5 h-5 text-purple-600" />
                       <div>
                         <p className="text-sm font-semibold">Galeria</p>
-                        <p className="text-xs text-gray-500">Escolher foto</p>
+                        <p className="text-xs text-muted-foreground">Escolher foto</p>
                       </div>
                     </button>
                     <button
                       onClick={() => handleAssinaturaOption('desenhar')}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left border-t"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left border-t"
                     >
                       <Pen className="w-5 h-5 text-green-600" />
                       <div>
                         <p className="text-sm font-semibold">Desenhar</p>
-                        <p className="text-xs text-gray-500">Assinatura digital</p>
+                        <p className="text-xs text-muted-foreground">Assinatura digital</p>
                       </div>
                     </button>
                   </div>
@@ -285,7 +285,7 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
                     onClick={() => setShowComprovanteMenu(!showComprovanteMenu)}
                     className="p-2 bg-gray-100 rounded-md hover:bg-gray-200 transition"
                   >
-                    <Paperclip className="w-4 h-4 text-gray-600" />
+                    <Paperclip className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
                 
@@ -293,32 +293,32 @@ export default function ConfirmarEntrega({ pedido, open, onClose, onSuccess }) {
                   <div className="absolute right-0 top-12 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
                     <button
                       onClick={() => handleComprovanteOption('camera')}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left"
                     >
                       <Camera className="w-5 h-5 text-blue-600" />
                       <div>
                         <p className="text-sm font-semibold">Câmera</p>
-                        <p className="text-xs text-gray-500">Foto ou vídeo</p>
+                        <p className="text-xs text-muted-foreground">Foto ou vídeo</p>
                       </div>
                     </button>
                     <button
                       onClick={() => handleComprovanteOption('galeria')}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left border-t"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left border-t"
                     >
                       <ImageIcon className="w-5 h-5 text-purple-600" />
                       <div>
                         <p className="text-sm font-semibold">Galeria</p>
-                        <p className="text-xs text-gray-500">Escolher mídia</p>
+                        <p className="text-xs text-muted-foreground">Escolher mídia</p>
                       </div>
                     </button>
                     <button
                       onClick={() => handleComprovanteOption('arquivo')}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left border-t"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 w-full text-left border-t"
                     >
-                      <Paperclip className="w-5 h-5 text-gray-600" />
+                      <Paperclip className="w-5 h-5 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-semibold">Arquivo</p>
-                        <p className="text-xs text-gray-500">Qualquer tipo</p>
+                        <p className="text-xs text-muted-foreground">Qualquer tipo</p>
                       </div>
                     </button>
                   </div>

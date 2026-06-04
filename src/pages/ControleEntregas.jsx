@@ -154,40 +154,40 @@ export default function ControleEntregas() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">CONTROLE DE ENTREGAS E SEPARAÇÃO</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">ACOMPANHE O STATUS DOS PEDIDOS EM TEMPO REAL</p>
+        <h1 className="text-2xl font-bold text-foreground">CONTROLE DE ENTREGAS E SEPARAÇÃO</h1>
+        <p className="text-sm text-muted-foreground">ACOMPANHE O STATUS DOS PEDIDOS EM TEMPO REAL</p>
       </div>
 
       {/* Estatísticas */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-800 dark:text-white">{stats.total}</div>
-            <div className="text-xs text-gray-500">TOTAL PEDIDOS</div>
+            <div className="text-2xl font-bold text-foreground">{stats.total}</div>
+            <div className="text-xs text-muted-foreground">TOTAL PEDIDOS</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">{stats.emSeparacao}</div>
-            <div className="text-xs text-gray-500">EM SEPARAÇÃO</div>
+            <div className="text-xs text-muted-foreground">EM SEPARAÇÃO</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-indigo-600">{stats.emRota}</div>
-            <div className="text-xs text-gray-500">EM ROTA</div>
+            <div className="text-xs text-muted-foreground">EM ROTA</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">{stats.concluidos}</div>
-            <div className="text-xs text-gray-500">CONCLUÍDOS</div>
+            <div className="text-xs text-muted-foreground">CONCLUÍDOS</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-lg font-bold text-gray-800 dark:text-white">{formatValor(stats.valorTotal)}</div>
-            <div className="text-xs text-gray-500">VALOR TOTAL</div>
+            <div className="text-lg font-bold text-foreground">{formatValor(stats.valorTotal)}</div>
+            <div className="text-xs text-muted-foreground">VALOR TOTAL</div>
           </CardContent>
         </Card>
       </div>
@@ -196,12 +196,12 @@ export default function ControleEntregas() {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">FILTROS</span>
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground/90">FILTROS</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">DATA INÍCIO</label>
+              <label className="text-xs text-muted-foreground mb-1 block">DATA INÍCIO</label>
               <Input
                 type="date"
                 value={filtros.data_inicio}
@@ -210,7 +210,7 @@ export default function ControleEntregas() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">DATA FIM</label>
+              <label className="text-xs text-muted-foreground mb-1 block">DATA FIM</label>
               <Input
                 type="date"
                 value={filtros.data_fim}
@@ -219,7 +219,7 @@ export default function ControleEntregas() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">STATUS</label>
+              <label className="text-xs text-muted-foreground mb-1 block">STATUS</label>
               <Select value={filtros.status} onValueChange={(value) => setFiltros({ ...filtros, status: value })}>
                 <SelectTrigger className="h-9">
                   <SelectValue />
@@ -235,7 +235,7 @@ export default function ControleEntregas() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">ENTREGA</label>
+              <label className="text-xs text-muted-foreground mb-1 block">ENTREGA</label>
               <Select value={filtros.metodo_entrega} onValueChange={(value) => setFiltros({ ...filtros, metodo_entrega: value })}>
                 <SelectTrigger className="h-9">
                   <SelectValue />
@@ -248,9 +248,9 @@ export default function ControleEntregas() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">CLIENTE</label>
+              <label className="text-xs text-muted-foreground mb-1 block">CLIENTE</label>
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="BUSCAR..."
                   value={filtros.cliente}
@@ -265,9 +265,9 @@ export default function ControleEntregas() {
 
       {/* Lista de Pedidos */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-500">CARREGANDO PEDIDOS...</div>
+        <div className="text-center py-12 text-muted-foreground">CARREGANDO PEDIDOS...</div>
       ) : pedidos.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">NENHUM PEDIDO ENCONTRADO</div>
+        <div className="text-center py-12 text-muted-foreground">NENHUM PEDIDO ENCONTRADO</div>
       ) : (
         <P38MobileLineList>
           {pedidos.map((pedido, index) => {
@@ -323,10 +323,10 @@ export default function ControleEntregas() {
               {/* Informações do Cliente */}
               <Card>
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-2">CLIENTE</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">CLIENTE</h3>
                   <p className="font-semibold">{pedidoSelecionado.cliente_nome}</p>
                   {clienteSelecionado && (
-                    <div className="text-sm text-gray-600 space-y-1 mt-2">
+                    <div className="text-sm text-muted-foreground space-y-1 mt-2">
                       {clienteSelecionado.telefone && (
                         <div className="flex items-center gap-2">
                           <Phone className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function ControleEntregas() {
               {/* Itens do Pedido */}
               <Card>
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-2">ITENS</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">ITENS</h3>
                   <div className="space-y-2">
                     {pedidoSelecionado.itens?.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
@@ -370,7 +370,7 @@ export default function ControleEntregas() {
               {/* Ações de Status */}
               <Card>
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-3">ALTERAR STATUS</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">ALTERAR STATUS</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {pedidoSelecionado.status !== 'Em Separação' && (
                       <Button

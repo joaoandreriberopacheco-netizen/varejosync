@@ -236,7 +236,7 @@ export default function ItinerarioFluvialMobile() {
   }, [freteEventos, freteFilter]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       <div className="max-w-md mx-auto px-3 space-y-4 overflow-x-hidden">
         <ItinerarioMobileHeader />
         <ItinerarioMobileTopTabs value={routeType} onChange={setRouteType} />

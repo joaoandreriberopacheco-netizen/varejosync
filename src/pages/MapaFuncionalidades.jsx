@@ -354,12 +354,12 @@ export default function MapaFuncionalidades() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted/40 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mapa de Funcionalidades</h1>
-            <p className="text-gray-600 mt-2">VarejoSync - Sistema de Gestão Integrada</p>
+            <h1 className="text-3xl font-bold text-foreground">Mapa de Funcionalidades</h1>
+            <p className="text-muted-foreground mt-2">VarejoSync - Sistema de Gestão Integrada</p>
           </div>
           <Button 
             onClick={handleGerarExcel}
@@ -375,7 +375,7 @@ export default function MapaFuncionalidades() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-sm text-gray-600">Total de Funcionalidades</p>
+                <p className="text-sm text-muted-foreground">Total de Funcionalidades</p>
                 <p className="text-3xl font-bold mt-2">{stats.total}</p>
               </div>
             </CardContent>
@@ -431,7 +431,7 @@ export default function MapaFuncionalidades() {
               <Card key={modulo.modulo}>
                 <Collapsible open={isOpen} onOpenChange={() => toggleModulo(modulo.modulo)}>
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                    <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
@@ -454,10 +454,10 @@ export default function MapaFuncionalidades() {
                     <CardContent>
                       <div className="space-y-2">
                         {modulo.items.map((item, idx) => (
-                          <div key={idx} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div key={idx} className="flex items-start justify-between p-3 bg-muted/40 rounded-lg hover:bg-gray-100 transition-colors">
                             <div className="flex-1">
-                              <p className="font-medium text-gray-900">{item.nome}</p>
-                              <p className="text-sm text-gray-600 mt-1">{item.obs}</p>
+                              <p className="font-medium text-foreground">{item.nome}</p>
+                              <p className="text-sm text-muted-foreground mt-1">{item.obs}</p>
                             </div>
                             <StatusBadge status={item.status} />
                           </div>
@@ -495,7 +495,7 @@ export default function MapaFuncionalidades() {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-gray-500">
+        <div className="text-center text-sm text-muted-foreground">
           <p>Última atualização: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
           <p className="mt-1">VarejoSync v1.0.0 - {percentualFuncional}% Funcional</p>
         </div>

@@ -45,25 +45,25 @@ export default function ProdutosAccessGuard({ children }) {
   if (acessoPermitido === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Carregando...</div>
+        <div className="text-muted-foreground">Carregando...</div>
       </div>
     );
   }
 
   if (!acessoPermitido) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-card p-4">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 mx-auto rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
             <Package className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Acesso Negado</h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-sm">
+          <h1 className="text-2xl font-bold text-foreground">Acesso Negado</h1>
+          <p className="text-muted-foreground max-w-sm">
             Seu perfil de acesso não possui permissão para visualizar o catálogo de produtos.
           </p>
           <a
             href={createPageUrl('Home')}
-            className="inline-block mt-6 px-6 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg font-medium hover:opacity-90 transition-opacity"
+            className="inline-block mt-6 px-6 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             Voltar para Home
           </a>

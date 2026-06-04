@@ -160,12 +160,12 @@ export default function LayoutTemplatesManager() {
 
   if (isCreating) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
+      <div className="min-h-screen flex flex-col bg-card">
         {/* Header */}
-        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 z-10">
+        <div className="p-4 bg-card border-b border-border/40 flex justify-between items-center sticky top-0 z-10">
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{CATEGORIAS[categoria]} {CATEGORIAS_NOMES[categoria]}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{nome || 'Novo Template'}</p>
+            <h2 className="text-lg font-semibold text-foreground">{CATEGORIAS[categoria]} {CATEGORIAS_NOMES[categoria]}</h2>
+            <p className="text-xs text-muted-foreground">{nome || 'Novo Template'}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleCancel} variant="outline" size="sm">Cancelar</Button>
@@ -186,12 +186,12 @@ export default function LayoutTemplatesManager() {
         {/* Feedback Section */}
         {showFeedback && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
-            <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">Deixe seu feedback para ajudar na melhoria:</p>
+            <p className="text-xs text-foreground/90 mb-2">Deixe seu feedback para ajudar na melhoria:</p>
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="O que poderia melhorar? Alguma dificuldade?"
-              className="w-full p-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 mb-2"
+              className="w-full p-2 text-xs rounded bg-card border border-gray-300 dark:border-gray-600 mb-2"
               rows="3"
             />
             <div className="flex gap-2">
@@ -202,10 +202,10 @@ export default function LayoutTemplatesManager() {
         )}
 
         {/* Meta info */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 space-y-3">
+        <div className="p-4 bg-background border-b border-border/40 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Nome</label>
+              <label className="text-xs text-muted-foreground block mb-1">Nome</label>
               <Input
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
@@ -215,11 +215,11 @@ export default function LayoutTemplatesManager() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Categoria</label>
+                <label className="text-xs text-muted-foreground block mb-1">Categoria</label>
                 <select
                   value={categoria}
                   onChange={(e) => setCategoria(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
+                  className="w-full px-3 py-2 text-xs rounded bg-card border border-gray-300 dark:border-gray-600"
                 >
                   {Object.entries(CATEGORIAS_NOMES).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
@@ -227,7 +227,7 @@ export default function LayoutTemplatesManager() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Tipo</label>
+                <label className="text-xs text-muted-foreground block mb-1">Tipo</label>
                 <Input
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
@@ -238,7 +238,7 @@ export default function LayoutTemplatesManager() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Descrição</label>
+            <label className="text-xs text-muted-foreground block mb-1">Descrição</label>
             <Input
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -261,7 +261,7 @@ export default function LayoutTemplatesManager() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Editor de Layouts</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Customize comprovantes, relatórios e documentos</p>
+          <p className="text-xs text-muted-foreground mt-1">Customize comprovantes, relatórios e documentos</p>
         </div>
         <Button
           onClick={() => {
@@ -291,7 +291,7 @@ export default function LayoutTemplatesManager() {
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs"
+          className="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-card text-xs"
         >
           <option value="">Todas</option>
           {Object.entries(CATEGORIAS_NOMES).map(([key, label]) => (
@@ -302,9 +302,9 @@ export default function LayoutTemplatesManager() {
 
       {/* Lista de Templates */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500 text-xs">Carregando...</div>
+        <div className="text-center py-12 text-muted-foreground text-xs">Carregando...</div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 text-xs">
+        <div className="text-center py-12 text-muted-foreground text-xs">
           {templates.length === 0 ? 'Nenhum template criado' : 'Nenhum template encontrado'}
         </div>
       ) : (
@@ -312,14 +312,14 @@ export default function LayoutTemplatesManager() {
           {filteredTemplates.map(template => (
             <div
               key={template.id}
-              className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center justify-between p-3 bg-card rounded shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{CATEGORIAS[template.categoria]}</span>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">{template.nome}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <h3 className="text-sm font-medium text-foreground truncate">{template.nome}</h3>
+                    <p className="text-xs text-muted-foreground">
                       {CATEGORIAS_NOMES[template.categoria]} {template.tipo && `· ${template.tipo}`} · {template.blocks_config ? JSON.parse(template.blocks_config || '[]').length : 0} blocos
                     </p>
                   </div>
@@ -330,7 +330,7 @@ export default function LayoutTemplatesManager() {
                   onClick={() => handleEdit(template)}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2"
+                  className="text-muted-foreground hover:bg-muted p-2"
                   title="Editar"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -339,7 +339,7 @@ export default function LayoutTemplatesManager() {
                   onClick={() => handleDuplicate(template)}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2"
+                  className="text-muted-foreground hover:bg-muted p-2"
                   disabled={saving}
                   title="Duplicar"
                 >

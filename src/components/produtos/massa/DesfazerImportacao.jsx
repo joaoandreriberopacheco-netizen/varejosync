@@ -82,14 +82,14 @@ export default function DesfazerImportacao() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (grupos.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-8 text-muted-foreground">
         <p className="text-sm">Nenhuma importação registrada para desfazer</p>
       </div>
     );
@@ -113,13 +113,13 @@ export default function DesfazerImportacao() {
           return (
             <div
               key={grupo.grupoId}
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center justify-between gap-4"
+              className="bg-card rounded-xl p-4 shadow-sm flex items-center justify-between gap-4"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   Importação {numLotes > 1 ? `(${numLotes} lotes)` : ''}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {grupo.totalItens} itens · {new Date(grupo.data).toLocaleString('pt-BR')}
                   {!temSnapshot && (
                     <span className="ml-2 text-red-400">· sem snapshot</span>

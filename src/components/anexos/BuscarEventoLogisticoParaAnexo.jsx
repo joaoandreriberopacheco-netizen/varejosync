@@ -90,16 +90,16 @@ function TimelineViagemFluvial({ ev }) {
               className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center ${
                 s.highlight
                   ? 'bg-emerald-50 ring-1 ring-emerald-200 dark:bg-emerald-950/50 dark:ring-emerald-800'
-                  : 'bg-gray-50 dark:bg-gray-800/80'
+                  : 'bg-muted/50/80'
               }`}
             >
-              <p className={`text-[10px] font-semibold uppercase tracking-wide ${s.highlight ? 'text-emerald-800 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400'}`}>
+              <p className={`text-[10px] font-semibold uppercase tracking-wide ${s.highlight ? 'text-emerald-800 dark:text-emerald-300' : 'text-muted-foreground'}`}>
                 {s.sub}
               </p>
-              <p className={`truncate text-[11px] font-medium ${s.highlight ? 'text-emerald-900 dark:text-emerald-100' : 'text-gray-700 dark:text-gray-200'}`}>
+              <p className={`truncate text-[11px] font-medium ${s.highlight ? 'text-emerald-900 dark:text-emerald-100' : 'text-foreground/90'}`}>
                 {s.label}
               </p>
-              <p className={`mt-0.5 text-xs tabular-nums ${s.highlight ? 'font-semibold text-emerald-800 dark:text-emerald-200' : 'text-gray-600 dark:text-gray-300'}`}>
+              <p className={`mt-0.5 text-xs tabular-nums ${s.highlight ? 'font-semibold text-emerald-800 dark:text-emerald-200' : 'text-muted-foreground'}`}>
                 {s.data}
               </p>
             </div>
@@ -107,13 +107,13 @@ function TimelineViagemFluvial({ ev }) {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-gray-100 pt-2 text-[11px] dark:border-gray-700">
-        <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/40 pt-2 text-[11px] dark:border-border/40">
+        <span className="inline-flex items-center gap-1 text-muted-foreground">
           <Ship className="h-3.5 w-3.5 shrink-0 opacity-70" />
           <span>
             {ev.total_embarques_relacionados || 0} embarque(s)
             {temEmb ? (
-              <span className="text-gray-500 dark:text-gray-500">
+              <span className="text-muted-foreground dark:text-muted-foreground">
                 {' '}
                 · {ev.total_embarques_ativos || 0} ativos · {ev.total_embarques_concluidos || 0} concl.
               </span>
@@ -122,7 +122,7 @@ function TimelineViagemFluvial({ ev }) {
             )}
           </span>
         </span>
-        <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400">
+        <span className="inline-flex items-center gap-1 text-muted-foreground">
           <Banknote className="h-3.5 w-3.5 shrink-0 opacity-70" />
           {temFrete ? (
             <span>
@@ -145,8 +145,8 @@ function TimelineViagemFluvial({ ev }) {
       </div>
 
       {(ev.resumo_fornecedores?.length > 0 || emb.length > 0) && temEmb ? (
-        <div className="rounded-lg bg-gray-50/90 px-2 py-1.5 text-[10px] leading-snug text-gray-600 dark:bg-gray-800/60 dark:text-gray-400">
-          <span className="inline-flex items-center gap-1 font-medium text-gray-700 dark:text-gray-300">
+        <div className="rounded-lg bg-muted/40/90 px-2 py-1.5 text-[10px] leading-snug text-muted-foreground dark:bg-muted/60 dark:text-muted-foreground">
+          <span className="inline-flex items-center gap-1 font-medium text-foreground/90">
             <Link2 className="h-3 w-3" /> Vínculos
           </span>
           <span className="mt-0.5 block">
@@ -235,13 +235,13 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
         <button
           type="button"
           onClick={onVoltar}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Viagem / frete fluvial</p>
-          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+          <p className="text-sm font-medium text-foreground/90">Viagem / frete fluvial</p>
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
             Linha do tempo com ETA em Tabatinga e vínculos (embarques / frete)
           </p>
@@ -251,14 +251,14 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           title="Recarregar lista de viagens"
           onClick={() => carregarDados()}
           disabled={carregando}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-muted-foreground transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-muted dark:text-foreground/90 dark:hover:bg-primary/90"
         >
           <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           ref={inputBuscaRef}
           autoComplete="off"
@@ -268,7 +268,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           value={query}
           onChange={handleSearchChange}
           placeholder="Código, barco, datas, fornecedor, pedido…"
-          className="w-full rounded-2xl border border-transparent bg-white py-3 pl-10 pr-4 text-sm text-gray-800 shadow-sm outline-none ring-2 ring-gray-200/80 placeholder:text-gray-400 focus:border-primary/30 focus:ring-primary/35 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-700 dark:focus:ring-primary/40"
+          className="w-full rounded-2xl border border-transparent bg-white py-3 pl-10 pr-4 text-sm text-gray-800 shadow-sm outline-none ring-2 ring-gray-200/80 placeholder:text-muted-foreground focus:border-primary/30 focus:ring-primary/35 dark:bg-background dark:text-foreground dark:ring-gray-700 dark:focus:ring-primary/40"
         />
       </div>
 
@@ -280,17 +280,17 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
         )}
         {carregando ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : eventosFiltrados.length === 0 ? (
           <div className="space-y-4 py-10 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {query.trim()
                 ? 'Nenhuma viagem corresponde à busca.'
                 : 'Nenhuma viagem encontrada neste momento.'}
             </p>
             {!query.trim() ? (
-              <p className="mx-auto max-w-sm text-xs leading-relaxed text-gray-400 dark:text-gray-500">
+              <p className="mx-auto max-w-sm text-xs leading-relaxed text-muted-foreground">
                 A lista junta viagens da base principal e da área de itinerário. Se usa o mapa em Logística e não via
                 nada aqui, toque em atualizar ou verifique em Compras / Gestão de eventos logísticos.
               </p>
@@ -299,7 +299,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
               type="button"
               onClick={() => carregarDados()}
               disabled={carregando}
-              className="inline-flex items-center gap-2 rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 disabled:opacity-50 dark:bg-muted dark:text-gray-100 dark:hover:bg-primary/90"
             >
               <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
               Atualizar lista
@@ -313,8 +313,8 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
               onClick={() => setSelecionado(ev)}
               className={`flex w-full flex-col rounded-2xl px-4 py-3 text-left text-sm shadow-sm transition-colors ${
                 selecionado?.id === ev.id
-                  ? 'bg-gray-900 text-white ring-2 ring-gray-900 dark:bg-white dark:text-gray-900 dark:ring-white'
-                  : 'bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                  ? 'bg-gray-900 text-white ring-2 ring-gray-900 dark:bg-white dark:text-foreground dark:ring-white'
+                  : 'bg-white text-gray-800 dark:bg-background dark:text-foreground'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -335,7 +335,7 @@ export default function BuscarEventoLogisticoParaAnexo({ onSelecionar, onVoltar,
           type="button"
           onClick={() => onSelecionar(selecionado)}
           disabled={uploadando}
-          className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white dark:bg-white dark:text-gray-900"
+          className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-sm font-semibold text-white dark:bg-white dark:text-foreground"
         >
           {uploadando ? (
             <>

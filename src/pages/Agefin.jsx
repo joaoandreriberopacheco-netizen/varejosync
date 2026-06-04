@@ -117,16 +117,16 @@ export default function Agefin() {
   }, [contas]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-card">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 shadow-sm min-w-0">
+      <div className="sticky top-0 z-20 bg-card shadow-sm min-w-0">
         <div className="p-4 md:p-6 min-w-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 min-w-0">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-quicksand font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-quicksand font-bold text-foreground">
                 Agefin
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Gestão unificada de lançamentos financeiros
               </p>
             </div>
@@ -179,17 +179,17 @@ export default function Agefin() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full border-t border-gray-200 dark:border-gray-800">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full border-t border-border/40">
           <TabsList className="w-full justify-start rounded-none border-0 bg-transparent px-4 md:px-6 h-auto p-0">
             <TabsTrigger
               value="contas"
-              className="rounded-none border-b-2 px-0 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=inactive]:border-transparent text-gray-700 dark:text-gray-300"
+              className="rounded-none border-b-2 px-0 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=inactive]:border-transparent text-foreground/90"
             >
               Contas a Pagar
             </TabsTrigger>
             <TabsTrigger
               value="recorrentes"
-              className="rounded-none border-b-2 px-6 py-3 ml-4 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=inactive]:border-transparent text-gray-700 dark:text-gray-300"
+              className="rounded-none border-b-2 px-6 py-3 ml-4 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=inactive]:border-transparent text-foreground/90"
             >
               Recorrências
             </TabsTrigger>
@@ -201,15 +201,15 @@ export default function Agefin() {
       <div className="p-4 md:p-6">
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" />
           </div>
         ) : !dataLoaded || contas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-96 text-center">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
               <FileText className="w-10 h-10 text-blue-500" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Nenhuma conta cadastrada</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-sm">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Nenhuma conta cadastrada</h2>
+            <p className="text-sm text-muted-foreground mb-8 max-w-sm">
               Comece importando contas ou crie dados de teste para explorar a plataforma.
             </p>
             <div className="flex gap-3">

@@ -28,24 +28,24 @@ export function DatePickerWithRange({ className, date, setDate }) {
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-1">
+      <div className="flex items-center gap-2 bg-card border border-border/40 rounded-md p-1">
         <div className="relative flex-1">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground">
                 <CalendarIcon className="w-4 h-4" />
             </span>
             <input autoComplete="off" 
                 type="date"
-                className="w-full pl-8 pr-2 py-1 text-sm bg-transparent border-none focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
+                className="w-full pl-8 pr-2 py-1 text-sm bg-transparent border-none focus:ring-0 outline-none text-foreground/90"
                 value={date?.from ? format(date.from, 'yyyy-MM-dd') : ''}
                 onChange={handleFromChange}
                 placeholder="Início"
             />
         </div>
-        <span className="text-gray-400">-</span>
+        <span className="text-muted-foreground">-</span>
         <div className="relative flex-1">
             <input autoComplete="off" 
                 type="date"
-                className="w-full px-2 py-1 text-sm bg-transparent border-none focus:ring-0 outline-none text-gray-700 dark:text-gray-200 text-right"
+                className="w-full px-2 py-1 text-sm bg-transparent border-none focus:ring-0 outline-none text-foreground/90 text-right"
                 value={date?.to ? format(date.to, 'yyyy-MM-dd') : ''}
                 onChange={handleToChange}
                 placeholder="Fim"

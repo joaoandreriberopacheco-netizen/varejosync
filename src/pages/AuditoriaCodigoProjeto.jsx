@@ -89,7 +89,7 @@ const FASES = [
 ];
 
 const STATUS = {
-  pendente: { label: '—', style: 'text-gray-400' },
+  pendente: { label: '—', style: 'text-muted-foreground' },
   excluir: { label: '✕ Excluir', style: 'text-red-600 font-semibold' },
   manter: { label: '✓ Manter', style: 'text-green-700 font-semibold' },
   revisar: { label: '? Revisar', style: 'text-amber-600 font-semibold' },
@@ -120,12 +120,12 @@ export default function AuditoriaCodigoProjeto() {
     <div className="max-w-3xl mx-auto px-4 py-6 font-mono text-sm text-gray-800 dark:text-gray-100">
 
       {/* Header */}
-      <div className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+      <div className="mb-6 border-b border-border/40 pb-4">
         <h1 className="text-xl font-bold tracking-tight">Auditoria de Código — Checklist</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+        <p className="text-muted-foreground text-xs mt-1">
           Marque cada item como <span className="text-red-600">Excluir</span>, <span className="text-green-700">Manter</span> ou <span className="text-amber-600">Revisar</span>.
         </p>
-        <div className="flex gap-4 mt-3 text-xs text-gray-500">
+        <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
           <span>{totalDecididos}/{totalItens} decididos</span>
           <span className="text-red-600">{totalPorStatus('excluir')} excluir</span>
           <span className="text-green-700">{totalPorStatus('manter')} manter</span>
@@ -139,11 +139,11 @@ export default function AuditoriaCodigoProjeto() {
         return (
           <div key={fase.id} className="mb-8">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{fase.fase}</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{fase.fase}</span>
               <h2 className="font-bold text-base">{fase.titulo}</h2>
-              <span className="text-xs text-gray-400 ml-auto">{decididos}/{fase.itens.length}</span>
+              <span className="text-xs text-muted-foreground ml-auto">{decididos}/{fase.itens.length}</span>
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{fase.descricao}</p>
+            <p className="text-xs text-muted-foreground mb-3">{fase.descricao}</p>
 
             <div className="space-y-1">
               {fase.itens.map((item) => {
@@ -156,13 +156,13 @@ export default function AuditoriaCodigoProjeto() {
                       status === 'excluir' ? 'bg-red-50 dark:bg-red-900/10' :
                       status === 'manter' ? 'bg-green-50 dark:bg-green-900/10' :
                       status === 'revisar' ? 'bg-amber-50 dark:bg-amber-900/10' :
-                      'bg-gray-50 dark:bg-gray-800/40'
+                      'bg-muted/50/40'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       {/* Nome */}
                       <span className={`flex-1 text-xs leading-relaxed break-all ${
-                        status === 'excluir' ? 'line-through text-gray-400' : ''
+                        status === 'excluir' ? 'line-through text-muted-foreground' : ''
                       }`}>
                         {item}
                       </span>
@@ -178,7 +178,7 @@ export default function AuditoriaCodigoProjeto() {
                                 ? s === 'excluir' ? 'bg-red-600 text-white border-red-600'
                                   : s === 'manter' ? 'bg-green-700 text-white border-green-700'
                                   : 'bg-amber-500 text-white border-amber-500'
-                                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400'
+                                : 'bg-white dark:bg-muted border-border/40 text-muted-foreground hover:border-gray-400'
                             }`}
                           >
                             {s === 'excluir' ? '✕' : s === 'manter' ? '✓' : '?'}
@@ -186,7 +186,7 @@ export default function AuditoriaCodigoProjeto() {
                         ))}
                         <button
                           onClick={() => setEditandoNota(editandoNota === item ? null : item)}
-                          className="text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-400 hover:border-gray-400"
+                          className="text-xs px-2 py-0.5 rounded border border-border/40 bg-white dark:bg-muted text-muted-foreground hover:border-gray-400"
                         >
                           ✎
                         </button>
@@ -206,11 +206,11 @@ export default function AuditoriaCodigoProjeto() {
                         }}
                         onBlur={() => setEditandoNota(null)}
                         placeholder="Observação..."
-                        className="mt-1.5 w-full text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 outline-none focus:border-gray-400"
+                        className="mt-1.5 w-full text-xs bg-white dark:bg-muted border border-border/40 rounded px-2 py-1 outline-none focus:border-gray-400"
                       />
                     )}
                     {nota && editandoNota !== item && (
-                      <p className="mt-1 text-xs text-gray-400 italic">↳ {nota}</p>
+                      <p className="mt-1 text-xs text-muted-foreground italic">↳ {nota}</p>
                     )}
                   </div>
                 );
@@ -221,10 +221,10 @@ export default function AuditoriaCodigoProjeto() {
       })}
 
       {/* Resumo exportável */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-        <p className="text-xs text-gray-400 mb-2 font-bold uppercase tracking-widest">Resumo das decisões</p>
+      <div className="border-t border-border/40 pt-4 mt-4">
+        <p className="text-xs text-muted-foreground mb-2 font-bold uppercase tracking-widest">Resumo das decisões</p>
         {Object.entries(decisoes).filter(([, v]) => v && v !== 'pendente').length === 0 ? (
-          <p className="text-xs text-gray-400">Nenhuma decisão tomada ainda.</p>
+          <p className="text-xs text-muted-foreground">Nenhuma decisão tomada ainda.</p>
         ) : (
           <div className="space-y-0.5">
             {Object.entries(decisoes)
@@ -233,8 +233,8 @@ export default function AuditoriaCodigoProjeto() {
               .map(([item, status]) => (
                 <div key={item} className="flex gap-2 text-xs">
                   <span className={`w-14 shrink-0 ${STATUS[status]?.style}`}>{STATUS[status]?.label}</span>
-                  <span className="text-gray-600 dark:text-gray-300 break-all">{item}</span>
-                  {notas[item] && <span className="text-gray-400 italic">— {notas[item]}</span>}
+                  <span className="text-muted-foreground break-all">{item}</span>
+                  {notas[item] && <span className="text-muted-foreground italic">— {notas[item]}</span>}
                 </div>
               ))}
           </div>

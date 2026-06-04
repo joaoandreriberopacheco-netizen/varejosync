@@ -59,7 +59,7 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
   const getStatusInfo = () => {
     const configs = {
       'Pendente Geração': {
-        color: 'bg-gray-100 text-gray-700',
+        color: 'bg-gray-100 text-foreground/90',
         icon: Clock,
         label: 'Não Gerado'
       },
@@ -92,11 +92,11 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 space-y-3">
+    <div className="bg-background/50 rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <QrCode className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <QrCode className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground/90">
             Conferência de {tipo === 'volumes' ? 'Volumes' : 'Itens'}
           </span>
         </div>
@@ -108,8 +108,8 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
 
       {codigo ? (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <code className="flex-1 text-base font-mono font-bold text-gray-900 dark:text-white tracking-wider">
+          <div className="flex items-center gap-2 p-3 bg-card rounded-lg border border-border/40">
+            <code className="flex-1 text-base font-mono font-bold text-foreground tracking-wider">
               {codigo}
             </code>
             <Button
@@ -128,7 +128,7 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
           </div>
 
           {status === 'Gerado' && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Forneça este código ao conferente para iniciar a conferência cega.
             </p>
           )}

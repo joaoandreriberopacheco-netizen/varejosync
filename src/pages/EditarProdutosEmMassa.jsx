@@ -335,16 +335,16 @@ export default function EditarProdutosEmMassa() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+        <h1 className="text-2xl font-semibold text-foreground font-glacial">
           Edição em Massa
         </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Atualize detalhes, embalagens (base, alternativas e unidade vitrine) ou estoque em lote via planilha.
         </p>
       </div>
 
       <Tabs defaultValue="produtos" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg gap-1">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted p-1 rounded-lg gap-1">
           <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
             Detalhes do Produto
           </TabsTrigger>
@@ -360,30 +360,30 @@ export default function EditarProdutosEmMassa() {
         </TabsList>
 
         <TabsContent value="produtos" className="space-y-8 mt-6">
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Gera um <strong>.xlsx</strong> com todos os produtos (sem colunas Base / Alt. — use a aba Embalagens). Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
             </p>
             <ExportarPlanilha />
           </div>
 
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <StepLabel number={2} label="Subir planilha editada" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Selecione o arquivo <strong>.xlsx</strong> modificado. Colunas extras ou não reconhecidas serão ignoradas.
             </p>
             <ImportarPlanilha onParsed={handleParsed} />
           </div>
 
           {parsedData && (
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm space-y-4">
               <StepLabel number={3} label="Validar e confirmar" />
               <ResumoPrevisualizacao data={parsedData} />
               <Button
                 onClick={handleConfirmar}
                 disabled={!podeConfirmar || salvando}
-                className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+                className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium"
               >
                 {salvando ? 'Sincronizando...' : `Confirmar Sincronização (${parsedData.alterados?.length ?? 0} registros)`}
               </Button>
@@ -413,7 +413,7 @@ export default function EditarProdutosEmMassa() {
               {processandoBackfillLegado ? 'Analisando e aplicando…' : 'Analisar e aplicar correção nos elegíveis'}
             </Button>
             {resumoBackfillLegado && (
-              <div className="mt-4 rounded-lg bg-white/70 dark:bg-gray-900/30 border border-amber-100 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
+              <div className="mt-4 rounded-lg bg-white/70 dark:bg-background/30 border border-amber-100 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
                 <p>Total analisado: {resumoBackfillLegado.total}</p>
                 <p>Podem ser corrigidos: {resumoBackfillLegado.candidatos}</p>
                 <p>Conflitos (revisão manual): {resumoBackfillLegado.conflitos}</p>
@@ -424,17 +424,17 @@ export default function EditarProdutosEmMassa() {
             )}
           </div>
 
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar planilha de embalagens" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Colunas: <strong>ID</strong>, <strong>Cód. Interno</strong>, <strong>Nome (referência)</strong>; para a <strong>base</strong> e até <strong>Alt.1</strong> e <strong>Alt.2</strong> — <strong>sigla</strong>, <strong>fator de conversão</strong> e <strong>ajuste preço (×)</strong> (multiplicador sobre o preço daquela embalagem; em branco conta como 1). Por fim, três colunas numéricas <strong>Base vitrine (0/1)</strong>, <strong>Alt.1 vitrine (0/1)</strong> e <strong>Alt.2 vitrine (0/1)</strong>: em cada linha deve haver exatamente um <strong>1</strong> (vitrine nesse slot) e dois <strong>0</strong>; na exportação, vitrine na base aparece como <code className="text-xs">1</code> só na coluna da base.
             </p>
             <ExportarEmbalagensPlanilha />
           </div>
 
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <StepLabel number={2} label="Subir planilha editada" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Prefira o arquivo gerado no passo anterior. Cada linha é reconhecida pelo <strong>ID</strong> ou pelo <strong>Cód. Interno</strong> (colunas bloqueadas). Cabeçalhos antigos de colunas de embalagem ainda podem ser reconhecidos quando o padrão for compatível; o modelo antigo com coluna única «Unidade vitrine» não é mais aceite nesta aba — use as três colunas 0/1 por slot.
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
@@ -444,13 +444,13 @@ export default function EditarProdutosEmMassa() {
           </div>
 
           {parsedEmbalagens && (
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm space-y-4">
               <StepLabel number={3} label="Conferir e gravar no sistema" />
               <ResumoPrevisualizacao data={parsedEmbalagens} />
               <Button
                 onClick={handleConfirmarEmbalagens}
                 disabled={!podeConfirmarEmbalagens || salvando}
-                className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+                className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium"
               >
                 {salvando
                   ? 'Gravando embalagens…'
@@ -469,24 +469,24 @@ export default function EditarProdutosEmMassa() {
         </TabsContent>
 
         <TabsContent value="estoque" className="space-y-8 mt-6">
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <StepLabel number={1} label="Baixar template de estoque" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Gera um <strong>.xlsx</strong> com ID, Nome e Estoque Atual de todos os produtos.
             </p>
             <ExportarEstoque />
           </div>
 
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <StepLabel number={2} label="Subir planilha de inventário" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Importe o arquivo <strong>.xlsx</strong> com as quantidades atualizadas. Movimentações de estoque serão geradas automaticamente.
             </p>
             <ImportarEstoque onParsed={handleParsedEstoque} />
           </div>
 
           {parsedEstoque && (
-            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm space-y-4">
               <StepLabel number={3} label="Validar e confirmar ajustes" />
               <div className="space-y-3">
                 {parsedEstoque.erros?.length > 0 && (
@@ -524,7 +524,7 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmarEstoque}
                 disabled={!podeConfirmarEstoque || salvando}
-                className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+                className="w-full bg-gray-900 dark:bg-white dark:text-foreground hover:bg-primary/90 dark:hover:bg-gray-100 h-11 text-sm font-medium"
               >
                 {salvando ? 'Atualizando estoque...' : `Confirmar Atualização (${parsedEstoque.alterados?.length ?? 0} produtos)`}
               </Button>
@@ -541,12 +541,12 @@ export default function EditarProdutosEmMassa() {
           </TabsContent>
 
           <TabsContent value="desfazer" className="space-y-6 mt-6">
-          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+          <div className="rounded-2xl bg-muted/50/60 p-6 shadow-sm">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-2">
+              <h2 className="text-lg font-semibold text-foreground font-glacial mb-2">
                 Histórico de Importações
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Restaure produtos para o estado anterior a uma importação realizada.
               </p>
             </div>
@@ -561,10 +561,10 @@ export default function EditarProdutosEmMassa() {
           function StepLabel({ number, label }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-bold flex items-center justify-center">
+      <span className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-foreground text-xs font-bold flex items-center justify-center">
         {number}
       </span>
-      <span className="font-semibold text-gray-800 dark:text-white text-sm font-glacial">{label}</span>
+      <span className="font-semibold text-foreground text-sm font-glacial">{label}</span>
     </div>
   );
 }

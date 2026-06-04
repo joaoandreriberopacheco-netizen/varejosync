@@ -13,7 +13,7 @@ export default function ConsumoFormShell({ onBack, desktop, mobile }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-background">
       <ConsumoFormHeader
         isDesktop={isDesktop}
         mobileStep={mobileStep}

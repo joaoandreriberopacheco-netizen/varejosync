@@ -85,9 +85,9 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-2xl">
+      <DialogContent className="max-w-md bg-card border-0 shadow-2xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-quicksand text-gray-900 dark:text-white text-base">
+          <DialogTitle className="flex items-center gap-2 font-quicksand text-foreground text-base">
             <Handshake className="w-4 h-4 text-amber-500" />
             Acordo Financeiro — Itens Órfãos
           </DialogTitle>
@@ -111,17 +111,17 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
 
           {/* Tipo de acordo */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400">Tipo de Acordo</Label>
+            <Label className="text-xs text-muted-foreground">Tipo de Acordo</Label>
             <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-gray-900 dark:text-gray-100">
+              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+              <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
                 <SelectItem value="saldo_fornecedor">Saldo a Favor (crédito com o fornecedor)</SelectItem>
                 <SelectItem value="conta_receber">Conta a Receber do Fornecedor</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
               {tipo === 'saldo_fornecedor'
                 ? 'Registra um crédito para uso em compras futuras com este fornecedor.'
                 : 'Registra uma cobrança formal ao fornecedor pelos itens não entregues.'}
@@ -130,24 +130,24 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
 
           {/* Valor */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400">Valor (R$) *</Label>
+            <Label className="text-xs text-muted-foreground">Valor (R$) *</Label>
             <Input
               type="text" inputMode="decimal"
               placeholder="0,00"
               value={valor}
               onChange={e => setValor(e.target.value.replace(',', '.'))}
-              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
             />
           </div>
 
           {/* Conta financeira */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400">Conta Financeira *</Label>
+            <Label className="text-xs text-muted-foreground">Conta Financeira *</Label>
             <Select value={contaId} onValueChange={setContaId}>
-              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-gray-900 dark:text-gray-100">
+              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+              <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
                 {contas.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                 ))}
@@ -157,19 +157,19 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
 
           {/* Observações */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400">Justificativa / Observações</Label>
+            <Label className="text-xs text-muted-foreground">Justificativa / Observações</Label>
             <Input
               placeholder="Motivo do acordo, referência NF, etc..."
               value={observacoes}
               onChange={e => setObservacoes(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-gray-100 placeholder:text-muted-foreground"
             />
           </div>
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading} size="sm"
-            className="border-0 shadow-sm text-gray-700 dark:text-gray-300">Cancelar</Button>
+            className="border-0 shadow-sm text-foreground/90">Cancelar</Button>
           <Button onClick={handleConfirmar} disabled={loading} size="sm"
             className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm">
             {loading ? 'Registrando...' : 'Confirmar Acordo'}

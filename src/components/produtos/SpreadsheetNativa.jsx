@@ -85,7 +85,7 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
 
   // Classe CSS para célula
   const obterClassesCelula = (produto, coluna) => {
-    const baseClasses = 'px-3 py-2 text-sm border-b border-gray-200 dark:border-gray-700';
+    const baseClasses = 'px-3 py-2 text-sm border-b border-border/40';
     
     // Destacar alterações
     if (!coluna.volatile && alteracoes[produto.id]?.[coluna.key] !== undefined) {
@@ -204,11 +204,11 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
   return (
     <div
       ref={containerRef}
-      className="w-full h-full overflow-x-auto overflow-y-auto bg-white dark:bg-gray-900"
+      className="w-full h-full overflow-x-auto overflow-y-auto bg-card"
       onScroll={handleScroll}
     >
       {/* Cabeçalho fixo */}
-      <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="sticky top-0 z-10 bg-muted/50 border-b border-border/40">
         <div className="flex" style={{ minWidth: colunas.reduce((acc, col) => acc + col.width, 0) }}>
           {colunas.map(coluna => (
             <div
@@ -216,8 +216,8 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
               style={{ width: coluna.width }}
               className={`px-3 py-2 text-xs font-semibold border-b border-gray-300 dark:border-gray-600 ${
                 coluna.volatile 
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 italic' 
-                  : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                  ? 'bg-muted text-muted-foreground italic' 
+                  : 'bg-muted/50 text-foreground/90'
               }`}
             >
               {coluna.label}
@@ -286,13 +286,13 @@ const SpreadsheetNativa = forwardRef(({ produtos, alteracoes, onAlteracoes }, re
                           }
                           if (e.key === 'Escape') setEditandoCell(null);
                         }}
-                        className="w-full h-full px-2 border border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none placeholder-gray-400"
+                        className="w-full h-full px-2 border border-blue-500 dark:border-blue-400 bg-card text-foreground text-sm focus:outline-none placeholder-gray-400"
                         placeholder={coluna.tipo === 'numero' ? '0 ou =50*1.1' : ''}
                         autoFocus
                       />
                     )
                   ) : (
-                    <div className={`truncate ${coluna.volatile ? 'text-gray-500 dark:text-gray-500 italic' : 'text-gray-900 dark:text-white hover:opacity-75 cursor-pointer'}`}>
+                    <div className={`truncate ${coluna.volatile ? 'text-muted-foreground dark:text-muted-foreground italic' : 'text-foreground hover:opacity-75 cursor-pointer'}`}>
                       {coluna.tipo === 'boolean' ? (
                         <input type="checkbox" checked={valor || false} disabled className="w-4 h-4 pointer-events-none" />
                       ) : typeof valor === 'number' ? (

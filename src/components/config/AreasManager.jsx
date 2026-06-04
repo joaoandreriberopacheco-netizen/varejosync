@@ -78,29 +78,29 @@ export default function AreasManager() {
   return (
     <div className="space-y-4 mt-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between pb-3 border-b border-border/40">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-gray-400" /> Áreas / Setores
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-muted-foreground" /> Áreas / Setores
           </h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Áreas e setores da loja</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Áreas e setores da loja</p>
         </div>
         <div className="flex items-center gap-1.5">
           <Button variant="ghost" size="icon" onClick={handleDownloadTemplate} className="h-8 w-8" title="Template CSV">
-            <FileText className="w-3.5 h-3.5 text-gray-500" />
+            <FileText className="w-3.5 h-3.5 text-muted-foreground" />
           </Button>
           <Button variant="ghost" size="icon" onClick={handleExport} className="h-8 w-8" title="Exportar">
-            <Download className="w-3.5 h-3.5 text-gray-500" />
+            <Download className="w-3.5 h-3.5 text-muted-foreground" />
           </Button>
           <div className="relative">
             <input type="file" id="import-areas" className="hidden" accept=".csv,.txt" onChange={handleImport} disabled={importing} />
             <Button variant="ghost" size="icon" onClick={() => document.getElementById('import-areas').click()}
               disabled={importing} className="h-8 w-8" title="Importar CSV">
-              {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5 text-gray-500" />}
+              {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5 text-muted-foreground" />}
             </Button>
           </div>
           <Button onClick={() => setShowDialog(true)} size="sm"
-            className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 px-3 text-xs">
+            className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Nova Área</span>
           </Button>
@@ -110,10 +110,10 @@ export default function AreasManager() {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>
       ) : areas.length === 0 ? (
-        <div className="text-center py-12 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-          <MapPin className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
-          <p className="text-sm text-gray-400 mb-4">Nenhuma área cadastrada</p>
-          <Button onClick={() => setShowDialog(true)} size="sm" className="bg-gray-800 text-white gap-1.5">
+        <div className="text-center py-12 rounded-xl bg-muted/50/50">
+          <MapPin className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <p className="text-sm text-muted-foreground mb-4">Nenhuma área cadastrada</p>
+          <Button onClick={() => setShowDialog(true)} size="sm" className="bg-primary text-white gap-1.5">
             <Plus className="w-3.5 h-3.5" /> Criar Primeira
           </Button>
         </div>
@@ -121,24 +121,24 @@ export default function AreasManager() {
         <div className="space-y-2">
           {areas.map(area => (
             <div key={area.id}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-800 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-gray-800 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-primary dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
                 <span className="text-[10px] font-bold text-white">{area.codigo}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{area.nome}</p>
-                {area.descricao && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{area.descricao}</p>}
+                {area.descricao && <p className="text-xs text-muted-foreground truncate">{area.descricao}</p>}
               </div>
               {!area.ativo && (
-                <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full flex-shrink-0">inativa</span>
+                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full flex-shrink-0">inativa</span>
               )}
               <div className="flex gap-1 flex-shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => handleEdit(area)}
-                  className="h-7 w-7 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200">
                   <Edit3 className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(area.id)}
-                  className="h-7 w-7 text-gray-400 hover:text-red-500">
+                  className="h-7 w-7 text-muted-foreground hover:text-red-500">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -154,44 +154,44 @@ export default function AreasManager() {
       )}
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800">
+        <DialogContent className="max-w-sm dark:bg-background dark:border-border/40">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-400" />
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               {editingArea ? 'Editar Área' : 'Nova Área'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Código *</Label>
+                <Label className="text-xs text-muted-foreground font-medium">Código *</Label>
                 <Input value={formData.codigo}
                   onChange={e => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
-                  placeholder="A1" className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+                  placeholder="A1" className="bg-muted/50 border-0 shadow-sm h-9 text-sm" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Nome *</Label>
+                <Label className="text-xs text-muted-foreground font-medium">Nome *</Label>
                 <Input value={formData.nome}
                   onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Hidráulica" className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+                  placeholder="Hidráulica" className="bg-muted/50 border-0 shadow-sm h-9 text-sm" />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Descrição</Label>
+              <Label className="text-xs text-muted-foreground font-medium">Descrição</Label>
               <Textarea value={formData.descricao || ''}
                 onChange={e => setFormData({ ...formData, descricao: e.target.value })}
                 placeholder="Descrição opcional..."
-                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm resize-none" rows={2} />
+                className="bg-muted/50 border-0 shadow-sm text-sm resize-none" rows={2} />
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50">
               <Checkbox checked={formData.ativo} onCheckedChange={v => setFormData({ ...formData, ativo: v })} id="area-ativo" />
-              <Label htmlFor="area-ativo" className="text-xs font-medium text-gray-700 dark:text-gray-200 cursor-pointer">Área ativa</Label>
+              <Label htmlFor="area-ativo" className="text-xs font-medium text-foreground/90 cursor-pointer">Área ativa</Label>
             </div>
           </div>
           <DialogFooter className="gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={handleClose} className="h-8 text-xs">Cancelar</Button>
             <Button size="sm" onClick={handleSave}
-              className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs">
+              className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>

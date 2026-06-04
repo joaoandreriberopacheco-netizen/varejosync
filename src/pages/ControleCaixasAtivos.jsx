@@ -275,44 +275,44 @@ export default function ControleCaixasAtivos() {
 
   if (loading && !caixaSelecionado) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+      <div className="min-h-screen bg-background p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-6"></div>
-          <div className="h-64 bg-white dark:bg-gray-800 rounded-xl shadow-sm animate-pulse"></div>
+          <div className="h-8 w-48 bg-gray-200 dark:bg-muted rounded animate-pulse mb-6"></div>
+          <div className="h-64 bg-card rounded-xl shadow-sm animate-pulse"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div id="controle-caixas-print-root" className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-glacial">
+            <h1 className="text-2xl font-bold text-foreground dark:text-gray-100 font-glacial">
               Controle de Caixas Ativos
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Análise detalhada dos movimentos de caixa
             </p>
           </div>
           <Button
             onClick={handleImprimir}
             variant="outline"
-            className="gap-2 print:hidden border-gray-200 dark:border-gray-700 no-pdf-capture">
+            className="gap-2 print:hidden border-border/40 no-pdf-capture">
             <Printer className="w-4 h-4" />
             Imprimir
           </Button>
         </div>
 
         {/* Seletor de Caixa */}
-        <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700 print:shadow-none">
+        <Card className="shadow-sm border-0 dark:bg-muted dark:border-border/40 print:shadow-none">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Wallet className="w-5 h-5 text-gray-400" />
+              <Wallet className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1">
-                <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 block">
+                <label className="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">
                   Caixa Selecionado
                 </label>
                 <Select
@@ -321,12 +321,12 @@ export default function ControleCaixasAtivos() {
                     const caixa = caixas.find(c => c.id === id);
                     setCaixaSelecionado(caixa);
                   }}>
-                  <SelectTrigger className="w-full md:w-64 border-0 bg-gray-50 dark:bg-gray-700 dark:text-gray-200">
+                  <SelectTrigger className="w-full md:w-64 border-0 bg-muted/40 dark:bg-muted dark:text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="dark:bg-muted dark:border-border/40">
                     {caixas.map(caixa => (
-                      <SelectItem key={caixa.id} value={caixa.id} className="dark:hover:bg-gray-700">
+                      <SelectItem key={caixa.id} value={caixa.id} className="dark:hover:bg-primary/90">
                         {caixa.nome}
                       </SelectItem>
                     ))}
@@ -340,59 +340,59 @@ export default function ControleCaixasAtivos() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Coluna 1: Movimentos */}
           <div>
-            <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
+            <Card className="shadow-sm border-0 dark:bg-muted dark:border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                <CardTitle className="text-base font-semibold text-foreground dark:text-gray-100">
                   Movimentos
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Saldo Inicial */}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between py-2 border-b border-border/40">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Saldo Inicial</span>
+                    <span className="text-sm text-muted-foreground">Saldo Inicial</span>
                   </div>
-                  <span className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                  <span className="text-base font-semibold text-foreground">
                     {formatValor(resumo.saldoInicial)}
                   </span>
                 </div>
 
                 {/* Entradas */}
                 <Collapsible open={showEntradasDetails} onOpenChange={setShowEntradasDetails}>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-between py-2 border-b border-border/40">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">Entradas</span>
+                      <span className="text-sm text-muted-foreground">Entradas</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
                         {formatValor(resumo.totalEntradas)}
                       </span>
                       <CollapsibleTrigger asChild>
-                        <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                          <Eye className="w-4 h-4 text-gray-500" />
+                        <button className="p-1.5 hover:bg-muted rounded transition-colors">
+                          <Eye className="w-4 h-4 text-muted-foreground" />
                         </button>
                       </CollapsibleTrigger>
                     </div>
                   </div>
                   <CollapsibleContent className="pt-3 space-y-2">
                     {entradasDetalhadas.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-2">Nenhuma entrada registrada</p>
+                      <p className="text-xs text-muted-foreground text-center py-2">Nenhuma entrada registrada</p>
                     ) : (
                       entradasDetalhadas.map((entrada, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-xs">
+                        <div key={idx} className="flex items-center justify-between p-2 bg-muted/40 dark:bg-muted/50 rounded text-xs">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               {getIconeFormaPagamento(entrada.forma)}
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                              <span className="font-medium text-foreground">
                                 {entrada.tipo}
                               </span>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-gray-500 dark:text-gray-400">{formatHora(entrada.horario)}</span>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="text-muted-foreground">{formatHora(entrada.horario)}</span>
                             </div>
-                            <div className="text-gray-600 dark:text-gray-400">{entrada.descricao}</div>
-                            <div className="text-gray-500 dark:text-gray-500">{entrada.forma}</div>
+                            <div className="text-muted-foreground">{entrada.descricao}</div>
+                            <div className="text-muted-foreground dark:text-muted-foreground">{entrada.forma}</div>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-emerald-600 dark:text-emerald-400">
@@ -402,7 +402,7 @@ export default function ControleCaixasAtivos() {
                               <button
                                 onClick={() => handleVerDetalhesVenda(entrada.referencia)}
                                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
-                                <Eye className="w-3 h-3 text-gray-500" />
+                                <Eye className="w-3 h-3 text-muted-foreground" />
                               </button>
                             )}
                           </div>
@@ -414,39 +414,39 @@ export default function ControleCaixasAtivos() {
 
                 {/* Saídas */}
                 <Collapsible open={showSaidasDetails} onOpenChange={setShowSaidasDetails}>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-between py-2 border-b border-border/40">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">Saídas</span>
+                      <span className="text-sm text-muted-foreground">Saídas</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-base font-semibold text-red-600 dark:text-red-400">
                         {formatValor(resumo.totalSaidas)}
                       </span>
                       <CollapsibleTrigger asChild>
-                        <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                          <Eye className="w-4 h-4 text-gray-500" />
+                        <button className="p-1.5 hover:bg-muted rounded transition-colors">
+                          <Eye className="w-4 h-4 text-muted-foreground" />
                         </button>
                       </CollapsibleTrigger>
                     </div>
                   </div>
                   <CollapsibleContent className="pt-3 space-y-2">
                     {saidasDetalhadas.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-2">Nenhuma saída registrada</p>
+                      <p className="text-xs text-muted-foreground text-center py-2">Nenhuma saída registrada</p>
                     ) : (
                       saidasDetalhadas.map((saida, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-xs">
+                        <div key={idx} className="flex items-center justify-between p-2 bg-muted/40 dark:bg-muted/50 rounded text-xs">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               {getIconeFormaPagamento(saida.forma)}
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                              <span className="font-medium text-foreground">
                                 {saida.tipo}
                               </span>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-gray-500 dark:text-gray-400">{formatHora(saida.horario)}</span>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="text-muted-foreground">{formatHora(saida.horario)}</span>
                             </div>
-                            <div className="text-gray-600 dark:text-gray-400">{saida.descricao}</div>
-                            <div className="text-gray-500 dark:text-gray-500">{saida.forma}</div>
+                            <div className="text-muted-foreground">{saida.descricao}</div>
+                            <div className="text-muted-foreground dark:text-muted-foreground">{saida.forma}</div>
                           </div>
                           <span className="font-semibold text-red-600 dark:text-red-400">
                             {formatValor(saida.valor)}
@@ -461,9 +461,9 @@ export default function ControleCaixasAtivos() {
                 <div className="flex items-center justify-between py-2 pt-3">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Saldo</span>
+                    <span className="text-sm font-semibold text-foreground/90">Saldo</span>
                   </div>
-                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-lg font-bold text-foreground dark:text-gray-100">
                     {formatValor(resumo.saldoAtual)}
                   </span>
                 </div>
@@ -473,9 +473,9 @@ export default function ControleCaixasAtivos() {
 
           {/* Coluna 2: Formas de Pagamento e Saldo Total */}
           <div className="space-y-4">
-            <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
+            <Card className="shadow-sm border-0 dark:bg-muted dark:border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                <CardTitle className="text-base font-semibold text-foreground dark:text-gray-100">
                   Formas de Pagamento
                 </CardTitle>
               </CardHeader>
@@ -483,12 +483,12 @@ export default function ControleCaixasAtivos() {
                 {Object.entries(formasPagamento).map(([forma, valores]) => {
                   const saldo = valores.entradas - valores.saidas;
                   return (
-                    <div key={forma} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                    <div key={forma} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
                       <div className="flex items-center gap-2">
                         {getIconeFormaPagamento(forma)}
-                        <span className="text-sm text-gray-600 dark:text-gray-300">{forma}</span>
+                        <span className="text-sm text-muted-foreground">{forma}</span>
                       </div>
-                      <span className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                      <span className="text-base font-semibold text-foreground">
                         {formatValor(saldo)}
                       </span>
                     </div>
@@ -497,14 +497,14 @@ export default function ControleCaixasAtivos() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
+            <Card className="shadow-sm border-0 dark:bg-muted dark:border-border/40">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Saldo</span>
+                    <span className="text-sm font-semibold text-foreground/90">Saldo</span>
                   </div>
-                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-lg font-bold text-foreground dark:text-gray-100">
                     {formatValor(resumo.saldoAtual)}
                   </span>
                 </div>
@@ -516,34 +516,34 @@ export default function ControleCaixasAtivos() {
 
       {/* Dialog de Detalhes da Venda */}
       <Dialog open={showVendaDialog} onOpenChange={setShowVendaDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-100">Detalhes da Venda</DialogTitle>
+            <DialogTitle className="text-foreground dark:text-gray-100">Detalhes da Venda</DialogTitle>
           </DialogHeader>
           {vendaSelecionada && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Pedido:</span>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200">
+                  <span className="text-xs text-muted-foreground">Pedido:</span>
+                  <p className="font-semibold text-foreground">
                     {vendaSelecionada.numero || 'S/N'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Cliente:</span>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200">
+                  <span className="text-xs text-muted-foreground">Cliente:</span>
+                  <p className="font-semibold text-foreground">
                     {vendaSelecionada.cliente_nome || 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Vendedor:</span>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <span className="text-xs text-muted-foreground">Vendedor:</span>
+                  <p className="text-foreground/90">
                     {vendaSelecionada.vendedor_nome || 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Horário:</span>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <span className="text-xs text-muted-foreground">Horário:</span>
+                  <p className="text-foreground/90">
                     {vendaSelecionada.created_date ? format(new Date(vendaSelecionada.created_date), 'HH:mm') : '--:--'}
                   </p>
                 </div>
@@ -551,17 +551,17 @@ export default function ControleCaixasAtivos() {
 
               {/* Itens */}
               <div>
-                <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">Itens</h4>
+                <h4 className="text-sm font-semibold mb-2 text-foreground">Itens</h4>
                 <div className="space-y-2">
                   {vendaSelecionada.itens?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
+                    <div key={idx} className="flex justify-between p-2 bg-muted/50 rounded text-sm">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-800 dark:text-gray-200">{item.produto_nome}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="font-medium text-foreground">{item.produto_nome}</p>
+                        <p className="text-xs text-muted-foreground">
                           {item.quantidade} × {formatValor(item.preco_unitario_praticado)}
                         </p>
                       </div>
-                      <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      <p className="font-semibold text-foreground">
                         {formatValor(item.total)}
                       </p>
                     </div>
@@ -571,15 +571,15 @@ export default function ControleCaixasAtivos() {
 
               {/* Pagamentos */}
               <div>
-                <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">Formas de Pagamento</h4>
+                <h4 className="text-sm font-semibold mb-2 text-foreground">Formas de Pagamento</h4>
                 <div className="space-y-2">
                   {vendaSelecionada.pagamentos?.map((pag, idx) => (
-                    <div key={idx} className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
+                    <div key={idx} className="flex justify-between p-2 bg-muted/50 rounded text-sm">
                       <div className="flex items-center gap-2">
                         {getIconeFormaPagamento(pag.forma_pagamento)}
-                        <span className="text-gray-700 dark:text-gray-300">{pag.forma_pagamento}</span>
+                        <span className="text-foreground/90">{pag.forma_pagamento}</span>
                       </div>
-                      <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      <p className="font-semibold text-foreground">
                         {formatValor(pag.valor)}
                       </p>
                     </div>
@@ -587,9 +587,9 @@ export default function ControleCaixasAtivos() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between text-lg">
-                <span className="font-semibold text-gray-700 dark:text-gray-300">Total:</span>
-                <span className="font-bold text-gray-900 dark:text-gray-100">
+              <div className="pt-3 border-t border-border/40 flex justify-between text-lg">
+                <span className="font-semibold text-foreground/90">Total:</span>
+                <span className="font-bold text-foreground dark:text-gray-100">
                   {formatValor(vendaSelecionada.valor_total)}
                 </span>
               </div>

@@ -42,27 +42,27 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
           />
 
           {/* Sheet */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl px-5 pt-5 pb-8 safe-area-container">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl shadow-2xl px-5 pt-5 pb-8 safe-area-container">
             {/* Handle */}
-            <div className="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-5" />
+            <div className="w-10 h-1 bg-muted rounded-full mx-auto mb-5" />
 
             {/* User info */}
             {user && (
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-11 h-11 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 font-glacial">
+                <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-semibold text-foreground/90 font-glacial">
                     {initials}
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.full_name}</p>
-                  <p className="text-xs text-gray-400 truncate">{user.email || user.perfil || 'Admin'}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email || user.perfil || 'Admin'}</p>
                 </div>
                 <button
                   onClick={handleClose}
-                  className="ml-auto w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0"
+                  className="ml-auto w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
             )}
@@ -72,13 +72,13 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
               {/* Modo escuro */}
               <button
                 onClick={() => { toggleDarkMode(); handleClose(); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
               >
                 {darkMode
-                  ? <Sun className="w-5 h-5 text-gray-500" />
-                  : <Moon className="w-5 h-5 text-gray-500" />
+                  ? <Sun className="w-5 h-5 text-muted-foreground" />
+                  : <Moon className="w-5 h-5 text-muted-foreground" />
                 }
-                <span className="text-sm text-gray-700 dark:text-gray-200">
+                <span className="text-sm text-foreground/90">
                   {darkMode ? 'Modo Claro' : 'Modo Escuro'}
                 </span>
               </button>
@@ -87,37 +87,37 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
 
               {/* Ajuda IA */}
               <button
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
               >
-                <HelpCircle className="w-5 h-5 text-gray-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-200">Ajuda (IA)</span>
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-foreground/90">Ajuda (IA)</span>
               </button>
 
               {/* Meu PIN */}
               <button
                 onClick={() => { setShowPin(true); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
               >
-                <Shield className="w-5 h-5 text-gray-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-200">
+                <Shield className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-foreground/90">
                   {user?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}
                 </span>
               </button>
 
-              <div className="px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800/80">
+              <div className="px-4 py-3.5 rounded-2xl bg-muted/50/80">
                 <FontScaleControl compact />
               </div>
 
               {/* Divisor */}
-              <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
+              <div className="h-px bg-muted my-2" />
 
               {/* Configurações */}
               <button
                 onClick={() => { navigate(createPageUrl('Configuracoes')); handleClose(); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-muted/40 dark:hover:bg-muted transition-colors"
               >
-                <Settings className="w-5 h-5 text-gray-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-200">Configurações</span>
+                <Settings className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-foreground/90">Configurações</span>
               </button>
 
               {/* Sair */}

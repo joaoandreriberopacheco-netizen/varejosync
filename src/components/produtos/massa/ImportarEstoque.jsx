@@ -121,28 +121,28 @@ export default function ImportarEstoque({ onParsed }) {
     <div>
       {!arquivo ? (
         <div
-          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          className="border-2 border-dashed border-border/40 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
           onClick={() => inputRef.current?.click()}
           onDrop={e => { e.preventDefault(); handleArquivo(e.dataTransfer.files[0]); }}
           onDragOver={e => e.preventDefault()}
         >
-          <Upload className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Arraste o arquivo aqui ou <span className="text-gray-800 dark:text-white font-medium underline">clique para selecionar</span>
+          <Upload className="w-8 h-8 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            Arraste o arquivo aqui ou <span className="text-foreground font-medium underline">clique para selecionar</span>
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Somente .xlsx</p>
+          <p className="text-xs text-muted-foreground mt-1">Somente .xlsx</p>
         </div>
       ) : (
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-3 bg-card rounded-xl px-4 py-3 shadow-sm">
           <FileSpreadsheet className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800 dark:text-white truncate">{arquivo.name}</p>
-            <p className="text-xs text-gray-400">{(arquivo.size / 1024).toFixed(0)} KB</p>
+            <p className="text-sm font-medium text-foreground truncate">{arquivo.name}</p>
+            <p className="text-xs text-muted-foreground">{(arquivo.size / 1024).toFixed(0)} KB</p>
           </div>
           {parsing ? (
-            <span className="text-xs text-gray-400 animate-pulse">Analisando...</span>
+            <span className="text-xs text-muted-foreground animate-pulse">Analisando...</span>
           ) : (
-            <button onClick={handleRemover} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <button onClick={handleRemover} className="text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-200">
               <X className="w-4 h-4" />
             </button>
           )}

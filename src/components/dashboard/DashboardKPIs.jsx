@@ -44,7 +44,7 @@ export default function DashboardKPIs({ kpis, isLoading }) {
       {cards.map((card, index) => (
         <Card key={index} className="shadow-sm border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">{card.title}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
             <div className={`p-2 rounded-md ${card.bgColor}`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
@@ -53,7 +53,7 @@ export default function DashboardKPIs({ kpis, isLoading }) {
             {isLoading ? (
               <Skeleton className="h-8 w-3/4" />
             ) : (
-              <div className="text-3xl font-bold text-gray-900">{card.value}</div>
+              <div className="text-3xl font-bold text-foreground">{card.value}</div>
             )}
           </CardContent>
         </Card>

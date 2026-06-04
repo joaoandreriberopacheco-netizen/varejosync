@@ -96,8 +96,8 @@ export default function RelatorioCatalogoEstoque() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-white dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex h-full items-center justify-center bg-card">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -127,9 +127,9 @@ export default function RelatorioCatalogoEstoque() {
     `}</style>
       <div
         id="relatorio-catalogo-estoque"
-        className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900 print:hidden"
+        className="flex flex-col h-full overflow-hidden w-full bg-card print:hidden"
       >
-        <div className="flex-none border-b border-gray-100 dark:border-gray-800 px-3 py-2 space-y-1.5">
+        <div className="flex-none border-b border-border/40 px-3 py-2 space-y-1.5">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
               <Link to={createPageUrl('Produtos')} title="Voltar ao catálogo">
@@ -140,7 +140,7 @@ export default function RelatorioCatalogoEstoque() {
               <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 font-glacial">
                 Relatório de estoque (Tree Grid)
               </h1>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              <p className="text-[11px] text-muted-foreground">
                 Espelha os filtros do catálogo · ajuste busca e filtros na página Produtos
               </p>
             </div>
@@ -156,8 +156,8 @@ export default function RelatorioCatalogoEstoque() {
           </div>
 
           {activeFilterCount > 0 ? (
-            <p className="text-[11px] text-gray-600 dark:text-gray-400 pl-11 pr-1">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Filtros do catálogo:</span>{' '}
+            <p className="text-[11px] text-muted-foreground pl-11 pr-1">
+              <span className="font-medium text-foreground/90">Filtros do catálogo:</span>{' '}
               {filtersSummary}.{' '}
               <Link
                 to={createPageUrl('Produtos')}
@@ -167,7 +167,7 @@ export default function RelatorioCatalogoEstoque() {
               </Link>
             </p>
           ) : (
-            <p className="text-[11px] text-gray-500 dark:text-gray-500 pl-11">
+            <p className="text-[11px] text-muted-foreground dark:text-muted-foreground pl-11">
               Sem filtros activos no catálogo.{' '}
               <Link
                 to={createPageUrl('Produtos')}
@@ -179,8 +179,8 @@ export default function RelatorioCatalogoEstoque() {
           )}
         </div>
 
-        <div className="flex items-center justify-between px-3 py-2 flex-none border-b border-gray-50 dark:border-gray-800/80">
-          <span className="text-xs text-gray-600 dark:text-gray-300">
+        <div className="flex items-center justify-between px-3 py-2 flex-none border-b border-gray-50 dark:border-border/40/80">
+          <span className="text-xs text-muted-foreground">
             {filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''} na grade
           </span>
           <LevelControl level={treeLevel} onChange={setTreeLevel} />
@@ -195,9 +195,9 @@ export default function RelatorioCatalogoEstoque() {
           />
         </div>
 
-        <div className="flex-none border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-3">
+        <div className="flex-none border-t border-border/40 bg-muted/50/60 px-4 py-3">
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="text-[11px] text-gray-500 dark:text-gray-400">
+            <div className="text-[11px] text-muted-foreground">
               Totais dos SKUs filtrados: <strong>estoque</strong> (vitrine comercial quando activa) ×{' '}
               <strong>valor de compra</strong> ou <strong>custo total</strong>, como no Tree Grid do catálogo.
             </div>
@@ -230,11 +230,11 @@ export default function RelatorioCatalogoEstoque() {
 function TotalKpi({ label, value, hint }) {
   return (
     <div className="text-right">
-      <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
-      <div className="text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold tabular-nums text-foreground dark:text-gray-100">
         R$ {formatarMoeda(value)}
       </div>
-      <div className="text-[10px] text-gray-400 dark:text-gray-500">{hint}</div>
+      <div className="text-[10px] text-muted-foreground">{hint}</div>
     </div>
   );
 }

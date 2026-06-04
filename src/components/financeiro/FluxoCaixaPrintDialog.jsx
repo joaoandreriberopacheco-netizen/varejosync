@@ -7,15 +7,15 @@ function OptionCard({ icon: IconComponent, title, description, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 text-left shadow-md transition-all hover:bg-gray-50 dark:hover:bg-slate-700"
+      className="w-full rounded-[24px] bg-white dark:bg-muted px-4 py-4 text-left shadow-md transition-all hover:bg-muted/40 dark:hover:bg-slate-700"
     >
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center flex-none">
-          <IconComponent className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+        <div className="w-11 h-11 rounded-2xl bg-white dark:bg-card shadow-sm flex items-center justify-center flex-none">
+          <IconComponent className="w-5 h-5 text-foreground/90" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{description}</p>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
         </div>
       </div>
     </button>
@@ -49,13 +49,13 @@ export default function FluxoCaixaPrintDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[30px] border-0 bg-white dark:bg-slate-900 p-0 shadow-2xl overflow-hidden">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[30px] border-0 bg-white dark:bg-card p-0 shadow-2xl overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-3 text-left">
-          <DialogTitle className="font-glacial text-xl text-gray-900 dark:text-white flex items-center gap-2">
+          <DialogTitle className="font-glacial text-xl text-foreground flex items-center gap-2">
             <Printer className="w-5 h-5" />
             Imprimir extratos
           </DialogTitle>
-          <DialogDescription className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
             Escolha abaixo o tipo de extrato que deseja gerar para impressão ou PDF.
           </DialogDescription>
         </DialogHeader>

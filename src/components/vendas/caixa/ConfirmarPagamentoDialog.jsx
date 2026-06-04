@@ -102,26 +102,26 @@ export default function ConfirmarPagamentoDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
+        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-background">
           {/* Header */}
-          <DialogHeader className="shrink-0 border-b border-gray-100 px-5 pb-4 pt-5 dark:border-gray-800">
+          <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-4 pt-5 dark:border-border/40">
             <DialogTitle className="flex items-center justify-between">
-              <span className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
+              <span className="text-base font-semibold text-foreground font-glacial">
                 {pedidoSelecionado.cliente_nome || 'Avulso'}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setValoresVisiveis(!valoresVisiveis)}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                   title={valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'}
                 >
                   {valoresVisiveis ? (
-                    <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <Eye className="w-4 h-4 text-muted-foreground" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
                   )}
                 </button>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">
+                <span className="text-2xl font-bold text-foreground font-glacial tabular-nums">
                   {valoresVisiveis ? formatValor(pedidoSelecionado.valor_total) : '••••••'}
                 </span>
               </div>
@@ -206,12 +206,12 @@ export default function ConfirmarPagamentoDialog({
                   value={codigoVale}
                   onChange={(e) => setCodigoVale(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleBuscarVale(); }}
-                  className="flex-1 h-11 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0"
+                  className="flex-1 h-11 px-3 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0"
                 />
                 <button
                   onClick={handleBuscarVale}
                   disabled={buscandoVale}
-                  className="h-11 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium disabled:opacity-50"
+                  className="h-11 px-4 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl text-sm font-medium disabled:opacity-50"
                 >
                   {buscandoVale ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Buscar'}
                 </button>
@@ -251,16 +251,16 @@ export default function ConfirmarPagamentoDialog({
 
             {/* Resumo troco / falta */}
             {(troco > 0 || valorRestante > 0) && (
-              <div className="mt-1 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-1.5">
+              <div className="mt-1 pt-3 border-t border-border/40 space-y-1.5">
                 {troco > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Troco</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{formatValor(troco)}</span>
+                    <span className="text-muted-foreground">Troco</span>
+                    <span className="font-semibold text-foreground">{formatValor(troco)}</span>
                   </div>
                 )}
                 {valorRestante > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Falta</span>
+                    <span className="text-muted-foreground">Falta</span>
                     <span className="font-semibold text-red-500 dark:text-red-400">{formatValor(valorRestante)}</span>
                   </div>
                 )}
@@ -269,17 +269,17 @@ export default function ConfirmarPagamentoDialog({
           </div>
 
           {/* Botões */}
-          <div className="flex shrink-0 gap-2.5 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-gray-800">
+          <div className="flex shrink-0 gap-2.5 border-t border-border/40 px-4 pb-4 pt-3 dark:border-border/40">
             <button
               onClick={() => setShowRetornoDialog(true)}
-              className="h-12 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2 flex-shrink-0"
+              className="h-12 px-4 bg-muted text-foreground/90 rounded-xl text-sm font-medium flex items-center gap-2 flex-shrink-0"
             >
               <ArrowLeft className="w-4 h-4" /> Devolver
             </button>
             <button
               onClick={handleFinalizarVenda}
               disabled={!pagamentoValido || processandoVenda}
-              className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-foreground rounded-xl font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {processandoVenda
                 ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
@@ -336,16 +336,16 @@ function InputPagamento({
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
           active
-            ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
-            : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
+            ? 'bg-muted ring-1 ring-gray-300 dark:ring-gray-600'
+            : 'bg-muted/50/60 hover:bg-muted'
         }`}
         onClick={() => {
           if (onContainerClick) onContainerClick();
           else onFocus?.();
         }}
       >
-        <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
-        <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none min-w-0">{label}</span>
+        <Icon className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground flex-1 select-none min-w-0">{label}</span>
         {fiadoPendente && onFiadoButtonClick ? (
           <button
             type="button"
@@ -355,7 +355,7 @@ function InputPagamento({
               onFiadoButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-foreground dark:hover:bg-gray-100 dark:focus:ring-gray-500"
           >
             Prazo · fiado
           </button>
@@ -368,7 +368,7 @@ function InputPagamento({
               onMaquininhaButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-gray-900 px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-white dark:text-foreground dark:hover:bg-gray-100 dark:focus:ring-gray-500"
           >
             Maquininha / bandeira
           </button>
@@ -381,14 +381,14 @@ function InputPagamento({
             onChange={() => {}}
             onFocus={(e) => { e.target.select(); onFocus?.(); }}
             onKeyDown={onKeyDown}
-            className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
+            className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-foreground cursor-text tabular-nums"
           />
         )}
       </div>
       {badge && (
         <button
           onClick={onBadgeClick}
-          className="w-full text-left px-3 py-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="w-full text-left px-3 py-1 text-xs text-muted-foreground hover:text-muted-foreground dark:hover:text-gray-300 transition-colors"
         >
           {badge} · <span className="underline">trocar</span>
         </button>

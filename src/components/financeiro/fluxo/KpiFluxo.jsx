@@ -22,15 +22,15 @@ export default function KpiFluxo({ kpis }) {
     <>
       <div className="mb-2 flex items-start justify-between gap-2 sm:mb-2.5 sm:gap-4">
         <div className="min-w-0">
-          <p className="mb-0.5 pl-0.5 text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Saldo de Execução</p>
-          <p className="break-words text-[15px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[17px] md:text-[19px] dark:text-foreground">
+          <p className="mb-0.5 pl-0.5 text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Saldo de Execução</p>
+          <p className="break-words text-[15px] font-semibold leading-tight text-foreground tabular-nums sm:text-[17px] md:text-[19px] dark:text-foreground">
             <span className={kpis.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldo >= 0 ? '+' : '−'}</span>
             {R(Math.abs(kpis.saldo))}
           </p>
         </div>
         <div className="shrink-0 pt-0.5 text-right">
-          <p className="mb-0.5 text-[8px] uppercase leading-tight tracking-normal text-gray-400 sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Taxa</p>
-          <p className="text-[12px] font-semibold text-gray-700 sm:text-[13px] dark:text-foreground">{taxa}%</p>
+          <p className="mb-0.5 text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Taxa</p>
+          <p className="text-[12px] font-semibold text-foreground/90 sm:text-[13px] dark:text-foreground">{taxa}%</p>
         </div>
       </div>
       <div className="h-1 overflow-hidden rounded-full bg-white sm:h-1.5 dark:bg-muted">
@@ -47,20 +47,20 @@ export default function KpiFluxo({ kpis }) {
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <TrendingUp className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
             </div>
-            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:tracking-[0.16em] dark:text-muted-foreground">Receitas</p>
+            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">Receitas</p>
           </div>
-          <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.entrou)}</p>
-          {kpis.pEntrou > 0 && <p className="mt-0.5 break-words text-[8px] text-gray-500 sm:mt-1 sm:text-[9px] dark:text-muted-foreground">+{R(kpis.pEntrou)} previsto</p>}
+          <p className="break-words text-[13px] font-semibold leading-tight text-foreground tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.entrou)}</p>
+          {kpis.pEntrou > 0 && <p className="mt-0.5 break-words text-[8px] text-muted-foreground sm:mt-1 sm:text-[9px] dark:text-muted-foreground">+{R(kpis.pEntrou)} previsto</p>}
         </div>
         <div className={kpiTopPad}>
           <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-white sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
               <TrendingDown className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
             </div>
-            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-gray-500 sm:tracking-[0.16em] dark:text-muted-foreground">Despesas</p>
+            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">Despesas</p>
           </div>
-          <p className="break-words text-[13px] font-semibold leading-tight text-gray-900 tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.saiu)}</p>
-          {kpis.pSaiu > 0 && <p className="mt-0.5 break-words text-[8px] text-gray-500 sm:mt-1 sm:text-[9px] dark:text-muted-foreground">+{R(kpis.pSaiu)} previsto</p>}
+          <p className="break-words text-[13px] font-semibold leading-tight text-foreground tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.saiu)}</p>
+          {kpis.pSaiu > 0 && <p className="mt-0.5 break-words text-[8px] text-muted-foreground sm:mt-1 sm:text-[9px] dark:text-muted-foreground">+{R(kpis.pSaiu)} previsto</p>}
         </div>
       </div>
 
@@ -70,11 +70,11 @@ export default function KpiFluxo({ kpis }) {
           <div className={`${kpiCardBase} ${kpiSaldoPad} flex min-h-0 min-w-0 flex-1 items-center gap-2 sm:gap-3`}>
             <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500 sm:h-4 sm:w-4 dark:text-red-400" />
             <div className="min-w-0 flex-1">
-              <p className="text-[8px] uppercase tracking-wider text-gray-500 sm:text-[9px] dark:text-muted-foreground">Vencidos</p>
-              <p className="break-words text-[11px] font-semibold leading-snug text-gray-900 sm:text-sm dark:text-foreground">
+              <p className="text-[8px] uppercase tracking-wider text-muted-foreground sm:text-[9px] dark:text-muted-foreground">Vencidos</p>
+              <p className="break-words text-[11px] font-semibold leading-snug text-foreground sm:text-sm dark:text-foreground">
                 <span className="text-red-600 dark:text-red-400">−</span>
                 {R(kpis.vencidos)}
-                <span className="text-gray-500 dark:text-muted-foreground">
+                <span className="text-muted-foreground dark:text-muted-foreground">
                   {' '}
                   · {kpis.qtdVencidos}{' '}
                   <span className="sm:hidden">lç.</span>
@@ -92,7 +92,7 @@ export default function KpiFluxo({ kpis }) {
       <div className={`${kpiBlock} flex items-center gap-2 sm:gap-3`}>
           <ArrowRightLeft className="h-3.5 w-3.5 flex-none text-slate-500 sm:h-4 sm:w-4 dark:text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <p className="text-[8px] uppercase tracking-wider text-gray-500 sm:text-[9px] dark:text-muted-foreground">Transferências</p>
+            <p className="text-[8px] uppercase tracking-wider text-muted-foreground sm:text-[9px] dark:text-muted-foreground">Transferências</p>
             <p className="text-xs font-semibold text-gray-800 sm:text-sm dark:text-foreground">{R(kpis.totalTransferencias)}</p>
           </div>
         </div>

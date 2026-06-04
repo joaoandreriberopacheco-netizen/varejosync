@@ -201,7 +201,7 @@ export default function MassTagGenerator({ products, onComplete, open, onOpenCha
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !isProcessing && setDialogOpen?.(open)}>
-        <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+        <DialogContent className="sm:max-w-md dark:bg-background dark:text-foreground dark:border-border/40">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Tag className="w-5 h-5 text-indigo-600" />
@@ -218,19 +218,19 @@ export default function MassTagGenerator({ products, onComplete, open, onOpenCha
 
             {isProcessing ? (
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Processando...</span>
                   <span>{processedCount} / {products.length}</span>
                 </div>
                 <Progress value={progress} className="h-2" />
-                <div className="h-32 rounded-md border p-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 dark:border-gray-700 overflow-y-auto">
+                <div className="h-32 rounded-md border p-2 text-xs font-mono bg-muted/50 dark:border-border/40 overflow-y-auto">
                   {logs.map((log, i) => (
                     <div key={i} className="mb-1">{log}</div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-muted-foreground">
                 Clique em "Iniciar" para começar o processamento. Isso pode levar alguns minutos.
               </div>
             )}

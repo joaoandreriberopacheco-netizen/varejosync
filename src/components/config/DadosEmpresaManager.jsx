@@ -8,19 +8,19 @@ import { Loader2, Upload, Search, Save, Building2, FileText } from 'lucide-react
 
 const Field = ({ label, value, onChange, placeholder, type = 'text', className = '' }) => (
   <div className={`space-y-1.5 ${className}`}>
-    <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</Label>
+    <Label className="text-xs text-muted-foreground font-medium">{label}</Label>
     <Input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm dark:text-gray-100" />
+      className="bg-muted/50 border-0 shadow-sm h-9 text-sm dark:text-gray-100" />
   </div>
 );
 
 const Section = ({ icon: Icon, label, desc, children }) => (
   <div className="space-y-3">
-    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-      <Icon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+    <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       <div>
-        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{label}</p>
-        {desc && <p className="text-[11px] text-gray-400 dark:text-gray-500">{desc}</p>}
+        <p className="text-xs font-semibold text-foreground/90">{label}</p>
+        {desc && <p className="text-[11px] text-muted-foreground">{desc}</p>}
       </div>
     </div>
     {children}
@@ -59,7 +59,7 @@ export default function DadosEmpresaManager() {
       const ne = await base44.entities.DadosEmpresa.create(empresa);
       setEmpresa(ne);
     }
-    toast({ title: "Dados salvos", className: "bg-white dark:bg-gray-800" });
+    toast({ title: "Dados salvos", className: "bg-card" });
     setIsSaving(false);
   };
 
@@ -73,7 +73,7 @@ export default function DadosEmpresaManager() {
       response_json_schema: { type: "object", properties: { razao_social:{type:"string"}, nome_fantasia:{type:"string"}, cnpj:{type:"string"}, data_abertura:{type:"string"}, natureza_juridica:{type:"string"}, atividade_principal:{type:"string"}, endereco:{type:"string"}, numero:{type:"string"}, complemento:{type:"string"}, bairro:{type:"string"}, cidade:{type:"string"}, estado:{type:"string"}, cep:{type:"string"}, email:{type:"string"}, telefone:{type:"string"}, situacao_cadastral:{type:"string"}, porte:{type:"string"} } }
     });
     setEmpresa(prev => ({ ...prev, ...(typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes) }));
-    toast({ title: "Importação concluída", description: "Verifique os dados e salve.", className: "bg-white dark:bg-gray-800" });
+    toast({ title: "Importação concluída", description: "Verifique os dados e salve.", className: "bg-card" });
     setIsImporting(false); e.target.value = null;
   };
 
@@ -87,7 +87,7 @@ export default function DadosEmpresaManager() {
     });
     const r = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
     setEmpresa(prev => ({ ...prev, razao_social: r.razao_social||prev.razao_social, nome_fantasia: r.nome_fantasia||prev.nome_fantasia, endereco: r.endereco||prev.endereco, bairro: r.bairro||prev.bairro, cidade: r.cidade||prev.cidade, estado: r.estado||prev.estado, cep: r.cep||prev.cep, atividade_principal: r.atividade_principal||prev.atividade_principal }));
-    toast({ title: "Consulta concluída", className: "bg-white dark:bg-gray-800" });
+    toast({ title: "Consulta concluída", className: "bg-card" });
     setIsSearching(false);
   };
 
@@ -96,23 +96,23 @@ export default function DadosEmpresaManager() {
   return (
     <div className="space-y-5 mt-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between pb-3 border-b border-border/40">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Dados da Empresa</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Informações cadastrais para emissão de documentos</p>
+          <h3 className="text-sm font-semibold text-foreground">Dados da Empresa</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Informações cadastrais para emissão de documentos</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <input type="file" accept=".pdf,image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               onChange={handleFileUpload} disabled={isImporting} />
             <Button variant="ghost" size="sm" disabled={isImporting}
-              className="h-8 px-3 text-xs gap-1.5 text-gray-500 dark:text-gray-400">
+              className="h-8 px-3 text-xs gap-1.5 text-muted-foreground">
               {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Importar CNPJ</span>
             </Button>
           </div>
           <Button onClick={handleSave} disabled={isSaving} size="sm"
-            className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 px-3 text-xs">
+            className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 px-3 text-xs">
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Salvar
           </Button>
@@ -123,14 +123,14 @@ export default function DadosEmpresaManager() {
       <Section icon={Building2} label="Identificação" desc="Dados principais de registro da empresa">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">CNPJ</Label>
+            <Label className="text-xs text-muted-foreground font-medium">CNPJ</Label>
             <div className="flex gap-2">
               <Input value={empresa.cnpj || ''} onChange={e => set('cnpj')(e.target.value)}
                 placeholder="00.000.000/0000-00"
-                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm dark:text-gray-100" />
+                className="bg-muted/50 border-0 shadow-sm h-9 text-sm dark:text-gray-100" />
               <Button size="icon" variant="ghost" onClick={handleConsultarCNPJ} disabled={isSearching}
-                className="h-9 w-9 flex-shrink-0 bg-gray-50 dark:bg-gray-800 shadow-sm">
-                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4 text-gray-400" />}
+                className="h-9 w-9 flex-shrink-0 bg-muted/50 shadow-sm">
+                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4 text-muted-foreground" />}
               </Button>
             </div>
           </div>

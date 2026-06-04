@@ -43,11 +43,11 @@ export default function CancelarLancamentoDialog({ isOpen, onClose, lancamento, 
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-sm text-muted-foreground">
             <p><strong>Descrição:</strong> {lancamento?.descricao}</p>
             <p><strong>Valor:</strong> R$ {lancamento?.valor?.toFixed(2)}</p>
             {lancamento?.grupo_lancamento_id && (
-              <p className="text-xs text-gray-500 mt-2">⚠️ Isto cancelará o par de entrada/saída</p>
+              <p className="text-xs text-muted-foreground mt-2">⚠️ Isto cancelará o par de entrada/saída</p>
             )}
           </div>
 

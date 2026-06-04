@@ -15,15 +15,15 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
         }
         #saldo-consolidado-print { display: contents; }
       `}</style>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+        <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}>
-            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <ArrowLeft className="w-6 h-6 text-foreground/90" />
           </button>
-          <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Saldo Consolidado</h2>
+          <h2 className="flex-1 text-center text-lg font-semibold text-foreground font-glacial">Saldo Consolidado</h2>
           <button
             onClick={async () => {
               const el = document.getElementById('saldo-consolidado-print');
@@ -47,12 +47,12 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 .font-bold { font-weight: 700; }
                 .font-semibold { font-weight: 600; }
                 .font-medium { font-weight: 500; }
-                .text-gray-400, .text-gray-500 { color: #9ca3af; }
-                .text-gray-700, .text-gray-800 { color: #374151; }
-                .text-gray-900 { color: #111827; }
+                .text-muted-foreground, .text-muted-foreground { color: #9ca3af; }
+                .text-foreground/90, .text-gray-800 { color: #374151; }
+                .text-foreground { color: #111827; }
                 .text-emerald-600 { color: #059669; }
                 .text-blue-600 { color: #2563eb; }
-                .bg-gray-50 { background: #f9fafb; }
+                .bg-muted/40 { background: #f9fafb; }
                 .space-y-2 > * + * { margin-top: 8px; }
                 .space-y-1 > * + * { margin-top: 4px; }
                 .mt-0\\.5 { margin-top: 2px; }
@@ -64,92 +64,92 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 alert('Permita pop-ups para imprimir.');
               }
             }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors print:hidden"
+            className="p-2 hover:bg-muted rounded-lg transition-colors print:hidden"
             style={{ minWidth: '44px', minHeight: '44px' }}>
-            <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <Printer className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
           <div id="saldo-consolidado-print" className="max-w-lg mx-auto space-y-3">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none">
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Extrato do Turno</h3>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            <div className="bg-card rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none">
+              <div className="px-5 py-3 border-b border-border/40">
+                <h3 className="text-sm font-semibold text-foreground/90">Extrato do Turno</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {turnoAtivo?.numero} · abertura {turnoAtivo?.data_abertura ? format(new Date(turnoAtivo.data_abertura), 'dd/MM HH:mm') : '-'}
                 </p>
               </div>
-              <div className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+              <div className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
                 <div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">Fundo de caixa (dinheiro)</div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">Abertura do turno</div>
+                  <div className="text-sm text-foreground/90">Fundo de caixa (dinheiro)</div>
+                  <div className="text-xs text-muted-foreground">Abertura do turno</div>
                 </div>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
+                <span className="text-sm font-semibold text-foreground">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
               </div>
               {(vendasFinalizadas || []).length > 0 && vendasFinalizadas.map((v) => {
                 const pagamentos = (v.pagamentos || []);
                 const temMultiplos = pagamentos.length > 1;
                 return (
-                  <div key={v.id} className="border-b border-gray-50 dark:border-gray-700/50">
+                  <div key={v.id} className="border-b border-gray-50 dark:border-border/40/50">
                     <div className="px-5 py-2.5 flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{v.numero} · {v.cliente_nome}</div>
-                        <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(v.created_date), 'HH:mm')}{!temMultiplos && pagamentos[0] ? ` · ${pagamentos[0].forma_pagamento} ${formatValor(pagamentos[0].valor)}` : ''}</div>
+                        <div className="text-sm font-medium text-foreground/90">{v.numero} · {v.cliente_nome}</div>
+                        <div className="text-xs text-muted-foreground">{format(new Date(v.created_date), 'HH:mm')}{!temMultiplos && pagamentos[0] ? ` · ${pagamentos[0].forma_pagamento} ${formatValor(pagamentos[0].valor)}` : ''}</div>
                       </div>
                       <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex-shrink-0 tabular-nums">+{formatValor(v.valor_total)}</span>
                     </div>
                     {temMultiplos && pagamentos.map((p, idx) => (
                       <div key={idx} className="px-5 py-1 flex justify-between items-center">
-                        <span className="text-xs text-gray-400 dark:text-gray-500 pl-3">↳ {p.forma_pagamento}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{formatValor(p.valor)}</span>
+                        <span className="text-xs text-muted-foreground pl-3">↳ {p.forma_pagamento}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{formatValor(p.valor)}</span>
                       </div>
                     ))}
                   </div>
                 );
               })}
               {(movimentos || []).filter(m => m.tipo === 'Reforço').map((m) => (
-                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
                   <div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">Reforço · {m.numero}</div>
-                    <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
+                    <div className="text-sm text-foreground/90">Reforço · {m.numero}</div>
+                    <div className="text-xs text-muted-foreground">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
                   </div>
                   <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(m.valor)}</span>
                 </div>
               ))}
               {(movimentos || []).filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((m) => (
-                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
                   <div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">Recolhimento · {m.numero}</div>
-                    <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
+                    <div className="text-sm text-foreground/90">Recolhimento · {m.numero}</div>
+                    <div className="text-xs text-muted-foreground">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
                   </div>
                   <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">−{formatValor(m.valor)}</span>
                 </div>
               ))}
               {(caixaData.despesasLista || []).map((d) => (
-                <div key={d.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                <div key={d.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50">
                   <div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">Despesa · {d.descricao}</div>
-                    <div className="text-xs text-gray-400 dark:text-gray-500">{d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''} · {d.categoria}</div>
+                    <div className="text-sm text-foreground/90">Despesa · {d.descricao}</div>
+                    <div className="text-xs text-muted-foreground">{d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''} · {d.categoria}</div>
                   </div>
                   <span className="text-sm font-semibold text-red-600 dark:text-red-400">−{formatValor(d.valor)}</span>
                 </div>
               ))}
-              <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 space-y-2">
+              <div className="px-5 py-4 bg-muted/40 dark:bg-muted/30 space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total do turno (liquidez)</span>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
+                  <span className="text-sm font-semibold text-foreground">Total do turno (liquidez)</span>
+                  <span className="text-xl font-bold text-foreground font-glacial">{formatValor(caixaData.totalVendas)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">↳ Dinheiro na gaveta</span>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{formatValor(caixaData.saldoAtual)}</span>
+                  <span className="text-xs text-muted-foreground">↳ Dinheiro na gaveta</span>
+                  <span className="text-sm font-medium text-foreground/90">{formatValor(caixaData.saldoAtual)}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none print:border print:border-gray-300">
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">O que esperar no caixa</h3>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Baseado nas vendas do turno</p>
+            <div className="bg-card rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none print:border print:border-gray-300">
+              <div className="px-5 py-3 border-b border-border/40">
+                <h3 className="text-sm font-semibold text-foreground/90">O que esperar no caixa</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Baseado nas vendas do turno</p>
               </div>
               {[
                 { label: 'Dinheiro', sub: 'gaveta — imediato', valor: caixaData.saldoAtual },
@@ -157,20 +157,20 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 { label: 'Cartão Débito', sub: 'maquininha — D+1', valor: caixaData.recebimentos.debito || 0 },
                 { label: 'Cartão Crédito', sub: 'maquininha — D+30', valor: caixaData.recebimentos.credito || 0 },
               ].map(({ label, sub, valor }) => (
-                <div key={label} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                <div key={label} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-border/40/50 last:border-0">
                   <div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">{label}</div>
-                    <div className="text-xs text-gray-400 dark:text-gray-500">{sub}</div>
+                    <div className="text-sm text-foreground/90">{label}</div>
+                    <div className="text-xs text-muted-foreground">{sub}</div>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(valor)}</span>
+                  <span className="text-sm font-semibold text-foreground">{formatValor(valor)}</span>
                 </div>
               ))}
-              <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 space-y-1">
+              <div className="px-5 py-4 bg-muted/40 dark:bg-muted/30 space-y-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total de vendas</span>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
+                  <span className="text-sm font-semibold text-foreground">Total de vendas</span>
+                  <span className="text-xl font-bold text-foreground font-glacial">{formatValor(caixaData.totalVendas)}</span>
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Toda liquidez gerada no turno, independente do meio de pagamento</p>
+                <p className="text-xs text-muted-foreground">Toda liquidez gerada no turno, independente do meio de pagamento</p>
               </div>
             </div>
           </div>

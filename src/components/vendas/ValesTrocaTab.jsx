@@ -8,11 +8,11 @@ const getStatusClass = (status) => {
   const variants = {
     'Ativo': 'text-[#4A5D23] dark:text-[#a4ce33]',
     'Utilizado Parcialmente': 'text-amber-600 dark:text-amber-400',
-    'Utilizado': 'text-gray-500 dark:text-gray-400',
+    'Utilizado': 'text-muted-foreground',
     'Expirado': 'text-red-500 dark:text-red-400',
     'Cancelado': 'text-red-500 dark:text-red-400',
   };
-  return variants[status] || 'text-gray-500 dark:text-gray-400';
+  return variants[status] || 'text-muted-foreground';
 };
 
 export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, dataFim, activeTab }) {
@@ -78,14 +78,14 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
   return (
     <div className="space-y-4 min-w-0">
       <div className="flex items-start justify-between gap-3 text-sm min-w-0">
-        <span className="text-gray-500 dark:text-gray-400 min-w-0">{filteredVales.length} vale(s)</span>
-        <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">R$ {formatValor(subtotalDisponivel)}</span>
+        <span className="text-muted-foreground min-w-0">{filteredVales.length} vale(s)</span>
+        <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalDisponivel)}</span>
       </div>
 
       {filteredVales.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <Ticket className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-600 dark:text-gray-300">Nenhum vale troca encontrado</p>
+        <div className="text-center py-12 text-muted-foreground">
+          <Ticket className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Nenhum vale troca encontrado</p>
         </div>
       ) : (
         <>

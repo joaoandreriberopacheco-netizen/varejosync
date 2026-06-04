@@ -42,38 +42,38 @@ export default function DespesaDialog({
     <Dialog open={open} onOpenChange={(o) => {
       if (!o) { onOpenChange(false); setDespesaStep('obs'); setValorDespesaNum(''); }
     }}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+        <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => {
               if (despesaStep === 'valor') setDespesaStep('obs');
               else { onOpenChange(false); setDespesaStep('obs'); setValorDespesaNum(''); }
             }}
-            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}>
-            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <ArrowLeft className="w-6 h-6 text-foreground/90" />
           </button>
-          <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Registrar Despesa</h2>
+          <h2 className="flex-1 text-center text-lg font-semibold text-foreground font-glacial">Registrar Despesa</h2>
           <div className="w-10" />
         </div>
 
         <div className="flex-1 flex flex-col p-5 gap-4">
           {despesaStep === 'obs' && (
             <>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+              <div className="bg-card rounded-2xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
                     <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">{contaCaixaPDV?.nome}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Valor será debitado deste caixa</div>
+                    <div className="text-sm font-semibold text-foreground">{contaCaixaPDV?.nome}</div>
+                    <div className="text-xs text-muted-foreground">Valor será debitado deste caixa</div>
                   </div>
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex-1 flex flex-col gap-4">
+              <div className="bg-card rounded-2xl p-4 shadow-sm flex-1 flex flex-col gap-4">
                 <div className="flex-1">
-                  <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Descrição *</label>
+                  <label className="text-xs text-muted-foreground block mb-2">Descrição *</label>
                   <textarea
                     autoFocus
                     rows={3}
@@ -89,16 +89,16 @@ export default function DespesaDialog({
                         }
                       }
                     }}
-                    className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                    className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-foreground placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Categoria</label>
+                  <label className="text-xs text-muted-foreground block mb-2">Categoria</label>
                   <Select value={categoriaDespesa} onValueChange={setCategoriaDespesa}>
-                    <SelectTrigger className="h-11 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 border-0">
+                    <SelectTrigger className="h-11 bg-muted/40 dark:bg-muted dark:text-foreground border-0">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    <SelectContent className="dark:bg-muted dark:border-border/40">
                       <SelectItem value="Utilities">Utilities</SelectItem>
                       <SelectItem value="Marketing">Marketing</SelectItem>
                       <SelectItem value="Outros">Outros</SelectItem>
@@ -121,9 +121,9 @@ export default function DespesaDialog({
 
           {despesaStep === 'valor' && (
             <>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 flex-1">
-                <div className="text-xs text-gray-500 dark:text-gray-400">{descricaoDespesa}</div>
-                <div className="text-xs text-gray-400 dark:text-gray-500">R$</div>
+              <div className="bg-card rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 flex-1">
+                <div className="text-xs text-muted-foreground">{descricaoDespesa}</div>
+                <div className="text-xs text-muted-foreground">R$</div>
                 <input autoComplete="off"
                   ref={valorRef}
                   autoFocus

@@ -64,12 +64,12 @@ export default function DocumentTypeSearcher({
         <div className="space-y-4">
           {/* Search Input */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar ou criar tipo..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 rounded-2xl border-gray-200 dark:border-gray-700"
+              className="pl-10 rounded-2xl border-border/40"
               autoFocus
             />
           </div>
@@ -80,7 +80,7 @@ export default function DocumentTypeSearcher({
               {selectedTypes.map(type => (
                 <div
                   key={type}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm text-foreground"
                 >
                   {type}
                   <button
@@ -102,8 +102,8 @@ export default function DocumentTypeSearcher({
                 onClick={() => handleAddType(type)}
                 className={`w-full text-left px-4 py-2.5 rounded-xl transition-colors ${
                   selectedTypes.includes(type)
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground'
+                    : 'bg-muted text-foreground dark:text-foreground hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 {type}
@@ -115,7 +115,7 @@ export default function DocumentTypeSearcher({
           {!showNewInput ? (
             <button
               onClick={() => setShowNewInput(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border/40 text-foreground/90 hover:bg-muted/50 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span className="text-sm">Novo tipo</span>
@@ -133,12 +133,12 @@ export default function DocumentTypeSearcher({
                     setNewType('');
                   }
                 }}
-                className="rounded-xl border-gray-200 dark:border-gray-700 text-sm"
+                className="rounded-xl border-border/40 text-sm"
                 autoFocus
               />
               <button
                 onClick={handleCreateNew}
-                className="px-3 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium text-sm hover:opacity-90"
+                className="px-3 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-foreground font-medium text-sm hover:opacity-90"
               >
                 Criar
               </button>

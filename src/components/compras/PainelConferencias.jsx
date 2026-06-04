@@ -156,7 +156,7 @@ export default function PainelConferencias() {
   if (carregando) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -172,28 +172,28 @@ export default function PainelConferencias() {
         <TabsContent value="volumes" className="space-y-6">
           {/* Não Iniciadas */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               NÃO INICIADAS ({smNaoIniciados.length})
             </h3>
             {smNaoIniciados.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma conferência pendente</p>
+              <p className="text-sm text-muted-foreground">Nenhuma conferência pendente</p>
             ) : (
               <div className="grid gap-3">
                 {smNaoIniciados.map(sm => (
-                  <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                  <div key={sm.id} className="bg-card rounded-xl shadow-sm p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Package className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-foreground">
                             {sm.numero}
                           </span>
                           <Badge variant="outline" className="text-xs">
                             {sm.transportadora_nome}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           Código: {sm.codigo_conferencia_volumes}
                         </p>
                       </div>
@@ -209,31 +209,31 @@ export default function PainelConferencias() {
 
           {/* Finalizadas */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               FINALIZADAS ({smFinalizados.length})
             </h3>
             {smFinalizados.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma conferência finalizada</p>
+              <p className="text-sm text-muted-foreground">Nenhuma conferência finalizada</p>
             ) : (
               <div className="grid gap-3">
                 {smFinalizados.map(sm => (
-                  <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                  <div key={sm.id} className="bg-card rounded-xl shadow-sm p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Package className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-foreground">
                             {sm.numero}
                           </span>
                           <Badge variant="outline" className="text-xs">
                             {sm.transportadora_nome}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <p className="text-xs text-muted-foreground mb-1">
                           Conferente: {sm.conferente_volumes_nome}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           Data: {sm.data_conferencia_volumes ? new Date(sm.data_conferencia_volumes).toLocaleString('pt-BR') : '-'}
                         </p>
                       </div>
@@ -285,25 +285,25 @@ export default function PainelConferencias() {
         <TabsContent value="itens" className="space-y-6">
           {/* Similar para itens */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               NÃO INICIADAS ({meNaoIniciados.length})
             </h3>
             {meNaoIniciados.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma conferência pendente</p>
+              <p className="text-sm text-muted-foreground">Nenhuma conferência pendente</p>
             ) : (
               <div className="grid gap-3">
                 {meNaoIniciados.map(me => (
-                  <div key={me.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                  <div key={me.id} className="bg-card rounded-xl shadow-sm p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Package className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-foreground">
                             {me.numero}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           Código: {me.codigo_conferencia_itens}
                         </p>
                       </div>
@@ -337,7 +337,7 @@ export default function PainelConferencias() {
             </div>
 
             <div>
-              <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
+              <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 block">
                 SENHA
               </label>
               <Input
@@ -345,13 +345,13 @@ export default function PainelConferencias() {
                 placeholder="Digite sua senha"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                className="bg-gray-50 dark:bg-gray-900"
+                className="bg-background"
               />
             </div>
 
             {!foto ? (
               <div className="space-y-3">
-                <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold block">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold block">
                   FOTO
                 </label>
                 <div className="relative bg-gray-900 rounded-xl overflow-hidden aspect-video">
@@ -373,7 +373,7 @@ export default function PainelConferencias() {
                   </Button>
                   <Button
                     onClick={tirarFoto}
-                    className="flex-1 bg-gray-900 hover:bg-gray-800"
+                    className="flex-1 bg-gray-900 hover:bg-primary"
                   >
                     CAPTURAR
                   </Button>
@@ -381,10 +381,10 @@ export default function PainelConferencias() {
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold block">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold block">
                   FOTO CAPTURADA
                 </label>
-                <div className="relative bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden aspect-video">
+                <div className="relative bg-gray-100 dark:bg-background rounded-xl overflow-hidden aspect-video">
                   <img src={foto} alt="Responsável" className="w-full h-full object-cover" />
                 </div>
                 <Button
@@ -442,11 +442,11 @@ export default function PainelConferencias() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">SUPERMANIFESTO</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{manifestoSelecionado.numero}</p>
+                  <p className="text-xs text-muted-foreground">SUPERMANIFESTO</p>
+                  <p className="font-medium text-foreground">{manifestoSelecionado.numero}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">STATUS</p>
+                  <p className="text-xs text-muted-foreground">STATUS</p>
                   <Badge className={manifestoSelecionado.tem_divergencias 
                     ? 'bg-red-100 text-red-800'
                     : 'bg-green-100 text-green-800'
@@ -458,12 +458,12 @@ export default function PainelConferencias() {
 
               {manifestoSelecionado.volumes_conferidos && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">VOLUMES CONFERIDOS</p>
-                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground/90">VOLUMES CONFERIDOS</p>
+                  <div className="bg-background rounded-lg p-3 space-y-2">
                     {manifestoSelecionado.volumes_conferidos.map((v, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
-                        <span className="text-gray-700 dark:text-gray-300">{v.descricao}</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{v.quantidade}</span>
+                        <span className="text-foreground/90">{v.descricao}</span>
+                        <span className="font-medium text-foreground">{v.quantidade}</span>
                       </div>
                     ))}
                   </div>
@@ -472,7 +472,7 @@ export default function PainelConferencias() {
 
               {manifestoSelecionado.ocorrencias_conferencia && manifestoSelecionado.ocorrencias_conferencia.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">OCORRÊNCIAS</p>
+                  <p className="text-sm font-semibold text-foreground/90">OCORRÊNCIAS</p>
                   <div className="space-y-2">
                     {manifestoSelecionado.ocorrencias_conferencia.map((o, idx) => (
                       <div key={idx} className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
@@ -492,7 +492,7 @@ export default function PainelConferencias() {
 
               {manifestoSelecionado.conferente_volumes_foto && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">FOTO DO CONFERENTE</p>
+                  <p className="text-sm font-semibold text-foreground/90">FOTO DO CONFERENTE</p>
                   <img 
                     src={manifestoSelecionado.conferente_volumes_foto} 
                     alt="Conferente" 

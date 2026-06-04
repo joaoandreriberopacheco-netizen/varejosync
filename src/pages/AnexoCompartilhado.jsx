@@ -504,7 +504,7 @@ export default function AnexoCompartilhado() {
   if (carregando) {
     return (
       <div className={`flex min-h-screen flex-col items-center justify-center gap-3 ${brandSurface.pageScreen}`}>
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground dark:text-muted-foreground" />
         <p className={`text-sm ${brandSurface.textMuted}`}>Carregando arquivo compartilhado...</p>
       </div>
     );
@@ -527,7 +527,7 @@ export default function AnexoCompartilhado() {
           <CheckCircle2 className="h-10 w-10 text-green-500" />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-foreground">{titulo}</h2>
+          <h2 className="text-xl font-semibold text-foreground dark:text-foreground">{titulo}</h2>
           {etapa === 'sucesso_conta' && (
             <p className={`mt-2 text-sm ${brandSurface.textMuted}`}>Pode rever no AGEFIN e no atualizador de boletos.</p>
           )}
@@ -589,23 +589,23 @@ export default function AnexoCompartilhado() {
 
         {etapa === 'importar_pdf_conta' && arquivo?.file && (
           <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-gray-50 dark:bg-gray-950"
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-gray-950"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
-            <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+            <div className="flex shrink-0 items-center gap-3 border-b border-border/40 px-4 py-3 dark:border-border/40">
               <button
                 type="button"
                 onClick={() => setEtapa('opcoes')}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Importar conta a pagar</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">O PDF já foi enviado; confira os dados sugeridos antes de salvar.</p>
+                <p className="text-sm font-medium text-foreground">Importar conta a pagar</p>
+                <p className="text-xs text-muted-foreground">O PDF já foi enviado; confira os dados sugeridos antes de salvar.</p>
               </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -626,7 +626,7 @@ export default function AnexoCompartilhado() {
 
         {etapa === 'atualizar_boleto' && arquivo?.file && (
           <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-gray-50 dark:bg-gray-950"
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-gray-950"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
@@ -644,26 +644,26 @@ export default function AnexoCompartilhado() {
 
         {etapa === 'atualizar_boleto_import' && arquivo?.file && contaMesBoletoAlvo && (
           <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-gray-50 dark:bg-gray-950"
+            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-gray-950"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
-            <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+            <div className="flex shrink-0 items-center gap-3 border-b border-border/40 px-4 py-3 dark:border-border/40">
               <button
                 type="button"
                 onClick={() => {
                   setContaMesBoletoAlvo(null);
                   setEtapa('atualizar_boleto');
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">Atualizar boleto</p>
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
+                <p className="truncate text-sm font-medium text-foreground">Atualizar boleto</p>
+                <p className="truncate text-xs text-muted-foreground">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
               </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -699,23 +699,23 @@ export default function AnexoCompartilhado() {
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="flex min-w-0 flex-1 items-center gap-2.5">
               <RadioTower
-                className="h-6 w-6 shrink-0 text-gray-700 dark:text-primary"
+                className="h-6 w-6 shrink-0 text-foreground/90 dark:text-primary"
                 aria-hidden
               />
-              <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+              <h1 className="truncate text-lg font-semibold text-foreground">
                 Torre de controle
               </h1>
             </div>
             <button
               type="button"
               onClick={() => setAjudaTorreAberta((v) => !v)}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-muted-foreground transition-colors dark:bg-muted dark:text-foreground ${ajudaTorreAberta ? 'ring-2 ring-primary/40' : ''}`}
               aria-expanded={ajudaTorreAberta}
               aria-label="Ajuda: tipo de documento"
             >
@@ -804,12 +804,12 @@ export default function AnexoCompartilhado() {
                 if (etapa === 'opcoes') setEtapa('torre_controle');
                 else window.history.back();
               }}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 dark:bg-muted dark:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-muted-foreground dark:bg-muted dark:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Comprovante recebido</h1>
+              <h1 className="text-lg font-semibold text-foreground">Comprovante recebido</h1>
               {etapa === 'opcoes' && (
                 <p className={`text-xs ${brandSurface.textLabel}`}>O que deseja fazer com este arquivo?</p>
               )}
@@ -823,7 +823,7 @@ export default function AnexoCompartilhado() {
           <div className="md:col-span-2">
             <ArquivoPreview arquivo={arquivo} />
           </div>
-          <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-muted-foreground md:col-span-2 px-0.5">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground dark:text-muted-foreground md:col-span-2 px-0.5">
             Destino no P38
           </p>
           <OpcaoCard icon={Link2} titulo="Lançamento financeiro" descricao="Conta a pagar / despesa existente" onClick={() => setEtapa('vincular')} />
@@ -866,7 +866,7 @@ export default function AnexoCompartilhado() {
                 Arquivo não detectado. Veja os dados de diagnóstico abaixo:
               </p>
               
-              <div className="p-4 bg-gray-800 text-green-400 text-[10px] font-mono break-all rounded-xl text-left overflow-x-auto shadow-inner">
+              <div className="p-4 bg-primary text-green-400 text-[10px] font-mono break-all rounded-xl text-left overflow-x-auto shadow-inner">
                 <strong>🔍 MODO DEBUG:</strong><br/>
                 URL Atual: {window.location.pathname}<br/>
                 Parâmetros: {window.location.search || "Nenhum parâmetro"}<br/>
@@ -909,9 +909,9 @@ function ArquivoPreview({ arquivo }) {
   }
   return (
     <div className={`flex items-center gap-3 overflow-hidden rounded-3xl p-4 shadow-sm md:gap-4 md:p-5 ${brandSurface.card}`}>
-      <FileText className="h-6 w-6 shrink-0 text-gray-500 dark:text-muted-foreground md:h-7 md:w-7" />
+      <FileText className="h-6 w-6 shrink-0 text-muted-foreground dark:text-muted-foreground md:h-7 md:w-7" />
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-gray-900 dark:text-foreground">{arquivo.nome}</p>
+        <p className="truncate text-sm font-medium text-foreground dark:text-foreground">{arquivo.nome}</p>
         {arquivo.file?.size && <p className={`text-xs ${brandSurface.textLabel}`}>{(arquivo.file.size / 1024).toFixed(1)} KB</p>}
       </div>
     </div>
@@ -934,13 +934,13 @@ function OpcaoCard({ icon: Icon, titulo, descricao, onClick, disabled }) {
       disabled={disabled}
       className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left shadow-sm transition-colors md:flex-row md:gap-4 md:rounded-3xl md:p-5 ${
         brandSurface.card
-      } ${disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-gray-50/80 dark:hover:bg-muted/30'}`}
+      } ${disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/40/80 dark:hover:bg-muted/30'}`}
     >
       <div className={`h-11 w-11 shrink-0 md:h-12 md:w-12 ${brandSurface.iconCapsule}`}>
-        <Icon className="h-5 w-5 text-gray-700 dark:text-foreground" />
+        <Icon className="h-5 w-5 text-foreground/90 dark:text-foreground" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-gray-900 dark:text-foreground">{titulo}</p>
+        <p className="text-sm font-semibold text-foreground dark:text-foreground">{titulo}</p>
         <p className={`mt-0.5 text-xs ${brandSurface.textLabel}`}>{descricao}</p>
       </div>
       <ArrowLeft className="h-4 w-4 shrink-0 rotate-180 text-gray-300 dark:text-muted-foreground" />

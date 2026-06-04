@@ -30,7 +30,7 @@ function Avatar({ name, size = 'md' }) {
   const initials = (name || '?').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
   const sizeClass = size === 'sm' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm';
   return (
-    <div className={`${sizeClass} rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-semibold text-gray-500 dark:text-gray-400 flex-shrink-0`}>
+    <div className={`${sizeClass} rounded-xl bg-muted flex items-center justify-center font-semibold text-muted-foreground flex-shrink-0`}>
       {initials}
     </div>
   );
@@ -45,32 +45,32 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
   const qtdOverrides = Object.entries(overrides || {}).filter(([k]) => k.startsWith(`${modulo.key}.`)).length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl shadow-sm overflow-hidden">
       <button
         type="button"
         onClick={() => setExpandido(!expandido)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <Icon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+          <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
+            <Icon className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{modulo.label}</span>
+          <span className="text-sm font-medium text-foreground">{modulo.label}</span>
           {qtdOverrides > 0 && (
             <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-mono">
               {qtdOverrides} override{qtdOverrides > 1 ? 's' : ''}
             </span>
           )}
         </div>
-        {expandido ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+        {expandido ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
       </button>
 
       {expandido && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-0.5">
+        <div className="px-3 pb-3 pt-1 border-t border-border/40 space-y-0.5">
           {/* Header das colunas */}
           <div className="grid grid-cols-[1fr_56px_56px_56px] items-center gap-1 px-2 pb-1.5">
             <div />
-            <span className="text-[10px] text-center text-gray-400 dark:text-gray-500 font-medium">PERFIL</span>
+            <span className="text-[10px] text-center text-muted-foreground font-medium">PERFIL</span>
             <span className="text-[10px] text-center text-amber-500 font-medium">+ADD</span>
             <span className="text-[10px] text-center text-red-400 font-medium">-REM</span>
           </div>
@@ -110,13 +110,13 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
             };
 
             return (
-              <div key={perm.key} className="grid grid-cols-[1fr_56px_56px_56px] items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                <span className="text-xs text-gray-600 dark:text-gray-400">{perm.label}</span>
+              <div key={perm.key} className="grid grid-cols-[1fr_56px_56px_56px] items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-muted/20 transition-colors">
+                <span className="text-xs text-muted-foreground">{perm.label}</span>
 
                 {/* Valor do perfil base (read-only) */}
                 <div className="flex justify-center">
                   <div className={`w-4 h-4 rounded flex items-center justify-center ${valorBase ? 'bg-gray-200 dark:bg-gray-600' : ''}`}>
-                    {valorBase && <Check className="w-2.5 h-2.5 text-gray-500 dark:text-gray-400" />}
+                    {valorBase && <Check className="w-2.5 h-2.5 text-muted-foreground" />}
                   </div>
                 </div>
 
@@ -128,7 +128,7 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
                     className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                       overrideAdd
                         ? 'bg-green-500 text-white'
-                        : 'border border-gray-200 dark:border-gray-600 text-gray-300 hover:border-green-400 hover:text-green-400'
+                        : 'border border-border/40 text-gray-300 hover:border-green-400 hover:text-green-400'
                     }`}
                   >
                     <Check className="w-3 h-3" />
@@ -143,7 +143,7 @@ function OverridePanel({ modulo, perfilBase, overrides, onChange }) {
                     className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
                       overrideRem
                         ? 'bg-red-400 text-white'
-                        : 'border border-gray-200 dark:border-gray-600 text-gray-300 hover:border-red-400 hover:text-red-400'
+                        : 'border border-border/40 text-gray-300 hover:border-red-400 hover:text-red-400'
                     }`}
                   >
                     <X className="w-3 h-3" />
@@ -184,16 +184,16 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between pb-3 border-b border-border/40">
         <div className="flex items-center gap-3">
-          <button onClick={onCancelar} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors">
+          <button onClick={onCancelar} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-2.5">
             <Avatar name={usuario.full_name} size="sm" />
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{usuario.full_name}</p>
-              <p className="text-xs text-gray-400">{usuario.email}</p>
+              <p className="text-sm font-semibold text-foreground">{usuario.full_name}</p>
+              <p className="text-xs text-muted-foreground">{usuario.email}</p>
             </div>
           </div>
         </div>
@@ -207,7 +207,7 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
             size="sm"
             onClick={handleSalvar}
             disabled={saving}
-            className="h-8 text-xs bg-gray-800 hover:bg-gray-900 text-white dark:bg-gray-200 dark:text-gray-900"
+            className="h-8 text-xs bg-primary hover:bg-gray-900 text-white dark:bg-gray-200 dark:text-foreground"
           >
             {saving ? 'Salvando...' : 'Salvar Acesso'}
           </Button>
@@ -218,7 +218,7 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
         {/* Coluna esquerda: selecionar template */}
         <div className="space-y-3">
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-2">TEMPLATE DE ACESSO</p>
+            <p className="text-xs text-muted-foreground font-medium mb-2">TEMPLATE DE ACESSO</p>
             <div className="space-y-1.5">
               {perfis.filter(p => p.ativo).map(p => (
                 <button
@@ -227,16 +227,16 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
                   onClick={() => setPerfilId(p.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${
                     perfilId === p.id
-                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                      : 'bg-white dark:bg-gray-800 shadow-sm hover:shadow text-gray-700 dark:text-gray-200'
+                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground'
+                      : 'bg-card shadow-sm hover:shadow text-foreground/90'
                   }`}
                 >
-                  <Shield className={`w-4 h-4 flex-shrink-0 ${perfilId === p.id ? 'text-white dark:text-gray-700' : 'text-gray-400'}`} />
+                  <Shield className={`w-4 h-4 flex-shrink-0 ${perfilId === p.id ? 'text-white dark:text-foreground/90' : 'text-muted-foreground'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{p.nome}</p>
-                    {p.descricao && <p className={`text-xs truncate mt-0.5 ${perfilId === p.id ? 'text-gray-300 dark:text-gray-600' : 'text-gray-400'}`}>{p.descricao}</p>}
+                    {p.descricao && <p className={`text-xs truncate mt-0.5 ${perfilId === p.id ? 'text-gray-300 dark:text-muted-foreground' : 'text-muted-foreground'}`}>{p.descricao}</p>}
                   </div>
-                  {perfilId === p.id && <Check className="w-3.5 h-3.5 flex-shrink-0 text-white dark:text-gray-700" />}
+                  {perfilId === p.id && <Check className="w-3.5 h-3.5 flex-shrink-0 text-white dark:text-foreground/90" />}
                 </button>
               ))}
               {perfis.length === 0 && (
@@ -250,24 +250,24 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
 
           {/* Resumo das permissões finais */}
           {perfilSelecionado && (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 shadow-sm space-y-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">ACESSO RESULTANTE</p>
+            <div className="bg-muted/50 rounded-xl p-3 shadow-sm space-y-2">
+              <p className="text-xs text-muted-foreground font-medium">ACESSO RESULTANTE</p>
               {MODULOS.map(m => {
                 const { ativas, total } = contarPermissoes(permissoesFinais, m.key);
                 if (total === 0) return null;
                 const Icon = MODULO_ICONS[m.key] || Shield;
                 return (
                   <div key={m.key} className="flex items-center gap-2">
-                    <Icon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-xs text-gray-600 dark:text-gray-400 flex-1">{m.label}</span>
-                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${ativas > 0 ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'}`}>
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground flex-1">{m.label}</span>
+                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${ativas > 0 ? 'bg-primary dark:bg-gray-200 text-white dark:text-foreground' : 'bg-muted text-muted-foreground'}`}>
                       {ativas}/{total}
                     </span>
                   </div>
                 );
               })}
               {qtdOverrides > 0 && (
-                <div className="pt-1.5 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-1.5 border-t border-border/40">
                   <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
                     ↑ {qtdOverrides} override{qtdOverrides > 1 ? 's' : ''} individual{qtdOverrides > 1 ? 'is' : ''} aplicado{qtdOverrides > 1 ? 's' : ''}
                   </p>
@@ -280,11 +280,11 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
         {/* Coluna direita: overrides individuais */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between mb-2 px-1">
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide">OVERRIDES INDIVIDUAIS</p>
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground font-medium tracking-wide">OVERRIDES INDIVIDUAIS</p>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                  <Check className="w-2 h-2 text-gray-500" />
+                  <Check className="w-2 h-2 text-muted-foreground" />
                 </div>
                 <span>Perfil base</span>
               </div>
@@ -306,9 +306,9 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
           </div>
 
           {!perfilSelecionado ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center">
-              <Shield className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">Selecione um template para configurar overrides</p>
+            <div className="bg-card rounded-xl shadow-sm p-8 text-center">
+              <Shield className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Selecione um template para configurar overrides</p>
             </div>
           ) : (
             MODULOS.map(modulo => (
@@ -383,7 +383,7 @@ export default function UsuariosManager() {
   // ── Lista de usuários ────────────────────────────────────────────────────
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-border/40 border-t-gray-600 rounded-full animate-spin" />
     </div>
   );
 
@@ -392,22 +392,22 @@ export default function UsuariosManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Quarter Master — Gestão de Acessos</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Vincule e-mails de login a perfis de acesso e configure overrides individuais</p>
+          <h3 className="text-sm font-semibold text-foreground">Quarter Master — Gestão de Acessos</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Vincule e-mails de login a perfis de acesso e configure overrides individuais</p>
         </div>
-        <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-lg font-mono">
+        <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-lg font-mono">
           {usuarios.length} usuários
         </span>
       </div>
 
       {/* Busca */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
         <Input
           value={busca}
           onChange={e => setBusca(e.target.value)}
           placeholder="Buscar por nome, e-mail ou perfil..."
-          className="pl-8 h-9 bg-white dark:bg-gray-800 border-0 shadow-sm text-sm"
+          className="pl-8 h-9 bg-card border-0 shadow-sm text-sm"
         />
       </div>
 
@@ -426,26 +426,26 @@ export default function UsuariosManager() {
           const pct = isAdmin ? 100 : (totalGeral > 0 ? (totalAtivas / totalGeral) * 100 : 0);
 
           return (
-            <div key={usuario.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-4">
+            <div key={usuario.id} className="bg-card rounded-xl shadow-sm p-4 flex items-center gap-4">
               <Avatar name={usuario.full_name} />
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{usuario.full_name || usuario.email}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{usuario.full_name || usuario.email}</p>
                   {isAdmin && (
-                    <span className="text-[10px] bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+                    <span className="text-[10px] bg-gray-900 dark:bg-gray-200 text-white dark:text-foreground px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
                       <Lock className="w-2.5 h-2.5" /> Admin
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{usuario.email}</p>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{usuario.email}</p>
                 
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {isAdmin ? (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Acesso total ao sistema</span>
+                    <span className="text-xs text-muted-foreground">Acesso total ao sistema</span>
                   ) : perfil ? (
                     <>
-                      <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-md flex items-center gap-1">
                         <Shield className="w-3 h-3" />
                         {perfil.nome}
                       </span>
@@ -455,10 +455,10 @@ export default function UsuariosManager() {
                         </span>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <div className="w-20 h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-gray-500 dark:bg-gray-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                        <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-muted/400 dark:bg-gray-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="text-[10px] text-gray-400 font-mono">{totalAtivas}/{totalGeral}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{totalAtivas}/{totalGeral}</span>
                       </div>
                     </>
                   ) : (
@@ -472,7 +472,7 @@ export default function UsuariosManager() {
               {!isAdmin && (
                 <button
                   onClick={() => setEditando(usuario)}
-                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex-shrink-0"
+                  className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-200 transition-colors flex-shrink-0"
                   title="Configurar acesso"
                 >
                   <Pencil className="w-4 h-4" />
@@ -483,9 +483,9 @@ export default function UsuariosManager() {
         })}
 
         {usuariosFiltrados.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm py-12 text-center">
-            <Users className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">
+          <div className="bg-card rounded-xl shadow-sm py-12 text-center">
+            <Users className="w-8 h-8 text-gray-200 dark:text-foreground/90 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
               {busca ? `Nenhum resultado para "${busca}"` : 'Nenhum usuário encontrado'}
             </p>
           </div>
@@ -493,9 +493,9 @@ export default function UsuariosManager() {
       </div>
 
       {/* Nota informativa */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 flex gap-2.5 items-start">
-        <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+      <div className="bg-muted/50/50 rounded-xl p-3 flex gap-2.5 items-start">
+        <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
           Novos usuários são adicionados automaticamente após realizarem login/cadastro. 
           Atribua um perfil de acesso para definir o que cada usuário poderá ver e operar no sistema.
         </p>

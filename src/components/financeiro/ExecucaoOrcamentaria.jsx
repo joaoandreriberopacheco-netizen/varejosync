@@ -282,16 +282,16 @@ export default function ExecucaoOrcamentaria() {
       <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-transparent bg-[#F3F4F6] px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-border dark:bg-card">
         <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
-            <p className="text-[24px] leading-none font-semibold text-gray-900 sm:text-[32px] dark:text-gray-100 font-glacial">Financeiro</p>
-            <p className="text-xs text-gray-500 sm:text-sm dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
+            <p className="text-[24px] leading-none font-semibold text-foreground sm:text-[32px] dark:text-gray-100 font-glacial">Financeiro</p>
+            <p className="text-xs text-muted-foreground sm:text-sm dark:text-muted-foreground">Fluxo e contas com visual mais leve, limpo e direto.</p>
           </div>
           {aba === 'fluxo' && (
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/90 dark:bg-slate-800"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/90 dark:bg-muted"
               aria-label="Imprimir extrato"
             >
-              <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+              <Printer className="w-4 h-4 text-foreground/90" />
             </button>
           )}
         </div>
@@ -299,24 +299,24 @@ export default function ExecucaoOrcamentaria() {
           <button
             type="button"
             onClick={() => setAba('fluxo')}
-            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'fluxo' ? 'bg-white dark:bg-muted opacity-100' : 'bg-white/80 dark:bg-muted/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'fluxo' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-              <Scale className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
+            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'fluxo' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+              <Scale className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
             </div>
-            <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Fluxo de Caixa</p>
-            <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">Movimento do período</p>
+            <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Fluxo de Caixa</p>
+            <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">Movimento do período</p>
           </button>
           <button
             type="button"
             onClick={() => setAba('contas')}
-            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'contas' ? 'bg-white dark:bg-muted opacity-100' : 'bg-white/80 dark:bg-muted/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-              <Clock className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
+            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+              <Clock className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
             </div>
-            <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Contas Abertas</p>
-            <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">Pendências e cobranças</p>
+            <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Contas Abertas</p>
+            <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">Pendências e cobranças</p>
           </button>
         </div>
 
@@ -328,10 +328,10 @@ export default function ExecucaoOrcamentaria() {
             {/* Alerta conciliação pendente */}
             {totalPend > 0 && !pendentes && (
               <button onClick={() => setPendentes(true)}
-                className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs text-left">
-                <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
+                className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-white dark:bg-muted text-foreground/90 text-xs text-left">
+                <Clock className="w-3.5 h-3.5 flex-none text-muted-foreground" />
                 <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
-                <span className="font-semibold flex-none text-gray-500">Ver →</span>
+                <span className="font-semibold flex-none text-muted-foreground">Ver →</span>
               </button>
             )}
 
@@ -361,24 +361,24 @@ export default function ExecucaoOrcamentaria() {
               <button
                 type="button"
                 onClick={() => setAbaContas('contas')}
-                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'contas' ? 'bg-white dark:bg-muted opacity-100' : 'bg-white/80 dark:bg-muted/70 opacity-85'}`}
               >
-                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-                  <ArrowUpRight className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
+                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
                 </div>
-                <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Contas a pagar</p>
-                <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">Pendências e pagamentos</p>
+                <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Contas a pagar</p>
+                <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">Pendências e pagamentos</p>
               </button>
               <button
                 type="button"
                 onClick={() => setAbaContas('agefin')}
-                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'agefin' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
+                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'agefin' ? 'bg-white dark:bg-muted opacity-100' : 'bg-white/80 dark:bg-muted/70 opacity-85'}`}
               >
-                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'agefin' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
-                  <Upload className="h-3.5 w-3.5 text-gray-700 sm:h-4 sm:w-4 dark:text-gray-200" />
+                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'agefin' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+                  <Upload className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
                 </div>
-                <p className="text-[12px] font-medium leading-tight text-gray-900 sm:text-[13px] dark:text-white">Atualizar boletos</p>
-                <p className="mt-0.5 hidden text-[10px] text-gray-500 dark:text-gray-400 sm:mt-1 sm:block">PDF e recorrências</p>
+                <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Atualizar boletos</p>
+                <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">PDF e recorrências</p>
               </button>
             </div>
 
@@ -398,9 +398,9 @@ export default function ExecucaoOrcamentaria() {
       {aba === 'contas' && (
         <>
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-          <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
-            <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
-              <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
+          <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
+            <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-border/40">
+              <DialogTitle className="text-foreground">Importar conta</DialogTitle>
             </DialogHeader>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
               <AgefinImportador
@@ -465,9 +465,9 @@ export default function ExecucaoOrcamentaria() {
           />
 
           <Dialog open={conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(false)}>
-            <DialogContent className="flex h-[85vh] max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden border-gray-700 p-0 dark:border-gray-700 dark:bg-gray-800">
+            <DialogContent className="flex h-[85vh] max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden border-gray-700 p-0 dark:border-border/40 dark:bg-muted">
               <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
-                <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
+                <DialogTitle className="text-foreground">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
               </DialogHeader>
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
                 <ConciliacaoBancaria

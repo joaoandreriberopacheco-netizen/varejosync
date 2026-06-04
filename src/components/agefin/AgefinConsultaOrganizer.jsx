@@ -50,20 +50,20 @@ export default function AgefinConsultaOrganizer({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 shadow-sm transition hover:shadow-md dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
             title="Agrupar contas"
           >
             <CurrentIcon className="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="rounded-xl border-0 shadow-lg dark:bg-gray-800">
+        <DropdownMenuContent align="end" className="rounded-xl border-0 shadow-lg dark:bg-muted">
           {OPTIONS.map((option) => {
             const Icon = option.icon;
             return (
               <DropdownMenuItem
                 key={option.value}
                 onClick={() => onGroupByChange(option.value)}
-                className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="cursor-pointer gap-2 dark:text-foreground dark:hover:bg-primary/90"
               >
                 <Icon className="h-4 w-4" />
                 <span>{option.label}</span>
@@ -76,7 +76,7 @@ export default function AgefinConsultaOrganizer({
       <button
         type="button"
         onClick={onSortOrderToggle}
-        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 shadow-sm transition hover:shadow-md dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
         title={sortOrder === 'desc' ? 'Ordem: mais recente / Z–A' : 'Ordem: mais antigo / A–Z'}
       >
         <ArrowDownUp className={`h-4 w-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />

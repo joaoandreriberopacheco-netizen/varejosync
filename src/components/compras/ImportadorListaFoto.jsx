@@ -234,9 +234,9 @@ Retorne JSON:
 
     return (
         <>
-            <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-y-auto">
+            <div className="fixed inset-0 bg-card z-50 overflow-y-auto">
                 {/* Header */}
-                <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
+                <div className="sticky top-0 bg-card border-b border-border/40 z-10">
                     <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
                                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                     <div className="flex items-center gap-3 md:gap-4">
@@ -248,10 +248,10 @@ Retorne JSON:
                                         <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">
+                                        <h2 className="text-lg md:text-xl font-medium text-foreground">
                                           {mode === 'merge' ? 'Importar Lista na Cotação' : 'Importação Inteligente'}
                                         </h2>
-                                        <p className="text-xs md:text-sm text-gray-500">
+                                        <p className="text-xs md:text-sm text-muted-foreground">
                                           {mode === 'merge' ? 'A IA identifica itens e mescla na cotação em montagem' : 'IA identifica produtos e sugere quantidades'}
                                         </p>
                                     </div>
@@ -280,16 +280,16 @@ Retorne JSON:
                                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-gray-800 flex items-center justify-center mb-8">
                                     <Camera className="w-12 h-12 text-purple-500 dark:text-purple-400" />
                                 </div>
-                                <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">
+                                <h3 className="text-2xl font-light text-foreground mb-2">
                                   {mode === 'merge' ? 'Importar Itens para Cotação' : 'Nova Cotação via Foto'}
                                 </h3>
-                                <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-md">
+                                <p className="text-muted-foreground mb-8 text-center max-w-md">
                                     Tire uma foto da sua lista de compras manual ou envie um arquivo. 
                                     Nossa IA identificará os produtos e sugerirá as quantidades.
                                 </p>
                                 
                                 <div className="relative">
-                                    <Button size="lg" className="h-14 px-10 bg-gray-900 hover:bg-gray-800 text-white rounded-full shadow-xl">
+                                    <Button size="lg" className="h-14 px-10 bg-gray-900 hover:bg-primary text-white rounded-full shadow-xl">
                                         <ImageIcon className="w-5 h-5 mr-2.5" /> 
                                         Selecionar Imagem
                                     </Button>
@@ -309,12 +309,12 @@ Retorne JSON:
                         <div className="max-w-2xl mx-auto py-20 flex flex-col items-center justify-center">
                             <div className="relative mb-8">
                                 <div className="absolute inset-0 bg-purple-100 dark:bg-purple-900/20 rounded-full animate-ping opacity-50"></div>
-                                <div className="relative bg-white dark:bg-gray-800 p-6 rounded-full shadow-xl">
+                                <div className="relative bg-card p-6 rounded-full shadow-xl">
                                     <Sparkles className="w-10 h-10 text-purple-600 dark:text-purple-400 animate-pulse" />
                                 </div>
                             </div>
-                            <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Analisando Imagem...</h3>
-                            <p className="text-gray-500 dark:text-gray-400">Identificando produtos e calculando reposição</p>
+                            <h3 className="text-2xl font-light text-foreground mb-2">Analisando Imagem...</h3>
+                            <p className="text-muted-foreground">Identificando produtos e calculando reposição</p>
                         </div>
                     )}
 
@@ -323,13 +323,13 @@ Retorne JSON:
                             <div className="bg-card rounded-xl overflow-hidden border border-border">
                                 <P38TableShell className="hidden md:block overflow-x-auto">
                                     <table className="w-full">
-                                        <thead className="bg-gray-50 dark:bg-gray-900/50">
+                                        <thead className="bg-background/50">
                                             <tr>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12"></th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Identificado</th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[40%]">Produto no Sistema</th>
-                                                <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estoque</th>
-                                                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sugerido</th>
+                                                <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12"></th>
+                                                <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Item Identificado</th>
+                                                <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-[40%]">Produto no Sistema</th>
+                                                <th className="px-6 py-4 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">Estoque</th>
+                                                <th className="px-6 py-4 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Sugerido</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -337,7 +337,7 @@ Retorne JSON:
                                                 const product = products.find(p => p.id === item.selected_product_id);
                                                 
                                                 return (
-                                                    <tr key={idx} className={`${item.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50'} transition-colors`}>
+                                                    <tr key={idx} className={`${item.ignored ? 'opacity-40 bg-background/20' : 'hover:bg-muted/40/50 dark:hover:bg-muted/50'} transition-colors`}>
                                                         <td className="px-6 py-4">
                                                             <Checkbox 
                                                                 checked={!item.ignored} 
@@ -350,9 +350,9 @@ Retorne JSON:
                                                             />
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <div className="font-medium text-gray-900 dark:text-white">{item.texto_identificado}</div>
+                                                            <div className="font-medium text-foreground">{item.texto_identificado}</div>
                                                             {item.quantidade_escrita && (
-                                                                <div className="text-xs text-gray-400 mt-1">
+                                                                <div className="text-xs text-muted-foreground mt-1">
                                                                     Escrito: {item.quantidade_escrita}
                                                                 </div>
                                                             )}
@@ -372,10 +372,10 @@ Retorne JSON:
                                                         <td className="px-6 py-4 text-center">
                                                             {product ? (
                                                                 <div className="flex flex-col items-center">
-                                                                    <span className="font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">
+                                                                    <span className="font-semibold text-foreground/90 bg-muted px-2 py-0.5 rounded text-xs">
                                                                         {product.estoque_atual || 0}
                                                                     </span>
-                                                                    <span className="text-gray-400 text-[10px] mt-1">Min: {product.estoque_minimo || 0}</span>
+                                                                    <span className="text-muted-foreground text-[10px] mt-1">Min: {product.estoque_minimo || 0}</span>
                                                                 </div>
                                                             ) : (
                                                                 <span className="text-gray-200 text-xl">−</span>
@@ -394,7 +394,7 @@ Retorne JSON:
                                                                     }}
                                                                     disabled={item.ignored}
                                                                 />
-                                                                <span className="text-xs text-gray-400 w-8 font-medium">
+                                                                <span className="text-xs text-muted-foreground w-8 font-medium">
                                                                     {product?.unidade_principal || 'UN'}
                                                                 </span>
                                                             </div>
@@ -470,9 +470,9 @@ Retorne JSON:
                                 </P38MobileLineList>
                             </div>
 
-                            <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center text-sm text-gray-500">
+                            <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center text-sm text-muted-foreground">
                                 <span>{analyzedItems.filter(i => !i.ignored).length} itens selecionados</span>
-                                <Button variant="ghost" onClick={() => setStep('upload')} className="text-gray-500 w-full md:w-auto">
+                                <Button variant="ghost" onClick={() => setStep('upload')} className="text-muted-foreground w-full md:w-auto">
                                     Voltar e Reenviar
                                 </Button>
                             </div>

@@ -38,13 +38,13 @@ export default function AgefinDetalhes({ conta, onBack, onUpdate }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-800">
-        <button onClick={onBack} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+      <div className="flex items-center gap-3 pb-4 border-b border-border/40">
+        <button onClick={onBack} className="p-2 hover:bg-muted rounded-full">
           <ChevronLeft className="w-6 h-6" />
         </button>
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{conta.descricao}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h2 className="text-xl font-bold text-foreground">{conta.descricao}</h2>
+          <p className="text-sm text-muted-foreground">
             {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
           </p>
         </div>
@@ -52,8 +52,8 @@ export default function AgefinDetalhes({ conta, onBack, onUpdate }) {
 
       {/* Value */}
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-3xl p-6 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Valor</p>
-        <p className="text-4xl font-bold text-gray-900 dark:text-white">
+        <p className="text-sm text-muted-foreground mb-2">Valor</p>
+        <p className="text-4xl font-bold text-foreground">
           R$ {conta.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </p>
       </div>
@@ -100,9 +100,9 @@ export default function AgefinDetalhes({ conta, onBack, onUpdate }) {
 
 function InfoRow({ label, value }) {
   return (
-    <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-      <p className="text-sm text-gray-600 dark:text-gray-400">{label}</p>
-      <p className="font-semibold text-gray-900 dark:text-white">{value}</p>
+    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-2xl">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="font-semibold text-foreground">{value}</p>
     </div>
   );
 }

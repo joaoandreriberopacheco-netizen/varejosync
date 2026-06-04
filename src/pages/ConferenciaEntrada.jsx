@@ -18,8 +18,8 @@ export default function ConferenciaEntrada() {
   return (
     <div className="max-w-7xl mx-auto px-0 md:px-2 py-2 md:py-4">
       <div className="px-4 md:px-0 pb-4">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white font-glacial">Conferência de Entrada</h1>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Controle de conferência de volumes e itens</p>
+        <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Conferência de Entrada</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Controle de conferência de volumes e itens</p>
       </div>
 
       <div className="px-4 md:px-0 mb-4">
@@ -67,7 +67,7 @@ function ConferenciaCodigosTab() {
     }
   };
 
-  if (carregando) return <div className="text-center py-12 text-gray-500">Carregando...</div>;
+  if (carregando) return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;
 
   const manifestosPendentes = manifestos.filter(m => m.status_codigo_conferencia_itens !== 'Concluído');
   const supermanifestosPendentes = supermanifestos.filter(s => s.status_codigo_conferencia_volumes !== 'Concluído');
@@ -88,7 +88,7 @@ function ConferenciaCodigosTab() {
 
       {supermanifestosPendentes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">SUPERMANIFESTOS</h3>
+          <h3 className="text-sm font-semibold text-foreground/90 mb-3">SUPERMANIFESTOS</h3>
           <P38MobileLineList>
             {supermanifestosPendentes.map((sm, index) => {
               const tone = p38StatusTone(sm.status);
@@ -116,7 +116,7 @@ function ConferenciaCodigosTab() {
 
       {manifestosPendentes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">MANIFESTOS DE ENTRADA</h3>
+          <h3 className="text-sm font-semibold text-foreground/90 mb-3">MANIFESTOS DE ENTRADA</h3>
           <P38MobileLineList>
             {manifestosPendentes.map((me, index) => {
               const tone = p38StatusTone(me.status);
@@ -143,7 +143,7 @@ function ConferenciaCodigosTab() {
       )}
 
       {manifestosPendentes.length === 0 && supermanifestosPendentes.length === 0 && (
-        <div className="text-center py-12 text-gray-500">Nenhum manifesto aguardando conferência</div>
+        <div className="text-center py-12 text-muted-foreground">Nenhum manifesto aguardando conferência</div>
       )}
     </div>
   );

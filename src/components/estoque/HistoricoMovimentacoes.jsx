@@ -47,18 +47,18 @@ export default function HistoricoMovimentacoes() {
   });
 
   const getTipoBadge = (tipo) => {
-    return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
+    return "bg-muted text-foreground";
   };
 
   const getMotivoBadge = (motivo) => {
-    return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
+    return "bg-muted text-foreground";
   };
 
   return (
     <div className="space-y-6">
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <ArrowUpCircle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+      <div className="pb-4 border-b border-border/40">
+        <h2 className="text-xl font-medium text-foreground flex items-center gap-2">
+          <ArrowUpCircle className="w-5 h-5 text-muted-foreground" />
           Histórico Completo de Movimentações
         </h2>
       </div>
@@ -67,7 +67,7 @@ export default function HistoricoMovimentacoes() {
         {/* Filtros */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Buscar produto ou documento..." 
               className="pl-9"
@@ -107,23 +107,23 @@ export default function HistoricoMovimentacoes() {
 
         {/* Estatísticas Rápidas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Total Entradas</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground uppercase mb-1">Total Entradas</div>
+            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
               {movimentacoes.filter(m => m.tipo === 'Entrada').length}
             </div>
           </div>
 
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Total Saídas</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground uppercase mb-1">Total Saídas</div>
+            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
               {movimentacoes.filter(m => m.tipo === 'Saída').length}
             </div>
           </div>
 
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Total Movimentações</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground uppercase mb-1">Total Movimentações</div>
+            <div className="text-2xl font-bold text-foreground dark:text-gray-100">
               {movimentacoes.length}
             </div>
           </div>
@@ -179,22 +179,22 @@ export default function HistoricoMovimentacoes() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filteredMovimentacoes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nenhuma movimentação encontrada
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredMovimentacoes.map(mov => (
-                  <TableRow key={mov.id} className="hover:bg-gray-50">
+                  <TableRow key={mov.id} className="hover:bg-muted/40">
                     <TableCell className="font-medium">
                       <div>{format(new Date(mov.created_date), 'dd/MM/yyyy')}</div>
-                      <div className="text-xs text-gray-500">{format(new Date(mov.created_date), 'HH:mm')}</div>
+                      <div className="text-xs text-muted-foreground">{format(new Date(mov.created_date), 'HH:mm')}</div>
                     </TableCell>
                     <TableCell>
                       <Badge className={getTipoBadge(mov.tipo)}>
@@ -208,7 +208,7 @@ export default function HistoricoMovimentacoes() {
                     </TableCell>
                     <TableCell>
                       <div className="font-semibold">{mov.produto_nome}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         Custo: R$ {mov.custo_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
                       </div>
                     </TableCell>
@@ -232,7 +232,7 @@ export default function HistoricoMovimentacoes() {
         </P38TableShell>
 
         {filteredMovimentacoes.length > 0 && (
-          <div className="mt-4 text-sm text-gray-600 text-center">
+          <div className="mt-4 text-sm text-muted-foreground text-center">
             Exibindo {filteredMovimentacoes.length} de {movimentacoes.length} movimentações
           </div>
         )}

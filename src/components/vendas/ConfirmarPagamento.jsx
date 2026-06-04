@@ -204,17 +204,17 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted/40 rounded-lg">
             <div>
-              <p className="text-sm text-gray-600">Pedido:</p>
+              <p className="text-sm text-muted-foreground">Pedido:</p>
               <p className="font-bold">{pedido?.numero}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Cliente:</p>
+              <p className="text-sm text-muted-foreground">Cliente:</p>
               <p className="font-bold">{pedido?.cliente_nome}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-600">Valor Total:</p>
+              <p className="text-sm text-muted-foreground">Valor Total:</p>
               <p className="text-2xl font-bold text-green-600">
                 R$ {pedido?.valor_total?.toFixed(2)}
               </p>
@@ -302,8 +302,8 @@ export default function ConfirmarPagamento({ pedido, open, onClose, onSuccess })
           </div>
 
           <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg">
-            <Keyboard className="w-4 h-4 text-gray-500" />
-            <div className="text-xs text-gray-600">
+            <Keyboard className="w-4 h-4 text-muted-foreground" />
+            <div className="text-xs text-muted-foreground">
               <span className="font-bold">F1:</span> Ajuda | 
               <span className="font-bold ml-2">F2:</span> Adicionar Forma de Pagamento | 
               <span className="font-bold ml-2">F3:</span> Confirmar Pagamento | 

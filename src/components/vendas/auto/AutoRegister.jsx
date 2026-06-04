@@ -51,7 +51,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
 
   return (
     <motion.div 
-      className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 p-6 md:p-12"
+      className="flex-1 flex flex-col bg-background p-6 md:p-12"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
@@ -65,16 +65,16 @@ export default function AutoRegister({ onSuccess, onBack }) {
           <ArrowLeft className="w-5 h-5 mr-2" /> Voltar
         </Button>
 
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Novo Cadastro</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">Preencha seus dados para criar sua conta</p>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Novo Cadastro</h2>
+        <p className="text-muted-foreground mb-8">Preencha seus dados para criar sua conta</p>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 rounded-2xl shadow-xl">
           <div>
             <Label className="text-base font-medium mb-2 block">Nome Completo *</Label>
             <Input
               value={formData.nome}
               onChange={e => setFormData({...formData, nome: e.target.value})}
-              className="h-12 text-lg bg-gray-50 border-gray-200 rounded-xl"
+              className="h-12 text-lg bg-muted/40 border-border/40 rounded-xl"
               placeholder="Seu nome"
               required
             />
@@ -86,7 +86,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
               type="tel"
               value={formData.telefone}
               onChange={e => setFormData({...formData, telefone: e.target.value})}
-              className="h-12 text-lg bg-gray-50 border-gray-200 rounded-xl"
+              className="h-12 text-lg bg-muted/40 border-border/40 rounded-xl"
               placeholder="(00) 00000-0000"
             />
           </div>
@@ -97,7 +97,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
               type="tel"
               value={formData.cpf_cnpj}
               onChange={e => setFormData({...formData, cpf_cnpj: e.target.value})}
-              className="h-12 text-lg bg-gray-50 border-gray-200 rounded-xl"
+              className="h-12 text-lg bg-muted/40 border-border/40 rounded-xl"
               placeholder="000.000.000-00"
             />
           </div>

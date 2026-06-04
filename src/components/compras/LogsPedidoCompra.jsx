@@ -4,7 +4,7 @@ import { ArrowRight, User, Bot, Users } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
 const STATUS_CORES = {
-  'Rascunho':             'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  'Rascunho':             'bg-gray-100 text-foreground/90 dark:bg-muted dark:text-foreground/90',
   'Enviado':              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   'Aguardando Liberação': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   'Aprovado':             'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
@@ -41,15 +41,15 @@ export default function LogsPedidoCompra({ pedidoId }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-border/40 border-t-gray-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (logs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-        <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
           <ArrowRight className="w-5 h-5" />
         </div>
         <p className="text-sm">Nenhuma transição registrada</p>
@@ -65,18 +65,18 @@ export default function LogsPedidoCompra({ pedidoId }) {
         const dataFormatada = formatarDataHora(log.data_transicao);
 
         return (
-          <div key={log.id || idx} className="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 shadow-sm">
+          <div key={log.id || idx} className="bg-muted/50 rounded-xl px-4 py-3 shadow-sm">
             {/* Linha de transição de status */}
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {log.status_anterior && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_anterior] || 'bg-gray-100 text-gray-600'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_anterior] || 'bg-gray-100 text-muted-foreground'}`}>
                   {log.status_anterior}
                 </span>
               )}
               {log.status_anterior && (
-                <ArrowRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
               )}
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_novo] || 'bg-gray-100 text-gray-600'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CORES[log.status_novo] || 'bg-gray-100 text-muted-foreground'}`}>
                 {log.status_novo}
               </span>
             </div>
@@ -84,20 +84,20 @@ export default function LogsPedidoCompra({ pedidoId }) {
             {/* Responsável e data */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
-                <Icon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground truncate">
                   {log.responsavel_nome || log.responsavel_email || 'Sistema'}
                 </span>
                 {log.codigo_operacao && (
-                  <span className="text-xs text-gray-400 font-mono hidden sm:inline">· {log.codigo_operacao}</span>
+                  <span className="text-xs text-muted-foreground font-mono hidden sm:inline">· {log.codigo_operacao}</span>
                 )}
               </div>
-              <span className="text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">{dataFormatada}</span>
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap flex-shrink-0">{dataFormatada}</span>
             </div>
 
             {/* Observação */}
             {log.observacao && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-1.5">
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed border-t border-border/40 pt-1.5">
                 {log.observacao}
               </p>
             )}

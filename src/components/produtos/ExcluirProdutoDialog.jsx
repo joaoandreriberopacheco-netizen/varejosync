@@ -106,18 +106,18 @@ export default function ExcluirProdutoDialog({ produto, open, onClose, onSuccess
 
   return (
     <AlertDialog open={open} onOpenChange={v => !v && onClose()}>
-      <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-800 max-w-sm">
+      <AlertDialogContent className="dark:bg-background dark:border-border/40 max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-base text-gray-900 dark:text-white">
+          <AlertDialogTitle className="text-base text-foreground">
             {fase === 'ja_inativo' ? 'Produto Inativo' : 'Remover Produto'}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-              <p className="font-medium text-gray-800 dark:text-gray-200 truncate">{produto.nome}</p>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground truncate">{produto.nome}</p>
 
               {fase === 'verificando' && (
                 <div className="flex items-center gap-2 py-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   <span>Verificando dependências...</span>
                 </div>
               )}
@@ -150,7 +150,7 @@ export default function ExcluirProdutoDialog({ produto, open, onClose, onSuccess
           <AlertDialogCancel
             disabled={loading}
             onClick={onClose}
-            className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 text-sm"
+            className="dark:bg-muted dark:text-foreground dark:border-border/40 dark:hover:bg-primary/90 text-sm"
           >
             Cancelar
           </AlertDialogCancel>

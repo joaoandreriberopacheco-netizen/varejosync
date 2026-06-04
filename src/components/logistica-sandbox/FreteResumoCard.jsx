@@ -2,7 +2,7 @@ import React from 'react';
 import { DollarSign } from 'lucide-react';
 
 function getStatusAggregado(eventos) {
-  if (eventos.length === 0) return { label: 'Sem fretes', color: '#d1d5db', bgClass: 'bg-gray-50 dark:bg-gray-700' };
+  if (eventos.length === 0) return { label: 'Sem fretes', color: '#d1d5db', bgClass: 'bg-muted/40 dark:bg-muted' };
   
   const temAtrasada = eventos.some(e => {
     if (!e.lancamento_financeiro_id) return false;
@@ -27,7 +27,7 @@ export default function FreteResumoCard({ eventos = [] }) {
   const { label, color, bgClass } = getStatusAggregado(eventos);
   
   return (
-    <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm">
+    <div className="rounded-3xl bg-card shadow-sm">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${bgClass}`}>
@@ -39,12 +39,12 @@ export default function FreteResumoCard({ eventos = [] }) {
           </div>
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Total de fretes</span>
-              <span className="text-lg font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total de fretes</span>
+              <span className="text-lg font-bold text-foreground">
                 {(totalFretes || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </span>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-500">{label}</span>
+            <span className="text-xs text-muted-foreground dark:text-muted-foreground">{label}</span>
           </div>
         </div>
       </div>

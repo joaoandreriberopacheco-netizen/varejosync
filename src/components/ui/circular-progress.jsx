@@ -19,7 +19,7 @@ export function CircularProgress({ value, max, currentBatch, totalBatches, proce
             stroke="currentColor"
             strokeWidth="8"
             fill="none"
-            className="text-gray-200 dark:text-gray-700"
+            className="text-gray-200 dark:text-foreground/90"
           />
           {/* Progress circle */}
           <circle
@@ -36,17 +36,17 @@ export function CircularProgress({ value, max, currentBatch, totalBatches, proce
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+          <span className="text-2xl font-semibold text-foreground">
             {Math.round(percentage)}%
           </span>
         </div>
       </div>
       
       <div className="text-center space-y-1">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <p className="text-sm font-medium text-foreground/90">
           Lote {currentBatch} de {totalBatches}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           {processedItems} de {totalItems} produtos
         </p>
       </div>

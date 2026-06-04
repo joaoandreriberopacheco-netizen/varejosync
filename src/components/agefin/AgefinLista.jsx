@@ -44,7 +44,7 @@ export default function AgefinLista({ contas, onRefresh }) {
             className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
               filterStatus === status
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                : 'bg-muted text-foreground/90'
             }`}
           >
             {status}
@@ -57,7 +57,7 @@ export default function AgefinLista({ contas, onRefresh }) {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="flex-1 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-4 py-3 rounded-2xl bg-muted text-foreground border-0 focus:ring-2 focus:ring-blue-500"
         >
           <option value="vencimento">Ordenar por vencimento</option>
           <option value="valor">Ordenar por valor</option>
@@ -68,11 +68,11 @@ export default function AgefinLista({ contas, onRefresh }) {
       <div>
         {sorted.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Filter className="w-10 h-10 text-gray-400" />
+            <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Filter className="w-10 h-10 text-muted-foreground" />
             </div>
-            <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">Nenhuma conta encontrada</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+            <p className="text-foreground/90 font-medium mb-2">Nenhuma conta encontrada</p>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
               {filterStatus ? `Nenhuma conta com status "${filterStatus}". Ajuste o filtro para ver outras contas.` : 'Adicione contas para começar a gerenciar seus pagamentos.'}
             </p>
             {filterStatus && (

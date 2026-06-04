@@ -225,8 +225,8 @@ JSON:
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-10 bg-card border-b border-border/40">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10">
@@ -235,19 +235,19 @@ JSON:
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-600" />
-                <h1 className="text-lg font-medium text-gray-900 dark:text-white">Otimização de Estoque com IA</h1>
+                <h1 className="text-lg font-medium text-foreground">Otimização de Estoque com IA</h1>
               </div>
-              <p className="text-sm text-gray-500">Classificação ABC e distribuição inteligente</p>
+              <p className="text-sm text-muted-foreground">Classificação ABC e distribuição inteligente</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+        <div className="bg-card rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="w-5 h-5 text-gray-600" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Valor do Investimento</h3>
+            <DollarSign className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-medium text-foreground">Valor do Investimento</h3>
           </div>
           <div className="space-y-4">
             <Input
@@ -255,9 +255,9 @@ JSON:
               placeholder="Ex: 50000"
               value={valorInvestimento}
               onChange={(e) => setValorInvestimento(e.target.value)}
-              className="text-lg h-14 bg-gray-50 dark:bg-gray-900 border-0"
+              className="text-lg h-14 bg-background border-0"
             />
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Package className="w-4 h-4" />
               <span>{produtos.length} produtos serão analisados</span>
             </div>
@@ -265,8 +265,8 @@ JSON:
         </div>
 
         <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-6">
-          <h3 className="font-medium text-gray-900 dark:text-white mb-3">Como Funciona</h3>
-          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <h3 className="font-medium text-foreground mb-3">Como Funciona</h3>
+          <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
               <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
               <p><strong>Classificação ABC:</strong> Produtos essenciais (A), intermediários (B) e baixo giro (C)</p>
@@ -292,7 +292,7 @@ JSON:
               processedItems={progress.current}
               totalItems={progress.total}
             />
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400 pb-6">A IA está classificando seus produtos...</p>
+            <p className="text-center text-sm text-muted-foreground pb-6">A IA está classificando seus produtos...</p>
           </div>
         )}
 
@@ -309,7 +309,7 @@ JSON:
 
         {!isProcessing && resultados && (
           <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+            <div className="bg-card rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-green-600" />
                 <h3 className="font-medium">Resumo da Análise</h3>
@@ -317,38 +317,38 @@ JSON:
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4">
                   <div className="text-2xl font-bold text-red-600">{resultados.resumo.total_produtos_a}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Produtos A</div>
+                  <div className="text-xs text-muted-foreground">Produtos A</div>
                 </div>
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4">
                   <div className="text-2xl font-bold text-yellow-600">{resultados.resumo.total_produtos_b}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Produtos B</div>
+                  <div className="text-xs text-muted-foreground">Produtos B</div>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
                   <div className="text-2xl font-bold text-blue-600">{resultados.resumo.total_produtos_c}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Produtos C</div>
+                  <div className="text-xs text-muted-foreground">Produtos C</div>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
                   <div className="text-2xl font-bold text-green-600">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(resultados.resumo.valor_estimado_estoque)}
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Valor Total</div>
+                  <div className="text-xs text-muted-foreground">Valor Total</div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border/40">
                 <h3 className="font-medium">Produtos Otimizados</h3>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-96 overflow-y-auto">
                 {resultados.produtos.map(r => {
                   const produto = produtos.find(p => p.id === r.produto_id);
                   return (
-                    <div key={r.produto_id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <div key={r.produto_id} className="p-4 hover:bg-muted/50">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-gray-900 dark:text-white">{produto?.nome}</span>
+                            <span className="font-medium text-foreground">{produto?.nome}</span>
                             <Badge className={`${
                               r.classificacao_abc === 'A' ? 'bg-red-100 text-red-700' :
                               r.classificacao_abc === 'B' ? 'bg-yellow-100 text-yellow-700' :
@@ -357,8 +357,8 @@ JSON:
                               {r.classificacao_abc}
                             </Badge>
                           </div>
-                          <p className="text-xs text-gray-500 mb-2">{r.justificativa}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-600">
+                          <p className="text-xs text-muted-foreground mb-2">{r.justificativa}</p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>Mín: <strong>{r.estoque_minimo}</strong></span>
                             <span>Ideal: <strong>{r.estoque_ideal}</strong></span>
                             <span>Máx: <strong>{r.estoque_maximo}</strong></span>

@@ -734,29 +734,29 @@ ${blocoTextoLocal}`,
       <div
         className={`flex h-full flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5 ${fluxoLoopAtualizadorRecorrente ? 'min-h-0' : 'min-h-[32rem]'}`}
       >
-        <div className="rounded-[32px] bg-white p-6 shadow-sm dark:bg-gray-800">
+        <div className="rounded-[32px] bg-white p-6 shadow-sm dark:bg-muted">
           <div className="mb-5 flex items-start gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
               <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Sucesso</p>
-              <h3 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">{modoAtualizacao ? 'Boleto atualizado com sucesso' : 'Conta a pagar criada com sucesso'}</h3>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{successState.descricao}</p>
+              <h3 className="mt-2 font-glacial text-2xl font-semibold text-foreground">{modoAtualizacao ? 'Boleto atualizado com sucesso' : 'Conta a pagar criada com sucesso'}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{successState.descricao}</p>
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-gray-50 p-4 dark:bg-gray-900">
+          <div className="rounded-[24px] bg-muted/40 p-4 dark:bg-background">
             <div className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'O novo boleto substituiu o anterior nesta conta.' : 'A conta j? foi enviada para o Contas a Pagar.'}</p>
+              <p className="text-sm text-foreground/90">{modoAtualizacao ? 'O novo boleto substituiu o anterior nesta conta.' : 'A conta j? foi enviada para o Contas a Pagar.'}</p>
             </div>
             <div className="mt-3 flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela tamb?m j? pode aparecer no AGEFIN quando for recorrente.'}</p>
+              <p className="text-sm text-foreground/90">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela tamb?m j? pode aparecer no AGEFIN quando for recorrente.'}</p>
             </div>
             {fluxoLoopAtualizadorRecorrente && (
-              <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">A regressar ao atualizador para escolher outra conta???</p>
+              <p className="mt-4 text-center text-sm text-muted-foreground">A regressar ao atualizador para escolher outra conta???</p>
             )}
           </div>
         </div>
@@ -795,25 +795,25 @@ ${blocoTextoLocal}`,
   if (!extractedData) {
     return (
       <div className="h-full overflow-y-auto space-y-5 px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-2">
-        <div className="rounded-[28px] bg-white/95 p-5 shadow-sm dark:bg-gray-800">
+        <div className="rounded-[28px] bg-white/95 p-5 shadow-sm dark:bg-muted">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-gray-400">Importar conta</p>
-              <h2 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">Leitura autom?tica</h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Envie boleto, guia, DAR, PDF ou imagem para pr?-preencher a conta.</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Importar conta</p>
+              <h2 className="mt-2 font-glacial text-2xl font-semibold text-foreground">Leitura autom?tica</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Envie boleto, guia, DAR, PDF ou imagem para pr?-preencher a conta.</p>
             </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
-              <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted">
+              <Sparkles className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
 
           <label className="block cursor-pointer">
-            <div className="rounded-[24px] bg-gray-100 px-5 py-7 text-center shadow-sm transition-all hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-950">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-gray-800">
-                <Upload className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+            <div className="rounded-[24px] bg-gray-100 px-5 py-7 text-center shadow-sm transition-all hover:bg-gray-200 dark:bg-background dark:hover:bg-gray-950">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-muted">
+                <Upload className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="font-medium text-gray-900 dark:text-white">{file ? file.name : 'Selecionar documento'}</p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">PDF, boleto escaneado ou imagem n?tida</p>
+              <p className="font-medium text-foreground">{file ? file.name : 'Selecionar documento'}</p>
+              <p className="mt-1 text-sm text-muted-foreground">PDF, boleto escaneado ou imagem n?tida</p>
             </div>
             <input
               type="file"
@@ -826,33 +826,33 @@ ${blocoTextoLocal}`,
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-gray-800">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">Formato</p>
+          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-muted">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Formato</p>
             <div className="mt-3 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
-                <FileText className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted">
+                <FileText className="h-4 w-4 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">PDF ou imagem</p>
+              <p className="text-sm font-medium text-foreground">PDF ou imagem</p>
             </div>
           </div>
-          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-gray-800">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">Resultado</p>
+          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-muted">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Resultado</p>
             <div className="mt-3 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
-                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted">
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Pr?-cadastro</p>
+              <p className="text-sm font-medium text-foreground">Pr?-cadastro</p>
             </div>
           </div>
         </div>
 
         {loading && (
-          <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-gray-800">
+          <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-muted">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl border-2 border-gray-300 border-t-gray-600 animate-spin dark:border-gray-600 dark:border-t-gray-200" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Lendo documento</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Analisando campos principais para contas a pagar.</p>
+                <p className="text-sm font-medium text-foreground">Lendo documento</p>
+                <p className="text-xs text-muted-foreground">Analisando campos principais para contas a pagar.</p>
               </div>
             </div>
           </div>
@@ -889,45 +889,45 @@ ${blocoTextoLocal}`,
     <div className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
-          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-muted">
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
                 <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-gray-900 dark:text-white">Documento lido com sucesso</p>
-                <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{file?.name}</p>
+                <p className="font-medium text-foreground">Documento lido com sucesso</p>
+                <p className="mt-1 truncate text-sm text-muted-foreground">{file?.name}</p>
               </div>
               <button
                 onClick={resetState}
-                className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 text-muted-foreground transition-colors hover:bg-muted dark:text-foreground/90 dark:hover:bg-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-muted">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pr?-preenchimento</p>
-                <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Pr?-preenchimento</p>
+                <h3 className="mt-2 font-glacial text-xl font-semibold text-foreground">
                   {fluxoListaRecorrentes ? 'Rever boleto desta conta' : 'Revisar dados'}
                 </h3>
                 {fluxoListaRecorrentes && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     A recorr?ncia j? est? definida no cadastro. Confirme valor, vencimento e dados do PDF.
                   </p>
                 )}
               </div>
-              <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">PDV style</span>
+              <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-muted-foreground dark:bg-muted dark:text-foreground/90">PDV style</span>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Conta financeira</label>
+                <label className="mb-2 block text-sm font-medium text-foreground/90">Conta financeira</label>
                 <Select value={contaFinanceiraId} onValueChange={setContaFinanceiraId}>
-                  <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
+                  <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-foreground shadow-none focus:ring-0 dark:bg-background dark:text-white">
                     <SelectValue placeholder="Escolher conta" />
                   </SelectTrigger>
                   <SelectContent>
@@ -939,7 +939,7 @@ ${blocoTextoLocal}`,
               </div>
 
               <div>
-                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground/90">
                   Descri??o
                   {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
@@ -953,15 +953,15 @@ ${blocoTextoLocal}`,
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
                   readOnly={!fluxoListaRecorrentes && descricaoSacralizadaLock}
                   title={!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'Esta conta j? tem descri??o confirmada; novos PDFs n?o a alteram.' : undefined}
-                  className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950 ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
+                  className={`h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950 ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
                 />
                 {fluxoListaRecorrentes && (
-                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1.5 text-xs text-muted-foreground">
                     Nome da conta no cadastro (pode editar). O leitor do PDF n?o substitui este t?tulo ??? s? ajuda em valor, vencimento e anexo.
                   </p>
                 )}
                 {!fluxoListaRecorrentes && !descricaoSacralizadaLock && (
-                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1.5 text-xs text-muted-foreground">
                     Sugest?o do leitor autom?tico ??? pode editar antes de salvar. Depois de salva, a descri??o fica fixa para manter o mesmo nome mental nesta conta e nos meses seguintes.
                   </p>
                 )}
@@ -974,43 +974,43 @@ ${blocoTextoLocal}`,
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Benefici?rio</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground/90">Benefici?rio</label>
                   <input autoComplete="off"
                     type="text"
                     value={extractedData.terceiro_nome}
                     onChange={(e) => setExtractedData({ ...extractedData, terceiro_nome: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Compet?ncia</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground/90">Compet?ncia</label>
                   <input autoComplete="off"
                     type="date"
                     value={extractedData.periodo_referencia}
                     onChange={(e) => setExtractedData({ ...extractedData, periodo_referencia: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Valor</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground/90">Valor</label>
                   <input autoComplete="off"
                     type="number"
                     value={extractedData.valor}
                     onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) || 0 })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                     step="0.01"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Vencimento</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground/90">Vencimento</label>
                   <input autoComplete="off"
                     type="date"
                     value={extractedData.data_vencimento}
                     onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                   />
                 </div>
               </div>
@@ -1018,18 +1018,18 @@ ${blocoTextoLocal}`,
               {!fluxoListaRecorrentes && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">N? da parcela</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground/90">N? da parcela</label>
                   <input autoComplete="off"
                     type="number"
                     value={extractedData.parcela_numero}
                     onChange={(e) => setExtractedData({ ...extractedData, parcela_numero: e.target.value })}
-                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Frequ?ncia</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground/90">Frequ?ncia</label>
                   <Select value={selectedRecorrencia} onValueChange={setSelectedRecorrencia}>
-                    <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
+                    <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-foreground shadow-none focus:ring-0 dark:bg-background dark:text-white">
                       <SelectValue placeholder="Escolher frequ?ncia" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1046,41 +1046,41 @@ ${blocoTextoLocal}`,
               )}
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digit?vel</label>
+                <label className="mb-2 block text-sm font-medium text-foreground/90">Linha digit?vel</label>
                 <textarea
                   value={extractedData.linha_digitavel}
                   onChange={(e) => setExtractedData({ ...extractedData, linha_digitavel: e.target.value })}
-                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">PIX copia e cola</label>
+                <label className="mb-2 block text-sm font-medium text-foreground/90">PIX copia e cola</label>
                 <textarea
                   value={extractedData.codigo_pix_copia_cola}
                   onChange={(e) => setExtractedData({ ...extractedData, codigo_pix_copia_cola: e.target.value })}
-                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Instru??es / observa??es</label>
+                <label className="mb-2 block text-sm font-medium text-foreground/90">Instru??es / observa??es</label>
                 <textarea
                   value={extractedData.observacoes}
                   onChange={(e) => setExtractedData({ ...extractedData, observacoes: e.target.value })}
-                  className="min-h-[110px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  className="min-h-[110px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-foreground outline-none ring-0 focus:bg-gray-200 dark:bg-background dark:text-white dark:focus:bg-gray-950"
                 />
               </div>
             </div>
           </div>
 
           {!fluxoListaRecorrentes && (
-          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
-            <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual ? a natureza desta conta?</label>
+          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-muted">
+            <label className="mb-3 block text-sm font-medium text-foreground/90">Qual ? a natureza desta conta?</label>
             <AgefinNaturezaSelector value={selectedNatureza || '??nico'} onChange={setSelectedNatureza} />
             {selectedNatureza === 'Recorrente' && (
-              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                Sugest?o de recorr?ncia: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Sugest?o de recorr?ncia: <span className="font-medium text-foreground">{selectedRecorrencia}</span>
               </p>
             )}
           </div>
@@ -1097,7 +1097,7 @@ ${blocoTextoLocal}`,
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-gray-50/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-gray-950/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-muted/40/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-gray-950/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"
@@ -1109,7 +1109,7 @@ ${blocoTextoLocal}`,
           <Button
             onClick={handleConfirm}
             disabled={loading || (!fluxoListaRecorrentes && !selectedNatureza) || !contaFinanceiraId}
-            className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-white"
+            className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-foreground hover:bg-gray-400 dark:bg-gray-200 dark:text-foreground dark:hover:bg-white"
           >
             {loading ? 'Salvando...' : fluxoListaRecorrentes ? 'Guardar boleto' : 'Salvar Conta'}
           </Button>

@@ -115,7 +115,7 @@ export default function HubLogistico() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+        <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -124,8 +124,8 @@ export default function HubLogistico() {
     <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-light text-gray-800 dark:text-gray-200">Hub Logístico Inbound</h1>
-          <p className="text-sm text-gray-500">Gestão de manifestos e planejamento de recebimento</p>
+          <h1 className="text-2xl font-light text-foreground">Hub Logístico Inbound</h1>
+          <p className="text-sm text-muted-foreground">Gestão de manifestos e planejamento de recebimento</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={loadManifestos} variant="outline" size="sm" className="gap-2 border-0 shadow-sm">
@@ -134,7 +134,7 @@ export default function HubLogistico() {
           </Button>
           <Button
             onClick={() => navigate(createPageUrl('ConferenciaEntrada'))}
-            className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg gap-2"
+            className="bg-gray-900 hover:bg-primary dark:bg-muted dark:hover:bg-gray-600 shadow-lg gap-2"
             size="sm"
           >
             <QrCode className="w-4 h-4" />
@@ -143,7 +143,7 @@ export default function HubLogistico() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+      <div className="bg-card rounded-xl p-4 border border-border/40">
         <Input
           placeholder="Buscar por manifesto ou transportadora..."
           value={searchTerm}
@@ -153,9 +153,9 @@ export default function HubLogistico() {
       </div>
 
       {manifestosFiltrados.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+        <div className="text-center py-12 bg-card rounded-xl border border-border/40">
           <Truck className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500">Nenhum manifesto encontrado</p>
+          <p className="text-muted-foreground">Nenhum manifesto encontrado</p>
         </div>
       ) : (
         <P38MobileLineList>
@@ -199,23 +199,23 @@ export default function HubLogistico() {
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-background rounded-lg">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Transportadora</p>
+                  <p className="text-xs text-muted-foreground mb-1">Transportadora</p>
                   <p className="font-medium">{manifestoSelecionado.transportadora_nome}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Status</p>
+                  <p className="text-xs text-muted-foreground mb-1">Status</p>
                   <Badge className={getStatusBadge(manifestoSelecionado.status)}>
                     {manifestoSelecionado.status}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">ETA</p>
+                  <p className="text-xs text-muted-foreground mb-1">ETA</p>
                   <p className="font-medium">{format(parseISO(manifestoSelecionado.eta), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Peso Total</p>
+                  <p className="text-xs text-muted-foreground mb-1">Peso Total</p>
                   <p className="font-medium">{manifestoSelecionado.peso_total_bruto_kg?.toFixed(2) || 0} kg</p>
                 </div>
               </div>
@@ -229,12 +229,12 @@ export default function HubLogistico() {
                   {manifestoSelecionado.pedidos_vinculados?.map((pedido, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+                      className="flex items-start justify-between p-3 border border-border/40 rounded-lg"
                     >
                       <div className="flex-1">
                         <p className="font-medium text-sm">{pedido.pedido_numero}</p>
-                        <p className="text-xs text-gray-500 mt-1">{pedido.descritivo_volumes}</p>
-                        <p className="text-xs text-gray-400 mt-1">Peso: {pedido.peso_informado_kg} kg</p>
+                        <p className="text-xs text-muted-foreground mt-1">{pedido.descritivo_volumes}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Peso: {pedido.peso_informado_kg} kg</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -254,7 +254,7 @@ export default function HubLogistico() {
                   <h4 className="text-sm font-semibold mb-2 text-amber-900 dark:text-amber-200">
                     Descritivo Consolidado de Volumes
                   </h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <p className="text-sm text-foreground/90">
                     {manifestoSelecionado.observacoes_consolidadas}
                   </p>
                 </div>
@@ -299,10 +299,10 @@ export default function HubLogistico() {
             </DialogHeader>
 
             <div className="py-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Tem certeza que deseja remover o pedido <strong>{pedidoParaRemover.pedido_numero}</strong> deste manifesto?
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 O pedido voltará ao status "Enviado" e poderá ser vinculado a outro manifesto.
               </p>
             </div>

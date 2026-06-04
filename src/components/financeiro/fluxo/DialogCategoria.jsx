@@ -19,21 +19,21 @@ export function NovaCategoriaInline({ tipo, onCriada, onCancelar }) {
   };
 
   return (
-    <div className="mt-2 bg-gray-50 dark:bg-gray-700 rounded-xl p-3 flex gap-2">
+    <div className="mt-2 bg-muted/40 dark:bg-muted rounded-xl p-3 flex gap-2">
       <input autoComplete="off"
         autoFocus
         value={nome}
         onChange={e => setNome(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') handleSalvar(); if (e.key === 'Escape') onCancelar(); }}
         placeholder="Nome da categoria"
-        className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none"
+        className="flex-1 min-w-0 bg-transparent text-sm text-foreground/90 placeholder:text-muted-foreground outline-none"
       />
       <button onClick={handleSalvar} disabled={saving || !nome.trim()}
-        className="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium disabled:opacity-40">
+        className="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-foreground text-xs font-medium disabled:opacity-40">
         OK
       </button>
       <button onClick={onCancelar} className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
-        <X className="w-3.5 h-3.5 text-gray-400" />
+        <X className="w-3.5 h-3.5 text-muted-foreground" />
       </button>
     </div>
   );
@@ -59,19 +59,19 @@ export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada }
   const filtradas = categorias.filter(c => c.tipo === tipo);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 space-y-2">
-      <p className="text-[10px] text-gray-400 uppercase tracking-wider">Categoria</p>
+    <div className="bg-card rounded-2xl shadow-sm p-4 space-y-2">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Categoria</p>
       <div className="flex flex-wrap gap-2">
         {filtradas.map(c => (
           <button key={c.id} onClick={() => onChange(value === c.nome ? '' : c.nome, c.id)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${value === c.nome
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-foreground'
+              : 'bg-muted text-muted-foreground'}`}>
             {c.nome}
           </button>
         ))}
         <button onClick={() => setShowNova(true)}
-          className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-700 text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 flex items-center gap-1">
+          className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted/40 dark:bg-muted text-muted-foreground border border-dashed border-gray-300 dark:border-gray-600 flex items-center gap-1">
           <Plus className="w-3 h-3" /> Nova
         </button>
       </div>

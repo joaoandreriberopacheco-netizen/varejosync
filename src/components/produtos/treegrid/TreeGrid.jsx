@@ -59,7 +59,7 @@ function StatusDot({ produto }) {
   return (
     <div className="flex items-center gap-1">
       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cls}`} />
-      <span className="text-[10px] text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="text-[10px] text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -69,97 +69,97 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
   const cat = getCatalogoComercialView(produto);
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
-    case 'codigo_interno':       return <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{produto.codigo_interno || '—'}</span>;
-    case 'codigo_barras':        return <span className="text-[10px] font-mono text-gray-400">{produto.codigo_barras || '—'}</span>;
-    case 'categoria':            return <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">{produto.categoria_nome || '—'}</span>;
+    case 'codigo_interno':       return <span className="text-[10px] font-mono text-muted-foreground">{produto.codigo_interno || '—'}</span>;
+    case 'codigo_barras':        return <span className="text-[10px] font-mono text-muted-foreground">{produto.codigo_barras || '—'}</span>;
+    case 'categoria':            return <span className="text-xs text-muted-foreground uppercase">{produto.categoria_nome || '—'}</span>;
     case 'tags':                 return (
       <div className="flex flex-wrap gap-0.5 max-w-[100px]">
         {(produto.tags || []).slice(0, 2).map(t => (
-          <span key={t} className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1 rounded">#{t}</span>
+          <span key={t} className="text-[9px] bg-muted text-muted-foreground px-1 rounded">#{t}</span>
         ))}
       </div>
     );
-    case 'fornecedor':           return <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px] block">{produto.fornecedor_padrao_codigo || '—'}</span>;
+    case 'fornecedor':           return <span className="text-xs text-muted-foreground truncate max-w-[120px] block">{produto.fornecedor_padrao_codigo || '—'}</span>;
     case 'preco_venda':          return (
-      <span className="text-xs text-gray-700 dark:text-gray-200 tabular-nums inline-flex flex-col leading-tight">
+      <span className="text-xs text-foreground/90 tabular-nums inline-flex flex-col leading-tight">
         {cat.precoVenda > 0 ? (
           <>
             <span>R$ {fmtR(cat.precoVenda)}</span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
           </>
         ) : '—'}
       </span>
     );
-    case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'text-green-600 dark:text-green-400' : margem > 0 ? 'text-gray-500 dark:text-gray-400' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
+    case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'text-green-600 dark:text-green-400' : margem > 0 ? 'text-muted-foreground' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
     case 'preco_custo':          return (
-      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums inline-flex flex-col leading-tight">
+      <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight">
         {cat.custoNaEmbalagem > 0 ? (
           <>
             <span>R$ {fmtR(cat.custoNaEmbalagem)}</span>
-            <span className="text-[10px] text-gray-500">/{cat.sigla}</span>
+            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
           </>
         ) : '—'}
       </span>
     );
     case 'valor_compra':         return (
-      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums inline-flex flex-col leading-tight">
+      <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight">
         {cat.valorCompraNaEmbalagem > 0 ? (
           <>
             <span>R$ {fmtR(cat.valorCompraNaEmbalagem)}</span>
-            <span className="text-[10px] text-gray-500">/{cat.sigla}</span>
+            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
           </>
         ) : '—'}
       </span>
     );
     case 'markup':               return (
-      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+      <span className="text-xs text-muted-foreground tabular-nums">
         {lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : (produto.preco_venda_percentual > 0 ? `${fmtN(produto.preco_venda_percentual)}%` : '—')}
       </span>
     );
-    case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
+    case 'inventario_valorizado':return <span className="text-xs text-muted-foreground tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual': {
       const apresent = formatEstoqueApresentacao(produto);
       const qtdExibicao = apresent ? apresent.quantidade : produto.estoque_atual;
       const unExibicao = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
       return (
-        <span className="flex flex-col text-xs text-gray-600 dark:text-gray-300 tabular-nums leading-tight">
+        <span className="flex flex-col text-xs text-muted-foreground tabular-nums leading-tight">
           <span>{fmtN(qtdExibicao)} {unExibicao}</span>
           {apresent && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+            <span className="text-[10px] text-muted-foreground mt-0.5">
               {apresent.rotulo ? `(${apresent.rotulo})` : '(unidade de vitrine)'}
             </span>
           )}
         </span>
       );
     }
-    case 'estoque_minimo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
-    case 'estoque_ideal':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_ideal)}</span>;
-    case 'estoque_maximo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_maximo)}</span>;
-    case 'tempo_reposicao':      return <span className="text-xs text-gray-400 tabular-nums">{produto.tempo_reposicao_dias || 0}d</span>;
-    case 'peso':                 return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.peso_kg)}kg</span>;
-    case 'dimensoes':            return <span className="text-xs text-gray-400">{produto.dimensoes_cm || '—'}</span>;
-    case 'tipo':                 return <span className="text-xs text-gray-400">{produto.tipo || '—'}</span>;
+    case 'estoque_minimo':       return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
+    case 'estoque_ideal':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_ideal)}</span>;
+    case 'estoque_maximo':       return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_maximo)}</span>;
+    case 'tempo_reposicao':      return <span className="text-xs text-muted-foreground tabular-nums">{produto.tempo_reposicao_dias || 0}d</span>;
+    case 'peso':                 return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.peso_kg)}kg</span>;
+    case 'dimensoes':            return <span className="text-xs text-muted-foreground">{produto.dimensoes_cm || '—'}</span>;
+    case 'tipo':                 return <span className="text-xs text-muted-foreground">{produto.tipo || '—'}</span>;
     case 'unidade': {
       const { unidadeBase, unidadeComercial, mostramMesma } = getCatalogUnitLabels(produto);
       return (
-        <span className="flex flex-col text-xs text-gray-400 leading-tight">
+        <span className="flex flex-col text-xs text-muted-foreground leading-tight">
           <span>{unidadeBase || '—'}</span>
           {!mostramMesma && (
-            <span className="text-[9px] text-gray-500 dark:text-gray-500 mt-0.5">Vitrine: {unidadeComercial}</span>
+            <span className="text-[9px] text-muted-foreground dark:text-muted-foreground mt-0.5">Vitrine: {unidadeComercial}</span>
           )}
         </span>
       );
     }
-    case 'unidades_pacote':      return <span className="text-xs text-gray-400">{produto.unidades_por_pacote || 1}</span>;
-    default:                     return <span className="text-xs text-gray-400">—</span>;
+    case 'unidades_pacote':      return <span className="text-xs text-muted-foreground">{produto.unidades_por_pacote || 1}</span>;
+    default:                     return <span className="text-xs text-muted-foreground">—</span>;
   }
 }
 
 // ── Valor agregado para grupos ────────────────────────────────────────────────
 function groupCellValue(colId, row) {
-  const tilde  = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(v)}</span> : dash();
-  const tildeP = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(v)}</span> : dash();
-  const dash   = () => <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
+  const tilde  = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtR(v)}</span> : dash();
+  const tildeP = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtPct(v)}</span> : dash();
+  const dash   = () => <span className="text-xs text-gray-300 dark:text-foreground/90">—</span>;
   switch (colId) {
     case 'preco_venda':           return tilde(row.precoMedio);
     case 'preco_custo':           return tilde(row.custoMedio);
@@ -167,7 +167,7 @@ function groupCellValue(colId, row) {
     case 'markup':                return tildeP(row.markupMedio);
     case 'margem':                return tildeP(row.margemMedia);
     case 'inventario_valorizado': return row.lastroTotal > 0
-      ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(row.lastroTotal)}</span>
+      ? <span className="text-xs font-semibold text-muted-foreground tabular-nums">{fmtR(row.lastroTotal)}</span>
       : dash();
     case 'estoque_atual': {
       const skus = collectSkus(row.node);
@@ -175,29 +175,29 @@ function groupCellValue(colId, row) {
       if (disp.mode === 'empty') return dash();
       if (disp.mode === 'mixed') {
         return (
-          <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums inline-flex flex-col leading-tight items-end">
+          <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight items-end">
             <span>{fmtN(disp.quantidade)}</span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">un. base (mistura)</span>
+            <span className="text-[10px] text-muted-foreground">un. base (mistura)</span>
           </span>
         );
       }
       return (
-        <span className="flex flex-col text-xs text-gray-600 dark:text-gray-300 tabular-nums leading-tight items-end">
+        <span className="flex flex-col text-xs text-muted-foreground tabular-nums leading-tight items-end">
           <span>
             {fmtN(disp.quantidade)} {disp.sigla || (skus[0]?.unidade_principal || 'UN')}
           </span>
           {disp.mode === 'display' ? (
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+            <span className="text-[10px] text-muted-foreground mt-0.5">
               {disp.rotulo ? `(${disp.rotulo})` : '(unidade de vitrine)'}
             </span>
           ) : null}
         </span>
       );
     }
-    case 'estoque_minimo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.estoqueMinTotal)}</span>;
-    case 'estoque_ideal':         return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.estoqueIdealTotal)}</span>;
-    case 'estoque_maximo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.estoqueMaxTotal)}</span>;
-    case 'peso':                  return <span className="text-xs text-gray-400 tabular-nums">{fmtN(row.pesoTotal)}kg</span>;
+    case 'estoque_minimo':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.estoqueMinTotal)}</span>;
+    case 'estoque_ideal':         return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.estoqueIdealTotal)}</span>;
+    case 'estoque_maximo':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.estoqueMaxTotal)}</span>;
+    case 'peso':                  return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.pesoTotal)}kg</span>;
     case 'status':                return row.criticalCount > 0
       ? (
         <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400">
@@ -235,14 +235,14 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
         <div className="flex items-center gap-1.5 min-w-0">
           {!isLeaf && (
             <ChevronRight
-              className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+              className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
             />
           )}
           {isLeaf && <div className="w-3.5 flex-shrink-0" />}
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-100 truncate uppercase tracking-wide">
+          <span className="text-xs font-semibold text-foreground/90 dark:text-gray-100 truncate uppercase tracking-wide">
             {row.label}
           </span>
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 flex-shrink-0 ml-0.5">
+          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
             {row.count}
           </Badge>
         </div>
@@ -271,12 +271,12 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
             <Button variant="ghost" size="icon"
               className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
-              <Edit className="w-3 h-3 text-gray-500" />
+              <Edit className="w-3 h-3 text-muted-foreground" />
             </Button>
             <Button variant="ghost" size="icon"
               className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => { e.stopPropagation(); onDelete(p); }}>
-              <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
+              <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
             </Button>
           </div>
         </td>
@@ -286,15 +286,15 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
         style={{ left: editOffset, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
+          <div className="flex-shrink-0 rounded bg-muted overflow-hidden flex items-center justify-center"
             style={{ width: 32, height: 32 }}>
             {p.imagem_url
               ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
               : <Package className="w-3.5 h-3.5 text-gray-300" />}
           </div>
-          <span className="text-xs font-normal text-gray-500 dark:text-gray-400 truncate uppercase">{p.nome}</span>
+          <span className="text-xs font-normal text-muted-foreground truncate uppercase">{p.nome}</span>
           {p.codigo_interno && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 flex-shrink-0 font-mono">{p.codigo_interno}</span>
+            <span className="text-[10px] text-muted-foreground flex-shrink-0 font-mono">{p.codigo_interno}</span>
           )}
         </div>
       </td>
@@ -320,13 +320,13 @@ export function LevelControl({ level, onChange }) {
 
   return (
     <div className="flex items-center gap-1 select-none">
-      <span className="text-[10px] text-gray-400 dark:text-gray-500 mr-1">nível</span>
+      <span className="text-[10px] text-muted-foreground mr-1">nível</span>
       {levels.map(({ value, label, title }) => (
         <button key={value} onClick={() => onChange(value)} title={title}
           className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
             level === value
-              ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-primary/90'
           }`}
         >
           {label}
@@ -439,7 +439,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={headerColSpan} className="py-12 text-center text-sm text-gray-400">
+                <td colSpan={headerColSpan} className="py-12 text-center text-sm text-muted-foreground">
                   Nenhum produto encontrado.
                 </td>
               </tr>

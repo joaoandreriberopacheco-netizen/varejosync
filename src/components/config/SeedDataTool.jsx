@@ -329,7 +329,7 @@ export default function SeedDataTool() {
   };
 
   return (
-    <Card className="font-glacial border-0 shadow-sm bg-white dark:bg-gray-800 mt-6">
+    <Card className="font-glacial border-0 shadow-sm bg-card mt-6">
       <CardHeader className="pb-2 border-b border-slate-50 bg-slate-50/30">
         <CardTitle className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
           <Database className="w-5 h-5 text-blue-600" />

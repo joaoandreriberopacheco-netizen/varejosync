@@ -92,7 +92,7 @@ export default function LixeiraLancamentos() {
   };
 
   if (loading) {
-    return <div className="p-4 text-center text-gray-500">Carregando...</div>;
+    return <div className="p-4 text-center text-muted-foreground">Carregando...</div>;
   }
 
   return (
@@ -109,7 +109,7 @@ export default function LixeiraLancamentos() {
       </div>
 
       {lancamentos.length === 0 ? (
-        <Card className="p-8 text-center text-gray-500">
+        <Card className="p-8 text-center text-muted-foreground">
           Nenhum lançamento cancelado
         </Card>
       ) : (
@@ -124,10 +124,10 @@ export default function LixeiraLancamentos() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-foreground">
                         {lanc.descricao}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         {lanc.referencia_numero}
                       </p>
                     </div>
@@ -136,7 +136,7 @@ export default function LixeiraLancamentos() {
                     </p>
                   </div>
 
-                  <div className="text-xs text-gray-500 space-y-1">
+                  <div className="text-xs text-muted-foreground space-y-1">
                     <p>Cancelado por: <strong>{quemCancelou}</strong></p>
                     {quando && <p>Em: {quando}</p>}
                     {lanc.grupo_lancamento_id && (

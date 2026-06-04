@@ -280,14 +280,14 @@ export default function AprovacoesFinanceirasPage() {
   const fmtDate = (d) => { try { return format(new Date(d), 'dd/MM/yy HH:mm', { locale: ptBR }); } catch { return '-'; } };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
+    <div className="min-h-screen bg-background pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+            <h1 className="text-2xl font-semibold text-foreground font-glacial">
               Aprovações Financeiras
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {Object.keys(groupedTransactions).length} pendente{Object.keys(groupedTransactions).length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -304,9 +304,9 @@ export default function AprovacoesFinanceirasPage() {
         </div>
 
         {Object.keys(groupedTransactions).length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center shadow-sm">
+          <div className="bg-card rounded-3xl p-12 text-center shadow-sm">
             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-            <p className="text-base font-medium text-gray-600 dark:text-gray-400">
+            <p className="text-base font-medium text-muted-foreground">
               Nenhuma aprovação pendente
             </p>
           </div>
@@ -338,7 +338,7 @@ export default function AprovacoesFinanceirasPage() {
                         <button
                           type="button"
                           onClick={() => handleTogglePedidoLote(primeira.id)}
-                          className={`h-5 w-5 rounded-full transition-colors ${selectedPedidosIds.includes(primeira.id) ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+                          className={`h-5 w-5 rounded-full transition-colors ${selectedPedidosIds.includes(primeira.id) ? 'bg-emerald-600' : 'bg-muted'}`}
                         />
                       )}
                       {primeira.referencia_tipo === 'PedidoCompra' && (
@@ -364,19 +364,19 @@ export default function AprovacoesFinanceirasPage() {
         )}
 
         {modoSelecaoLote && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm space-y-4">
+          <div className="bg-card rounded-3xl p-4 shadow-sm space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Aprovação em lote</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{pedidosSelecionadosLote.length} pedido(s) selecionado(s)</p>
+                <p className="text-sm font-semibold text-foreground">Aprovação em lote</p>
+                <p className="text-xs text-muted-foreground">{pedidosSelecionadosLote.length} pedido(s) selecionado(s)</p>
               </div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(pedidosSelecionadosLote.reduce((acc, item) => acc + (item.valor || 0), 0))}</p>
+              <p className="text-sm font-semibold text-foreground">{formatCurrency(pedidosSelecionadosLote.reduce((acc, item) => acc + (item.valor || 0), 0))}</p>
             </div>
             <div className="space-y-4">
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/60 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo do lançamento</p>
-                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">Despesa CMV automática</p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Pedidos aprovados no financeiro geram contas de compra como custo de mercadoria vendida.</p>
+              <div className="rounded-2xl bg-muted/40 dark:bg-muted/60 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipo do lançamento</p>
+                <p className="mt-1 text-sm font-medium text-foreground">Despesa CMV automática</p>
+                <p className="mt-1 text-xs text-muted-foreground">Pedidos aprovados no financeiro geram contas de compra como custo de mercadoria vendida.</p>
               </div>
               <div>
                 <Label>Conta para Pagamento</Label>
@@ -398,15 +398,15 @@ export default function AprovacoesFinanceirasPage() {
         {/* Modal de aprovação */}
         {selectedTransaction && (
           <Dialog open={!!selectedTransaction} onOpenChange={() => { setSelectedTransaction(null); }}>
-            <DialogContent className="dark:bg-gray-800">
+            <DialogContent className="dark:bg-muted">
               <DialogHeader>
                 <p className="font-semibold text-lg">Aprovar Pagamento</p>
                 </DialogHeader>
               <div className="space-y-4 py-4">
-                <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/60 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo do lançamento</p>
-                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">Despesa CMV automática</p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Este pagamento de compra será salvo como custo de mercadoria vendida.</p>
+                <div className="rounded-2xl bg-muted/40 dark:bg-muted/60 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipo do lançamento</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">Despesa CMV automática</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Este pagamento de compra será salvo como custo de mercadoria vendida.</p>
                 </div>
                 <div>
                   <Label>Conta para Pagamento</Label>
@@ -435,14 +435,14 @@ export default function AprovacoesFinanceirasPage() {
         )}
 
         {isProcessingApproval && (
-          <div className="fixed inset-0 z-[70] bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center px-6">
-            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-3xl px-6 py-7 flex flex-col items-center gap-3 max-w-xs w-full text-center">
-              <div className="h-14 w-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <div className="fixed inset-0 z-[70] bg-white/80 dark:bg-background/80 backdrop-blur-sm flex items-center justify-center px-6">
+            <div className="bg-card shadow-xl rounded-3xl px-6 py-7 flex flex-col items-center gap-3 max-w-xs w-full text-center">
+              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
                 <Loader2 className="w-7 h-7 animate-spin text-emerald-600" />
               </div>
               <div>
-                <p className="text-base font-semibold text-gray-900 dark:text-white font-glacial">Processando aprovação</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Aguarde para evitar confirmações acidentais.</p>
+                <p className="text-base font-semibold text-foreground font-glacial">Processando aprovação</p>
+                <p className="text-sm text-muted-foreground mt-1">Aguarde para evitar confirmações acidentais.</p>
               </div>
             </div>
           </div>
@@ -452,7 +452,7 @@ export default function AprovacoesFinanceirasPage() {
       {/* FAB Histórico */}
       <button
         onClick={() => { setShowHistorico(true); loadHistorico(); }}
-        className="fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 text-white shadow-xl dark:bg-gray-700 p38-bottom-fab1 lg:bottom-8"
+        className="fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-xl dark:bg-muted p38-bottom-fab1 lg:bottom-8"
         title="Histórico de aprovações"
       >
         <Clock className="w-5 h-5" />
@@ -462,32 +462,32 @@ export default function AprovacoesFinanceirasPage() {
       {showHistorico && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setShowHistorico(false)} />
-          <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh]">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-400" />
+          <div className="relative w-full max-w-lg bg-card rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border/40 flex-shrink-0">
+              <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
                 Histórico de Aprovações
               </h2>
-              <button onClick={() => setShowHistorico(false)} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800">
-                <X className="w-4 h-4 text-gray-500" />
+              <button onClick={() => setShowHistorico(false)} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted">
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-              {loadingHistorico && <div className="text-center py-8 text-gray-400 text-sm">Carregando...</div>}
+              {loadingHistorico && <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>}
               {!loadingHistorico && historico.length === 0 && (
-                <div className="text-center py-8 text-gray-400 text-sm">Nenhum registro encontrado</div>
+                <div className="text-center py-8 text-muted-foreground text-sm">Nenhum registro encontrado</div>
               )}
               {historico.map(p => (
-                <div key={p.id} className="flex items-start justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+                <div key={p.id} className="flex items-start justify-between p-3 rounded-xl bg-muted/50">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{p.numero}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{p.fornecedor_nome}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
+                    <p className="text-sm font-medium text-foreground">{p.numero}</p>
+                    <p className="text-xs text-muted-foreground truncate">{p.fornecedor_nome}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       {p.data_aprovacao_financeira ? fmtDate(p.data_aprovacao_financeira) : fmtDate(p.updated_date)}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-semibold text-foreground dark:text-gray-100">
                       R$ {calcValorTotalPedidoCompra(p).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${

@@ -64,7 +64,7 @@ export default function CampanhasPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 min-w-0">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-gray-800">Campanhas Promocionais</h1>
-            <p className="text-gray-600">Crie promoções automáticas com data e hora de validade.</p>
+            <p className="text-muted-foreground">Crie promoções automáticas com data e hora de validade.</p>
           </div>
           <Button onClick={handleAddNew} className="gap-2 bg-green-600 hover:bg-green-700 shrink-0 w-full sm:w-auto">
             <PlusCircle className="h-4 w-4" /> Nova Campanha
@@ -251,7 +251,7 @@ function CampanhaForm({ campanha, onSave, onClose }) {
 
         <div>
           <Label>Produtos Participantes</Label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-muted-foreground mb-2">
             Selecione quais produtos fazem parte desta campanha
           </p>
           <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-2">

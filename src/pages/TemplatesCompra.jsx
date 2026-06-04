@@ -157,8 +157,8 @@ export default function TemplatesCompra() {
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-20">
       {/* Header */}
       <div className="pb-2">
-        <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Templates de Pedidos</p>
-        <p className="text-xs text-gray-400">Baixe o template com sua base de dados, preencha e importe</p>
+        <p className="text-xl font-medium text-foreground font-glacial">Templates de Pedidos</p>
+        <p className="text-xs text-muted-foreground">Baixe o template com sua base de dados, preencha e importe</p>
       </div>
 
       {/* Message */}
@@ -179,15 +179,15 @@ export default function TemplatesCompra() {
 
       {/* Import Result Details */}
       {importResult && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-3 shadow-sm">
+        <div className="bg-card rounded-lg p-4 space-y-3 shadow-sm">
           {importResult.novos_produtos?.length > 0 && (
             <div className="flex items-start gap-2">
-              <Package className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+              <Package className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Novos produtos cadastrados:</p>
+                <p className="text-sm font-medium text-foreground/90">Novos produtos cadastrados:</p>
                 <ul className="mt-1 space-y-0.5">
                   {importResult.novos_produtos.map((p, i) => (
-                    <li key={i} className="text-xs text-gray-500 dark:text-gray-400">• {p}</li>
+                    <li key={i} className="text-xs text-muted-foreground">• {p}</li>
                   ))}
                 </ul>
               </div>
@@ -195,12 +195,12 @@ export default function TemplatesCompra() {
           )}
           {importResult.novos_fornecedores?.length > 0 && (
             <div className="flex items-start gap-2">
-              <Users className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+              <Users className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Novos fornecedores cadastrados:</p>
+                <p className="text-sm font-medium text-foreground/90">Novos fornecedores cadastrados:</p>
                 <ul className="mt-1 space-y-0.5">
                   {importResult.novos_fornecedores.map((f, i) => (
-                    <li key={i} className="text-xs text-gray-500 dark:text-gray-400">• {f}</li>
+                    <li key={i} className="text-xs text-muted-foreground">• {f}</li>
                   ))}
                 </ul>
               </div>
@@ -223,7 +223,7 @@ export default function TemplatesCompra() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-2 border-b border-border/40">
         {[
           { id: 'download', label: 'Baixar Template', Icon: Download },
           { id: 'import',   label: 'Importar',         Icon: Upload },
@@ -233,8 +233,8 @@ export default function TemplatesCompra() {
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
               activeTab === id
-                ? 'text-gray-900 dark:text-white border-gray-900 dark:border-white'
-                : 'text-gray-500 dark:text-gray-400 border-transparent'
+                ? 'text-foreground border-gray-900 dark:border-white'
+                : 'text-muted-foreground border-transparent'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -246,21 +246,21 @@ export default function TemplatesCompra() {
       {/* Download Tab */}
       {activeTab === 'download' && (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-card rounded-lg p-6 shadow-sm">
             <div className="flex flex-col items-center justify-center text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <FileSpreadsheet className="w-8 h-8 text-gray-600 dark:text-gray-400" />
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                <FileSpreadsheet className="w-8 h-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white mb-1">Template com Base de Dados</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <h3 className="font-medium text-foreground mb-1">Template com Base de Dados</h3>
+                <p className="text-sm text-muted-foreground">
                   O arquivo gerado inclui todos os seus produtos e fornecedores cadastrados como referência
                 </p>
               </div>
               <Button
                 onClick={handleDownloadTemplate}
                 disabled={isGenerating}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800"
+                className="bg-gray-900 dark:bg-white text-white dark:text-foreground hover:bg-primary"
               >
                 {isGenerating ? 'Gerando...' : 'Baixar Template'}
               </Button>
@@ -268,8 +268,8 @@ export default function TemplatesCompra() {
           </div>
 
           {/* Info sobre as abas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm space-y-3">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <div className="bg-card rounded-lg p-4 shadow-sm space-y-3">
+            <p className="text-sm font-medium text-foreground/90 flex items-center gap-2">
               <Info className="w-4 h-4" /> O template contém 3 abas:
             </p>
             <div className="space-y-2">
@@ -279,19 +279,19 @@ export default function TemplatesCompra() {
                 { Icon: Users,        title: '"Fornecedores Cadastrados"', desc: 'Consulta — lista todos os fornecedores com ID e campos para referência.' },
               ].map(({ Icon, title, desc }) => (
                 <div key={title} className="flex items-start gap-3">
-                  <Icon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <Icon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{title}: </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{desc}</span>
+                    <span className="text-sm font-medium text-foreground/90">{title}: </span>
+                    <span className="text-sm text-muted-foreground">{desc}</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Como usar:</p>
-            <ol className="text-sm text-gray-500 dark:text-gray-400 space-y-1.5 list-decimal list-inside">
+          <div className="bg-card rounded-lg p-4 shadow-sm space-y-2">
+            <p className="text-sm font-medium text-foreground/90">Como usar:</p>
+            <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
               <li>Baixe o template — ele já vem com seus dados atuais</li>
               <li>Na aba "Pedido", preencha o cabeçalho com os dados do fornecedor</li>
               <li>Adicione os itens: cole o ID do produto existente <strong>OU</strong> deixe vazio e preencha os campos hierárquicos para cadastrar um novo</li>
@@ -308,8 +308,8 @@ export default function TemplatesCompra() {
 
           {/* Barra de progresso */}
           {isImporting && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm space-y-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Progresso da importação</p>
+            <div className="bg-card rounded-lg p-4 shadow-sm space-y-3">
+              <p className="text-sm font-medium text-foreground/90">Progresso da importação</p>
               <div className="space-y-2">
                 {STEPS.map((s, i) => {
                   const currentIdx = STEPS.findIndex(x => x.id === step);
@@ -320,26 +320,26 @@ export default function TemplatesCompra() {
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
                         isDone  ? 'bg-green-500' :
                         isActive ? 'bg-gray-700 dark:bg-gray-200' :
-                                   'bg-gray-200 dark:bg-gray-700'
+                                   'bg-muted'
                       }`}>
                         {isDone ? (
                           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         ) : isActive ? (
-                          <div className="w-2 h-2 rounded-full bg-white dark:bg-gray-900 animate-pulse" />
+                          <div className="w-2 h-2 rounded-full bg-card animate-pulse" />
                         ) : (
-                          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
+                          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-muted/400" />
                         )}
                       </div>
                       <span className={`text-sm ${
                         isDone  ? 'text-green-600 dark:text-green-400' :
-                        isActive ? 'text-gray-900 dark:text-white font-medium' :
-                                   'text-gray-400 dark:text-gray-600'
+                        isActive ? 'text-foreground font-medium' :
+                                   'text-muted-foreground'
                       }`}>{s.label}</span>
                       {isActive && s.id === 'analyzing' && analyzeResult === null && (
-                        <span className="text-xs text-gray-400 ml-auto">verificando dados…</span>
+                        <span className="text-xs text-muted-foreground ml-auto">verificando dados…</span>
                       )}
                       {isActive && s.id === 'importing' && analyzeResult && (
-                        <span className="text-xs text-gray-400 ml-auto">
+                        <span className="text-xs text-muted-foreground ml-auto">
                           {analyzeResult.itens_count} iten{analyzeResult.itens_count !== 1 ? 's' : ''}, {analyzeResult.fornecedor_nome}
                         </span>
                       )}
@@ -349,15 +349,15 @@ export default function TemplatesCompra() {
               </div>
               {/* Resumo da análise após fase analyze */}
               {analyzeResult && step === 'importing' && (
-                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-1.5">
+                <div className="mt-2 pt-2 border-t border-border/40 grid grid-cols-2 gap-1.5">
                   {[
                     { label: 'Itens no pedido',     val: analyzeResult.itens_count },
                     { label: 'Produtos a atualizar', val: analyzeResult.produtos_atualizados },
                     { label: 'Produtos novos',       val: analyzeResult.produtos_novos },
                     { label: 'Avisos',               val: analyzeResult.erros?.length || 0 },
                   ].map(({ label, val }) => (
-                    <div key={label} className="text-xs text-gray-500 dark:text-gray-400">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{val} </span>{label}
+                    <div key={label} className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground/90">{val} </span>{label}
                     </div>
                   ))}
                 </div>
@@ -372,17 +372,17 @@ export default function TemplatesCompra() {
             onDrop={handleDrop}
             className={`rounded-lg p-8 text-center transition-colors border-2 border-dashed ${
               dragActive
-                ? 'border-gray-700 dark:border-gray-300 bg-gray-50 dark:bg-gray-700/50'
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                ? 'border-gray-700 dark:border-gray-300 bg-muted/40 dark:bg-muted/50'
+                : 'border-gray-300 dark:border-gray-600 bg-card'
             }`}
           >
             <div className="flex flex-col items-center justify-center space-y-3">
-              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Upload className="w-7 h-7 text-gray-500 dark:text-gray-400" />
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+                <Upload className="w-7 h-7 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-gray-900 dark:text-white">Arraste o arquivo aqui</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">ou clique para selecionar</p>
+                <p className="font-medium text-foreground">Arraste o arquivo aqui</p>
+                <p className="text-sm text-muted-foreground">ou clique para selecionar</p>
               </div>
               <input
                 ref={fileInputRef}
@@ -395,17 +395,17 @@ export default function TemplatesCompra() {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800"
+                className="bg-gray-900 dark:bg-white text-white dark:text-foreground hover:bg-primary"
               >
                 {isImporting ? 'Importando...' : 'Selecionar Arquivo'}
               </Button>
-              <p className="text-xs text-gray-400">Apenas .xlsx ou .xls</p>
+              <p className="text-xs text-muted-foreground">Apenas .xlsx ou .xls</p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">O que acontece na importação:</p>
-            <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-1.5 list-disc list-inside">
+          <div className="bg-card rounded-lg p-4 shadow-sm space-y-2">
+            <p className="text-sm font-medium text-foreground/90">O que acontece na importação:</p>
+            <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
               <li>Fornecedores novos são cadastrados automaticamente</li>
               <li>Produtos novos são cadastrados automaticamente</li>
               <li>O pedido de compra é criado com todos os itens válidos</li>

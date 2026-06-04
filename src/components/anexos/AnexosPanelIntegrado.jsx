@@ -108,14 +108,14 @@ export default function AnexosPanelIntegrado({
   };
 
   const fabClass = inline
-    ? 'relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
-    : 'fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 shadow-lg transition-colors hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-white p38-bottom-fab1';
+    ? 'relative flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+    : 'fixed right-6 z-[55] flex h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg transition-colors hover:bg-primary/90 dark:bg-gray-200 dark:hover:bg-white p38-bottom-fab1';
   const iconClass = inline
-    ? 'w-4 h-4 text-gray-500 dark:text-gray-300'
+    ? 'w-4 h-4 text-muted-foreground dark:text-foreground/90'
     : 'w-5 h-5 text-white dark:text-gray-800';
   const badgeClass = inline
-    ? 'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-gray-700 dark:bg-white text-white dark:text-gray-900 text-[0.5rem] font-bold flex items-center justify-center'
-    : 'absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-[0.55rem] font-bold flex items-center justify-center shadow';
+    ? 'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-gray-700 dark:bg-white text-white dark:text-foreground text-[0.5rem] font-bold flex items-center justify-center'
+    : 'absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-card text-foreground text-[0.55rem] font-bold flex items-center justify-center shadow';
 
   return (
     <>

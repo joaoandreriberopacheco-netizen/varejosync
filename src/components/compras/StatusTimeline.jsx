@@ -89,10 +89,10 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
     }
     if (isCompleted) {
       return isActive
-        ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-500'
-        : 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900';
+        ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-500'
+        : 'bg-gray-700 dark:bg-gray-200 text-white dark:text-foreground';
     }
-    return 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600';
+    return 'bg-muted text-muted-foreground';
   };
 
   // Cor da linha de conexão entre etapas
@@ -102,7 +102,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
       if (idx >= 1 && currentIndex >= 2) return 'bg-lime-500';
       return 'bg-gray-700 dark:bg-gray-300';
     }
-    return 'bg-gray-100 dark:bg-gray-800';
+    return 'bg-muted';
   };
 
   return (
@@ -110,8 +110,8 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
       {/* Cronômetro progressivo */}
       {elapsed && (
         <div className="flex items-center justify-end gap-1 px-1">
-          <Clock className="w-3 h-3 text-gray-400" />
-          <span className="text-[10px] text-gray-400 font-mono">{elapsed} em andamento</span>
+          <Clock className="w-3 h-3 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground font-mono">{elapsed} em andamento</span>
         </div>
       )}
 
@@ -132,7 +132,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
                 <Icon className="w-3.5 h-3.5" />
               </div>
               {isActive && dataStage && (
-                <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center leading-tight mt-0.5 max-w-[54px]">
+                <div className="text-[9px] text-muted-foreground text-center leading-tight mt-0.5 max-w-[54px]">
                   {format(new Date(dataStage), 'dd/MM HH:mm')}
                 </div>
               )}

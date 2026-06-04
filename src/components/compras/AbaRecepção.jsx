@@ -168,7 +168,7 @@ export default function AbaRecepção({ pedido }) {
       case 'Recebido Parcial':
         return <AlertTriangle className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
       default:
-        return <Clock className="w-5 h-5 text-gray-400 dark:text-gray-500" />;
+        return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -185,13 +185,13 @@ export default function AbaRecepção({ pedido }) {
   if (embarques.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-          <Package className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+          <Package className="w-8 h-8 text-muted-foreground" />
         </div>
-        <p className="text-base text-gray-600 dark:text-gray-400 font-medium mb-1">
+        <p className="text-base text-muted-foreground font-medium mb-1">
           Nenhum embarque registrado
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-500">
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground">
           Adicione embarques na aba Logística para iniciar a recepção.
         </p>
       </div>
@@ -234,7 +234,7 @@ export default function AbaRecepção({ pedido }) {
           <button
             key={embarque.id || idx}
             onClick={() => setSelectedEmbarque(embarque)}
-            className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="w-full text-left bg-muted/50/50 hover:bg-muted rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -243,7 +243,7 @@ export default function AbaRecepção({ pedido }) {
                   <div className="w-6 h-6 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
                     <Package className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-base font-semibold text-foreground">
                     Embarque {codigoExibicao}
                   </h3>
                   <div className="flex-1" />
@@ -253,27 +253,27 @@ export default function AbaRecepção({ pedido }) {
                 {/* Info grid - 2 colunas */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">Transportadora</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{embarque.transportadora_nome || '-'}</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Transportadora</p>
+                    <p className="text-sm font-semibold text-foreground">{embarque.transportadora_nome || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">Despacho</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{dataEmbarque}</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Despacho</p>
+                    <p className="text-sm font-semibold text-foreground">{dataEmbarque}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">ETA</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{eta}</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-0.5">ETA</p>
+                    <p className="text-sm font-semibold text-foreground">{eta}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">Itens</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{qtdItens} produto(s)</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Itens</p>
+                    <p className="text-sm font-semibold text-foreground">{qtdItens} produto(s)</p>
                   </div>
                 </div>
 
                 {/* Status badge */}
                 <span className={`inline-block px-3 py-1.5 text-xs font-semibold rounded-full ${
                   statusRecebimento === 'Pendente'
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    ? 'bg-muted text-foreground/90'
                     : statusRecebimento === 'Recebido OK'
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                     : statusRecebimento === 'Com Divergência'
@@ -313,20 +313,20 @@ export default function AbaRecepção({ pedido }) {
                 )}
 
                 {movimentosDoEmbarque.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
+                  <div className="mt-3 pt-3 border-t border-border/40">
+                    <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1">
                       <Warehouse className="w-3 h-3" /> Movimento de Estoque
                       {isLoadingMovimentos ? (
-                        <Loader2 className="w-3 h-3 animate-spin text-gray-400" aria-hidden />
+                        <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" aria-hidden />
                       ) : null}
                     </p>
                     {movimentosDoEmbarque.map((mov) => (
-                      <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300 space-y-0.5">
+                      <div key={mov.id} className="text-xs text-foreground/90 space-y-0.5">
                         <div>
                           <span className="font-medium">{mov.quantidade}</span> un. — {mov.produto_nome}
                         </div>
                         {mov.observacoes ? (
-                          <div className="text-[11px] text-gray-500 dark:text-gray-500 pl-0 leading-snug">
+                          <div className="text-[11px] text-muted-foreground dark:text-muted-foreground pl-0 leading-snug">
                             {mov.observacoes}
                           </div>
                         ) : null}
@@ -343,8 +343,8 @@ export default function AbaRecepção({ pedido }) {
                     <Play className="w-5 h-5 text-white fill-white" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                    <Play className="w-5 h-5 text-gray-600 dark:text-gray-400 fill-gray-600 dark:fill-gray-400" />
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    <Play className="w-5 h-5 text-muted-foreground fill-gray-600 dark:fill-gray-400" />
                   </div>
                 )}
               </div>
@@ -380,18 +380,18 @@ export default function AbaRecepção({ pedido }) {
 
       {recebimentoSucesso && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-gray-900 shadow-xl p-6 text-center space-y-4">
+          <div className="w-full max-w-md rounded-3xl bg-card shadow-xl p-6 text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
               <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recebimento concluído com sucesso</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Número do recebimento</p>
-              <p className="text-base font-semibold text-gray-900 dark:text-white">{recebimentoSucesso.recebimentoNumero}</p>
+              <h3 className="text-lg font-semibold text-foreground">Recebimento concluído com sucesso</h3>
+              <p className="text-sm text-muted-foreground">Número do recebimento</p>
+              <p className="text-base font-semibold text-foreground">{recebimentoSucesso.recebimentoNumero}</p>
             </div>
             <Button
               onClick={() => setRecebimentoSucesso(null)}
-              className="w-full h-11 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 rounded-xl"
+              className="w-full h-11 bg-gray-900 dark:bg-gray-100 text-white dark:text-foreground hover:opacity-90 rounded-xl"
             >
               Fechar
             </Button>

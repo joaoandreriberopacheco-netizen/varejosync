@@ -378,7 +378,7 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
             if (f?.name?.endsWith('.xlsx')) handleArquivo(f);
             else toast.error('Selecione um arquivo .xlsx');
           }}
-          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-8"
+          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-muted/50/50 p-8"
         >
           <input
             ref={inputRef}
@@ -390,14 +390,14 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           />
           <div className="flex flex-col items-center text-center pointer-events-none">
             {parsing ? (
-              <p className="text-sm text-gray-600 dark:text-gray-300">Lendo planilha de embalagens…</p>
+              <p className="text-sm text-muted-foreground">Lendo planilha de embalagens…</p>
             ) : (
               <>
-                <FileSpreadsheet className="w-10 h-10 text-gray-400 mb-2" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <FileSpreadsheet className="w-10 h-10 text-muted-foreground mb-2" />
+                <p className="text-sm font-medium text-foreground">
                   Arraste o .xlsx aqui ou clique para selecionar
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Modele pela exportação desta aba: base + Alt.1–2 (sigla, fator de conversão, ajuste preço × sobre o preço da embalagem; em branco = 1) e três colunas de vitrine 0/1 (Base, Alt.1, Alt.2) — exatamente uma com «1» por linha. Isto só prepara o resumo — a gravação é no botão Confirmar embalagens.
                 </p>
               </>
@@ -405,15 +405,15 @@ export default function ImportarEmbalagensPlanilha({ onParsed }) {
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <span className="text-sm truncate text-gray-700 dark:text-gray-200">{arquivo.name}</span>
+        <div className="flex items-center justify-between rounded-xl border border-border/40 p-4">
+          <span className="text-sm truncate text-foreground/90">{arquivo.name}</span>
           <button
             type="button"
             onClick={() => {
               setArquivo(null);
               if (inputRef.current) inputRef.current.value = '';
             }}
-            className="p-2 text-gray-400 hover:text-gray-600"
+            className="p-2 text-muted-foreground hover:text-muted-foreground"
           >
             <X className="w-4 h-4" />
           </button>

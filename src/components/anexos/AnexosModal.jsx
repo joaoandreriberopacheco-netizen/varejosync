@@ -40,11 +40,11 @@ function ThumbnailIcon({ anexo, large = false }) {
   return (
     <div className={`${size} flex flex-none items-center justify-center bg-gray-200 dark:bg-muted`}>
       {isPdf ? (
-        <FileText className={`${iconSize} text-gray-500 dark:text-muted-foreground`} />
+        <FileText className={`${iconSize} text-muted-foreground dark:text-muted-foreground`} />
       ) : isImage ? (
-        <Image className={`${iconSize} text-gray-500 dark:text-muted-foreground`} />
+        <Image className={`${iconSize} text-muted-foreground dark:text-muted-foreground`} />
       ) : (
-        <File className={`${iconSize} text-gray-500 dark:text-muted-foreground`} />
+        <File className={`${iconSize} text-muted-foreground dark:text-muted-foreground`} />
       )}
     </div>
   );
@@ -67,17 +67,17 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
           href={anexo.url_drive}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-800 hover:text-gray-900 dark:text-foreground dark:hover:text-foreground"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-800 hover:text-foreground dark:text-foreground dark:hover:text-foreground"
         >
           <span className="truncate">{anexo.nome_arquivo}</span>
-          <ExternalLink className="h-3.5 w-3.5 flex-none text-gray-500 dark:text-muted-foreground" />
+          <ExternalLink className="h-3.5 w-3.5 flex-none text-muted-foreground dark:text-muted-foreground" />
         </a>
         {anexo.origem_label && (
-          <p className="mt-0.5 text-[10px] text-gray-400 dark:text-muted-foreground">{anexo.origem_label}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground dark:text-muted-foreground">{anexo.origem_label}</p>
         )}
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">{formatSize(anexo.tamanho_bytes)}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground dark:text-muted-foreground">{formatSize(anexo.tamanho_bytes)}</p>
         {anexo.descricao && (
-          <p className="mt-1 line-clamp-2 text-[11px] text-gray-400 dark:text-muted-foreground">{anexo.descricao}</p>
+          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground dark:text-muted-foreground">{anexo.descricao}</p>
         )}
       </div>
       {!readOnly && (
@@ -89,7 +89,7 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
             setDeleting(false);
           }}
           disabled={deleting}
-          className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400"
         >
           {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         </button>
@@ -167,9 +167,9 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
     <div className={`fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden ${brandSurface.pageScreen}`}>
       <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-6">
         <div className="min-w-0">
-          <h2 className="font-glacial text-xl font-semibold text-gray-900 dark:text-foreground">Anexos</h2>
+          <h2 className="font-glacial text-xl font-semibold text-foreground dark:text-foreground">Anexos</h2>
           {referenciaNomero && (
-            <p className="mt-0.5 truncate text-xs uppercase tracking-wide text-gray-500 dark:text-muted-foreground">{referenciaNomero}</p>
+            <p className="mt-0.5 truncate text-xs uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">{referenciaNomero}</p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -180,14 +180,14 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
             className="flex h-9 items-center justify-center gap-2 rounded-full bg-gray-200 px-3 transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-muted dark:hover:bg-muted/80"
           >
             {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
-            <span className="text-xs font-medium text-gray-600 dark:text-foreground">PDF</span>
+            <span className="text-xs font-medium text-muted-foreground dark:text-foreground">PDF</span>
           </button>
           <button
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 transition-colors hover:bg-gray-300 dark:bg-muted dark:hover:bg-muted/80"
           >
-            <X className="h-4 w-4 text-gray-600 dark:text-foreground" />
+            <X className="h-4 w-4 text-muted-foreground dark:text-foreground" />
           </button>
         </div>
       </div>
@@ -196,11 +196,11 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
         {anexos.length === 0 ? (
           <div className="flex h-full min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-muted">
-              <File className="h-7 w-7 text-gray-400 dark:text-muted-foreground" />
+              <File className="h-7 w-7 text-muted-foreground dark:text-muted-foreground" />
             </div>
-            <p className="text-sm text-gray-400 dark:text-muted-foreground">Nenhum anexo ainda</p>
+            <p className="text-sm text-muted-foreground dark:text-muted-foreground">Nenhum anexo ainda</p>
             {!readOnly && (
-              <p className="max-w-xs text-xs text-gray-400 dark:text-muted-foreground">
+              <p className="max-w-xs text-xs text-muted-foreground dark:text-muted-foreground">
                 Use o botão + para escolher o tipo de documento e enviar um arquivo.
               </p>
             )}
@@ -208,16 +208,16 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
         ) : (
           <div className="space-y-5">
             {readOnly && (
-              <div className={`rounded-2xl px-4 py-3 text-sm ${brandSurface.cardInset} text-gray-600 dark:text-muted-foreground`}>
+              <div className={`rounded-2xl px-4 py-3 text-sm ${brandSurface.cardInset} text-muted-foreground dark:text-muted-foreground`}>
                 Visualização apenas: você pode abrir os anexos, mas não pode adicionar nem excluir arquivos.
               </div>
             )}
             {grupos.map(({ tipo, itens }) => (
               <div key={tipo}>
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">{tipo}</span>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">{tipo}</span>
                   <span className="text-[0.65rem] text-gray-300 dark:text-muted-foreground/50">·</span>
-                  <span className="text-[0.65rem] text-gray-400 dark:text-muted-foreground">{itens.length}</span>
+                  <span className="text-[0.65rem] text-muted-foreground dark:text-muted-foreground">{itens.length}</span>
                 </div>
                 <div className="space-y-2">
                   {itens.map((anexo) => (
@@ -255,7 +255,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30" />
-                <p className="mb-3 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-muted-foreground">
+                <p className="mb-3 text-[0.6rem] font-semibold uppercase tracking-widest text-muted-foreground dark:text-muted-foreground">
                   Tipo do documento
                 </p>
                 <TipoDocumentoSearch
@@ -272,7 +272,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
                   type="button"
                   onClick={() => inputRef.current?.click()}
                   disabled={uploading || !String(tipoSelecionado || '').trim()}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted/50 py-4 text-gray-700 transition-colors hover:bg-muted dark:text-foreground disabled:opacity-40"
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted/50 py-4 text-foreground/90 transition-colors hover:bg-muted dark:text-foreground disabled:opacity-40"
                 >
                   {uploading ? (
                     <>

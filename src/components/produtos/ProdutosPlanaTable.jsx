@@ -65,53 +65,53 @@ const widthMap = {
 function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }) {
   switch (col) {
     case 'codigo_interno':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_interno}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.codigo_interno}</TableCell>;
     case 'codigo_barras':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_barras || '-'}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.codigo_barras || '-'}</TableCell>;
     case 'categoria':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.categoria_nome || '-'}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.categoria_nome || '-'}</TableCell>;
     case 'tags':
-      return <TableCell key={col}><div className="flex flex-wrap gap-1">{(produto.tags || []).slice(0, 2).map(tag => <span key={tag} className="text-[10px] px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">#{tag}</span>)}</div></TableCell>;
+      return <TableCell key={col}><div className="flex flex-wrap gap-1">{(produto.tags || []).slice(0, 2).map(tag => <span key={tag} className="text-[10px] px-1 py-0.5 bg-muted text-foreground/90 rounded">#{tag}</span>)}</div></TableCell>;
     case 'status':
       return <TableCell key={col}>{getStockStatusIndicator(produto)}</TableCell>;
     case 'cadastro':
       return <TableCell key={col}>{cadastroStatus.incompleto ? <div className="flex flex-col gap-0.5">{cadastroStatus.checks.semCategoria && <span className="text-[10px] text-red-600 dark:text-red-400">Sem categoria</span>}{cadastroStatus.checks.semFornecedor && <span className="text-[10px] text-red-600 dark:text-red-400">Sem fornecedor</span>}{cadastroStatus.checks.semPrecoVenda && <span className="text-[10px] text-red-600 dark:text-red-400">Sem preço</span>}{cadastroStatus.checks.semCodigoBarras && <span className="text-[10px] text-red-600 dark:text-red-400">Sem cód. barras</span>}{cadastroStatus.checks.semImagem && <span className="text-[10px] text-red-600 dark:text-red-400">Sem imagem</span>}</div> : <span className="text-xs text-green-600 dark:text-green-400">Completo</span>}</TableCell>;
     case 'fornecedor':
-      return <TableCell key={col}>{fornecedorMap[produto.fornecedor_padrao_id] ? <div className="text-xs text-gray-700 dark:text-gray-300">{fornecedorMap[produto.fornecedor_padrao_id]}</div> : <span className="text-xs text-gray-600 dark:text-gray-400">N/A</span>}</TableCell>;
+      return <TableCell key={col}>{fornecedorMap[produto.fornecedor_padrao_id] ? <div className="text-xs text-foreground/90">{fornecedorMap[produto.fornecedor_padrao_id]}</div> : <span className="text-xs text-muted-foreground">N/A</span>}</TableCell>;
     case 'preco_venda':
       return (
-        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+        <TableCell key={col} className="text-xs text-foreground/90">
           <div className="flex flex-col leading-tight">
             <span>R$ {formatarNumero(cat.precoVenda)}</span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
           </div>
         </TableCell>
       );
     case 'margem':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(margem)}%</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(margem)}%</TableCell>;
     case 'preco_custo':
       return (
-        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+        <TableCell key={col} className="text-xs text-foreground/90">
           <div className="flex flex-col leading-tight">
             <span>R$ {formatarNumero(cat.custoNaEmbalagem)}</span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
           </div>
         </TableCell>
       );
     case 'valor_compra':
       return (
-        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+        <TableCell key={col} className="text-xs text-foreground/90">
           <div className="flex flex-col leading-tight">
             <span>R$ {formatarNumero(cat.valorCompraNaEmbalagem)}</span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">/{cat.sigla}</span>
+            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
           </div>
         </TableCell>
       );
     case 'markup':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{cat.markupSobreCustoPct > 0 ? `${formatarNumero(cat.markupSobreCustoPct)}%` : `${produto.preco_venda_percentual || 0}%`}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{cat.markupSobreCustoPct > 0 ? `${formatarNumero(cat.markupSobreCustoPct)}%` : `${produto.preco_venda_percentual || 0}%`}</TableCell>;
     case 'estoque_atual':
       return (
-        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+        <TableCell key={col} className="text-xs text-foreground/90">
           <div className="flex flex-col leading-tight">
             <span>
               {(() => {
@@ -124,7 +124,7 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
               const apresent = formatEstoqueApresentacao(produto);
               if (!apresent) return null;
               return (
-                <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                <span className="text-[10px] text-muted-foreground mt-0.5">
                   {apresent.rotulo ? `(${apresent.rotulo})` : 'unidade de exibição'}
                 </span>
               );
@@ -133,27 +133,27 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
         </TableCell>
       );
     case 'estoque_minimo':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_minimo)}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_minimo)}</TableCell>;
     case 'estoque_ideal':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_ideal)}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_ideal)}</TableCell>;
     case 'estoque_maximo':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_maximo)}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_maximo)}</TableCell>;
     case 'tempo_reposicao':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.tempo_reposicao_dias || 0}d</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.tempo_reposicao_dias || 0}d</TableCell>;
     case 'peso':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.peso_kg)}kg</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.peso_kg)}kg</TableCell>;
     case 'dimensoes':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.dimensoes_cm || '-'}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.dimensoes_cm || '-'}</TableCell>;
     case 'tipo':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.tipo}</TableCell>;
     case 'unidade': {
       const { unidadeBase, unidadeComercial, mostramMesma } = getCatalogUnitLabels(produto);
       return (
-        <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">
+        <TableCell key={col} className="text-xs text-foreground/90">
           <div className="flex flex-col leading-tight">
             <span>{unidadeBase}</span>
             {!mostramMesma && (
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+              <span className="text-[10px] text-muted-foreground mt-0.5">
                 com. {unidadeComercial}
               </span>
             )}
@@ -162,18 +162,18 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       );
     }
     case 'unidades_pacote':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{produto.unidades_por_pacote || 1}</TableCell>;
     case 'inventario_valorizado': {
       const custo = resolveCustoTotalUnitBaseProduto(produto);
       const lastro = custo * (produto.estoque_atual || 0);
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{lastro > 0 ? `R$ ${formatarNumero(lastro)}` : '—'}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{lastro > 0 ? `R$ ${formatarNumero(lastro)}` : '—'}</TableCell>;
     }
     case 'show_comercial':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN')}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN')}</TableCell>;
     case 'show_logistica':
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">{(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">{(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}</TableCell>;
     default:
-      return <TableCell key={col} className="text-xs text-gray-700 dark:text-gray-300">-</TableCell>;
+      return <TableCell key={col} className="text-xs text-foreground/90">-</TableCell>;
   }
 }
 
@@ -189,14 +189,14 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
   const colSpan = 3 + visibleColumns.length;
 
   return (
-    <div ref={scrollContainerRef} className="hidden md:block w-full h-full overflow-auto border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900">
+    <div ref={scrollContainerRef} className="hidden md:block w-full h-full overflow-auto border border-border/40 rounded bg-card">
       <Table>
-        <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
+        <TableHeader className="bg-muted/40 sticky top-0 z-20 dark:bg-muted">
           <TableRow>
-            <TableHead className="sticky left-0 z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 w-[50px] border-r border-gray-200 dark:border-gray-700 text-xs p-2" />
-            <TableHead className="sticky left-[50px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[60px] border-r border-gray-200 dark:border-gray-700 text-xs text-center">Img</TableHead>
-            <TableHead className="sticky left-[110px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[220px] border-r border-gray-200 dark:border-gray-700 text-xs">Produto</TableHead>
-            {visibleColumns.map(col => <TableHead key={col} className={`${widthMap[col] || 'min-w-[90px]'} text-gray-700 dark:text-gray-300 text-xs`}>{headMap[col] || col}</TableHead>)}
+            <TableHead className="sticky left-0 z-30 bg-muted/50 text-foreground/90 w-[50px] border-r border-border/40 text-xs p-2" />
+            <TableHead className="sticky left-[50px] z-30 bg-muted/50 text-foreground/90 min-w-[60px] border-r border-border/40 text-xs text-center">Img</TableHead>
+            <TableHead className="sticky left-[110px] z-30 bg-muted/50 text-foreground/90 min-w-[220px] border-r border-border/40 text-xs">Produto</TableHead>
+            {visibleColumns.map(col => <TableHead key={col} className={`${widthMap[col] || 'min-w-[90px]'} text-foreground/90 text-xs`}>{headMap[col] || col}</TableHead>)}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -212,27 +212,27 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
             const cadastroStatus = isCadastroIncompleto(produto);
 
             return (
-              <TableRow key={produto.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                <TableCell className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1">
+              <TableRow key={produto.id} className="hover:bg-muted/40 dark:hover:bg-muted/50">
+                <TableCell className="sticky left-0 z-10 bg-card border-r border-border/40 p-1">
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5 text-gray-700 dark:text-gray-400" /></Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5 text-foreground/90 dark:text-muted-foreground" /></Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="z-50 dark:bg-gray-800 dark:border-gray-700" sideOffset={5}>
-                      <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"><Edit className="mr-2 h-3.5 w-3.5" />Editar</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCreateSimilar(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"><Copy className="mr-2 h-3.5 w-3.5" />Produto similar</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setProdutoParaExcluir(produto)} className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs"><Trash2 className="mr-2 h-3.5 w-3.5" />{produto.ativo ? 'Excluir / Inativar' : 'Reativar'}</DropdownMenuItem>
+                    <DropdownMenuContent align="start" className="z-50 dark:bg-muted dark:border-border/40" sideOffset={5}>
+                      <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs"><Edit className="mr-2 h-3.5 w-3.5" />Editar</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCreateSimilar(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs"><Copy className="mr-2 h-3.5 w-3.5" />Produto similar</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setProdutoParaExcluir(produto)} className="text-red-600 dark:text-red-400 dark:hover:bg-primary/90 text-xs"><Trash2 className="mr-2 h-3.5 w-3.5" />{produto.ativo ? 'Excluir / Inativar' : 'Reativar'}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-                <TableCell className="sticky left-[50px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1 text-center">
-                  <div className="w-10 h-10 mx-auto bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center overflow-hidden">
+                <TableCell className="sticky left-[50px] z-10 bg-card border-r border-border/40 p-1 text-center">
+                  <div className="w-10 h-10 mx-auto bg-muted rounded-md flex items-center justify-center overflow-hidden">
                     {produto.imagem_url ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-gray-300" />}
                   </div>
                 </TableCell>
-                <TableCell className="sticky left-[110px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                  <div className="font-medium text-sm text-gray-700 dark:text-gray-200 uppercase">{produto.nome}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 uppercase">{produto.codigo_interno}</div>
+                <TableCell className="sticky left-[110px] z-10 bg-card border-r border-border/40">
+                  <div className="font-medium text-sm text-foreground/90 uppercase">{produto.nome}</div>
+                  <div className="text-xs text-muted-foreground uppercase">{produto.codigo_interno}</div>
                 </TableCell>
                 {visibleColumns.map((col) => renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }))}
               </TableRow>

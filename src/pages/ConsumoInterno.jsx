@@ -375,11 +375,11 @@ export default function ConsumoInternoPage() {
           isSubmitting={isSubmitting}
         />
         <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
-          <DialogContent className="max-w-sm rounded-[28px] border-0 bg-white p-5 shadow-2xl dark:bg-gray-900">
+          <DialogContent className="max-w-sm rounded-[28px] border-0 bg-white p-5 shadow-2xl dark:bg-background">
             <div className="space-y-4">
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">Novo cadastro interno</p>
-              <Input value={novoCadastro.valor} onChange={(e) => setNovoCadastro((prev) => ({ ...prev, valor: e.target.value }))} placeholder={novoCadastro.tipo === 'destinacao' ? 'Nome da destinação' : 'Nome do responsável'} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-800" />
-              <Button onClick={handleSalvarCadastro} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">Salvar</Button>
+              <p className="text-lg font-semibold text-foreground">Novo cadastro interno</p>
+              <Input value={novoCadastro.valor} onChange={(e) => setNovoCadastro((prev) => ({ ...prev, valor: e.target.value }))} placeholder={novoCadastro.tipo === 'destinacao' ? 'Nome da destinação' : 'Nome do responsável'} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-muted" />
+              <Button onClick={handleSalvarCadastro} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-primary dark:bg-white dark:text-foreground">Salvar</Button>
             </div>
           </DialogContent>
         </Dialog>

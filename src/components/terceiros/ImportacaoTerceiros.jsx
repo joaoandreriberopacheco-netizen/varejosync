@@ -307,10 +307,10 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-4 pb-4 border-b border-border/40">
             <Button
               variant="ghost"
               size="icon"
@@ -320,10 +320,10 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-semibold text-foreground">
                 Importação de Terceiros
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Importe clientes e fornecedores em lote via CSV
               </p>
             </div>
@@ -335,12 +335,12 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
               <div key={s} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                   step >= s 
-                    ? 'bg-gray-800 dark:bg-white text-white dark:text-gray-900 shadow-md' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                    ? 'bg-primary dark:bg-white text-white dark:text-foreground shadow-md' 
+                    : 'bg-muted text-muted-foreground'
                 }`}>
                   {step > s ? <CheckCircle className="w-5 h-5" /> : <span className="text-sm font-medium">{s}</span>}
                 </div>
-                {s < 3 && <div className={`w-16 h-0.5 ${step > s ? 'bg-gray-800 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'}`} />}
+                {s < 3 && <div className={`w-16 h-0.5 ${step > s ? 'bg-primary dark:bg-white' : 'bg-muted'}`} />}
               </div>
             ))}
           </div>
@@ -348,16 +348,16 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
           {/* Step 1: Upload */}
           {step === 1 && (
             <div className="space-y-6">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+              <div className="bg-muted/50 rounded-xl p-6">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <Download className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                    <Download className="w-6 h-6 text-muted-foreground" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       1. Baixe o template CSV
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                       Use nosso modelo com todas as colunas necessárias
                     </p>
                     <Button onClick={handleDownloadTemplate} className="gap-2">
@@ -368,16 +368,16 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                 </div>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+              <div className="bg-muted/50 rounded-xl p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <Upload className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-muted flex items-center justify-center flex-shrink-0">
+                    <Upload className="w-6 h-6 text-muted-foreground" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       2. Selecione o arquivo preenchido
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                       Formato CSV com separador ponto-e-vírgula (;)
                     </p>
 
@@ -399,11 +399,11 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                         Selecionar Arquivo
                       </Button>
                     ) : (
-                      <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-700 rounded-xl">
-                        <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <div className="flex items-center gap-3 p-4 bg-white dark:bg-muted rounded-xl">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-sm font-medium text-foreground">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             {(file.size / 1024).toFixed(2)} KB
                           </p>
                         </div>
@@ -430,16 +430,16 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                     {file && isValidating && (
                       <div className="mt-4 space-y-3">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">
+                          <span className="text-muted-foreground">
                             {validationProgress.step}
                           </span>
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <span className="font-medium text-foreground">
                             {validationProgress.progress}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                           <div
-                            className="bg-gray-800 dark:bg-white h-full transition-all duration-500 rounded-full"
+                            className="bg-primary dark:bg-white h-full transition-all duration-500 rounded-full"
                             style={{ width: `${validationProgress.progress}%` }}
                           />
                         </div>
@@ -456,18 +456,18 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
             <div className="space-y-6">
               {validationResult.success ? (
                 <>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+                  <div className="bg-muted/50 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-6">
                       <CheckCircle className="w-8 h-8 text-green-600" />
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-medium text-foreground">
                         Arquivo validado com sucesso!
                       </h3>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white dark:bg-gray-700 rounded-xl p-4">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Linhas</p>
-                        <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      <div className="bg-white dark:bg-muted rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Total de Linhas</p>
+                        <p className="text-2xl font-semibold text-foreground">
                           {validationResult.totalLinhas}
                         </p>
                       </div>
@@ -516,14 +516,14 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
                   </div>
                 </>
               ) : (
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+                <div className="bg-muted/50 rounded-xl p-6">
                   <div className="flex items-start gap-3 mb-6">
                     <AlertTriangle className="w-8 h-8 text-red-600 flex-shrink-0" />
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-lg font-medium text-foreground mb-2">
                         Erro na validação
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         {validationResult.error}
                       </p>
                     </div>
@@ -538,28 +538,28 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
 
           {/* Step 3: Importing */}
           {step === 3 && (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8">
+            <div className="bg-muted/50 rounded-xl p-8">
               <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin text-gray-600 dark:text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <Loader2 className="w-12 h-12 animate-spin text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   Importando terceiros...
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                <p className="text-sm text-muted-foreground mb-6">
                   Por favor, aguarde. Não feche esta página.
                 </p>
 
-                <div className="bg-white dark:bg-gray-700 rounded-xl p-6">
+                <div className="bg-white dark:bg-muted rounded-xl p-6">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-medium text-foreground/90">
                       Progresso
                     </span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-foreground">
                       {importProgress.current} / {importProgress.total}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gray-800 dark:bg-white h-full transition-all duration-300 rounded-full"
+                      className="bg-primary dark:bg-white h-full transition-all duration-300 rounded-full"
                       style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
                     />
                   </div>

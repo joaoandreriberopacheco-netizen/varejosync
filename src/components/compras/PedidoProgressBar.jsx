@@ -45,7 +45,7 @@ export default function PedidoProgressBar({ pedido }) {
         return (
           <div
             key={i}
-            className={`flex-1 rounded-[2px] transition-all duration-300 ${!isActive ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            className={`flex-1 rounded-[2px] transition-all duration-300 ${!isActive ? 'bg-muted' : ''}`}
             style={{
               height: `${h}px`,
               backgroundColor: isActive ? bg : undefined,

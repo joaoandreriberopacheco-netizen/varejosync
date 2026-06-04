@@ -29,13 +29,13 @@ export default function ProductUnitSelectorDialog({
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose?.()}>
-      <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-3xl">
+      <DialogContent className="max-w-lg bg-card border-0 shadow-2xl rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-white">
+          <DialogTitle className="text-foreground">
             Selecionar unidade
           </DialogTitle>
           {product && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {product.nome}
             </p>
           )}
@@ -51,8 +51,8 @@ export default function ProductUnitSelectorDialog({
                 onClick={() => setSelectedUnit(option)}
                 className={`w-full rounded-2xl p-4 text-left transition-all shadow-sm ${
                   isSelected
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'bg-gray-50 text-gray-900 dark:bg-gray-800 dark:text-white'
+                    ? 'bg-gray-900 text-white dark:bg-white dark:text-foreground'
+                    : 'bg-muted/40 text-foreground dark:bg-muted dark:text-white'
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -60,12 +60,12 @@ export default function ProductUnitSelectorDialog({
                     <div className="flex items-center gap-2">
                       <span className="text-base font-semibold">{option.unidade}</span>
                       {option.is_primary && (
-                        <Badge className={`border-0 ${isSelected ? 'bg-white/15 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200'}`}>
+                        <Badge className={`border-0 ${isSelected ? 'bg-white/15 text-white dark:bg-gray-200 dark:text-foreground' : 'bg-white text-foreground/90 dark:bg-background dark:text-foreground'}`}>
                           Principal
                         </Badge>
                       )}
                     </div>
-                    <p className={`text-xs mt-1 ${isSelected ? 'text-white/75 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <p className={`text-xs mt-1 ${isSelected ? 'text-white/75 dark:text-muted-foreground' : 'text-muted-foreground'}`}>
                       {formatUnitConversion(option, product?.unidade_principal)}
                     </p>
                   </div>

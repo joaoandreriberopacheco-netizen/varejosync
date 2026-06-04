@@ -48,7 +48,7 @@ export default function TerceirosPage() {
         await base44.entities.Terceiro.update(selectedTerceiro.id, formData);
         toast({ 
           title: "Terceiro atualizado!", 
-          className: "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
+          className: "bg-card border border-gray-300 dark:border-border/40"
         });
       } else {
         const allTerceiros = await base44.entities.Terceiro.list();
@@ -64,7 +64,7 @@ export default function TerceirosPage() {
         });
         toast({ 
           title: "Terceiro criado!", 
-          className: "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
+          className: "bg-card border border-gray-300 dark:border-border/40"
         });
       }
       loadTerceiros();
@@ -85,7 +85,7 @@ export default function TerceirosPage() {
       loadTerceiros();
       toast({ 
         title: "Terceiro excluído!", 
-        className: "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
+        className: "bg-card border border-gray-300 dark:border-border/40"
       });
     }
   };
@@ -142,26 +142,26 @@ export default function TerceirosPage() {
       {/* Header glacial */}
       <div>
         <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Terceiros</h1>
-        <p className="text-xs text-gray-400 dark:text-gray-500">Clientes, fornecedores e parceiros</p>
+        <p className="text-xs text-muted-foreground">Clientes, fornecedores e parceiros</p>
       </div>
 
       {/* Controles */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Buscar..." 
-              className="pl-6 bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none focus:border-gray-700 dark:focus:border-gray-400 h-9 text-sm dark:text-gray-200" 
+              className="pl-6 bg-transparent border-0 border-b border-border/40 rounded-none focus:border-gray-700 dark:focus:border-gray-400 h-9 text-sm dark:text-foreground" 
               value={searchTerm} 
               onChange={e => setSearchTerm(e.target.value)} 
             />
           </div>
           <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-9 text-sm dark:text-gray-200">
+            <SelectTrigger className="w-full sm:w-[180px] bg-transparent border-0 border-b border-border/40 rounded-none h-9 text-sm dark:text-foreground">
               <SelectValue placeholder="Filtrar por tipo" />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+            <SelectContent className="dark:bg-muted dark:border-border/40">
               <SelectItem value="todos">Todos os Tipos</SelectItem>
               <SelectItem value="Cliente">Cliente</SelectItem>
               <SelectItem value="Fornecedor">Fornecedor</SelectItem>
@@ -170,13 +170,13 @@ export default function TerceirosPage() {
           </Select>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Exportar">
-            <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted" title="Exportar">
+            <Download className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Importar" onClick={() => setShowImportador(true)}>
-            <Upload className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-muted" title="Importar" onClick={() => setShowImportador(true)}>
+            <Upload className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button onClick={handleAddNew} className="gap-2 bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 text-white h-9 px-4 rounded-xl text-sm">
+          <Button onClick={handleAddNew} className="gap-2 bg-primary hover:bg-primary/90 dark:bg-muted text-white h-9 px-4 rounded-xl text-sm">
             <PlusCircle className="w-4 h-4" /> <span className="hidden sm:inline">Novo</span>
           </Button>
         </div>
@@ -184,10 +184,10 @@ export default function TerceirosPage() {
 
       {/* Tabela */}
       {filteredTerceiros.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
-          <Users className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Nenhum terceiro cadastrado</p>
-          <Button onClick={handleAddNew} className="gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm h-9 px-4">
+        <div className="text-center py-12 bg-card rounded-2xl shadow-sm">
+          <Users className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+          <p className="text-sm text-muted-foreground mb-4">Nenhum terceiro cadastrado</p>
+          <Button onClick={handleAddNew} className="gap-2 bg-primary hover:bg-primary/90 text-white text-sm h-9 px-4">
             <PlusCircle className="w-4 h-4" /> Criar Primeiro Terceiro
           </Button>
         </div>
@@ -291,37 +291,37 @@ export default function TerceirosPage() {
 
       {/* Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl dark:bg-gray-900 dark:border-gray-800">
+        <DialogContent className="max-w-2xl dark:bg-background dark:border-border/40">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-200">
+            <DialogTitle className="text-foreground">
               {selectedTerceiro ? 'Editar Terceiro' : 'Novo Terceiro'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Label className="text-gray-700 dark:text-gray-300">Nome / Razão Social *</Label>
+                <Label className="text-foreground/90">Nome / Razão Social *</Label>
                 <Input 
                   value={formData.nome}
                   onChange={e => setFormData({...formData, nome: e.target.value})}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
                 />
               </div>
               <div>
-                <Label className="text-gray-700 dark:text-gray-300">CPF / CNPJ</Label>
+                <Label className="text-foreground/90">CPF / CNPJ</Label>
                 <Input 
                   value={formData.cpf_cnpj}
                   onChange={e => setFormData({...formData, cpf_cnpj: e.target.value})}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
                 />
               </div>
               <div>
-                <Label className="text-gray-700 dark:text-gray-300">Tipo *</Label>
+                <Label className="text-foreground/90">Tipo *</Label>
                 <Select value={formData.tipo} onValueChange={v => setFormData({...formData, tipo: v})}>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="dark:bg-muted dark:border-gray-600 dark:text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="dark:bg-muted dark:border-border/40">
                     <SelectItem value="Cliente">Cliente</SelectItem>
                     <SelectItem value="Fornecedor">Fornecedor</SelectItem>
                     <SelectItem value="Ambos">Ambos</SelectItem>
@@ -329,26 +329,26 @@ export default function TerceirosPage() {
                 </Select>
               </div>
               <div>
-                <Label className="text-gray-700 dark:text-gray-300">Email</Label>
+                <Label className="text-foreground/90">Email</Label>
                 <Input 
                   type="email"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
                 />
               </div>
               <div>
-                <Label className="text-gray-700 dark:text-gray-300">Telefone</Label>
+                <Label className="text-foreground/90">Telefone</Label>
                 <Input 
                   value={formData.telefone}
                   onChange={e => setFormData({...formData, telefone: e.target.value})}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="dark:bg-muted dark:border-gray-600 dark:text-foreground"
                 />
               </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-gray-700 dark:border-gray-600 text-gray-700 dark:text-gray-200 h-11 md:h-10 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-muted dark:border-gray-600 text-foreground/90 h-11 md:h-10 w-full sm:w-auto">
               Cancelar
             </Button>
             <Button onClick={handleSave} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white h-11 md:h-10 w-full sm:w-auto">

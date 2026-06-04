@@ -298,20 +298,20 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-gray-100 dark:bg-gray-950">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border/40 flex-shrink-0">
         <button
           onClick={onVoltar}
-          className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 py-1"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gray-800 dark:hover:text-gray-200 py-1"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar
         </button>
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">Prévia</span>
+        <span className="text-sm font-semibold text-foreground font-glacial">Prévia</span>
         <Button
           onClick={handlePrint}
           disabled={exportingPdf}
           size="sm"
-          className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+          className="bg-gray-900 hover:bg-primary dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-foreground text-white h-9 text-xs gap-1.5 rounded-xl px-4"
         >
           {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
           {exportingPdf ? 'Gerando…' : 'Imprimir'}

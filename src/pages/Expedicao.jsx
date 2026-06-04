@@ -51,12 +51,12 @@ export default function ExpedicaoPage() {
     <div className="p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Expedição e Entrega</h1>
-        <p className="text-gray-600 mb-8">Confirme a entrega dos pedidos separados.</p>
+        <p className="text-muted-foreground mb-8">Confirme a entrega dos pedidos separados.</p>
 
         {pedidosProntos.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
+          <div className="bg-card rounded-lg p-8 text-center">
             <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-gray-500">Nenhum pedido pronto para expedição</p>
+            <p className="text-muted-foreground">Nenhum pedido pronto para expedição</p>
           </div>
         ) : (
           <>
@@ -85,7 +85,7 @@ export default function ExpedicaoPage() {
                     <Button
                       size="sm"
                       onClick={() => handleConfirmarEntrega(pedido)}
-                      className="bg-[#4A5D23] hover:bg-[#3d4f1d] dark:bg-[#a4ce33] dark:hover:bg-[#8fb32a] dark:text-gray-900 gap-1 shrink-0 h-9"
+                      className="bg-[#4A5D23] hover:bg-[#3d4f1d] dark:bg-[#a4ce33] dark:hover:bg-[#8fb32a] dark:text-foreground gap-1 shrink-0 h-9"
                     >
                       <CheckCircle className="w-4 h-4" />
                       Confirmar

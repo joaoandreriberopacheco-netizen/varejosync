@@ -277,7 +277,7 @@ export default function ExportarPlanilha() {
       onClick={handleExportar}
       disabled={loading}
       variant="outline"
-      className="gap-2 border-gray-200 dark:border-gray-700"
+      className="gap-2 border-border/40"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
       {loading ? 'Gerando planilha...' : 'Exportar Produtos (.xlsx)'}

@@ -161,23 +161,23 @@ const PedidosCompraTab = () => {
   return (
     <div className="space-y-6">
       {/* Filtros e Ações - Glacial: Limpo, sem bordas pesadas */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl p-3 md:p-4 shadow-sm">
+      <div className="bg-card rounded-2xl p-3 md:p-4 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Buscar por Nº ou fornecedor..." 
-                className="pl-9 bg-gray-50 border-transparent focus:bg-white transition-all dark:bg-gray-900 dark:text-gray-200 rounded-lg" 
+                className="pl-9 bg-muted/40 border-transparent focus:bg-white transition-all dark:bg-background dark:text-foreground rounded-lg" 
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
               />
             </div>
             <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-gray-50 border-transparent focus:bg-white transition-all dark:bg-gray-900 dark:text-gray-200 rounded-lg">
+              <SelectTrigger className="w-full sm:w-[180px] bg-muted/40 border-transparent focus:bg-white transition-all dark:bg-background dark:text-foreground rounded-lg">
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+              <SelectContent className="dark:bg-muted dark:border-border/40">
                 <SelectItem value="todos">Todos os Status</SelectItem>
                 {statusPedidoCompra.filter(s => s.ativo).map(status => (
                   <SelectItem key={status.codigo} value={status.codigo}>{status.nome}</SelectItem>
@@ -186,11 +186,11 @@ const PedidosCompraTab = () => {
             </Select>
             
             <div className="ml-auto flex gap-2 w-full sm:w-auto">
-              <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 w-full sm:w-auto rounded-xl shadow-sm border-0 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+              <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 w-full sm:w-auto rounded-xl shadow-sm border-0 bg-muted text-foreground/90 hover:bg-gray-200 dark:hover:bg-primary/90">
                 <FileText className="w-4 h-4" />
                 Importar NF
               </Button>
-              <Button onClick={handleAddNew} className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white gap-2 w-full sm:w-auto rounded-xl shadow-sm">
+              <Button onClick={handleAddNew} className="bg-gray-900 hover:bg-primary dark:bg-white dark:hover:bg-gray-100 dark:text-foreground text-white gap-2 w-full sm:w-auto rounded-xl shadow-sm">
                 <PlusCircle className="w-4 h-4" />
                 Novo Pedido
               </Button>
@@ -198,8 +198,8 @@ const PedidosCompraTab = () => {
           </div>
 
           {/* Filtros de Data Compactos */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 pt-3 border-t border-gray-50 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 pt-3 border-t border-gray-50 dark:border-border/40">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
               <CalendarRange className="w-3 h-3" />
               Período
             </div>
@@ -208,18 +208,18 @@ const PedidosCompraTab = () => {
                 type="date"
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
-                className="flex-1 sm:w-32 h-9 text-xs bg-gray-50 border-transparent rounded-lg"
+                className="flex-1 sm:w-32 h-9 text-xs bg-muted/40 border-transparent rounded-lg"
               />
-              <span className="text-gray-400">-</span>
+              <span className="text-muted-foreground">-</span>
               <Input
                 type="date"
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
-                className="flex-1 sm:w-32 h-9 text-xs bg-gray-50 border-transparent rounded-lg"
+                className="flex-1 sm:w-32 h-9 text-xs bg-muted/40 border-transparent rounded-lg"
               />
             </div>
             {(dataInicio || dataFim) && (
-              <Button variant="ghost" size="sm" onClick={() => { setDataInicio(''); setDataFim(''); }} className="h-8 text-xs text-gray-500 hover:text-gray-700">
+              <Button variant="ghost" size="sm" onClick={() => { setDataInicio(''); setDataFim(''); }} className="h-8 text-xs text-muted-foreground hover:text-foreground/90">
                 Limpar
               </Button>
             )}
@@ -229,9 +229,9 @@ const PedidosCompraTab = () => {
 
       {/* Totais - Glacial: Texto grande e limpo */}
       <div className="flex items-baseline gap-4 px-1">
-        <h2 className="text-xl md:text-2xl font-light text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl md:text-2xl font-light text-foreground dark:text-gray-100">
           <span className="font-semibold">R$ {formatValor(subtotalFiltrado)}</span>
-          <span className="text-xs md:text-sm text-gray-500 ml-2 font-normal">em {quantidadeFiltrada} pedidos</span>
+          <span className="text-xs md:text-sm text-muted-foreground ml-2 font-normal">em {quantidadeFiltrada} pedidos</span>
         </h2>
       </div>
 
@@ -240,8 +240,8 @@ const PedidosCompraTab = () => {
         {/* Responsive: Cards for Mobile, Table for Desktop */}
         {pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12 rounded-xl border border-border bg-background shadow-sm overflow-auto">
-            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum pedido encontrado</p>
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-foreground/90" />
+            <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (
           <>
@@ -382,13 +382,13 @@ export default function ComprasPage() {
     <div className="max-w-7xl mx-auto space-y-0 px-0 md:px-2 py-2 md:py-4">
       {/* Header */}
       <div className="px-4 md:px-0 pb-4">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white font-glacial">Compras</h1>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Gestão completa do ciclo de suprimentos</p>
+        <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
       </div>
 
       {/* Tab Bar - PDV Style pill tabs */}
       <div className="px-4 md:px-0">
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
+        <div className="flex gap-1 bg-muted rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.value;
@@ -398,8 +398,8 @@ export default function ComprasPage() {
                 onClick={() => handleTabChange(tab.value)}
                 className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'bg-white dark:bg-muted text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-gray-300'
                 }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
@@ -500,7 +500,7 @@ function ConferenciaTab() {
   };
 
   if (carregando) {
-    return <div className="text-center py-12 text-gray-500">Carregando...</div>;
+    return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;
   }
 
   const manifestosPendentes = manifestos.filter(m => 
@@ -529,14 +529,14 @@ function ConferenciaTab() {
 
       {supermanifestosPendentes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">SUPERMANIFESTOS</h3>
+          <h3 className="text-sm font-semibold text-foreground/90 mb-3">SUPERMANIFESTOS</h3>
           <div className="grid gap-3">
             {supermanifestosPendentes.map((sm) => (
-              <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+              <div key={sm.id} className="bg-card rounded-xl shadow-sm p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="font-medium text-sm">{sm.numero}</div>
-                    <div className="text-xs text-gray-500">{sm.transportadora_nome}</div>
+                    <div className="text-xs text-muted-foreground">{sm.transportadora_nome}</div>
                   </div>
                   <Badge variant="outline">{sm.status}</Badge>
                 </div>
@@ -553,14 +553,14 @@ function ConferenciaTab() {
 
       {manifestosPendentes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">MANIFESTOS DE ENTRADA</h3>
+          <h3 className="text-sm font-semibold text-foreground/90 mb-3">MANIFESTOS DE ENTRADA</h3>
           <div className="grid gap-3">
             {manifestosPendentes.map((me) => (
-              <div key={me.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+              <div key={me.id} className="bg-card rounded-xl shadow-sm p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="font-medium text-sm">{me.numero}</div>
-                    <div className="text-xs text-gray-500">Pedido: {me.pedido_numero}</div>
+                    <div className="text-xs text-muted-foreground">Pedido: {me.pedido_numero}</div>
                   </div>
                   <Badge variant="outline">{me.status}</Badge>
                 </div>
@@ -576,7 +576,7 @@ function ConferenciaTab() {
       )}
 
       {manifestosPendentes.length === 0 && supermanifestosPendentes.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-foreground">
           Nenhum manifesto aguardando conferência
         </div>
       )}

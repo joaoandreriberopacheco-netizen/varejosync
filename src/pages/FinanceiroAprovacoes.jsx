@@ -299,25 +299,25 @@ export default function FinanceiroAprovacoesPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Aprovações Financeiras</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie pagamentos e histórico de aprovações</p>
+      <div className="pb-4 border-b border-border/40">
+        <h1 className="text-2xl font-medium text-foreground mb-1">Aprovações Financeiras</h1>
+        <p className="text-sm text-muted-foreground">Gerencie pagamentos e histórico de aprovações</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-2 gap-6 pb-6 border-b border-border/40">
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total {activeTab === 'pendentes' ? 'Pendente' : activeTab === 'aprovados' ? 'Aprovado' : 'Rejeitado'}</div>
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(totalPendente)}</div>
+          <div className="text-xs text-muted-foreground mb-1">Total {activeTab === 'pendentes' ? 'Pendente' : activeTab === 'aprovados' ? 'Aprovado' : 'Rejeitado'}</div>
+          <div className="text-3xl font-bold text-foreground">{formatCurrency(totalPendente)}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pedidos</div>
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{pendingTransactions.length}</div>
+          <div className="text-xs text-muted-foreground mb-1">Pedidos</div>
+          <div className="text-3xl font-bold text-foreground">{pendingTransactions.length}</div>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex items-center justify-between mb-4">
-          <TabsList className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+          <TabsList className="bg-muted p-1 rounded-xl">
             <TabsTrigger value="pendentes" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
               <Clock className="w-4 h-4 mr-2" />
               Pendentes
@@ -341,10 +341,10 @@ export default function FinanceiroAprovacoesPage() {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input 
             placeholder="Buscar por pedido, fornecedor ou descrição..."
-            className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+            className="pl-11 bg-muted/50 border-0 shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -352,17 +352,17 @@ export default function FinanceiroAprovacoesPage() {
 
         <TabsContent value={activeTab} className="mt-0">
           {isLoading ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-12 text-muted-foreground">
               <Clock className="w-12 h-12 mx-auto mb-3 animate-spin" />
               <p>Carregando...</p>
             </div>
           ) : filteredPedidos.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+            <div className="text-center py-16 bg-card rounded-xl shadow-sm">
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-muted-foreground" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 {searchTerm ? 'Nenhum resultado encontrado' : `Nenhum pedido ${activeTab === 'pendentes' ? 'pendente' : activeTab === 'aprovados' ? 'aprovado' : 'rejeitado'}`}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {searchTerm ? 'Tente outro termo de busca' : `Não há pedidos ${activeTab} no momento`}
               </p>
             </div>
@@ -370,47 +370,47 @@ export default function FinanceiroAprovacoesPage() {
             <>
               <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
+                  <TableHeader className="bg-background/80">
                     <TableRow className="border-0">
-                      <TableHead className="text-gray-700 dark:text-gray-300">Pedido</TableHead>
-                      <TableHead className="text-gray-700 dark:text-gray-300">Fornecedor</TableHead>
-                      <TableHead className="text-center text-gray-700 dark:text-gray-300">Itens</TableHead>
-                      <TableHead className="text-right text-gray-700 dark:text-gray-300">Valor Total</TableHead>
+                      <TableHead className="text-foreground/90">Pedido</TableHead>
+                      <TableHead className="text-foreground/90">Fornecedor</TableHead>
+                      <TableHead className="text-center text-foreground/90">Itens</TableHead>
+                      <TableHead className="text-right text-foreground/90">Valor Total</TableHead>
                       {activeTab === 'aprovados' && (
-                        <TableHead className="text-gray-700 dark:text-gray-300">Data Aprovação</TableHead>
+                        <TableHead className="text-foreground/90">Data Aprovação</TableHead>
                       )}
                       {activeTab === 'rejeitados' && (
-                        <TableHead className="text-gray-700 dark:text-gray-300">Motivo</TableHead>
+                        <TableHead className="text-foreground/90">Motivo</TableHead>
                       )}
-                      <TableHead className="text-right text-gray-700 dark:text-gray-300">Ações</TableHead>
+                      <TableHead className="text-right text-foreground/90">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredPedidos.map((pedido) => {
                       return (
-                        <TableRow key={pedido.id} className={`border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${
+                        <TableRow key={pedido.id} className={`border-0 hover:bg-muted/40 dark:hover:bg-gray-900/50 ${
                           activeTab === 'aprovados' ? 'bg-green-50/50 dark:bg-green-900/10' :
                           activeTab === 'rejeitados' ? 'bg-red-50/50 dark:bg-red-900/10' : ''
                         }`}>
-                          <TableCell className="font-medium text-gray-800 dark:text-gray-200">
+                          <TableCell className="font-medium text-foreground">
                             {pedido.numero}
                           </TableCell>
-                          <TableCell className="text-gray-600 dark:text-gray-400">
+                          <TableCell className="text-muted-foreground">
                             {pedido.fornecedor_nome}
                           </TableCell>
-                          <TableCell className="text-center text-gray-600 dark:text-gray-400">
+                          <TableCell className="text-center text-muted-foreground">
                             {pedido.itens?.length || 0}
                           </TableCell>
-                          <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200">
+                          <TableCell className="text-right font-bold text-foreground">
                             {formatCurrency(calcValorTotalPedidoCompra(pedido))}
                           </TableCell>
                           {activeTab === 'aprovados' && (
-                            <TableCell className="text-gray-600 dark:text-gray-400 text-xs">
+                            <TableCell className="text-muted-foreground text-xs">
                               {pedido.data_aprovacao_financeira ? format(new Date(pedido.data_aprovacao_financeira), 'dd/MM/yyyy HH:mm') : '-'}
                             </TableCell>
                           )}
                           {activeTab === 'rejeitados' && (
-                            <TableCell className="text-gray-600 dark:text-gray-400 max-w-xs truncate text-xs">
+                            <TableCell className="text-muted-foreground max-w-xs truncate text-xs">
                               {pedido.motivo_rejeicao_financeira || 'Sem motivo'}
                             </TableCell>
                           )}
@@ -526,9 +526,9 @@ export default function FinanceiroAprovacoesPage() {
       </Tabs>
 
       <Dialog open={!!selectedTransaction && !isRejectDialogOpen} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-        <DialogContent className="dark:bg-gray-800 border-0 shadow-2xl">
+        <DialogContent className="dark:bg-muted border-0 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-200">
+            <DialogTitle className="text-foreground">
               Aprovar Pagamento
             </DialogTitle>
           </DialogHeader>
@@ -539,10 +539,10 @@ export default function FinanceiroAprovacoesPage() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    <p className="text-sm text-foreground/90 font-medium mb-1">
                       {selectedTransaction.numero}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       Pedido de compra com {selectedTransaction.itens?.length || 0} itens
                     </p>
                   </div>
@@ -551,40 +551,40 @@ export default function FinanceiroAprovacoesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Fornecedor</div>
-                  <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <div className="text-xs text-muted-foreground mb-1">Fornecedor</div>
+                  <div className="text-sm font-medium text-foreground">
                     {selectedTransaction.fornecedor_nome}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Criado em</div>
-                  <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <div className="text-xs text-muted-foreground mb-1">Criado em</div>
+                  <div className="text-sm font-medium text-foreground">
                     {selectedTransaction.created_date ? format(new Date(selectedTransaction.created_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
-                <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
+              <div className="bg-gray-100 dark:bg-background rounded-lg p-4">
+                <div className="text-xs text-muted-foreground mb-1">Valor Total</div>
+                <div className="text-3xl font-bold text-foreground">
                   {formatCurrency(calcValorTotalPedidoCompra(selectedTransaction))}
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">
+                <Label className="text-sm text-foreground/90 mb-2 block">
                   Conta de Pagamento *
                 </Label>
                 <Select value={contaSelecionada} onValueChange={setContaSelecionada}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm">
+                  <SelectTrigger className="bg-muted/40 dark:bg-muted border-0 shadow-sm">
                     <SelectValue placeholder="Selecione a conta..." />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
+                  <SelectContent className="dark:bg-muted border-0 shadow-lg">
                     {contas.map(conta => (
                       <SelectItem key={conta.id} value={conta.id}>
                         <div className="flex items-center justify-between w-full">
                           <span>{conta.nome}</span>
-                          <span className="text-xs text-gray-500 ml-3">
+                          <span className="text-xs text-muted-foreground ml-3">
                             {formatCurrency(conta.saldo_atual)}
                           </span>
                         </div>
@@ -616,9 +616,9 @@ export default function FinanceiroAprovacoesPage() {
       </Dialog>
 
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-        <DialogContent className="dark:bg-gray-800 border-0 shadow-2xl">
+        <DialogContent className="dark:bg-muted border-0 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-200">
+            <DialogTitle className="text-foreground">
               Rejeitar Pagamento
             </DialogTitle>
           </DialogHeader>
@@ -628,10 +628,10 @@ export default function FinanceiroAprovacoesPage() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                  <p className="text-sm text-foreground/90 font-medium mb-1">
                     Feedback para o setor de compras
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Informe o motivo da rejeição para futuras reuniões de alinhamento
                   </p>
                 </div>
@@ -639,12 +639,12 @@ export default function FinanceiroAprovacoesPage() {
             </div>
 
             <div>
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">
+              <Label className="text-sm text-foreground/90 mb-2 block">
                 Motivo da Rejeição *
               </Label>
               <Textarea 
                 placeholder="Ex: Orçamento ultrapassado, fornecedor não homologado, prazo incompatível..."
-                className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm resize-none"
+                className="bg-muted/40 dark:bg-muted border-0 shadow-sm resize-none"
                 rows={4}
                 value={motivoRejeicao}
                 onChange={(e) => setMotivoRejeicao(e.target.value)}
@@ -718,7 +718,7 @@ export default function FinanceiroAprovacoesPage() {
         <div className="mt-8 pt-8 border-t-2 border-orange-200 dark:border-orange-800">
           <div className="flex items-center gap-3 mb-6">
             <AlertCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-            <h2 className="text-xl font-medium text-gray-800 dark:text-gray-200">Solicitações de Edição</h2>
+            <h2 className="text-xl font-medium text-foreground">Solicitações de Edição</h2>
           </div>
 
           <P38MobileLineList>

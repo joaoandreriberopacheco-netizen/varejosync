@@ -113,40 +113,40 @@ export default function ReversaoDespesasSangrias() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
+      <div className="h-screen flex items-center justify-center bg-card">
+        <div className="w-8 h-8 border-4 border-border/40 border-t-gray-900 dark:border-border/40 dark:border-t-white rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center">
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center">
         <button
           onClick={() => navigate('/')}
-          className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
           style={{ minWidth: '44px', minHeight: '44px' }}>
-          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          <ArrowLeft className="w-6 h-6 text-foreground/90" />
         </button>
-        <h1 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white">
+        <h1 className="flex-1 text-center text-lg font-semibold text-foreground">
           Reversão de Despesas
         </h1>
         <button
           onClick={carregarDados}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted rounded-lg transition-colors"
           style={{ minWidth: '44px', minHeight: '44px' }}>
-          <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <RefreshCw className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
 
-      <div className="border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 px-4">
+      <div className="border-b border-border/40 bg-card sticky top-0 px-4">
         <div className="max-w-2xl mx-auto flex gap-1">
           <button
             onClick={() => setAbaSelecionada('despesas')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               abaSelecionada === 'despesas'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                ? 'border-gray-900 dark:border-white text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-gray-300'
             }`}>
             Despesas ({despesasProblematicas.length})
           </button>
@@ -154,8 +154,8 @@ export default function ReversaoDespesasSangrias() {
             onClick={() => setAbaSelecionada('movimentos')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               abaSelecionada === 'movimentos'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                ? 'border-gray-900 dark:border-white text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-gray-300'
             }`}>
             Movimentos ({movimentos.length})
           </button>
@@ -169,8 +169,8 @@ export default function ReversaoDespesasSangrias() {
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-[#4A5D23] dark:text-[#a4ce33]" />
               </div>
-              <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">Tudo limpo!</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-lg font-medium text-foreground mb-2">Tudo limpo!</p>
+              <p className="text-sm text-muted-foreground">
                 Nenhuma despesa vinculada a sangrias foi encontrada.
               </p>
             </div>
@@ -191,16 +191,16 @@ export default function ReversaoDespesasSangrias() {
                 return (
                   <div
                     key={despesa.id}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm flex items-start justify-between gap-4">
+                    className="bg-card rounded-2xl p-5 shadow-sm flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-foreground">
                         {despesa.descricao}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <div className="text-xs text-muted-foreground mt-1">
                         Conta: {despesa.conta_financeira_nome}
                       </div>
                       {movimento && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-muted-foreground">
                           Vinculado a: {movimento.numero} ({movimento.tipo})
                         </div>
                       )}
@@ -230,8 +230,8 @@ export default function ReversaoDespesasSangrias() {
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-[#4A5D23] dark:text-[#a4ce33]" />
               </div>
-              <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nenhum movimento</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Não há movimentos de caixa para deletar.</p>
+              <p className="text-lg font-medium text-foreground mb-2">Nenhum movimento</p>
+              <p className="text-sm text-muted-foreground">Não há movimentos de caixa para deletar.</p>
             </div>
           ) : abaSelecionada === 'movimentos' ? (
             <P38MobileLineList>

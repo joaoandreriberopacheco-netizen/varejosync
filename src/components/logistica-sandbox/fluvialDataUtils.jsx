@@ -30,13 +30,13 @@ export function getEmbarqueLifecycleStatus(embarque = {}) {
 export function getLinkedIndicatorStyle(status = 'ativo') {
   if (status === 'finalizado') {
     return {
-      badge: 'bg-gray-300/90 text-gray-800 dark:bg-gray-500/70 dark:text-gray-100',
-      dot: 'bg-gray-300 dark:bg-gray-500'
+      badge: 'bg-gray-300/90 text-gray-800 dark:bg-muted/400/70 dark:text-gray-100',
+      dot: 'bg-gray-300 dark:bg-muted/400'
     };
   }
 
   return {
-    badge: 'bg-lime-300 text-gray-900 dark:bg-lime-300 dark:text-gray-900',
+    badge: 'bg-lime-300 text-foreground dark:bg-lime-300 dark:text-foreground',
     dot: 'bg-lime-300 dark:bg-lime-300'
   };
 }

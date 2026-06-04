@@ -147,7 +147,7 @@ export default function MovimentacaoEstoqueForm() {
             <h3 className="font-semibold">Itens do Pedido {poNumber} (Conferência Cega)</h3>
             <div className="border rounded-md overflow-hidden">
              <Table>
-                <TableHeader className="bg-gray-50">
+                <TableHeader className="bg-muted/40">
                     <TableRow>
                         <TableHead>Produto</TableHead>
                         <TableHead>Quantidade Pedida</TableHead>

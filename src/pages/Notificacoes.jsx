@@ -52,7 +52,7 @@ export default function NotificacoesPage() {
       case 'success': return 'bg-secondary/50 dark:bg-secondary/30 text-[#4A5D23] dark:text-[#a4ce33]';
       case 'warning': return 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400';
       case 'info': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400';
-      default: return 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
+      default: return 'bg-muted/50 text-muted-foreground';
     }
   };
 
@@ -61,10 +61,10 @@ export default function NotificacoesPage() {
       <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-4">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+          <h1 className="text-2xl font-semibold text-foreground font-glacial">
             Notificações
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {notifications.filter(n => !n.read).length} não lidas
           </p>
         </div>

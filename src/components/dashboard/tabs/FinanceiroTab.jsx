@@ -103,29 +103,29 @@ export default function FinanceiroTab() {
     <div className="space-y-6">
       {/* KPIs - SEM BORDAS */}
       <div>
-        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">Posição Financeira</h3>
+        <h3 className="text-sm font-medium text-foreground mb-4">Posição Financeira</h3>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo em Caixa</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Saldo em Caixa</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
               {formatCurrency(data.saldoCaixa)}
             </div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Receitas (Mês)</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Receitas (Mês)</div>
             <div className="text-xl font-semibold text-green-600 dark:text-green-500">
               {formatCurrency(data.receitaMes)}
             </div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Despesas (Mês)</div>
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Despesas (Mês)</div>
             <div className="text-xl font-semibold text-red-600 dark:text-red-500">
               {formatCurrency(data.despesaMes)}
             </div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Margem Líquida</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Margem Líquida</div>
+            <div className="text-xl font-semibold text-foreground dark:text-gray-100">
               {data.margemLiquida.toFixed(1)}%
             </div>
           </div>
@@ -134,23 +134,23 @@ export default function FinanceiroTab() {
 
       {/* Contas - SEM BORDAS */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-500" />
-            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">A Receber</h3>
+            <h3 className="text-sm font-medium text-foreground">A Receber</h3>
           </div>
           <div className="space-y-2">
             {data.contasReceber.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nenhuma conta a receber</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma conta a receber</p>
             ) : (
               data.contasReceber.map((conta) => (
-                <div key={conta.id} className="py-2 border-b last:border-0 border-gray-200 dark:border-gray-700">
+                <div key={conta.id} className="py-2 border-b last:border-0 border-border/40">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{conta.descricao}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">Venc: {formatDate(conta.data_vencimento)}</div>
+                      <div className="text-sm font-medium text-foreground truncate">{conta.descricao}</div>
+                      <div className="text-xs text-muted-foreground">Venc: {formatDate(conta.data_vencimento)}</div>
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <div className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap">
                       {formatCurrency(conta.valor)}
                     </div>
                   </div>
@@ -160,23 +160,23 @@ export default function FinanceiroTab() {
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-500" />
-            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">A Pagar</h3>
+            <h3 className="text-sm font-medium text-foreground">A Pagar</h3>
           </div>
           <div className="space-y-2">
             {data.contasPagar.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nenhuma conta a pagar</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma conta a pagar</p>
             ) : (
               data.contasPagar.map((conta) => (
-                <div key={conta.id} className="py-2 border-b last:border-0 border-gray-200 dark:border-gray-700">
+                <div key={conta.id} className="py-2 border-b last:border-0 border-border/40">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{conta.descricao}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">Venc: {formatDate(conta.data_vencimento)}</div>
+                      <div className="text-sm font-medium text-foreground truncate">{conta.descricao}</div>
+                      <div className="text-xs text-muted-foreground">Venc: {formatDate(conta.data_vencimento)}</div>
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <div className="text-sm font-semibold text-foreground dark:text-gray-100 whitespace-nowrap">
                       {formatCurrency(conta.valor)}
                     </div>
                   </div>
@@ -189,19 +189,19 @@ export default function FinanceiroTab() {
 
       {/* Fluxo Projetado - SEM BORDAS */}
       <div>
-        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">Fluxo Projetado</h3>
+        <h3 className="text-sm font-medium text-foreground mb-4">Fluxo Projetado</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+          <div className="p-4 bg-muted/50 rounded-lg text-center">
             <div className="text-2xl font-bold text-green-600 dark:text-green-500 mb-1">{formatCurrency(data.fluxoProjetado.entradas)}</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Entradas Previstas</div>
+            <div className="text-xs text-muted-foreground">Entradas Previstas</div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+          <div className="p-4 bg-muted/50 rounded-lg text-center">
             <div className="text-2xl font-bold text-red-600 dark:text-red-500 mb-1">{formatCurrency(data.fluxoProjetado.saidas)}</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Saídas Previstas</div>
+            <div className="text-xs text-muted-foreground">Saídas Previstas</div>
           </div>
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{formatCurrency(data.fluxoProjetado.saldoProjetado)}</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Saldo Projetado</div>
+          <div className="p-4 bg-muted/50 rounded-lg text-center">
+            <div className="text-2xl font-bold text-foreground dark:text-gray-100 mb-1">{formatCurrency(data.fluxoProjetado.saldoProjetado)}</div>
+            <div className="text-xs text-muted-foreground">Saldo Projetado</div>
           </div>
         </div>
       </div>

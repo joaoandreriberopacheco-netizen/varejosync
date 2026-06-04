@@ -161,7 +161,7 @@ export default function DataAuditor() {
   };
 
   return (
-    <Card className="font-glacial border-0 shadow-sm bg-white dark:bg-gray-800">
+    <Card className="font-glacial border-0 shadow-sm bg-card">
       <CardHeader className="pb-2 border-b border-slate-50 bg-slate-50/30">
         <CardTitle className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-indigo-600" />
@@ -217,7 +217,7 @@ export default function DataAuditor() {
         {results.length > 0 && (
           <div className="border rounded-lg overflow-hidden">
             <Table>
-              <TableHeader className="bg-gray-50 dark:bg-gray-700">
+              <TableHeader className="bg-muted/40 dark:bg-muted">
                 <TableRow>
                   <TableHead>Entidade</TableHead>
                   <TableHead>Identificador / Nome</TableHead>
@@ -232,7 +232,7 @@ export default function DataAuditor() {
                     <TableCell>
                       <div className="flex flex-col">
                         <span>{item.name}</span>
-                        <span className="text-[10px] text-gray-400 font-mono">{item.id}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{item.id}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -270,7 +270,7 @@ export default function DataAuditor() {
         )}
         
         {!scanning && results.length === 0 && (
-          <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-100 rounded-lg">
+          <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed border-border/40 rounded-lg">
             Os resultados da auditoria aparecerão aqui.
           </div>
         )}

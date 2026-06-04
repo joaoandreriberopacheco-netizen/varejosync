@@ -89,24 +89,24 @@ export default function LogsAutenticacaoPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Logs de Autenticação</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Histórico completo de operações autenticadas no sistema</p>
+      <div className="pb-4 border-b border-border/40">
+        <h1 className="text-2xl font-medium text-foreground mb-1">Logs de Autenticação</h1>
+        <p className="text-sm text-muted-foreground">Histórico completo de operações autenticadas no sistema</p>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pb-6 border-b border-border/40">
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Operações</div>
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{filteredLogs.length}</div>
+          <div className="text-xs text-muted-foreground mb-1">Total de Operações</div>
+          <div className="text-3xl font-bold text-foreground">{filteredLogs.length}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Intervenientes Ativos</div>
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{intervenientes.length}</div>
+          <div className="text-xs text-muted-foreground mb-1">Intervenientes Ativos</div>
+          <div className="text-3xl font-bold text-foreground">{intervenientes.length}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Hoje</div>
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
+          <div className="text-xs text-muted-foreground mb-1">Hoje</div>
+          <div className="text-3xl font-bold text-foreground">
             {filteredLogs.filter(l => {
               const logDate = new Date(l.data.split(' ').reverse().join('/'));
               const today = new Date();
@@ -115,8 +115,8 @@ export default function LogsAutenticacaoPage() {
           </div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Esta Semana</div>
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">
+          <div className="text-xs text-muted-foreground mb-1">Esta Semana</div>
+          <div className="text-3xl font-bold text-foreground">
             {filteredLogs.filter(l => {
               const logDate = new Date(l.data.split(' ').reverse().join('/'));
               const weekAgo = new Date();
@@ -128,9 +128,9 @@ export default function LogsAutenticacaoPage() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 space-y-4">
+      <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground/90">
             <Filter className="w-4 h-4" />
             Filtros
           </div>
@@ -149,23 +149,23 @@ export default function LogsAutenticacaoPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="Buscar por pedido, código, ação..."
-              className="pl-11 bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+              className="pl-11 bg-muted/40 dark:bg-muted border-0 shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           <Select value={filterInterveniente} onValueChange={setFilterInterveniente}>
-            <SelectTrigger className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm">
+            <SelectTrigger className="bg-muted/40 dark:bg-muted border-0 shadow-sm">
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-400" />
+                <User className="w-4 h-4 text-muted-foreground" />
                 <SelectValue placeholder="Todos os intervenientes" />
               </div>
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800">
+            <SelectContent className="dark:bg-muted">
               <SelectItem value={null}>Todos os intervenientes</SelectItem>
               {intervenientes.map(nome => (
                 <SelectItem key={nome} value={nome}>{nome}</SelectItem>
@@ -175,7 +175,7 @@ export default function LogsAutenticacaoPage() {
 
           <Input
             type="date"
-            className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+            className="bg-muted/40 dark:bg-muted border-0 shadow-sm"
             value={filterDataInicio}
             onChange={(e) => setFilterDataInicio(e.target.value)}
             placeholder="Data início"
@@ -183,7 +183,7 @@ export default function LogsAutenticacaoPage() {
 
           <Input
             type="date"
-            className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+            className="bg-muted/40 dark:bg-muted border-0 shadow-sm"
             value={filterDataFim}
             onChange={(e) => setFilterDataFim(e.target.value)}
             placeholder="Data fim"
@@ -192,57 +192,57 @@ export default function LogsAutenticacaoPage() {
       </div>
 
       {/* Tabela de Logs */}
-      <div className="border-0 shadow-sm rounded-xl bg-white dark:bg-gray-800 min-w-0 overflow-hidden">
+      <div className="border-0 shadow-sm rounded-xl bg-card min-w-0 overflow-hidden">
         {isLoading ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-12 text-muted-foreground">
             <Clock className="w-12 h-12 mx-auto mb-3 animate-spin" />
             <p>Carregando logs...</p>
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="text-center py-16">
-            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Nenhum log encontrado</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-muted-foreground" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum log encontrado</h3>
+            <p className="text-sm text-muted-foreground">
               {searchTerm || filterInterveniente || filterDataInicio ? 'Tente ajustar os filtros' : 'Não há operações registradas'}
             </p>
           </div>
         ) : (
           <div className="w-full min-w-0 overflow-x-auto">
           <Table>
-            <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
+            <TableHeader className="bg-background/80">
               <TableRow className="border-0">
-                <TableHead className="text-gray-700 dark:text-gray-300">Data/Hora</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Pedido</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Ação</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Interveniente</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Código Operação</TableHead>
+                <TableHead className="text-foreground/90">Data/Hora</TableHead>
+                <TableHead className="text-foreground/90">Pedido</TableHead>
+                <TableHead className="text-foreground/90">Ação</TableHead>
+                <TableHead className="text-foreground/90">Interveniente</TableHead>
+                <TableHead className="text-foreground/90">Código Operação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredLogs.map((log) => (
                 <TableRow 
                   key={log.id} 
-                  className="border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50"
+                  className="border-0 hover:bg-muted/40 dark:hover:bg-gray-900/50"
                 >
-                  <TableCell className="text-gray-600 dark:text-gray-400">
+                  <TableCell className="text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
                       {log.data}
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium text-gray-800 dark:text-gray-200">
+                  <TableCell className="font-medium text-foreground">
                     {log.pedido_numero}
                   </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">
+                  <TableCell className="text-muted-foreground">
                     {log.acao}
                   </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">
+                  <TableCell className="text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
+                      <User className="w-4 h-4 text-muted-foreground" />
                       {log.interveniente}
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-gray-600 dark:text-gray-400">
+                  <TableCell className="font-mono text-xs text-muted-foreground">
                     {log.codigo_operacao}
                   </TableCell>
                 </TableRow>
@@ -255,13 +255,13 @@ export default function LogsAutenticacaoPage() {
 
       {/* Dialog de Imagem */}
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="dark:bg-gray-800">
+        <DialogContent className="dark:bg-muted">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-200">Evidência Fotográfica</DialogTitle>
+            <DialogTitle className="text-foreground">Evidência Fotográfica</DialogTitle>
           </DialogHeader>
           {selectedLog && (
             <div className="space-y-4">
-              <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
+              <div className="bg-gray-100 dark:bg-background rounded-lg p-4">
                 <img 
                   src={selectedLog.evidencia_url} 
                   alt="Evidência"
@@ -270,12 +270,12 @@ export default function LogsAutenticacaoPage() {
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pedido</div>
-                  <div className="font-medium text-gray-800 dark:text-gray-200">{selectedLog.pedido_numero}</div>
+                  <div className="text-xs text-muted-foreground mb-1">Pedido</div>
+                  <div className="font-medium text-foreground">{selectedLog.pedido_numero}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Interveniente</div>
-                  <div className="font-medium text-gray-800 dark:text-gray-200">{selectedLog.interveniente}</div>
+                  <div className="text-xs text-muted-foreground mb-1">Interveniente</div>
+                  <div className="font-medium text-foreground">{selectedLog.interveniente}</div>
                 </div>
               </div>
             </div>

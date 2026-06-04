@@ -210,7 +210,7 @@ export default function ItinerarioFluvial() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6 overflow-x-hidden">
+    <div className="min-h-screen bg-background pb-20 md:pb-6 overflow-x-hidden">
       <div className="max-w-4xl mx-auto w-full px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
@@ -252,7 +252,7 @@ export default function ItinerarioFluvial() {
               <div className="space-y-4">
                 <button
                   onClick={() => setSelectedEvento(null)}
-                  className="text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-sm text-muted-foreground font-medium hover:text-foreground/90 dark:hover:text-gray-300"
                 >
                   ← Voltar
                 </button>
@@ -267,7 +267,7 @@ export default function ItinerarioFluvial() {
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
                   ))}
                   {freteEventosFiltrados.length === 0 && (
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
+                    <div className="bg-card rounded-3xl p-6 shadow-sm text-sm text-muted-foreground">
                       {freteSearchQuery ? 'Nenhuma viagem encontrada.' : 'Nenhuma viagem com embarques vinculados.'}
                     </div>
                   )}

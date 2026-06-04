@@ -6,8 +6,8 @@ export default function Manual() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Manual de Multi-Inquilino</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-lg">Entenda como funciona a criação e gestão de empresas e usuários no sistema.</p>
+        <h1 className="text-3xl font-bold text-foreground">Manual de Multi-Inquilino</h1>
+        <p className="text-muted-foreground text-lg">Entenda como funciona a criação e gestão de empresas e usuários no sistema.</p>
       </div>
 
       <div className="grid gap-6">
@@ -21,7 +21,7 @@ export default function Manual() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-foreground/90 leading-relaxed">
               O sistema utiliza uma arquitetura <strong>Multi-Tenant Lógico</strong>. 
               Isso significa que todos os dados estão na mesma plataforma, mas são rigorosamente segregados pelo identificador da empresa.
               Cada usuário pertence a uma empresa e só pode ver os dados dela.
@@ -41,7 +41,7 @@ export default function Manual() {
             <div className="bg-green-50 p-4 rounded-lg border border-green-100">
               <p className="font-medium text-green-800">O processo é automático no primeiro login.</p>
             </div>
-            <ol className="list-decimal pl-5 space-y-3 text-gray-700 dark:text-gray-300">
+            <ol className="list-decimal pl-5 space-y-3 text-foreground/90">
               <li>
                 <strong>Acesse com um email inédito:</strong> Na tela de login, utilize um email que nunca foi cadastrado no sistema.
               </li>
@@ -67,10 +67,10 @@ export default function Manual() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-700 dark:text-gray-300">
+            <p className="text-foreground/90">
               Para que outras pessoas acessem <strong>a sua empresa</strong>, você deve convidá-las:
             </p>
-            <ol className="list-decimal pl-5 space-y-3 text-gray-700 dark:text-gray-300">
+            <ol className="list-decimal pl-5 space-y-3 text-foreground/90">
               <li>
                 Faça login como <strong>Admin</strong>.
               </li>

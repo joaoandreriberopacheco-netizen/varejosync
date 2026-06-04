@@ -43,32 +43,32 @@ export default function PersonalizacaoComprovanteManager() {
     setSalvando(false);
   };
 
-  if (loading) return <div className="flex items-center justify-center py-12"><div className="text-sm text-gray-400">Carregando...</div></div>;
+  if (loading) return <div className="flex items-center justify-center py-12"><div className="text-sm text-muted-foreground">Carregando...</div></div>;
 
   return (
     <div className="space-y-5 mt-4">
       {/* Header */}
-      <div className="pb-3 border-b border-gray-100 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Personalização do Comprovante</h3>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Configure a aparência dos comprovantes de venda impressos</p>
+      <div className="pb-3 border-b border-border/40">
+        <h3 className="text-sm font-semibold text-foreground">Personalização do Comprovante</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Configure a aparência dos comprovantes de venda impressos</p>
       </div>
 
       {/* Logo */}
       <div className="space-y-3">
-        <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
+        <Label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
           Logo da Empresa
         </Label>
         {formData.logo_url && (
-          <div className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60">
+          <div className="flex items-center gap-4 p-3 rounded-xl bg-muted/50/60">
             <img src={formData.logo_url} alt="Logo" className="max-w-[100px] max-h-[60px] object-contain"
               style={{ filter: 'grayscale(100%) contrast(200%)' }} />
-            <p className="text-xs text-gray-400 dark:text-gray-500">Preview em preto e branco</p>
+            <p className="text-xs text-muted-foreground">Preview em preto e branco</p>
           </div>
         )}
         <div className="flex gap-2">
           <label className="flex-1">
             <input type="file" accept="image/*" onChange={handleUploadLogo} className="hidden" disabled={uploadingLogo} />
-            <Button type="button" variant="ghost" className="w-full bg-gray-50 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 h-9 text-xs gap-1.5"
+            <Button type="button" variant="ghost" className="w-full bg-muted/50/60 text-muted-foreground hover:bg-muted/60 h-9 text-xs gap-1.5"
               disabled={uploadingLogo} onClick={() => document.querySelector('input[type="file"]')?.click()}>
               <Upload className="w-3.5 h-3.5" />
               {uploadingLogo ? 'Enviando...' : formData.logo_url ? 'Alterar Logo' : 'Carregar Logo'}
@@ -76,31 +76,31 @@ export default function PersonalizacaoComprovanteManager() {
           </label>
           {formData.logo_url && (
             <Button type="button" variant="ghost" size="sm"
-              className="h-9 px-3 text-xs text-gray-400 hover:text-red-500 bg-gray-50 dark:bg-gray-800/60"
+              className="h-9 px-3 text-xs text-muted-foreground hover:text-red-500 bg-muted/50/60"
               onClick={() => setFormData(prev => ({ ...prev, logo_url: '' }))}>
               Remover
             </Button>
           )}
         </div>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500">PNG ou SVG com fundo transparente. Máx 2MB.</p>
+        <p className="text-[11px] text-muted-foreground">PNG ou SVG com fundo transparente. Máx 2MB.</p>
       </div>
 
       {/* Rodapé */}
       <div className="space-y-2">
-        <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
+        <Label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
           Mensagem de Rodapé
         </Label>
         <Textarea value={formData.mensagem_rodape}
           onChange={e => setFormData(prev => ({ ...prev, mensagem_rodape: e.target.value }))}
           placeholder="Ex: OBRIGADO PELA PREFERÊNCIA!" maxLength={100} rows={2}
-          className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm font-mono text-xs dark:text-gray-200 resize-none" />
-        <p className="text-[11px] text-gray-400 dark:text-gray-500">Máximo 100 caracteres. Exibido em negrito no rodapé.</p>
+          className="bg-muted/50 border-0 shadow-sm font-mono text-xs dark:text-foreground resize-none" />
+        <p className="text-[11px] text-muted-foreground">Máximo 100 caracteres. Exibido em negrito no rodapé.</p>
       </div>
 
       {/* Preview */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preview</p>
-        <div className="flex justify-center p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preview</p>
+        <div className="flex justify-center p-4 rounded-xl bg-muted/50/60">
           <div className="bg-white p-4 shadow-lg rounded" style={{ width: '240px', fontFamily: 'Courier, monospace', fontSize: '10px', color: '#000' }}>
             <div className="text-center space-y-1">
               {formData.logo_url && (
@@ -122,11 +122,11 @@ export default function PersonalizacaoComprovanteManager() {
 
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="ghost" size="sm" onClick={carregarDados} disabled={salvando}
-          className="h-8 text-xs text-gray-500 dark:text-gray-400">
+          className="h-8 text-xs text-muted-foreground">
           Cancelar
         </Button>
         <Button onClick={handleSalvar} disabled={salvando} size="sm"
-          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 text-xs">
+          className="bg-primary hover:bg-gray-900 dark:bg-gray-200 dark:text-foreground text-white gap-1.5 h-8 text-xs">
           <Save className="w-3.5 h-3.5" />
           {salvando ? 'Salvando...' : 'Salvar'}
         </Button>

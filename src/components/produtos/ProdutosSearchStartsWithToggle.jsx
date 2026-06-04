@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 export default function ProdutosSearchStartsWithToggle({ checked, onChange, className = '' }) {
   return (
     <label
-      className={`flex items-center gap-1.5 flex-shrink-0 cursor-pointer select-none rounded-xl bg-gray-100 dark:bg-gray-800 px-2 h-10 ${className}`}
+      className={`flex items-center gap-1.5 flex-shrink-0 cursor-pointer select-none rounded-xl bg-muted px-2 h-10 ${className}`}
       title={checked ? 'Busca pelo início do texto' : 'Busca em qualquer parte do texto'}
     >
       <Switch
@@ -13,7 +13,7 @@ export default function ProdutosSearchStartsWithToggle({ checked, onChange, clas
         onCheckedChange={onChange}
         className="scale-[0.72] data-[state=checked]:bg-gray-700 dark:data-[state=checked]:bg-gray-300"
       />
-      <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">
+      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
         Começa com
       </span>
     </label>

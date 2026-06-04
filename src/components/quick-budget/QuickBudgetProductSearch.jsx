@@ -15,7 +15,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           ref={inputRef}
           variant="search"
@@ -28,7 +28,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
             }
           }}
           placeholder="Buscar produto, código ou marca"
-          className="h-14 md:h-12 pl-11 pr-4 border-0 bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm text-base md:text-sm"
+          className="h-14 md:h-12 pl-11 pr-4 border-0 bg-muted/50 rounded-2xl shadow-sm text-base md:text-sm"
         />
       </div>
 
@@ -39,15 +39,15 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
               key={produto.id}
               type="button"
               onClick={() => onAddProduct(produto)}
-              className="w-full rounded-2xl bg-white dark:bg-gray-900 shadow-sm px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="w-full rounded-2xl bg-card shadow-sm px-4 py-3 text-left hover:bg-muted/40 dark:hover:bg-muted transition-colors"
             >
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-4 h-4 text-gray-500" />
+                <div className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white break-words">{produto.nome}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-sm font-medium text-foreground break-words">{produto.nome}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span>Estoque: {Number(produto.estoque_atual || 0)}</span>
                     {produto.codigo_interno && <span>#{produto.codigo_interno}</span>}
                   </div>
@@ -66,7 +66,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
           ))}
 
           {resultados.length === 0 && (
-            <div className="rounded-2xl bg-white dark:bg-gray-900 shadow-sm px-4 py-6 text-center text-sm text-gray-400">
+            <div className="rounded-2xl bg-card shadow-sm px-4 py-6 text-center text-sm text-muted-foreground">
               Nenhum produto encontrado
             </div>
           )}

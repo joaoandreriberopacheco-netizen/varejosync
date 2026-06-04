@@ -130,9 +130,9 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
 
       {/* Dialog para processar autorização */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
           {/* Header */}
-          <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+          <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
             <button
               onClick={() => {
                 if (step === 'confirmacao') {
@@ -141,11 +141,11 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                   setShowDialog(false);
                 }
               }}
-              className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
               style={{ minWidth: '44px', minHeight: '44px' }}>
-              <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              <ArrowLeft className="w-6 h-6 text-foreground/90" />
             </button>
-            <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+            <h2 className="flex-1 text-center text-lg font-semibold text-foreground font-glacial">
               Processar Autorização de Estorno
             </h2>
             <div className="w-10" />
@@ -156,42 +156,42 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
               {step === 'info' && (
                 <>
                   {/* Dados da autorização - pré-preenchidos */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Autorização Gerencial</h3>
+                  <div className="bg-card rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Autorização Gerencial</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Número</span>
-                        <span className="font-mono font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm text-muted-foreground">Número</span>
+                        <span className="font-mono font-semibold text-foreground">
                           {selectedAuth.numero}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Devolução</span>
-                        <span className="font-mono font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm text-muted-foreground">Devolução</span>
+                        <span className="font-mono font-semibold text-foreground">
                           {selectedAuth.devolucao_numero}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Pedido Original</span>
-                        <span className="font-mono font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm text-muted-foreground">Pedido Original</span>
+                        <span className="font-mono font-semibold text-foreground">
                           {selectedAuth.pedido_origem_numero}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Cliente</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm text-muted-foreground">Cliente</span>
+                        <span className="font-semibold text-foreground">
                           {selectedAuth.cliente_nome}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Gerente Aprovador</span>
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="text-sm text-muted-foreground">Gerente Aprovador</span>
+                        <span className="text-sm text-foreground/90">
                           {selectedAuth.gerente_aprovador_nome}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Motivo</span>
-                        <span className="text-sm text-gray-700 dark:text-gray-300 text-right max-w-xs">
+                        <span className="text-sm text-muted-foreground">Motivo</span>
+                        <span className="text-sm text-foreground/90 text-right max-w-xs">
                           {selectedAuth.motivo}
                         </span>
                       </div>
@@ -210,22 +210,22 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                   </div>
 
                   {/* Informações da conta de caixa */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Movimentação Financeira</h3>
+                  <div className="bg-card rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Movimentação Financeira</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Conta</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{contaCaixa?.nome}</span>
+                        <span className="text-sm text-muted-foreground">Conta</span>
+                        <span className="font-semibold text-foreground">{contaCaixa?.nome}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Atual</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm text-muted-foreground">Saldo Atual</span>
+                        <span className="font-semibold text-foreground">
                           {formatValor(contaCaixa?.saldo_atual)}
                         </span>
                       </div>
-                      <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between">
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Saldo Após Estorno</span>
-                        <span className="font-bold text-gray-900 dark:text-white">
+                      <div className="pt-2 border-t border-border/40 flex justify-between">
+                        <span className="text-sm font-semibold text-foreground/90">Saldo Após Estorno</span>
+                        <span className="font-bold text-foreground">
                           {formatValor((contaCaixa?.saldo_atual || 0) - selectedAuth.valor_autorizado)}
                         </span>
                       </div>
@@ -267,7 +267,7 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                         <Input
                           value={currentUser?.full_name || ''}
                           disabled
-                          className="bg-white dark:bg-gray-700 border-emerald-200 dark:border-emerald-700 dark:text-white"
+                          className="bg-white dark:bg-muted border-emerald-200 dark:border-emerald-700 dark:text-white"
                         />
                       </div>
 
@@ -283,7 +283,7 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                         </div>
                       </div>
 
-                      <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center py-3 bg-white dark:bg-gray-800 rounded-xl">
+                      <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center py-3 bg-card rounded-xl">
                         Ao confirmar, você está validando o reembolso do cliente {selectedAuth.cliente_nome} e entregando o valor em dinheiro
                       </p>
                     </div>
@@ -293,7 +293,7 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
                     <button
                       onClick={() => setStep('info')}
                       disabled={loading}
-                      className="flex-1 h-14 rounded-2xl font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                      className="flex-1 h-14 rounded-2xl font-semibold text-foreground/90 bg-muted hover:bg-gray-200 dark:hover:bg-primary/90 transition-colors disabled:opacity-50"
                       style={{ minHeight: '56px' }}>
                       Voltar
                     </button>

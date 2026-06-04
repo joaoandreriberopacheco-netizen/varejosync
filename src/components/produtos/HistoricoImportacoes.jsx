@@ -83,14 +83,14 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col dark:bg-gray-900 dark:border-gray-700">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col dark:bg-background dark:border-border/40">
         <DialogHeader>
-          <DialogTitle className="text-base font-medium text-gray-800 dark:text-gray-200">Histórico de Importações</DialogTitle>
+          <DialogTitle className="text-base font-medium text-foreground">Histórico de Importações</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-3 py-4">
           {importacoes.length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+            <div className="text-center py-8 text-muted-foreground text-sm">
               Nenhuma importação realizada ainda
             </div>
           )}
@@ -100,32 +100,32 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
               key={imp.id}
               className={`p-4 rounded-lg border ${
                 imp.status === 'Desfeita'
-                  ? 'bg-gray-50 border-gray-300 dark:bg-gray-800/50 dark:border-gray-700'
-                  : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+                  ? 'bg-muted/40 border-gray-300 dark:bg-muted/50 dark:border-border/40'
+                  : 'bg-white border-border/40 dark:bg-muted dark:border-border/40'
               }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded flex items-center justify-center ${
                     imp.status === 'Desfeita' 
-                      ? 'bg-gray-200 dark:bg-gray-700' 
-                      : 'bg-gray-100 dark:bg-gray-700/50'
+                      ? 'bg-muted' 
+                      : 'bg-muted/50'
                   }`}>
                     <FileText className={`w-5 h-5 ${
                       imp.status === 'Desfeita' 
-                        ? 'text-gray-500 dark:text-gray-500' 
-                        : 'text-gray-700 dark:text-gray-400'
+                        ? 'text-muted-foreground dark:text-muted-foreground' 
+                        : 'text-foreground/90 dark:text-muted-foreground'
                     }`} />
                   </div>
                   <div>
-                    <div className="font-medium text-sm text-gray-900 dark:text-gray-200">{imp.numero}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{imp.arquivo_nome || 'Sem nome'}</div>
+                    <div className="font-medium text-sm text-foreground dark:text-foreground">{imp.numero}</div>
+                    <div className="text-xs text-muted-foreground">{imp.arquivo_nome || 'Sem nome'}</div>
                   </div>
                 </div>
 
                 <Badge className={`${
                   imp.status === 'Desfeita'
-                    ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    ? 'bg-gray-200 text-foreground/90 dark:bg-muted dark:text-foreground/90'
                     : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
                 } text-xs`}>
                   {imp.status === 'Desfeita' ? (
@@ -136,7 +136,7 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 mb-3">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                 <div>
                   <span className="font-medium text-green-600 dark:text-green-400">{imp.total_novos}</span> novos
                 </div>
@@ -149,7 +149,7 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
               </div>
 
               {imp.status === 'Desfeita' && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 p-2 rounded">
+                <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
                   Desfeita em {formatDate(imp.data_desfeita)} por {imp.usuario_desfez}
                 </div>
               )}
@@ -160,7 +160,7 @@ export default function HistoricoImportacoes({ isOpen, onClose, importacoes, onR
                   size="sm"
                   onClick={() => handleDesfazer(imp)}
                   disabled={isUndoing !== null}
-                  className="w-full gap-2 text-xs dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="w-full gap-2 text-xs dark:border-border/40 dark:text-foreground/90 dark:hover:bg-primary/90"
                 >
                   {isUndoing === imp.id ? (
                     <><Loader2 className="w-3 h-3 animate-spin" />Desfazendo...</>

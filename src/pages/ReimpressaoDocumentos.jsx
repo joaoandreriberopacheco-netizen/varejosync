@@ -86,28 +86,28 @@ export default function ReimpressaoDocumentos() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background p-4 md:p-6">
+    <div className="min-h-screen bg-muted/40 dark:bg-background p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <Printer className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+            <Printer className="w-6 h-6 text-foreground/90" />
+            <h1 className="text-2xl font-semibold text-foreground font-glacial">
               Reimpressão de Documentos
             </h1>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Busque e reimprima pré-vendas ou vendas finalizadas
           </p>
         </div>
 
         {/* Seletor de tipo */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-foreground/90 mb-2">
             Tipo de Documento
           </label>
           <Select value={tipoDoc} onValueChange={(val) => { setTipoDoc(val); setBusca(''); }}>
-            <SelectTrigger className="bg-white dark:bg-gray-800">
+            <SelectTrigger className="bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -128,23 +128,23 @@ export default function ReimpressaoDocumentos() {
 
         {/* Busca */}
         <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por número, cliente, fornecedor..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="pl-10 bg-white dark:bg-gray-800"
+            className="pl-10 bg-card"
           />
           {busca && (
             <button
               onClick={() => setBusca('')}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              <X className="w-4 h-4 text-muted-foreground hover:text-muted-foreground" />
             </button>
           )}
           {ultimoDocumento && busca === ultimoDocumento.numero && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Último documento: {ultimoDocumento.numero}
             </p>
           )}
@@ -152,19 +152,19 @@ export default function ReimpressaoDocumentos() {
 
         {/* Resultados */}
         {busca.length > 0 && busca.length < 3 && (
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
+          <div className="text-center text-sm text-muted-foreground py-8">
             Digite pelo menos 3 caracteres para buscar
           </div>
         )}
 
         {isLoading && (
           <div className="text-center py-8">
-            <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin mx-auto" />
           </div>
         )}
 
         {!isLoading && busca.length >= 3 && documentos.length === 0 && (
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
+          <div className="text-center text-sm text-muted-foreground py-8">
             Nenhum documento encontrado
           </div>
         )}

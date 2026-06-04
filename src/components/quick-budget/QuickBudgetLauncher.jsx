@@ -76,7 +76,7 @@ export default function QuickBudgetLauncher() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={resetDrag}
-          className="pointer-events-auto flex h-16 w-9 select-none flex-col items-center justify-center gap-1 rounded-r-2xl border border-gray-200/80 bg-white/95 text-gray-500 shadow-lg backdrop-blur-sm dark:border-gray-700/80 dark:bg-gray-900/95 dark:text-gray-400 touch-pan-x"
+          className="pointer-events-auto flex h-16 w-9 select-none flex-col items-center justify-center gap-1 rounded-r-2xl border border-border/40/80 bg-white/95 text-muted-foreground shadow-lg backdrop-blur-sm dark:border-border/40/80 dark:bg-background/95 dark:text-muted-foreground touch-pan-x"
           aria-label="Arraste para cima e para a direita para abrir o orçamento rápido"
         >
           <Search className="h-4 w-4" />

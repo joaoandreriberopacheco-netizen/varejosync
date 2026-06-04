@@ -7,39 +7,39 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
   return (
     <Dialog open={!!venda} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">
+          <DialogTitle className="text-lg text-foreground">
             Detalhes da Venda - {venda.numero}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500 dark:text-gray-400">Cliente:</span>
-              <p className="font-medium text-gray-800 dark:text-gray-200">{venda.cliente_nome}</p>
+              <span className="text-muted-foreground">Cliente:</span>
+              <p className="font-medium text-foreground">{venda.cliente_nome}</p>
             </div>
             <div>
-              <span className="text-gray-500 dark:text-gray-400">Vendedor:</span>
-              <p className="font-medium text-gray-800 dark:text-gray-200">{venda.vendedor_nome}</p>
+              <span className="text-muted-foreground">Vendedor:</span>
+              <p className="font-medium text-foreground">{venda.vendedor_nome}</p>
             </div>
             <div>
-              <span className="text-gray-500 dark:text-gray-400">Horário:</span>
-              <p className="font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-muted-foreground">Horário:</span>
+              <p className="font-medium text-foreground">
                 {formatarDataHora(venda.created_date)}
               </p>
             </div>
             <div>
-              <span className="text-gray-500 dark:text-gray-400">Pagamento:</span>
+              <span className="text-muted-foreground">Pagamento:</span>
               {venda.pagamentos?.map((p, idx) => (
-                <p key={idx} className="font-medium text-gray-800 dark:text-gray-200">
+                <p key={idx} className="font-medium text-foreground">
                   {p.forma_pagamento} - {formatValor(p.valor)}
                 </p>
               ))}
             </div>
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">Itens da Venda</h4>
+          <div className="border-t border-border/40 pt-4">
+            <h4 className="font-semibold text-foreground mb-3">Itens da Venda</h4>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -61,19 +61,19 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
               </TableBody>
             </Table>
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+          <div className="border-t border-border/40 pt-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
-              <span className="font-medium text-gray-800 dark:text-gray-200">{formatValor(venda.subtotal)}</span>
+              <span className="text-muted-foreground">Subtotal:</span>
+              <span className="font-medium text-foreground">{formatValor(venda.subtotal)}</span>
             </div>
             {venda.valor_desconto > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Desconto:</span>
+                <span className="text-muted-foreground">Desconto:</span>
                 <span className="font-medium text-red-600 dark:text-red-400">-{formatValor(venda.valor_desconto)}</span>
               </div>
             )}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-gray-800 dark:text-gray-200">Total:</span>
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-border/40">
+              <span className="text-foreground">Total:</span>
               <span className="text-emerald-600 dark:text-emerald-400">{formatValor(venda.valor_total)}</span>
             </div>
           </div>

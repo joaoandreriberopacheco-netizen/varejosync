@@ -7,7 +7,7 @@ export default function MobileFilterSheet({ open, onOpenChange }) {
     <Button
       type="button"
       onClick={() => onOpenChange?.(!open)}
-      className="h-11 w-11 rounded-2xl border-0 shadow-sm bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 px-0"
+      className="h-11 w-11 rounded-2xl border-0 shadow-sm bg-card hover:bg-muted text-foreground/90 dark:text-gray-100 px-0"
     >
       <ListFilter className="w-4 h-4" />
     </Button>

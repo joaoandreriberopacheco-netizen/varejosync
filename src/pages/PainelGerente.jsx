@@ -111,18 +111,18 @@ export default function PainelGerente() {
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{titulo}</p>
-            <p className={`text-2xl font-bold ${cor || 'text-gray-800 dark:text-white'}`}>
+            <p className="text-xs text-muted-foreground mb-1">{titulo}</p>
+            <p className={`text-2xl font-bold ${cor || 'text-foreground'}`}>
               {valor}
             </p>
             {subtitulo && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitulo}</p>
+              <p className="text-xs text-muted-foreground mt-1">{subtitulo}</p>
             )}
           </div>
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            cor ? `bg-${cor.split('-')[1]}-100 dark:bg-${cor.split('-')[1]}-900/20` : 'bg-gray-100 dark:bg-gray-800'
+            cor ? `bg-${cor.split('-')[1]}-100 dark:bg-${cor.split('-')[1]}-900/20` : 'bg-muted'
           }`}>
-            <Icon className={`w-5 h-5 ${cor || 'text-gray-500'}`} />
+            <Icon className={`w-5 h-5 ${cor || 'text-muted-foreground'}`} />
           </div>
         </div>
         {tendencia !== undefined && (
@@ -148,8 +148,8 @@ export default function PainelGerente() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">CARREGANDO DADOS...</p>
+          <div className="w-16 h-16 border-4 border-border/40 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">CARREGANDO DADOS...</p>
         </div>
       </div>
     );
@@ -159,20 +159,20 @@ export default function PainelGerente() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">PAINEL GERENCIAL</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">VISÃO GERAL DAS OPERAÇÕES</p>
+        <h1 className="text-2xl font-bold text-foreground">PAINEL GERENCIAL</h1>
+        <p className="text-sm text-muted-foreground">VISÃO GERAL DAS OPERAÇÕES</p>
       </div>
 
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">FILTROS</span>
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground/90">FILTROS</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">DATA INÍCIO</label>
+              <label className="text-xs text-muted-foreground mb-1 block">DATA INÍCIO</label>
               <Input
                 type="date"
                 value={filtros.data_inicio}
@@ -181,7 +181,7 @@ export default function PainelGerente() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">DATA FIM</label>
+              <label className="text-xs text-muted-foreground mb-1 block">DATA FIM</label>
               <Input
                 type="date"
                 value={filtros.data_fim}
@@ -190,7 +190,7 @@ export default function PainelGerente() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">STATUS</label>
+              <label className="text-xs text-muted-foreground mb-1 block">STATUS</label>
               <Select value={filtros.status} onValueChange={(value) => setFiltros({ ...filtros, status: value })}>
                 <SelectTrigger className="h-9">
                   <SelectValue />
@@ -205,9 +205,9 @@ export default function PainelGerente() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">CLIENTE</label>
+              <label className="text-xs text-muted-foreground mb-1 block">CLIENTE</label>
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="BUSCAR..."
                   value={filtros.cliente}
@@ -254,7 +254,7 @@ export default function PainelGerente() {
       {/* Tabela de Pedidos */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold text-gray-500 mb-4">PEDIDOS DO PERÍODO</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-4">PEDIDOS DO PERÍODO</h3>
           {pedidos.length === 0 ? (
             <p className="text-center py-8 text-sm text-muted-foreground">NENHUM PEDIDO ENCONTRADO</p>
           ) : (

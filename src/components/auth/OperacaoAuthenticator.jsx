@@ -219,14 +219,14 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
     return (
         <>
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border-none shadow-xl">
+            <DialogContent className="sm:max-w-md bg-card border-none shadow-xl">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl font-glacial text-gray-800 dark:text-white">
+                    <DialogTitle className="flex items-center gap-2 text-xl font-glacial text-foreground">
                         <KeyRound className="w-5 h-5 text-indigo-600" />
                         Autenticação de Operação
                     </DialogTitle>
-                    <DialogDescription className="text-gray-500">
-                        {operationName} — <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{operationCode}</span>
+                    <DialogDescription className="text-muted-foreground">
+                        {operationName} — <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{operationCode}</span>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -257,20 +257,20 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                 <Shield className="w-8 h-8 text-amber-500" />
                             </div>
                             <div>
-                                <p className="font-medium text-gray-800 dark:text-white text-base">PIN não configurado</p>
-                                <p className="text-xs text-gray-400 mt-1 max-w-xs">
+                                <p className="font-medium text-foreground text-base">PIN não configurado</p>
+                                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
                                     Você precisa definir um PIN de 6 dígitos antes de autorizar operações.
                                 </p>
                             </div>
                             <Button
                                 onClick={() => setShowPinSetup(true)}
-                                className="bg-gray-900 dark:bg-white dark:text-gray-900 text-white gap-2"
+                                className="bg-gray-900 dark:bg-white dark:text-foreground text-white gap-2"
                             >
                                 Configurar PIN agora
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
                             {OPERACAO_AUTH_PHOTO_ENABLED && (
-                                <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600">Tirar nova foto</button>
+                                <button onClick={reset} className="text-xs text-muted-foreground hover:text-muted-foreground">Tirar nova foto</button>
                             )}
                         </div>
                     )}
@@ -291,7 +291,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                             <div className="flex justify-center gap-3 py-2">
                                 {dots.map((filled, i) => (
                                     <div key={i} className={`w-3 h-3 rounded-full transition-all duration-150 ${
-                                        filled ? 'bg-gray-800 dark:bg-white scale-110' : 'bg-gray-200 dark:bg-gray-700'
+                                        filled ? 'bg-primary dark:bg-white scale-110' : 'bg-muted'
                                     }`} />
                                 ))}
                             </div>
@@ -304,7 +304,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                     value={pin}
                                     onChange={e => { setError(''); setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
                                     onKeyDown={e => e.key === 'Enter' && pin.length === 6 && handlePinSubmit()}
-                                    className="w-full h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                                    className="w-full h-14 rounded-2xl bg-muted/50 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                                     maxLength={6}
                                     placeholder="••••••"
                                     autoComplete="one-time-code"
@@ -322,14 +322,14 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                 </div>
 
                 <DialogFooter className="sm:justify-between gap-2">
-                    <Button variant="ghost" onClick={onClose} disabled={loading} className="text-gray-500">
+                    <Button variant="ghost" onClick={onClose} disabled={loading} className="text-muted-foreground">
                         Cancelar
                     </Button>
                     {step === 'pin' && (
                         <Button
                             onClick={handlePinSubmit}
                             disabled={loading || pin.length < 6}
-                            className="bg-gray-900 dark:bg-white dark:text-gray-900 text-white min-w-[120px]"
+                            className="bg-gray-900 dark:bg-white dark:text-foreground text-white min-w-[120px]"
                         >
                             {loading ? (
                                 <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Validando...</>

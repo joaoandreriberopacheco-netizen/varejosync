@@ -5,33 +5,33 @@ const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigit
 
 function EmptyState() {
   return (
-    <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-[28px] bg-gray-100/80 px-6 text-center dark:bg-gray-900/80">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-800">
-        <Package2 className="h-5 w-5 text-gray-400" />
+    <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-[28px] bg-gray-100/80 px-6 text-center dark:bg-background/80">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm dark:bg-muted">
+        <Package2 className="h-5 w-5 text-muted-foreground" />
       </div>
-      <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum item adicionado</p>
+      <p className="text-sm text-muted-foreground">Nenhum item adicionado</p>
     </div>
   );
 }
 
 function ItemRow({ item, onRemove }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
-        <ShoppingCart className="h-4 w-4 text-gray-500 dark:text-gray-300" />
+    <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-muted">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted">
+        <ShoppingCart className="h-4 w-4 text-muted-foreground dark:text-foreground/90" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{item.produto_nome}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="truncate text-sm font-semibold text-foreground">{item.produto_nome}</p>
+        <p className="text-xs text-muted-foreground">
           {item.quantidade} {item.unidade_medida} · {fmt(item.custo_unitario)}
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{fmt(item.subtotal)}</span>
+        <span className="text-sm font-bold text-foreground">{fmt(item.subtotal)}</span>
         <button
           type="button"
           onClick={onRemove}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:bg-gray-700"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-muted-foreground hover:bg-red-50 hover:text-red-500 dark:bg-muted"
         >
           <X className="h-3.5 w-3.5" />
         </button>

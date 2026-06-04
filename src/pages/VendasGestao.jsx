@@ -50,7 +50,7 @@ const getVirtualPadding = (virtualItems, totalSize) => {
 function PedidoActionsMenu({
   pedido,
   align = 'end',
-  triggerClassName = 'h-8 w-8 text-gray-400',
+  triggerClassName = 'h-8 w-8 text-muted-foreground',
   onVerDetalhes,
   onEdit,
   onReimprimir,
@@ -62,7 +62,7 @@ function PedidoActionsMenu({
           <MoreHorizontal className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="dark:bg-gray-800">
+      <DropdownMenuContent align={align} className="dark:bg-muted">
         <DropdownMenuItem onClick={() => onVerDetalhes(pedido)}>
           <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
         </DropdownMenuItem>
@@ -331,7 +331,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-gray-200 dark:border-gray-700">
+          <TableRow className="border-b border-border/40">
             <TableHead>Senha</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Status</TableHead>
@@ -355,27 +355,27 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
                 key={virtualRow.key}
                 data-index={virtualRow.index}
                 ref={rowVirtualizer.measureElement}
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                className="border-b border-border/40 hover:bg-muted/40 dark:hover:bg-muted/50"
               >
                 <TableCell>
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    <span className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
+                    <span className="text-2xl font-bold text-foreground font-mono">
                       {rascunho.senha_atendimento?.slice(-4)}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">{rascunho.senha_atendimento}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{rascunho.senha_atendimento}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-gray-800 dark:text-gray-200">{rascunho.cliente_nome || '-'}</div>
+                  <div className="font-medium text-foreground">{rascunho.cliente_nome || '-'}</div>
                 </TableCell>
                 <TableCell>
                   <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
                 </TableCell>
-                <TableCell className="text-sm text-gray-500 dark:text-gray-400">{rascunho.vendedor_nome}</TableCell>
-                <TableCell className="text-sm text-gray-500 dark:text-gray-400">
+                <TableCell className="text-sm text-muted-foreground">{rascunho.vendedor_nome}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
                   {fmtDtHora(rascunho.created_date)}
                 </TableCell>
-                <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
+                <TableCell className="text-right font-semibold text-foreground">
                   R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </TableCell>
                 <TableCell>
@@ -558,25 +558,25 @@ function VendasGestaoPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 pr-2">
           <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Gestão de Vendas</h1>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Orçamentos, pedidos e acompanhamento</p>
+          <p className="text-xs text-muted-foreground">Orçamentos, pedidos e acompanhamento</p>
         </div>
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
-            <RotateCcw className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-muted" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+            <RotateCcw className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
-            <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-muted" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
-            <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-muted" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+            <CreditCard className="w-4 h-4 text-muted-foreground" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-full sm:hidden rounded-2xl bg-gray-100 dark:bg-slate-800"
+            className="h-11 w-full sm:hidden rounded-2xl bg-gray-100 dark:bg-muted"
             onClick={() => setShowFiltros(true)}
           >
-            <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+            <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
           </Button>
         </div>
       </div>
@@ -585,35 +585,35 @@ function VendasGestaoPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               variant="search"
               placeholder="Buscar por número, cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 h-12 bg-white dark:bg-slate-800 border-0 rounded-2xl min-w-0 shadow-sm"
+              className="pl-10 pr-4 h-12 bg-white dark:bg-muted border-0 rounded-2xl min-w-0 shadow-sm"
             />
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="hidden sm:flex h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 shrink-0"
+            className="hidden sm:flex h-12 w-12 rounded-2xl bg-gray-100 dark:bg-muted shrink-0"
             onClick={() => setShowFiltros(true)}
           >
-            <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+            <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
           </Button>
         </div>
       </div>
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
           </DrawerHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Tipo</label>
+              <label className="block text-xs text-muted-foreground mb-2">Tipo</label>
               <GlacialTabsList className="w-full" scrollable>
                 <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
                 <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
@@ -622,12 +622,12 @@ function VendasGestaoPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Status</label>
+              <label className="block text-xs text-muted-foreground mb-2">Status</label>
               <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-                <SelectTrigger className="h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 border-0">
+                <SelectTrigger className="h-12 rounded-2xl bg-gray-100 dark:bg-muted border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-slate-900 dark:border-slate-700">
+                <SelectContent className="dark:bg-card dark:border-slate-700">
                   <SelectItem value="todos">Todos</SelectItem>
                   {activeTab === 'rascunhos' ? (
                     <>
@@ -660,7 +660,7 @@ function VendasGestaoPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Período</label>
+              <label className="block text-xs text-muted-foreground mb-2">Período</label>
               <MobileDateRangePicker
                 startDate={dataInicio}
                 endDate={dataFim}
@@ -702,8 +702,8 @@ function VendasGestaoPage() {
         <div className="space-y-4 min-w-0">
           {/* Total no topo */}
           <div className="flex items-start justify-between gap-3 text-sm min-w-0">
-            <span className="text-gray-500 dark:text-gray-400 min-w-0">{quantidadeFiltrada} pedido(s)</span>
-            <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+            <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
           </div>
 
           {/* Lista de Rascunhos */}
@@ -713,9 +713,9 @@ function VendasGestaoPage() {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
           </div>
         ) : rascunhosFiltrados.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-600 dark:text-gray-300">Nenhum pedido encontrado</p>
+          <div className="text-center py-12 text-muted-foreground">
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (
           <>
@@ -739,8 +739,8 @@ function VendasGestaoPage() {
         <div className="space-y-4 min-w-0">
           {/* Total no topo */}
           <div className="flex items-start justify-between gap-3 text-sm min-w-0">
-            <span className="text-gray-500 dark:text-gray-400 min-w-0">{quantidadeFiltrada} pedido(s)</span>
-            <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+            <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
           </div>
 
           {/* Lista de Pedidos */}
@@ -750,9 +750,9 @@ function VendasGestaoPage() {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
           </div>
         ) : pedidosFiltrados.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-600 dark:text-gray-300">Nenhum pedido encontrado</p>
+          <div className="text-center py-12 text-muted-foreground">
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (
           <>

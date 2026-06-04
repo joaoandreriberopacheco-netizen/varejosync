@@ -59,14 +59,14 @@ export function PrecoVendaTabelaLinhas({
   const precos = (
     <>
       {temAjuste && precoOriginal > 0 && (
-        <div className="text-xs text-gray-400 line-through tabular-nums whitespace-nowrap">
+        <div className="text-xs text-muted-foreground line-through tabular-nums whitespace-nowrap">
           {formatCurrency(precoOriginal)}
         </div>
       )}
       {precoFinal > 0 && (
         <div className={`tabular-nums whitespace-nowrap ${finalClassName}`}>
           {formatCurrency(precoFinal)}
-          <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400 ml-0.5">/{sigla}</span>
+          <span className="text-[10px] font-normal text-muted-foreground ml-0.5">/{sigla}</span>
         </div>
       )}
     </>
@@ -80,7 +80,7 @@ export function PrecoVendaTabelaLinhas({
         precos
       )}
       {labelBottom != null && labelBottom !== false && (
-        <p className="text-xs text-gray-400">{labelBottom}</p>
+        <p className="text-xs text-muted-foreground">{labelBottom}</p>
       )}
     </>
   );
