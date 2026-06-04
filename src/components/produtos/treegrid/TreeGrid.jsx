@@ -119,10 +119,6 @@ function CatalogProdutoCell({
   );
 }
 
-function catalogHierDepth(level) {
-  return Math.max(0, (level || 1) - 1);
-}
-
 // ── Dot de status ─────────────────────────────────────────────────────────────
 function StatusDot({ produto }) {
   const e = produto.estoque_atual  || 0;
@@ -316,7 +312,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
           showTierDot={isPrimeiroNivel}
           showIcon={false}
         >
-          <span className="text-xs font-semibold text-foreground/90 dark:text-foreground truncate uppercase tracking-wide">
+          <span className={CATALOG_ROW_LABEL_CLASS}>
             {row.label}
           </span>
           <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
@@ -370,9 +366,16 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
           showIcon
           produto={p}
         >
-          <span className="text-xs font-normal text-muted-foreground truncate uppercase">{p.nome}</span>
+          <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
+            {p.nome}
+          </span>
           {p.codigo_interno && (
-            <span className="text-[10px] text-muted-foreground flex-shrink-0 font-mono">{p.codigo_interno}</span>
+            <span className={cn(
+              'text-[10px] flex-shrink-0 font-mono',
+              isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
+            )}>
+              {p.codigo_interno}
+            </span>
           )}
         </CatalogProdutoCell>
       </td>
@@ -499,14 +502,14 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                   style={{ width: W_EDIT, minWidth: W_EDIT }} />
               )}
               <th
-                className={cn(p38Table.stickyHeadLeft, p38Table.head, "text-left py-2")}
+                className={cn(p38Table.stickyHeadLeft, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
                 style={{ left: nameColLeft, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>
               {activeCols.map(col => (
                 <th key={col.id}
-                  className={cn(p38Table.head, p38Table.headRight, "py-2 whitespace-nowrap")}
+                  className={cn(p38Table.head, p38Table.headRight, CATALOG_ROW_LABEL_CLASS, "py-2 whitespace-nowrap")}
                   style={{ width: col.w, minWidth: col.w }}>
                   {col.label}
                 </th>
