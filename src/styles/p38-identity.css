@@ -45,10 +45,13 @@
     --p38-divider: 0 0% 0% / 0.06;
     /* Tipografia mobile */
     --p38-tracking: 0.02em;
-    --p38-body-size: 14px;
-    --p38-title-size: 14px;
-    --p38-label-size: 0.625rem;
-    --p38-meta-size: 0.625rem;
+    --p38-body-size: 1rem;
+    --p38-title-size: 1rem;
+    --p38-label-size: 1rem;
+    --p38-meta-size: 1rem;
+    --p38-type-lg: 1.125rem;
+    --p38-type-xl: 1.25rem;
+    --p38-type-2xl: 1.5rem;
   }
 
   .dark {
@@ -66,7 +69,7 @@
   /* Classe usada em Relatório de Margem e páginas P38 */
   .font-din-1451 {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-size: var(--p38-body-size, 14px);
+    font-size: var(--p38-body-size, 1rem);
     font-weight: 300;
     letter-spacing: var(--p38-tracking);
   }
@@ -83,7 +86,7 @@
 
   .font-din1451 {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-size: var(--p38-body-size, 14px);
+    font-size: var(--p38-body-size, 1rem);
     font-weight: 300;
     letter-spacing: var(--p38-tracking);
   }
@@ -101,7 +104,7 @@
 
   .font-din-native {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-size: var(--p38-body-size, 14px);
+    font-size: var(--p38-body-size, 1rem);
     font-weight: 300;
     letter-spacing: var(--p38-tracking);
   }

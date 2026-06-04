@@ -5,8 +5,25 @@ module.exports = {
   theme: {
   	extend: {
   		fontFamily: {
+  			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			'din-1451': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+  		},
+  		fontSize: {
+  			/* Piso 14px (1rem com html=14px); lg+ proporcional */
+  			xs: ['1rem', { lineHeight: '1.25' }],
+  			sm: ['1rem', { lineHeight: '1.375' }],
+  			base: ['1rem', { lineHeight: '1.5' }],
+  			lg: ['1.125rem', { lineHeight: '1.375' }],
+  			xl: ['1.25rem', { lineHeight: '1.375' }],
+  			'2xl': ['1.5rem', { lineHeight: '1.25' }],
+  			'3xl': ['1.875rem', { lineHeight: '1.2' }],
+  			'4xl': ['2.25rem', { lineHeight: '1.1' }],
+  			'5xl': ['3rem', { lineHeight: '1' }],
+  			'6xl': ['3.75rem', { lineHeight: '1' }],
+  			'7xl': ['4.5rem', { lineHeight: '1' }],
+  			'8xl': ['6rem', { lineHeight: '1' }],
+  			'9xl': ['8rem', { lineHeight: '1' }],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
