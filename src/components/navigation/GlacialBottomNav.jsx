@@ -53,12 +53,12 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
           const content = (
             <div className="flex flex-col items-center justify-center gap-1 w-full h-full pt-1">
-              <div className={`h-1 w-10 rounded-full transition-all duration-200 ${active ? 'bg-foreground' : 'bg-transparent'}`} />
+              <div className={`h-1 w-10 rounded-full transition-all duration-200 ${active ? 'bg-[#636b33] dark:bg-[#a4ce33]' : 'bg-transparent'}`} />
               <div className="flex items-center justify-center w-12 h-7">
                 <Icon 
                   className={`transition-all duration-200 ${
                     active 
-                      ? 'w-5 h-5 text-foreground stroke-[2]' 
+                      ? 'w-5 h-5 text-[#4A5D23] dark:text-[#a4ce33] stroke-[2]' 
                       : 'w-5 h-5 text-muted-foreground stroke-[1.75]'
                   }`} 
                 />

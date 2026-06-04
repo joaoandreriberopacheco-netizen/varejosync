@@ -184,9 +184,14 @@
     @apply border-l-cyan-500 dark:border-l-cyan-400;
   }
 
-  /* Contentor lista mobile */
+  /* Contentor lista mobile (oculto em md+ quando há tabela desktop) */
   .p38-list-shell {
     @apply md:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
+  }
+
+  /* Contentor lista em todos os viewports */
+  .p38-line-list-shell {
+    @apply overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
   }
 
   /* Campo busca / filtro */

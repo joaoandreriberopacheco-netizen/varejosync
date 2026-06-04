@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Banknote, Lock, RefreshCw, Search, RotateCcw } from 'lucide-react';
+import { Lock, RefreshCw, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
@@ -156,63 +156,63 @@ export default function TurnosFechadosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background font-din-1451 -m-4 md:-m-6 p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-2 flex items-center gap-2">
-              <Lock className="w-6 h-6 text-gray-400" />
+            <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+              <Lock className="w-6 h-6 text-muted-foreground" />
               Turnos Fechados
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Consulte o balanço e a conferência de turnos encerrados
             </p>
           </div>
           <button
             onClick={loadData}
-            className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors"
             style={{ minWidth: '48px', minHeight: '48px' }}
             aria-label="Atualizar lista"
           >
-            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <RefreshCw className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar turno, caixa ou operador..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="pl-9 bg-white dark:bg-gray-800"
+              className="pl-9 p38-search-field border-0"
             />
           </div>
           <Input
             type="date"
             value={filtroData}
             onChange={(e) => setFiltroData(e.target.value)}
-            className="w-full sm:w-44 bg-white dark:bg-gray-800"
+            className="w-full sm:w-44 p38-search-field border-0"
           />
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
           </div>
         ) : turnosFiltrados.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center shadow-sm">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+          <div className="bg-card rounded-2xl p-12 text-center shadow-sm border border-border/40">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nenhum turno fechado</h3>
-            <p className="text-gray-500 dark:text-gray-400">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum turno fechado</h3>
+            <p className="text-muted-foreground">
               {busca || filtroData ? 'Ajuste os filtros para ver outros resultados' : 'Não há turnos encerrados no momento'}
             </p>
           </div>
         ) : (
           <>
-            <P38MobileLineList className="md:hidden">
+            <P38MobileLineList allViewports>
               {turnosFiltrados.map((turno, index) => {
                 const diferenca = turno.diferenca || 0;
                 const diffOk = Math.abs(diferenca) < 0.01;
@@ -240,57 +240,6 @@ export default function TurnosFechadosPage() {
                 );
               })}
             </P38MobileLineList>
-
-            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-3">
-              {turnosFiltrados.map((turno) => {
-                const diferenca = turno.diferenca || 0;
-                const diffOk = Math.abs(diferenca) < 0.01;
-                return (
-                  <button
-                    key={turno.id}
-                    type="button"
-                    onClick={() => handleSelecionarTurno(turno)}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
-                          {turno.conta_caixa_pdv_nome || 'Caixa'}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          {turno.numero} · {turno.usuario_abertura_nome || '—'}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                          Vendas: {formatValor(turno.total_vendas)}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          Fechado{' '}
-                          {turno.data_fechamento
-                            ? format(new Date(turno.data_fechamento), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                            : '—'}
-                          {turno.usuario_fechamento_nome ? ` · ${turno.usuario_fechamento_nome}` : ''}
-                        </p>
-                        <p
-                          className={`text-xs font-medium mt-1 ${
-                            diffOk
-                              ? 'text-gray-400'
-                              : diferenca > 0
-                                ? 'text-[#4A5D23] dark:text-[#a4ce33]'
-                                : 'text-red-500 dark:text-red-400'
-                          }`}
-                        >
-                          Diferença: {diferenca > 0 ? '+' : ''}
-                          {diferenca.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </>
         )}
       </div>

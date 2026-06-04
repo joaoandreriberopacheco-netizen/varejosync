@@ -93,10 +93,17 @@ export function P38MobileLine({
   );
 }
 
-/** Contentor de lista mobile com borda P38 (sem cards com margem). */
-export const P38MobileLineList = React.forwardRef(function P38MobileLineList({ className, children, ...props }, ref) {
+/** Contentor de lista P38 (sem cards com margem). `allViewports` mantém linhas em tablet/desktop. */
+export const P38MobileLineList = React.forwardRef(function P38MobileLineList(
+  { className, allViewports = false, children, ...props },
+  ref
+) {
   return (
-    <div ref={ref} className={cn(p38Table.mobileListShell, className)} {...props}>
+    <div
+      ref={ref}
+      className={cn(allViewports ? p38Table.lineListShell : p38Table.mobileListShell, className)}
+      {...props}
+    >
       {children}
     </div>
   );

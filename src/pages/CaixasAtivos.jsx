@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket, RefreshCw } from 'lucide-react';
+import { Lock, PackageCheck, Eye, EyeOff, Printer, Ticket, RefreshCw } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
@@ -247,34 +247,34 @@ export default function CaixasAtivosPage() {
 
   // Tela de seleção de caixa
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background font-din-1451 -m-4 md:-m-6 p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-2">Caixas Ativos</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Visualize o balanço de caixas em operação</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Caixas Ativos</h1>
+            <p className="text-sm text-muted-foreground">Visualize o balanço de caixas em operação</p>
           </div>
-          <button onClick={loadTurnos} className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
-            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <button onClick={loadTurnos} className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
+            <RefreshCw className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
           </div>
         ) : turnosAtivos.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center shadow-sm">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+          <div className="bg-card rounded-2xl p-12 text-center shadow-sm border border-border/40">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nenhum caixa aberto</h3>
-            <p className="text-gray-500 dark:text-gray-400">Não há turnos ativos no momento</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum caixa aberto</h3>
+            <p className="text-muted-foreground">Não há turnos ativos no momento</p>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="space-y-4">
-            <P38MobileLineList className="md:hidden">
+            <P38MobileLineList allViewports>
               {turnosAtivos.map((turno, index) => {
                 const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
                 return (
@@ -302,57 +302,15 @@ export default function CaixasAtivosPage() {
               })}
             </P38MobileLineList>
 
-            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-3">
-                {turnosAtivos.map(turno => {
-                  const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
-                  return (
-                    <button
-                      key={turno.id}
-                      onClick={() => handleSelecionarCaixa(turno)}
-                      className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                          <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
-                            {turno.conta_caixa_pdv_nome}
-                          </h3>
-                          {liq?.turnoAberto && (
-                            <div className="space-y-0.5">
-                              <p className="text-sm font-semibold text-[#4A5D23] dark:text-[#a4ce33]">
-                                Turno aberto · Liquidez: {formatValor(liq.liquidez)}
-                              </p>
-                              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                Dinheiro na gaveta: {formatValor(liq.dinheiroNaGaveta)}
-                              </p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">
-                                Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}
-                              </p>
-                              {(liq.quantidadeFiado || 0) > 0 && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+              <div className="bg-card rounded-2xl p-5 shadow-sm border border-border/40">
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
                       <Ticket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-gray-900 dark:text-white">Senhas aguardando caixa</h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Acompanhe o volume pendente antes do processamento</p>
+                      <h2 className="text-base font-semibold text-foreground">Senhas aguardando caixa</h2>
+                      <p className="text-xs text-muted-foreground">Acompanhe o volume pendente antes do processamento</p>
                     </div>
                   </div>
                   <button
@@ -360,22 +318,22 @@ export default function CaixasAtivosPage() {
                     className="text-right disabled:cursor-default"
                     disabled={senhasNaoProcessadas.length === 0}
                   >
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">pendente{senhasNaoProcessadas.length === 1 ? '' : 's'}</p>
+                    <p className="text-2xl font-bold text-foreground">{senhasNaoProcessadas.length}</p>
+                    <p className="text-xs text-muted-foreground">pendente{senhasNaoProcessadas.length === 1 ? '' : 's'}</p>
                   </button>
                 </div>
 
                 {senhasNaoProcessadas.length === 0 ? (
-                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhuma senha aguardando processamento.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma senha aguardando processamento.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
-                      <p className="text-xs text-gray-400 dark:text-gray-500">Senhas</p>
-                      <p className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
+                    <div className="rounded-xl bg-muted/60 px-3 py-3">
+                      <p className="text-xs text-muted-foreground">Senhas</p>
+                      <p className="text-lg font-bold text-foreground">{senhasNaoProcessadas.length}</p>
                     </div>
-                    <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
-                      <p className="text-xs text-gray-400 dark:text-gray-500">Valor</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
+                    <div className="rounded-xl bg-muted/60 px-3 py-3">
+                      <p className="text-xs text-muted-foreground">Valor</p>
+                      <p className="text-sm font-bold text-foreground">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
                     </div>
                   </div>
                 )}
@@ -383,23 +341,23 @@ export default function CaixasAtivosPage() {
             </div>
 
             {/* Relatório de Consumo Interno do Dia */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+            <div className="bg-card rounded-2xl p-5 shadow-sm border border-border/40">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <PackageCheck className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">Consumo Interno — Hoje</h2>
+                  <PackageCheck className="w-5 h-5 text-muted-foreground" />
+                  <h2 className="text-base font-semibold text-foreground">Consumo Interno — Hoje</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(totalConsumoHoje)}</span>
+                  <span className="text-sm font-semibold text-foreground/90">{formatValor(totalConsumoHoje)}</span>
                   {consumosPorDestinacao.length > 0 && (
-                    <button onClick={imprimirRelatorioConsumo} className="p-1.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Imprimir relatório consolidado">
-                      <Printer className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                    <button onClick={imprimirRelatorioConsumo} className="p-1.5 rounded-xl bg-muted hover:bg-muted/80 transition-colors" title="Imprimir relatório consolidado">
+                      <Printer className="w-4 h-4 text-muted-foreground" />
                     </button>
                   )}
                 </div>
               </div>
               {consumosPorDestinacao.length === 0 ? (
-                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhum consumo registrado hoje.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum consumo registrado hoje.</p>
               ) : (
                 <div className="space-y-2">
                   {consumosPorDestinacao.map(([dest, data]) => {
@@ -412,43 +370,43 @@ export default function CaixasAtivosPage() {
                       itensAgrupados[it.produto_nome].subtotal += it.subtotal || 0;
                     }));
                     return (
-                      <div key={dest} className="rounded-xl bg-gray-50 dark:bg-gray-900 overflow-hidden">
+                      <div key={dest} className="rounded-xl bg-muted/50 overflow-hidden">
                         <div className="flex items-center justify-between px-4 py-3">
                           <div>
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{dest}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{data.registros} registro{data.registros > 1 ? 's' : ''} · {data.qtdItens} item(ns)</p>
+                            <p className="text-sm font-medium text-foreground">{dest}</p>
+                            <p className="text-xs text-muted-foreground">{data.registros} registro{data.registros > 1 ? 's' : ''} · {data.qtdItens} item(ns)</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(data.total)}</p>
-                            <button onClick={() => toggleDestinacao(dest)} className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                              {expanded ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                            <p className="text-sm font-semibold text-foreground/90">{formatValor(data.total)}</p>
+                            <button onClick={() => toggleDestinacao(dest)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+                              {expanded ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                             </button>
                           </div>
                         </div>
                         {expanded && (
-                          <div className="space-y-3 border-t border-gray-100 px-4 pb-3 pt-2 dark:border-gray-800">
+                          <div className="space-y-3 border-t border-border/40 px-4 pb-3 pt-2">
                             {Object.entries(itensAgrupados).map(([nome, v]) => (
-                              <div key={nome} className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                              <div key={nome} className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>{nome}</span>
                                 <span className="flex items-center gap-3">
-                                  <span className="text-gray-400">{v.qtd} {v.unidade}</span>
-                                  <span className="font-medium text-gray-700 dark:text-gray-300">{formatValor(v.subtotal)}</span>
+                                  <span>{v.qtd} {v.unidade}</span>
+                                  <span className="font-medium text-foreground/90">{formatValor(v.subtotal)}</span>
                                 </span>
                               </div>
                             ))}
                             <div className="space-y-2 pt-2">
                               {registrosDestino.map((consumo) => (
-                                <div key={consumo.id} className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm dark:bg-gray-800/70">
+                                <div key={consumo.id} className="flex items-center justify-between rounded-2xl bg-card px-3 py-3 shadow-sm border border-border/30">
                                   <div className="min-w-0">
-                                    <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{consumo.numero || 'Consumo interno'}</p>
-                                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">{consumo.usuario_solicitante_nome || consumo.created_by || '—'} · {consumo.interveniente_nome || consumo.interveniente || 'Sem interveniente'}</p>
+                                    <p className="truncate text-sm font-medium text-foreground">{consumo.numero || 'Consumo interno'}</p>
+                                    <p className="truncate text-xs text-muted-foreground">{consumo.usuario_solicitante_nome || consumo.created_by || '—'} · {consumo.interveniente_nome || consumo.interveniente || 'Sem interveniente'}</p>
                                   </div>
                                   <div className="ml-3 flex items-center gap-2">
-                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(consumo.valor_total)}</p>
+                                    <p className="text-sm font-semibold text-foreground/90">{formatValor(consumo.valor_total)}</p>
                                     <button
                                       type="button"
                                       onClick={() => setConsumoSelecionado(consumo)}
-                                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500 shadow-sm hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground shadow-sm hover:bg-muted/80"
                                       aria-label="Ver detalhes do consumo"
                                     >
                                       <Eye className="h-4 w-4" />
@@ -469,13 +427,13 @@ export default function CaixasAtivosPage() {
         )}
 
         {showSenhasPage && (
-          <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+          <div className="fixed inset-0 z-50 bg-background flex flex-col font-din-1451">
+            <div className="flex items-center justify-between px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] bg-card border-b border-border/40 flex-shrink-0">
               <div>
-                <div className="text-xs text-gray-400 uppercase tracking-wider">Controle</div>
-                <div className="text-xl font-bold text-gray-900 dark:text-white font-glacial">Senhas aguardando caixa</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Controle</div>
+                <div className="text-xl font-bold text-foreground">Senhas aguardando caixa</div>
               </div>
-              <button onClick={() => setShowSenhasPage(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 text-sm font-medium">
+              <button onClick={() => setShowSenhasPage(false)} className="p-2 hover:bg-muted rounded-xl text-muted-foreground text-sm font-medium">
                 Fechar
               </button>
             </div>
@@ -483,17 +441,17 @@ export default function CaixasAtivosPage() {
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
               <div className="max-w-2xl mx-auto space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white dark:bg-gray-800 p-4 shadow-sm">
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Senhas</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
+                  <div className="rounded-2xl bg-card p-4 shadow-sm border border-border/40">
+                    <p className="text-xs text-muted-foreground">Senhas</p>
+                    <p className="text-2xl font-bold text-foreground">{senhasNaoProcessadas.length}</p>
                   </div>
-                  <div className="rounded-2xl bg-white dark:bg-gray-800 p-4 shadow-sm">
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Valor total</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
+                  <div className="rounded-2xl bg-card p-4 shadow-sm border border-border/40">
+                    <p className="text-xs text-muted-foreground">Valor total</p>
+                    <p className="text-lg font-bold text-foreground">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
                   </div>
                 </div>
 
-                <P38MobileLineList>
+                <P38MobileLineList allViewports>
                   {senhasNaoProcessadas.map((rascunho, index) => (
                     <P38MobileLine
                       key={rascunho.id}
@@ -532,37 +490,37 @@ export default function CaixasAtivosPage() {
 
         {rascunhoSelecionado && (
           <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl border border-border/40">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider">Senha</div>
-                  <div className="text-3xl font-bold font-mono text-gray-900 dark:text-white">{String(rascunhoSelecionado.senha_atendimento || '').slice(-4) || '----'}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Senha</div>
+                  <div className="text-3xl font-bold font-mono text-foreground">{String(rascunhoSelecionado.senha_atendimento || '').slice(-4) || '----'}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{rascunhoSelecionado.cliente_nome || 'Avulso'}</div>
-                  <div className="text-xs text-gray-400">{rascunhoSelecionado.vendedor_nome || 'Sem vendedor'}</div>
+                  <div className="text-sm font-medium text-foreground/90">{rascunhoSelecionado.cliente_nome || 'Avulso'}</div>
+                  <div className="text-xs text-muted-foreground">{rascunhoSelecionado.vendedor_nome || 'Sem vendedor'}</div>
                 </div>
-                <button onClick={() => setRascunhoSelecionado(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 text-sm font-medium">
+                <button onClick={() => setRascunhoSelecionado(null)} className="p-2 hover:bg-muted rounded-xl text-muted-foreground text-sm font-medium">
                   Fechar
                 </button>
               </div>
               <div className="p-5 space-y-3">
-                <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Itens</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Itens</div>
                 {(rascunhoSelecionado.itens || []).map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                  <div key={i} className="flex items-start gap-3 py-2 border-b border-border/30 last:border-0">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{item.produto_nome}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
+                      <div className="text-sm font-medium text-foreground leading-snug">{item.produto_nome}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">R$ {(item.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div className="text-sm font-semibold text-foreground flex-shrink-0">R$ {(item.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   </div>
                 ))}
                 {rascunhoSelecionado.valor_desconto > 0 && (
-                  <div className="flex justify-between text-sm text-gray-500">
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Desconto</span><span>-R$ {rascunhoSelecionado.valor_desconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border/40">
                   <span>Total</span><span>{formatValor(rascunhoSelecionado.valor_total || 0)}</span>
                 </div>
               </div>

@@ -23,6 +23,7 @@ export const P38_SHELL = {
     closeColor: '#ffffff',
     border: 'rgba(255,255,255,0.06)',
     subBorder: 'rgba(255,255,255,0.08)',
+    accent: '#a4ce33',
   },
   light: {
     bg: '#f7f8f4',
@@ -44,6 +45,7 @@ export const P38_SHELL = {
     closeColor: '#3d4238',
     border: 'rgba(0,0,0,0.06)',
     subBorder: 'rgba(0,0,0,0.08)',
+    accent: '#636b33',
   },
 };
 

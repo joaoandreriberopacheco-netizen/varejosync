@@ -332,25 +332,25 @@ export default function VisualizadorCaixa({
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen flex flex-col bg-background font-din-1451">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
-        <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
-          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+      <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
+          <ArrowLeft className="w-6 h-6 text-foreground/90" />
         </button>
         
         <div className="flex-1 text-center min-w-0 px-2">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+          <h1 className="text-lg font-semibold text-foreground font-glacial">
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+          <p className="text-[11px] text-muted-foreground truncate">
             {modoFechado
               ? turnoAtivo?.data_fechamento
                 ? `Fechado · ${format(new Date(turnoAtivo.data_fechamento), 'dd/MM/yyyy HH:mm')}`
@@ -365,13 +365,13 @@ export default function VisualizadorCaixa({
           <button
             type="button"
             onClick={() => loadData({ showSpinner: false })}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar"
           >
-            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <RefreshCw className="w-5 h-5 text-muted-foreground" />
           </button>
-          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <div className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
             {format(new Date(), 'HH:mm')}
           </div>
@@ -382,79 +382,79 @@ export default function VisualizadorCaixa({
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           {/* KPIs - Desktop */}
-          <div className="hidden md:block p-4 pb-0 bg-gray-50 dark:bg-gray-900">
+          <div className="hidden md:block p-4 pb-0 bg-background">
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo do Turno</div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.liquidez)}</div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Inicial + vendas + reforços − recolhimentos</div>
+              <div className="bg-card rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-muted-foreground mb-2">Saldo do Turno</div>
+                <div className="text-3xl font-bold text-foreground font-glacial">{formatValor(caixaData.liquidez)}</div>
+                <div className="text-xs text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Dinheiro na Gaveta</div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+              <div className="bg-card rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-muted-foreground mb-2">Dinheiro na Gaveta</div>
+                <div className="text-3xl font-bold text-foreground font-glacial">
                   {formatValor(dinheiroNaGaveta)}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
+                <div className="text-xs text-muted-foreground mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
               </div>
             </div>
           </div>
 
           {/* Tabs - Desktop */}
-          <div className="hidden md:block border-b border-gray-100 dark:border-gray-700 px-4 bg-gray-50 dark:bg-gray-900">
+          <div className="hidden md:block border-b border-border/40 px-4 bg-background">
             <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
-              <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                 <PieChart className="w-4 h-4" />
                 <span className="text-sm">Balanço</span>
               </TabsTrigger>
-              <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                 <Receipt className="w-4 h-4" />
                 <span className="text-sm">Vendas</span>
               </TabsTrigger>
-              <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+              <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                 <Wallet className="w-4 h-4" />
                 <span className="text-sm">Movimentos</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 bg-gray-50 dark:bg-gray-900">
+          <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 bg-background">
             <div className="max-w-4xl mx-auto space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Movimentações */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">Movimentações do Turno</h3>
+                <div className="bg-card rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-foreground mb-4 text-base font-semibold">Movimentações do Turno</h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
                         <div className="w-7"></div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
+                        <span className="text-sm text-muted-foreground">Saldo Inicial</span>
                       </div>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.saldoInicial)}</span>
+                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.saldoInicial)}</span>
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setShowVendasDialog(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <button onClick={() => setShowVendasDialog(true)} className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                          <Eye className="w-4 h-4 text-muted-foreground" />
                         </button>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Total Vendas</span>
+                        <span className="text-sm text-muted-foreground">Total Vendas</span>
                       </div>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.totalVendas)}</span>
+                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.totalVendas)}</span>
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setShowReforcosDialog(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <button onClick={() => setShowReforcosDialog(true)} className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                          <Eye className="w-4 h-4 text-muted-foreground" />
                         </button>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Reforços</span>
+                        <span className="text-sm text-muted-foreground">Reforços</span>
                       </div>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.reforcos)}</span>
+                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.reforcos)}</span>
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
                         <button onClick={() => setShowSangriasDialog(true)} className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
                           <Eye className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                         </button>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Recolhimentos</span>
+                        <span className="text-sm text-muted-foreground">Recolhimentos</span>
                       </div>
                       <span className="text-base font-medium text-blue-600 dark:text-blue-400 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.sangrias)}</span>
                     </div>
@@ -463,52 +463,52 @@ export default function VisualizadorCaixa({
                         <button onClick={() => setShowDespesasDialog(true)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
                           <Eye className="w-4 h-4 text-red-400 dark:text-red-500" />
                         </button>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Despesas</span>
+                        <span className="text-sm text-muted-foreground">Despesas</span>
                       </div>
                       <span className="text-base font-medium text-red-600 dark:text-red-400 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.despesas)}</span>
                     </div>
-                    <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
+                    <div className="pt-3 mt-1 border-t border-border/40">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
+                        <span className="text-sm font-semibold text-foreground/90">Liquidez do Turno</span>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setShowSaldoConsolidadoDialog(true)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                            <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          <button onClick={() => setShowSaldoConsolidadoDialog(true)} className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                            <Eye className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.liquidez)}</span>
+                          <span className="text-2xl font-bold text-foreground font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.liquidez)}</span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
+                      <p className="text-xs text-muted-foreground mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Recebimentos - BLOQUEADO */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">Recebimentos do Turno</h3>
+                <div className="bg-card rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-foreground mb-4 text-base font-semibold">Recebimentos do Turno</h3>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60">
+                    <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-muted cursor-not-allowed opacity-60">
                       <div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">somente leitura</p>
+                        <span className="text-sm text-muted-foreground">Dinheiro</span>
+                        <p className="text-xs text-muted-foreground">somente leitura</p>
                       </div>
-                      <span className="text-lg font-bold text-gray-500 dark:text-gray-400">{formatValor(dinheiroNaGaveta)}</span>
+                      <span className="text-lg font-bold text-muted-foreground">{formatValor(dinheiroNaGaveta)}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.pix)}</span>
+                      <span className="text-sm text-muted-foreground">PIX</span>
+                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.pix)}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Crédito</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.credito || 0)}</span>
+                      <span className="text-sm text-muted-foreground">Cartão Crédito</span>
+                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.credito || 0)}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Débito</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.debito || 0)}</span>
+                      <span className="text-sm text-muted-foreground">Cartão Débito</span>
+                      <span className="text-base font-medium text-foreground">{formatValor(caixaData.recebimentos.debito || 0)}</span>
                     </div>
                     {(caixaData.recebimentos.vale || 0) > 0 && (
                       <div className="flex items-center justify-between py-2 px-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
+                          <span className="text-sm text-muted-foreground">Vale Troca</span>
                           <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
                         </div>
                         <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">{formatValor(caixaData.recebimentos.vale)}</span>
@@ -517,26 +517,26 @@ export default function VisualizadorCaixa({
                     {(caixaData.fiado || 0) > 0 && (
                       <div className="flex items-center justify-between py-2 px-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Fiado</span>
-                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">a receber</span>
+                          <span className="text-sm text-muted-foreground">Fiado</span>
+                          <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">a receber</span>
                         </div>
-                        <span className="text-base font-medium text-gray-700 dark:text-gray-200">{formatValor(caixaData.fiado)}</span>
+                        <span className="text-base font-medium text-foreground/90">{formatValor(caixaData.fiado)}</span>
                       </div>
                     )}
                     
                     {/* Conferência de fechamento */}
-                    <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                    <div className="pt-3 mt-1 border-t border-border/40 space-y-3">
                       <div className="flex items-center justify-between px-1">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Conferido</span>
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                        <span className="text-sm font-medium text-foreground/90">Total Conferido</span>
+                        <span className="text-2xl font-bold text-foreground font-glacial">
                           {modoFechado ? formatValor(totalConferidoFechamento) : formatValor(caixaData.liquidez)}
                         </span>
                       </div>
                       {modoFechado ? (
                         <>
                           <div className="flex items-center justify-between px-1 text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Dinheiro conferido</span>
-                            <span className="font-semibold text-gray-900 dark:text-white">
+                            <span className="text-muted-foreground">Dinheiro conferido</span>
+                            <span className="font-semibold text-foreground">
                               {formatValor(dinheiroConferidoFechamento)}
                             </span>
                           </div>
@@ -572,7 +572,7 @@ export default function VisualizadorCaixa({
                             </div>
                           </div>
                           {turnoAtivo?.usuario_fechamento_nome && (
-                            <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                            <p className="text-xs text-center text-muted-foreground">
                               Fechado por {turnoAtivo.usuario_fechamento_nome}
                             </p>
                           )}
@@ -592,8 +592,8 @@ export default function VisualizadorCaixa({
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm space-y-2">
-                <button onClick={imprimirRelatorio} className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:shadow-lg transition-shadow" style={{ minHeight: '48px' }}>
+              <div className="bg-card rounded-2xl p-4 shadow-sm space-y-2">
+                <button onClick={imprimirRelatorio} className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity" style={{ minHeight: '48px' }}>
                   <Printer className="w-4 h-4" /> Imprimir Relatório
                 </button>
                 {modoFechado && onSolicitarReabertura && (
@@ -601,7 +601,7 @@ export default function VisualizadorCaixa({
                     type="button"
                     onClick={onSolicitarReabertura}
                     disabled={reabrindo}
-                    className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold flex items-center justify-center gap-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                    className="w-full h-12 rounded-2xl border border-border bg-muted text-foreground font-semibold flex items-center justify-center gap-2 text-sm hover:bg-muted/80 transition-colors disabled:opacity-50"
                     style={{ minHeight: '48px' }}
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -615,21 +615,21 @@ export default function VisualizadorCaixa({
           <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0">
             <div className="max-w-4xl mx-auto space-y-3">
               <div className="mb-4">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Finalizadas</div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                <div className="text-xs text-muted-foreground mb-1">Finalizadas</div>
+                <div className="text-2xl font-bold text-foreground font-glacial">
                   {(vendasFinalizadas || []).length} {(vendasFinalizadas || []).length === 1 ? 'Venda' : 'Vendas'}
                 </div>
               </div>
               {(vendasFinalizadas || []).map(v => (
-                <div key={v.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm cursor-pointer" onClick={() => setVendaDetalhada(v)}>
+                <div key={v.id} className="bg-card rounded-2xl p-5 shadow-sm cursor-pointer" onClick={() => setVendaDetalhada(v)}>
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
-                      <div className="text-base font-medium text-gray-900 dark:text-white truncate">{v.cliente_nome}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{v.numero} · {v.created_date ? formatarDataHora(v.created_date).split(' ')[1] : ''}</div>
+                      <div className="text-base font-medium text-foreground truncate">{v.cliente_nome}</div>
+                      <div className="text-sm text-muted-foreground mt-1">{v.numero} · {v.created_date ? formatarDataHora(v.created_date).split(' ')[1] : ''}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(v.valor_total)}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{v.itens?.length || 0} itens</div>
+                      <div className="text-2xl font-bold text-foreground font-glacial">{formatValor(v.valor_total)}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{v.itens?.length || 0} itens</div>
                     </div>
                   </div>
                 </div>
@@ -648,22 +648,22 @@ export default function VisualizadorCaixa({
                 );
                 
                 if (todos.length === 0) return (
-                  <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
+                  <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                     <Wallet className="w-10 h-10 mb-2" />
                     <p className="text-sm">Nenhuma movimentação</p>
                   </div>
                 );
 
                 return todos.map(item => (
-                  <div key={item.id} className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : item.cor === 'gray' ? 'bg-gray-100 dark:bg-gray-700' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                      {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : item.cor === 'gray' ? <Receipt className="w-4 h-4 text-gray-600 dark:text-gray-300" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                  <div key={item.id} className="bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : item.cor === 'gray' ? 'bg-muted' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                      {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : item.cor === 'gray' ? <Receipt className="w-4 h-4 text-muted-foreground" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.descricao}</div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
+                      <div className="text-sm font-medium text-foreground truncate">{item.descricao}</div>
+                      <div className="text-xs text-muted-foreground">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
                     </div>
-                    <div className={`text-base font-bold font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : item.cor === 'gray' ? 'text-gray-700 dark:text-gray-200' : 'text-red-600 dark:text-red-400'}`}>
+                    <div className={`text-base font-bold flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : item.cor === 'gray' ? 'text-foreground/90' : 'text-red-600 dark:text-red-400'}`}>
                       {item.cor === 'emerald' || item.cor === 'gray' ? '+' : '−'}{formatValor(item.valor)}
                     </div>
                   </div>
@@ -673,16 +673,16 @@ export default function VisualizadorCaixa({
           </TabsContent>
 
           {/* Bottom Nav - Mobile */}
-          <TabsList className="md:hidden grid grid-cols-3 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
-            <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+          <TabsList className="md:hidden grid grid-cols-3 h-16 bg-card border-t border-border/40 rounded-none p-0 flex-shrink-0">
+            <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <PieChart className="w-5 h-5" />
               <span className="text-xs">Balanço</span>
             </TabsTrigger>
-            <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+            <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <Receipt className="w-5 h-5" />
               <span className="text-xs">Vendas</span>
             </TabsTrigger>
-            <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+            <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <Wallet className="w-5 h-5" />
               <span className="text-xs">Movimentos</span>
             </TabsTrigger>

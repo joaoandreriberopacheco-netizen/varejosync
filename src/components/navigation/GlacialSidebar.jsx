@@ -172,7 +172,7 @@ export default function GlacialSidebar({
                         color: isActive ? c.text : c.textSub,
                       }}
                     >
-                      <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.text : c.iconColor }} />
+                      <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.accent : c.iconColor }} />
                       {isOpen && (
                         <>
                           <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
@@ -222,7 +222,7 @@ export default function GlacialSidebar({
                       color: isActive ? c.text : c.textSub,
                     }}
                   >
-                    <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.text : c.iconColor }} />
+                    <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.accent : c.iconColor }} />
                     {isOpen && (
                       <span className="text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
                     )}

@@ -229,20 +229,20 @@ export default function Layout({ children, currentPageName }) {
 
   if (isLoadingUser) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-background">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" />
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-background p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 font-din-1451">
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
           <WifiOff className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Erro de Conexão</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-center mb-6 max-w-md">
+        <h2 className="text-lg font-semibold text-foreground mb-2">Erro de Conexão</h2>
+        <p className="text-muted-foreground text-center mb-6 max-w-md">
           Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.
         </p>
         <Button onClick={() => window.location.reload()}>
@@ -346,26 +346,26 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-card border-gray-200 dark:border-border fixed top-4 md:top-[20%] translate-y-0">
-          <div className="flex items-center px-4 border-b border-gray-200 dark:border-border sticky top-0 bg-white dark:bg-card z-10">
-            <Search className="w-5 h-5 mr-3 text-gray-400" />
+        <DialogContent className="p-0 gap-0 max-w-xl bg-card border-border/40 fixed top-4 md:top-[20%] translate-y-0 font-din-1451">
+          <div className="flex items-center px-4 border-b border-border/40 sticky top-0 bg-card z-10">
+            <Search className="w-5 h-5 mr-3 text-muted-foreground" />
             <Input 
-              className="flex-1 h-14 border-none bg-transparent focus-visible:ring-0 px-0 text-lg text-gray-800 dark:text-gray-200 placeholder:text-gray-400" 
+              className="flex-1 h-14 border-none bg-transparent focus-visible:ring-0 px-0 text-lg text-foreground placeholder:text-muted-foreground" 
               placeholder="O que você procura?" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
             />
-            <div className="text-xs text-gray-400 bg-gray-100 dark:bg-muted px-2 py-1 rounded border border-gray-200 dark:border-border">ESC</div>
+            <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border border-border/40">ESC</div>
           </div>
           <div className="max-h-[50vh] md:max-h-[300px] overflow-y-auto p-2">
              {filteredSearchItems.length === 0 && searchQuery && (
-               <div className="p-4 text-center text-gray-500">
+               <div className="p-4 text-center text-muted-foreground">
                  Nenhuma funcionalidade encontrada para "{searchQuery}"
                </div>
              )}
              {filteredSearchItems.length === 0 && !searchQuery && (
-               <div className="p-4 text-center text-sm text-gray-400">
+               <div className="p-4 text-center text-sm text-muted-foreground">
                  Digite para buscar páginas, relatórios e configurações...
                </div>
              )}
@@ -381,17 +381,17 @@ export default function Layout({ children, currentPageName }) {
                      setSearchQuery("");
                      if(isMobile) setIsOpen(false);
                    }}
-                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer group transition-colors"
+                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer group transition-colors"
                  >
-                   <div className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                   <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center group-hover:bg-secondary text-muted-foreground group-hover:text-[#636b33] dark:group-hover:text-[#a4ce33] transition-colors">
                      <Icon className="w-4 h-4" />
                    </div>
                    <div>
-                     <div className="font-medium text-gray-800 dark:text-gray-200 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
+                     <div className="font-medium text-foreground group-hover:text-[#4A5D23] dark:group-hover:text-[#a4ce33]">
                        {item.name}
                      </div>
                      {item.parent && (
-                       <div className="text-xs text-gray-500 flex items-center gap-1">
+                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                          <span>{item.parent}</span>
                          <ChevronRight className="w-3 h-3" />
                        </div>
