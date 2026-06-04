@@ -38,7 +38,7 @@ export default function PedidoProgressBar({ pedido }) {
   if (filled === 0) return null;
 
   return (
-    <div className="flex items-end gap-[3px] mt-2.5 w-full">
+    <div className="flex items-end gap-[3px] mt-1.5 w-full">
       {HEIGHTS.map((h, i) => {
         const isActive = i < filled;
         const bg = isActive ? palette[i] : undefined;

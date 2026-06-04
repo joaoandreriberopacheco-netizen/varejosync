@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import PedidoProgressBar from '@/components/compras/PedidoProgressBar';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck, CalendarDays } from 'lucide-react';
+import { ChevronDown, Trash2, Check, Package2, CalendarClock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { formatQuantity } from '@/lib/financialUtils';
 import {
@@ -61,16 +61,12 @@ function EmbarquesInfo({ pedido }) {
   if (embarqueDormindo) return null;
 
   return (
-    <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-muted-foreground">
+    <div className="flex items-center gap-3 flex-wrap text-sm leading-normal text-muted-foreground">
       <span className="flex items-center gap-1.5">
-        <Truck className="w-3 h-3 flex-none" />
-        <span>{embarque?.transportadora_nome || 'Sem transportadora'}</span>
-      </span>
-      <span className="flex items-center gap-1.5">
-        <CalendarClock className="w-3 h-3 flex-none" />
+        <CalendarClock className="w-3.5 h-3.5 flex-none" />
         <span>{embarque?.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
       </span>
-      <span className="text-muted-foreground">
+      <span className="text-muted-foreground tabular-nums">
         {pedido._display_ordinal || '#01'}
       </span>
       {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
@@ -178,10 +174,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
         )}
 
-        <div className="w-full min-w-0 px-3 py-3 overflow-hidden">
+        <div className="w-full min-w-0 px-2 py-1.5 overflow-hidden">
           {/* Linha principal */}
-          <div className="flex w-full min-w-0 items-stretch justify-between gap-1.5 overflow-hidden">
-            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+          <div className="flex w-full min-w-0 items-center justify-between gap-1.5 overflow-hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
                 <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-muted'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
@@ -203,14 +199,14 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden" style={{maxWidth: '55%'}}>
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-foreground leading-none font-mono tracking-[0.01em]">
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-foreground leading-normal font-mono">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
-                    <p className="mt-1 text-[0.78rem] font-medium text-muted-foreground leading-tight">
+                    <p className="mt-0.5 text-sm font-medium text-muted-foreground leading-normal truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
-                    <div className="mt-1">
-                      <span className={`inline-flex max-w-[5.5rem] text-[0.6rem] px-1.5 py-[0.1rem] rounded-full font-semibold tracking-tight whitespace-nowrap truncate ${cfg.pill}`}>
+                    <div className="mt-0.5">
+                      <span className={`inline-flex max-w-full text-sm px-2 py-0.5 rounded-full font-semibold leading-normal whitespace-nowrap truncate ${cfg.pill}`}>
                         {displayStatusLabel}
                       </span>
                     </div>
@@ -220,21 +216,21 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right shrink-0 flex flex-col justify-center gap-0.5 pl-1">
-              <p className="text-[0.92rem] font-bold text-foreground leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+            <div className="flex-none text-right shrink-0 flex flex-col justify-center gap-0 pl-1">
+              <p className="text-sm font-bold text-foreground leading-normal whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.64rem] text-muted-foreground whitespace-nowrap">
+              <p className="text-sm text-muted-foreground leading-normal whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
           </div>
 
           {/* Linha de metadados */}
-          <div className="mt-3 flex flex-col gap-2 text-[0.7rem]">
-            <div className="flex items-center gap-4 flex-wrap">
+          <div className="mt-1.5 flex flex-col gap-1 text-sm leading-normal">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Package2 className="w-3 h-3 flex-none" />
+                <Package2 className="w-3.5 h-3.5 flex-none" />
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
                   {pedido._is_necessidade
@@ -260,7 +256,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
         {pedido.status === 'Rascunho' && !modoSelecao && (
           <button
             onClick={e => { e.stopPropagation(); setShowConfirm(true); }}
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
             title="Excluir rascunho"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -302,13 +298,13 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
 
   return (
     <div className={`w-full space-y-2 ${className}`}>
-      <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-1 gap-2 group">
-        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-muted-foreground truncate min-w-0 flex-1">
+      <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-0.5 gap-2 group">
+        <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground leading-normal truncate min-w-0 flex-1">
           {label}
         </p>
         <div className="flex items-center gap-1.5 flex-none shrink-0">
-          <span className="text-[0.65rem] font-bold text-muted-foreground whitespace-nowrap">{R(valorTotal)}</span>
-          <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+          <span className="text-sm font-bold text-muted-foreground leading-normal whitespace-nowrap tabular-nums">{R(valorTotal)}</span>
+          <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
         </div>
       </button>
       {open && (
@@ -335,7 +331,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />)}
+        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 bg-muted rounded-2xl animate-pulse" />)}
       </div>
     );
   }
@@ -350,7 +346,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (
@@ -368,7 +364,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
             selecionadosIds={selecionadosIds}
             onToggleSelecao={onToggleSelecao}
             modoSelecao={modoSelecao}
-            className={index > 0 ? (isSpecialTransition ? 'pt-5' : 'pt-3') : ''}
+            className={index > 0 ? (isSpecialTransition ? 'pt-3' : 'pt-2') : ''}
             _total_eta={_total_eta}
           />
         );
