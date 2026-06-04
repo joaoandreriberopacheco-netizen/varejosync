@@ -1,13 +1,13 @@
 /**
  * Superfícies P38 — alinhado ao Relatório de Margem mobile (screenshot) e tokens em index.css.
- * Escuro: carvão #1a1b21, cartão #2d333b, busca #26262e, cabeçalho tabela #383e47, limão #a4ce33.
+ * Escuro: carvão #1f1d22, cartão #2d333b, busca #26262e, cabeçalho tabela #383e47, limão #a4ce33.
  * Claro: fundo suave + acento verde oliva.
  */
 
 export const P38_THEME = {
   dark: {
-    bg: '#1a1b21',
-    headerBg: '#1a1b21',
+    bg: '#1f1d22',
+    headerBg: '#1f1d22',
     searchBg: '#26262e',
     cardBg: '#2d333b',
     tableHeaderBg: '#383e47',
@@ -48,7 +48,7 @@ export function p38ThemeColors(isDark) {
   return isDark ? P38_THEME.dark : P38_THEME.light;
 }
 
-/** Tokens da sidebar desktop — mesmo cinza da página (#1a1b21), não azul marinho. */
+/** Tokens da sidebar desktop — mesmo cinza da página (#1f1d22), não azul marinho. */
 export function p38SidebarColors(isDark) {
   const t = isDark ? P38_THEME.dark : P38_THEME.light;
   return {
