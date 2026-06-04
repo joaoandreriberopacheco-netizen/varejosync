@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronRight, AlertCircle, Calendar, Paperclip, Filter, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AgefinDetalhes from './AgefinDetalhes';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function AgefinLista({ contas, onRefresh }) {
   const [selectedConta, setSelectedConta] = useState(null);
@@ -64,7 +65,7 @@ export default function AgefinLista({ contas, onRefresh }) {
       </div>
 
       {/* List */}
-      <div className="space-y-3">
+      <div>
         {sorted.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
@@ -85,65 +86,48 @@ export default function AgefinLista({ contas, onRefresh }) {
             )}
           </div>
         ) : (
-          sorted.map((conta) => <ContaCard key={conta.id} conta={conta} onClick={() => setSelectedConta(conta)} />)
+          <P38MobileLineList>
+            {sorted.map((conta, index) => (
+              <ContaCard key={conta.id} conta={conta} striped={index % 2 === 1} onClick={() => setSelectedConta(conta)} />
+            ))}
+          </P38MobileLineList>
         )}
       </div>
     </div>
   );
 }
 
-function ContaCard({ conta, onClick }) {
+function ContaCard({ conta, onClick, striped }) {
   const isPaid = conta.status === 'Pago' || conta.status_visual === 'pago';
   const isOverdue = new Date(conta.data_vencimento) < new Date() && !isPaid;
   const hasBoleto = !!conta.tem_boleto;
   const daysUntil = Math.ceil((new Date(conta.data_vencimento) - new Date()) / (1000 * 60 * 60 * 24));
-
-  const statusColors = {
-    pendente: 'bg-gray-50 dark:bg-gray-900/40 border-l-4 border-gray-300',
-    boleto_anexado: 'bg-lime-50 dark:bg-lime-900/10 border-l-4 border-lime-400',
-    vencido: 'bg-pink-50 dark:bg-pink-900/10 border-l-4 border-pink-400',
-    pago: 'bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500',
-    Cancelado: 'bg-gray-100 dark:bg-gray-800 border-l-4 border-gray-400',
-  };
+  const statusLabel = isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Boleto' : conta.status || 'Pendente';
+  const tone = isPaid ? 'success' : isOverdue ? 'danger' : hasBoleto ? 'info' : conta.status === 'Cancelado' ? 'muted' : 'warning';
 
   return (
-    <button
+    <P38MobileLine
+      as="button"
+      type="button"
+      striped={striped}
+      accent={p38AccentKeyFromTone(tone)}
       onClick={onClick}
-      className={`w-full p-4 rounded-2xl shadow-sm transition-all hover:shadow-md active:scale-98 ${statusColors[conta.status_visual] || statusColors[conta.status] || 'bg-white dark:bg-gray-900'}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 text-left">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-              {conta.descricao}
-            </h3>
-            {isPaid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : isOverdue ? <AlertCircle className="w-4 h-4 text-pink-500 flex-shrink-0" /> : hasBoleto ? <DollarSign className="w-4 h-4 text-lime-500 flex-shrink-0" /> : <DollarSign className="w-4 h-4 text-gray-400 flex-shrink-0" />}
-            {conta.tem_anexo && <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />}
-            {conta.valor_desatualizado && <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                <Calendar className="w-4 h-4" />
-                {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
-              </span>
-              {daysUntil > 0 && (
-                <span className="text-gray-600 dark:text-gray-400 text-xs">
-                  {daysUntil} dia{daysUntil > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-2">
-          <div className="font-bold text-lg text-gray-900 dark:text-white">
-            R$ {conta.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </div>
-      </div>
-    </button>
+      className="w-full text-left"
+      title={conta.descricao}
+      meta={
+        <>
+          <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="w-3 h-3 shrink-0" />
+            {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
+          </span>
+          {daysUntil > 0 && !isPaid && <span>{daysUntil} dia{daysUntil > 1 ? 's' : ''}</span>}
+          {conta.tem_anexo && <Paperclip className="w-3 h-3 text-muted-foreground shrink-0" />}
+          {conta.valor_desatualizado && <AlertCircle className="w-3 h-3 text-amber-600 shrink-0" />}
+        </>
+      }
+      value={`R$ ${conta.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+      trailing={<ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+    />
   );
 }

@@ -3,8 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Edit, Tag, Calendar } from 'lucide-react';
@@ -52,10 +52,10 @@ export default function CampanhasPage() {
     const inicio = new Date(campanha.data_inicio);
     const fim = new Date(campanha.data_fim);
 
-    if (!campanha.ativo) return { label: 'Inativa', variant: 'secondary' };
-    if (agora < inicio) return { label: 'Agendada', variant: 'default' };
-    if (agora >= inicio && agora <= fim) return { label: 'Ativa', variant: 'default' };
-    return { label: 'Expirada', variant: 'destructive' };
+    if (!campanha.ativo) return { label: 'Inativa', variant: 'secondary', tone: 'muted' };
+    if (agora < inicio) return { label: 'Agendada', variant: 'default', tone: 'info' };
+    if (agora >= inicio && agora <= fim) return { label: 'Ativa', variant: 'default', tone: 'success' };
+    return { label: 'Expirada', variant: 'destructive', tone: 'danger' };
   };
 
   return (
@@ -71,46 +71,79 @@ export default function CampanhasPage() {
           </Button>
         </div>
 
-        <Card>
-          <CardContent className="pt-6 min-w-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome da Campanha</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Produtos</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {campanhas.map(campanha => {
-                  const status = getStatusCampanha(campanha);
-                  return (
-                    <TableRow key={campanha.id}>
-                      <TableCell className="font-medium">{campanha.nome_campanha}</TableCell>
-                      <TableCell>{campanha.tipo}</TableCell>
-                      <TableCell className="text-sm">
-                        {format(new Date(campanha.data_inicio), 'dd/MM/yyyy HH:mm')} até{' '}
-                        {format(new Date(campanha.data_fim), 'dd/MM/yyyy HH:mm')}
-                      </TableCell>
-                      <TableCell>{campanha.produtos_ids?.length || 0} produto(s)</TableCell>
-                      <TableCell>
-                        <Badge variant={status.variant}>{status.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(campanha)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {campanhas.length === 0 ? (
+          <div className="text-center py-12 rounded-xl border border-border bg-background shadow-sm">
+            <Tag className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Nenhuma campanha cadastrada</p>
+          </div>
+        ) : (
+          <>
+            <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome da Campanha</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Período</TableHead>
+                    <TableHead>Produtos</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {campanhas.map((campanha) => {
+                    const status = getStatusCampanha(campanha);
+                    const periodo = `${format(new Date(campanha.data_inicio), 'dd/MM/yyyy HH:mm')} até ${format(new Date(campanha.data_fim), 'dd/MM/yyyy HH:mm')}`;
+                    return (
+                      <TableRow key={campanha.id}>
+                        <TableCell className="font-medium text-foreground">{campanha.nome_campanha}</TableCell>
+                        <TableCell className="text-muted-foreground">{campanha.tipo}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{periodo}</TableCell>
+                        <TableCell className="text-muted-foreground">{campanha.produtos_ids?.length || 0} produto(s)</TableCell>
+                        <TableCell>
+                          <P38StatusLabel tone={status.tone}>{status.label}</P38StatusLabel>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(campanha)} className="h-8 w-8 text-muted-foreground">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </P38TableShell>
+
+            <P38MobileLineList className="md:hidden">
+              {campanhas.map((campanha, index) => {
+                const status = getStatusCampanha(campanha);
+                const periodo = `${format(new Date(campanha.data_inicio), 'dd/MM/yy')} – ${format(new Date(campanha.data_fim), 'dd/MM/yy')}`;
+                return (
+                  <P38MobileLine
+                    key={campanha.id}
+                    striped={index % 2 === 1}
+                    accent={p38AccentKeyFromTone(status.tone)}
+                    title={campanha.nome_campanha}
+                    subtitle={campanha.tipo}
+                    meta={
+                      <>
+                        <P38StatusLabel tone={status.tone}>{status.label}</P38StatusLabel>
+                        <span className="tabular-nums">{periodo}</span>
+                        <span>{campanha.produtos_ids?.length || 0} produto(s)</span>
+                      </>
+                    }
+                    trailing={
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(campanha)} className="h-8 w-8 text-muted-foreground shrink-0">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                );
+              })}
+            </P38MobileLineList>
+          </>
+        )}
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <CampanhaForm

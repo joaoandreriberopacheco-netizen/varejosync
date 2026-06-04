@@ -91,56 +91,60 @@ export default function ConsumoInternoPainelInicial({
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  {itens.map((item) => (
-                    <div key={item.id} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 shadow-sm dark:bg-gray-900">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
-                        <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-                          <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
-                          <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
-                          <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
-                          {!!item.assinatura_recolhedor_url && <span className="inline-flex items-center gap-1"><Paperclip className="h-3.5 w-3.5" />assinatura</span>}
-                          {!!item.tags?.length && <span className="inline-flex items-center gap-1"><Tags className="h-3.5 w-3.5" />{item.tags.join(', ')}</span>}
+                <P38MobileLineList>
+                  {itens.map((item, index) => (
+                    <P38MobileLine
+                      key={item.id}
+                      striped={index % 2 === 1}
+                      accent="muted"
+                      title={item.numero}
+                      meta={
+                        <>
+                          <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" />{item.destinacao}</span>
+                          <span className="inline-flex items-center gap-1"><UserRound className="h-3 w-3 shrink-0" />{item.responsavel_recebimento}</span>
+                          <span className="inline-flex items-center gap-1"><Package className="h-3 w-3 shrink-0" />{item.quantidade_total_itens} item(ns)</span>
+                          {!!item.assinatura_recolhedor_url && <span className="inline-flex items-center gap-1"><Paperclip className="h-3 w-3 shrink-0" />assinatura</span>}
+                          {!!item.tags?.length && <span className="inline-flex items-center gap-1"><Tags className="h-3 w-3 shrink-0" />{item.tags.join(', ')}</span>}
+                        </>
+                      }
+                      value={formatCurrency(item.valor_total)}
+                      trailing={
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => onView(item)}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary"
+                            aria-label="Visualizar consumo"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button type="button" onClick={(e) => e.stopPropagation()} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary">
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2">
+                                <Pencil className="h-4 w-4" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onViewAttachments(item)} className="cursor-pointer gap-2">
+                                <ImageIcon className="h-4 w-4" /> Ver anexos
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2">
+                                <Paperclip className="h-4 w-4" /> Anexar doc / foto
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => onDelete(item)} className="cursor-pointer gap-2 text-destructive">
+                                <Trash2 className="h-4 w-4" /> Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </div>
-
-                      <div className="ml-2 flex flex-shrink-0 items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onView(item)}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-gray-500 shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                          aria-label="Visualizar consumo"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button type="button" onClick={(e) => e.stopPropagation()} className="rounded-xl p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
-                              <MoreVertical className="h-4 w-4 text-gray-400" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44 dark:border-gray-700 dark:bg-gray-800">
-                            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
-                              <Pencil className="h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onViewAttachments(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
-                              <ImageIcon className="h-4 w-4" /> Ver anexos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2 dark:text-gray-200 dark:hover:bg-gray-700">
-                              <Paperclip className="h-4 w-4" /> Anexar doc / foto
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onDelete(item)} className="cursor-pointer gap-2 text-red-600 dark:text-red-400 dark:hover:bg-gray-700">
-                              <Trash2 className="h-4 w-4" /> Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
+                      }
+                    />
                   ))}
-                </div>
+                </P38MobileLineList>
               </div>
             ))}
           </div>

@@ -332,7 +332,7 @@ export default function PainelGerente() {
             </>
           )}
         </CardContent>
-      </Card>      </Card>
+      </Card>
     </div>
   );
 }
