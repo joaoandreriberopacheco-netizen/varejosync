@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './styles/p38-identity.css';
-
 @keyframes app-toast-progress {
   from {
     transform: scaleX(1);
@@ -130,40 +128,40 @@ button:focus-visible {
     /* Conteúdo rolável: livre da barra inferior + folga para última linha */
     --p38-scroll-pad-below-nav: calc(var(--p38-bottom-nav-total) + 1.5rem);
   }
-  /* Dark: neutro alinhado à Home (gray-50 / gray-900 / gray-800) */
+  /* Dark: cinzas do Relatório de Margem mobile (#1f1d22 / #26262e / #2d333b / #383e47) */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 16% 65%;
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 40% 98%;
+    --background: 264 8% 12%;
+    --foreground: 0 0% 100%;
+    --card: 214 13% 20%;
+    --card-foreground: 0 0% 100%;
+    --popover: 214 13% 20%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 76 61% 50%;
+    --primary-foreground: 264 8% 12%;
+    --secondary: 240 10% 16%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 216 12% 25%;
+    --muted-foreground: 240 4% 56%;
+    --accent: 216 12% 25%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 44%;
     --destructive-foreground: 0 0% 98%;
-    --border: 215 25% 27%;
-    --input: 215 25% 27%;
-    --ring: 215 20% 65%;
-    --chart-1: 220 70% 58%;
+    --border: 216 10% 28%;
+    --input: 240 10% 16%;
+    --ring: 76 61% 50%;
+    --chart-1: 76 61% 50%;
     --chart-2: 160 60% 48%;
     --chart-3: 30 80% 60%;
     --chart-4: 280 65% 65%;
     --chart-5: 340 75% 60%;
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 215 28% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 25% 27%;
-    --sidebar-ring: 215 20% 65%;
+    --sidebar-background: 264 8% 12%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 76 61% 50%;
+    --sidebar-primary-foreground: 264 8% 12%;
+    --sidebar-accent: 240 10% 16%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 10% 28%;
+    --sidebar-ring: 76 61% 50%;
   }
 }
 

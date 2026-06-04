@@ -66,6 +66,15 @@ const MARGIN_MOBILE_VALUE_ROWS = [
   ],
 ];
 
+/** Labels curtos no cabeçalho mobile (colunas estreitas). */
+const MARGIN_MOBILE_HEADER_ROWS = [
+  ['CUSTO UN', 'PREÇO V.', 'MK %'],
+  ['CUSTO T.', 'RECEITA', 'LUCRO'],
+];
+
+const MARGIN_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-0.5 min-w-0';
+const MARGIN_MOBILE_HEADER_LABEL = 'text-[9px] uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0';
+
 const MARGIN_METRIC_KEYS = MARGIN_MOBILE_VALUE_ROWS.flat().map(({ key }) => key);
 
 const MARGIN_METRIC_SORT_FIELD = {
@@ -391,20 +400,17 @@ function MargemMobileColumnHeader({ className = '' }) {
     <div className={`mx-3 md:mx-0 mt-3 mb-1 rounded-lg overflow-hidden ${MARGIN_TABLE_PANEL} border ${MARGIN_TABLE_BORDER} ${className}`}>
       <div className="flex">
         <div className="w-[3.25rem] flex-shrink-0 border-r border-white/15 px-1.5 py-2 text-right">
-          <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide leading-none opacity-90`}>Qtd</p>
-          <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide leading-none mt-2 opacity-90`}>Un</p>
+          <p className={`${MARGIN_MOBILE_HEADER_LABEL} text-right`}>Qtd</p>
+          <p className={`${MARGIN_MOBILE_HEADER_LABEL} text-right mt-2`}>Un</p>
         </div>
         <div className="flex-1 min-w-0 py-2 pr-2">
-          {MARGIN_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
+          {MARGIN_MOBILE_HEADER_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
-              className={`grid grid-cols-3 gap-x-1 ${rowIdx === 0 ? '' : 'mt-1.5'}`}
+              className={`${MARGIN_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1.5'}`}
             >
-              {valueRow.map(({ label }) => (
-                <p
-                  key={label}
-                  className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate`}
-                >
+              {valueRow.map((label) => (
+                <p key={label} className={MARGIN_MOBILE_HEADER_LABEL}>
                   {label}
                 </p>
               ))}
@@ -443,7 +449,7 @@ function MargemMobileTabulatedValues({ row, className = '', tier = 'filho' }) {
       {MARGIN_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
         <div
           key={rowIdx}
-          className={`grid grid-cols-3 gap-x-1 ${rowIdx === 0 ? '' : 'mt-1'}`}
+          className={`${MARGIN_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
         >
           {valueRow.map(({ key }) => (
             <p
@@ -1782,10 +1788,10 @@ export default function RelatorioMargemVendas() {
               <button
                 type="button"
                 onClick={handleApplySearchFilter}
-                className="h-10 px-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-secondary transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
+                className="h-10 px-3 rounded-xl bg-gray-900 dark:bg-secondary text-white dark:text-gray-200 hover:bg-gray-800 dark:hover:bg-muted transition text-xs font-semibold whitespace-nowrap flex-shrink-0"
                 title="Aplicar busca"
               >
-                Set Filter
+                Filtrar
               </button>
               <button
                 type="button"

@@ -61,6 +61,20 @@
 }
 
 @layer components {
+  /* Classe usada em Relatório de Margem e páginas P38 */
+  .font-din-1451,
+  .font-din-1451 * {
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+    font-weight: 300;
+    letter-spacing: var(--p38-tracking);
+  }
+
+  .font-din-1451 strong,
+  .font-din-1451 .font-semibold,
+  .font-din-1451 th {
+    font-weight: 400;
+  }
+
   /* Tipografia DIN — envolver secção mobile ou página inteira */
   .p38-font {
     font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
