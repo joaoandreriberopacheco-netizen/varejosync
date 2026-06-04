@@ -117,7 +117,7 @@ function Grupo({ label, items, totais, onRow }) {
         </div>
       </button>
       {open && (
-        <P38MobileLineList>
+        <P38MobileLineList className="block md:!block rounded-lg">
           {items.map((l, index) => (
             <LancRow key={l.id} l={l} onClick={onRow} striped={index % 2 === 1} />
           ))}

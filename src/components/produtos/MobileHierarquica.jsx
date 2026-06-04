@@ -12,6 +12,9 @@ import {
   getCatalogoComercialView,
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
+import { P38StatusDot } from '@/components/ui/p38-mobile-line';
+import { p38Table } from '@/lib/p38TableSurfaces';
+import { cn } from '@/components/utils';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -73,7 +76,7 @@ function getPricingForUnit(produto, unitOption) {
 
 function PricingLine({ label, value, tone = 'default', hint }) {
   const toneClass = tone === 'positive'
-    ? 'text-emerald-600 dark:text-emerald-400'
+    ? 'text-[#4A5D23] dark:text-[#a4ce33]'
     : tone === 'warning'
       ? 'text-orange-600 dark:text-orange-300'
       : tone === 'danger'
@@ -184,10 +187,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const e = p.estoque_atual || 0;
   const m = p.estoque_minimo || 0;
   const statusLabel = !p.ativo ? 'Inativo' : e <= 0 ? 'Crítico' : e <= m ? 'Baixo' : 'OK';
-  const dotCls = !p.ativo ? 'bg-gray-400'
-    : e <= 0 ? 'bg-red-500 md:animate-pulse'
-    : e <= m ? 'bg-orange-400'
-    : 'bg-green-500';
+  const stockTone = !p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success';
 
   const cat = getCatalogoComercialView(p);
   const apresent = formatEstoqueApresentacao(p);
@@ -195,7 +195,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
 
   return (
-    <div className="grid grid-cols-[40px_minmax(0,1fr)_44px] gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 w-full min-w-0 max-w-full box-border">
+    <div className={cn(p38Table.mobileLine, "grid grid-cols-[40px_minmax(0,1fr)_44px] gap-3 border-l-transparent w-full min-w-0 max-w-full box-border")}>
       <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
@@ -230,7 +230,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
             <div className="min-w-0">
               <div className="text-[9px] uppercase tracking-wide text-gray-400 dark:text-gray-600">Status</div>
               <div className="flex items-center gap-1 min-w-0">
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
+                <P38StatusDot tone={stockTone} />
                 <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{statusLabel}</span>
               </div>
             </div>
@@ -252,7 +252,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
             event.stopPropagation();
             onOpenPricing(p);
           }}
-          className="h-9 w-9 rounded-2xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15 dark:text-emerald-300"
+          className="h-9 w-9 rounded-lg bg-secondary/80 text-[#4A5D23] dark:text-[#a4ce33] hover:bg-secondary"
           title="Ver precificação"
         >
           <DollarSign className="w-4 h-4" />
@@ -270,11 +270,11 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
     <button
       type="button"
       onClick={() => onToggle(row.key)}
-      className={`w-full min-w-0 max-w-full flex items-center gap-2 py-2.5 text-left box-border transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 overflow-hidden ${
-        isRoot
-          ? 'px-4 bg-white dark:bg-gray-900'
-          : 'pl-8 pr-4 bg-gray-50/70 dark:bg-gray-800/40'
-      }`}
+      className={cn(
+        p38Table.mobileLine,
+        'flex items-center gap-2 border-l-transparent overflow-hidden',
+        isRoot ? 'px-4' : 'pl-8 pr-4 bg-secondary/15 dark:bg-secondary/20',
+      )}
     >
       <ChevronRight
         className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
@@ -350,7 +350,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
-      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+      <div className="rounded-lg border border-border/40 dark:border-white/10 overflow-hidden">
         {rows.map(row => (
           <div key={row.key} className="contain-layout">
             {row.type === 'group' ? (

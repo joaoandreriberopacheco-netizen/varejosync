@@ -19,7 +19,8 @@ import {
   lancamentoCompraMercadoriaPedidoPagamentoAVista,
 } from '@/lib/agefinConsultaFilters';
 import { brandSurface } from '@/lib/brandSurfaces';
-import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { p38Mobile } from '@/lib/p38MobileSurfaces';
 
 function formatCurrency(value) {
@@ -218,6 +219,44 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
     </button>
   );
 }
+
+function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, avisoMesmoGrupoDuplicado, striped }) {
+  const todayKey = dataHoje();
+  const isPaid = lancamentoPago(conta);
+  const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
+  const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
+  const ehCmv = lancamentoEhCmv(conta);
+  const ehFrete = lancamentoEhFreteItinerario(conta);
+  const tone = isPaid ? 'success' : isOverdue ? 'danger' : hasBoleto ? 'info' : 'warning';
+  const statusLabel = isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Boleto' : 'Pendente';
+
+  return (
+    <P38MobileLine
+      striped={striped}
+      accent={modoSelecao && selecionado ? 'success' : p38AccentKeyFromTone(tone)}
+      onClick={() => (modoSelecao ? onToggleSelecao?.(conta) : onOpen())}
+      title={conta.descricao}
+      subtitle={`${conta.terceiro_nome || 'Sem favorecido'} · ${conta.categoria || 'Sem categoria'}`}
+      meta={
+        <>
+          <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
+          <span>{formatarSoData(conta.data_vencimento)}</span>
+          {ehFrete ? <span>Frete</span> : null}
+          {ehCmv ? <span>CMV</span> : null}
+          {avisoMesmoGrupoDuplicado ? <span>Duplicado?</span> : null}
+          {modoSelecao ? (
+            <span className={selecionado ? p38Accent.success.text : 'text-muted-foreground'}>
+              {selecionado ? 'Selecionado' : 'Toque para selecionar'}
+            </span>
+          ) : null}
+        </>
+      }
+      value={formatCurrency(conta.valor)}
+      trailing={<Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+    />
+  );
+}
+
 
 export default function AgefinConsulta() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -782,7 +821,21 @@ export default function AgefinConsulta() {
                     {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
                   </span>
                 </div>
-                <P38MobileLineList>
+                <P38MobileLineList className="block md:hidden rounded-lg">
+                  {grupo.contas.map((conta, index) => (
+                    <ContaLinhaP38
+                      key={conta.id}
+                      conta={conta}
+                      striped={index % 2 === 1}
+                      modoSelecao={modoSelecao}
+                      selecionado={selecionadosIds.includes(conta.id)}
+                      onToggleSelecao={toggleSelecaoConta}
+                      onOpen={() => setSelectedConta(conta)}
+                      avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
+                    />
+                  ))}
+                </P38MobileLineList>
+                <div className="hidden md:block space-y-2">
                   {grupo.contas.map((conta, index) => (
                     <ContaCard
                       key={conta.id}
@@ -795,7 +848,7 @@ export default function AgefinConsulta() {
                       avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
                     />
                   ))}
-                </P38MobileLineList>
+                </div>
               </section>
             ))}
           </div>

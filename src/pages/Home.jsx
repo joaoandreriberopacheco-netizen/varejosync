@@ -17,6 +17,7 @@ import {
   normalizeQuickActionIds,
 } from '@/components/home/quickActions';
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { useKPIsCache } from '@/hooks/useKPIsCache';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 import {
@@ -248,52 +249,91 @@ export default function HomePage() {
           if (!temAvisos || !temAvisoValido) return null;
           
           return (
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 px-1">Avisos</h2>
-              {kpis.pedidosPendentes > 0 && podeVerCaixa && (
-                <Link to={createPageUrl('PDVCaixa')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {kpis.pedidosPendentes} {kpis.pedidosPendentes === 1 ? 'venda aguardando' : 'vendas aguardando'}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Processar pagamento no caixa</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                </Link>
-              )}
-              {kpis.estoqueAlerta > 0 && podeVerEstoque && (
-                <Link to={createPageUrl('Produtos')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {kpis.estoqueAlerta} {kpis.estoqueAlerta === 1 ? 'produto' : 'produtos'} em estoque baixo
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Verificar reposição</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                </Link>
-              )}
+            <div>
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 px-1">Avisos</h2>
+              <P38MobileLineList className="block md:hidden rounded-lg">
+                {kpis.pedidosPendentes > 0 && podeVerCaixa && (
+                  <P38MobileLine
+                    as={Link}
+                    to={createPageUrl('PDVCaixa')}
+                    accent="warning"
+                    title={`${kpis.pedidosPendentes} ${kpis.pedidosPendentes === 1 ? 'venda aguardando' : 'vendas aguardando'}`}
+                    subtitle="Processar pagamento no caixa"
+                    meta={<P38StatusLabel tone="warning">Caixa</P38StatusLabel>}
+                    trailing={<ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  />
+                )}
+                {kpis.estoqueAlerta > 0 && podeVerEstoque && (
+                  <P38MobileLine
+                    as={Link}
+                    to={createPageUrl('Produtos')}
+                    accent="danger"
+                    title={`${kpis.estoqueAlerta} ${kpis.estoqueAlerta === 1 ? 'produto' : 'produtos'} em estoque baixo`}
+                    subtitle="Verificar reposição"
+                    meta={<P38StatusLabel tone="danger">Estoque</P38StatusLabel>}
+                    trailing={<ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  />
+                )}
+              </P38MobileLineList>
+              <div className="hidden md:block space-y-2">
+                {kpis.pedidosPendentes > 0 && podeVerCaixa && (
+                  <Link to={createPageUrl('PDVCaixa')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {kpis.pedidosPendentes} {kpis.pedidosPendentes === 1 ? 'venda aguardando' : 'vendas aguardando'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Processar pagamento no caixa</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  </Link>
+                )}
+                {kpis.estoqueAlerta > 0 && podeVerEstoque && (
+                  <Link to={createPageUrl('Produtos')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {kpis.estoqueAlerta} {kpis.estoqueAlerta === 1 ? 'produto' : 'produtos'} em estoque baixo
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Verificar reposição</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  </Link>
+                )}
+              </div>
             </div>
           );
         })()}
 
         {/* Atalhos de lista adicionais — filtra por permissões */}
         {allowedActionIds.includes('consumo_interno') && (
-        <Link to="/ConsumoInterno" className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-            <ClipboardPenLine className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Registrar Consumo Interno</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Saída rastreada com destinação, assinatura e anexos.</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
-        </Link>
+        <>
+          <P38MobileLineList className="block md:hidden rounded-lg">
+            <P38MobileLine
+              as={Link}
+              to="/ConsumoInterno"
+              accent="info"
+              title="Registrar Consumo Interno"
+              subtitle="Saída rastreada com destinação, assinatura e anexos."
+              meta={<P38StatusLabel tone="info">Consumo</P38StatusLabel>}
+              trailing={<ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+            />
+          </P38MobileLineList>
+          <Link to="/ConsumoInterno" className="hidden md:flex bg-white dark:bg-card rounded-2xl p-4 shadow-sm items-start gap-3 hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+              <ClipboardPenLine className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Registrar Consumo Interno</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Saída rastreada com destinação, assinatura e anexos.</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+          </Link>
+        </>
         )}
 
         {(() => {
@@ -304,27 +344,43 @@ export default function HomePage() {
           if (outrosAtalhos.length === 0) return null;
           
           return (
-            <div className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial mb-3">Outros Atalhos</h3>
-              <div className="space-y-2">
-                {outrosAtalhos.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Link 
-                      key={action.id}
-                      to={createPageUrl(action.page)} 
-                      className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial mb-2 px-1 md:hidden">Outros Atalhos</h3>
+              <P38MobileLineList className="block md:hidden rounded-lg">
+                {outrosAtalhos.map((action, index) => (
+                  <P38MobileLine
+                    key={action.id}
+                    as={Link}
+                    to={createPageUrl(action.page)}
+                    striped={index % 2 === 1}
+                    accent="muted"
+                    title={action.label}
+                    trailing={<ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  />
+                ))}
+              </P38MobileLineList>
+              <div className="hidden md:block bg-white dark:bg-card rounded-2xl p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial mb-3">Outros Atalhos</h3>
+                <div className="space-y-2">
+                  {outrosAtalhos.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Link
+                        key={action.id}
+                        to={createPageUrl(action.page)}
+                        className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                            <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{action.label}</span>
                         </div>
-                        <span className="text-sm text-gray-700 dark:text-gray-300">{action.label}</span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </Link>
-                  );
-                })}
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           );

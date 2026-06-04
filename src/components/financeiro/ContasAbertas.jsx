@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Checkbox } from '@/components/ui/checkbox';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { dataHoje, formatarDataCurta } from '@/components/utils/dateUtils';
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -164,83 +166,63 @@ function ContaRecorrenciaBadge({ l }) {
 }
 
 // ─── Linha (mesmo layout que LancRow em ListaLancamentos) ───────────────────
-function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecionado }) {
+function contaRowTone(l) {
+  const isPago = isLancamentoPago(l);
+  if (isPago) return 'muted';
+  if (l.status === 'Vencido') return 'danger';
+  return l.tipo === 'Receita' ? 'success' : 'warning';
+}
+
+function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecionado, striped }) {
   const isR = l.tipo === 'Receita';
   const vStr = getVencimento(l);
   const val = Math.abs(l.valor || 0);
   const isPago = isLancamentoPago(l);
   const conc = l.status_conciliacao || 'N/A';
-  const showMeta = !!(
-    l.categoria ||
-    isPago ||
-    l.status === 'Vencido' ||
-    l.status === 'Em Aberto' ||
-    !!l.frequencia_recorrencia ||
-    (!isPago && !emSelecao)
-  );
-
-  const icon = isR
-    ? <ArrowDownLeft className="h-3.5 w-3.5 text-green-500 dark:text-green-400" />
-    : <ArrowUpRight className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />;
-
+  const tone = contaRowTone(l);
   const dataKey = vStr;
+  const subtitle = `${dataKey ? formatarDataCurta(dataKey) : '—'}${l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}`;
 
   return (
-    <button
-      type="button"
+    <P38MobileLine
+      striped={striped}
+      accent={p38AccentKeyFromTone(tone)}
       onClick={() => !emSelecao && onClick(l)}
-      className={`flex w-full min-w-0 max-w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 ${isPago ? 'opacity-60' : ''}`}
-    >
-      {emSelecao && !isPago && (
-        <span className="flex-none pt-0.5">
-          <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado(l.id)} />
+      className={isPago ? 'opacity-60' : undefined}
+      title={l.descricao}
+      subtitle={subtitle}
+      meta={
+        <>
+          {l.categoria ? <span>{l.categoria}</span> : null}
+          {!isPago && l.status ? <P38StatusLabel tone={l.status === 'Vencido' ? 'danger' : tone}>{l.status}</P38StatusLabel> : null}
+          {isPago ? <P38StatusLabel tone="success">Pago</P38StatusLabel> : null}
+          <ContaRecorrenciaBadge l={l} />
+          {!isPago && !emSelecao && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onPagar(l); }}
+              className="rounded-md bg-secondary px-1.5 py-0.5 text-[0.6rem] font-medium text-muted-foreground"
+            >
+              Pagar
+            </button>
+          )}
+        </>
+      }
+      value={
+        <span className={isPago ? 'text-muted-foreground' : isR ? p38Accent.success.text : p38Accent.danger.text}>
+          {isR ? '+' : '−'}{R(val)}
         </span>
-      )}
-      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700">{icon}</span>
-
-      <span className="min-w-0 flex-1">
-        <span className="block text-[0.82rem] font-medium leading-snug break-words whitespace-normal text-gray-800 dark:text-gray-100">
-          {l.descricao}
-        </span>
-        <span className="mt-0.5 block text-[0.68rem] text-gray-400 dark:text-gray-500">
-          {dataKey ? formatarDataCurta(dataKey) : '—'}
-          {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
-        </span>
-        {showMeta && (
-          <span className="mt-1 flex flex-wrap items-center gap-1">
-            {l.categoria && (
-              <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-                {l.categoria}
-              </span>
-            )}
-            <ContaStatusBadge status={isPago ? null : l.status} />
-            {isPago && (
-              <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                Pago
-              </span>
-            )}
-            <ContaRecorrenciaBadge l={l} />
-            {!isPago && !emSelecao && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onPagar(l); }}
-                className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-              >
-                Pagar
-              </button>
-            )}
-          </span>
-        )}
-      </span>
-
-      <span className="flex shrink-0 flex-col items-end gap-0.5 pl-1">
-        <span className={`text-[0.82rem] font-bold tabular-nums whitespace-nowrap ${isPago ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
-          <span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(val)}
-        </span>
-        {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-gray-400" />}
-        {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-gray-500" />}
-      </span>
-    </button>
+      }
+      trailing={
+        <div className="flex items-center gap-1 shrink-0">
+          {emSelecao && !isPago && (
+            <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado(l.id)} />
+          )}
+          {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
+          {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
+        </div>
+      }
+    />
   );
 }
 
@@ -271,11 +253,12 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
         </div>
       </button>
       {open && (
-        <div className="divide-y divide-gray-50 overflow-hidden rounded-2xl bg-white shadow-sm dark:divide-white/5 dark:bg-gray-800">
-          {items.map((l) => (
+        <P38MobileLineList className="block rounded-lg">
+          {items.map((l, index) => (
             <ContaRow
               key={l.id}
               l={l}
+              striped={index % 2 === 1}
               onPagar={onPagar}
               onClick={onRow}
               emSelecao={emSelecao}
@@ -283,7 +266,7 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
               onToggleSelecionado={onToggleSelecionado}
             />
           ))}
-        </div>
+        </P38MobileLineList>
       )}
     </div>
   );
