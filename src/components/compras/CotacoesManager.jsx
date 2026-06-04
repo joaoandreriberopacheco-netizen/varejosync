@@ -14,6 +14,19 @@ import ImportadorListaFoto from './ImportadorListaFoto';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { pickDefaultPurchaseUnit } from '@/lib/productUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+  p38StatusTone,
+} from '@/components/ui/p38-mobile-line';
+
+function cotacaoAccent(status) {
+  if (status === 'Finalizada') return 'success';
+  if (status === 'Em Análise') return 'info';
+  return 'muted';
+}
 
 export default function CotacoesManager() {
   const [cotacoes, setCotacoes] = useState([]);
@@ -31,6 +44,7 @@ export default function CotacoesManager() {
   const { toast } = useToast();
 
   const [precosInput, setPrecosInput] = useState({});
+  const [isAnaliseDialogOpen, setIsAnaliseDialogOpen] = useState(false);
 
   const mapCotacaoItemsToManualCart = (cotacao) => (
     (cotacao?.itens || []).map((item) => ({
@@ -495,7 +509,33 @@ export default function CotacoesManager() {
             <p className="text-muted-foreground">Nenhuma cotação encontrada</p>
           </div>
         ) : (
-          cotacoes.map(cotacao => (
+          <>
+            <P38MobileLineList className="md:hidden">
+              {cotacoes.map((cotacao, index) => (
+                <P38MobileLine
+                  key={cotacao.id}
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(cotacaoAccent(cotacao.status))}
+                  onClick={() => handleOpenAnaliseCotacao(cotacao)}
+                  title={cotacao.titulo}
+                  subtitle={cotacao.numero}
+                  meta={
+                    <>
+                      <P38StatusLabel tone={p38StatusTone(cotacao.status)}>{cotacao.status}</P38StatusLabel>
+                      <span>{cotacao.fornecedores?.length || 0} forn.</span>
+                    </>
+                  }
+                  value={`${cotacao.itens?.length || 0} prod.`}
+                  valueSub={
+                    cotacao.data_abertura
+                      ? format(new Date(cotacao.data_abertura), 'dd/MM/yyyy')
+                      : '—'
+                  }
+                />
+              ))}
+            </P38MobileLineList>
+            <div className="hidden md:grid gap-3">
+          {cotacoes.map(cotacao => (
             <div key={cotacao.id} className="bg-card rounded-xl border border-border/40 p-4 transition-all hover:border-teal-200">
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-start">
@@ -750,9 +790,44 @@ export default function CotacoesManager() {
                 </div>
               </div>
             </div>
-          ))
+          ))}
+            </div>
+          </>
         )}
       </div>
+
+      <Dialog
+        open={isAnaliseDialogOpen && !!selectedCotacao}
+        onOpenChange={(open) => {
+          setIsAnaliseDialogOpen(open);
+          if (!open) setSelectedCotacao(null);
+        }}
+      >
+        {selectedCotacao && (
+          <DialogContent className="w-[96vw] max-w-[96vw] sm:!max-w-[95vw] sm:!w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl font-light">
+                {selectedCotacao.status === 'Rascunho'
+                  ? `Montagem da Cotação: ${selectedCotacao.titulo}`
+                  : `Análise de Cotação: ${selectedCotacao.titulo}`}
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground mb-4">
+              {selectedCotacao.itens?.length || 0} produtos · {selectedCotacao.fornecedores?.length || 0} fornecedores
+            </p>
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mb-2"
+              onClick={() => setIsAnaliseDialogOpen(false)}
+            >
+              <Trophy className="w-4 h-4 mr-2 inline" />
+              {selectedCotacao.status === 'Rascunho' ? 'Montar lista' : 'Analisar preços'}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Use um ecrã maior para edição completa de fornecedores e preços, ou rode em modo paisagem.
+            </p>
+          </DialogContent>
+        )}
+      </Dialog>
 
       {selectedCotacao && (
         <ImportadorCotacaoPDF 

@@ -232,6 +232,7 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
 
   return (
     <P38MobileLine
+      thinAccent
       striped={striped}
       accent={modoSelecao && selecionado ? 'success' : p38AccentKeyFromTone(tone)}
       onClick={() => (modoSelecao ? onToggleSelecao?.(conta) : onOpen())}

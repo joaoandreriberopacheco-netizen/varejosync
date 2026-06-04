@@ -14,6 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+  p38StatusTone,
+} from '@/components/ui/p38-mobile-line';
 
 const R = (v) => {
   const n = v || 0;
@@ -102,6 +109,130 @@ function getLEDStatus(pedido) {
   }
 
   return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
+}
+
+function pedidoAccentFromStatus(displayStatus, led) {
+  if (led?.isVerde || displayStatus === 'Concluído') return 'success';
+  if (led?.isCyan || displayStatus === 'Despachado') return 'info';
+  if (led?.isAmbar || String(displayStatus).includes('Aguard') || String(displayStatus).includes('Aprovação')) return 'warning';
+  if (led?.isVermelho || displayStatus === 'Cancelado') return 'danger';
+  if (displayStatus === 'Aprovado') return 'success';
+  return 'muted';
+}
+
+function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao, striped }) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isVirtualCard = !!pedido._display_status;
+  const displayStatus = pedido._display_status || pedido.status;
+  const displayStatusLabel = displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira'
+    ? 'Aguard. Pgto'
+    : displayStatus;
+
+  const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
+    ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
+    : (pedido.itens || []));
+  const totalLinhas = itensDisplay.length;
+  const totalQtd = itensDisplay.reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
+  const totalQtdEmbarcada = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_embarcada) || 0), 0);
+  const totalQtdPedidaCard = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
+  const unidadesCard = [...new Set(itensDisplay.map((i) => String(i.unidade_medida || '').trim()).filter(Boolean))];
+  const sufixoUnidade = unidadesCard.length === 1 ? unidadesCard[0] : 'un.';
+  const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
+    ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
+    : pedido.valor_total);
+
+  const led = useMemo(() => {
+    if (isVirtualCard) {
+      const quantidadePendente = pedido._quantidade_pendente ?? 0;
+      return {
+        isVerde: displayStatus === 'Concluído',
+        isAmbar: displayStatus === 'Aguardando Aprovação Financeira',
+        isVermelho: pedido._embarque?.tipo === 'Necessidade' && !(pedido._embarque?.transportadora_id || pedido._embarque?.transportadora_nome || pedido._embarque?.data_embarque || pedido._embarque?.eta) && (
+          !((pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0)) || quantidadePendente > 0
+        ),
+        isPisca: false,
+        isCyan: displayStatus === 'Despachado',
+      };
+    }
+    return getLEDStatus(pedido);
+  }, [pedido, displayStatus, isVirtualCard]);
+
+  const accent = pedidoAccentFromStatus(displayStatus, led);
+  const codigo = String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '');
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    await base44.entities.PedidoCompra.delete(pedido.id);
+    setDeleting(false);
+    setShowConfirm(false);
+    onDelete();
+  };
+
+  const qtdLabel = pedido._is_necessidade
+    ? (totalQtd > 0 ? `${formatQuantity(totalQtd)} ${sufixoUnidade} pend.` : '')
+    : totalQtdEmbarcada > 0
+      ? `${formatQuantity(totalQtdEmbarcada)} / ${formatQuantity(totalQtdPedidaCard)} ${sufixoUnidade}`
+      : (totalQtd > 0 ? `${formatQuantity(totalQtd)} ${sufixoUnidade}` : '');
+
+  return (
+    <>
+      <P38MobileLine
+        striped={striped}
+        accent={p38AccentKeyFromTone(accent)}
+        onClick={() => {
+          if (modoSelecao) { if (!desabilitadoSelecao) onToggleSelecao?.(pedido); return; }
+          onEdit(pedido);
+        }}
+        title={codigo}
+        subtitle={pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+        meta={
+          <>
+            <P38StatusLabel tone={p38StatusTone(displayStatus)}>{displayStatusLabel}</P38StatusLabel>
+            <span>{totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}{qtdLabel ? ` · ${qtdLabel}` : ''}</span>
+            {pedido._display_date ? <span>{formatarDataCurta(pedido._display_date)}</span> : null}
+          </>
+        }
+        value={R(valorExibido)}
+        trailing={
+          <div className="flex items-center gap-0.5 shrink-0">
+            {modoSelecao && (
+              <div className={`w-5 h-5 rounded-md flex items-center justify-center ${selecionado ? 'bg-primary text-primary-foreground' : 'bg-muted'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
+                {selecionado && <Check className="w-3 h-3" />}
+              </div>
+            )}
+            {pedido.status === 'Rascunho' && !modoSelecao && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500"
+                aria-label="Excluir rascunho"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        }
+      />
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent className="rounded-2xl border border-border/40 dark:bg-background max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir rascunho?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O pedido <strong className="font-mono">{pedido.numero}</strong> será excluído permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700 text-white">
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }
 
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
@@ -298,7 +429,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
 
   return (
     <div className={`w-full space-y-2 font-din-1451 ${className}`}>
-      <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-0.5 gap-2 group">
+      <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between border-b border-border/50 dark:border-white/10 px-1 py-2 gap-2 group">
         <p className="text-sm font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
           {label}
         </p>
@@ -308,20 +439,37 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
         </div>
       </button>
       {open && (
-        <div className="space-y-2">
-          {pedidos.map(p => (
-            <PedidoCard
-              key={p._virtual_key || p.id}
-              pedido={p}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              modoSelecao={modoSelecao}
-              selecionado={selecionadosIds.includes(p.id)}
-              desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
-              onToggleSelecao={onToggleSelecao}
-            />
-          ))}
-        </div>
+        <>
+          <P38MobileLineList className="md:hidden">
+            {pedidos.map((p, index) => (
+              <PedidoMobileLine
+                key={p._virtual_key || p.id}
+                pedido={p}
+                striped={index % 2 === 1}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                modoSelecao={modoSelecao}
+                selecionado={selecionadosIds.includes(p.id)}
+                desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
+                onToggleSelecao={onToggleSelecao}
+              />
+            ))}
+          </P38MobileLineList>
+          <div className="hidden md:block space-y-2">
+            {pedidos.map(p => (
+              <PedidoCard
+                key={p._virtual_key || p.id}
+                pedido={p}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                modoSelecao={modoSelecao}
+                selecionado={selecionadosIds.includes(p.id)}
+                desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
+                onToggleSelecao={onToggleSelecao}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

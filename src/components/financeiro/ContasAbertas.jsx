@@ -185,6 +185,7 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
 
   return (
     <P38MobileLine
+      thinAccent
       striped={striped}
       accent={p38AccentKeyFromTone(tone)}
       onClick={() => !emSelecao && onClick(l)}

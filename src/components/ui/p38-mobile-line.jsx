@@ -40,13 +40,14 @@ export function P38MobileLine({
   valueSub,
   trailing,
   accent = 'default',
+  thinAccent = false,
   striped = false,
   className,
   children,
   ...props
 }) {
   const rowClass = cn(
-    p38Table.mobileLine,
+    thinAccent ? p38Table.mobileLineThin : p38Table.mobileLine,
     ACCENT_BORDER[accent] ?? ACCENT_BORDER.default,
     striped && 'bg-secondary/15 dark:bg-secondary/20',
     onClick && p38Table.mobileLineInteractive,
