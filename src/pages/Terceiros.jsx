@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { Users, PlusCircle, Edit, Trash2, Search, Download, Upload } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ImportacaoTerceiros from '../components/terceiros/ImportacaoTerceiros';
@@ -183,7 +184,7 @@ export default function TerceirosPage() {
 
       {/* Tabela */}
       {filteredTerceiros.length === 0 ? (
-        <div className="text-center py-12 rounded-xl border border-border bg-background shadow-sm overflow-auto">
+        <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
           <Users className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Nenhum terceiro cadastrado</p>
           <Button onClick={handleAddNew} className="gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm h-9 px-4">
@@ -191,55 +192,91 @@ export default function TerceirosPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-background shadow-sm overflow-auto min-w-0 overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-gray-50 dark:bg-gray-800">
-              <TableRow className="border-b border-gray-100 dark:border-gray-700">
-                <TableHead className="text-gray-700 dark:text-gray-300">Código</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Nome / Razão Social</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">CPF / CNPJ</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Cidade</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300">Tipo</TableHead>
-                <TableHead className="text-right text-gray-700 dark:text-gray-300">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTerceiros.map(terceiro => (
-                <TableRow key={terceiro.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                  <TableCell className="font-mono text-xs text-gray-600 dark:text-gray-400">{terceiro.codigo_interno}</TableCell>
-                  <TableCell className="font-medium text-gray-800 dark:text-gray-200">{terceiro.nome}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{terceiro.cpf_cnpj || '-'}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{terceiro.cidade || '-'}</TableCell>
-                  <TableCell>
-                    <span className="px-2 py-1 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                      {terceiro.tipo}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-1 justify-end">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleEdit(terceiro)}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-600 h-10 w-10 md:h-8 md:w-8"
-                      >
-                        <Edit className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDelete(terceiro.id)}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-600 h-10 w-10 md:h-8 md:w-8"
-                      >
-                        <Trash2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <>
+          <P38MobileLineList className="md:hidden">
+            {filteredTerceiros.map((terceiro, index) => (
+              <P38MobileLine
+                key={terceiro.id}
+                striped={index % 2 === 1}
+                title={terceiro.nome}
+                subtitle={terceiro.codigo_interno}
+                meta={
+                  <>
+                    <span>{terceiro.tipo}</span>
+                    <span>{terceiro.cpf_cnpj || '-'}</span>
+                  </>
+                }
+                value={terceiro.cidade || '-'}
+                trailing={
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(terceiro)}
+                      className="h-8 w-8 text-muted-foreground"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(terceiro.id)}
+                      className="h-8 w-8 text-muted-foreground"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                }
+              />
+            ))}
+          </P38MobileLineList>
+
+          <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Nome / Razão Social</TableHead>
+                  <TableHead>CPF / CNPJ</TableHead>
+                  <TableHead>Cidade</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredTerceiros.map(terceiro => (
+                  <TableRow key={terceiro.id}>
+                    <TableCell className="font-mono text-xs">{terceiro.codigo_interno}</TableCell>
+                    <TableCell className="font-medium">{terceiro.nome}</TableCell>
+                    <TableCell>{terceiro.cpf_cnpj || '-'}</TableCell>
+                    <TableCell>{terceiro.cidade || '-'}</TableCell>
+                    <TableCell>{terceiro.tipo}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(terceiro)}
+                          className="h-8 w-8"
+                        >
+                          <Edit className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(terceiro.id)}
+                          className="h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </P38TableShell>
+        </>
       )}
 
       <ImportacaoTerceiros 

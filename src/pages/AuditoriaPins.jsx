@@ -4,8 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { gerenciarPin } from '@/functions/gerenciarPin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 
 export default function AuditoriaPins() {
   const [usuarios, setUsuarios] = useState([]);

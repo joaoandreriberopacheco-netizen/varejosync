@@ -5,8 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
+import {
+    P38MobileLine,
+    P38MobileLineList,
+    P38StatusLabel,
+    p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Plus, Search, Edit2, Trash2, Shield, Key } from 'lucide-react';
@@ -101,56 +106,82 @@ export default function IntervenientesPage() {
                 <CardContent>
                     {isLoading ? (
                         <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+                    ) : filteredItems.length === 0 ? (
+                        <p className="text-center py-8 text-gray-500">Nenhum interveniente encontrado.</p>
                     ) : (
-                        <div className="min-w-0 overflow-x-auto -mx-1">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>Descrição/Cargo</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredItems.map((item) => (
-                                    <TableRow key={item.id} className="border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                                    <Shield className="w-4 h-4" />
+                        <>
+                            <P38MobileLineList className="md:hidden">
+                                {filteredItems.map((item, index) => {
+                                    const statusLabel = item.active ? 'Ativo' : 'Inativo';
+                                    const tone = item.active ? 'success' : 'muted';
+                                    return (
+                                        <P38MobileLine
+                                            key={item.id}
+                                            striped={index % 2 === 1}
+                                            accent={p38AccentKeyFromTone(tone)}
+                                            title={item.full_name}
+                                            subtitle={item.description}
+                                            meta={<P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>}
+                                            trailing={
+                                                <div className="flex items-center gap-0.5 shrink-0">
+                                                    <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }} className="h-8 w-8">
+                                                        <Edit2 className="w-4 h-4 text-muted-foreground" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => { if(confirm('Tem certeza?')) deleteMutation.mutate(item.id); }} className="h-8 w-8">
+                                                        <Trash2 className="w-4 h-4 text-red-400" />
+                                                    </Button>
                                                 </div>
-                                                {item.full_name}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-gray-500">{item.description}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={item.active ? "success" : "secondary"} className={item.active ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}>
-                                                {item.active ? "Ativo" : "Inativo"}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
-                                                    <Edit2 className="w-4 h-4 text-gray-500" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => { if(confirm('Tem certeza?')) deleteMutation.mutate(item.id); }}>
-                                                    <Trash2 className="w-4 h-4 text-red-400" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {filteredItems.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                                            Nenhum interveniente encontrado.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                        </div>
+                                            }
+                                        />
+                                    );
+                                })}
+                            </P38MobileLineList>
+
+                            <P38TableShell className="hidden md:block min-w-0 overflow-x-auto -mx-1">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Nome</TableHead>
+                                            <TableHead>Descrição/Cargo</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Ações</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredItems.map((item) => {
+                                            const statusLabel = item.active ? 'Ativo' : 'Inativo';
+                                            const tone = item.active ? 'success' : 'muted';
+                                            return (
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="font-medium">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                                                <Shield className="w-4 h-4" />
+                                                            </div>
+                                                            {item.full_name}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-muted-foreground">{item.description}</TableCell>
+                                                    <TableCell>
+                                                        <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
+                                                                <Edit2 className="w-4 h-4 text-muted-foreground" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => { if(confirm('Tem certeza?')) deleteMutation.mutate(item.id); }}>
+                                                                <Trash2 className="w-4 h-4 text-red-400" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </P38TableShell>
+                        </>
                     )}
                 </CardContent>
             </Card>

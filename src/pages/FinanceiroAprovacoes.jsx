@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, Clock, AlertCircle, FileText, Eye, Search } from 'lucide-react';
 import { format } from 'date-fns';
@@ -368,7 +368,7 @@ export default function FinanceiroAprovacoesPage() {
             </div>
           ) : (
             <>
-              <div className="hidden md:block border-0 shadow-sm rounded-xl min-w-0 overflow-x-auto bg-white dark:bg-gray-800">
+              <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
                     <TableRow className="border-0">
@@ -455,7 +455,7 @@ export default function FinanceiroAprovacoesPage() {
                     })}
                   </TableBody>
                 </Table>
-              </div>
+              </P38TableShell>
 
               <div className="md:hidden space-y-4">
                 {filteredPedidos.map((pedido) => {

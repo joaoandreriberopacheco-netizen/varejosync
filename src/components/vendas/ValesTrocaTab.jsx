@@ -89,47 +89,41 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
         </div>
       ) : (
         <>
-          <div className="md:hidden space-y-2">
-            {filteredVales.map((vale) => (
-              <div key={vale.id} className="bg-white dark:bg-slate-900 rounded-[26px] p-4 shadow-sm overflow-hidden">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="inline-flex items-center gap-2 mb-2 px-3 py-2 bg-gray-100 dark:bg-slate-800 rounded-2xl max-w-full">
-                      <Ticket className="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" />
-                      <span className="text-base font-bold text-gray-800 dark:text-gray-100 font-mono leading-none truncate">{vale.codigo}</span>
-                    </div>
-                    <div className="font-semibold text-gray-800 dark:text-gray-100 break-words leading-tight">
-                      {vale.cliente_nome || 'Cliente não informado'}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
-                      <span className={`text-xs ${getStatusClass(vale.status)}`}>● {vale.status}</span>
-                      <span className="text-xs text-gray-400 break-words">{vale.origem_tipo}</span>
-                    </div>
-                    <div className="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                      <div>Pedido: {vale.pedido_origem_numero || '-'}</div>
-                      <div>Emitido: {formatarSoData(vale.created_date)}</div>
-                      {vale.data_expiracao && <div>Expira: {formatarSoData(vale.data_expiracao)}</div>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0 max-w-[42%]">
-                    <div className="text-right">
-                      <div className="text-xs text-gray-400">Disponível</div>
-                      <div className="font-semibold text-gray-800 dark:text-gray-100">R$ {formatValor(vale.valor_disponivel)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-gray-400">Original</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">R$ {formatValor(vale.valor_original)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <P38MobileLineList className="md:hidden">
+            {filteredVales.map((vale, index) => {
+              const tone = p38StatusTone(vale.status);
+              return (
+                <P38MobileLine
+                  key={vale.id}
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(tone)}
+                  title={
+                    <span className="inline-flex items-center gap-1.5 font-mono">
+                      <Ticket className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                      {vale.codigo}
+                    </span>
+                  }
+                  subtitle={vale.cliente_nome || 'Cliente não informado'}
+                  meta={
+                    <>
+                      <P38StatusLabel tone={tone}>{vale.status}</P38StatusLabel>
+                      <span>{vale.origem_tipo}</span>
+                      <span>Pedido {vale.pedido_origem_numero || '-'}</span>
+                      <span>Emitido {formatarSoData(vale.created_date)}</span>
+                      {vale.data_expiracao && <span>Expira {formatarSoData(vale.data_expiracao)}</span>}
+                    </>
+                  }
+                  value={`R$ ${formatValor(vale.valor_disponivel)}`}
+                  valueSub={`Orig. R$ ${formatValor(vale.valor_original)}`}
+                />
+              );
+            })}
+          </P38MobileLineList>
 
-          <div className="hidden md:block min-w-0 overflow-x-auto">
+          <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-gray-200 dark:border-gray-700">
+                <TableRow>
                   <TableHead>Código</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Status</TableHead>
@@ -142,31 +136,32 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVales.map((vale) => (
-                  <TableRow key={vale.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <TableCell>
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                        <Ticket className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="font-mono font-semibold text-gray-800 dark:text-gray-100">{vale.codigo}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-gray-800 dark:text-gray-200">{vale.cliente_nome || '-'}</div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-xs ${getStatusClass(vale.status)}`}>● {vale.status}</span>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500 dark:text-gray-400">{vale.origem_tipo}</TableCell>
-                    <TableCell className="text-sm text-gray-500 dark:text-gray-400">{vale.pedido_origem_numero || '-'}</TableCell>
-                    <TableCell className="text-sm text-gray-500 dark:text-gray-400">{formatarDataHora(vale.created_date)}</TableCell>
-                    <TableCell className="text-sm text-gray-500 dark:text-gray-400">{vale.data_expiracao ? formatarSoData(vale.data_expiracao) : '-'}</TableCell>
-                    <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(vale.valor_disponivel)}</TableCell>
-                    <TableCell className="text-right text-sm text-gray-500 dark:text-gray-400">R$ {formatValor(vale.valor_original)}</TableCell>
-                  </TableRow>
-                ))}
+                {filteredVales.map((vale) => {
+                  const tone = p38StatusTone(vale.status);
+                  return (
+                    <TableRow key={vale.id}>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-2 font-mono font-semibold">
+                          <Ticket className="w-4 h-4 text-muted-foreground" />
+                          {vale.codigo}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-medium">{vale.cliente_nome || '-'}</TableCell>
+                      <TableCell>
+                        <P38StatusLabel tone={tone}>{vale.status}</P38StatusLabel>
+                      </TableCell>
+                      <TableCell>{vale.origem_tipo}</TableCell>
+                      <TableCell>{vale.pedido_origem_numero || '-'}</TableCell>
+                      <TableCell>{formatarDataHora(vale.created_date)}</TableCell>
+                      <TableCell>{vale.data_expiracao ? formatarSoData(vale.data_expiracao) : '-'}</TableCell>
+                      <TableCell className="text-right font-semibold">R$ {formatValor(vale.valor_disponivel)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">R$ {formatValor(vale.valor_original)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
-          </div>
+          </P38TableShell>
         </>
       )}
     </div>
