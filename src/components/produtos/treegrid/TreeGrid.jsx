@@ -43,9 +43,19 @@ export const ALL_COLS     = COL_DEFS;
 export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'markup', 'inventario_valorizado'];
 export const TREE_GRID_EXPAND_ALL_LEVEL = 99;
 
-const INDENT_GROUP = 14;
-const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — alinhamento uniforme
+const HIER_STEP = 20;    // recuo por nível hierárquico (filhos vs pais/solteiros)
+const CELL_PAD = 4;
 const W_EDIT = 60;       // coluna de edição sticky à esquerda (edit + delete)
+
+const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
+
+/** Rótulo principal — pais, solteiros de 1º nível e cabeçalho da tabela */
+const CATALOG_ROW_LABEL_CLASS =
+  'text-xs font-semibold text-foreground/90 dark:text-foreground truncate uppercase tracking-wide';
+
+/** Filhos (nível ≥ 2) — tom mais suave que o pai */
+const CATALOG_CHILD_LABEL_CLASS =
+  'text-xs font-normal text-muted-foreground truncate uppercase';
 
 /** Marcador verde mediterrâneo — pais e solteiros de 1º nível na árvore */
 function CatalogTierDot() {
@@ -55,6 +65,62 @@ function CatalogTierDot() {
       aria-hidden="true"
     />
   );
+}
+
+/**
+ * Coluna Produto com trilho fixo: chevron | dot | ícone (32px reservado).
+ * Texto de pais (1º nível) e solteiros alinha no mesmo eixo; filhos recuam HIER_STEP.
+ */
+function CatalogProdutoCell({
+  hierDepth = 0,
+  showChevron = false,
+  isExpanded = false,
+  showTierDot = false,
+  showIcon = false,
+  produto = null,
+  children,
+}) {
+  return (
+    <div
+      className="flex items-center min-w-0 w-full"
+      style={{ paddingLeft: CELL_PAD + hierDepth * HIER_STEP }}
+    >
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="w-3.5 h-3.5 inline-flex items-center justify-center flex-shrink-0">
+          {showChevron ? (
+            <ChevronRight
+              className={cn(
+                'w-3.5 h-3.5 text-muted-foreground transition-transform duration-150',
+                isExpanded && 'rotate-90',
+              )}
+            />
+          ) : null}
+        </span>
+        <span className="w-1.5 inline-flex items-center justify-center flex-shrink-0">
+          {showTierDot ? <CatalogTierDot /> : null}
+        </span>
+        <span
+          className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0"
+          style={{ width: 32, height: 32 }}
+        >
+          {showIcon ? (
+            produto?.imagem_url ? (
+              <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <Package className="w-3.5 h-3.5 text-muted-foreground" />
+            )
+          ) : null}
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 ml-1.5">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function catalogHierDepth(level) {
+  return Math.max(0, (level || 1) - 1);
 }
 
 // ── Dot de status ─────────────────────────────────────────────────────────────
