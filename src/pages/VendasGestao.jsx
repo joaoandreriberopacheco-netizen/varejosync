@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
@@ -115,7 +115,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 122,
+    estimateSize: () => 76,
     getItemKey: (index) => pedidos[index]?.id ?? index,
     measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
@@ -123,7 +123,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   return (
-    <div ref={parentRef} className="md:hidden overflow-y-auto pr-1" style={VIRTUAL_LIST_STYLE}>
+    <P38MobileLineList ref={parentRef} className="pr-1" style={VIRTUAL_LIST_STYLE}>
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const pedido = pedidos[virtualRow.index];
@@ -133,11 +133,12 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }
               key={virtualRow.key}
               data-index={virtualRow.index}
               ref={rowVirtualizer.measureElement}
-              className="absolute left-0 top-0 w-full pb-2"
+              className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
-              <PedidoMobileCard
+              <PedidoMobileLine
                 pedido={pedido}
+                striped={virtualRow.index % 2 === 1}
                 onVerDetalhes={onVerDetalhes}
                 onEdit={onEdit}
                 onReimprimir={onReimprimir}
@@ -146,7 +147,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }
           );
         })}
       </div>
-    </div>
+    </P38MobileLineList>
   );
 }
 
@@ -165,65 +166,73 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
 
   return (
     <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8"></TableHead>
-            <TableHead>Pedido</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Vendedor</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead className="text-right">Valor</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paddingTop > 0 && (
-            <TableRow aria-hidden="true" className="border-0">
-              <TableCell colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} />
+      <P38TableShell className="overflow-visible">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8"></TableHead>
+              <TableHead>Pedido</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
             </TableRow>
-          )}
-          {virtualItems.map((virtualRow) => {
-            const pedido = pedidos[virtualRow.index];
-
-            return (
-              <TableRow
-                key={virtualRow.key}
-                data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
-              >
-                <TableCell>
-                  <PedidoActionsMenu
-                    pedido={pedido}
-                    align="start"
-                    onVerDetalhes={onVerDetalhes}
-                    onEdit={onEdit}
-                    onReimprimir={onReimprimir}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium text-gray-800 dark:text-gray-200">{pedido.cliente_nome || '-'}</div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">{pedido.numero}</div>
-                </TableCell>
-                <TableCell>
-                  <span className="text-xs text-green-600">● {pedido.status}</span>
-                </TableCell>
-                <TableCell className="text-sm text-gray-500 dark:text-gray-400">{pedido.vendedor_nome}</TableCell>
-                <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                  {fmtDtHora(pedido.created_date)}
-                </TableCell>
-                <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
-                  R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                </TableCell>
+          </TableHeader>
+          <TableBody>
+            {paddingTop > 0 && (
+              <TableRow aria-hidden="true" className="border-0">
+                <TableCell colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} />
               </TableRow>
-            );
-          })}
-          {paddingBottom > 0 && (
-            <TableRow aria-hidden="true" className="border-0">
-              <TableCell colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} />
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+            {virtualItems.map((virtualRow) => {
+              const pedido = pedidos[virtualRow.index];
+              const tone = statusTone(pedido.status);
+
+              return (
+                <TableRow
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                >
+                  <TableCell>
+                    <PedidoActionsMenu
+                      pedido={pedido}
+                      align="start"
+                      onVerDetalhes={onVerDetalhes}
+                      onEdit={onEdit}
+                      onReimprimir={onReimprimir}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-foreground">{pedido.cliente_nome || '-'}</div>
+                    <div className="text-xs text-muted-foreground">{pedido.numero}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1 text-xs">
+                      <P38StatusDot tone={tone} />
+                      <span className={tone === 'danger' ? p38Accent.danger.text : tone === 'warning' ? p38Accent.warning.text : p38Accent.success.text}>
+                        {pedido.status}
+                      </span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{pedido.vendedor_nome}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {fmtDtHora(pedido.created_date)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-foreground tabular-nums">
+                    R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {paddingBottom > 0 && (
+              <TableRow aria-hidden="true" className="border-0">
+                <TableCell colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} />
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </P38TableShell>
     </div>
   );
 }
@@ -244,46 +253,47 @@ function RascunhoInutilizarButton({ rascunho, onInutilizar }) {
   );
 }
 
-function RascunhoMobileCard({ rascunho, onInutilizar }) {
+function RascunhoMobileLine({ rascunho, onInutilizar, striped }) {
+  const tone = statusTone(rascunho.status);
+  const accentClass = tone === 'danger' ? 'danger' : tone === 'warning' ? 'warning' : 'success';
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[26px] p-4 shadow-sm overflow-hidden">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="inline-flex items-center gap-2 mb-2 px-3 py-2 bg-gray-100 dark:bg-slate-800 rounded-2xl max-w-full">
-            <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">Senha</span>
-            <span className="text-2xl font-bold text-gray-800 dark:text-gray-100 font-mono leading-none truncate">
-              {rascunho.senha_atendimento?.slice(-4)}
+    <P38MobileLine
+      striped={striped}
+      accent={accentClass}
+      title={rascunho.cliente_nome || 'Cliente não informado'}
+      subtitle={
+        <>
+          <span className="font-mono font-semibold text-foreground">{rascunho.senha_atendimento?.slice(-4)}</span>
+          {rascunho.senha_atendimento ? (
+            <span className="text-muted-foreground"> · {rascunho.senha_atendimento}</span>
+          ) : null}
+        </>
+      }
+      meta={
+        <>
+          <span className="inline-flex items-center gap-1">
+            <P38StatusDot tone={tone} />
+            <span className={tone === 'danger' ? p38Accent.danger.text : tone === 'warning' ? p38Accent.warning.text : p38Accent.success.text}>
+              {rascunho.status}
             </span>
-          </div>
-          <div className="text-xs text-gray-400 mb-1 break-all">{rascunho.senha_atendimento}</div>
-          <div className="font-semibold text-gray-800 dark:text-gray-100 break-words leading-tight">
-            {rascunho.cliente_nome || 'Cliente não informado'}
-          </div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
-            <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
-            <span className="text-xs text-gray-400 break-words">{rascunho.vendedor_nome}</span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2 shrink-0 max-w-[40%]">
-          <div className="font-semibold text-gray-800 dark:text-gray-100 text-right break-words leading-tight">
-            R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-          </div>
-          <div className="text-xs text-gray-400 text-right">
-            {fmtDataCurta(rascunho.created_date)}
-          </div>
+          </span>
+          {rascunho.vendedor_nome ? <span className="truncate">{rascunho.vendedor_nome}</span> : null}
           <RascunhoInutilizarButton rascunho={rascunho} onInutilizar={onInutilizar} />
-        </div>
-      </div>
-    </div>
+        </>
+      }
+      value={`R$ ${(rascunho.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+      valueSub={fmtDataCurta(rascunho.created_date)}
+    />
   );
 }
 
-function VirtualizedRascunhoCards({ rascunhos, onInutilizar }) {
+function VirtualizedRascunhoLines({ rascunhos, onInutilizar }) {
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: rascunhos.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 158,
+    estimateSize: () => 88,
     getItemKey: (index) => rascunhos[index]?.id ?? index,
     measureElement: measureVirtualItem,
     overscan: VIRTUAL_OVERSCAN,
@@ -291,7 +301,7 @@ function VirtualizedRascunhoCards({ rascunhos, onInutilizar }) {
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   return (
-    <div ref={parentRef} className="md:hidden overflow-y-auto pr-1" style={VIRTUAL_LIST_STYLE}>
+    <P38MobileLineList ref={parentRef} className="pr-1" style={VIRTUAL_LIST_STYLE}>
       <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {virtualItems.map((virtualRow) => {
           const rascunho = rascunhos[virtualRow.index];
@@ -301,15 +311,19 @@ function VirtualizedRascunhoCards({ rascunhos, onInutilizar }) {
               key={virtualRow.key}
               data-index={virtualRow.index}
               ref={rowVirtualizer.measureElement}
-              className="absolute left-0 top-0 w-full pb-2"
+              className="absolute left-0 top-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
-              <RascunhoMobileCard rascunho={rascunho} onInutilizar={onInutilizar} />
+              <RascunhoMobileLine
+                rascunho={rascunho}
+                striped={virtualRow.index % 2 === 1}
+                onInutilizar={onInutilizar}
+              />
             </div>
           );
         })}
       </div>
-    </div>
+    </P38MobileLineList>
   );
 }
 
@@ -330,7 +344,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
     <div ref={parentRef} className="hidden md:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="border-b border-gray-200 dark:border-gray-700">
             <TableHead>Senha</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Status</TableHead>
@@ -354,6 +368,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
                 key={virtualRow.key}
                 data-index={virtualRow.index}
                 ref={rowVirtualizer.measureElement}
+                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               >
                 <TableCell>
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
@@ -717,7 +732,7 @@ function VendasGestaoPage() {
           </div>
         ) : (
           <>
-            <VirtualizedRascunhoCards
+            <VirtualizedRascunhoLines
               rascunhos={rascunhosFiltrados}
               onInutilizar={handleInutilizarRascunho}
             />

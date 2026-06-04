@@ -141,7 +141,7 @@ export default function HomePage() {
   const formatValor = (valor) => formatCurrency(roundToTwoDecimals(valor || 0));
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header com marca + boas-vindas */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -161,10 +161,10 @@ export default function HomePage() {
 
         {/* Saldo Card — visível apenas com permissão de dashboard ou vendas */}
         {podeVerResumoVendas && (
-          <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-sm">
+          <div className={`bg-white dark:bg-card rounded-3xl p-6 shadow-sm border-l-[3px] ${p38Accent.success.border}`}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Resumo de Vendas</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5"><P38StatusDot tone="success" />Resumo de Vendas</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Hoje</p>
               </div>
               <button onClick={() => setShowBalance(!showBalance)} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors">
@@ -219,10 +219,11 @@ export default function HomePage() {
                 <Link
                   key={action.id}
                   to={createPageUrl(action.page)}
-                  className="bg-white dark:bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
+                  className="bg-white dark:bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95 relative overflow-hidden"
                   style={{ minHeight: '100px' }}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-secondary flex items-center justify-center shadow-sm relative">
+                    <span className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${p38Accent.success.dot}`} aria-hidden />
                     <Icon className="w-6 h-6 text-gray-700 dark:text-gray-300" strokeWidth={2} />
                   </div>
                   <span className="text-xs font-medium text-gray-900 dark:text-white text-center leading-tight">
@@ -249,7 +250,7 @@ export default function HomePage() {
             <div className="space-y-2">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 px-1">Avisos</h2>
               {kpis.pedidosPendentes > 0 && podeVerCaixa && (
-                <Link to={createPageUrl('PDVCaixa')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+                <Link to={createPageUrl('PDVCaixa')} className={`bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow border-l-[3px] ${p38Accent.warning.border} md:border-l-[3px]`}>
                   <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
                     <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
@@ -263,7 +264,7 @@ export default function HomePage() {
                 </Link>
               )}
               {kpis.estoqueAlerta > 0 && podeVerEstoque && (
-                <Link to={createPageUrl('Produtos')} className="bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+                <Link to={createPageUrl('Produtos')} className={`bg-white dark:bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow border-l-[3px] ${p38Accent.danger.border}`}>
                   <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
                     <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>

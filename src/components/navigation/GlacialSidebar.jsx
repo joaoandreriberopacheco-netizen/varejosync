@@ -5,7 +5,6 @@ import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } 
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
-import { p38SidebarColors } from '@/lib/p38ThemeSurfaces';
 
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
@@ -78,7 +77,29 @@ export default function GlacialSidebar({
 
   const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
-  const c = p38SidebarColors(isDark);
+  const c = isDark ? {
+    bg: '#111827',
+    border: 'rgba(255,255,255,0.06)',
+    text: '#ffffff',
+    textSub: '#9ca3af',
+    iconColor: '#9ca3af',
+    activeBg: 'rgba(255,255,255,0.08)',
+    hoverBg: 'rgba(255,255,255,0.05)',
+    chevron: '#6b7280',
+    sectionLabel: '#6b7280',
+    subBorder: 'rgba(255,255,255,0.08)',
+  } : {
+    bg: '#ffffff',
+    border: 'rgba(0,0,0,0.06)',
+    text: '#1e293b',
+    textSub: '#64748b',
+    iconColor: '#6b7280',
+    activeBg: 'rgba(0,0,0,0.05)',
+    hoverBg: 'rgba(0,0,0,0.03)',
+    chevron: '#9ca3af',
+    sectionLabel: '#9ca3af',
+    subBorder: 'rgba(0,0,0,0.08)',
+  };
 
   const toggleSubmenu = (menuName) => {
     setExpandedMenus(prev => {
@@ -163,16 +184,17 @@ export default function GlacialSidebar({
                   <>
                     <button
                       onClick={() => toggleSubmenu(item.name)}
-                      className="w-full flex items-center rounded-xl transition-colors"
+                      className="w-full flex items-center rounded-xl transition-colors relative"
                       style={{
                         gap: 10,
                         padding: isOpen ? '10px 12px' : '10px',
                         justifyContent: isOpen ? 'flex-start' : 'center',
                         background: isActive ? c.activeBg : 'transparent',
                         color: isActive ? c.text : c.textSub,
+                        borderLeft: isActive ? `2px solid ${c.accent}` : '2px solid transparent',
                       }}
                     >
-                      <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.text : c.iconColor }} />
+                      <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.accent : c.iconColor }} />
                       {isOpen && (
                         <>
                           <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
@@ -273,7 +295,7 @@ export default function GlacialSidebar({
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{currentUser.full_name}</p>
-                    <p className="text-[11px] truncate preserve-case" style={{ color: c.textSub }}>{currentUser.email}</p>
+                    <p className="text-[11px] truncate" style={{ color: c.textSub }}>{currentUser.email}</p>
                   </div>
                 </div>
               )}
@@ -299,7 +321,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <ALargeSmall size={15} style={{ color: c.iconColor }} />
-                  <span className="text-sm">{`Fonte (${fontLabel})`}</span>
+                  <span className="text-sm">Fonte ({fontLabel})</span>
                 </button>
 
                 <button
@@ -324,7 +346,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <Settings size={15} style={{ color: c.iconColor }} />
-                  <span className="text-sm">{'Configurações'}</span>
+                  <span className="text-sm">Configurações</span>
                 </Link>
 
                 <button
@@ -334,7 +356,7 @@ export default function GlacialSidebar({
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <LogOut size={15} style={{ color: '#ef4444' }} />
-                  <span className="text-sm" style={{ color: '#ef4444' }}>{'Sair'}</span>
+                  <span className="text-sm" style={{ color: '#ef4444' }}>Sair</span>
                 </button>
               </div>
             </div>
