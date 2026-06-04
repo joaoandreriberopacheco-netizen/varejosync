@@ -11,7 +11,7 @@ export default function ProdutosSearchStartsWithToggle({ checked, onChange, clas
       <Switch
         checked={checked}
         onCheckedChange={onChange}
-        className="scale-[0.72] data-[state=checked]:bg-gray-700 dark:data-[state=checked]:bg-gray-300"
+        className="scale-[0.72] data-[state=checked]:bg-muted dark:data-[state=checked]:bg-muted"
       />
       <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
         Começa com

@@ -206,7 +206,7 @@ export default function ConfirmarPagamentoDialog({
                   value={codigoVale}
                   onChange={(e) => setCodigoVale(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleBuscarVale(); }}
-                  className="flex-1 h-11 px-3 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700 border-0"
+                  className="flex-1 h-11 px-3 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring border-0"
                 />
                 <button
                   onClick={handleBuscarVale}
@@ -355,7 +355,7 @@ function InputPagamento({
               onFiadoButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-ring"
           >
             Prazo · fiado
           </button>
@@ -368,7 +368,7 @@ function InputPagamento({
               onMaquininhaButtonClick();
             }}
             onFocus={() => onFocus?.()}
-            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-gray-500"
+            className="max-w-[11rem] shrink-0 touch-manipulation rounded-xl bg-background px-3 py-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary focus:outline-none focus:ring-2 focus:ring-ring dark:bg-card dark:text-foreground dark:hover:bg-muted dark:focus:ring-ring"
           >
             Maquininha / bandeira
           </button>

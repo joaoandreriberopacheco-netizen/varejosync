@@ -492,7 +492,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
               <div className="relative flex-1">
                 <Input type="number" min="0" step="0.01"
                   value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
-                  className="pr-5 h-8 bg-card border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-border/40 dark:focus:ring-gray-700"
+                  className="pr-5 h-8 bg-card border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
                   placeholder="0" />
                 <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{tipoDesconto === 'percentual' ? '%' : 'R$'}</span>
               </div>

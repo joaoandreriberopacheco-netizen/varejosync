@@ -13,7 +13,7 @@ const CheckRow = ({ label, desc, checked, onChange }) => (
       {desc && <p className="text-[11px] text-muted-foreground mt-0.5">{desc}</p>}
     </div>
     <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
-      className="w-4 h-4 accent-gray-700 flex-shrink-0" />
+      className="w-4 h-4 accent-primary flex-shrink-0" />
   </div>
 );
 

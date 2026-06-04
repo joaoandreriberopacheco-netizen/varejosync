@@ -148,7 +148,7 @@ export default function EditorEtapa1({ onSelecionado }) {
                   {doc.descricao}
                 </p>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground dark:group-hover:text-gray-300" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-muted-foreground dark:group-hover:text-muted-foreground" />
             </button>
           ))
         )}

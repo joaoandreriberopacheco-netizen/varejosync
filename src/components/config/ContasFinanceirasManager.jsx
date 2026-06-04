@@ -215,7 +215,7 @@ export default function ContasFinanceirasManager() {
                 <div key={key} className="flex items-start gap-2 px-3 py-2 rounded-xl bg-muted/50">
                   <input type="checkbox" checked={formData[key]}
                     onChange={e => setFormData({ ...formData, [key]: e.target.checked })}
-                    className="w-4 h-4 mt-0.5 accent-gray-700" />
+                    className="w-4 h-4 mt-0.5 accent-primary" />
                   <div>
                     <p className="text-xs font-medium text-foreground/90">{label}</p>
                     {desc && <p className="text-[11px] text-muted-foreground mt-0.5">{desc}</p>}

@@ -75,8 +75,8 @@ export const p38Accent = {
   },
   muted: {
     text: 'text-muted-foreground',
-    dot: 'bg-gray-400 dark:bg-gray-500',
-    border: 'border-l-gray-300 dark:border-l-gray-600',
+    dot: 'bg-muted-foreground/50 dark:bg-muted-foreground/60',
+    border: 'border-l-border dark:border-l-border',
   },
 };
 

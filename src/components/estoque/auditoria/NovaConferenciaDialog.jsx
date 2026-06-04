@@ -45,14 +45,14 @@ export default function NovaConferenciaDialog({ open, onClose, onCriada }) {
               placeholder="Ex: Inventário Corredor A"
               value={form.nome_conferencia}
               onChange={e => setForm(f => ({ ...f, nome_conferencia: e.target.value }))}
-              className="rounded-xl border-0 bg-muted/50 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-gray-700"
+              className="rounded-xl border-0 bg-muted/50 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring"
             />
           </div>
 
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Tipo</label>
             <Select value={form.tipo_conferencia} onValueChange={v => setForm(f => ({ ...f, tipo_conferencia: v }))}>
-              <SelectTrigger className="rounded-xl border-0 bg-muted/50 focus:ring-1 focus:ring-border/40 dark:focus:ring-gray-700">
+              <SelectTrigger className="rounded-xl border-0 bg-muted/50 focus:ring-1 focus:ring-border/40 dark:focus:ring-ring">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

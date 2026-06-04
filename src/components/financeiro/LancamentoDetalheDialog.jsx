@@ -423,7 +423,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   autoComplete="off"
                   value={cadDescricao}
                   onChange={(e) => setCadDescricao(e.target.value)}
-                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -434,7 +434,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                     type="date"
                     value={cadVencimento}
                     onChange={(e) => setCadVencimento(e.target.value)}
-                    className="w-full h-10 px-2 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+                    className="w-full h-10 px-2 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -446,7 +446,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                     min="0"
                     value={cadValor}
                     onChange={(e) => setCadValor(e.target.value)}
-                    className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+                    className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                   />
                 </div>
               </div>
@@ -456,7 +456,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   value={cadObs}
                   onChange={(e) => setCadObs(e.target.value)}
                   rows={2}
-                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                 />
               </div>
               <button
@@ -482,7 +482,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               min="0"
               value={valorEditavel}
               onChange={(e) => setValorEditavel(e.target.value)}
-              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
             />
           </div>
         )}
@@ -508,7 +508,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   value={dataPagamento}
                   onChange={(e) => setDataPagamento(e.target.value)}
                   disabled={!isPagoLocal}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -576,7 +576,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   type="date"
                   value={dataLiquidacao}
                   onChange={(e) => setDataLiquidacao(e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                 />
               </div>
               <button

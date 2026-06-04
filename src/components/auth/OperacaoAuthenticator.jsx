@@ -304,7 +304,7 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                     value={pin}
                                     onChange={e => { setError(''); setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
                                     onKeyDown={e => e.key === 'Enter' && pin.length === 6 && handlePinSubmit()}
-                                    className="w-full h-14 rounded-2xl bg-muted/50 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+                                    className="w-full h-14 rounded-2xl bg-muted/50 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                                     maxLength={6}
                                     placeholder="••••••"
                                     autoComplete="one-time-code"

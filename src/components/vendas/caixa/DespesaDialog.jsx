@@ -89,7 +89,7 @@ export default function DespesaDialog({
                         }
                       }
                     }}
-                    className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-foreground placeholder:text-gray-300 dark:placeholder:text-muted-foreground"
+                    className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
                   />
                 </div>
                 <div>

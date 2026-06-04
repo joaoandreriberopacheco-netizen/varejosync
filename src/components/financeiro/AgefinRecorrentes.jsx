@@ -460,7 +460,7 @@ export default function AgefinRecorrentes() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <div className="h-6 w-6 animate-spin rounded-full border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200" />
+          <div className="h-6 w-6 animate-spin rounded-full border-4 border-border/40 border-t-primary dark:border-border/40 dark:border-t-foreground" />
         </div>
       ) : filteredCards.length === 0 ? (
         <div className="rounded-[28px] bg-card py-12 text-center shadow-sm dark:bg-card dark:ring-1 dark:ring-border">

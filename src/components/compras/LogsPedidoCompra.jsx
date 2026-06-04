@@ -41,7 +41,7 @@ export default function LogsPedidoCompra({ pedidoId }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-6 h-6 border-2 border-border/40 border-t-gray-500 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-border/40 border-t-muted-foreground rounded-full animate-spin" />
       </div>
     );
   }

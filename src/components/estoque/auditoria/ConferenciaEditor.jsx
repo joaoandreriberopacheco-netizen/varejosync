@@ -303,7 +303,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 placeholder="Buscar produto por nome ou código..."
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
-                className="pl-9 pr-9 rounded-xl border-0 bg-muted dark:bg-muted text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-gray-700"
+                className="pl-9 pr-9 rounded-xl border-0 bg-muted dark:bg-muted text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring"
                 autoComplete="off"
               />
               {busca && (
@@ -591,7 +591,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 value={modalQtd.qtdStr}
                 onChange={e => setModalQtd(m => ({ ...m, qtdStr: e.target.value }))}
                 onKeyDown={e => e.key === "Enter" && confirmarQtd()}
-                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-muted text-foreground rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-gray-700"
+                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-muted text-foreground rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring"
               />
               <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
                 <Plus className="w-5 h-5 text-muted-foreground dark:text-foreground/90" />

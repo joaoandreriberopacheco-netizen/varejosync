@@ -136,7 +136,7 @@ function TemplateEditor({ template, onSave, onCancel }) {
       <textarea
         value={htmlTemplate}
         onChange={e => setHtmlTemplate(e.target.value)}
-        className="flex-1 w-full min-h-[400px] font-mono text-xs border border-border/40 rounded-xl p-3 bg-muted/40 dark:bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-gray-400"
+        className="flex-1 w-full min-h-[400px] font-mono text-xs border border-border/40 rounded-xl p-3 bg-muted/40 dark:bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-ring"
         placeholder="Cole aqui o HTML do template..."
         spellCheck={false}
       />

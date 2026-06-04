@@ -266,7 +266,7 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
               <select
                 value={janelaTemporalSelecionada}
                 onChange={(e) => setJanelaTemporalSelecionada(e.target.value)}
-                className="w-full px-3 py-2 bg-muted/50 border border-border/40 rounded text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                className="w-full px-3 py-2 bg-muted/50 border border-border/40 rounded text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring dark:focus:ring-ring"
               >
                 <option value="30d">30 dias</option>
                 <option value="60d">60 dias</option>

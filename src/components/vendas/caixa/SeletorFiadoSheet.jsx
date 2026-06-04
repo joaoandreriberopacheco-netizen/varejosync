@@ -137,7 +137,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                   setDataSelecionada(null);
                 }
               }}
-              className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+              className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               setValor(formatado);
             }}
             placeholder="Ex: R$ 100,00"
-            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-600"
+            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 border border-border/40 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
           />
         </div>
 
@@ -167,7 +167,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             placeholder="Ex: cliente conhece, vai pagar no final do mês..."
             rows={2}
             autoFocus={false}
-            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700 border-0 resize-none placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
+            className="w-full px-3 py-2.5 bg-muted/50 rounded-xl text-sm text-foreground/90 focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring border-0 resize-none placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
           />
         </div>
 

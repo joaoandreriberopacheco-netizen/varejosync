@@ -208,7 +208,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
                 <select
                   value={maqSelecionada?.id || ''}
                   onChange={e => setMaqSelecionada(maquininhas.find(m => m.id === e.target.value))}
-                  className="w-full h-11 pl-4 pr-10 rounded-xl bg-muted/50 text-sm text-foreground dark:text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-gray-700"
+                  className="w-full h-11 pl-4 pr-10 rounded-xl bg-muted/50 text-sm text-foreground dark:text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                 >
                   {maquininhas.map(m => <option key={m.id} value={m.id}>{m.nome} — {m.adquirente}</option>)}
                 </select>

@@ -38,7 +38,7 @@ export default function Armazenagem() {
             <TabsTrigger
               value="separacao"
               title="Fila de Separação"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+              className="flex items-center gap-2 data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
             >
               <Package className="w-4 h-4" />
               <span className="hidden md:inline">Fila de Separação</span>
@@ -46,7 +46,7 @@ export default function Armazenagem() {
             <TabsTrigger
               value="movimentacao"
               title="Nova Movimentação"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+              className="flex items-center gap-2 data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
             >
               <TrendingUp className="w-4 h-4" />
               <span className="hidden md:inline">Nova Movimentação</span>
@@ -54,7 +54,7 @@ export default function Armazenagem() {
             <TabsTrigger
               value="historico"
               title="Histórico de Movimentações"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+              className="flex items-center gap-2 data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
             >
               <History className="w-4 h-4" />
               <span className="hidden md:inline">Histórico</span>
@@ -63,7 +63,7 @@ export default function Armazenagem() {
               value="auditoria"
               title="Auditoria de Estoque"
               onClick={() => setConferenciaAtiva(null)}
-              className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+              className="flex items-center gap-2 data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
             >
               <ClipboardCheck className="w-4 h-4" />
               <span className="hidden md:inline">Auditoria de Estoque</span>
@@ -88,14 +88,14 @@ export default function Armazenagem() {
                 <TabsTrigger
                   value="contagem"
                   onClick={() => { setConferenciaAtiva(null); }}
-                  className="text-sm data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+                  className="text-sm data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
                 >
                   Contagem
                 </TabsTrigger>
                 <TabsTrigger
                   value="auditoria-sub"
                   onClick={() => { setConferenciaAuditoria(null); }}
-                  className="text-sm data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+                  className="text-sm data-[state=active]:bg-muted dark:data-[state=active]:bg-muted"
                 >
                   Auditoria
                 </TabsTrigger>

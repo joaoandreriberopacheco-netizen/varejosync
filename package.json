@@ -25,6 +25,7 @@
     "git:ship": "node scripts/git-ship.mjs",
     "p38:color-audit": "node scripts/p38-color-audit.mjs",
     "p38:color-fix": "node scripts/p38-color-audit.mjs --fix",
+    "p38:color-fix-pdv": "node scripts/p38-color-audit.mjs --fix --include-pdv",
     "p38:token-migrate": "node scripts/p38-token-migrate.mjs src"
   },
   "dependencies": {

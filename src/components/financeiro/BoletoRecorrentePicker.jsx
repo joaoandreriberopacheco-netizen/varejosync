@@ -215,7 +215,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-border/40 border-t-primary dark:border-border/40 dark:border-t-foreground" />
           </div>
         ) : filteredCards.length === 0 ? (
           <div className="rounded-[28px] bg-card py-12 text-center text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">

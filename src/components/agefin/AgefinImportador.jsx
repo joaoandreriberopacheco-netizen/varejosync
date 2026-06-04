@@ -849,7 +849,7 @@ ${blocoTextoLocal}`,
         {loading && (
           <div className="rounded-3xl bg-card p-5 shadow-sm dark:bg-muted">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl border-2 border-border/40 border-t-gray-600 animate-spin dark:border-border/40 dark:border-t-gray-200" />
+              <div className="h-10 w-10 rounded-2xl border-2 border-border/40 border-t-primary animate-spin dark:border-border/40 dark:border-t-foreground" />
               <div>
                 <p className="text-sm font-medium text-foreground">Lendo documento</p>
                 <p className="text-xs text-muted-foreground">Analisando campos principais para contas a pagar.</p>

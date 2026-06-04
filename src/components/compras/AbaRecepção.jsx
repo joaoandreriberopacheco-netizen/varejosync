@@ -344,7 +344,7 @@ export default function AbaRecepção({ pedido }) {
                   </div>
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted dark:hover:bg-muted transition-colors">
-                    <Play className="w-5 h-5 text-muted-foreground fill-gray-600 dark:fill-gray-400" />
+                    <Play className="w-5 h-5 text-muted-foreground fill-muted-foreground dark:fill-muted-foreground" />
                   </div>
                 )}
               </div>

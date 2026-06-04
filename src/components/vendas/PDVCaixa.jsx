@@ -58,25 +58,25 @@ const PDV_CAIXA_IDLE_SYNC_TICK_MS = 45 * 1000;
 function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, formatarValorExibicao }) {
   return (
     <div
-      className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => onDetalhes(rascunho)}
     >
       <div className="flex items-start justify-between gap-4 mb-3">
         {rascunho.senha_atendimento && (
-          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Senha</div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
+          <div className="px-4 py-2 bg-muted/40 dark:bg-muted rounded-xl">
+            <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">Senha</div>
+            <div className="text-3xl font-bold text-foreground dark:text-white font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-base font-medium text-gray-900 dark:text-white truncate">{rascunho.cliente_nome}</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome}</div>
+          <div className="text-base font-medium text-foreground dark:text-white truncate">{rascunho.cliente_nome}</div>
+          <div className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">{rascunho.vendedor_nome}</div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+          <div className="text-2xl font-bold text-foreground dark:text-white font-glacial">
             R$ {formatarValorExibicao(rascunho.valor_total)}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
             {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
           </div>
         </div>
@@ -84,14 +84,14 @@ function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, f
       <div className="flex gap-2">
         <button
           onClick={(e) => { e.stopPropagation(); onDetalhes(rascunho); }}
-          className="h-12 px-4 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
+          className="h-12 px-4 bg-muted/40 dark:bg-muted text-foreground/90 dark:text-muted-foreground rounded-xl font-medium hover:bg-muted dark:hover:bg-muted transition-colors flex items-center justify-center"
           style={{ minHeight: '48px' }}
         >
           <Eye className="w-4 h-4" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onEditar(rascunho); }}
-          className="flex-1 h-12 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+          className="flex-1 h-12 bg-muted/40 dark:bg-muted text-foreground/90 dark:text-muted-foreground rounded-xl font-medium hover:bg-muted dark:hover:bg-muted transition-colors flex items-center justify-center gap-2"
           style={{ minHeight: '48px' }}
         >
           <Edit className="w-4 h-4" />
@@ -99,7 +99,7 @@ function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, f
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onConfirmar(rascunho); }}
-          className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:shadow-md transition-shadow"
+          className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-medium hover:shadow-md transition-shadow"
           style={{ minHeight: '48px' }}
         >
           Confirmar
@@ -111,13 +111,13 @@ function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, f
 
 function MovimentoTimelineCard({ item, formatValor }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+    <div className="bg-card dark:bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
       <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
         {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.descricao}</div>
-        <div className="text-xs text-gray-400 dark:text-gray-500">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
+        <div className="text-sm font-medium text-foreground dark:text-white truncate">{item.descricao}</div>
+        <div className="text-xs text-muted-foreground dark:text-muted-foreground">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
       </div>
       <div className={`text-base font-bold tabular-nums font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
         {item.icone}{formatValor(item.valor)}
@@ -1382,7 +1382,7 @@ export default function PDVCaixa() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen flex flex-col bg-muted/40 dark:bg-background">
       {showSeletorCaixa && (
         <SeletorCaixaPDV 
           open={showSeletorCaixa} 
@@ -1402,17 +1402,17 @@ export default function PDVCaixa() {
       )}
 
       {/* Header Minimalista */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+      <div className="bg-card dark:bg-card border-b border-border/40 dark:border-border/40 px-4 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={() => navigateBackOr(navigate)}
-          className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 -ml-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
           style={{ minWidth: '44px', minHeight: '44px' }}>
-          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          <ArrowLeft className="w-6 h-6 text-foreground/90 dark:text-muted-foreground" />
         </button>
         
         <div className="flex-1 text-center">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+          <h1 className="text-lg font-semibold text-foreground dark:text-white font-glacial">
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
           {modoVisualizacao && (
@@ -1423,12 +1423,12 @@ export default function PDVCaixa() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar (F7)">
-            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
           </button>
-          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <div className="text-sm text-muted-foreground dark:text-muted-foreground flex items-center gap-1">
             <Clock className="w-4 h-4" />
             {format(new Date(), 'HH:mm')}
           </div>
@@ -1436,10 +1436,10 @@ export default function PDVCaixa() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 overflow-auto bg-muted/40 dark:bg-background">
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center text-gray-500 dark:text-gray-400">
+            <div className="text-center text-muted-foreground dark:text-muted-foreground">
               <Monitor className="w-16 h-16 mx-auto mb-4" />
               <p>Selecione um caixa para continuar</p>
             </div>
@@ -1452,35 +1452,35 @@ export default function PDVCaixa() {
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo do Turno</div>
-                     <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                    <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
+                     <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Saldo do Turno</div>
+                     <div className="text-3xl font-bold text-foreground dark:text-white font-glacial">
                        {formatValor(caixaData.liquidez)}
                      </div>
-                     <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Inicial + vendas + reforços − recolhimentos</div>
+                     <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Inicial + vendas + reforços − recolhimentos</div>
                     </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Dinheiro na Gaveta</div>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                    <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
+                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Dinheiro na Gaveta</div>
+                      <div className="text-3xl font-bold text-foreground dark:text-white font-glacial">
                         {formatValor(caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0))}
                       </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
+                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Tabs Navigation - Desktop */}
-                <div className="hidden md:block border-b border-gray-100 dark:border-gray-700 px-4">
+                <div className="hidden md:block border-b border-border/40 dark:border-border/40 px-4">
                   <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
-                    <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                       <PieChart className="w-4 h-4" />
                       <span className="text-sm">Balanço</span>
                     </TabsTrigger>
-                    <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                       <Receipt className="w-4 h-4" />
                       <span className="text-sm">Vendas</span>
                     </TabsTrigger>
-                    <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                    <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                       <Wallet className="w-4 h-4" />
                       <span className="text-sm">Movimentos</span>
                     </TabsTrigger>
@@ -1491,8 +1491,8 @@ export default function PDVCaixa() {
                   <div className="max-w-4xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Movimentações do Turno */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
+                <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-foreground mb-4 text-base font-semibold dark:text-white font-glacial">
                     Movimentações do Turno
                   </h3>
                   {/* Helper: row with label on left, value+eye aligned right */}
@@ -1503,14 +1503,14 @@ export default function PDVCaixa() {
                           {onEye ? (
                             <button
                               onClick={onEye}
-                              className={`p-1 rounded transition-colors flex-shrink-0 ${eyeColor || 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                              className={`p-1 rounded transition-colors flex-shrink-0 ${eyeColor || 'hover:bg-muted dark:hover:bg-muted'}`}
                               style={{ minWidth: '28px', minHeight: '28px' }}>
-                              <Eye className={`w-4 h-4 ${eyeIconColor || 'text-gray-400 dark:text-gray-500'}`} />
+                              <Eye className={`w-4 h-4 ${eyeIconColor || 'text-muted-foreground dark:text-muted-foreground'}`} />
                             </button>
                           ) : <div className="w-7" />}
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+                          <span className="text-sm text-muted-foreground dark:text-muted-foreground">{label}</span>
                         </div>
-                        <span className={`text-base font-medium tabular-nums text-right ${color || 'text-gray-900 dark:text-gray-100'}`} style={{ minWidth: '110px' }}>
+                        <span className={`text-base font-medium tabular-nums text-right ${color || 'text-foreground dark:text-foreground'}`} style={{ minWidth: '110px' }}>
                           {formatValor(valor)}
                         </span>
                       </div>
@@ -1525,22 +1525,22 @@ export default function PDVCaixa() {
                         {(caixaData.recebimentos?.fiado || 0) > 0 && (
                           <ValorRow label="Conta a Receber" valor={caixaData.recebimentos.fiado} color="text-amber-600 dark:text-amber-400" eyeColor="hover:bg-amber-50 dark:hover:bg-amber-900/20" eyeIconColor="text-amber-500 dark:text-amber-400" />
                         )}
-                        <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
+                        <div className="pt-3 mt-1 border-t border-border/40 dark:border-border/40">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
+                            <span className="text-sm font-semibold text-foreground/90 dark:text-muted-foreground">Liquidez do Turno</span>
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => setShowSaldoConsolidadoDialog(true)}
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                                className="p-1 hover:bg-muted dark:hover:bg-muted rounded transition-colors flex-shrink-0"
                                 style={{ minWidth: '28px', minHeight: '28px' }}>
-                                <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                                <Eye className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
                               </button>
-                              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>
+                              <span className="text-2xl font-bold text-foreground dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>
                                 {formatValor(caixaData.liquidez)}
                               </span>
                             </div>
                           </div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 text-right">
                             Inicial + vendas + reforços − recolhimentos
                           </p>
                         </div>
@@ -1550,14 +1550,14 @@ export default function PDVCaixa() {
                 </div>
 
                 {/* Recebimentos do Turno */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
+                <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-foreground mb-4 text-base font-semibold dark:text-white font-glacial">
                     Recebimentos do Turno
                   </h3>
                   <div className="space-y-2">
                     {/* Dinheiro - campo editável clicável (bloqueado em modo visualização) */}
                     <div
-                      className={`flex items-center justify-between py-2 px-3 rounded-xl ${modoVisualizacao ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700'} transition-colors group`}
+                      className={`flex items-center justify-between py-2 px-3 rounded-xl ${modoVisualizacao ? 'bg-muted dark:bg-card' : 'bg-muted/40 dark:bg-muted/50 cursor-pointer hover:bg-muted dark:hover:bg-muted'} transition-colors group`}
                       onClick={() => {
                         if (modoVisualizacao) return;
                         const el = document.getElementById('input-dinheiro-conferido');
@@ -1565,8 +1565,8 @@ export default function PDVCaixa() {
                         el?.select();
                       }}>
                       <div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">{modoVisualizacao ? 'somente leitura' : 'toque para conferir'}</p>
+                        <span className="text-sm text-muted-foreground dark:text-muted-foreground">Dinheiro</span>
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground">{modoVisualizacao ? 'somente leitura' : 'toque para conferir'}</p>
                       </div>
                       <input autoComplete="off"
                         id="input-dinheiro-conferido"
@@ -1576,34 +1576,34 @@ export default function PDVCaixa() {
                         onChange={(e) => !modoVisualizacao && setRecebimentosDinheiro(e.target.value)}
                         onFocus={(e) => e.target.select()}
                         disabled={modoVisualizacao}
-                        className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                        className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-foreground dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                         placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
 
                     <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm text-muted-foreground dark:text-muted-foreground">PIX</span>
+                      <span className="text-base font-medium text-foreground dark:text-foreground">
                         {formatValor(caixaData.recebimentos.pix)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Crédito</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm text-muted-foreground dark:text-muted-foreground">Cartão Crédito</span>
+                      <span className="text-base font-medium text-foreground dark:text-foreground">
                         {formatValor(caixaData.recebimentos.credito || 0)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Débito</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm text-muted-foreground dark:text-muted-foreground">Cartão Débito</span>
+                      <span className="text-base font-medium text-foreground dark:text-foreground">
                         {formatValor(caixaData.recebimentos.debito || 0)}
                       </span>
                     </div>
                     {(caixaData.recebimentos.vale || 0) > 0 && (
                      <div className="flex items-center justify-between py-2 px-3">
                        <div className="flex items-center gap-2">
-                         <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
+                         <span className="text-sm text-muted-foreground dark:text-muted-foreground">Vale Troca</span>
                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
                        </div>
                        <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">
@@ -1614,7 +1614,7 @@ export default function PDVCaixa() {
                     {(caixaData.recebimentos.fiado || 0) > 0 && (
                      <div className="flex items-center justify-between py-2 px-3">
                        <div className="flex items-center gap-2">
-                         <span className="text-sm text-gray-600 dark:text-gray-400">Conta a Pagar</span>
+                         <span className="text-sm text-muted-foreground dark:text-muted-foreground">Conta a Pagar</span>
                          <span className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">a receber</span>
                        </div>
                        <span className="text-base font-medium text-amber-700 dark:text-amber-300">
@@ -1624,7 +1624,7 @@ export default function PDVCaixa() {
                     )}
 
                     {/* Total e Diferença */}
-                    <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                    <div className="pt-3 mt-1 border-t border-border/40 dark:border-border/40 space-y-3">
                       {(() => {
                         const dinheiroConferido = roundToTwoDecimals(
                           parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0
@@ -1641,8 +1641,8 @@ export default function PDVCaixa() {
                         return (
                           <>
                             <div className="flex items-center justify-between px-1">
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Conferido</span>
-                              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                              <span className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">Total Conferido</span>
+                              <span className="text-2xl font-bold text-foreground dark:text-white font-glacial">
                                 {formatValor(totalConferido)}
                               </span>
                             </div>
@@ -1656,7 +1656,7 @@ export default function PDVCaixa() {
                                 </span>
                               </div>
                               {temDiferenca && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                                   Esperado: {formatValor(esperado)}
                                 </p>
                               )}
@@ -1771,9 +1771,9 @@ export default function PDVCaixa() {
                        }
                      };
                      return (
-                       <div id="secao-fechamento-caixa" className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
+                       <div id="secao-fechamento-caixa" className="bg-card dark:bg-card rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
                          <div className="flex items-center justify-between mb-3">
-                           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Fechamento de Caixa</h3>
+                           <h3 className="text-sm font-semibold text-foreground/90 dark:text-muted-foreground">Fechamento de Caixa</h3>
                            {!temDiferenca ? (
                              <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Valores conferem</span>
                            ) : (
@@ -1781,7 +1781,7 @@ export default function PDVCaixa() {
                            )}
                          </div>
                          <div className="flex gap-2">
-                           <button onClick={imprimirRelatorio} className="flex-1 h-12 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }} disabled={fechandoCaixa}>
+                           <button onClick={imprimirRelatorio} className="flex-1 h-12 bg-muted dark:bg-muted text-foreground/90 dark:text-muted-foreground rounded-2xl font-medium flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }} disabled={fechandoCaixa}>
                              <Printer className="w-4 h-4" /> Imprimir
                            </button>
                            <FechamentoCaixaButton
@@ -1806,27 +1806,27 @@ export default function PDVCaixa() {
                    <div className="max-w-4xl mx-auto">
                      <div className="mb-4 flex items-center justify-between">
                        <div>
-                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aguardando</div>
-                         <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                         <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-1">Aguardando</div>
+                         <div className="text-2xl font-bold text-foreground dark:text-white font-glacial">
                            {rascunhosAguardando.length} {rascunhosAguardando.length === 1 ? 'Venda' : 'Vendas'}
                          </div>
                        </div>
                        <button
                          onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
-                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                         className="p-2 hover:bg-muted dark:hover:bg-muted rounded-xl transition-colors"
                          style={{ minWidth: '44px', minHeight: '44px' }}
                          title="Atualizar">
-                         <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                         <RefreshCw className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
                        </button>
                      </div>
 
                     {rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16">
-                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                          <Receipt className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+                        <div className="w-20 h-20 bg-muted dark:bg-card rounded-full flex items-center justify-center mb-4">
+                          <Receipt className="w-10 h-10 text-muted-foreground dark:text-muted-foreground" />
                         </div>
-                        <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui</p>
+                        <p className="text-base font-medium text-muted-foreground dark:text-muted-foreground">Nenhuma venda aguardando</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">As vendas aparecerão aqui</p>
                       </div>
                     ) : (
                       <VirtualizedList
@@ -1854,37 +1854,37 @@ export default function PDVCaixa() {
                     {/* Botões de ação */}
                     <div className="grid grid-cols-3 gap-2">
                       <button onClick={() => handleAbrirMovimento('Reforço')} disabled={modoVisualizacao}
-                        className="h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
+                        className="h-16 bg-card dark:bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
                         <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
                           <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <div className="text-xs font-medium text-gray-900 dark:text-white">Reforço</div>
+                        <div className="text-xs font-medium text-foreground dark:text-white">Reforço</div>
                       </button>
                       <button onClick={() => handleAbrirMovimento('Recolhimento de Caixa')} disabled={modoVisualizacao}
-                        className="h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
+                        className="h-16 bg-card dark:bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
                         <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                           <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div className="text-xs font-medium text-gray-900 dark:text-white">Recolhimento</div>
+                        <div className="text-xs font-medium text-foreground dark:text-white">Recolhimento</div>
                       </button>
                       <button onClick={() => setShowDespesaDialog(true)} disabled={modoVisualizacao}
-                        className="h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
+                        className="h-16 bg-card dark:bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
                         <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
                           <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />
                         </div>
-                        <div className="text-xs font-medium text-gray-900 dark:text-white">Despesa</div>
+                        <div className="text-xs font-medium text-foreground dark:text-white">Despesa</div>
                       </button>
                     </div>
 
                     {/* Histórico cronológico de movimentos + despesas */}
                     {movimentosTimelineItems.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
+                        <div className="flex flex-col items-center justify-center py-10 text-muted-foreground dark:text-muted-foreground">
                           <Wallet className="w-10 h-10 mb-2" />
                           <p className="text-sm">Nenhuma movimentação registrada</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <p className="text-xs text-gray-400 dark:text-gray-500 px-1">Histórico do turno</p>
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground px-1">Histórico do turno</p>
                           <VirtualizedList
                             items={movimentosTimelineItems}
                             estimateSize={68}
@@ -1903,16 +1903,16 @@ export default function PDVCaixa() {
 
 
                 {/* Barra de Navegação - Mobile */}
-                <TabsList className="md:hidden grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
-                <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <TabsList className="md:hidden grid grid-cols-4 h-16 bg-card dark:bg-card border-t border-border/40 dark:border-border/40 rounded-none p-0 flex-shrink-0">
+                <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
                 <PieChart className="w-5 h-5" />
                 <span className="text-xs">Balanço</span>
                 </TabsTrigger>
-                <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
                 <ShoppingCart className="w-5 h-5" />
                 <span className="text-xs">Vendas</span>
                 </TabsTrigger>
-                <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
                 <Wallet className="w-5 h-5" />
                 <span className="text-xs">Movimentos</span>
                 </TabsTrigger>
@@ -1925,7 +1925,7 @@ export default function PDVCaixa() {
                        document.getElementById('secao-fechamento-caixa')?.scrollIntoView({ behavior: 'smooth' });
                      }, 100);
                    }}
-                   className={`flex flex-col items-center justify-center gap-1 h-full rounded-none border-0 transition-colors ${activeTab === 'balanco' && !modoVisualizacao ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
+                   className={`flex flex-col items-center justify-center gap-1 h-full rounded-none border-0 transition-colors ${activeTab === 'balanco' && !modoVisualizacao ? 'text-foreground dark:text-white' : 'text-muted-foreground dark:text-muted-foreground cursor-not-allowed'}`}
                  >
                    <Lock className="w-5 h-5" />
                    <span className="text-xs">Fechar</span>
@@ -2086,45 +2086,45 @@ export default function PDVCaixa() {
         {/* Modal de Detalhes do Rascunho (Aba Vendas) */}
         {rascunhoDetalhesTab && (
           <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="bg-card dark:bg-background rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 dark:border-border/40">
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider">Senha</div>
-                  <div className="text-3xl font-bold font-mono text-gray-900 dark:text-white">{rascunhoDetalhesTab.senha_atendimento?.slice(-4)}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Senha</div>
+                  <div className="text-3xl font-bold font-mono text-foreground dark:text-white">{rascunhoDetalhesTab.senha_atendimento?.slice(-4)}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{rascunhoDetalhesTab.cliente_nome || 'Avulso'}</div>
-                  <div className="text-xs text-gray-400">{rascunhoDetalhesTab.vendedor_nome}</div>
+                  <div className="text-sm font-medium text-foreground/90 dark:text-muted-foreground">{rascunhoDetalhesTab.cliente_nome || 'Avulso'}</div>
+                  <div className="text-xs text-muted-foreground">{rascunhoDetalhesTab.vendedor_nome}</div>
                 </div>
-                <button onClick={() => setRascunhoDetalhesTab(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
-                  <X className="w-5 h-5 text-gray-500" />
+                <button onClick={() => setRascunhoDetalhesTab(null)} className="p-2 hover:bg-muted dark:hover:bg-card rounded-xl">
+                  <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
               <div className="p-5 space-y-3">
-                <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Itens</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Itens</div>
                 {(rascunhoDetalhesTab.itens || []).map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-4 h-4 text-gray-400" />
+                  <div key={i} className="flex items-start gap-3 py-2 border-b border-border/30 dark:border-border/40 last:border-0">
+                    <div className="w-8 h-8 rounded-lg bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
+                      <Package className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{item.produto_nome}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
+                      <div className="text-sm font-medium text-foreground dark:text-white leading-snug">{item.produto_nome}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">R$ {formatarValorExibicao(item.total || 0)}</div>
+                    <div className="text-sm font-semibold text-foreground dark:text-white flex-shrink-0">R$ {formatarValorExibicao(item.total || 0)}</div>
                   </div>
                 ))}
                 {rascunhoDetalhesTab.valor_desconto > 0 && (
-                  <div className="flex justify-between text-sm text-gray-500">
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Desconto</span><span>-R$ {formatarValorExibicao(rascunhoDetalhesTab.valor_desconto)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex justify-between text-lg font-bold text-foreground dark:text-white pt-2 border-t border-border/40 dark:border-border/40">
                   <span>Total</span><span>R$ {formatarValorExibicao(rascunhoDetalhesTab.valor_total || 0)}</span>
                 </div>
                 <button
                   onClick={() => { setRascunhoDetalhesTab(null); handleAbrirPedido(rascunhoDetalhesTab); }}
-                  className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold mt-2">
+                  className="w-full h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold mt-2">
                   Confirmar Pagamento
                 </button>
               </div>

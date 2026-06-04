@@ -985,7 +985,7 @@ export default function PDVVendedor() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 relative">
+    <div className="h-screen flex flex-col bg-muted/40 dark:bg-background relative">
       {/* Feedback Inline - Glacial Style */}
       <AnimatePresence>
         {feedback.message &&
@@ -996,7 +996,7 @@ export default function PDVVendedor() {
           className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm ${
           feedback.type === 'success' ? 'bg-emerald-500/90 text-white' :
           feedback.type === 'error' ? 'bg-red-500/90 text-white' :
-          'bg-gray-700/90 text-white'}`
+          'bg-muted/90 text-white'}`
           }>
 
             {feedback.message}
@@ -1005,16 +1005,16 @@ export default function PDVVendedor() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-gray-50 dark:bg-gray-950 px-3 md:px-5 pt-3 md:pt-5 pb-2 md:pb-3 flex-shrink-0">
-        <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm px-4 py-3 md:px-5 md:py-4">
+      <div className="bg-muted/40 dark:bg-background px-3 md:px-5 pt-3 md:pt-5 pb-2 md:pb-3 flex-shrink-0">
+        <div className="rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3 md:px-5 md:py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center shadow-sm shrink-0">
-                <ShoppingCart className="w-4.5 h-4.5 text-white dark:text-gray-900" />
+              <div className="w-10 h-10 rounded-2xl bg-background dark:bg-card flex items-center justify-center shadow-sm shrink-0">
+                <ShoppingCart className="w-4.5 h-4.5 text-white dark:text-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Operação de vendas</p>
-                <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white leading-tight font-glacial">PDV Vendedor</h1>
+                <p className="text-[10px] text-muted-foreground dark:text-muted-foreground uppercase tracking-[0.18em]">Operação de vendas</p>
+                <h1 className="text-xl md:text-2xl font-semibold text-foreground dark:text-white leading-tight font-glacial">PDV Vendedor</h1>
                 {rascunhoEmEdicaoId && (
                   <div className="flex flex-wrap items-center gap-2 mt-1.5">
                     <span className="text-[11px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full font-medium">Editando</span>
@@ -1024,15 +1024,15 @@ export default function PDVVendedor() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
-                className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Orçamentos recentes">
+                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Orçamentos recentes">
                 <FileText className="w-4 h-4 stroke-[1.5]" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
-                className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Reeditar rascunho">
+                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted" title="Reeditar rascunho">
                 <Edit className="w-4 h-4 stroke-[1.5]" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleSair}
-                className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">
+                className="h-9 w-9 rounded-2xl bg-muted dark:bg-card text-muted-foreground hover:text-foreground/90 hover:bg-muted dark:hover:bg-muted">
                 <Undo2 className="w-4 h-4 stroke-[1.5]" />
               </Button>
             </div>
@@ -1042,22 +1042,22 @@ export default function PDVVendedor() {
 
       <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
         {/* Área Principal */}
-        <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-gray-50 dark:bg-gray-950">
+        <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-muted/40 dark:bg-background">
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
                 <div className="flex-1 relative min-w-0 rounded-2xl overflow-hidden">
-                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                   ref={inputProdutoRef}
                   placeholder="Buscar por nome, código ou código de barras..."
-                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                  className="w-full pl-12 pr-14 bg-card dark:bg-background border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground dark:text-muted-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus={false} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:text-muted-foreground hover:bg-muted dark:hover:bg-card rounded-xl">
                     <Camera className="w-5 h-5" />
                   </Button>
                 </div>
@@ -1068,7 +1068,7 @@ export default function PDVVendedor() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="Qtd"
-                  className="w-full bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent]"
+                  className="w-full bg-card dark:bg-background border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground dark:text-muted-foreground h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent]"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
@@ -1079,12 +1079,12 @@ export default function PDVVendedor() {
             {showSuggestions && produtosSugeridos.length > 0 &&
             <div
               ref={suggestionsListRef}
-              className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
-                  <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              className="absolute z-50 left-0 right-0 mt-2 bg-card dark:bg-background rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto border border-border/40 dark:border-border/40">
+                  <div className="sticky top-0 bg-card dark:bg-background px-4 py-3 border-b border-border/40 dark:border-border/40 flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {produtosSugeridos.length} resultado{produtosSugeridos.length > 1 ? 's' : ''}
                     </span>
-                    <span className="text-xs text-gray-400 hidden md:block">Tab para quantidade · Enter para adicionar</span>
+                    <span className="text-xs text-muted-foreground hidden md:block">Tab para quantidade · Enter para adicionar</span>
                   </div>
                   {produtosSugeridos.map((produto, index) => {
                 const mult = tabelaPreco?.fator_ajuste || 1;
@@ -1097,21 +1097,21 @@ export default function PDVVendedor() {
                 return (
                   <div key={produto.id}
                     ref={(el) => { suggestionItemRefs.current[index] = el; }}
-                    className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
-                    index === produtoSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}`}
+                    className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-border/30 dark:border-border/40 last:border-b-0 ${
+                    index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : 'hover:bg-muted/40 dark:hover:bg-muted/60'}`}
                     onClick={() => handleSelecionarProduto(produto)}>
                     {produto.imagem_url
                       ? <img src={produto.imagem_url} alt={produto.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                          <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-gray-400'}`} />
+                      : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-muted dark:bg-card'}`}>
+                          <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-muted-foreground'}`} />
                         </div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug break-words whitespace-normal">{produto.nome}</p>
+                      <p className="text-base font-medium text-foreground dark:text-foreground leading-snug break-words whitespace-normal">{produto.nome}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
+                        <span className="text-xs text-muted-foreground font-mono">#{produto.codigo_interno || '—'}</span>
                         {variasUnidades && (
-                          <span title="Várias unidades de venda" className="inline-flex items-center text-gray-400">
+                          <span title="Várias unidades de venda" className="inline-flex items-center text-muted-foreground">
                             <Boxes className="w-3.5 h-3.5" aria-hidden />
                           </span>
                         )}
@@ -1130,7 +1130,7 @@ export default function PDVVendedor() {
                             Outra unidade
                           </button>
                         )}
-                        <span className="text-base font-bold text-gray-900 dark:text-gray-100 ml-auto tabular-nums">
+                        <span className="text-base font-bold text-foreground dark:text-foreground ml-auto tabular-nums">
                           R$ {precoTabela.toFixed(2).replace('.', ',')}
                         </span>
                       </div>
@@ -1140,21 +1140,21 @@ export default function PDVVendedor() {
                 </div>
             }
                 {produtoSelecionado &&
-                <div className="mt-3 p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-3">
+                <div className="mt-3 p-4 bg-card dark:bg-background rounded-2xl shadow-sm border border-border/40 dark:border-border/40 space-y-3">
                 <div className="flex items-center gap-3">
                 {produtoSelecionado.imagem_url
                   ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-gray-500" />
+                  : <div className="w-12 h-12 rounded-xl bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 text-muted-foreground" />
                     </div>
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100 break-words whitespace-normal leading-snug">{produtoSelecionado.nome}</p>
+                  <p className="text-base font-semibold text-foreground dark:text-foreground break-words whitespace-normal leading-snug">{produtoSelecionado.nome}</p>
                   {produtoSelecionado.preco_livre ? (
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
                       <div className="relative flex-1">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-muted-foreground">R$</span>
                         <input autoComplete="off"
                           ref={precoLivreInputRef}
                           type="number" step="0.01" inputMode="decimal" min={(produtoSelecionado.preco_custo_calculado || 0) * (produtoSelecionado.fator_conversao || 1)}
@@ -1170,27 +1170,27 @@ export default function PDVVendedor() {
                               handleConfirmarAdicao();
                             }
                           }}
-                          className="w-full pl-8 h-10 bg-gray-50 dark:bg-gray-800/70 rounded-xl text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-gray-900 dark:text-gray-100 font-semibold"
+                          className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-xl text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
                         />
                       </div>
-                      <span className="text-xs text-gray-400">× {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}</span>
+                      <span className="text-xs text-muted-foreground">× {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}</span>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       R$ {((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)} × {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}
-                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
+                      {' '}= <span className="font-semibold text-foreground/90 dark:text-muted-foreground">R$ {(((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">Equivale a {produtoSelecionado.fator_conversao || 1} {produtoSelecionado.unidade_principal || 'UN'} por {produtoSelecionado.unidade_medida || 'UN'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Equivale a {produtoSelecionado.fator_conversao || 1} {produtoSelecionado.unidade_principal || 'UN'} por {produtoSelecionado.unidade_medida || 'UN'}</p>
                 </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); }}
-                    variant="ghost" size="sm" className="h-10 px-3 text-gray-400 hover:text-gray-600">
+                    variant="ghost" size="sm" className="h-10 px-3 text-muted-foreground hover:text-muted-foreground">
                     <X className="w-4 h-4" />
                   </Button>
                   <Button onClick={handleConfirmarAdicao}
-                    className="flex-1 h-10 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-sm font-semibold rounded-xl shadow-none">
+                    className="flex-1 h-10 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white text-sm font-semibold rounded-xl shadow-none">
                     + Adicionar
                   </Button>
                 </div>
@@ -1200,12 +1200,12 @@ export default function PDVVendedor() {
         </div>
 
         {/* Sidebar Carrinho - Desktop Only */}
-        <div className="hidden md:flex w-80 lg:w-[22rem] bg-gray-50 dark:bg-gray-950 px-0 pr-5 pb-5 flex-col flex-shrink-0">
-          <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm flex flex-col min-h-0 h-full overflow-hidden">
+        <div className="hidden md:flex w-80 lg:w-[22rem] bg-muted/40 dark:bg-background px-0 pr-5 pb-5 flex-col flex-shrink-0">
+          <div className="rounded-[28px] bg-card dark:bg-background shadow-sm flex flex-col min-h-0 h-full overflow-hidden">
             <div className="px-5 py-4 flex items-center justify-between flex-shrink-0">
-              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 font-glacial">Carrinho</h2>
+              <h2 className="text-base font-semibold text-foreground font-glacial">Carrinho</h2>
               {carrinho.length > 0 && (
-                <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2.5 py-1 rounded-full">{totalItens} un · {carrinho.length} itens</span>
+                <span className="text-xs bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground px-2.5 py-1 rounded-full">{totalItens} un · {carrinho.length} itens</span>
               )}
             </div>
 
@@ -1213,24 +1213,24 @@ export default function PDVVendedor() {
           <div className="flex-1 overflow-auto p-3 space-y-2">
             {carrinho.length === 0 ?
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
-                  <ShoppingCart className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+                <div className="w-16 h-16 rounded-2xl bg-muted dark:bg-card flex items-center justify-center mb-3">
+                  <ShoppingCart className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
                 </div>
-                <p className="text-sm text-gray-400">Carrinho vazio</p>
-                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Busque um produto acima</p>
+                <p className="text-sm text-muted-foreground">Carrinho vazio</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">Busque um produto acima</p>
               </div> :
             carrinho.map((item) =>
-            <div key={item.item_key} className="group p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <div key={item.item_key} className="group p-3 bg-muted/40 dark:bg-muted/60 rounded-xl hover:bg-muted dark:hover:bg-card transition-colors">
                   <div className="flex items-start gap-2.5 mb-2.5">
                     {item.imagem_url
                         ? <img src={item.imagem_url} alt={item.produto_nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                        : <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Package className="w-4 h-4 text-gray-400" />
+                        : <div className="w-10 h-10 rounded-lg bg-muted dark:bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                       }
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug flex-1 break-words">{item.produto_nome}</p>
+                      <p className="text-sm font-medium text-foreground dark:text-muted-foreground leading-snug flex-1 break-words">{item.produto_nome}</p>
                       <button onClick={() => handleRemoveItem(item.item_key)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
+                        className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1239,34 +1239,34 @@ export default function PDVVendedor() {
                        <div className="flex items-center gap-2 mb-2.5">
                          <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide whitespace-nowrap">Preço livre</span>
                          <div className="relative flex-1">
-                           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
+                           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-muted-foreground">R$</span>
                            <input autoComplete="off"
                              type="number" step="0.01" inputMode="decimal"
                              value={item.preco_unitario_praticado?.toFixed(2)}
                              onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
                              onBlur={() => handleBlurPrecoLivre(item.item_key)}
-                             className="w-full pl-8 h-10 bg-gray-50 dark:bg-gray-800/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-gray-900 dark:text-gray-100 font-semibold"
+                             className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
                            />
                          </div>
                        </div>
                      )}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-400 mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
-                        <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
+                        <p className="text-xs text-muted-foreground mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
+                        <div className="flex items-center bg-card dark:bg-background rounded-lg overflow-hidden shadow-sm">
                         <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade - 1)}
-                          className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                          className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted dark:hover:bg-card transition-colors">
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-sm font-bold w-9 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
+                        <span className="text-sm font-bold w-9 text-center text-foreground dark:text-muted-foreground">{item.quantidade}</span>
                         <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
                           disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
-                          className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
+                          className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted dark:hover:bg-card transition-colors disabled:opacity-40">
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                       </div>
-                      <p className="text-base font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
+                      <p className="text-base font-semibold text-foreground dark:text-foreground">R$ {item.total.toFixed(2)}</p>
                     </div>
                 </div>
             )
@@ -1274,7 +1274,7 @@ export default function PDVVendedor() {
           </div>
 
           {/* Resumo e Ações */}
-          <div className="border-t border-gray-100 dark:border-gray-800 p-4 space-y-3 flex-shrink-0">
+          <div className="border-t border-border/40 dark:border-border/40 p-4 space-y-3 flex-shrink-0">
             <button onClick={() => setShowLostSalesForm(true)}
               className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors">
               <AlertCircle className="w-3.5 h-3.5" />
@@ -1284,40 +1284,40 @@ export default function PDVVendedor() {
             {/* Botão simulador de taxa - desktop */}
             {carrinho.length > 0 && (
               <button onClick={() => setShowSimuladorTaxa(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-muted/40 dark:hover:bg-card rounded-lg transition-colors">
                 <CreditCard className="w-3.5 h-3.5" />
                 Ver taxa no cartão
               </button>
             )}
 
             <div className="space-y-2.5">
-              <div className="flex justify-between text-xs text-gray-400">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Subtotal</span>
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
 
               {/* Desconto Two-Way */}
-              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 space-y-2">
+              <div className="bg-muted/40 dark:bg-muted/60 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
                   {tabelaPreco?.percentual_desconto_maximo > 0 && (
-                    <span className="text-[10px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
+                    <span className="text-[10px] text-muted-foreground">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                   )}
                 </div>
                 <div className="flex gap-2 items-center">
                   <div className="relative flex-1">
                     <Input type="number" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
                       value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
-                      className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-sm text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      className="pr-6 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-lg text-sm text-right focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
                       placeholder="0" />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
                   </div>
-                  <span className="text-gray-300 dark:text-gray-700 text-xs">=</span>
+                  <span className="text-muted-foreground dark:text-foreground/90 text-xs">=</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">R$</span>
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                     <Input type="number" min="0" step="0.01"
                       value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
-                      className="pl-7 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-sm focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      className="pl-7 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-lg text-sm focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
                       placeholder="0,00" />
                   </div>
                 </div>
@@ -1325,13 +1325,13 @@ export default function PDVVendedor() {
               </div>
 
               <div className="flex justify-between items-center pt-1">
-                <span className="text-sm text-gray-500">Total</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2)}</span>
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-2xl font-bold text-foreground dark:text-white">R$ {valorTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <Button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-xl shadow-none border-0 text-base disabled:opacity-40">
+              className="w-full h-12 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white font-semibold rounded-xl shadow-none border-0 text-base disabled:opacity-40">
               Avançar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -1343,10 +1343,10 @@ export default function PDVVendedor() {
 
       {/* Barra inferior mobile: z-[55] fica acima do Dialog (z-50) — esconder com qualquer modal full-screen */}
       {!showClienteDialog && !showReeditarDialog && !unitSelector.open && (
-          <div className="pointer-events-auto fixed left-0 right-0 z-[55] flex items-center gap-2 rounded-t-[26px] border-t border-gray-100 bg-white/90 px-3 pt-3 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/95 md:hidden p38-bottom-dock shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
+          <div className="pointer-events-auto fixed left-0 right-0 z-[55] flex items-center gap-2 rounded-t-[26px] border-t border-border/40 bg-card/90 px-3 pt-3 backdrop-blur-md dark:border-border/40 dark:bg-muted/95 md:hidden p38-bottom-dock shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
-              <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
+              <div className="text-[10px] text-muted-foreground leading-none mb-0.5">Total</div>
+              <div className="text-xl font-bold text-foreground dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
             </div>
             <button onClick={() => setShowLostSalesForm(true)}
               className="w-10 h-10 flex items-center justify-center rounded-xl text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-shrink-0">
@@ -1354,7 +1354,7 @@ export default function PDVVendedor() {
             </button>
             {carrinho.length > 0 && (
               <button onClick={() => setShowSimuladorTaxa(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0">
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-muted/80 flex-shrink-0">
                 <CreditCard className="w-5 h-5" />
               </button>
             )}
@@ -1362,16 +1362,16 @@ export default function PDVVendedor() {
               type="button"
               onClick={() => setShowCarrinhoMobile(true)}
               aria-label="Abrir carrinho"
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0">
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-muted/80 flex-shrink-0">
               <ShoppingCart className="w-5 h-5" />
               {carrinho.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-slate-700 text-slate-100 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
+                <span className="absolute -top-0.5 -right-0.5 bg-muted text-foreground text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
                   {carrinho.length}
                 </span>
               )}
             </button>
             <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="flex items-center gap-1.5 h-10 px-4 bg-slate-700 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600 text-slate-100 dark:text-slate-100 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0">
+              className="flex items-center gap-1.5 h-10 px-4 bg-muted dark:bg-muted hover:bg-muted dark:hover:bg-muted text-foreground dark:text-foreground font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0">
               <UserPlus className="w-4 h-4" />
               Cliente
             </button>
@@ -1380,47 +1380,47 @@ export default function PDVVendedor() {
 
       {/* Dialog de cliente - GLACIAL PROTOCOL */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 rounded-3xl border-0 shadow-2xl">
-          <DialogHeader className="pb-4 border-b border-gray-100 dark:border-gray-800">
-            <DialogTitle className="text-xl font-medium text-gray-900 dark:text-white">Selecionar Cliente</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card dark:bg-background text-foreground dark:text-foreground p-6 rounded-3xl border-0 shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-border/40 dark:border-border/40">
+            <DialogTitle className="text-xl font-medium text-foreground dark:text-white">Selecionar Cliente</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             {!showNovoClienteForm ?
             <>
                 <div className="space-y-2">
-                  <Label className="text-sm font-normal text-gray-500 dark:text-gray-400">Buscar Cliente</Label>
+                  <Label className="text-sm font-normal text-muted-foreground dark:text-muted-foreground">Buscar Cliente</Label>
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                     placeholder="Digite nome, documento ou telefone..."
                     value={buscaCliente}
                     onChange={(e) => setBuscaCliente(e.target.value)}
-                    className="pl-11 h-14 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-all text-base" />
+                    className="pl-11 h-14 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl focus:ring-2 focus:ring-border/40 dark:focus:ring-ring transition-all text-base" />
 
                   </div>
 
                   {/* Lista de clientes filtrados */}
                   {clientesFiltrados.length > 0 &&
-                <div className="mt-2 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-sm">
+                <div className="mt-2 max-h-64 overflow-y-auto border border-border/40 dark:border-border/40 rounded-xl bg-card dark:bg-card shadow-sm">
                       {clientesFiltrados.map((cliente, index) =>
                   <div
                     key={cliente.id}
-                    className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors flex justify-between items-center ${
-                    clienteSelecionado?.id === cliente.id ? 'bg-gray-50 dark:bg-gray-700/50' : ''} ${
+                    className={`p-4 hover:bg-muted/40 dark:hover:bg-muted/50 cursor-pointer border-b border-border/40 dark:border-border/40 last:border-b-0 transition-colors flex justify-between items-center ${
+                    clienteSelecionado?.id === cliente.id ? 'bg-muted/40 dark:bg-muted/50' : ''} ${
 
-                    index === clienteSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`
+                    index === clienteSelecionadoIndex ? 'bg-muted/40 dark:bg-muted/50' : ''}`
                     }
                     onClick={() => handleSelecionarCliente(cliente)}>
 
                           <div>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100 text-base">{cliente.nome}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p className="font-semibold text-foreground dark:text-foreground text-base">{cliente.nome}</p>
+                            <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                               {cliente.cpf_cnpj || 'Sem doc'} • {cliente.telefone || 'Sem tel'}
                             </p>
                           </div>
                           {clienteSelecionado?.id === cliente.id &&
-                    <div className="w-2 h-2 rounded-full bg-gray-900 dark:bg-white"></div>
+                    <div className="w-2 h-2 rounded-full bg-background dark:bg-card"></div>
                     }
                         </div>
                   )}
@@ -1428,31 +1428,31 @@ export default function PDVVendedor() {
                 }
 
                   {!isMobile && clientesFiltrados.length > 0 &&
-                <p className="text-xs text-gray-400 dark:text-gray-500 px-1">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground px-1">
                       Use as setas ↑↓ para navegar e Enter para selecionar
                     </p>
                 }
                 </div>
 
                 {clienteSelecionado &&
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="p-4 bg-muted/40 dark:bg-card rounded-xl border border-border/40 dark:border-border/40 flex items-center justify-between">
                     <div>
-                       <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Selecionado</p>
-                       <p className="text-lg font-semibold text-gray-900 dark:text-white">{clienteSelecionado.nome}</p>
-                       <p className="text-sm text-gray-500 dark:text-gray-400">{clienteSelecionado.telefone}</p>
+                       <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">Selecionado</p>
+                       <p className="text-lg font-semibold text-foreground dark:text-white">{clienteSelecionado.nome}</p>
+                       <p className="text-sm text-muted-foreground dark:text-muted-foreground">{clienteSelecionado.telefone}</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => setClienteSelecionado(null)}>
-                      <X className="w-5 h-5 text-gray-400" />
+                      <X className="w-5 h-5 text-muted-foreground" />
                     </Button>
                   </div>
               }
 
                 <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-200 dark:border-gray-800" />
+                    <span className="w-full border-t border-border/40 dark:border-border/40" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white dark:bg-gray-900 px-4 text-gray-400 dark:text-gray-500 font-medium tracking-widest">OU</span>
+                    <span className="bg-card dark:bg-background px-4 text-muted-foreground dark:text-muted-foreground font-medium tracking-widest">OU</span>
                   </div>
                 </div>
 
@@ -1460,11 +1460,11 @@ export default function PDVVendedor() {
                 {buscaCliente.trim().length >= 2 && clientesFiltrados.length === 0 && (
                   <button
                     onClick={() => handleCriarClienteRapido(buscaCliente.trim())}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <UserPlus className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-muted/40 dark:bg-card rounded-xl text-left hover:bg-muted dark:hover:bg-muted transition-colors">
+                    <UserPlus className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Usar "{buscaCliente.trim()}" como novo cliente</p>
-                      <p className="text-xs text-gray-400">Cadastro rápido · detalhes podem ser adicionados depois</p>
+                      <p className="text-sm font-medium text-foreground dark:text-muted-foreground">Usar "{buscaCliente.trim()}" como novo cliente</p>
+                      <p className="text-xs text-muted-foreground">Cadastro rápido · detalhes podem ser adicionados depois</p>
                     </div>
                   </button>
                 )}
@@ -1475,24 +1475,24 @@ export default function PDVVendedor() {
                   setTimeout(() => clienteNomeRef.current?.focus(), 100);
                 }}
                 variant="outline"
-                className="w-full h-14 text-base font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all">
-                  <UserPlus className="w-5 h-5 mr-2 text-gray-500" />
+                className="w-full h-14 text-base font-medium border border-border/40 dark:border-border/40 text-foreground/90 dark:text-muted-foreground hover:bg-muted/40 dark:hover:bg-card rounded-xl transition-all">
+                  <UserPlus className="w-5 h-5 mr-2 text-muted-foreground" />
                   {isMobile ? 'Cadastrar Novo Cliente' : 'Cadastrar Novo Cliente (F2)'}
                 </Button>
 
                 {/* Método de Entrega */}
                 <div className="pt-4">
-                  <Label className="text-sm font-normal mb-3 block text-gray-500 dark:text-gray-400">Método de Entrega</Label>
+                  <Label className="text-sm font-normal mb-3 block text-muted-foreground dark:text-muted-foreground">Método de Entrega</Label>
                   <RadioGroup value={metodoEntrega} onValueChange={setMetodoEntrega} className="space-y-1">
                     <div className={`flex items-center space-x-4 p-3 rounded-xl transition-all cursor-pointer group ${
                   metodoEntrega === 'Retirada' ?
-                  'bg-gray-100 dark:bg-gray-800' :
-                  'hover:bg-gray-50 dark:hover:bg-gray-800/50'}`
+                  'bg-muted dark:bg-card' :
+                  'hover:bg-muted/40 dark:hover:bg-muted/50'}`
                   } onClick={() => setMetodoEntrega('Retirada')}>
-                      <RadioGroupItem value="Retirada" id="ret" className="border-gray-400 text-gray-900 w-5 h-5 mt-0.5" />
-                      <Label htmlFor="ret" className="flex items-center gap-3 cursor-pointer flex-1 text-gray-900 dark:text-gray-100 font-normal text-base">
-                        <div className={`p-2 rounded-lg ${metodoEntrega === 'Retirada' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                          <Store className={`w-5 h-5 ${metodoEntrega === 'Retirada' ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`} />
+                      <RadioGroupItem value="Retirada" id="ret" className="border-border/40 text-foreground w-5 h-5 mt-0.5" />
+                      <Label htmlFor="ret" className="flex items-center gap-3 cursor-pointer flex-1 text-foreground dark:text-foreground font-normal text-base">
+                        <div className={`p-2 rounded-lg ${metodoEntrega === 'Retirada' ? 'bg-card dark:bg-muted shadow-sm' : 'bg-muted dark:bg-card'}`}>
+                          <Store className={`w-5 h-5 ${metodoEntrega === 'Retirada' ? 'text-foreground dark:text-white' : 'text-muted-foreground'}`} />
                         </div>
                         Retirada no Balcão
                       </Label>
@@ -1500,13 +1500,13 @@ export default function PDVVendedor() {
                     
                     <div className={`flex items-center space-x-4 p-3 rounded-xl transition-all cursor-pointer group ${
                   metodoEntrega === 'Delivery' ?
-                  'bg-gray-100 dark:bg-gray-800' :
-                  'hover:bg-gray-50 dark:hover:bg-gray-800/50'}`
+                  'bg-muted dark:bg-card' :
+                  'hover:bg-muted/40 dark:hover:bg-muted/50'}`
                   } onClick={() => setMetodoEntrega('Delivery')}>
-                      <RadioGroupItem value="Delivery" id="del" className="border-gray-400 text-gray-900 w-5 h-5 mt-0.5" />
-                      <Label htmlFor="del" className="flex items-center gap-3 cursor-pointer flex-1 text-gray-900 dark:text-gray-100 font-normal text-base">
-                        <div className={`p-2 rounded-lg ${metodoEntrega === 'Delivery' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                          <Truck className={`w-5 h-5 ${metodoEntrega === 'Delivery' ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`} />
+                      <RadioGroupItem value="Delivery" id="del" className="border-border/40 text-foreground w-5 h-5 mt-0.5" />
+                      <Label htmlFor="del" className="flex items-center gap-3 cursor-pointer flex-1 text-foreground dark:text-foreground font-normal text-base">
+                        <div className={`p-2 rounded-lg ${metodoEntrega === 'Delivery' ? 'bg-card dark:bg-muted shadow-sm' : 'bg-muted dark:bg-card'}`}>
+                          <Truck className={`w-5 h-5 ${metodoEntrega === 'Delivery' ? 'text-foreground dark:text-white' : 'text-muted-foreground'}`} />
                         </div>
                         Delivery / Entrega
                       </Label>
@@ -1517,40 +1517,40 @@ export default function PDVVendedor() {
 
             <form onSubmit={handleCriarNovoCliente} className="space-y-5">
                 <div>
-                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Nome Completo *</Label>
+                  <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Nome Completo *</Label>
                   <Input
                   ref={clienteNomeRef}
                   placeholder="Nome do cliente..."
                   value={novoCliente.nome}
                   onChange={(e) => setNovoCliente({ ...novoCliente, nome: e.target.value })}
                   required
-                  className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-all" />
+                  className="h-12 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl focus:ring-2 focus:ring-border/40 dark:focus:ring-ring transition-all" />
 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Telefone</Label>
+                    <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Telefone</Label>
                     <Input
                     type="tel"
                     placeholder="(00) 00000-0000"
                     value={novoCliente.telefone}
                     onChange={(e) => setNovoCliente({ ...novoCliente, telefone: e.target.value })}
                     inputMode="tel"
-                    className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl" />
+                    className="h-12 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl" />
 
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Tipo de Documento</Label>
+                    <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Tipo de Documento</Label>
                     <Select
                     value={novoCliente.tipo_documento}
                     onValueChange={(v) => setNovoCliente({ ...novoCliente, tipo_documento: v })}>
 
-                      <SelectTrigger className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl">
+                      <SelectTrigger className="h-12 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 rounded-xl">
+                      <SelectContent className="bg-card dark:bg-card text-foreground dark:text-foreground border-border/40 dark:border-border/40 rounded-xl">
                         <SelectItem value="CPF">CPF</SelectItem>
                         <SelectItem value="RG">RG</SelectItem>
                         <SelectItem value="CNH">CNH</SelectItem>
@@ -1563,37 +1563,37 @@ export default function PDVVendedor() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Número do Documento</Label>
+                  <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Número do Documento</Label>
                   <Input
                   placeholder="000.000.000-00"
                   value={novoCliente.numero_documento}
                   onChange={(e) => setNovoCliente({ ...novoCliente, numero_documento: e.target.value })}
-                  className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl" />
+                  className="h-12 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl" />
 
                 </div>
 
                 <div>
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Endereço</Label>
+                    <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Endereço</Label>
                     <Textarea
                   placeholder="Rua, número, bairro, cidade..."
                   value={novoCliente.endereco}
                   onChange={(e) => setNovoCliente({ ...novoCliente, endereco: e.target.value })}
                   rows={3}
-                  className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl resize-none py-3" />
+                  className="bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl resize-none py-3" />
 
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Perfil do Cliente</Label>
+                      <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Perfil do Cliente</Label>
                       <Select
                     value={novoCliente.perfil}
                     onValueChange={(v) => setNovoCliente({ ...novoCliente, perfil: v })}>
 
-                        <SelectTrigger className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl">
+                        <SelectTrigger className="h-12 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl">
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 rounded-xl">
+                        <SelectContent className="bg-card dark:bg-card text-foreground dark:text-foreground border-border/40 dark:border-border/40 rounded-xl">
                           <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
                           <SelectItem value="Profissional/Instalador">Profissional/Instalador</SelectItem>
                           <SelectItem value="Empresa/Loja">Empresa/Loja</SelectItem>
@@ -1603,24 +1603,24 @@ export default function PDVVendedor() {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Data de Nascimento</Label>
+                      <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Data de Nascimento</Label>
                       <Input
                     type="date"
                     value={novoCliente.data_nascimento}
                     onChange={(e) => setNovoCliente({ ...novoCliente, data_nascimento: e.target.value })}
-                    className="h-12 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl" />
+                    className="h-12 bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl" />
 
                     </div>
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">Observações</Label>
+                    <Label className="text-sm font-medium text-foreground/90 dark:text-muted-foreground mb-1.5 block">Observações</Label>
                     <Textarea
                   placeholder="Informações adicionais sobre o cliente..."
                   value={novoCliente.observacoes}
                   onChange={(e) => setNovoCliente({ ...novoCliente, observacoes: e.target.value })}
                   rows={2}
-                  className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl resize-none" />
+                  className="bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl resize-none" />
 
                   </div>
 
@@ -1629,13 +1629,13 @@ export default function PDVVendedor() {
                   type="button"
                   variant="outline"
                   onClick={() => setShowNovoClienteForm(false)}
-                  className="flex-1 h-12 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl font-medium">
+                  className="flex-1 h-12 border-border/40 dark:border-border/40 text-foreground/90 dark:text-muted-foreground hover:bg-muted/40 dark:hover:bg-card rounded-xl font-medium">
 
                     Voltar
                   </Button>
                   <Button
                   type="submit"
-                  className="flex-1 h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-medium rounded-xl">
+                  className="flex-1 h-12 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white font-medium rounded-xl">
 
                     <UserPlus className="w-5 h-5 mr-2" />
                     Cadastrar
@@ -1650,14 +1650,14 @@ export default function PDVVendedor() {
               <Button
               variant="outline"
               onClick={() => setShowClienteDialog(false)}
-              className="w-full sm:w-auto h-12 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-base font-medium rounded-xl">
+              className="w-full sm:w-auto h-12 border-border/40 dark:border-border/40 text-foreground/90 dark:text-muted-foreground hover:bg-muted/40 dark:hover:bg-card text-base font-medium rounded-xl">
 
                 Cancelar {!isMobile && '(ESC)'}
               </Button>
               <Button
               onClick={handleFinalizarPreVenda}
               disabled={isProcessing || ajusteExcedido}
-              className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl shadow-none disabled:opacity-50 border-0">
+              className="bg-muted-foreground/30 hover:bg-muted dark:bg-muted dark:hover:bg-muted text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl shadow-none disabled:opacity-50 border-0">
 
                 {isProcessing ? 'Processando...' : currentUser?.pode_acessar_caixa ? 'Ir para Pagamento' : 'Enviar ao Caixa'}
               </Button>
@@ -1667,15 +1667,15 @@ export default function PDVVendedor() {
       </Dialog>
 
       {showCarrinhoMobile &&
-      <div className="md:hidden fixed inset-0 z-[70] bg-gray-50 dark:bg-gray-950 flex flex-col">
+      <div className="md:hidden fixed inset-0 z-[70] bg-muted/40 dark:bg-background flex flex-col">
           {/* Header */}
-          <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
-            <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <div className="px-4 py-3 bg-card dark:bg-background border-b border-border/40 dark:border-border/40 flex items-center justify-between flex-shrink-0">
+            <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-card">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="text-center">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Carrinho</h2>
-              <p className="text-[10px] text-gray-400">{totalItens} un · {carrinho.length} itens</p>
+              <h2 className="text-base font-semibold text-foreground dark:text-white">Carrinho</h2>
+              <p className="text-[10px] text-muted-foreground">{totalItens} un · {carrinho.length} itens</p>
             </div>
             <div className="w-9" />
           </div>
@@ -1684,62 +1684,62 @@ export default function PDVVendedor() {
           <div className="flex-1 overflow-auto p-3 space-y-2">
             {carrinho.length === 0 ?
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center mb-4">
-                  <ShoppingCart className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+                <div className="w-16 h-16 rounded-2xl bg-card dark:bg-background shadow-sm flex items-center justify-center mb-4">
+                  <ShoppingCart className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
                 </div>
-                <p className="text-base text-gray-400">Carrinho vazio</p>
+                <p className="text-base text-muted-foreground">Carrinho vazio</p>
               </div> :
           carrinho.map((item) =>
-          <div key={item.item_key} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+          <div key={item.item_key} className="p-3.5 bg-card dark:bg-background rounded-2xl shadow-sm">
                   <div className="flex items-start gap-3 mb-3">
                     {item.imagem_url
                       ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-gray-400" />
+                      : <div className="w-12 h-12 rounded-xl bg-muted dark:bg-card flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-muted-foreground" />
                         </div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-snug break-words">{item.produto_nome}</p>
+                      <p className="font-medium text-sm text-foreground dark:text-foreground leading-snug break-words">{item.produto_nome}</p>
                       {item.preco_livre ? (
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
                           <div className="relative flex-1 max-w-[160px]">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-muted-foreground">R$</span>
                             <input autoComplete="off"
                               type="number" step="0.01" inputMode="decimal"
                               value={item.preco_unitario_praticado?.toFixed(2)}
                               onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
                               onBlur={() => handleBlurPrecoLivre(item.item_key)}
-                              className="w-full pl-8 h-10 bg-gray-50 dark:bg-gray-800/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-gray-900 dark:text-gray-100 font-semibold"
+                              className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
                             />
                           </div>
                         </div>
                       ) : (
-                         <p className="text-xs text-gray-400 mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
+                         <p className="text-xs text-muted-foreground mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
                        )}
                     </div>
                     <button onClick={() => handleRemoveItem(item.item_key)}
-                      className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg flex-shrink-0">
+                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-red-400 rounded-lg flex-shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-400 mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
-                      <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                      <p className="text-xs text-muted-foreground mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
+                      <div className="flex items-center bg-muted/40 dark:bg-card rounded-xl overflow-hidden">
                       <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade - 1)}
-                        className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700">
+                        className="w-10 h-10 flex items-center justify-center text-muted-foreground active:bg-muted dark:active:bg-muted">
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="text-base font-bold w-10 text-center text-gray-900 dark:text-white">{item.quantidade}</span>
+                      <span className="text-base font-bold w-10 text-center text-foreground dark:text-white">{item.quantidade}</span>
                       <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
                         disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
-                        className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700 disabled:opacity-40">
+                        className="w-10 h-10 flex items-center justify-center text-muted-foreground active:bg-muted dark:active:bg-muted disabled:opacity-40">
                         <Plus className="w-4 h-4" />
                       </button>
                       </div>
                       </div>
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
+                      <p className="text-lg font-bold text-foreground dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
                   </div>
                 </div>
           )
@@ -1747,34 +1747,34 @@ export default function PDVVendedor() {
           </div>
 
           {/* Footer - Resumo e Ação */}
-          <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 space-y-3 flex-shrink-0">
-            <div className="flex justify-between text-xs text-gray-400">
+          <div className="p-3 bg-card dark:bg-background border-t border-border/40 dark:border-border/40 space-y-3 flex-shrink-0">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>Subtotal</span>
               <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
             </div>
 
             {/* Desconto Two-Way - Mobile */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 space-y-2">
+            <div className="bg-muted/40 dark:bg-card rounded-2xl p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
                 {tabelaPreco?.percentual_desconto_maximo > 0 && (
-                  <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
+                  <span className="text-[9px] text-muted-foreground">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                 )}
               </div>
               <div className="flex gap-2 items-center">
                 <div className="relative flex-1">
                   <Input type="number" inputMode="decimal" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
                     value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
-                    className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-gray-200"
+                    className="pr-6 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-border/40"
                     placeholder="0" />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">%</span>
                 </div>
-                <span className="text-gray-300 dark:text-gray-700 text-xs">=</span>
+                <span className="text-muted-foreground dark:text-foreground/90 text-xs">=</span>
                 <div className="relative flex-1">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">R$</span>
                   <Input type="number" inputMode="decimal" min="0" step="0.01"
                     value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
-                    className="pl-7 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-gray-200"
+                    className="pl-7 h-10 bg-card dark:bg-background border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-border/40"
                     placeholder="0,00" />
                 </div>
               </div>
@@ -1782,13 +1782,13 @@ export default function PDVVendedor() {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Total</span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-2xl font-bold text-foreground dark:text-white">R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
             </div>
 
             <Button onClick={() => { setShowCarrinhoMobile(false); handleAvancarParaCliente(); }}
               disabled={carrinho.length === 0 || ajusteExcedido}
-              className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-2xl shadow-none border-0 disabled:opacity-40">
+              className="w-full h-12 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white font-semibold rounded-2xl shadow-none border-0 disabled:opacity-40">
               Avançar <ArrowRight className="w-4 h-4 ml-1.5 inline" />
             </Button>
           </div>
@@ -1851,14 +1851,14 @@ export default function PDVVendedor() {
 
       {/* Dialog de Reeditar Rascunho */}
       <Dialog open={showReeditarDialog} onOpenChange={setShowReeditarDialog}>
-        <DialogContent className="max-w-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 rounded-3xl border-0 shadow-2xl">
-          <DialogHeader className="pb-4 border-b border-gray-100 dark:border-gray-800">
-            <DialogTitle className="text-xl font-medium text-gray-900 dark:text-white">Reeditar Rascunho</DialogTitle>
+        <DialogContent className="max-w-md bg-card dark:bg-background text-foreground dark:text-foreground p-6 rounded-3xl border-0 shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-border/40 dark:border-border/40">
+            <DialogTitle className="text-xl font-medium text-foreground dark:text-white">Reeditar Rascunho</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-2 block">
+              <Label className="text-sm font-normal text-muted-foreground dark:text-muted-foreground mb-2 block">
                 Digite os 4 últimos dígitos da senha
               </Label>
               <Input
@@ -1877,12 +1877,12 @@ export default function PDVVendedor() {
                     handleReeditarRascunho();
                   }
                 }}
-                className="h-16 text-center text-2xl font-bold tracking-widest bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl"
+                className="h-16 text-center text-2xl font-bold tracking-widest bg-muted/40 dark:bg-card border-border/40 dark:border-border/40 text-foreground dark:text-foreground rounded-xl"
                 autoFocus
               />
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground text-center">
               A senha está impressa no comprovante do cliente
             </p>
           </div>
@@ -1894,14 +1894,14 @@ export default function PDVVendedor() {
                 setShowReeditarDialog(false);
                 setSenhaReeditar('');
               }}
-              className="w-full sm:w-auto h-12 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-base font-medium rounded-xl">
+              className="w-full sm:w-auto h-12 border-border/40 dark:border-border/40 text-foreground/90 dark:text-muted-foreground hover:bg-muted/40 dark:hover:bg-card text-base font-medium rounded-xl">
 
               Cancelar
             </Button>
             <Button
               onClick={handleReeditarRascunho}
               disabled={senhaReeditar.length < 4}
-              className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl disabled:opacity-50">
+              className="bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl disabled:opacity-50">
 
               Carregar Rascunho
             </Button>

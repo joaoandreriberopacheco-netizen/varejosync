@@ -87,7 +87,7 @@ function CmvQuickToggle({ checked, onChange }) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 ${
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         checked ? 'bg-background dark:bg-card' : 'bg-muted dark:bg-muted'
       }`}
     >
@@ -806,7 +806,7 @@ export default function AgefinConsulta() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" /></div>
+          <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-border/40 border-t-primary dark:border-border/40 dark:border-t-foreground rounded-full animate-spin" /></div>
         ) : contasOrdenadas.length === 0 ? (
           <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
             Nenhuma conta a pagar encontrada para esse mês e filtros.

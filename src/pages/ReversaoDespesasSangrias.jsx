@@ -114,7 +114,7 @@ export default function ReversaoDespesasSangrias() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-card">
-        <div className="w-8 h-8 border-4 border-border/40 border-t-gray-900 dark:border-border/40 dark:border-t-white rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-border/40 border-t-foreground dark:border-border/40 dark:border-t-white rounded-full animate-spin"></div>
       </div>
     );
   }

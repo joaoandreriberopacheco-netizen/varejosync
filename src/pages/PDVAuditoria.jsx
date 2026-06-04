@@ -416,7 +416,7 @@ export default function PDVAuditoria() {
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onFocus={() => setMostrarBusca(true)}
-              className="pl-9 rounded-xl border-0 bg-muted/50 h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-gray-700 w-full"
+              className="pl-9 rounded-xl border-0 bg-muted/50 h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring w-full"
             />
           </div>
           <Button

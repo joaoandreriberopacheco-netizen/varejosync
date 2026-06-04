@@ -159,7 +159,7 @@ export default function ReimpressaoDocumentos() {
 
         {isLoading && (
           <div className="text-center py-8">
-            <div className="w-8 h-8 border-4 border-border/40 border-t-gray-800 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-4 border-border/40 border-t-primary dark:border-border/40 dark:border-t-foreground rounded-full animate-spin mx-auto" />
           </div>
         )}
 

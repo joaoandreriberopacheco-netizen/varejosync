@@ -169,7 +169,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
                     <select
                       value={viewMode}
                       onChange={(e) => setViewMode(e.target.value)}
-                      className="w-full text-xs px-3 py-2 rounded bg-muted text-foreground dark:text-foreground border-0 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                      className="w-full text-xs px-3 py-2 rounded bg-muted text-foreground dark:text-foreground border-0 focus:ring-1 focus:ring-ring dark:focus:ring-ring"
                     >
                       <option value="saida_manaus">Saída Manaus</option>
                       <option value="chegada_manaus">Chegada Manaus</option>

@@ -177,7 +177,7 @@ export default function AgefinAtualizador({ onRefresh }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <div className="w-6 h-6 border-2 border-border/40 border-t-gray-700 dark:border-border/40 dark:border-t-gray-200 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-border/40 border-t-primary dark:border-border/40 dark:border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }

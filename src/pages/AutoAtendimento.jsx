@@ -137,7 +137,7 @@ export default function AutoAtendimentoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-muted dark:bg-background overflow-hidden flex flex-col">
       <AnimatePresence mode="wait">
         {step === 'home' && (
           <AutoHome key="home" onStart={handleStart} />
@@ -188,18 +188,18 @@ export default function AutoAtendimentoPage() {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 bg-emerald-600 text-white"
           >
-            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center text-emerald-600 text-6xl">
+            <div className="w-32 h-32 bg-card rounded-full flex items-center justify-center text-emerald-600 text-6xl">
               ✓
             </div>
             <h1 className="text-4xl font-bold">Compra Realizada!</h1>
             <p className="text-xl opacity-90">Retire sua senha e aguarde a chamada.</p>
-            <div className="bg-white/20 p-6 rounded-xl backdrop-blur-sm mt-8">
+            <div className="bg-card/20 p-6 rounded-xl backdrop-blur-sm mt-8">
               <p className="text-sm uppercase tracking-widest mb-2">Seu Pedido</p>
               <p className="text-6xl font-mono font-bold">{pedidoFinalizado?.numero?.split('-')[1] || '000'}</p>
             </div>
             <button 
               onClick={() => window.location.reload()}
-              className="mt-12 px-8 py-3 bg-white text-emerald-600 rounded-full font-bold text-lg hover:bg-emerald-50 transition-colors"
+              className="mt-12 px-8 py-3 bg-card text-emerald-600 rounded-full font-bold text-lg hover:bg-emerald-50 transition-colors"
             >
               Nova Compra
             </button>

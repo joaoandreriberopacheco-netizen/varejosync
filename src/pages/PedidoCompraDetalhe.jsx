@@ -128,7 +128,7 @@ export default function PedidoCompraDetalhe() {
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-card">
-        <div className="w-8 h-8 border-4 border-border/40 border-t-gray-700 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-border/40 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }

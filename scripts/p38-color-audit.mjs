@@ -4,6 +4,7 @@
  *
  *   node scripts/p38-color-audit.mjs              # relatório no stdout
  *   node scripts/p38-color-audit.mjs --fix        # aplica correções
+ *   node scripts/p38-color-audit.mjs --fix --include-pdv  # inclui PDV fullscreen
  *   node scripts/p38-color-audit.mjs --json       # JSON para CI
  */
 import fs from 'fs';
@@ -204,6 +205,49 @@ function replaceUtilityTokens(content) {
     [/\bdark:focus:ring-gray-600\b/g, 'dark:focus:ring-ring'],
     [/\bring-gray-400\b/g, 'ring-ring'],
     [/\bdark:text-gray-50\b/g, 'dark:text-foreground'],
+    [/\bdark:focus:ring-gray-700\b/g, 'dark:focus:ring-ring'],
+    [/\bdark:focus:ring-gray-600\b/g, 'dark:focus:ring-ring'],
+    [/\bdark:focus-visible:ring-gray-700\b/g, 'dark:focus-visible:ring-ring'],
+    [/\bfocus-visible:ring-gray-700\b/g, 'focus-visible:ring-ring'],
+    [/\bfocus-visible:ring-gray-400\b/g, 'focus-visible:ring-ring'],
+    // Spinners (anel superior)
+    [/\bborder-t-gray-950\b/g, 'border-t-foreground'],
+    [/\bborder-t-gray-900\b/g, 'border-t-foreground'],
+    [/\bborder-t-gray-800\b/g, 'border-t-primary'],
+    [/\bborder-t-gray-700\b/g, 'border-t-primary'],
+    [/\bborder-t-gray-600\b/g, 'border-t-primary'],
+    [/\bborder-t-gray-500\b/g, 'border-t-muted-foreground'],
+    [/\bborder-t-gray-400\b/g, 'border-t-muted-foreground'],
+    [/\bborder-t-gray-300\b/g, 'border-t-muted-foreground'],
+    [/\bborder-t-slate-900\b/g, 'border-t-foreground'],
+    [/\bborder-t-slate-800\b/g, 'border-t-foreground'],
+    [/\bborder-t-slate-700\b/g, 'border-t-primary'],
+    [/\bborder-t-slate-600\b/g, 'border-t-primary'],
+    [/\bborder-t-slate-500\b/g, 'border-t-muted-foreground'],
+    [/\bdark:border-t-gray-200\b/g, 'dark:border-t-foreground'],
+    [/\bdark:border-t-gray-300\b/g, 'dark:border-t-foreground'],
+    [/\bdark:border-t-gray-400\b/g, 'dark:border-t-muted-foreground'],
+    [/\bdark:border-t-slate-200\b/g, 'dark:border-t-foreground'],
+    // Bordas laterais / accent / fill
+    [/\bborder-l-gray-\d+\b/g, 'border-l-border'],
+    [/\bdark:border-l-gray-\d+\b/g, 'dark:border-l-border'],
+    [/\baccent-gray-\d+\b/g, 'accent-primary'],
+    [/\bfill-gray-\d+\b/g, 'fill-muted-foreground'],
+    [/\bdark:fill-gray-\d+\b/g, 'dark:fill-muted-foreground'],
+    [/\bdark:group-hover:text-gray-300\b/g, 'dark:group-hover:text-muted-foreground'],
+    [/\bfocus:ring-gray-600\b/g, 'focus:ring-ring'],
+    [/\bfocus:ring-gray-500\b/g, 'focus:ring-ring'],
+    [/\bfocus:ring-slate-500\b/g, 'focus:ring-ring'],
+    [/\bplaceholder:text-gray-300\b/g, 'placeholder:text-muted-foreground'],
+    [/\bdark:group-hover:text-gray-300\b/g, 'dark:group-hover:text-muted-foreground'],
+    [/\bdata-\[state=checked\]:bg-gray-700\b/g, 'data-[state=checked]:bg-primary'],
+    [/\bdark:data-\[state=checked\]:bg-gray-300\b/g, 'dark:data-[state=checked]:bg-primary'],
+    [
+      'data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700',
+      'data-[state=active]:bg-muted dark:data-[state=active]:bg-muted',
+    ],
+    ['data-[state=active]:bg-gray-100', 'data-[state=active]:bg-muted'],
+    ['dark:data-[state=active]:bg-gray-700', 'dark:data-[state=active]:bg-muted'],
   ];
 
   for (const [from, to] of LITERAL_REPLACEMENTS) {
@@ -216,7 +260,7 @@ function replaceUtilityTokens(content) {
 }
 
 const GRAY_SLATE_RE =
-  /(?:^|[\s"'`{,])(?:(?:hover:|dark:|dark:hover:)?(?:bg|text|border|ring|divide|from|to|via|placeholder)-(?:gray|slate)-\d+(?:\/\d+)?|placeholder-gray-\d+|divide-gray-\d+|ring-gray-\d+)/g;
+  /(?:^|[\s"'`{,])(?:(?:hover:|dark:|dark:hover:|dark:focus:|dark:focus-visible:|dark:group-hover:|focus:|focus-visible:|placeholder:)?(?:bg|text|border(?:-[tblr])?|ring|divide|from|to|via|placeholder|accent|fill)-(?:gray|slate)-\d+(?:\/\d+)?|placeholder-gray-\d+|divide-gray-\d+|ring-gray-\d+|ring-slate-\d+|data-\[[^\]]+\]:bg-gray-\d+|dark:data-\[[^\]]+\]:bg-gray-\d+)/g;
 
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
@@ -245,9 +289,16 @@ function scanFile(filePath) {
 
 const fix = process.argv.includes('--fix');
 const asJson = process.argv.includes('--json');
+const includePdv = process.argv.includes('--include-pdv');
+
+function shouldSkipFile(filePath) {
+  if (SKIP_PATH_RE.test(filePath)) return true;
+  if (!includePdv && SKIP_FILE_RE.test(filePath)) return true;
+  return false;
+}
 
 const srcRoot = path.join(root, 'src');
-const files = walk(srcRoot).filter((f) => !SKIP_FILE_RE.test(f) && !SKIP_PATH_RE.test(f));
+const files = walk(srcRoot).filter((f) => !shouldSkipFile(f));
 
 const report = {
   scannedFiles: files.length,
@@ -257,10 +308,12 @@ const report = {
   skippedPdv: [],
 };
 
-for (const file of walk(srcRoot)) {
-  if (SKIP_FILE_RE.test(file)) {
-    const n = (scanFile(file) || []).length;
-    if (n) report.skippedPdv.push({ file: rel(file), matches: n });
+if (!includePdv) {
+  for (const file of walk(srcRoot)) {
+    if (SKIP_FILE_RE.test(file)) {
+      const n = scanFile(file).length;
+      if (n) report.skippedPdv.push({ file: rel(file), matches: n });
+    }
   }
 }
 
@@ -335,8 +388,8 @@ if (asJson) {
     }
   });
 
-  if (report.skippedPdv.length) {
-    console.log(`\nPDV fullscreen (não alterados): ${report.skippedPdv.length} ficheiros com gray/slate`);
+  if (!includePdv && report.skippedPdv.length) {
+    console.log(`\nPDV fullscreen (não alterados; use --include-pdv): ${report.skippedPdv.length} ficheiros`);
   }
   console.log('');
 }

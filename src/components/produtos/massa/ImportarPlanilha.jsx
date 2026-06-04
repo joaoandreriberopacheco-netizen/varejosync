@@ -325,7 +325,7 @@ export default function ImportarPlanilha({ onParsed }) {
           <div className="flex flex-col items-center justify-center text-center pointer-events-none">
             {parsing ? (
               <>
-                <div className="w-12 h-12 rounded-full border-4 border-border/40 border-t-gray-900 dark:border-t-white animate-spin mb-3" />
+                <div className="w-12 h-12 rounded-full border-4 border-border/40 border-t-foreground dark:border-t-white animate-spin mb-3" />
                 <p className="text-sm font-medium text-foreground">Processando arquivo...</p>
               </>
             ) : (

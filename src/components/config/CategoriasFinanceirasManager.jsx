@@ -147,7 +147,7 @@ export default function CategoriasFinanceirasManager() {
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50">
               <input type="checkbox" checked={formData.ativo}
                 onChange={e => setFormData({ ...formData, ativo: e.target.checked })}
-                className="w-4 h-4 accent-gray-700" />
+                className="w-4 h-4 accent-primary" />
               <p className="text-xs font-medium text-foreground/90">Categoria ativa</p>
             </div>
           </div>

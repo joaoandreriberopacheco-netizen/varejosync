@@ -73,7 +73,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-7 h-7 border-2 border-border/40 border-t-gray-500 rounded-full animate-spin" />
+            <div className="w-7 h-7 border-2 border-border/40 border-t-muted-foreground rounded-full animate-spin" />
           </div>
         ) : orcamentos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
