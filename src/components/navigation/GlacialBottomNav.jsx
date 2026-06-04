@@ -40,20 +40,12 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451 relative overflow-hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451"
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
         boxShadow: '0 -6px 24px -12px rgba(0,0,0,0.18)'
       }}
     >
-      <span className="p38-nav-rail" aria-hidden />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: 'linear-gradient(90deg, transparent, hsl(74 36% 25% / 0.35) 20%, hsl(78 55% 51% / 0.45) 50%, hsl(74 36% 25% / 0.35) 80%, transparent)',
-        }}
-        aria-hidden
-      />
       <div className="flex items-stretch h-[68px]">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -61,12 +53,16 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
           const content = (
             <div className="flex flex-col items-center justify-center gap-1 w-full h-full pt-1">
-              <div className={`h-1 w-10 rounded-full transition-all duration-200 ${active ? 'bg-[#636b33] dark:bg-[#a4ce33]' : 'bg-transparent'}`} />
+              <div
+                className={`h-0.5 w-8 rounded-full transition-all duration-200 ${
+                  active ? 'bg-[#636b33]/70 dark:bg-[#a4ce33]/60' : 'bg-transparent'
+                }`}
+              />
               <div className="flex items-center justify-center w-12 h-7">
                 <Icon 
                   className={`transition-all duration-200 ${
                     active 
-                      ? 'w-5 h-5 text-[#4A5D23] dark:text-[#a4ce33] stroke-[2]' 
+                      ? 'w-5 h-5 text-foreground stroke-[2]' 
                       : 'w-5 h-5 text-muted-foreground stroke-[1.75]'
                   }`} 
                 />
@@ -74,7 +70,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
               <span 
                 className={`text-[10px] font-medium transition-colors duration-200 ${
                   active 
-                    ? 'text-[#4A5D23] dark:text-[#a4ce33]' 
+                    ? 'text-foreground' 
                     : 'text-muted-foreground'
                 }`}
               >

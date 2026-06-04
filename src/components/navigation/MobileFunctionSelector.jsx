@@ -82,21 +82,14 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
       {!activeGroup ? (
         /* Lista principal */
         <div className="px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
-          <div className="rounded-[24px] p-4 relative overflow-hidden" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <span className="p38-menu-tile__accent" aria-hidden />
-            <h3 className="text-base font-semibold mb-3 flex items-center gap-2" style={{ color: c.textMuted }}>
-              <span className="p38-dot" aria-hidden />
-              Funções
-            </h3>
+          <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <h3 className="text-base font-semibold mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
               {visibleGroups.map((item) => {
                 const Icon = item.icon;
                 const active = item.submenu?.some(sub => isItemActive(sub.page)) || (item.page && isItemActive(item.page));
 
-                const itemStyle = {
-                  background: active ? c.btnBg : 'transparent',
-                  borderLeft: active ? `3px solid ${c.accent}` : '3px solid transparent',
-                };
+                const itemStyle = { background: active ? c.btnBg : 'transparent' };
 
                 if (item.page && !item.submenu?.length) {
                   return (
@@ -107,7 +100,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                       className="flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
                       style={itemStyle}
                     >
-                      <Icon className="w-5 h-5" style={{ color: active ? c.accent : c.iconColor }} />
+                      <Icon className="w-5 h-5" style={{ color: c.iconColor }} />
                       <span className="flex-1 text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{item.name}</span>
                       <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                     </Link>
@@ -121,7 +114,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                     className="w-full flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
                     style={itemStyle}
                   >
-                    <Icon className="w-5 h-5" style={{ color: active ? c.accent : c.iconColor }} />
+                    <Icon className="w-5 h-5" style={{ color: c.iconColor }} />
                     <span className="flex-1 text-left text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{item.name}</span>
                     <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                   </button>
@@ -157,15 +150,9 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                   style={{
                     background: isItemActive(subItem.page) ? c.btnBg : 'transparent',
                     color: isItemActive(subItem.page) ? c.text : c.textSub,
-                    borderLeft: isItemActive(subItem.page) ? `3px solid ${c.accent}` : '3px solid transparent',
                   }}
                 >
-                  {Icon && (
-                    <Icon
-                      className="w-5 h-5 flex-none"
-                      style={{ color: isItemActive(subItem.page) ? c.accent : c.iconColor }}
-                    />
-                  )}
+                  {Icon && <Icon className="w-5 h-5 flex-none" style={{ color: c.iconColor }} />}
                   <span className="flex-1 text-[1.04rem] font-semibold leading-tight tracking-[0.01em]">{subItem.name}</span>
                   <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                 </Link>
