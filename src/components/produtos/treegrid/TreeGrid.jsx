@@ -221,15 +221,15 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 
   return (
     <tr
-      className={cn(p38Table.row, !isLeaf && p38Table.rowInteractive, 'select-none')}
+      className={cn(p38Table.row, 'p38-catalog-row-tier', !isLeaf && p38Table.rowInteractive, 'select-none')}
       onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
       {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft)}
+        <td className={cn(p38Table.stickyCellLeft, 'p38-catalog-row-tier__sticky')}
           style={{ width: W_EDIT, minWidth: W_EDIT }} />
       )}
       <td
-        className={cn(p38Table.stickyCell, 'py-2')}
+        className={cn(p38Table.stickyCell, 'p38-catalog-row-tier__sticky', 'py-2')}
         style={{ left: editOffset, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
@@ -261,11 +261,13 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, readOnly }) {
   const p = row.produto;
   const editOffset = readOnly ? 0 : W_EDIT;
+  /** Nível 1 = solteiro na raiz; nível ≥ 2 = filho sob um pai */
+  const isSolteiro = row.level <= 1;
 
   return (
-    <tr className={cn(p38Table.row, 'group')}>
+    <tr className={cn(p38Table.row, isSolteiro && 'p38-catalog-row-tier', 'group')}>
       {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft, "py-1.5 text-center")}
+        <td className={cn(p38Table.stickyCellLeft, isSolteiro && 'p38-catalog-row-tier__sticky', "py-1.5 text-center")}
           style={{ width: W_EDIT, minWidth: W_EDIT }}>
           <div className="flex items-center gap-0.5 justify-center">
             <Button variant="ghost" size="icon"
@@ -282,7 +284,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
         </td>
       )}
       <td
-        className={cn(p38Table.stickyCell, "py-1.5")}
+        className={cn(p38Table.stickyCell, isSolteiro && 'p38-catalog-row-tier__sticky', "py-1.5")}
         style={{ left: editOffset, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
