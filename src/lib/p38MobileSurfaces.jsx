@@ -28,7 +28,7 @@ export const p38Mobile = {
   kpiValue: `${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate`,
   kpiValueAccent: `${MARGIN_BODY_TEXT} tabular-nums mt-1 truncate ${MARGIN_ACCENT_VALUE}`,
   detailPanel: 'rounded-lg border border-border/40 dark:border-white/10 bg-card/50 dark:bg-card/30 p-3',
-  detailLabel: 'text-[9px] uppercase tracking-wide text-muted-foreground leading-none mb-2',
+  detailLabel: 'text-xs uppercase tracking-wide text-muted-foreground leading-none mb-2',
 };
 
 /** Painel mobile com barra verde lateral (como Margem header). */
@@ -41,10 +41,10 @@ export function P38MobilePanelHeader({ title, subtitle, detail, footer, classNam
           <p className={cn(MARGIN_BODY_TEXT, 'font-semibold tracking-wide uppercase leading-tight')}>{title}</p>
         ) : null}
         {subtitle ? (
-          <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wide">{subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wide">{subtitle}</p>
         ) : null}
-        {detail ? <p className="text-[10px] text-muted-foreground/80 mt-2 line-clamp-3 leading-snug">{detail}</p> : null}
-        {footer ? <p className="text-[9px] text-muted-foreground/70 mt-2 text-right tabular-nums">{footer}</p> : null}
+        {detail ? <p className="text-xs text-muted-foreground/80 mt-2 line-clamp-3 leading-snug">{detail}</p> : null}
+        {footer ? <p className="text-xs text-muted-foreground/70 mt-2 text-right tabular-nums">{footer}</p> : null}
       </div>
     </div>
   );

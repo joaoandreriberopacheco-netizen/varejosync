@@ -1,4 +1,5 @@
 @import './styles/p38-identity.css';
+@import './styles/p38-typography.css';
 
 @tailwind base;
 @tailwind components;
@@ -174,13 +175,12 @@ button:focus-visible {
     @apply border-border outline-ring/50;
   }
   html {
-    font-size: calc(16px * var(--app-font-scale));
+    /* 1rem = 14px corpo mínimo; A+/A++ via --app-font-scale */
+    font-size: calc(14px * var(--app-font-scale));
   }
   html,
   body {
-    @apply bg-background text-foreground;
-    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
-    font-size: 14px;
+    @apply bg-background text-foreground font-sans;
     font-weight: 300;
     letter-spacing: 0.02em;
   }
