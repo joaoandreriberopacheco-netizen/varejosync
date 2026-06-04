@@ -19,7 +19,7 @@
 @font-face {
   font-family: 'DIN 1451';
   src: url('/fonts/dinish/DINish-Regular.ttf') format('truetype');
-  font-weight: 400;
+  font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
@@ -65,9 +65,9 @@
 @layer components {
   /* Classe usada em Relatório de Margem e páginas P38 */
   .font-din-1451 {
-    font-family: 'Montserrat', system-ui, sans-serif;
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     font-size: var(--p38-body-size, 14px);
-    font-weight: 400;
+    font-weight: 300;
     letter-spacing: var(--p38-tracking);
   }
 
@@ -78,24 +78,24 @@
   .font-din-1451 strong,
   .font-din-1451 .font-semibold,
   .font-din-1451 th {
-    font-weight: 600;
+    font-weight: 400;
   }
 
-  .font-montserrat {
-    font-family: 'Montserrat', system-ui, sans-serif;
+  .font-din1451 {
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     font-size: var(--p38-body-size, 14px);
-    font-weight: 400;
+    font-weight: 300;
     letter-spacing: var(--p38-tracking);
   }
 
-  .font-montserrat * {
+  .font-din1451 * {
     font-family: inherit;
   }
 
-  .font-montserrat strong,
-  .font-montserrat .font-semibold,
-  .font-montserrat th {
-    font-weight: 600;
+  .font-din1451 strong,
+  .font-din1451 .font-semibold,
+  .font-din1451 th {
+    font-weight: 400;
   }
 
 
@@ -112,9 +112,9 @@
     font-weight: 400;
   }
 
-  /* Tipografia Montserrat — mantém .font-din-1451 por compatibilidade */
+  /* Tipografia DIN 1451 — envolver secção mobile ou página inteira */
   .p38-font {
-    font-family: 'Montserrat', system-ui, sans-serif;
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     font-weight: 400;
     letter-spacing: var(--p38-tracking);
   }
@@ -141,23 +141,23 @@
   /* Labels micro (KPI, colunas) */
   .p38-micro-label {
     font-size: var(--p38-label-size);
-    @apply uppercase tracking-wide text-muted-foreground leading-none font-montserrat;
+    @apply uppercase tracking-wide text-muted-foreground leading-none font-din1451;
   }
 
   .p38-meta-label {
     font-size: var(--p38-meta-size);
-    @apply uppercase tracking-wide text-muted-foreground font-montserrat;
+    @apply uppercase tracking-wide text-muted-foreground font-din1451;
   }
 
   /* Título de linha mobile */
   .p38-line-title {
     font-size: var(--p38-title-size);
-    @apply font-montserrat font-medium uppercase tracking-wide text-foreground leading-tight break-words;
+    @apply font-din1451 font-medium uppercase tracking-wide text-foreground leading-tight break-words;
   }
 
   /* Linha compacta (substitui card em smartphone) */
   .p38-line {
-    @apply border-b border-border/50 dark:border-white/10 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-montserrat;
+    @apply border-b border-border/50 dark:border-white/10 border-l-2 border-l-transparent py-3 pr-3 pl-4 min-w-0 bg-background font-din1451;
   }
 
   .p38-line--interactive {

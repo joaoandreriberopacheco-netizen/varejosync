@@ -179,9 +179,9 @@ button:focus-visible {
   html,
   body {
     @apply bg-background text-foreground;
-    font-family: 'Montserrat', system-ui, sans-serif;
+    font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
     font-size: 14px;
-    font-weight: 400;
+    font-weight: 300;
     letter-spacing: 0.02em;
   }
 }
