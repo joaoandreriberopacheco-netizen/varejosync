@@ -99,6 +99,13 @@ export default function PainelGerente() {
     }).format(valor || 0);
   };
 
+  const statusLabelPedido = (status) => {
+    if (status === 'Aprovado') return 'EM SEPARAÇÃO';
+    if (status === 'Envio Agendado') return 'EM ROTA';
+    if (status === 'Aguardando Retirada') return 'AGUARDANDO';
+    return status;
+  };
+
   const MetricCard = ({ titulo, valor, subtitulo, icone: Icon, cor, tendencia }) => (
     <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -248,81 +255,84 @@ export default function PainelGerente() {
       <Card>
         <CardContent className="p-4">
           <h3 className="text-sm font-semibold text-gray-500 mb-4">PEDIDOS DO PERÍODO</h3>
-          <div className="min-w-0 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-gray-200 dark:border-gray-700">
-                <tr>
-                  <th className="text-left py-3 px-2 font-medium text-gray-500">PEDIDO</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-500">DATA</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-500">CLIENTE</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-500">VENDEDOR</th>
-                  <th className="text-right py-3 px-2 font-medium text-gray-500">VALOR</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-500">STATUS</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-500">ENTREGA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pedidos.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-8 text-gray-500">
-                      NENHUM PEDIDO ENCONTRADO
-                    </td>
-                  </tr>
-                ) : (
-                  pedidos.map((pedido) => (
-                    <tr key={pedido.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="py-3 px-2 font-medium text-gray-800 dark:text-white">
-                        {pedido.numero}
-                      </td>
-                      <td className="py-3 px-2 text-gray-600 dark:text-gray-400">
-                        {new Date(pedido.created_date).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="py-3 px-2 text-gray-600 dark:text-gray-400">
-                        {pedido.cliente_nome}
-                      </td>
-                      <td className="py-3 px-2 text-gray-600 dark:text-gray-400">
-                        {pedido.vendedor_nome || '-'}
-                      </td>
-                      <td className="py-3 px-2 text-right font-semibold text-gray-800 dark:text-white">
-                        {formatValor(pedido.valor_total)}
-                      </td>
-                      <td className="py-3 px-2">
-                        <Badge className={
-                          pedido.status === 'Finalizado' ? 'bg-green-100 text-green-800' :
-                          pedido.status === 'Aprovado' ? 'bg-blue-100 text-blue-800' :
-                          pedido.status === 'Envio Agendado' ? 'bg-indigo-100 text-indigo-800' :
-                          pedido.status === 'Aguardando Retirada' ? 'bg-purple-100 text-purple-800' :
-                          'bg-gray-100 text-gray-800'
-                        }>
-                          {pedido.status === 'Aprovado' ? 'EM SEPARAÇÃO' :
-                           pedido.status === 'Envio Agendado' ? 'EM ROTA' :
-                           pedido.status === 'Aguardando Retirada' ? 'AGUARDANDO' :
-                           pedido.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-2">
-                        <Badge variant="outline" className="text-xs">
-                          {pedido.metodo_entrega === 'Delivery' ? (
-                            <>
-                              <Truck className="w-3 h-3 mr-1" />
-                              DELIVERY
-                            </>
-                          ) : (
-                            <>
-                              <Package className="w-3 h-3 mr-1" />
-                              RETIRADA
-                            </>
-                          )}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {pedidos.length === 0 ? (
+            <p className="text-center py-8 text-sm text-muted-foreground">NENHUM PEDIDO ENCONTRADO</p>
+          ) : (
+            <>
+              <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Pedido</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Vendedor</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Entrega</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pedidos.map((pedido) => {
+                      const statusTxt = statusLabelPedido(pedido.status);
+                      const tone = p38StatusTone(pedido.status);
+                      return (
+                        <TableRow key={pedido.id}>
+                          <TableCell className="font-medium text-foreground">{pedido.numero}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(pedido.created_date).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{pedido.cliente_nome}</TableCell>
+                          <TableCell className="text-muted-foreground">{pedido.vendedor_nome || '-'}</TableCell>
+                          <TableCell className="text-right font-semibold text-foreground tabular-nums">
+                            {formatValor(pedido.valor_total)}
+                          </TableCell>
+                          <TableCell>
+                            <P38StatusLabel tone={tone}>{statusTxt}</P38StatusLabel>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-xs">
+                            {pedido.metodo_entrega === 'Delivery' ? (
+                              <span className="inline-flex items-center gap-1"><Truck className="w-3 h-3" /> Delivery</span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1"><Package className="w-3 h-3" /> Retirada</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </P38TableShell>
+
+              <P38MobileLineList className="md:hidden">
+                {pedidos.map((pedido, index) => {
+                  const statusTxt = statusLabelPedido(pedido.status);
+                  const tone = p38StatusTone(pedido.status);
+                  const entrega = pedido.metodo_entrega === 'Delivery' ? 'Delivery' : 'Retirada';
+                  return (
+                    <P38MobileLine
+                      key={pedido.id}
+                      striped={index % 2 === 1}
+                      accent={p38AccentKeyFromTone(tone)}
+                      title={pedido.cliente_nome || 'Cliente não informado'}
+                      subtitle={pedido.numero}
+                      meta={
+                        <>
+                          <P38StatusLabel tone={tone}>{statusTxt}</P38StatusLabel>
+                          <span>{pedido.vendedor_nome || '-'}</span>
+                          <span>{entrega}</span>
+                          <span className="tabular-nums">{new Date(pedido.created_date).toLocaleDateString('pt-BR')}</span>
+                        </>
+                      }
+                      value={formatValor(pedido.valor_total)}
+                    />
+                  );
+                })}
+              </P38MobileLineList>
+            </>
+          )}
         </CardContent>
-      </Card>
+      </Card>      </Card>
     </div>
   );
 }
