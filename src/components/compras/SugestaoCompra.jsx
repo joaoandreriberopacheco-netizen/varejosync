@@ -464,48 +464,54 @@ export default function SugestaoCompra() {
         </div>
       )}
 
-      <div className="md:hidden space-y-3 pb-20 px-2">
-        {filteredProducts.map(p => (
-          <div key={p.id} className={`p-4 rounded-xl ${selectedItems[p.id] ? 'bg-white dark:bg-gray-800 shadow-md' : 'bg-white dark:bg-gray-800 shadow-sm'}`}>
-            <div className="flex items-start gap-3 mb-3">
-              <Checkbox checked={!!selectedItems[p.id]} onCheckedChange={(c) => setSelectedItems(prev => c ? {...prev, [p.id]: true} : {...prev, [p.id]: undefined})} className="mt-1" />
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{p.nome}</h4>
-                    <div className="text-right">
-                    <div className="text-sm font-bold">{sugestaoDisplay(p).quantidade}</div>
-                    <div className="text-xs text-gray-400">{sugestaoDisplay(p).unidade}</div>
-                  </div>
-                </div>
+      <P38MobileLineList className="pb-20 px-0 mx-2">
+        {filteredProducts.map((p, index) => (
+          <P38MobileLine
+            key={p.id}
+            striped={index % 2 === 1}
+            accent={selectedItems[p.id] ? 'info' : 'default'}
+            title={p.nome}
+            meta={
+              <>
+                <span>
+                  Estoque {p.estoque_atual || 0}/{p.estoque_minimo || 0} mín
+                </span>
                 {p.quantidade_pendente > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600 mt-2 bg-gray-50 px-2 py-1 rounded w-fit">
-                    <Truck className="w-3.5 h-3.5" />{p.quantidade_pendente} em trânsito
-                  </div>
+                  <span className="inline-flex items-center gap-1">
+                    <Truck className="w-3 h-3 shrink-0" />
+                    {p.quantidade_pendente} em trânsito
+                  </span>
                 )}
-              </div>
-            </div>
-            <div className="space-y-3 pt-3 border-t border-gray-100">
-              <div>
-                <p className="text-xs text-gray-500 uppercase mb-1">Estoque</p>
-                <span className="font-medium">{p.estoque_atual || 0}</span>
-                <span className="text-gray-400 mx-1.5">/</span>
-                <span className="text-gray-600">{p.estoque_minimo || 0} mín</span>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase mb-1">Fornecedor</p>
-                <select 
-                  className="w-full h-10 bg-gray-50 dark:bg-gray-900 border-0 rounded text-sm"
+                <select
+                  className="w-full max-w-[14rem] h-9 bg-secondary/40 border-0 rounded text-sm mt-1"
                   value={fornecedorPorProduto[p.id] || p.fornecedor_padrao_id || ''}
-                  onChange={(e) => setFornecedorPorProduto({...fornecedorPorProduto, [p.id]: e.target.value})}
+                  onChange={(e) => setFornecedorPorProduto({ ...fornecedorPorProduto, [p.id]: e.target.value })}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <option value="">Selecione...</option>
-                  {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                  <option value="">Fornecedor...</option>
+                  {fornecedores.map(f => (
+                    <option key={f.id} value={f.id}>{f.nome}</option>
+                  ))}
                 </select>
-              </div>
-            </div>
-          </div>
+              </>
+            }
+            value={sugestaoDisplay(p).quantidade}
+            valueSub={sugestaoDisplay(p).unidade}
+            trailing={
+              <Checkbox
+                checked={!!selectedItems[p.id]}
+                onCheckedChange={(c) =>
+                  setSelectedItems(prev =>
+                    c ? { ...prev, [p.id]: true } : { ...prev, [p.id]: undefined }
+                  )
+                }
+                className="shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              />
+            }
+          />
         ))}
-      </div>
+      </P38MobileLineList>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Plus, ClipboardList, Play, CheckCircle2, Clock, XCircle, AlertCircle, ChevronRight, Shield } from "lucide-react";
+import { Plus, ClipboardList, Play, CheckCircle2, Clock, XCircle, AlertCircle, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
@@ -37,7 +37,6 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
     onAbrirConferencia(nova);
   };
 
-  // Filtra de acordo com a sub-aba
   const statusContagem = ["Rascunho", "Em Andamento"];
   const statusAuditoria = ["Aguardando Auditoria", "Concluída", "Cancelada"];
 
@@ -91,22 +90,22 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
           {grupos.ativas.length > 0 && (
             <section>
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
-              <div className="space-y-2">
-                {grupos.ativas.map(conf => (
-                  <ConferenciaCard key={conf.id} conf={conf} onClick={handleClick} />
+              <P38MobileLineList className="md:block">
+                {grupos.ativas.map((conf, index) => (
+                  <ConferenciaLine key={conf.id} conf={conf} onClick={handleClick} striped={index % 2 === 1} />
                 ))}
-              </div>
+              </P38MobileLineList>
             </section>
           )}
 
           {grupos.concluidas.length > 0 && (
             <section>
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
-              <div className="space-y-2">
-                {grupos.concluidas.map(conf => (
-                  <ConferenciaCard key={conf.id} conf={conf} onClick={handleClick} />
+              <P38MobileLineList className="md:block">
+                {grupos.concluidas.map((conf, index) => (
+                  <ConferenciaLine key={conf.id} conf={conf} onClick={handleClick} striped={index % 2 === 1} />
                 ))}
-              </div>
+              </P38MobileLineList>
             </section>
           )}
 
@@ -129,46 +128,39 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
   );
 }
 
-function ConferenciaCard({ conf, onClick }) {
+function ConferenciaLine({ conf, onClick, striped }) {
   const cfg = statusConfig[conf.status] || statusConfig["Rascunho"];
   const Icon = cfg.icon;
   const itens = conf.itens_conferidos?.length || 0;
-  const aguardandoAuditoria = conf.status === "Aguardando Auditoria";
+  const tone = p38StatusTone(conf.status);
+  const dataInicio = conf.data_inicio
+    ? format(new Date(conf.data_inicio), "dd/MM", { locale: ptBR })
+    : null;
 
   return (
-    <button
+    <P38MobileLine
+      as="button"
+      type="button"
       onClick={() => onClick(conf)}
-      className="w-full text-left rounded-2xl p-4 flex items-center gap-3 transition-colors min-w-0 overflow-hidden bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
-    >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
-        <Icon className={`w-5 h-5 ${cfg.color}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{conf.nome_conferencia}</p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className="text-xs text-gray-400 dark:text-gray-500">{conf.tipo_conferencia}</span>
-          <span className="text-gray-200 dark:text-gray-700">·</span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{itens} item{itens !== 1 ? "s" : ""}</span>
-          {conf.data_inicio && (
-            <>
-              <span className="text-gray-200 dark:text-gray-700 hidden sm:inline">·</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">
-                {format(new Date(conf.data_inicio), "dd/MM", { locale: ptBR })}
-              </span>
-            </>
-          )}
+      striped={striped}
+      accent={p38AccentKeyFromTone(tone)}
+      title={conf.nome_conferencia}
+      subtitle={conf.tipo_conferencia}
+      meta={
+        <>
+          <P38StatusLabel tone={tone}>{cfg.label}</P38StatusLabel>
+          <span>{itens} item{itens !== 1 ? "s" : ""}</span>
+          {dataInicio ? <span className="tabular-nums">{dataInicio}</span> : null}
+        </>
+      }
+      trailing={
+        <div className="flex items-center gap-1 shrink-0">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${cfg.bg}`}>
+            <Icon className={`w-4 h-4 ${cfg.color}`} />
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
         </div>
-      </div>
-      {/* No mobile: só ícone. No sm+: ícone + label */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${cfg.bg}`}>
-          <Icon className={`w-4 h-4 ${cfg.color}`} />
-        </div>
-        <span className={`hidden sm:inline text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
-          {cfg.label}
-        </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
-      </div>
-    </button>
+      }
+    />
   );
 }

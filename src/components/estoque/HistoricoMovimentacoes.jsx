@@ -130,59 +130,42 @@ export default function HistoricoMovimentacoes() {
         </div>
 
         {/* Lista Mobile */}
-        <div className="md:hidden space-y-3">
-          {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Carregando...</div>
-          ) : filteredMovimentacoes.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">Nenhuma movimentação encontrada</div>
-          ) : (
-            filteredMovimentacoes.map(mov => (
-              <div key={mov.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">{mov.produto_nome}</div>
-                    <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                      <span>{format(new Date(mov.created_date), 'dd/MM/yyyy HH:mm')}</span>
-                      <span>•</span>
-                      <span>{mov.usuario_responsavel || 'N/A'}</span>
-                    </div>
-                  </div>
-                  <Badge className={getTipoBadge(mov.tipo)}>
-                    {mov.tipo === 'Entrada' ? (
-                      <ArrowDownCircle className="w-3 h-3 mr-1" />
-                    ) : (
-                      <ArrowUpCircle className="w-3 h-3 mr-1" />
-                    )}
-                    {mov.tipo}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg mb-3">
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase">Quantidade</div>
-                    <div className={`text-lg font-bold ${mov.tipo === 'Entrada' ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {mov.tipo === 'Entrada' ? '+' : '-'}{mov.quantidade}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500 uppercase">Motivo</div>
-                    <div className="text-sm font-medium">{mov.motivo}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div>Doc: {mov.documento_referencia || '-'}</div>
-                  <div>Custo: R$ {mov.custo_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        {isLoading ? (
+          <div className="md:hidden text-center py-8 text-muted-foreground">Carregando...</div>
+        ) : filteredMovimentacoes.length === 0 ? (
+          <div className="md:hidden text-center py-8 text-muted-foreground">Nenhuma movimentação encontrada</div>
+        ) : (
+          <P38MobileLineList>
+            {filteredMovimentacoes.map((mov, index) => {
+              const tone = mov.tipo === 'Entrada' ? 'success' : 'danger';
+              const qtyPrefix = mov.tipo === 'Entrada' ? '+' : '-';
+              return (
+                <P38MobileLine
+                  key={mov.id}
+                  striped={index % 2 === 1}
+                  accent={tone}
+                  title={mov.produto_nome}
+                  subtitle={format(new Date(mov.created_date), 'dd/MM/yyyy HH:mm')}
+                  meta={
+                    <>
+                      <span className="font-medium">{mov.tipo}</span>
+                      <span>{mov.motivo}</span>
+                      <span className="truncate">{mov.usuario_responsavel || 'N/A'}</span>
+                      <span>Doc: {mov.documento_referencia || '-'}</span>
+                    </>
+                  }
+                  value={`${qtyPrefix}${mov.quantidade}`}
+                  valueSub={`R$ ${mov.custo_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`}
+                />
+              );
+            })}
+          </P38MobileLineList>
+        )}
 
         {/* Tabela Desktop */}
-        <div className="hidden md:block border rounded-lg overflow-hidden">
+        <P38TableShell className="hidden md:block">
           <Table>
-            <TableHeader className="bg-gray-50">
+            <TableHeader>
               <TableRow>
                 <TableHead>Data/Hora</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -246,7 +229,7 @@ export default function HistoricoMovimentacoes() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </P38TableShell>
 
         {filteredMovimentacoes.length > 0 && (
           <div className="mt-4 text-sm text-gray-600 text-center">
