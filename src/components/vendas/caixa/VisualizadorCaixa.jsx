@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw } from 'lucide-react';
+import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw, RotateCcw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
@@ -14,7 +14,14 @@ import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pd
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
-export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
+export default function VisualizadorCaixa({
+  turnoAtivo,
+  caixaSelecionado,
+  onVoltar,
+  modoFechado = false,
+  onSolicitarReabertura,
+  reabrindo = false,
+}) {
   const [caixaData, setCaixaData] = useState({
     saldoInicial: 0,
     liquidez: 0,
@@ -194,6 +201,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const POLL_MS = 12000;
 
   useEffect(() => {
+    if (modoFechado) return undefined;
     if (!turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
 
     const poll = () => {
@@ -211,7 +219,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [turnoAtivo?.id, caixaSelecionado?.id, loadData]);
+  }, [modoFechado, turnoAtivo?.id, caixaSelecionado?.id, loadData]);
 
   const formatValor = (valor) => {
     const num = valor || 0;
@@ -226,6 +234,22 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       (caixaData.recebimentos?.debito || 0) -
       (caixaData.recebimentos?.vale || 0)
   );
+
+  const dinheiroConferidoFechamento = roundToTwoDecimals(turnoAtivo?.dinheiro_conferido ?? 0);
+  const totalConferidoFechamento = roundToTwoDecimals(
+    dinheiroConferidoFechamento +
+      (caixaData.recebimentos?.pix || 0) +
+      (caixaData.recebimentos?.credito || 0) +
+      (caixaData.recebimentos?.debito || 0)
+  );
+  const esperadoFechamento = roundToTwoDecimals(
+    (caixaData.liquidez || 0) - (caixaData.recebimentos?.vale || 0)
+  );
+  const diferencaFechamento =
+    modoFechado && turnoAtivo?.diferenca != null
+      ? roundToTwoDecimals(turnoAtivo.diferenca)
+      : roundToTwoDecimals(totalConferidoFechamento - esperadoFechamento);
+  const conferenciaOk = Math.abs(diferencaFechamento) < 0.01;
 
   const imprimirRelatorio = async () => {
     const linhasVendas = (vendasFinalizadas || []).map(v => {
@@ -327,7 +351,13 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
             {caixaSelecionado?.nome || 'Caixa'}
           </h1>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-            {ultimaAtualizacao ? `Atualizado · ${format(ultimaAtualizacao, 'HH:mm:ss')}` : '…'}
+            {modoFechado
+              ? turnoAtivo?.data_fechamento
+                ? `Fechado · ${format(new Date(turnoAtivo.data_fechamento), 'dd/MM/yyyy HH:mm')}`
+                : 'Turno fechado'
+              : ultimaAtualizacao
+                ? `Atualizado · ${format(ultimaAtualizacao, 'HH:mm:ss')}`
+                : '…'}
           </p>
         </div>
         
@@ -494,27 +524,90 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                       </div>
                     )}
                     
-                    {/* Total Conferido - BLOQUEADO */}
+                    {/* Conferência de fechamento */}
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
                       <div className="flex items-center justify-between px-1">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Conferido</span>
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.liquidez)}</span>
+                        <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                          {modoFechado ? formatValor(totalConferidoFechamento) : formatValor(caixaData.liquidez)}
+                        </span>
                       </div>
-                      <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 opacity-60">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">✓ Valores Conferem</span>
-                          <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-glacial">{formatValor(0)}</span>
+                      {modoFechado ? (
+                        <>
+                          <div className="flex items-center justify-between px-1 text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Dinheiro conferido</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {formatValor(dinheiroConferidoFechamento)}
+                            </span>
+                          </div>
+                          <div
+                            className={`p-4 rounded-xl ${
+                              conferenciaOk
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                                : 'bg-amber-50 dark:bg-amber-900/20'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-sm font-medium ${
+                                  conferenciaOk
+                                    ? 'text-emerald-700 dark:text-emerald-300'
+                                    : 'text-amber-800 dark:text-amber-300'
+                                }`}
+                              >
+                                {conferenciaOk ? '✓ Valores conferem' : 'Diferença no fechamento'}
+                              </span>
+                              <span
+                                className={`text-2xl font-bold font-glacial ${
+                                  conferenciaOk
+                                    ? 'text-emerald-700 dark:text-emerald-300'
+                                    : diferencaFechamento > 0
+                                      ? 'text-[#4A5D23] dark:text-[#a4ce33]'
+                                      : 'text-red-600 dark:text-red-400'
+                                }`}
+                              >
+                                {diferencaFechamento > 0 ? '+' : ''}
+                                {formatValor(diferencaFechamento)}
+                              </span>
+                            </div>
+                          </div>
+                          {turnoAtivo?.usuario_fechamento_nome && (
+                            <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                              Fechado por {turnoAtivo.usuario_fechamento_nome}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 opacity-60">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">✓ Valores Conferem</span>
+                            <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-glacial">
+                              {formatValor(0)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm space-y-2">
                 <button onClick={imprimirRelatorio} className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:shadow-lg transition-shadow" style={{ minHeight: '48px' }}>
                   <Printer className="w-4 h-4" /> Imprimir Relatório
                 </button>
+                {modoFechado && onSolicitarReabertura && (
+                  <button
+                    type="button"
+                    onClick={onSolicitarReabertura}
+                    disabled={reabrindo}
+                    className="w-full h-12 rounded-2xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold flex items-center justify-center gap-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                    style={{ minHeight: '48px' }}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    {reabrindo ? 'Reabrindo…' : 'Solicitar Reabertura'}
+                  </button>
+                )}
               </div>
             </div>
           </TabsContent>

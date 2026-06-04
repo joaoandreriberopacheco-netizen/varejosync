@@ -6,6 +6,7 @@ import ConsumoDetalheDialog from '@/components/caixa/ConsumoDetalheDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
