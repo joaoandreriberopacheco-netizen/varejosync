@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
@@ -76,37 +77,33 @@ function PedidoActionsMenu({
   );
 }
 
-function PedidoMobileCard({ pedido, onVerDetalhes, onEdit, onReimprimir }) {
+function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, striped }) {
+  const tone = p38StatusTone(pedido.status);
+
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm overflow-hidden">
-      <div className="flex items-start gap-3 min-w-0">
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-800 dark:text-gray-200 break-words leading-tight">
-            {pedido.cliente_nome || 'Cliente não informado'}
-          </div>
-          <div className="text-xs text-blue-600 dark:text-blue-400 break-all">{pedido.numero}</div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 min-w-0">
-            <span className="text-xs text-green-600 break-words">● {pedido.status}</span>
-            <span className="text-xs text-gray-400 break-words">{pedido.vendedor_nome}</span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-1 shrink-0 max-w-[42%]">
-          <div className="font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">
-            R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-          </div>
-          <div className="text-xs text-gray-400 text-right">
-            {fmtDataCurta(pedido.created_date)}
-          </div>
-        </div>
+    <P38MobileLine
+      striped={striped}
+      accent={p38AccentKeyFromTone(tone)}
+      title={pedido.cliente_nome || 'Cliente não informado'}
+      subtitle={pedido.numero}
+      meta={
+        <>
+          <P38StatusLabel tone={tone}>{pedido.status}</P38StatusLabel>
+          {pedido.vendedor_nome ? <span className="truncate">{pedido.vendedor_nome}</span> : null}
+        </>
+      }
+      value={`R$ ${(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+      valueSub={fmtDataCurta(pedido.created_date)}
+      trailing={
         <PedidoActionsMenu
           pedido={pedido}
-          triggerClassName="h-8 w-8 text-gray-400 shrink-0"
+          triggerClassName="h-8 w-8 text-muted-foreground shrink-0"
           onVerDetalhes={onVerDetalhes}
           onEdit={onEdit}
           onReimprimir={onReimprimir}
         />
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -186,7 +183,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
             )}
             {virtualItems.map((virtualRow) => {
               const pedido = pedidos[virtualRow.index];
-              const tone = statusTone(pedido.status);
+              const tone = p38StatusTone(pedido.status);
 
               return (
                 <TableRow
@@ -208,12 +205,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
                     <div className="text-xs text-muted-foreground">{pedido.numero}</div>
                   </TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center gap-1 text-xs">
-                      <P38StatusDot tone={tone} />
-                      <span className={tone === 'danger' ? p38Accent.danger.text : tone === 'warning' ? p38Accent.warning.text : p38Accent.success.text}>
-                        {pedido.status}
-                      </span>
-                    </span>
+                    <P38StatusLabel tone={tone}>{pedido.status}</P38StatusLabel>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{pedido.vendedor_nome}</TableCell>
                   <TableCell className="text-muted-foreground">
@@ -254,8 +246,8 @@ function RascunhoInutilizarButton({ rascunho, onInutilizar }) {
 }
 
 function RascunhoMobileLine({ rascunho, onInutilizar, striped }) {
-  const tone = statusTone(rascunho.status);
-  const accentClass = tone === 'danger' ? 'danger' : tone === 'warning' ? 'warning' : 'success';
+  const tone = p38StatusTone(rascunho.status);
+  const accentClass = p38AccentKeyFromTone(tone);
 
   return (
     <P38MobileLine
@@ -272,12 +264,7 @@ function RascunhoMobileLine({ rascunho, onInutilizar, striped }) {
       }
       meta={
         <>
-          <span className="inline-flex items-center gap-1">
-            <P38StatusDot tone={tone} />
-            <span className={tone === 'danger' ? p38Accent.danger.text : tone === 'warning' ? p38Accent.warning.text : p38Accent.success.text}>
-              {rascunho.status}
-            </span>
-          </span>
+          <P38StatusLabel tone={tone}>{rascunho.status}</P38StatusLabel>
           {rascunho.vendedor_nome ? <span className="truncate">{rascunho.vendedor_nome}</span> : null}
           <RascunhoInutilizarButton rascunho={rascunho} onInutilizar={onInutilizar} />
         </>

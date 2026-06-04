@@ -95,6 +95,42 @@ export const P38MobileLineList = React.forwardRef(function P38MobileLineList({ c
 });
 P38MobileLineList.displayName = 'P38MobileLineList';
 
+
+/** Mapeia texto de status para tom semântico P38. */
+export function p38StatusTone(status) {
+  if (!status) return 'muted';
+  const s = String(status).toLowerCase();
+  if (s.includes('cancel') || s.includes('discrep') || s.includes('inutil') || s.includes('rejeit')) return 'danger';
+  if (s.includes('pend') || s.includes('aguard') || s.includes('rascunho') || s.includes('parcial')) return 'warning';
+  if (s.includes('enviad') || s.includes('transit') || s.includes('cota')) return 'info';
+  return 'success';
+}
+
+export function p38AccentKeyFromTone(tone) {
+  if (tone === 'danger') return 'danger';
+  if (tone === 'warning') return 'warning';
+  if (tone === 'info') return 'info';
+  if (tone === 'muted') return 'muted';
+  return 'success';
+}
+
+export function p38StatusTextClass(tone) {
+  if (tone === 'danger') return p38Accent.danger.text;
+  if (tone === 'warning') return p38Accent.warning.text;
+  if (tone === 'info') return p38Accent.info.text;
+  return p38Accent.success.text;
+}
+
+/** Ponto + texto colorido para status em linhas/tabelas. */
+export function P38StatusLabel({ tone = 'success', children, className }) {
+  return (
+    <span className={cn('inline-flex items-center gap-1 text-xs', className)}>
+      <P38StatusDot tone={tone} />
+      <span className={p38StatusTextClass(tone)}>{children}</span>
+    </span>
+  );
+}
+
 /** Chip métrico horizontal (Receita, Lucro, etc.) — scroll horizontal opcional. */
 export function P38MobileMetric({ label, value, tone = 'default', className }) {
   const valueClass =

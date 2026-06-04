@@ -4,11 +4,12 @@ import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
-import { ShoppingCart, PlusCircle, Search, Edit, Eye, User, Truck, DollarSign, CalendarRange, FileText, Weight, Package as PackageIcon, Calendar, Trash2, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
+import { ShoppingCart, PlusCircle, Search, Edit, Eye, Truck, DollarSign, CalendarRange, FileText, Weight, Package as PackageIcon, Calendar, Trash2, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
 import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import PedidoCompraForm from '../components/compras/PedidoCompraForm';
@@ -245,7 +246,7 @@ const PedidosCompraTab = () => {
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block min-w-0 overflow-x-auto rounded-xl border border-border bg-background shadow-sm overflow-auto">
+            <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -259,97 +260,82 @@ const PedidosCompraTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pedidosFiltrados.map((pedido) => (
+                  {pedidosFiltrados.map((pedido) => {
+                    const statusLabel = getStatusNome(pedido.status);
+                    const tone = p38StatusTone(statusLabel || pedido.status);
+                    return (
                     <TableRow key={pedido.id}>
-                      <TableCell className="font-medium text-gray-900 dark:text-white">
+                      <TableCell className="font-medium text-foreground">
                         {pedido.numero}
                       </TableCell>
-                      <TableCell className="text-gray-600 dark:text-gray-300">
-                        {getStatusNome(pedido.status)}
+                      <TableCell>
+                        <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
                       </TableCell>
-                      <TableCell className="text-gray-600 dark:text-gray-300">
+                      <TableCell className="text-muted-foreground">
                         {pedido.fornecedor_nome}
                       </TableCell>
-                      <TableCell className="text-gray-500 dark:text-gray-400 text-sm">
+                      <TableCell className="text-muted-foreground">
                         {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : '-'}
                       </TableCell>
-                      <TableCell className="text-gray-500 dark:text-gray-400 text-sm">
+                      <TableCell className="text-muted-foreground">
                          {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-'}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-gray-900 dark:text-white">
-                        {formatValor(pedido.valor_total)}
+                      <TableCell className="text-right font-semibold text-foreground tabular-nums">
+                        R$ {formatValor(pedido.valor_total)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                          <Button variant="ghost" size="sm" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-lg">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(pedido)} className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(pedido)} className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-lg">
                             <Edit className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );})}
                 </TableBody>
               </Table>
-            </div>
+            </P38TableShell>
 
-            {/* Mobile Cards View */}
-            <div className="md:hidden grid gap-4 px-1">
-              {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="group bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-sm transition-all duration-200">
-                  <div className="flex flex-col gap-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-300 shadow-sm">
-                          <DollarSign className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{pedido.numero}</span>
-                            <span className="text-xs text-gray-600 dark:text-gray-400">{getStatusNome(pedido.status)}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                            <User className="w-3.5 h-3.5" />
-                            <span className="truncate">{pedido.fornecedor_nome}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-9 w-9 text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+            {/* Mobile: linhas P38 compactas */}
+            <P38MobileLineList>
+              {pedidosFiltrados.map((pedido, index) => {
+                const statusLabel = getStatusNome(pedido.status);
+                const tone = p38StatusTone(statusLabel || pedido.status);
+                const emissao = pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : '-';
+                const entrega = pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-';
+
+                return (
+                  <P38MobileLine
+                    key={pedido.id}
+                    striped={index % 2 === 1}
+                    accent={p38AccentKeyFromTone(tone)}
+                    title={pedido.fornecedor_nome || 'Fornecedor não informado'}
+                    subtitle={pedido.numero}
+                    meta={
+                      <>
+                        <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
+                        <span className="tabular-nums">Emissão {emissao}</span>
+                        <span className="tabular-nums">Entrega {entrega}</span>
+                      </>
+                    }
+                    value={`R$ ${formatValor(pedido.valor_total)}`}
+                    trailing={
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 text-muted-foreground">
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-9 w-9 text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-8 w-8 text-muted-foreground">
                           <Edit className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Criação</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                          {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM') : '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Entrega</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                          {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM') : '-'}
-                        </p>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Total</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                          R$ {formatValor(pedido.valor_total)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    }
+                  />
+                );
+              })}
+            </P38MobileLineList>
           </>
         )}
       </div>
