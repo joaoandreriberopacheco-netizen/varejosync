@@ -89,40 +89,56 @@ function ConferenciaCodigosTab() {
       {supermanifestosPendentes.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">SUPERMANIFESTOS</h3>
-          <div className="grid gap-3">
-            {supermanifestosPendentes.map((sm) => (
-              <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="font-medium text-sm">{sm.numero}</div>
-                    <div className="text-xs text-gray-500">{sm.transportadora_nome}</div>
+          <P38MobileLineList>
+            {supermanifestosPendentes.map((sm, index) => {
+              const tone = p38StatusTone(sm.status);
+              return (
+                <P38MobileLine
+                  key={sm.id}
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(tone)}
+                  className="flex flex-col gap-3 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{sm.numero}</div>
+                      <div className="text-xs text-muted-foreground truncate">{sm.transportadora_nome}</div>
+                    </div>
+                    <P38StatusLabel tone={tone}>{sm.status}</P38StatusLabel>
                   </div>
-                  <Badge variant="outline">{sm.status}</Badge>
-                </div>
-                <GestaoCodigosConferencia manifesto={sm} tipo="volumes" onUpdate={carregarDados} />
-              </div>
-            ))}
-          </div>
+                  <GestaoCodigosConferencia manifesto={sm} tipo="volumes" onUpdate={carregarDados} />
+                </P38MobileLine>
+              );
+            })}
+          </P38MobileLineList>
         </div>
       )}
 
       {manifestosPendentes.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">MANIFESTOS DE ENTRADA</h3>
-          <div className="grid gap-3">
-            {manifestosPendentes.map((me) => (
-              <div key={me.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="font-medium text-sm">{me.numero}</div>
-                    <div className="text-xs text-gray-500">Pedido: {me.pedido_numero}</div>
+          <P38MobileLineList>
+            {manifestosPendentes.map((me, index) => {
+              const tone = p38StatusTone(me.status);
+              return (
+                <P38MobileLine
+                  key={me.id}
+                  striped={index % 2 === 1}
+                  accent={p38AccentKeyFromTone(tone)}
+                  className="flex flex-col gap-3 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{me.numero}</div>
+                      <div className="text-xs text-muted-foreground truncate">Pedido: {me.pedido_numero}</div>
+                    </div>
+                    <P38StatusLabel tone={tone}>{me.status}</P38StatusLabel>
                   </div>
-                  <Badge variant="outline">{me.status}</Badge>
-                </div>
-                <GestaoCodigosConferencia manifesto={me} tipo="itens" onUpdate={carregarDados} />
-              </div>
-            ))}
-          </div>
+                  <GestaoCodigosConferencia manifesto={me} tipo="itens" onUpdate={carregarDados} />
+                </P38MobileLine>
+              );
+            })}
+          </P38MobileLineList>
         </div>
       )}
 

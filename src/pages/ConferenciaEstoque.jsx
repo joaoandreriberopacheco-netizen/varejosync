@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const statusConfig = {
   "Rascunho": { icon: Clock, color: "text-gray-400", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
@@ -77,11 +78,11 @@ export default function ConferenciaEstoque() {
             {grupos.ativas.length > 0 && (
               <section>
                 <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
-                <div className="space-y-2">
-                  {grupos.ativas.map(conf => (
-                    <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} />
+                <P38MobileLineList>
+                  {grupos.ativas.map((conf, index) => (
+                    <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} striped={index % 2 === 1} />
                   ))}
-                </div>
+                </P38MobileLineList>
               </section>
             )}
 
@@ -89,11 +90,11 @@ export default function ConferenciaEstoque() {
             {grupos.concluidas.length > 0 && (
               <section>
                 <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
-                <div className="space-y-2">
-                  {grupos.concluidas.map(conf => (
-                    <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} />
+                <P38MobileLineList>
+                  {grupos.concluidas.map((conf, index) => (
+                    <ConferenciaCard key={conf.id} conf={conf} onClick={abrirConferencia} striped={index % 2 === 1} />
                   ))}
-                </div>
+                </P38MobileLineList>
               </section>
             )}
 

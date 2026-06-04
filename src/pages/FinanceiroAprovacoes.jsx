@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, Clock, AlertCircle, FileText, Eye, Search } from 'lucide-react';
 import { format } from 'date-fns';
@@ -457,80 +457,69 @@ export default function FinanceiroAprovacoesPage() {
                 </Table>
               </P38TableShell>
 
-              <div className="md:hidden space-y-4">
-                {filteredPedidos.map((pedido) => {
+              <P38MobileLineList className="md:hidden">
+                {filteredPedidos.map((pedido, index) => {
+                  const statusLabel =
+                    activeTab === 'aprovados' ? 'Aprovado' : activeTab === 'rejeitados' ? 'Rejeitado' : 'Pendente';
+                  const tone = p38StatusTone(statusLabel);
                   return (
-                    <Card key={pedido.id} className={`p-6 hover:shadow-lg transition-shadow border-0 shadow-sm ${
-                      activeTab === 'aprovados' ? 'bg-green-50 dark:bg-green-900/20' :
-                      activeTab === 'rejeitados' ? 'bg-red-50 dark:bg-red-900/20' :
-                      'bg-white dark:bg-gray-800'
-                    }`}>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                              {pedido.numero}
-                            </h3>
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                            <p><span className="font-medium">Fornecedor:</span> {pedido.fornecedor_nome}</p>
-                            <p><span className="font-medium">Itens:</span> {pedido.itens?.length || 0}</p>
-                            {activeTab === 'aprovados' && pedido.data_aprovacao_financeira && (
-                              <p className="text-green-600 dark:text-green-400">
-                                <span className="font-medium">Aprovado em:</span> {format(new Date(pedido.data_aprovacao_financeira), 'dd/MM/yyyy HH:mm')}
-                              </p>
-                            )}
-                            {activeTab === 'rejeitados' && (
-                              <p className="text-red-600 dark:text-red-400">
-                                <span className="font-medium">Motivo:</span> {pedido.motivo_rejeicao_financeira || 'Sem motivo'}
-                              </p>
-                            )}
-                          </div>
+                    <P38MobileLine
+                      key={pedido.id}
+                      striped={index % 2 === 1}
+                      accent={p38AccentKeyFromTone(tone)}
+                      title={pedido.numero}
+                      subtitle={pedido.fornecedor_nome}
+                      meta={
+                        <>
+                          <P38StatusLabel tone={tone}>{statusLabel}</P38StatusLabel>
+                          <span>{pedido.itens?.length || 0} itens</span>
+                          {activeTab === 'aprovados' && pedido.data_aprovacao_financeira && (
+                            <span className="tabular-nums">
+                              {format(new Date(pedido.data_aprovacao_financeira), 'dd/MM/yyyy HH:mm')}
+                            </span>
+                          )}
+                          {activeTab === 'rejeitados' && (
+                            <span className="truncate max-w-[12rem]">
+                              {pedido.motivo_rejeicao_financeira || 'Sem motivo'}
+                            </span>
+                          )}
+                        </>
+                      }
+                      value={formatCurrency(calcValorTotalPedidoCompra(pedido))}
+                      trailing={
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={async () => {
+                              const pedidos = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+                              setSelectedPedido(pedidos[0]);
+                              setShowPedidoDetails(true);
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          {activeTab === 'pendentes' && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleReject(pedido)}>
+                                <XCircle className="w-4 h-4 text-red-600" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                className="h-8 w-8 bg-gray-700 hover:bg-gray-600"
+                                onClick={() => handleApprove(pedido)}
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
-                          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(calcValorTotalPedidoCompra(pedido))}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3 justify-end">
-                        <Button 
-                          variant="outline" 
-                          className="gap-2 border-0 shadow-sm"
-                          onClick={async () => {
-                            const pedidos = await base44.entities.PedidoCompra.filter({ id: pedido.id });
-                            setSelectedPedido(pedidos[0]);
-                            setShowPedidoDetails(true);
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                          Ver
-                        </Button>
-                        {activeTab === 'pendentes' && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              className="gap-2 border-0 shadow-sm"
-                              onClick={() => handleReject(pedido)}
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Rejeitar
-                            </Button>
-                            <Button 
-                              className="gap-2 bg-gray-700 hover:bg-gray-600"
-                              onClick={() => handleApprove(pedido)}
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                              Aprovar
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </Card>
+                      }
+                    />
                   );
                 })}
-              </div>
+              </P38MobileLineList>
             </>
           )}
         </TabsContent>
@@ -732,57 +721,54 @@ export default function FinanceiroAprovacoesPage() {
             <h2 className="text-xl font-medium text-gray-800 dark:text-gray-200">Solicitações de Edição</h2>
           </div>
 
-          <div className="space-y-4">
-            {solicitacoesEdicao.map(pedido => (
-              <Card key={pedido.id} className="p-6 border-0 shadow-sm bg-orange-50 dark:bg-orange-900/20">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
-                      {pedido.numero}
-                    </h3>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Solicitante:</span> {pedido.solicitacao_edicao_solicitante}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Data:</span> {pedido.solicitacao_edicao_data ? format(new Date(pedido.solicitacao_edicao_data), 'dd/MM/yyyy HH:mm') : '-'}
-                      </p>
-                      <p className="text-orange-700 dark:text-orange-300 font-medium">
-                        <span className="text-gray-600 dark:text-gray-400 font-medium">Motivo:</span> {pedido.solicitacao_edicao_motivo}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline"
-                      size="sm"
+          <P38MobileLineList>
+            {solicitacoesEdicao.map((pedido, index) => (
+              <P38MobileLine
+                key={pedido.id}
+                striped={index % 2 === 1}
+                accent="warning"
+                title={pedido.numero}
+                subtitle={pedido.solicitacao_edicao_solicitante}
+                meta={
+                  <>
+                    <P38StatusLabel tone="warning">Edição solicitada</P38StatusLabel>
+                    <span className="tabular-nums">
+                      {pedido.solicitacao_edicao_data
+                        ? format(new Date(pedido.solicitacao_edicao_data), 'dd/MM/yyyy HH:mm')
+                        : '-'}
+                    </span>
+                    <span className="truncate max-w-[14rem]">{pedido.solicitacao_edicao_motivo}</span>
+                  </>
+                }
+                trailing={
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={async () => {
                         const pedidos = await base44.entities.PedidoCompra.filter({ id: pedido.id });
                         setSelectedPedido(pedidos[0]);
                         setShowPedidoDetails(true);
                       }}
-                      className="border-0 shadow-sm"
                     >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Ver
+                      <Eye className="w-4 h-4" />
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
+                      size="icon"
+                      className="h-8 w-8 bg-gray-700 hover:bg-gray-600"
                       onClick={() => {
                         setSelectedSolicitacao(pedido);
                         void runOperacaoAuthBypass((authData) => handleLiberarEdicao(authData, pedido));
                       }}
-                      className="bg-gray-700 text-white hover:bg-gray-600 border-0"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Liberar Edição
+                      <CheckCircle className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-              </Card>
+                }
+              />
             ))}
-          </div>
+          </P38MobileLineList>
         </div>
       )}
 

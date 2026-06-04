@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const statusConfig = {
   "Rascunho": { icon: Clock, color: "text-gray-400", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
@@ -116,41 +117,29 @@ export default function AuditoriaEstoque() {
   );
 }
 
-function ConferenciaCard({ conf, onClick }) {
+function ConferenciaCard({ conf, onClick, striped }) {
   const cfg = statusConfig[conf.status] || statusConfig["Rascunho"];
-  const Icon = cfg.icon;
   const itens = conf.itens_conferidos?.length || 0;
+  const tone = p38StatusTone(conf.status);
+  const subtitle = [
+    conf.tipo_conferencia,
+    `${itens} item${itens !== 1 ? "s" : ""}`,
+    conf.data_inicio ? format(new Date(conf.data_inicio), "dd/MM", { locale: ptBR }) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <button
+    <P38MobileLine
+      as="button"
+      type="button"
+      striped={striped}
+      accent={p38AccentKeyFromTone(tone)}
       onClick={() => onClick(conf)}
-      className="w-full text-left bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-0 overflow-hidden"
-    >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
-        <Icon className={`w-5 h-5 ${cfg.color}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{conf.nome_conferencia}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-gray-400 dark:text-gray-500">{conf.tipo_conferencia}</span>
-          <span className="text-gray-200 dark:text-gray-700">·</span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{itens} item{itens !== 1 ? "s" : ""}</span>
-          {conf.data_inicio && (
-            <>
-              <span className="text-gray-200 dark:text-gray-700">·</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {format(new Date(conf.data_inicio), "dd/MM", { locale: ptBR })}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[38%]">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full truncate ${cfg.bg} ${cfg.color}`}>
-          {cfg.label}
-        </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
-      </div>
-    </button>
+      title={conf.nome_conferencia}
+      subtitle={subtitle}
+      meta={<P38StatusLabel tone={tone}>{cfg.label}</P38StatusLabel>}
+      trailing={<ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+    />
   );
 }
