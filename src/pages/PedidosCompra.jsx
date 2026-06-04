@@ -771,7 +771,7 @@ export default function PedidosCompraPage() {
   const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">

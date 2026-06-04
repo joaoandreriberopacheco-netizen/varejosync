@@ -241,6 +241,7 @@ export default function FinanceiroModuloPage() {
                   return (
                     <P38MobileLine
                       key={account.id}
+                      thinAccent
                       striped={index % 2 === 1}
                       accent={p38AccentKeyFromTone(isNegativo ? 'danger' : account.ativo ? 'success' : 'muted')}
                       title={account.nome}

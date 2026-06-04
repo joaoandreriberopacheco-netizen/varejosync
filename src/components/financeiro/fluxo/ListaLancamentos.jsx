@@ -58,6 +58,7 @@ function LancRow({ l, onClick, striped }) {
     <P38MobileLine
       as="button"
       type="button"
+      thinAccent
       striped={striped}
       accent={p38AccentKeyFromTone(accent)}
       onClick={() => onClick(l)}

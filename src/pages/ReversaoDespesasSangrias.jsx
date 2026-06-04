@@ -238,6 +238,7 @@ export default function ReversaoDespesasSangrias() {
               {movimentos.map((movimento, index) => (
                 <P38MobileLine
                   key={movimento.id}
+                  thinAccent
                   striped={index % 2 === 1}
                   accent={p38AccentKeyFromTone(movimento.tipo === 'Reforço' ? 'success' : 'info')}
                   className="flex items-start justify-between gap-4 p-4"

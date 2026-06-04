@@ -109,6 +109,7 @@ function ContaCard({ conta, onClick, striped }) {
     <P38MobileLine
       as="button"
       type="button"
+      thinAccent
       striped={striped}
       accent={p38AccentKeyFromTone(tone)}
       onClick={onClick}
