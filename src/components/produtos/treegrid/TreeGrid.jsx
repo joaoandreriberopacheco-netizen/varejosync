@@ -47,6 +47,16 @@ const INDENT_GROUP = 14;
 const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — alinhamento uniforme
 const W_EDIT = 60;       // coluna de edição sticky à esquerda (edit + delete)
 
+/** Marcador verde mediterrâneo — pais e solteiros de 1º nível na árvore */
+function CatalogTierDot() {
+  return (
+    <span
+      className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 p38-catalog-dot-ok"
+      aria-hidden="true"
+    />
+  );
+}
+
 // ── Dot de status ─────────────────────────────────────────────────────────────
 function StatusDot({ produto }) {
   const e = produto.estoque_atual  || 0;
@@ -218,18 +228,19 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
   const editOffset = readOnly ? 0 : W_EDIT;
   const indent = (row.level - 1) * INDENT_GROUP;
   const isLeaf = row.isLeafGroup;
+  const isPrimeiroNivel = row.level === 1;
 
   return (
     <tr
-      className={cn(p38Table.row, 'p38-catalog-row-tier', !isLeaf && p38Table.rowInteractive, 'select-none')}
+      className={cn(p38Table.row, isPrimeiroNivel && 'p38-catalog-row-tier', !isLeaf && p38Table.rowInteractive, 'select-none')}
       onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
       {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft, 'p38-catalog-row-tier__sticky')}
+        <td className={cn(p38Table.stickyCellLeft, isPrimeiroNivel && 'p38-catalog-row-tier__sticky')}
           style={{ width: W_EDIT, minWidth: W_EDIT }} />
       )}
       <td
-        className={cn(p38Table.stickyCell, 'p38-catalog-row-tier__sticky', 'py-2')}
+        className={cn(p38Table.stickyCell, isPrimeiroNivel && 'p38-catalog-row-tier__sticky', 'py-2')}
         style={{ left: editOffset, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
@@ -239,6 +250,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
             />
           )}
           {isLeaf && <div className="w-3.5 flex-shrink-0" />}
+          {isPrimeiroNivel && <CatalogTierDot />}
           <span className="text-xs font-semibold text-foreground/90 dark:text-foreground truncate uppercase tracking-wide">
             {row.label}
           </span>
@@ -262,7 +274,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
   const p = row.produto;
   const editOffset = readOnly ? 0 : W_EDIT;
   /** Nível 1 = solteiro na raiz; nível ≥ 2 = filho sob um pai */
-  const isSolteiro = row.level <= 1;
+  const isSolteiro = row.level === 1;
 
   return (
     <tr className={cn(p38Table.row, isSolteiro && 'p38-catalog-row-tier', 'group')}>
@@ -288,6 +300,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
         style={{ left: editOffset, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
+          {isSolteiro && <CatalogTierDot />}
           <div className="flex-shrink-0 rounded bg-muted overflow-hidden flex items-center justify-center"
             style={{ width: 32, height: 32 }}>
             {p.imagem_url
