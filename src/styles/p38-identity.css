@@ -249,4 +249,69 @@
   .p38-kpi-grid {
     @apply grid grid-cols-2 gap-x-3 gap-y-2;
   }
+
+  /* Tile de menu / atalho — barra vertical + ícone com fundo verde suave */
+  .p38-menu-tile {
+    @apply relative overflow-hidden bg-card rounded-2xl border border-border/40 shadow-sm transition-all;
+  }
+
+  .p38-menu-tile:hover {
+    @apply shadow-md;
+  }
+
+  .p38-menu-tile__accent {
+    @apply absolute left-2.5 top-3 bottom-3 w-[3px] rounded-sm pointer-events-none;
+    background-color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-menu-tile__accent {
+    background-color: hsl(var(--p38-accent-lime));
+  }
+
+  .p38-menu-tile__icon {
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm;
+    background-color: hsl(var(--p38-accent-olive) / 0.1);
+  }
+
+  .dark .p38-menu-tile__icon {
+    background-color: hsl(var(--p38-accent-lime) / 0.14);
+  }
+
+  .p38-menu-tile__icon svg {
+    color: hsl(var(--p38-accent-olive));
+  }
+
+  .dark .p38-menu-tile__icon svg {
+    color: hsl(var(--p38-accent-lime));
+  }
+
+  /* Painel com barra verde (resumo home, cards) */
+  .p38-panel-menu {
+    @apply relative overflow-hidden bg-card rounded-3xl border border-border/40 shadow-sm;
+  }
+
+  .p38-section-label {
+    @apply flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+
+  .p38-nav-rail {
+    @apply pointer-events-none absolute left-0 top-0 bottom-0 w-[2px];
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--p38-accent-olive) / 0.55) 35%,
+      hsl(var(--p38-accent-olive) / 0.55) 65%,
+      transparent 100%
+    );
+  }
+
+  .dark .p38-nav-rail {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--p38-accent-lime) / 0.5) 35%,
+      hsl(var(--p38-accent-lime) / 0.5) 65%,
+      transparent 100%
+    );
+  }
 }

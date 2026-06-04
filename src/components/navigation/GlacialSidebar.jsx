@@ -123,6 +123,7 @@ export default function GlacialSidebar({
           willChange: isMobile ? 'transform' : 'width',
         }}
       >
+        {!isMobile && <span className="p38-nav-rail" style={{ left: 'auto', right: 0 }} aria-hidden />}
         {/* Header com logo */}
         <div
           className="flex items-center flex-shrink-0 px-4"
@@ -144,9 +145,10 @@ export default function GlacialSidebar({
         <nav className="px-2 py-3 space-y-0.5" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
           {isOpen && (
             <p
-              className="text-[10px] px-3 mb-2 uppercase tracking-widest"
+              className="p38-section-label text-[10px] px-3 mb-2 tracking-widest"
               style={{ color: c.sectionLabel }}
             >
+              <span className="p38-dot" aria-hidden />
               Menu
             </p>
           )}
@@ -170,12 +172,13 @@ export default function GlacialSidebar({
                         justifyContent: isOpen ? 'flex-start' : 'center',
                         background: isActive ? c.activeBg : 'transparent',
                         color: isActive ? c.text : c.textSub,
+                        borderLeft: isOpen && isActive ? `3px solid ${c.accent}` : '3px solid transparent',
                       }}
                     >
                       <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.accent : c.iconColor }} />
                       {isOpen && (
                         <>
-                          <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
+                          <span className="flex-1 text-left text-sm font-medium" style={{ color: isActive ? c.text : c.textSub }}>{item.name}</span>
                           <ChevronRight
                             size={14}
                             style={{ color: c.chevron, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
@@ -195,13 +198,17 @@ export default function GlacialSidebar({
                               key={subItem.page}
                               to={createPageUrl(subItem.page)}
                               onClick={closeMobileMenu}
-                              className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors"
+                              className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors min-h-[36px]"
                               style={{
                                 background: isSubActive ? c.activeBg : 'transparent',
                                 color: isSubActive ? c.text : c.textSub,
                                 fontWeight: isSubActive ? 600 : 400,
+                                borderLeft: isSubActive ? `3px solid ${c.accent}` : '3px solid transparent',
                               }}
                             >
+                              {isSubActive && (
+                                <span className="p38-dot flex-shrink-0" aria-hidden />
+                              )}
                               {subItem.name}
                             </Link>
                           );
@@ -220,11 +227,12 @@ export default function GlacialSidebar({
                       justifyContent: isOpen ? 'flex-start' : 'center',
                       background: isActive ? c.activeBg : 'transparent',
                       color: isActive ? c.text : c.textSub,
+                      borderLeft: isOpen && isActive ? `3px solid ${c.accent}` : '3px solid transparent',
                     }}
                   >
                     <Icon className="flex-shrink-0" size={18} style={{ color: isActive ? c.accent : c.iconColor }} />
                     {isOpen && (
-                      <span className="text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
+                      <span className="text-sm font-medium" style={{ color: isActive ? c.text : c.textSub }}>{item.name}</span>
                     )}
                   </Link>
                 )}

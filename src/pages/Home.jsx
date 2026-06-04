@@ -161,7 +161,8 @@ export default function HomePage() {
 
         {/* Saldo Card — visível apenas com permissão de dashboard ou vendas */}
         {podeVerResumoVendas && (
-          <div className="bg-card rounded-3xl p-6 shadow-sm border border-border/40">
+          <div className="p38-panel-menu p-6 pl-7">
+            <span className="p38-menu-tile__accent" aria-hidden />
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Resumo de Vendas</p>
@@ -173,7 +174,7 @@ export default function HomePage() {
             </div>
             {showBalance ? (
               <>
-                <div className="text-3xl font-bold text-foreground mb-1">
+                <div className="text-3xl font-bold p38-text-accent mb-1">
                   R$ {formatValor(kpis.valorVendasHoje)}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -199,7 +200,8 @@ export default function HomePage() {
         {/* Quick Actions */}
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <h2 className="p38-section-label">
+              <span className="p38-dot" aria-hidden />
               Acesso Rápido
             </h2>
             {podePersonalizar && (
@@ -219,11 +221,12 @@ export default function HomePage() {
                 <Link
                   key={action.id}
                   to={createPageUrl(action.page)}
-                  className="bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-sm border border-border/40 hover:shadow-md transition-all active:scale-95"
+                  className="p38-menu-tile p-4 pl-5 flex flex-col items-center justify-center gap-3 active:scale-[0.98]"
                   style={{ minHeight: '100px' }}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center shadow-sm">
-                    <Icon className="w-6 h-6 text-foreground/80" strokeWidth={2} />
+                  <span className="p38-menu-tile__accent" aria-hidden />
+                  <div className="p38-menu-tile__icon">
+                    <Icon className="w-6 h-6" strokeWidth={2} />
                   </div>
                   <span className="text-xs font-medium text-foreground text-center leading-tight">
                     {action.label}
@@ -247,7 +250,10 @@ export default function HomePage() {
           
           return (
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 px-1">Avisos</h2>
+              <h2 className="p38-section-label mb-3 px-1">
+                <span className="p38-dot" aria-hidden />
+                Avisos
+              </h2>
               {kpis.pedidosPendentes > 0 && podeVerCaixa && (
                 <Link to={createPageUrl('PDVCaixa')} className="bg-card rounded-2xl p-4 shadow-sm border border-border/40 flex items-start gap-3 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
@@ -314,8 +320,8 @@ export default function HomePage() {
                       className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        <div className="w-8 h-8 rounded-lg p38-menu-tile__icon !w-8 !h-8 !rounded-lg">
+                          <Icon className="w-4 h-4" strokeWidth={2} />
                         </div>
                         <span className="text-sm text-foreground/90">{action.label}</span>
                       </div>
