@@ -12,7 +12,8 @@ import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
-import { CAIXA_PRINT, caixaClasses, movimentoTone } from '@/lib/caixaP38Theme';
+import { CAIXA_PRINT, caixaClasses, caixaTypo, movimentoTone } from '@/lib/caixaP38Theme';
+import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({
@@ -340,7 +341,7 @@ export default function VisualizadorCaixa({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background font-din-1451">
+    <div className={`h-screen flex flex-col bg-background ${caixaTypo.screen}`}>
       {/* Header */}
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
@@ -457,7 +458,7 @@ export default function VisualizadorCaixa({
                         </button>
                         <span className="text-sm text-muted-foreground">Recolhimentos</span>
                       </div>
-                      <span className={`text-base font-medium tabular-nums ${caixaClasses('info').text}`} style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.sangrias)}</span>
+                      <div style={{ minWidth: '120px', textAlign: 'right' }}><CaixaValorDisplay valor={caixaData.sangrias} tone="info" signed size="md" /></div>
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
@@ -466,7 +467,7 @@ export default function VisualizadorCaixa({
                         </button>
                         <span className="text-sm text-muted-foreground">Despesas</span>
                       </div>
-                      <span className={`text-base font-medium tabular-nums ${caixaClasses('danger').text}`} style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.despesas)}</span>
+                      <div style={{ minWidth: '120px', textAlign: 'right' }}><CaixaValorDisplay valor={caixaData.despesas} tone="danger" signed size="md" /></div>
                     </div>
                     <div className="pt-3 mt-1 border-t border-border/40">
                       <div className="flex items-center justify-between">
@@ -665,8 +666,13 @@ export default function VisualizadorCaixa({
                       <div className="text-sm font-medium text-foreground truncate">{item.descricao}</div>
                       <div className="text-xs text-muted-foreground">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
                     </div>
-                    <div className={`text-base font-bold flex-shrink-0 ${item.tone === 'muted' ? tone.text : tone.text}`}>
-                      {item.tone === 'success' || item.tone === 'muted' ? '+' : '−'}{formatValor(item.valor)}
+                    <div className="flex-shrink-0">
+                      <CaixaValorDisplay
+                        valor={item.valor}
+                        tone={item.tone === 'muted' ? 'neutral' : item.tone}
+                        signed={item.tone !== 'muted'}
+                        size="md"
+                      />
                     </div>
                   </div>
                 );});

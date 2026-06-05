@@ -223,6 +223,17 @@
   }
 
   /* Ponto de status ● */
+  /* Tela PDV Caixa — maiúsculas + DIN 1451 (valores mantêm tabular-nums) */
+  .caixa-screen {
+    @apply uppercase tracking-wide;
+  }
+
+  .caixa-screen input,
+  .caixa-screen textarea {
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
   .p38-dot {
     @apply inline-block w-1.5 h-1.5 rounded-full shrink-0;
     background-color: hsl(var(--p38-accent-olive));
