@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw, RotateCcw } from 'lucide-react';
-import { formatarDataHora } from '@/components/utils/dateUtils';
 import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
@@ -25,6 +24,7 @@ import {
 } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
+import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({
@@ -577,27 +577,11 @@ export default function VisualizadorCaixa({
           </TabsContent>
 
           <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
-            <div className="max-w-4xl mx-auto space-y-3">
-              <div className="mb-4">
-                <div className="text-xs text-muted-foreground mb-1">Finalizadas</div>
-                <div className="text-2xl font-bold text-foreground font-glacial">
-                  {(vendasFinalizadas || []).length} {(vendasFinalizadas || []).length === 1 ? 'Venda' : 'Vendas'}
-                </div>
-              </div>
-              {(vendasFinalizadas || []).map(v => (
-                <div key={v.id} className="bg-card rounded-2xl p-5 shadow-sm cursor-pointer" onClick={() => setVendaDetalhada(v)}>
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-medium text-foreground truncate">{v.cliente_nome}</div>
-                      <div className="text-sm text-muted-foreground mt-1">{v.numero} · {v.created_date ? formatarDataHora(v.created_date).split(' ')[1] : ''}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-foreground font-glacial">{formatValor(v.valor_total)}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{v.itens?.length || 0} itens</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="max-w-4xl mx-auto pb-4">
+              <ConsultaVendasCaixa
+                vendasFinalizadas={vendasFinalizadas}
+                onVerDetalhes={setVendaDetalhada}
+              />
             </div>
           </TabsContent>
 
@@ -652,7 +636,7 @@ export default function VisualizadorCaixa({
             </TabsTrigger>
             <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <Receipt className="w-5 h-5" />
-              <span className="text-xs">Vendas</span>
+              <span className={caixaTypo.labelSm}>Vendas</span>
             </TabsTrigger>
             <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <Wallet className="w-5 h-5" />
