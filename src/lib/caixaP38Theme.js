@@ -104,3 +104,17 @@ export function conferenciaTone({ temDiferenca, diferenca }) {
   if (diferenca > 0) return 'info';
   return 'danger';
 }
+
+/** Tipografia da tela de caixa — maiúsculas + corpo maior (alinhado ao fluxo P38) */
+export const caixaTypo = {
+  screen: 'caixa-screen font-din-1451',
+  label: 'text-base uppercase tracking-wide text-muted-foreground',
+  labelSm: 'text-sm uppercase tracking-wide text-muted-foreground',
+  title: 'text-lg font-semibold uppercase tracking-wide text-foreground',
+  section: 'text-base font-semibold uppercase tracking-wide text-foreground',
+  value: 'text-lg font-semibold tabular-nums',
+  valueLg: 'text-2xl font-bold tabular-nums',
+  meta: 'text-sm uppercase tracking-wide text-muted-foreground',
+  tab: 'text-base uppercase tracking-wide',
+  groupHeader: 'text-sm font-semibold uppercase tracking-wide text-muted-foreground sm:tracking-widest',
+};
