@@ -1440,7 +1440,7 @@ export default function PDVCaixa({
       )}
 
       {/* Header Minimalista */}
-      <div className="bg-card dark:bg-card border-b border-border/40 dark:border-border/40 px-4 py-3 flex items-center justify-between">
+      <div className="flex-shrink-0 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 px-4 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={handleClose}
@@ -1485,7 +1485,6 @@ export default function PDVCaixa({
         ) : view === 'dashboard' &&
         <>
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
-            <div className={`${caixaMain} flex flex-col`}>
               <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={caixaTabsRoot}>
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
@@ -1831,7 +1830,7 @@ export default function PDVCaixa({
                       <VirtualizedList
                         items={rascunhosAguardando}
                         estimateSize={174}
-                        className="h-[calc(100vh-220px)] pr-1"
+                        className="pr-1 md:h-[calc(100vh-220px)]"
                         itemClassName="pb-3"
                         getItemKey={(rascunho) => rascunho.id}
                         renderItem={(rascunho) => (
@@ -1887,7 +1886,7 @@ export default function PDVCaixa({
                           <VirtualizedList
                             items={movimentosTimelineItems}
                             estimateSize={68}
-                            className="h-[calc(100vh-290px)] pr-1"
+                            className="pr-1 md:h-[calc(100vh-290px)]"
                             itemClassName="pb-2"
                             getItemKey={(item) => item.id}
                             renderItem={(item) => (
@@ -1931,7 +1930,6 @@ export default function PDVCaixa({
                  </button>
                 </TabsList>
                 </Tabs>
-                </div>
                 </>
                 }
 

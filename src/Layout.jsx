@@ -259,7 +259,7 @@ export default function Layout({ children, currentPageName }) {
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <div className="min-h-screen bg-white dark:bg-background">
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background">
           {children}
         </div>
       </div>

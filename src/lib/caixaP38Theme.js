@@ -111,9 +111,9 @@ export const caixaPanelBody = 'p38-panel__body';
 
 /** Layout fullscreen — scroll interno sem cortar botões sob a barra inferior */
 export const caixaShell = 'h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden';
-export const caixaMain = 'flex-1 min-h-0 overflow-hidden';
-export const caixaTabsRoot = 'h-full min-h-0 flex flex-col';
-export const caixaTabPanel = 'flex-1 min-h-0 overflow-y-auto overscroll-y-contain mt-0 data-[state=inactive]:hidden';
+export const caixaMain = 'flex-1 min-h-0 overflow-hidden flex flex-col';
+export const caixaTabsRoot = 'flex-1 min-h-0 flex flex-col';
+export const caixaTabPanel = 'flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y mt-0 data-[state=inactive]:hidden';
 export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]';
 export const caixaMobileTabBar = 'md:hidden flex-shrink-0 pb-[env(safe-area-inset-bottom)]';
 /** Detalhe embutido (Caixas Ativos / Turnos Fechados) — cobre o menu global */

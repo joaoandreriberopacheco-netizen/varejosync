@@ -6,7 +6,7 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
   const [rascunhoDetalhes, setRascunhoDetalhes] = useState(null);
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="flex-1 min-h-0 flex flex-col bg-background">
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center">
         <button onClick={onBack} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-foreground/90" />
