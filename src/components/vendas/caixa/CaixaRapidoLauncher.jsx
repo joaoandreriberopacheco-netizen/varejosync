@@ -109,7 +109,7 @@ export default function CaixaRapidoLauncher() {
     typeof document !== 'undefined' &&
     createPortal(
       <div
-        className="pointer-events-none fixed left-0 p38-quick-access-launcher2"
+        className="pointer-events-none fixed left-0 p38-bottom-fab2"
         style={{
           zIndex: QUICK_ACCESS_Z.launcher,
           transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
@@ -122,11 +122,11 @@ export default function CaixaRapidoLauncher() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={resetDrag}
-          className="pointer-events-auto flex h-11 w-7 select-none flex-col items-center justify-center gap-0.5 rounded-r-xl border border-border/25 bg-background/70 text-muted-foreground/55 shadow-sm backdrop-blur-sm opacity-85 active:opacity-100 dark:border-border/20 dark:bg-background/65 dark:text-muted-foreground/50 touch-pan-x"
+          className="pointer-events-auto flex h-16 w-9 select-none flex-col items-center justify-center gap-1 rounded-r-2xl border border-border/40/80 bg-white/95 text-muted-foreground shadow-lg backdrop-blur-sm dark:border-border/40/80 dark:bg-background/95 dark:text-muted-foreground touch-pan-x"
           aria-label="Arraste para cima e para a direita para abrir o caixa rápido"
         >
-          <Wallet className="h-3.5 w-3.5" />
-          <ChevronUp className="h-2.5 w-2.5 opacity-45" />
+          <Wallet className="h-4 w-4" />
+          <ChevronUp className="h-3 w-3 opacity-70" />
         </button>
       </div>,
       document.body

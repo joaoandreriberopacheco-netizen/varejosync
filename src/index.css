@@ -129,10 +129,6 @@ button:focus-visible {
     --p38-bottom-nav-total: calc(var(--p38-bottom-nav-bar) + env(safe-area-inset-bottom, 0px));
     --p38-fab-gap: 16px;
     --p38-fab-size: 56px;
-    /* Atalhos laterais (orçamento/caixa): mais acima e compactos que FABs de página */
-    --p38-quick-access-lift: 56px;
-    --p38-quick-access-size: 44px;
-    --p38-quick-access-gap: 8px;
     --p38-scroll-pad-below-nav: calc(var(--p38-bottom-nav-total) + 1.5rem);
 
     /* Scrollbar — inspirado no Cursor; área de toque ~10px (Cursor ~6px) */
@@ -225,16 +221,6 @@ button:focus-visible {
   /* Legado: era “muito alto”; alinhar ao principal */
   .p38-bottom-fab-xl {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap));
-  }
-  /* Atalhos globais à esquerda (orçamento + caixa) — acima dos FABs de página */
-  .p38-quick-access-launcher1 {
-    bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift));
-  }
-  .p38-quick-access-launcher2 {
-    bottom: calc(
-      var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift) +
-        var(--p38-quick-access-size) + var(--p38-quick-access-gap)
-    );
   }
   /* Área de conteúdo sob o header mobile: padding inferior ≥ nav + safe + folga */
   .p38-layout-mobile-scroll-pad {
