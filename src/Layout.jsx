@@ -18,7 +18,13 @@ import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
-const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem', 'RelatorioCatalogoEstoque']);
+const MOBILE_FULL_VIEWPORT_PAGES = new Set([
+  'Produtos',
+  'RelatorioMargem',
+  'RelatorioCatalogoEstoque',
+  'CaixasAtivos',
+  'TurnosFechados',
+]);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
 const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
 
