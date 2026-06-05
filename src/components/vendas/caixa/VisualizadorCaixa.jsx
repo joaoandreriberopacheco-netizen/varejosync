@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -310,6 +311,15 @@ export default function VisualizadorCaixa({
     }
   }, [turnoAtivo, caixaSelecionado, loadData]);
 
+  // Portal no body: evita contentor overflow-hidden do Layout bloquear toque/scroll no mobile.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
   // Realtime: no cliente P38, subscribe() é no-op — mantemos vínculo com polling + foco na aba.
   const POLL_MS = 12000;
 
@@ -463,15 +473,20 @@ export default function VisualizadorCaixa({
     }
   };
 
+  const renderInPortal = (node) => {
+    if (typeof document === 'undefined') return node;
+    return createPortal(node, document.body);
+  };
+
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin"></div>
+    return renderInPortal(
+      <div className={`${caixaOverlayShell} ${caixaTypo.screen} items-center justify-center`}>
+        <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }
 
-  return (
+  return renderInPortal(
     <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -827,7 +842,7 @@ export default function VisualizadorCaixa({
       />
 
       {rascunhoDetalhesTab && (
-        <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 z-[1190]">
           <div className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
               <div>

@@ -6,6 +6,7 @@ import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas'
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
+import { shouldHideQuickAccessLaunchers } from '@/lib/caixaQuickAccessHide';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
 
 function userCanAccessCaixa(user, perfilDeAcesso) {
@@ -19,14 +20,10 @@ function userCanAccessCaixa(user, perfilDeAcesso) {
 
 function useHideOnCaixaPage() {
   const location = useLocation();
-  return useMemo(() => {
-    if (location.pathname.includes('PDVCaixa')) return true;
-    if (location.pathname.includes('PDV')) {
-      const mode = new URLSearchParams(location.search).get('mode');
-      if (mode === 'caixa') return true;
-    }
-    return false;
-  }, [location.pathname, location.search]);
+  return useMemo(
+    () => shouldHideQuickAccessLaunchers(location.pathname, location.search),
+    [location.pathname, location.search]
+  );
 }
 
 export default function CaixaRapidoLauncher() {

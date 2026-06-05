@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import { ChevronUp, Search } from 'lucide-react';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
+import { shouldHideQuickAccessLaunchers } from '@/lib/caixaQuickAccessHide';
 import QuickBudgetPanel from './QuickBudgetPanel';
 
 export default function QuickBudgetLauncher() {
@@ -10,6 +12,11 @@ export default function QuickBudgetLauncher() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const startPointRef = useRef(null);
+  const location = useLocation();
+  const hideOnCaixaPage = useMemo(
+    () => shouldHideQuickAccessLaunchers(location.pathname, location.search),
+    [location.pathname, location.search]
+  );
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -20,6 +27,7 @@ export default function QuickBudgetLauncher() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      if (hideOnCaixaPage) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'q') {
         event.preventDefault();
         setOpen((prev) => !prev);
@@ -28,7 +36,7 @@ export default function QuickBudgetLauncher() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [hideOnCaixaPage]);
 
   const resetDrag = () => {
     setDragOffset({ x: 0, y: 0 });
@@ -56,6 +64,7 @@ export default function QuickBudgetLauncher() {
   };
 
   const launcher =
+    !hideOnCaixaPage &&
     isMobile &&
     !open &&
     typeof document !== 'undefined' &&
@@ -83,6 +92,8 @@ export default function QuickBudgetLauncher() {
       </div>,
       document.body
     );
+
+  if (hideOnCaixaPage && !open) return null;
 
   return (
     <>
