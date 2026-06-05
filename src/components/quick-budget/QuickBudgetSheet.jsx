@@ -289,7 +289,7 @@ function BudgetContent({ onClose, isMobile }) {
                 autoFocus={!isMobile}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar nome, código ou barras"
+                placeholder="Nome ou código (use ; para combinar termos)..."
                 className="h-11 rounded-2xl border-0 bg-muted/40 pl-10 text-foreground shadow-none focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white dark:placeholder:text-muted-foreground"
               />
             </div>

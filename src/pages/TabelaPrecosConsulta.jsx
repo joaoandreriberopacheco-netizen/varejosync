@@ -10,6 +10,7 @@ import { p38Mobile } from '@/lib/p38MobileSurfaces';
 import { P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
+import { produtoMatchesSearchTerm } from '@/lib/filterProdutos';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -128,15 +129,10 @@ export default function TabelaPrecosConsulta() {
 
   const produtosFiltrados = useMemo(() => {
     let lista = produtos;
-    if (searchTerm) {
-      const termo = searchTerm.toLowerCase();
-      lista = lista.filter(p =>
-        p.nome?.toLowerCase().includes(termo) ||
-        p.codigo_interno?.toLowerCase().includes(termo) ||
-        p.codigo_barras?.toLowerCase().includes(termo)
-      );
+    if (searchTerm.trim()) {
+      lista = lista.filter((p) => produtoMatchesSearchTerm(p, searchTerm));
     }
-    return [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+    return [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
   }, [produtos, searchTerm]);
 
   const calcularPreco = useCallback(
@@ -199,7 +195,7 @@ export default function TabelaPrecosConsulta() {
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Buscar produto, código, EAN..."
+            placeholder="Nome ou código (use ; para combinar termos)..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className={cn(p38Mobile.searchInput, "text-sm pl-10 w-full")}

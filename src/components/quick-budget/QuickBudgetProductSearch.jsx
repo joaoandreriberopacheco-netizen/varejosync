@@ -27,7 +27,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
               onSubmitFirstResult?.(resultados[0]);
             }
           }}
-          placeholder="Buscar produto, código ou marca"
+          placeholder="Nome ou código (use ; para combinar termos)..."
           className="h-14 md:h-12 pl-11 pr-4 border-0 bg-muted/50 rounded-2xl shadow-sm text-base md:text-sm"
         />
       </div>

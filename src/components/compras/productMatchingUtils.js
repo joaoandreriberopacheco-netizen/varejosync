@@ -38,11 +38,19 @@ export function getProductSearchText(produto) {
   ].filter(Boolean).join(' '));
 }
 
+/** Termos separados por ";" — todos devem aparecer (mesmo conceito da tela Produtos). */
+export function getSemicolonSearchTokens(query) {
+  return String(query || '')
+    .split(';')
+    .map(normalizeProductSearchText)
+    .filter(Boolean);
+}
+
 export function matchesProductQuery(produto, query) {
   if (!query?.trim()) return true;
   const searchable = getProductSearchText(produto);
-  const words = normalizeProductSearchText(query).split(/\s+/).filter(Boolean);
-  return words.every((word) => searchable.includes(word));
+  const terms = getSemicolonSearchTokens(query);
+  return terms.every((term) => searchable.includes(term));
 }
 
 export function sortProductsAlphabetically(produtos = []) {
