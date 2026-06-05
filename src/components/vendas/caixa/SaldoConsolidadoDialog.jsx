@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
@@ -16,7 +17,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
         }
         #saldo-consolidado-print { display: contents; }
       `}</style>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+      <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => onOpenChange(false)}
@@ -176,7 +177,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
             </div>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

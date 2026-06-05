@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CreditCard, ChevronRight, AlertCircle } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
@@ -59,9 +60,10 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
 
   return (
     <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
-      <DialogContent
+      <CaixaDialogContent
+        nestedChild
         className={cn(
-          'z-[100] flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-card p-5 shadow-2xl dark:bg-background sm:w-full',
+          'flex max-h-[min(90dvh,36rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-card p-5 shadow-2xl dark:bg-background sm:w-full',
           '[&>button]:hidden'
         )}
       >
@@ -195,7 +197,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             </div>
           </>
         )}
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

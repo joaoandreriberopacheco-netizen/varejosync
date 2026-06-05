@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
@@ -33,7 +34,7 @@ export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+      <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button onClick={() => onOpenChange(false)} className="p-2 -ml-2 hover:bg-muted rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
             <ArrowLeft className="w-6 h-6 text-foreground/90" />
@@ -93,7 +94,7 @@ export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimen
             </button>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

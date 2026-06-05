@@ -12,6 +12,8 @@ import { renderTemplate, prepararDadosVenda, ordenarItensComprovante } from '@/l
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
 import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { useCaixaNestedDialogZ } from '@/components/vendas/caixa/CaixaOverlayStackContext';
+import { cn } from '@/components/utils';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -426,6 +428,7 @@ function TemplateRenderer({ htmlContent }) {
 }
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
+  const nestedZ = useCaixaNestedDialogZ();
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [dadosCliente, setDadosCliente] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
@@ -587,7 +590,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   if (!open || !pedido) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-muted dark:bg-background">
+    <div className={cn('fixed inset-0 flex flex-col bg-muted dark:bg-background', nestedZ || 'z-[60]')}>
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border/40 flex-shrink-0">
         <button

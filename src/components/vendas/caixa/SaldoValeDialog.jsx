@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Printer, Ticket } from 'lucide-react';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { caixaClasses } from '@/lib/caixaP38Theme';
@@ -8,7 +9,7 @@ export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValo
   const tone = caixaClasses('success');
   return (
     <Dialog open={!!saldoResidualVale} onOpenChange={onClose}>
-      <DialogContent className="max-w-xs mx-auto dark:bg-background">
+      <CaixaDialogContent className="max-w-xs mx-auto dark:bg-background">
         <div className="flex flex-col items-center gap-4 py-2">
           <div className={`w-14 h-14 rounded-full flex items-center justify-center ${tone.well}`}>
             <Ticket className={`w-7 h-7 ${tone.icon}`} />
@@ -71,7 +72,7 @@ export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValo
             </button>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

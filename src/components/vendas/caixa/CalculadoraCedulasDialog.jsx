@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { caixaClasses } from '@/lib/caixaP38Theme';
 import { Input } from '@/components/ui/input';
@@ -35,7 +36,7 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md dark:bg-background dark:text-foreground">
+      <CaixaDialogContent className="max-w-md dark:bg-background dark:text-foreground">
         <DialogHeader>
           <DialogTitle className="text-lg text-foreground">Calculadora de Cédulas e Moedas</DialogTitle>
         </DialogHeader>
@@ -73,7 +74,7 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
             <Button onClick={() => onConfirmar(calcularTotal())} className={`flex-1 ${caixaClasses('success').btn}`}>Confirmar</Button>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

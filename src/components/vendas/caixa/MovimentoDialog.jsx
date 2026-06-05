@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { ArrowLeft, Plus, Minus, Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { caixaClasses, movimentoTone } from '@/lib/caixaP38Theme';
@@ -50,7 +51,7 @@ export default function MovimentoDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onOpenChange(false); }}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+      <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => { if (movimentoStep === 'valor') setMovimentoStep('obs'); else onOpenChange(false); }}
@@ -153,7 +154,7 @@ export default function MovimentoDialog({
             </>
           )}
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

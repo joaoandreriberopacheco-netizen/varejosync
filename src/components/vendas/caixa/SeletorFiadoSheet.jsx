@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ChevronRight, User, AlertCircle, Calendar, FileText, Dice5 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
 
 /**
@@ -55,9 +56,10 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
 
   return (
     <Dialog open={visible} onOpenChange={(open) => { if (!open) onCancel(); }}>
-      <DialogContent
+      <CaixaDialogContent
+        nestedChild
         className={cn(
-          'z-[100] flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-card p-5 shadow-2xl dark:bg-background sm:w-full',
+          'flex max-h-[min(90dvh,40rem)] w-[calc(100vw-1.5rem)] max-w-md flex-col gap-0 overflow-y-auto rounded-2xl border-0 bg-card p-5 shadow-2xl dark:bg-background sm:w-full',
           '[&>button]:hidden'
         )}
       >
@@ -194,7 +196,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             Confirmar <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

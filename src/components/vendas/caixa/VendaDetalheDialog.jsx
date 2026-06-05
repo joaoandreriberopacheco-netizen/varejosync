@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { caixaClasses } from '@/lib/caixaP38Theme';
@@ -8,7 +9,7 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
   return (
     <Dialog open={!!venda} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground">
+      <CaixaDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-background dark:text-foreground">
         <DialogHeader>
           <DialogTitle className="text-lg text-foreground">
             Detalhes da Venda - {venda.numero}
@@ -79,7 +80,7 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
             </div>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

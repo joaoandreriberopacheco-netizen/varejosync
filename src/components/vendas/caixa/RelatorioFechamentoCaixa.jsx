@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { printOrShareElementAsPdf, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import SafeActionButton from '@/components/ui/safe-action-button';
 import { Printer, X, CheckCircle } from 'lucide-react';
@@ -37,7 +38,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-card">
+      <CaixaDialogContent className="max-w-md p-0 gap-0 bg-card">
         <div className="no-print flex items-center justify-between p-4 border-b border-border/40">
           <h2 className="text-lg font-semibold text-foreground font-glacial">
             Relatório de Fechamento
@@ -176,7 +177,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
             Continuar
           </SafeActionButton>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

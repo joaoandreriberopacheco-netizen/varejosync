@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CaixaDialogContent } from '@/components/vendas/caixa/CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,6 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { getCachedUserSession } from '@/lib/userSessionCache';
-import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
 function normalizeCaixaId(id) {
   return String(id ?? '').trim();
@@ -21,7 +21,7 @@ function isCaixaAutorizado(caixaId, autorizados = []) {
   return autorizados.some((id) => normalizeCaixaId(id) === key);
 }
 
-export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, elevatedStack = false }) {
+export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
   const navigate = useNavigate();
   const [caixasDisponiveis, setCaixasDisponiveis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -224,16 +224,10 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
     }
   };
 
-  const elevatedDialogClass = elevatedStack ? QUICK_ACCESS_NESTED_DIALOG_CLASS : undefined;
-
   return (
     <>
       <Dialog open={open && !showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent
-          overlayClassName={elevatedDialogClass}
-          className={`max-w-2xl dark:bg-background ${elevatedDialogClass || ''}`}
-          hideClose
-        >
+        <CaixaDialogContent className="max-w-2xl dark:bg-background" hideClose>
           <DialogHeader className="relative">
             <button
               onClick={() => onClose ? onClose() : navigate(-1)}
@@ -306,13 +300,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
               })}
             </div>
           )}
-        </DialogContent>
+        </CaixaDialogContent>
       </Dialog>
 
       <Dialog open={showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent
-          overlayClassName={elevatedDialogClass}
-          className={`max-w-sm dark:bg-background border-0 p-0 shadow-2xl ${elevatedDialogClass || ''}`}
+        <CaixaDialogContent
+          className="max-w-sm dark:bg-background border-0 p-0 shadow-2xl"
           hideClose
         >
           <div className="flex flex-col h-full">
@@ -390,7 +383,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
               </Button>
             </div>
           </div>
-        </DialogContent>
+        </CaixaDialogContent>
       </Dialog>
     </>
   );

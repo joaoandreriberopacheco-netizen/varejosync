@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Plus, Minus, DollarSign, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
@@ -28,7 +29,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+      <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button onClick={() => onOpenChange(false)} className="p-2 -ml-2 hover:bg-muted rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
             <ArrowLeft className="w-6 h-6 text-foreground/90" />
@@ -119,7 +120,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
             </div>
           </div>
         )}
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

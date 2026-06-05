@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import {
   Banknote, Smartphone, CreditCard, Ticket, Receipt, ArrowLeft, ChevronRight, RefreshCw, Eye, EyeOff
 } from 'lucide-react';
@@ -103,7 +104,7 @@ export default function ConfirmarPagamentoDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
+        <CaixaDialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-4 pt-5 dark:border-border/40">
             <DialogTitle className="flex items-center justify-between">
@@ -288,7 +289,7 @@ export default function ConfirmarPagamentoDialog({
               }
             </button>
           </div>
-        </DialogContent>
+        </CaixaDialogContent>
       </Dialog>
 
       <SeletorMaquininhaSheet

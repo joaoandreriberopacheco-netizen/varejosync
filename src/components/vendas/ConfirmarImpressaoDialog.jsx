@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import {
   AlertDialog,
-  AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { CaixaAlertDialogContent } from '@/components/vendas/caixa/CaixaAlertDialogContent';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -85,7 +85,7 @@ export default function ConfirmarImpressaoDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-card p-5 shadow-2xl sm:w-full sm:max-w-lg sm:p-6 dark:bg-background">
+      <CaixaAlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-card p-5 shadow-2xl sm:w-full sm:max-w-lg sm:p-6 dark:bg-background">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-center text-xl">{titulo}</AlertDialogTitle>
           {numeroExibicao ? (
@@ -123,7 +123,7 @@ export default function ConfirmarImpressaoDialog({
             Sim <span className="ml-1 text-xs opacity-80">(S / Enter)</span>
           </Button>
         </AlertDialogFooter>
-      </AlertDialogContent>
+      </CaixaAlertDialogContent>
     </AlertDialog>
   );
 }

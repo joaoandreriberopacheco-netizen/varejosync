@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +9,7 @@ import { Edit } from 'lucide-react';
 export default function RetornoEdicaoDialog({ open, onOpenChange, motivo, onMotivoChange, onConfirmar }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md dark:bg-background dark:text-foreground">
+      <CaixaDialogContent className="max-w-md dark:bg-background dark:text-foreground">
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2 text-foreground">
             <Edit className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -46,7 +47,7 @@ export default function RetornoEdicaoDialog({ open, onOpenChange, motivo, onMoti
             </Button>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { Printer, X, FileText } from 'lucide-react';
 import { format } from 'date-fns';
@@ -120,7 +121,7 @@ ${pedido.valor_desconto > 0 ? `<div class="info" style="text-align:right">Descon
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm dark:bg-background">
+      <CaixaDialogContent className="max-w-sm dark:bg-background">
         {/* Preview card */}
         <div className="flex flex-col items-center gap-1 pt-2 pb-1">
           <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-1">
@@ -165,7 +166,7 @@ ${pedido.valor_desconto > 0 ? `<div class="info" style="text-align:right">Descon
             <Printer className="w-4 h-4 mr-2" /> Imprimir
           </Button>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

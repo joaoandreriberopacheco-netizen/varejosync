@@ -68,6 +68,7 @@ import {
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
@@ -1425,6 +1426,7 @@ export default function PDVCaixa({
     : `${caixaShell} bg-muted/40 dark:bg-background ${caixaTypo.screen}`;
 
   return (
+    <CaixaOverlayStackProvider active={overlayMode}>
     <div className={rootClassName}>
       {showSeletorCaixa && (
         <SeletorCaixaPDV 
@@ -1432,7 +1434,6 @@ export default function PDVCaixa({
           onSelect={handleSelecionarCaixa}
           currentUser={currentUser}
           onClose={handleClose}
-          elevatedStack={overlayMode}
         />
       )}
 
@@ -2106,7 +2107,7 @@ export default function PDVCaixa({
 
         {/* Modal de Detalhes do Rascunho (Aba Vendas) */}
         {rascunhoDetalhesTab && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
+          <div className={`fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 ${overlayMode ? 'z-[1220]' : 'z-50'}`}>
             <div className="bg-card dark:bg-background rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
               <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 dark:border-border/40">
                 <div>
@@ -2153,6 +2154,8 @@ export default function PDVCaixa({
           </div>
         )}
       </div>
-    </div>);
+    </div>
+    </CaixaOverlayStackProvider>
+  );
 
 }

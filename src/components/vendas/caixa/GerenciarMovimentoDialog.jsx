@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { caixaClasses } from '@/lib/caixaP38Theme';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ export default function GerenciarMovimentoDialog({ open, onOpenChange, movimento
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-[28px] border-0 bg-card p-0 shadow-2xl dark:bg-background">
+      <CaixaDialogContent className="max-w-lg rounded-[28px] border-0 bg-card p-0 shadow-2xl dark:bg-background">
         <div className="border-b border-border/40 px-4 py-3 dark:border-border/40">
           <div className="flex items-center gap-3">
             <button onClick={() => onOpenChange(false)} className="rounded-2xl p-2 hover:bg-muted">
@@ -64,7 +65,7 @@ export default function GerenciarMovimentoDialog({ open, onOpenChange, movimento
             </Button>
           </div>
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

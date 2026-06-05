@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, DollarSign } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
@@ -44,7 +45,7 @@ export default function DespesaDialog({
     <Dialog open={open} onOpenChange={(o) => {
       if (!o) { onOpenChange(false); setDespesaStep('obs'); setValorDespesaNum(''); }
     }}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+      <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => {
@@ -154,7 +155,7 @@ export default function DespesaDialog({
             </>
           )}
         </div>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

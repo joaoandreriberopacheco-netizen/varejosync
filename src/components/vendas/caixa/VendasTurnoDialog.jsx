@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { CaixaDialogContent } from './CaixaDialogContent';
 import { Badge } from '@/components/ui/badge';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Printer, Receipt, Eye, ArrowDownUp } from 'lucide-react';
@@ -138,7 +139,7 @@ export default function VendasTurnoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
+      <CaixaDialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-background flex flex-col">
         <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => onOpenChange(false)}
@@ -300,7 +301,7 @@ export default function VendasTurnoDialog({
             </div>
           </div>
         )}
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }
