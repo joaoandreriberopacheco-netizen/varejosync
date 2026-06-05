@@ -3,8 +3,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { caixaClasses, movimentoTone } from '@/lib/caixaP38Theme';
 
 export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimentoCriado, tipoMovimento, currentUser, formatValor }) {
+  const tone = caixaClasses(movimentoTone(movimentoCriado?.tipo || tipoMovimento));
   const printComprovante = async () => {
     const html = `<html><head><title>Comprovante</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
@@ -64,7 +66,7 @@ export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimen
             <div className="px-6 py-4 border-t-2 border-b-2 border-dashed border-border/40">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-foreground/90">VALOR</span>
-                <span className={`text-2xl font-bold font-glacial ${movimentoCriado?.tipo === 'Reforço' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                <span className={`text-2xl font-bold font-glacial ${tone.text}`}>
                   {movimentoCriado?.tipo === 'Reforço' ? '+' : '−'}{formatValor(movimentoCriado?.valor)}
                 </span>
               </div>
@@ -85,7 +87,7 @@ export default function ComprovanteMovimentoDialog({ open, onOpenChange, movimen
             </button>
             <button
               onClick={printComprovante}
-              className={`flex-1 h-12 rounded-2xl font-medium text-white ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'}`}
+              className={`flex-1 h-12 rounded-2xl font-medium ${tone.btn}`}
               style={{ minHeight: '48px' }}>
               <span className="flex items-center justify-center gap-2"><Printer className="w-4 h-4" /> Imprimir</span>
             </button>

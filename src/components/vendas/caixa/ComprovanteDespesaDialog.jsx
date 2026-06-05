@@ -3,8 +3,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCriada, currentUser, formatValor }) {
+  const tone = caixaClasses('danger');
   const printComprovante = async () => {
     const html = `<html><head><title>Comprovante Despesa</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
@@ -63,7 +65,7 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
             <div className="px-6 py-4 border-t-2 border-b-2 border-dashed border-border/40">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-foreground/90">VALOR</span>
-                <span className="text-2xl font-bold font-glacial text-red-600 dark:text-red-400">
+                <span className={`text-2xl font-bold font-glacial ${tone.text}`}>
                   −{formatValor(despesaCriada?.valor)}
                 </span>
               </div>
@@ -77,7 +79,7 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
             <button onClick={() => onOpenChange(false)} className="flex-1 h-12 bg-muted text-foreground/90 rounded-2xl font-medium" style={{ minHeight: '48px' }}>
               Fechar
             </button>
-            <button onClick={printComprovante} className="flex-1 h-12 rounded-2xl font-medium text-white bg-red-600" style={{ minHeight: '48px' }}>
+            <button onClick={printComprovante} className={`flex-1 h-12 rounded-2xl font-medium ${tone.btn}`} style={{ minHeight: '48px' }}>
               <span className="flex items-center justify-center gap-2"><Printer className="w-4 h-4" /> Imprimir</span>
             </button>
           </div>

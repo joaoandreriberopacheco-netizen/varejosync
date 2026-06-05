@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { CAIXA_PRINT, caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, turnoAtivo, vendasFinalizadas, movimentos, formatValor }) {
   return (
@@ -50,8 +51,8 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 .text-muted-foreground, .text-muted-foreground { color: #9ca3af; }
                 .text-foreground/90, .text-foreground { color: #374151; }
                 .text-foreground { color: #111827; }
-                .text-emerald-600 { color: #059669; }
-                .text-blue-600 { color: #2563eb; }
+                .text-emerald-600 { color: ${CAIXA_PRINT.success}; }
+                .text-blue-600 { color: ${CAIXA_PRINT.info}; }
                 .bg-muted/40 { background: #f9fafb; }
                 .space-y-2 > * + * { margin-top: 8px; }
                 .space-y-1 > * + * { margin-top: 4px; }
@@ -96,7 +97,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                         <div className="text-sm font-medium text-foreground/90">{v.numero} · {v.cliente_nome}</div>
                         <div className="text-xs text-muted-foreground">{format(new Date(v.created_date), 'HH:mm')}{!temMultiplos && pagamentos[0] ? ` · ${pagamentos[0].forma_pagamento} ${formatValor(pagamentos[0].valor)}` : ''}</div>
                       </div>
-                      <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex-shrink-0 tabular-nums">+{formatValor(v.valor_total)}</span>
+                      <span className={`text-sm font-semibold flex-shrink-0 tabular-nums ${caixaClasses('success').text}`}>+{formatValor(v.valor_total)}</span>
                     </div>
                     {temMultiplos && pagamentos.map((p, idx) => (
                       <div key={idx} className="px-5 py-1 flex justify-between items-center">
@@ -113,7 +114,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                     <div className="text-sm text-foreground/90">Reforço · {m.numero}</div>
                     <div className="text-xs text-muted-foreground">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(m.valor)}</span>
+                  <span className={`text-sm font-semibold ${caixaClasses('success').text}`}>+{formatValor(m.valor)}</span>
                 </div>
               ))}
               {(movimentos || []).filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((m) => (
@@ -122,7 +123,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                     <div className="text-sm text-foreground/90">Recolhimento · {m.numero}</div>
                     <div className="text-xs text-muted-foreground">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
                   </div>
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">−{formatValor(m.valor)}</span>
+                  <span className={`text-sm font-semibold ${caixaClasses('info').text}`}>−{formatValor(m.valor)}</span>
                 </div>
               ))}
               {(caixaData.despesasLista || []).map((d) => (
@@ -131,7 +132,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                     <div className="text-sm text-foreground/90">Despesa · {d.descricao}</div>
                     <div className="text-xs text-muted-foreground">{d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''} · {d.categoria}</div>
                   </div>
-                  <span className="text-sm font-semibold text-red-600 dark:text-red-400">−{formatValor(d.valor)}</span>
+                  <span className={`text-sm font-semibold ${caixaClasses('danger').text}`}>−{formatValor(d.valor)}</span>
                 </div>
               ))}
               <div className="px-5 py-4 bg-muted/40 dark:bg-muted/30 space-y-2">

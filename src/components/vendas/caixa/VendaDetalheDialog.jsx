@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatarDataHora } from '@/components/utils/dateUtils';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
@@ -69,12 +70,12 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
             {venda.valor_desconto > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Desconto:</span>
-                <span className="font-medium text-red-600 dark:text-red-400">-{formatValor(venda.valor_desconto)}</span>
+                <span className={`font-medium ${caixaClasses('danger').text}`}>-{formatValor(venda.valor_desconto)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-border/40">
               <span className="text-foreground">Total:</span>
-              <span className="text-emerald-600 dark:text-emerald-400">{formatValor(venda.valor_total)}</span>
+              <span className={caixaClasses('success').text}>{formatValor(venda.valor_total)}</span>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Plus, Minus, Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { caixaClasses, movimentoTone } from '@/lib/caixaP38Theme';
 
 export default function MovimentoDialog({
   open, onOpenChange,
@@ -14,6 +15,7 @@ export default function MovimentoDialog({
   formatarValorExibicao,
 }) {
   const { toast } = useToast();
+  const tone = caixaClasses(movimentoTone(tipoMovimento));
   const valorRef = React.useRef(null);
   const [processando, setProcessando] = React.useState(false);
 
@@ -68,10 +70,10 @@ export default function MovimentoDialog({
             <>
               <div className="bg-card rounded-2xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tipoMovimento === 'Reforço' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tone.well}`}>
                     {tipoMovimento === 'Reforço'
-                      ? <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                      : <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                      ? <Plus className={`w-5 h-5 ${tone.icon}`} />
+                      : <Minus className={`w-5 h-5 ${tone.icon}`} />}
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-foreground">{contaCaixaPDV?.nome}</div>
@@ -103,7 +105,7 @@ export default function MovimentoDialog({
               <button
                 onClick={() => { setMovimentoStep('valor'); setTimeout(() => valorRef.current?.focus(), 100); }}
                 disabled={processando}
-                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm transition-opacity ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'} ${processando ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`w-full h-14 rounded-2xl font-semibold text-base shadow-sm transition-opacity ${tone.btn} ${processando ? 'opacity-60 cursor-not-allowed' : ''}`}
                 style={{ minHeight: '56px' }}>
                 Próximo →
               </button>
@@ -137,7 +139,7 @@ export default function MovimentoDialog({
                   executarSalvar();
                 }}
                 disabled={processando}
-                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm transition-opacity ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'} ${processando ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`w-full h-14 rounded-2xl font-semibold text-base shadow-sm transition-opacity ${tone.btn} ${processando ? 'opacity-60 cursor-not-allowed' : ''}`}
                 style={{ minHeight: '56px' }}>
                 {processando ? (
                   <>

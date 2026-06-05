@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -58,7 +59,7 @@ export default function GerenciarMovimentoDialog({ open, onOpenChange, movimento
             <Button onClick={() => onEdit({ valor, observacao, motivo })} disabled={!motivo.trim()} className="h-11 rounded-2xl bg-background text-white hover:bg-primary dark:bg-card dark:text-foreground">
               <Pencil className="mr-2 h-4 w-4" />Salvar edição
             </Button>
-            <Button onClick={() => onCancel({ motivo })} disabled={!motivo.trim()} variant="outline" className="h-11 rounded-2xl border-0 text-red-600 shadow-sm hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30">
+            <Button onClick={() => onCancel({ motivo })} disabled={!motivo.trim()} variant="outline" className={`h-11 rounded-2xl border-0 shadow-sm ${caixaClasses('danger').text} ${caixaClasses('danger').hover}`}>
               <Ban className="mr-2 h-4 w-4" />Cancelar movimento
             </Button>
           </div>

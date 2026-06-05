@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { formatarDiferencaSubstituicao } from '@/lib/substituicoesVendaCaixa';
+import { CAIXA_PRINT, caixaClasses } from '@/lib/caixaP38Theme';
 
 const fmtHora = (d) => {
   const dataHora = formatarDataHora(d);
@@ -119,7 +120,7 @@ function htmlLinhaVenda(v, meta) {
     const diff = formatarDiferencaSubstituicao(meta.diferenca, (n) => `R$ ${Number(n).toFixed(2)}`);
     sub = `<div style="font-size:10px;color:#b45309;margin-top:2px">↔ Substitui ${meta.origem.numero} (<s>R$ ${(meta.origem.valor_total || 0).toFixed(2)}</s>) · ${diff}</div>`;
   }
-  return `<div style="border-bottom:1px solid #f3f4f6;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${v.numero} · ${v.cliente_nome || ''} · ${fmtHora(v.created_date)}</span><span style="color:#059669;font-weight:600">+R$ ${(v.valor_total || 0).toFixed(2)}</span></div>${sub}<div style="font-size:10px;color:#9ca3af">${pags}</div></div>`;
+  return `<div style="border-bottom:1px solid #f3f4f6;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${v.numero} · ${v.cliente_nome || ''} · ${fmtHora(v.created_date)}</span><span style="color:${CAIXA_PRINT.success};font-weight:600">+R$ ${(v.valor_total || 0).toFixed(2)}</span></div>${sub}<div style="font-size:10px;color:#9ca3af">${pags}</div></div>`;
 }
 
 export default function VendasTurnoDialog({
@@ -160,7 +161,7 @@ export default function VendasTurnoDialog({
                   ? cancelamentos
                       .map(
                         (c) =>
-                          `<div style="border-bottom:1px solid #fee2e2;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626;font-weight:600">CANCELADO</span></div><div style="font-size:10px;color:#9ca3af">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div></div>`
+                          `<div style="border-bottom:1px solid #fee2e2;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:${CAIXA_PRINT.danger}">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:${CAIXA_PRINT.danger};font-weight:600">CANCELADO</span></div><div style="font-size:10px;color:#9ca3af">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div></div>`
                       )
                       .join('')
                   : '<p style="font-size:11px;color:#9ca3af;margin:4px 0">Nenhuma venda cancelada</p>';
@@ -219,24 +220,24 @@ export default function VendasTurnoDialog({
             <>
               {turnoAtivo?.cancelamentos_rastro?.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs font-semibold text-red-600 dark:text-red-400 px-1 mb-2">
+                  <p className={`text-xs font-semibold px-1 mb-2 ${caixaClasses('danger').text}`}>
                     Cancelamentos do turno ({turnoAtivo.cancelamentos_rastro.length})
                   </p>
                   <div className="space-y-2">
                     {turnoAtivo.cancelamentos_rastro.map((c, idx) => (
-                      <div key={idx} className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-4 shadow-sm">
+                      <div key={idx} className={`rounded-2xl p-4 shadow-sm ${caixaClasses('danger').panel}`}>
                         <div className="flex justify-between items-start">
                           <div>
-                            <div className="text-sm font-semibold text-red-700 dark:text-red-300">
+                            <div className={`text-sm font-semibold ${caixaClasses('danger').panelText}`}>
                               {c.pedido_numero} · {c.cliente_nome}
                             </div>
-                            <div className="text-xs text-red-500 dark:text-red-400 mt-0.5">{c.motivo_cancelamento}</div>
+                            <div className={`text-xs mt-0.5 ${caixaClasses('danger').text}`}>{c.motivo_cancelamento}</div>
                             <div className="text-xs text-muted-foreground mt-0.5">
                               {c.cancelado_por}
                               {c.data_cancelamento ? ` · ${format(new Date(c.data_cancelamento), 'HH:mm')}` : ''}
                             </div>
                           </div>
-                          <span className="text-base font-bold text-red-600 dark:text-red-400 font-glacial">
+                          <span className={`text-base font-bold font-glacial ${caixaClasses('danger').text}`}>
                             -{formatValor(c.valor_total)}
                           </span>
                         </div>

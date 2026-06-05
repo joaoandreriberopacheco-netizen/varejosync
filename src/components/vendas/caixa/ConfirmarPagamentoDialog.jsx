@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
+import { CAIXA_TOAST_SUCCESS, caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
@@ -85,7 +86,7 @@ export default function ConfirmarPagamentoDialog({
         const maxVale = Math.min(saldoDisponivel, pedidoSelecionado.valor_total);
         setPagamentosVale(maxVale);
         setInputVale(formatarValorExibicao(maxVale));
-        toast({ title: `Vale encontrado: ${formatValor(saldoDisponivel)}`, className: 'bg-emerald-100 text-emerald-800', duration: 2000 });
+        toast({ title: `Vale encontrado: ${formatValor(saldoDisponivel)}`, className: CAIXA_TOAST_SUCCESS, duration: 2000 });
       } else {
         toast({ title: 'Vale não encontrado ou sem saldo disponível', variant: 'destructive', duration: 2000 });
         setValeEncontrado(null);
@@ -261,7 +262,7 @@ export default function ConfirmarPagamentoDialog({
                 {valorRestante > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Falta</span>
-                    <span className="font-semibold text-red-500 dark:text-red-400">{formatValor(valorRestante)}</span>
+                    <span className={`font-semibold ${caixaClasses('danger').text}`}>{formatValor(valorRestante)}</span>
                   </div>
                 )}
               </div>

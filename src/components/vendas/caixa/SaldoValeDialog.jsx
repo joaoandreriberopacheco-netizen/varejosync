@@ -2,14 +2,16 @@ import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Printer, Ticket } from 'lucide-react';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValor }) {
+  const tone = caixaClasses('success');
   return (
     <Dialog open={!!saldoResidualVale} onOpenChange={onClose}>
       <DialogContent className="max-w-xs mx-auto dark:bg-background">
         <div className="flex flex-col items-center gap-4 py-2">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-            <Ticket className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${tone.well}`}>
+            <Ticket className={`w-7 h-7 ${tone.icon}`} />
           </div>
           <div className="w-full bg-card rounded-2xl overflow-hidden shadow-sm" style={{ fontFamily: 'Courier New, monospace' }}>
             <div className="px-5 py-4 text-center border-b-2 border-dashed border-border/40">
@@ -21,7 +23,7 @@ export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValo
               <p className="text-2xl font-bold font-mono text-foreground">{saldoResidualVale?.codigo}</p>
               <div className="pt-3 border-t border-dashed border-border/40">
                 <p className="text-xs text-muted-foreground mb-1">Saldo Disponível</p>
-                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 font-glacial">
+                <p className={`text-3xl font-bold font-glacial ${tone.text}`}>
                   {formatValor(saldoResidualVale?.saldo)}
                 </p>
               </div>

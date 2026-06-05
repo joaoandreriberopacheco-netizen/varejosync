@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, DollarSign } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function DespesaDialog({
   open, onOpenChange,
@@ -16,6 +17,7 @@ export default function DespesaDialog({
   formatarValorExibicao,
 }) {
   const { toast } = useToast();
+  const tone = caixaClasses('danger');
   const valorRef = React.useRef(null);
 
   const handleValorChange = (e) => {
@@ -62,8 +64,8 @@ export default function DespesaDialog({
             <>
               <div className="bg-card rounded-2xl p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tone.well}`}>
+                    <DollarSign className={`w-5 h-5 ${tone.icon}`} />
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-foreground">{contaCaixaPDV?.nome}</div>
@@ -112,7 +114,7 @@ export default function DespesaDialog({
                   setDespesaStep('valor');
                   setTimeout(() => valorRef.current?.focus(), 100);
                 }}
-                className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600"
+                className={`w-full h-14 rounded-2xl font-semibold text-base shadow-sm ${tone.btn}`}
                 style={{ minHeight: '56px' }}>
                 Próximo →
               </button>
@@ -133,7 +135,7 @@ export default function DespesaDialog({
                   onChange={handleValorChange}
                   onKeyDown={handleValorKeyDown}
                   onFocus={(e) => e.target.select()}
-                  className="text-5xl font-bold text-red-600 dark:text-red-400 font-glacial text-center bg-transparent border-0 focus:outline-none w-full"
+                  className={`text-5xl font-bold font-glacial text-center bg-transparent border-0 focus:outline-none w-full ${tone.text}`}
                   style={{ caretColor: 'transparent' }}
                 />
               </div>
@@ -145,7 +147,7 @@ export default function DespesaDialog({
                   if (!salvando) onSalvar(valorDespesaNum);
                 }}
                 disabled={salvando}
-                className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                className={`w-full h-14 rounded-2xl font-semibold text-base shadow-sm ${tone.btn} disabled:opacity-60 disabled:cursor-not-allowed`}
                 style={{ minHeight: '56px' }}>
                 {salvando ? 'Processando...' : 'Confirmar'}
               </button>

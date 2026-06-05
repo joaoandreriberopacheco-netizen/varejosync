@@ -21,6 +21,7 @@ import {
 import { format } from 'date-fns';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function ControleCaixasAtivos() {
   const [caixas, setCaixas] = useState([]);
@@ -362,11 +363,11 @@ export default function ControleCaixasAtivos() {
                 <Collapsible open={showEntradasDetails} onOpenChange={setShowEntradasDetails}>
                   <div className="flex items-center justify-between py-2 border-b border-border/40">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <div className={`w-2 h-2 rounded-full ${caixaClasses('success').dot}`}></div>
                       <span className="text-sm text-muted-foreground">Entradas</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className={`text-base font-semibold ${caixaClasses('success').text}`}>
                         {formatValor(resumo.totalEntradas)}
                       </span>
                       <CollapsibleTrigger asChild>
@@ -395,7 +396,7 @@ export default function ControleCaixasAtivos() {
                             <div className="text-muted-foreground dark:text-muted-foreground">{entrada.forma}</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            <span className={`font-semibold ${caixaClasses('success').text}`}>
                               {formatValor(entrada.valor)}
                             </span>
                             {entrada.tipo === 'Venda' && (
@@ -416,11 +417,11 @@ export default function ControleCaixasAtivos() {
                 <Collapsible open={showSaidasDetails} onOpenChange={setShowSaidasDetails}>
                   <div className="flex items-center justify-between py-2 border-b border-border/40">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className={`w-2 h-2 rounded-full ${caixaClasses('danger').dot}`}></div>
                       <span className="text-sm text-muted-foreground">Saídas</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-base font-semibold text-red-600 dark:text-red-400">
+                      <span className={`text-base font-semibold ${caixaClasses('danger').text}`}>
                         {formatValor(resumo.totalSaidas)}
                       </span>
                       <CollapsibleTrigger asChild>
@@ -448,7 +449,7 @@ export default function ControleCaixasAtivos() {
                             <div className="text-muted-foreground">{saida.descricao}</div>
                             <div className="text-muted-foreground dark:text-muted-foreground">{saida.forma}</div>
                           </div>
-                          <span className="font-semibold text-red-600 dark:text-red-400">
+                          <span className={`font-semibold ${caixaClasses('danger').text}`}>
                             {formatValor(saida.valor)}
                           </span>
                         </div>
@@ -460,7 +461,7 @@ export default function ControleCaixasAtivos() {
                 {/* Saldo */}
                 <div className="flex items-center justify-between py-2 pt-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <div className={`w-2 h-2 rounded-full ${caixaClasses('info').dot}`}></div>
                     <span className="text-sm font-semibold text-foreground/90">Saldo</span>
                   </div>
                   <span className="text-lg font-bold text-foreground dark:text-foreground">
@@ -501,7 +502,7 @@ export default function ControleCaixasAtivos() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <div className={`w-2 h-2 rounded-full ${caixaClasses('info').dot}`}></div>
                     <span className="text-sm font-semibold text-foreground/90">Saldo</span>
                   </div>
                   <span className="text-lg font-bold text-foreground dark:text-foreground">
