@@ -21,9 +21,28 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { cn } from '@/components/utils';
 import { brandSurface } from '@/lib/brandSurfaces';
+import { p38Mobile } from '@/lib/p38MobileSurfaces';
+import { p38Table } from '@/lib/p38TableSurfaces';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+function PeriodFilterChip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-lg px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors',
+        active ? 'bg-primary text-primary-foreground shadow-sm' : p38Mobile.filterChip
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
 function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
   return (
@@ -32,7 +51,7 @@ function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, o
         <button
           type="button"
           onClick={(e) => e.stopPropagation()}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary"
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10"
           aria-label="Mais opções"
         >
           <MoreVertical className="h-4 w-4" />
@@ -60,14 +79,14 @@ function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, o
   );
 }
 
-/** Mobile — linha compacta P38 (sem card). */
+/** Mobile — linha compacta P38 com barra oliva. */
 function ConsumoHistoricoLinha({ item, index, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
   const subtitulo = [item.destinacao, item.responsavel_recebimento].filter(Boolean).join(' · ');
   return (
     <P38MobileLine
       thinAccent
       striped={index % 2 === 1}
-      accent="muted"
+      accent="success"
       onClick={() => onView(item)}
       title={item.numero}
       subtitle={subtitulo || 'Sem destinação'}
@@ -78,19 +97,20 @@ function ConsumoHistoricoLinha({ item, index, onView, onEdit, onViewAttachments,
           {!!item.tags?.length && <span>{item.tags.join(', ')}</span>}
         </>
       }
-      value={formatCurrency(item.valor_total)}
+      value={<span className={p38Accent.success.text}>{formatCurrency(item.valor_total)}</span>}
       trailing={<ConsumoAcoesMenu item={item} onView={onView} onEdit={onEdit} onViewAttachments={onViewAttachments} onAttach={onAttach} onDelete={onDelete} />}
     />
   );
 }
 
-/** Desktop — card com detalhes. */
+/** Desktop — card P38 com barra oliva. */
 function ConsumoHistoricoCard({ item, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
   return (
-    <div className={`rounded-[24px] px-4 py-3.5 shadow-sm ${brandSurface.card}`}>
-      <div className="flex items-start justify-between gap-3">
+    <div className={cn('relative rounded-[24px] px-4 py-3.5', brandSurface.card)}>
+      <div className={cn('absolute left-0 top-3 bottom-3 w-[3px] rounded-sm', p38Table.panelAccentBar)} aria-hidden />
+      <div className="flex items-start justify-between gap-3 pl-3">
         <button type="button" onClick={() => onView(item)} className="min-w-0 flex-1 text-left">
-          <p className="text-sm font-semibold text-foreground">{item.numero}</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-foreground">{item.numero}</p>
           <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3 w-3 shrink-0" />
@@ -119,11 +139,13 @@ function ConsumoHistoricoCard({ item, onView, onEdit, onViewAttachments, onAttac
           </div>
         </button>
         <div className="flex shrink-0 items-center gap-1">
-          <p className="text-base font-semibold text-foreground tabular-nums">{formatCurrency(item.valor_total)}</p>
+          <p className={cn('text-base font-semibold tabular-nums', p38Accent.success.text)}>
+            {formatCurrency(item.valor_total)}
+          </p>
           <button
             type="button"
             onClick={() => onView(item)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10"
             aria-label="Visualizar consumo"
           >
             <Eye className="h-4 w-4" />
@@ -161,102 +183,96 @@ export default function ConsumoInternoPainelInicial({
   onNovoFormulario,
 }) {
   const acoesProps = { onView, onEdit, onViewAttachments, onAttach, onDelete };
+  const totalPeriodo = consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0);
 
   return (
-    <div className="min-h-screen bg-muted/40 p-4 dark:bg-background md:p-6">
-      <div className="mx-auto max-w-6xl space-y-5 pb-24">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-2xl font-semibold text-foreground">Consumo Interno</p>
-            <p className="text-sm text-muted-foreground">Movimentações internas.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/RelatorioConsumoInterno"
-              className="flex items-center gap-2 rounded-[24px] bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90 md:shadow-sm"
-              title="Relatório de consumo interno"
-            >
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
-              <span className="hidden sm:inline">Relatório</span>
-            </Link>
-            <button
-              onClick={onRefresh}
-              className="rounded-[24px] bg-card p-3 shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90 md:shadow-sm"
-              style={{ minWidth: 48, minHeight: 48 }}
-              type="button"
-              aria-label="Atualizar"
-            >
-              <RefreshCw className="h-5 w-5 text-muted-foreground" />
-            </button>
-            <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted md:shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Total — {labelFiltro[filtroTemporal]}
-              </p>
-              <p className="text-lg font-semibold text-foreground">
-                {formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}
-              </p>
+    <div className={cn('min-h-screen -m-4 p-3 font-din-1451 md:-m-6 md:p-6', brandSurface.pageScreen)}>
+      <div className="mx-auto max-w-6xl space-y-4 pb-24 md:space-y-5">
+        <div className={cn('rounded-[24px] p-4 md:rounded-[28px] md:p-5', brandSurface.card)}>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Operação · estoque</p>
+              <h1 className="text-2xl font-semibold text-foreground md:text-3xl">Consumo Interno</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Movimentações internas.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to="/RelatorioConsumoInterno"
+                className={cn(
+                  'flex items-center gap-2 rounded-2xl border border-border/40 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-primary/10',
+                  brandSurface.card
+                )}
+                title="Relatório de consumo interno"
+              >
+                <BarChart3 className={cn('h-5 w-5', brandSurface.accent)} />
+                <span className="hidden sm:inline">Relatório</span>
+              </Link>
+              <button
+                onClick={onRefresh}
+                type="button"
+                className={cn(
+                  'rounded-2xl border border-border/40 p-3 transition-colors hover:bg-primary/10',
+                  brandSurface.card
+                )}
+                style={{ minWidth: 48, minHeight: 48 }}
+                aria-label="Atualizar"
+              >
+                <RefreshCw className="h-5 w-5 text-muted-foreground" />
+              </button>
+              <div className={cn('min-w-[120px] rounded-2xl border border-border/40 px-4 py-2.5', brandSurface.card)}>
+                <p className={p38Mobile.kpiLabel}>Total — {labelFiltro[filtroTemporal]}</p>
+                <p className={cn(p38Mobile.kpiValueAccent, 'text-lg md:text-xl')}>{formatCurrency(totalPeriodo)}</p>
+              </div>
             </div>
           </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Object.entries(labelFiltro).map(([key, label]) => (
+              <PeriodFilterChip key={key} active={filtroTemporal === key} onClick={() => setFiltroTemporal(key)}>
+                {label}
+              </PeriodFilterChip>
+            ))}
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(labelFiltro).map(([key, label]) => (
-            <button
-              type="button"
-              key={key}
-              onClick={() => setFiltroTemporal(key)}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                filtroTemporal === key
-                  ? 'bg-background text-white dark:bg-card dark:text-foreground'
-                  : 'bg-card text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90 md:shadow-sm'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Mobile: layout plano; desktop: bloco card */}
-        <div className="md:rounded-[30px] md:bg-card md:p-5 md:shadow-sm dark:md:bg-muted">
+        <div className={cn('md:rounded-[28px] md:p-5', brandSurface.card, 'md:border md:shadow-sm')}>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-lg font-semibold text-foreground">Histórico</p>
+            <p className="text-base font-semibold uppercase tracking-wide text-foreground">Histórico</p>
             <div className="relative w-full max-w-[220px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar"
-                className="h-10 rounded-2xl border-0 bg-muted pl-9 shadow-sm dark:bg-background md:shadow-sm"
+                className={cn(p38Mobile.searchInput, 'h-11 rounded-lg pl-9')}
               />
             </div>
           </div>
 
           <div className="space-y-5 md:space-y-4">
             {consumosAgrupadosPorDia.length === 0 && (
-              <div className="rounded-[24px] bg-muted/40 px-4 py-10 text-center text-sm text-muted-foreground md:shadow-sm dark:bg-background dark:text-muted-foreground">
+              <div className={cn('rounded-lg px-4 py-10 text-center text-sm text-muted-foreground', p38Mobile.detailPanel)}>
                 Nenhuma movimentação encontrada.
               </div>
             )}
 
             {consumosAgrupadosPorDia.map(([dia, itens]) => (
               <section key={dia} className="space-y-2">
-                <div className="flex items-baseline justify-between gap-2 px-0.5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                <div className="flex items-baseline justify-between gap-2 border-b border-border/40 px-0.5 pb-2 dark:border-white/10">
+                  <p className="p38-meta-label font-medium">
                     {format(new Date(dia + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
                   </p>
-                  <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                  <span className={cn('text-xs font-semibold tabular-nums', p38Accent.success.text)}>
                     {formatCurrency(itens.reduce((s, i) => s + (i.valor_total || 0), 0))}
                   </span>
                 </div>
 
-                {/* Mobile: linhas P38 */}
-                <P38MobileLineList className="block md:hidden rounded-lg border-0 md:border">
+                <P38MobileLineList className="block rounded-lg border border-border/40 dark:border-white/10 md:hidden">
                   {itens.map((item, index) => (
                     <ConsumoHistoricoLinha key={item.id} item={item} index={index} {...acoesProps} />
                   ))}
                 </P38MobileLineList>
 
-                {/* Desktop: cards */}
                 <div className="hidden space-y-2 md:block">
                   {itens.map((item) => (
                     <ConsumoHistoricoCard key={item.id} item={item} {...acoesProps} />
@@ -270,18 +286,18 @@ export default function ConsumoInternoPainelInicial({
 
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-3 p38-bottom-fab1 lg:bottom-10 lg:right-6">
         {showFabMenu && (
-          <div className="flex flex-col gap-2 rounded-[28px] bg-card p-2 shadow-2xl dark:bg-muted">
+          <div className={cn('flex flex-col gap-2 rounded-[28px] border border-border/40 p-2 shadow-2xl', brandSurface.card)}>
             <button
               type="button"
               onClick={onNovoFormulario}
-              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-foreground/90 transition-colors hover:bg-muted/40 dark:text-foreground dark:hover:bg-primary/90"
+              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-primary/10"
             >
               Novo formulário
             </button>
             <Link
               to="/AnexoCompartilhado"
               onClick={() => setShowFabMenu(false)}
-              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-foreground/90 transition-colors hover:bg-muted/40 dark:text-foreground dark:hover:bg-primary/90"
+              className="min-h-[48px] rounded-2xl px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-primary/10"
             >
               Página antiga
             </Link>
@@ -291,7 +307,7 @@ export default function ConsumoInternoPainelInicial({
         <button
           type="button"
           onClick={() => setShowFabMenu((prev) => !prev)}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-background text-white shadow-2xl transition-transform hover:scale-105 dark:bg-card dark:text-foreground"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform hover:scale-105 hover:bg-primary/90"
           aria-label="Novo consumo interno"
         >
           <Plus className="h-6 w-6" />
