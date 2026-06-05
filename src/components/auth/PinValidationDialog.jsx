@@ -22,7 +22,15 @@ import { OPERACAO_AUTH_ENABLED } from './operacaoAuthFlags';
  *     operationName="Cancelar Venda"
  *   />
  */
-export default function PinValidationDialog({ isOpen, onClose, onSuccess, operationName = 'Operação Crítica' }) {
+export default function PinValidationDialog({
+  isOpen,
+  onClose,
+  onSuccess,
+  operationName = 'Operação Crítica',
+  /** Quando true, exige PIN mesmo com auth global desligada (ex.: salvar pedido de compra). */
+  forceEnabled = false,
+}) {
+  const authActive = forceEnabled || OPERACAO_AUTH_ENABLED;
   const [pin, setPin] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +45,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
       bypassedForOpen.current = false;
       return;
     }
-    if (OPERACAO_AUTH_ENABLED) {
+    if (authActive) {
       setPin(''); setErro(''); setEmailEnviado(false);
       setTimeout(() => inputRef.current?.focus(), 150);
       return;
@@ -46,7 +54,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
     bypassedForOpen.current = true;
     onSuccess?.();
     onClose?.();
-  }, [isOpen, onSuccess, onClose]);
+  }, [isOpen, onSuccess, onClose, authActive]);
 
   const handleValidar = async () => {
     if (pin.length < 6) return setErro('PIN deve ter 6 dígitos.');
@@ -83,7 +91,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
   // PIN numérico estilo teclado virtual — 4 dots
   const dots = Array.from({ length: 6 }, (_, i) => i < pin.length);
 
-  if (!OPERACAO_AUTH_ENABLED) return null;
+  if (!authActive) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -95,10 +103,11 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
             </div>
           </div>
           <DialogTitle className="font-glacial text-foreground text-center">
-            Confirmação de Segurança
+            {forceEnabled ? 'Digite sua senha' : 'Confirmação de Segurança'}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-xs text-center">
             {operationName}
+            {forceEnabled ? ' — PIN de 6 dígitos, sem foto.' : ''}
           </DialogDescription>
         </DialogHeader>
 

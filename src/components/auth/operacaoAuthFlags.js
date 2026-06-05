@@ -8,6 +8,10 @@ export const OPERACAO_AUTH_PHOTO_ENABLED =
     OPERACAO_AUTH_ENABLED &&
     String(import.meta.env.VITE_OPERACAO_AUTH_PHOTO_ENABLED ?? 'false').toLowerCase() === 'true';
 
+/** Salvar / enviar pedido de compra ao financeiro — PIN sem foto (desligar: VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN=false). */
+export const PEDIDO_COMPRA_SAVE_AUTH_ENABLED =
+    String(import.meta.env.VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN ?? 'true').toLowerCase() !== 'false';
+
 export function makeOperationCode() {
     return `OP-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 }

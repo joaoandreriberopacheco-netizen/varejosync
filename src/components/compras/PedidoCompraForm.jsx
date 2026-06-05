@@ -26,6 +26,9 @@ import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
+import PinValidationDialog from '@/components/auth/PinValidationDialog';
+import PinSetupDialog from '@/components/auth/PinSetupDialog';
+import { PEDIDO_COMPRA_SAVE_AUTH_ENABLED, buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
@@ -136,6 +139,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
+  const [showSavePinDialog, setShowSavePinDialog] = useState(false);
+  const [showPinSetupForSave, setShowPinSetupForSave] = useState(false);
+  const [pendingSaveOptions, setPendingSaveOptions] = useState(null);
   const { toast } = useToast();
 
   const pedidoAtual = pedidoLogistica || pedido;
@@ -687,7 +693,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     onClose();
   };
 
-  const handleInitiateSave = (saveOptions = {}) => {
+  const executarSaveComAuth = async (saveOptions = {}) => {
+    const authData = await buildBypassAuthPayload(() => base44.auth.me());
+    await handleAuthSuccess(authData, saveOptions);
+  };
+
+  const handleInitiateSave = async (saveOptions = {}) => {
     if (!formData.fornecedor_id) {
       toast({
         title: "Fornecedor obrigatório",
@@ -706,7 +717,35 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       return;
     }
 
-    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, saveOptions));
+    if (!PEDIDO_COMPRA_SAVE_AUTH_ENABLED) {
+      void executarSaveComAuth(saveOptions);
+      return;
+    }
+
+    try {
+      const u = await base44.auth.me();
+      if (!u?.pin_definido) {
+        setPendingSaveOptions(saveOptions);
+        setShowPinSetupForSave(true);
+        toast({
+          title: 'Cadastre seu PIN',
+          description: 'Defina um PIN de 6 dígitos para poder salvar pedidos de compra.',
+        });
+        return;
+      }
+    } catch {
+      /* segue para o diálogo de PIN */
+    }
+
+    setPendingSaveOptions(saveOptions);
+    setShowSavePinDialog(true);
+  };
+
+  const handleSavePinConfirmado = () => {
+    const opts = pendingSaveOptions ?? {};
+    setShowSavePinDialog(false);
+    setPendingSaveOptions(null);
+    void executarSaveComAuth(opts);
   };
 
   const handleSolicitarEdicao = async () => {
@@ -1668,6 +1707,47 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
            </DialogFooter>
          </DialogContent>
        </Dialog>
+
+       <PinValidationDialog
+         forceEnabled
+         isOpen={showSavePinDialog}
+         onClose={() => {
+           setShowSavePinDialog(false);
+           setPendingSaveOptions(null);
+         }}
+         onSuccess={handleSavePinConfirmado}
+         operationName={
+           saveOptionsLabel(pendingSaveOptions) ||
+           `Salvar pedido${formData.numero ? ` ${formData.numero}` : ''}`
+         }
+       />
+
+       <PinSetupDialog
+         isOpen={showPinSetupForSave}
+         onClose={async () => {
+           setShowPinSetupForSave(false);
+           try {
+             const u = await base44.auth.me();
+             setCurrentUser(u);
+             if (u?.pin_definido && pendingSaveOptions != null) {
+               setShowSavePinDialog(true);
+             } else {
+               setPendingSaveOptions(null);
+             }
+           } catch {
+             setPendingSaveOptions(null);
+           }
+         }}
+         user={currentUser}
+       />
        </div>
        );
        }
+
+function saveOptionsLabel(saveOptions) {
+  if (!saveOptions?.status) return null;
+  if (saveOptions.status === 'Aguardando Aprovação Financeira') {
+    return 'Enviar pedido ao financeiro';
+  }
+  return `Salvar pedido (${saveOptions.status})`;
+}
