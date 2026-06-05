@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   const [loading, setLoading] = useState(true);
@@ -160,7 +161,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
           valor: m.valor || 0,
           horario: m.created_date,
           icone: ArrowUpCircle,
-          cor: 'text-emerald-500',
+          cor: caixaClasses('success').icon,
           sinal: '+'
         });
       });
@@ -177,7 +178,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
           valor: valorDinheiro,
           horario: v.created_date,
           icone: ShoppingBag,
-          cor: 'text-emerald-500',
+          cor: caixaClasses('success').icon,
           sinal: '+',
           referencia: v
         });
@@ -194,7 +195,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
           valor: m.valor || 0,
           horario: m.created_date,
           icone: ArrowDownCircle,
-          cor: 'text-amber-500',
+          cor: caixaClasses('info').icon,
           sinal: '-'
         });
       });
@@ -207,7 +208,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
         valor: d.valor || 0,
         horario: d.created_date,
         icone: Receipt,
-        cor: 'text-red-500',
+        cor: caixaClasses('danger').icon,
         sinal: '-'
       });
     });
@@ -271,8 +272,8 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
         <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-background">
           <DialogHeader className="p-6 pb-4 bg-card shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg">
-                <Wallet className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+                <Wallet className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
                 <DialogTitle className="text-xl font-semibold text-foreground dark:text-foreground font-glacial">
@@ -288,12 +289,12 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
           <div className="overflow-y-auto p-6 space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-4 border-border/40 border-t-emerald-500 rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-border/40 border-t-primary rounded-full animate-spin"></div>
               </div>
             ) : (
               <>
                 {/* Saldo Atual */}
-                <Card className="shadow-sm border-0 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
+                <Card className={`shadow-sm border-0 ${caixaClasses('success').panel}`}>
                   <CardContent className="p-6">
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-2">Saldo Atual</p>
@@ -339,10 +340,10 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                         })}
                         
                         {/* Total de Vendas */}
-                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20">
+                        <div className={`p-4 ${caixaClasses('success').panel}`}>
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center">
-                              <ShoppingBag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${caixaClasses('success').well}`}>
+                              <ShoppingBag className={`w-4 h-4 ${caixaClasses('success').icon}`} />
                             </div>
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-foreground dark:text-foreground">
@@ -353,7 +354,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                              <p className={`text-xl font-bold ${caixaClasses('success').text}`}>
                                 {formatValor(totalVendas)}
                               </p>
                             </div>
@@ -398,7 +399,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-foreground dark:text-foreground'}`}>
+                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? caixaClasses('success').text : item.sinal === '-' ? caixaClasses('danger').text : 'text-foreground dark:text-foreground'}`}>
                                     {item.sinal && item.sinal} {formatValor(item.valor)}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-1">

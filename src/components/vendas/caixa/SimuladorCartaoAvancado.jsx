@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 import { Input } from '@/components/ui/input';
 import { CreditCard, ChevronDown } from 'lucide-react';
 
@@ -126,21 +127,21 @@ export default function SimuladorCartaoAvancado() {
           </div>
 
           {/* Passo 3 */}
-          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg space-y-2 border border-green-200 dark:border-green-900">
-            <p className="text-xs text-green-700 dark:text-green-400 uppercase font-semibold">
+          <div className={`p-3 rounded-lg space-y-2 border border-primary/20 ${caixaClasses('success').panel}`}>
+            <p className={`text-xs uppercase font-semibold ${caixaClasses('success').panelText}`}>
               Passo 3: Valor Líquido (o que entra na conta)
             </p>
-            <p className="text-base font-semibold text-green-700 dark:text-green-400">
+            <p className={`text-base font-semibold ${caixaClasses('success').panelText}`}>
               {formatValor(calculos.vBruto)} − {formatValor(calculos.valorTaxa)} = {formatValor(calculos.valorLiquido)}
             </p>
           </div>
 
           {/* Passo 4 */}
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-2 border border-blue-200 dark:border-blue-900">
-            <p className="text-xs text-blue-700 dark:text-blue-400 uppercase font-semibold">
+          <div className={`p-3 rounded-lg space-y-2 border border-cyan-500/20 ${caixaClasses('info').panel}`}>
+            <p className={`text-xs uppercase font-semibold ${caixaClasses('info').panelText}`}>
               Passo 4: Dividir em Parcelas
             </p>
-            <div className="space-y-1 text-blue-700 dark:text-blue-400">
+            <div className={`space-y-1 ${caixaClasses('info').panelText}`}>
               <p>Valor bruto por parcela:</p>
               <p className="ml-2">{formatValor(calculos.vBruto)} ÷ {calculos.nParcelas} = {formatValor(calculos.valorPorParcela)}</p>
               <p className="mt-2">Valor líquido por parcela:</p>
@@ -166,13 +167,13 @@ export default function SimuladorCartaoAvancado() {
           {/* Linha 2 */}
           <div className="flex items-center justify-between pb-3 border-b border-border/40">
             <span className="text-muted-foreground">Taxa de Operadora ({calculos.tPerc}%)</span>
-            <span className="text-lg font-semibold text-red-400">−{formatValor(calculos.valorTaxa)}</span>
+            <span className={`text-lg font-semibold ${caixaClasses('danger').text}`}>−{formatValor(calculos.valorTaxa)}</span>
           </div>
 
           {/* Linha 3 */}
           <div className="flex items-center justify-between pb-3 border-b border-border/40">
             <span className="text-muted-foreground font-semibold">Valor que Entra na Conta</span>
-            <span className="text-2xl font-bold text-green-400">{formatValor(calculos.valorLiquido)}</span>
+            <span className={`text-2xl font-bold ${caixaClasses('success').text}`}>{formatValor(calculos.valorLiquido)}</span>
           </div>
 
           {/* Linha 4 */}
@@ -206,8 +207,8 @@ export default function SimuladorCartaoAvancado() {
                   <tr key={i} className="border-b border-border/40">
                     <td className="py-2.5 font-semibold text-foreground">{i + 1}/{calculos.nParcelas}</td>
                     <td className="text-right text-muted-foreground">{formatValor(calculos.valorPorParcela)}</td>
-                    <td className="text-right text-red-500">−{formatValor(calculos.taxaPorParcela)}</td>
-                    <td className="text-right font-semibold text-green-600 dark:text-green-400">
+                    <td className={`text-right ${caixaClasses('danger').text}`}>−{formatValor(calculos.taxaPorParcela)}</td>
+                    <td className={`text-right font-semibold ${caixaClasses('success').text}`}>
                       {formatValor(calculos.valorLiquidoPorParcela)}
                     </td>
                     <td className="text-left text-muted-foreground text-xs">

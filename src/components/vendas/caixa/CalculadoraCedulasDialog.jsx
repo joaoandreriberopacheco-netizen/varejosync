@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 import { Input } from '@/components/ui/input';
 import { Plus, Minus } from 'lucide-react';
 
@@ -64,12 +65,12 @@ export default function CalculadoraCedulasDialog({ open, onOpenChange, cedulas, 
           <div className="pt-3 border-t border-border/40">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-foreground">Total Calculado:</span>
-              <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatValor(calcularTotal())}</span>
+              <span className={`text-xl font-bold ${caixaClasses('success').text}`}>{formatValor(calcularTotal())}</span>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">Cancelar</Button>
-            <Button onClick={() => onConfirmar(calcularTotal())} className="flex-1 bg-emerald-600 hover:bg-emerald-700">Confirmar</Button>
+            <Button onClick={() => onConfirmar(calcularTotal())} className={`flex-1 ${caixaClasses('success').btn}`}>Confirmar</Button>
           </div>
         </div>
       </DialogContent>

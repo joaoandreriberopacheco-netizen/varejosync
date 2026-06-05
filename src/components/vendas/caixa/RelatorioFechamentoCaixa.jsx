@@ -6,6 +6,7 @@ import SafeActionButton from '@/components/ui/safe-action-button';
 import { Printer, X, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { caixaClasses, conferenciaTone } from '@/lib/caixaP38Theme';
 
 const fmt = (v) =>
   `R$ ${roundToTwoDecimals(v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -135,9 +136,7 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
               <span className="font-mono text-foreground">{fmt(totalConferido)}</span>
             </div>
             <div className={`flex justify-between text-base font-bold pt-2 border-t border-border/40 dark:border-border/40 ${
-              Math.abs(diferenca) < 0.01 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-red-600 dark:text-red-400'
+              caixaClasses(conferenciaTone({ temDiferenca: Math.abs(diferenca) >= 0.01, diferenca })).panelText
             }`}>
               <span>Diferença:</span>
               <span className="font-mono">{diferenca >= 0 ? '+' : ''}{fmt(diferenca)}</span>
@@ -146,9 +145,9 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
 
           {/* Status */}
           <div className="text-center pt-4 border-t border-border/40">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">Caixa Fechado</span>
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${caixaClasses('success').panel}`}>
+              <CheckCircle className={`w-5 h-5 ${caixaClasses('success').icon}`} />
+              <span className={`text-sm font-medium ${caixaClasses('success').panelText}`}>Caixa Fechado</span>
             </div>
           </div>
         </div>

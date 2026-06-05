@@ -255,7 +255,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
                         </h3>
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
                           <div className="space-y-0.5">
-                            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                            <p className="text-sm font-semibold text-primary">
                               Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             <p className="text-xs text-muted-foreground">

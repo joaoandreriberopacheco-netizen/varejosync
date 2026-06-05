@@ -12,6 +12,7 @@ import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { CAIXA_PRINT, caixaClasses, movimentoTone } from '@/lib/caixaP38Theme';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({
@@ -261,20 +262,20 @@ export default function VisualizadorCaixa({
       return `<div style="border-bottom:1px solid #f3f4f6;padding:5px 0">
         <div style="display:flex;justify-content:space-between;font-size:11px">
           <span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}${formasSingle}</span>
-          <span style="font-weight:600;color:#059669;white-space:nowrap;margin-left:8px">+R$ ${(v.valor_total || 0).toFixed(2)}</span>
+          <span style="font-weight:600;color:${CAIXA_PRINT.success};white-space:nowrap;margin-left:8px">+R$ ${(v.valor_total || 0).toFixed(2)}</span>
         </div>${subLinhas}</div>`;
     }).join('');
 
     const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço').map(m =>
-      `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#059669">+R$ ${(m.valor || 0).toFixed(2)}</span></div>`
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:${CAIXA_PRINT.success}">+R$ ${(m.valor || 0).toFixed(2)}</span></div>`
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum reforço</p>';
 
     const linhasRecolhimentos = movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m =>
-      `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#2563eb">-R$ ${(m.valor || 0).toFixed(2)}</span></div>`
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:${CAIXA_PRINT.info}">-R$ ${(m.valor || 0).toFixed(2)}</span></div>`
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
 
     const linhasDespesas = (caixaData.despesasLista || []).map(d =>
-      `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor || 0).toFixed(2)}</span></div>`
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''}</span><span style="color:${CAIXA_PRINT.danger}">-R$ ${(d.valor || 0).toFixed(2)}</span></div>`
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
 
     const html = `<html><head><title>Relatório - ${caixaSelecionado.nome}</title><style>
@@ -451,21 +452,21 @@ export default function VisualizadorCaixa({
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setShowSangriasDialog(true)} className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                        <button onClick={() => setShowSangriasDialog(true)} className={`p-1 rounded transition-colors flex-shrink-0 ${caixaClasses('info').hover}`} style={{ minWidth: '28px', minHeight: '28px' }}>
+                          <Eye className={`w-4 h-4 ${caixaClasses('info').icon}`} />
                         </button>
                         <span className="text-sm text-muted-foreground">Recolhimentos</span>
                       </div>
-                      <span className="text-base font-medium text-blue-600 dark:text-blue-400 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.sangrias)}</span>
+                      <span className={`text-base font-medium tabular-nums ${caixaClasses('info').text}`} style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.sangrias)}</span>
                     </div>
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setShowDespesasDialog(true)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-red-400 dark:text-red-500" />
+                        <button onClick={() => setShowDespesasDialog(true)} className={`p-1 rounded transition-colors flex-shrink-0 ${caixaClasses('danger').hover}`} style={{ minWidth: '28px', minHeight: '28px' }}>
+                          <Eye className={`w-4 h-4 ${caixaClasses('danger').icon}`} />
                         </button>
                         <span className="text-sm text-muted-foreground">Despesas</span>
                       </div>
-                      <span className="text-base font-medium text-red-600 dark:text-red-400 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.despesas)}</span>
+                      <span className={`text-base font-medium tabular-nums ${caixaClasses('danger').text}`} style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.despesas)}</span>
                     </div>
                     <div className="pt-3 mt-1 border-t border-border/40">
                       <div className="flex items-center justify-between">
@@ -509,9 +510,9 @@ export default function VisualizadorCaixa({
                       <div className="flex items-center justify-between py-2 px-3">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">Vale Troca</span>
-                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('success').pill}`}>não monetário</span>
                         </div>
-                        <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">{formatValor(caixaData.recebimentos.vale)}</span>
+                        <span className={`text-base font-medium ${caixaClasses('success').panelText}`}>{formatValor(caixaData.recebimentos.vale)}</span>
                       </div>
                     )}
                     {(caixaData.fiado || 0) > 0 && (
@@ -543,16 +544,16 @@ export default function VisualizadorCaixa({
                           <div
                             className={`p-4 rounded-xl ${
                               conferenciaOk
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                                : 'bg-amber-50 dark:bg-amber-900/20'
+                                ? caixaClasses('success').panel
+                                : caixaClasses('warning').panel
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span
                                 className={`text-sm font-medium ${
                                   conferenciaOk
-                                    ? 'text-emerald-700 dark:text-emerald-300'
-                                    : 'text-amber-800 dark:text-amber-300'
+                                    ? caixaClasses('success').panelText
+                                    : caixaClasses('warning').panelText
                                 }`}
                               >
                                 {conferenciaOk ? '✓ Valores conferem' : 'Diferença no fechamento'}
@@ -560,10 +561,8 @@ export default function VisualizadorCaixa({
                               <span
                                 className={`text-2xl font-bold font-glacial ${
                                   conferenciaOk
-                                    ? 'text-emerald-700 dark:text-emerald-300'
-                                    : diferencaFechamento > 0
-                                      ? 'text-[#4A5D23] dark:text-[#a4ce33]'
-                                      : 'text-red-600 dark:text-red-400'
+                                    ? caixaClasses('success').panelText
+                                    : caixaClasses(diferencaFechamento > 0 ? 'info' : 'danger').panelText
                                 }`}
                               >
                                 {diferencaFechamento > 0 ? '+' : ''}
@@ -578,10 +577,10 @@ export default function VisualizadorCaixa({
                           )}
                         </>
                       ) : (
-                        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 opacity-60">
+                        <div className={`p-4 rounded-xl opacity-60 ${caixaClasses('success').panel}`}>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">✓ Valores Conferem</span>
-                            <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-glacial">
+                            <span className={`text-sm font-medium ${caixaClasses('success').panelText}`}>✓ Valores Conferem</span>
+                            <span className={`text-2xl font-bold font-glacial ${caixaClasses('success').panelText}`}>
                               {formatValor(0)}
                             </span>
                           </div>
@@ -640,9 +639,9 @@ export default function VisualizadorCaixa({
           <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0">
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
-                const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
-                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
-                const itensFiado = (caixaData?.fiadoLista || []).map(f => ({ id: f.id, tipo: 'Fiado', valor: f.valor, descricao: f.descricao || 'Lançamento fiado', hora: f.created_date, cor: 'gray' }));
+                const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, tone: movimentoTone(m.tipo) }));
+                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, tone: 'danger' }));
+                const itensFiado = (caixaData?.fiadoLista || []).map(f => ({ id: f.id, tipo: 'Fiado', valor: f.valor, descricao: f.descricao || 'Lançamento fiado', hora: f.created_date, tone: 'muted' }));
                 const todos = [...itensMovimentos, ...itensDespesas, ...itensFiado].sort(
                   (a, b) => new Date(a.hora).getTime() - new Date(b.hora).getTime()
                 );
@@ -654,20 +653,23 @@ export default function VisualizadorCaixa({
                   </div>
                 );
 
-                return todos.map(item => (
+                return todos.map(item => {
+                  const tone = caixaClasses(item.tone);
+                  const Icon = item.tone === 'success' ? Plus : item.tone === 'info' ? Minus : item.tone === 'muted' ? Receipt : DollarSign;
+                  return (
                   <div key={item.id} className="bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : item.cor === 'gray' ? 'bg-muted' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                      {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : item.cor === 'gray' ? <Receipt className="w-4 h-4 text-muted-foreground" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
+                      <Icon className={`w-4 h-4 ${item.tone === 'muted' ? 'text-muted-foreground' : tone.icon}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-foreground truncate">{item.descricao}</div>
                       <div className="text-xs text-muted-foreground">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
                     </div>
-                    <div className={`text-base font-bold flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : item.cor === 'gray' ? 'text-foreground/90' : 'text-red-600 dark:text-red-400'}`}>
-                      {item.cor === 'emerald' || item.cor === 'gray' ? '+' : '−'}{formatValor(item.valor)}
+                    <div className={`text-base font-bold flex-shrink-0 ${item.tone === 'muted' ? tone.text : tone.text}`}>
+                      {item.tone === 'success' || item.tone === 'muted' ? '+' : '−'}{formatValor(item.valor)}
                     </div>
                   </div>
-                ));
+                );});
               })()}
             </div>
           </TabsContent>

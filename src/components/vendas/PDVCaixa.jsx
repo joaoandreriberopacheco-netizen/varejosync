@@ -50,6 +50,7 @@ import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { CAIXA_PRINT, CAIXA_TOAST_SUCCESS, caixaClasses, conferenciaTone, movimentoTone } from '@/lib/caixaP38Theme';
 
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
 const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
@@ -110,16 +111,18 @@ function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, f
 }
 
 function MovimentoTimelineCard({ item, formatValor }) {
+  const tone = caixaClasses(item.tone || item.cor);
+  const Icon = item.tone === 'success' || item.cor === 'emerald' ? Plus : item.tone === 'info' || item.cor === 'blue' ? Minus : DollarSign;
   return (
     <div className="bg-card dark:bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-        {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
+      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
+        <Icon className={`w-4 h-4 ${tone.icon}`} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-foreground dark:text-white truncate">{item.descricao}</div>
         <div className="text-xs text-muted-foreground dark:text-muted-foreground">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
       </div>
-      <div className={`text-base font-bold tabular-nums font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+      <div className={`text-base font-bold tabular-nums font-glacial flex-shrink-0 ${tone.text}`}>
         {item.icone}{formatValor(item.valor)}
       </div>
     </div>
@@ -449,7 +452,7 @@ export default function PDVCaixa() {
         loadData();
         toast({
           title: "✓ Atualizado!",
-          className: "bg-emerald-100 text-emerald-800",
+          className: CAIXA_TOAST_SUCCESS,
           duration: 1000
         });
         return;
@@ -708,7 +711,7 @@ export default function PDVCaixa() {
       toast({
         title: "✓ Retornado para edição",
         description: "O rascunho foi devolvido ao vendedor.",
-        className: "bg-emerald-100 text-emerald-800"
+        className: CAIXA_TOAST_SUCCESS
       });
 
       setShowRetornoDialog(false);
@@ -951,7 +954,7 @@ export default function PDVCaixa() {
       toast({
         title: "✓ Pagamento aprovado!",
         description: "Venda finalizada com sucesso.",
-        className: "bg-emerald-100 text-emerald-800",
+        className: CAIXA_TOAST_SUCCESS,
         duration: 2000
       });
 
@@ -1084,7 +1087,7 @@ export default function PDVCaixa() {
       toast({
         title: "✓ Despesa registrada!",
         description: `${descricaoDespesa} - ${formatValor(valorFloat)}`,
-        className: "bg-emerald-100 text-emerald-800",
+        className: CAIXA_TOAST_SUCCESS,
         duration: 2000
       });
 
@@ -1193,7 +1196,7 @@ export default function PDVCaixa() {
       toast({
         title: `✓ ${tipoMovimento} registrado!`,
         description: `Movimento ${numeroMovimento} realizado.`,
-        className: "bg-emerald-100 text-emerald-800",
+        className: CAIXA_TOAST_SUCCESS,
         duration: 2000
       });
 
@@ -1337,7 +1340,7 @@ export default function PDVCaixa() {
     setView('dashboard');
     toast({
       title: "✓ Caixa fechado com sucesso!",
-      className: "bg-emerald-100 text-emerald-800",
+      className: CAIXA_TOAST_SUCCESS,
       duration: 2000
     });
   };
@@ -1355,7 +1358,7 @@ export default function PDVCaixa() {
       descricao: m.observacao || m.tipo,
       hora: m.created_date,
       operador: m.usuario_responsavel_nome,
-      cor: m.tipo === 'Reforço' ? 'emerald' : 'blue',
+      tone: movimentoTone(m.tipo),
       icone: m.tipo === 'Reforço' ? '+' : '−',
     }));
     const itensDespesas = (caixaData.despesasLista || []).map(d => ({
@@ -1365,7 +1368,7 @@ export default function PDVCaixa() {
       descricao: d.descricao,
       hora: d.created_date,
       operador: null,
-      cor: 'red',
+      tone: 'danger',
       icone: '−',
     }));
 
@@ -1422,7 +1425,7 @@ export default function PDVCaixa() {
         
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
+            onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
             className="p-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar (F7)">
@@ -1520,10 +1523,10 @@ export default function PDVCaixa() {
                         <ValorRow label="Saldo Inicial" valor={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0} />
                         <ValorRow label="Total Vendas" valor={caixaData.totalVendas} onEye={() => setShowVendasDialog(true)} />
                         <ValorRow label="Reforços" valor={caixaData.reforcos} onEye={() => setShowReforcosDialog(true)} />
-                        <ValorRow label="Recolhimentos" valor={caixaData.sangrias} color="text-blue-600 dark:text-blue-400" onEye={() => setShowSangriasDialog(true)} eyeColor="hover:bg-blue-50 dark:hover:bg-blue-900/20" eyeIconColor="text-blue-500 dark:text-blue-400" />
-                        <ValorRow label="Despesas" valor={caixaData.despesas} color="text-red-600 dark:text-red-400" onEye={() => setShowDespesasDialog(true)} eyeColor="hover:bg-red-50 dark:hover:bg-red-900/20" eyeIconColor="text-red-400 dark:text-red-500" />
+                        <ValorRow label="Recolhimentos" valor={caixaData.sangrias} color={caixaClasses('info').text} onEye={() => setShowSangriasDialog(true)} eyeColor={caixaClasses('info').hover} eyeIconColor={caixaClasses('info').icon} />
+                        <ValorRow label="Despesas" valor={caixaData.despesas} color={caixaClasses('danger').text} onEye={() => setShowDespesasDialog(true)} eyeColor={caixaClasses('danger').hover} eyeIconColor={caixaClasses('danger').icon} />
                         {(caixaData.recebimentos?.fiado || 0) > 0 && (
-                          <ValorRow label="Conta a Receber" valor={caixaData.recebimentos.fiado} color="text-amber-600 dark:text-amber-400" eyeColor="hover:bg-amber-50 dark:hover:bg-amber-900/20" eyeIconColor="text-amber-500 dark:text-amber-400" />
+                          <ValorRow label="Conta a Receber" valor={caixaData.recebimentos.fiado} color={caixaClasses('warning').text} eyeColor={caixaClasses('warning').hover} eyeIconColor={caixaClasses('warning').icon} />
                         )}
                         <div className="pt-3 mt-1 border-t border-border/40 dark:border-border/40">
                           <div className="flex items-center justify-between">
@@ -1604,9 +1607,9 @@ export default function PDVCaixa() {
                      <div className="flex items-center justify-between py-2 px-3">
                        <div className="flex items-center gap-2">
                          <span className="text-sm text-muted-foreground dark:text-muted-foreground">Vale Troca</span>
-                         <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
+                         <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('success').pill}`}>não monetário</span>
                        </div>
-                       <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">
+                       <span className={`text-base font-medium ${caixaClasses('success').panelText}`}>
                          {formatValor(caixaData.recebimentos.vale || 0)}
                        </span>
                      </div>
@@ -1615,9 +1618,9 @@ export default function PDVCaixa() {
                      <div className="flex items-center justify-between py-2 px-3">
                        <div className="flex items-center gap-2">
                          <span className="text-sm text-muted-foreground dark:text-muted-foreground">Conta a Pagar</span>
-                         <span className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">a receber</span>
+                         <span className={`text-xs px-1.5 py-0.5 rounded ${caixaClasses('warning').pill}`}>a receber</span>
                        </div>
-                       <span className="text-base font-medium text-amber-700 dark:text-amber-300">
+                       <span className={`text-base font-medium ${caixaClasses('warning').panelText}`}>
                          {formatValor(caixaData.recebimentos.fiado || 0)}
                        </span>
                      </div>
@@ -1646,12 +1649,12 @@ export default function PDVCaixa() {
                                 {formatValor(totalConferido)}
                               </span>
                             </div>
-                            <div className={`p-4 rounded-xl transition-colors ${!temDiferenca ? 'bg-emerald-50 dark:bg-emerald-900/20' : diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                            <div className={`p-4 rounded-xl transition-colors ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panel}`}>
                               <div className="flex items-center justify-between">
-                                <span className={`text-sm font-medium ${!temDiferenca ? 'text-emerald-700 dark:text-emerald-300' : diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                <span className={`text-sm font-medium ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panelText}`}>
                                   {!temDiferenca ? '✓ Confere' : diferenca > 0 ? 'Sobrando' : 'Faltando'}
                                 </span>
-                                <span className={`text-2xl font-bold font-glacial ${!temDiferenca ? 'text-emerald-700 dark:text-emerald-300' : diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                <span className={`text-2xl font-bold font-glacial ${caixaClasses(conferenciaTone({ temDiferenca, diferenca })).panelText}`}>
                                   {!temDiferenca ? formatValor(0) : formatValor(Math.abs(diferenca))}
                                 </span>
                               </div>
@@ -1698,24 +1701,24 @@ export default function PDVCaixa() {
                          return `<div style="border-bottom:1px solid #f3f4f6;padding:5px 0">
                            <div style="display:flex;justify-content:space-between;font-size:11px">
                              <span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${formasSingle}</span>
-                             <span style="font-weight:600;color:#059669;white-space:nowrap;margin-left:8px">+R$ ${(v.valor_total||0).toFixed(2)}</span>
+                             <span style="font-weight:600;color:${CAIXA_PRINT.success};white-space:nowrap;margin-left:8px">+R$ ${(v.valor_total||0).toFixed(2)}</span>
                            </div>${linhaSub}${subLinhas}</div>`;
                        }).join('');
                        // Reforços
                        const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço').map(m =>
-                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#059669">+R$ ${(m.valor||0).toFixed(2)}</span></div>`
+                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:${CAIXA_PRINT.success}">+R$ ${(m.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum reforço</p>';
                        // Recolhimentos
                        const linhasRecolhimentos = movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m =>
-                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#2563eb">-R$ ${(m.valor||0).toFixed(2)}</span></div>`
+                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:${CAIXA_PRINT.info}">-R$ ${(m.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
                        // Despesas
                        const linhasDespesas = (caixaData.despesasLista || []).map(d =>
-                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
+                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:${CAIXA_PRINT.danger}">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
                        
                        const linhasCancelamentos = cancelamentos.length > 0
-                         ? cancelamentos.map(c => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af;padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
+                         ? cancelamentos.map(c => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:${CAIXA_PRINT.danger}">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:${CAIXA_PRINT.danger}">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:${CAIXA_PRINT.muted};padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
                          : '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda cancelada</p>';
                        const html = `<html><head><title>Relatório de Fechamento</title><style>
                          body{font-family:'DIN 1451',DINish,system-ui,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
@@ -1775,9 +1778,9 @@ export default function PDVCaixa() {
                          <div className="flex items-center justify-between mb-3">
                            <h3 className="text-sm font-semibold text-foreground/90 dark:text-muted-foreground">Fechamento de Caixa</h3>
                            {!temDiferenca ? (
-                             <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Valores conferem</span>
+                             <span className={`text-xs flex items-center gap-1 ${caixaClasses('success').text}`}><CheckCircle2 className="w-3 h-3" /> Valores conferem</span>
                            ) : (
-                             <span className="text-xs text-red-500 dark:text-red-400">{diferenca > 0 ? 'Sobrando' : 'Faltando'} {formatValor(Math.abs(diferenca))}</span>
+                             <span className={`text-xs ${caixaClasses(diferenca > 0 ? 'info' : 'danger').text}`}>{diferenca > 0 ? 'Sobrando' : 'Faltando'} {formatValor(Math.abs(diferenca))}</span>
                            )}
                          </div>
                          <div className="flex gap-2">
@@ -1812,7 +1815,7 @@ export default function PDVCaixa() {
                          </div>
                        </div>
                        <button
-                         onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
+                         onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
                          className="p-2 hover:bg-muted dark:hover:bg-muted rounded-xl transition-colors"
                          style={{ minWidth: '44px', minHeight: '44px' }}
                          title="Atualizar">
@@ -1855,22 +1858,22 @@ export default function PDVCaixa() {
                     <div className="grid grid-cols-3 gap-2">
                       <button onClick={() => handleAbrirMovimento('Reforço')} disabled={modoVisualizacao}
                         className="h-16 bg-card dark:bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
-                        <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
-                          <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${caixaClasses('success').well}`}>
+                          <Plus className={`w-4 h-4 ${caixaClasses('success').icon}`} />
                         </div>
                         <div className="text-xs font-medium text-foreground dark:text-white">Reforço</div>
                       </button>
                       <button onClick={() => handleAbrirMovimento('Recolhimento de Caixa')} disabled={modoVisualizacao}
                         className="h-16 bg-card dark:bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
-                        <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                          <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${caixaClasses('info').well}`}>
+                          <Minus className={`w-4 h-4 ${caixaClasses('info').icon}`} />
                         </div>
                         <div className="text-xs font-medium text-foreground dark:text-white">Recolhimento</div>
                       </button>
                       <button onClick={() => setShowDespesaDialog(true)} disabled={modoVisualizacao}
                         className="h-16 bg-card dark:bg-card rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
-                        <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                          <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${caixaClasses('danger').well}`}>
+                          <DollarSign className={`w-4 h-4 ${caixaClasses('danger').icon}`} />
                         </div>
                         <div className="text-xs font-medium text-foreground dark:text-white">Despesa</div>
                       </button>
@@ -1942,7 +1945,7 @@ export default function PDVCaixa() {
           <ProcessarVendasView
             rascunhosAguardando={rascunhosAguardando}
             onBack={() => setView('dashboard')}
-            onRefresh={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
+            onRefresh={() => { loadData(); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
             onAbrirPedido={handleAbrirPedido}
             formatarValorExibicao={formatarValorExibicao}
           />

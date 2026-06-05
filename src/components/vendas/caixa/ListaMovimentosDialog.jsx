@@ -2,6 +2,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Plus, Minus, DollarSign, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
+import { caixaClasses } from '@/lib/caixaP38Theme';
 
 export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, formatValor, onSelectMovimento, onRefresh }) {
 
@@ -19,7 +20,8 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
     ? (despesasLista || [])
     : [];
 
-  const corTotal = isReforcos ? 'text-emerald-600 dark:text-emerald-400' : isSangrias ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400';
+  const corTotal = isReforcos ? caixaClasses('success').text : isSangrias ? caixaClasses('info').text : caixaClasses('danger').text;
+  const toneDanger = caixaClasses('danger');
   const sinal = isReforcos ? '+' : '−';
 
   const EmptyIcon = isReforcos ? Plus : isSangrias ? Minus : DollarSign;
@@ -62,7 +64,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
                           <div className="text-sm font-semibold text-foreground">{item.descricao}</div>
                           <div className="text-xs text-muted-foreground mt-1">{item.categoria} · {item.created_date ? formatarDataHora(item.created_date).split(' ')[1] : ''}</div>
                         </div>
-                        <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">−{formatValor(item.valor)}</div>
+                        <div className={`text-2xl font-bold font-glacial ${toneDanger.text}`}>−{formatValor(item.valor)}</div>
                       </div>
                     </div>
                   );
@@ -78,7 +80,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
                         <div className="flex items-center gap-3 mb-2 flex-wrap">
                           <span className={`text-sm font-semibold ${cancelado ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{item.numero}</span>
                           <span className="text-xs text-muted-foreground">{formatarDataHora(item.created_date).split(' ')[1]}</span>
-                          {cancelado && <span className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">Cancelado</span>}
+                          {cancelado && <span className={`text-[10px] px-2 py-1 rounded-full ${toneDanger.pill}`}>Cancelado</span>}
                           {editado && <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Editado</span>}
                         </div>
                         <div className="text-xs text-muted-foreground">{item.usuario_responsavel_nome}</div>
