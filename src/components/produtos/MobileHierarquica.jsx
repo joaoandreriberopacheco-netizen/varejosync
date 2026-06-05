@@ -13,11 +13,16 @@ import {
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
 import { P38StatusDot } from '@/components/ui/p38-mobile-line';
-import { p38Table } from '@/lib/p38TableSurfaces';
+import { p38Table, MARGIN_TABLE_BORDER, MARGIN_TABLE_MICRO, MARGIN_TABLE_PANEL } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-2 gap-x-1 min-w-0';
+const CATALOGO_MOBILE_HEADER_LABEL = `${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0`;
+const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right';
+const CATALOGO_MOBILE_BODY_TEXT = `${p38Table.bodyText} leading-none`;
 
 function buildUnitOptions(produto) {
   const purchaseOptions = buildPurchaseUnitOptions(produto);
@@ -181,7 +186,38 @@ function PricingDialog({ produto, open, onOpenChange }) {
   );
 }
 
-// ── Card de SKU ────────────────────────────────────────────────────────────────
+function CatalogoMobileColumnHeader({ className = '' }) {
+  return (
+    <div className={cn(`overflow-hidden border-b ${MARGIN_TABLE_BORDER} ${MARGIN_TABLE_PANEL}`, className)}>
+      <div className="flex min-w-0">
+        <div className="w-[3.25rem] flex-shrink-0 border-r border-white/15 px-1.5 py-2 text-right">
+          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>Estoque</p>
+          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-2`}>Un</p>
+        </div>
+        <div className={`flex-1 min-w-0 py-2 pr-11 pl-2 ${CATALOGO_MOBILE_VALUES_GRID}`}>
+          <p className={CATALOGO_MOBILE_HEADER_LABEL}>Preço venda</p>
+          <p className={CATALOGO_MOBILE_HEADER_LABEL}>Status</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CatalogoMobileEstoqueCol({ quantidade, unidade, stockTone }) {
+  return (
+    <div className={CATALOGO_MOBILE_ESTOQUE_COL}>
+      <P38StatusDot tone={stockTone} className="absolute left-0 top-3" />
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-foreground`}>
+        {fmtN(quantidade)}
+      </p>
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 truncate`}>
+        {unidade}
+      </p>
+    </div>
+  );
+}
+
+// ── Linha de SKU (grelha mobile, padrão Margem / pedido de compras) ───────────
 const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const p = row.produto;
   const e = p.estoque_atual || 0;
@@ -195,55 +231,52 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
 
   return (
-    <div className={cn(p38Table.mobileLine, "grid grid-cols-[40px_minmax(0,1fr)_44px] gap-3 border-l-transparent w-full min-w-0 max-w-full box-border")}>
-      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
-        {p.imagem_url
-          ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />}
-      </div>
-
-      <button type="button" className="min-w-0 overflow-hidden text-left" onClick={() => onEdit(p)}>
-        <p className="text-[12px] font-normal text-foreground/90 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-3">
-          {p.nome}
-        </p>
-        <div className="mt-1.5 min-w-0 max-w-full">
-          <div className="grid grid-cols-3 gap-2 min-w-0">
-            <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Estoque</div>
-              <div className="text-[11px] font-medium text-muted-foreground tabular-nums truncate">
-                {fmtN(estoqueExibicao)} {unidadeExibicao}
-              </div>
-              {apresent && (
-                <div className="text-[9px] text-muted-foreground truncate">
-                  {apresent.rotulo || 'unidade de exibição'}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Preço venda</div>
-              <div className="text-[11px] font-semibold text-foreground tabular-nums truncate">
-                {cat.precoVenda > 0 ? (
-                  <>R$ {fmtR(cat.precoVenda)} <span className="text-[9px] font-normal text-muted-foreground">/{cat.sigla}</span></>
-                ) : '-'}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Status</div>
-              <div className="flex items-center gap-1 min-w-0">
-                <P38StatusDot tone={stockTone} />
-                <span className="text-[11px] text-muted-foreground truncate">{statusLabel}</span>
-              </div>
-            </div>
-          </div>
+    <div className={cn(
+      p38Table.mobileLine,
+      'flex min-w-0 max-w-full border-l-transparent p-0 pr-0 pl-0',
+    )}>
+      <button
+        type="button"
+        className="flex flex-1 min-w-0 text-left active:bg-secondary/30 dark:active:bg-secondary/50"
+        onClick={() => onEdit(p)}
+      >
+        <CatalogoMobileEstoqueCol
+          quantidade={estoqueExibicao}
+          unidade={unidadeExibicao}
+          stockTone={stockTone}
+        />
+        <div className="flex-1 min-w-0 py-2 pr-2 pl-2">
+          <p
+            lang="pt-BR"
+            className="text-[12px] font-normal text-foreground/90 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-2"
+          >
+            {p.nome}
+          </p>
           {p.codigo_interno && (
-            <div className="mt-1 text-[10px] text-muted-foreground font-mono truncate">
+            <p className="mt-0.5 text-[10px] text-muted-foreground font-mono truncate">
               #{p.codigo_interno}
-            </div>
+            </p>
+          )}
+          <div className={`${CATALOGO_MOBILE_VALUES_GRID} mt-1`}>
+            <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate text-foreground font-semibold`}>
+              {cat.precoVenda > 0 ? (
+                <>R$ {fmtR(cat.precoVenda)}</>
+              ) : '-'}
+            </p>
+            <p className={`${CATALOGO_MOBILE_BODY_TEXT} text-right truncate text-muted-foreground flex items-center justify-end gap-1`}>
+              <P38StatusDot tone={stockTone} />
+              <span className="truncate">{statusLabel}</span>
+            </p>
+          </div>
+          {apresent && (
+            <p className="mt-0.5 text-[9px] text-muted-foreground truncate">
+              {apresent.rotulo || 'unidade de exibição'}
+            </p>
           )}
         </div>
       </button>
 
-      <div className="flex items-start justify-end pt-0.5">
+      <div className="flex items-start justify-center pt-2 pr-2 w-11 flex-shrink-0">
         <Button
           type="button"
           variant="ghost"
@@ -351,6 +384,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="rounded-lg border border-border/40 dark:border-white/10 overflow-hidden">
+        <CatalogoMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
         {rows.map(row => (
           <div key={row.key} className="contain-layout">
             {row.type === 'group' ? (
