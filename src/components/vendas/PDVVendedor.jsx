@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import ComprovantePreVenda from './ComprovantePreVenda';
+import ConfirmarImpressaoDialog from './ConfirmarImpressaoDialog';
 import LostSalesForm from './LostSalesForm';
 import OrcamentosRecentesSheet from './OrcamentosRecentesSheet';
 import SimuladorTaxaCartao from './SimuladorTaxaCartao';
@@ -63,6 +64,7 @@ export default function PDVVendedor() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [ultimaPreVenda, setUltimaPreVenda] = useState(null);
   const [showComprovante, setShowComprovante] = useState(false);
+  const [showConfirmarImpressao, setShowConfirmarImpressao] = useState(false);
   const [produtoSelecionadoIndex, setProdutoSelecionadoIndex] = useState(0);
   const [clienteSelecionadoIndex, setClienteSelecionadoIndex] = useState(0);
   const [showLostSalesForm, setShowLostSalesForm] = useState(false);
@@ -297,6 +299,8 @@ export default function PDVVendedor() {
   // Atalhos de teclado
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {// Renamed to avoid confusion with local handleKeyDown
+      if (showConfirmarImpressao) return;
+
       // F1 - Ajuda
       if (e.key === 'F1') {
         e.preventDefault();
@@ -329,7 +333,7 @@ export default function PDVVendedor() {
       }
 
       // ESC - Voltar à tela anterior (só se nenhum dialog de cliente estiver aberto)
-      if (e.key === 'Escape' && !showClienteDialog && !showComprovante) {
+      if (e.key === 'Escape' && !showClienteDialog && !showComprovante && !showConfirmarImpressao) {
         e.preventDefault();
         const confirmExit = confirm('Deseja sair do PDV e voltar à tela anterior?');
         if (confirmExit) {
@@ -396,7 +400,7 @@ export default function PDVVendedor() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [showClienteDialog, showNovoClienteForm, carrinho, showSuggestions, produtosSugeridos, produtoSelecionadoIndex, clientesFiltrados, clienteSelecionadoIndex, showComprovante, ajusteExcedido]);
+  }, [showClienteDialog, showNovoClienteForm, carrinho, showSuggestions, produtosSugeridos, produtoSelecionadoIndex, clientesFiltrados, clienteSelecionadoIndex, showComprovante, showConfirmarImpressao, ajusteExcedido]);
 
   useEffect(() => {
     if (inputProdutoRef.current && !showClienteDialog) {// Updated ref
@@ -857,7 +861,7 @@ export default function PDVVendedor() {
       }
 
       setUltimaPreVenda(rascunhoFinal);
-      setShowComprovante(true);
+      setShowConfirmarImpressao(true);
 
       setCarrinho([]);
       setClienteSelecionado(null);
@@ -1794,6 +1798,13 @@ export default function PDVVendedor() {
           </div>
         </div>
       }
+
+      <ConfirmarImpressaoDialog
+        open={showConfirmarImpressao}
+        onOpenChange={setShowConfirmarImpressao}
+        onSim={() => setShowComprovante(true)}
+        onNao={() => {}}
+      />
 
       {ultimaPreVenda &&
       <ComprovantePreVenda
