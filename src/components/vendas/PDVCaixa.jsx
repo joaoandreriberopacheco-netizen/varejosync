@@ -47,6 +47,7 @@ import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
+import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
@@ -265,6 +266,7 @@ export default function PDVCaixa({
   const [showPromissoria, setShowPromissoria] = useState(false);
   const [dadosPromissoria, setDadosPromissoria] = useState(null); // { pedido, valorFiado }
   const [showComprovanteCaixa, setShowComprovanteCaixa] = useState(false);
+  const [showConfirmarImpressao, setShowConfirmarImpressao] = useState(false);
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
@@ -436,6 +438,8 @@ export default function PDVCaixa({
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (showConfirmarImpressao) return;
+
       if (e.key === 'F1') {
         e.preventDefault();
         toast({
@@ -495,7 +499,7 @@ export default function PDVCaixa({
         return;
       }
 
-      if (e.key === 'Escape' && view !== 'dashboard' && !isDialogOpen && !showMovimentoDialog && !showFechamentoDialog) {// Updated telaAtual to view
+      if (e.key === 'Escape' && view !== 'dashboard' && !isDialogOpen && !showMovimentoDialog && !showFechamentoDialog && !showConfirmarImpressao) {// Updated telaAtual to view
         e.preventDefault();
         setView('dashboard'); // Updated setTelaAtual to setView
         return;
@@ -504,7 +508,7 @@ export default function PDVCaixa({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, pedidosAguardando]); // Updated telaAtual to view
+  }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, showConfirmarImpressao, valorRestante, pedidosAguardando]); // Updated telaAtual to view
 
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
@@ -650,6 +654,7 @@ export default function PDVCaixa({
     processandoVenda ||
     fechandoCaixa ||
     showComprovanteCaixa ||
+    showConfirmarImpressao ||
     showPromissoria ||
     showRetornoDialog ||
     showComprovanteMovimento ||
@@ -1005,7 +1010,7 @@ export default function PDVCaixa({
         itens: pedidoVenda.itens?.length ? pedidoVenda.itens : pedidoSelecionado.itens,
         pagamentos: pagamentosArray,
       });
-      setShowComprovanteCaixa(true);
+      setShowConfirmarImpressao(true);
 
       loadData();
     } catch (error) {
@@ -2032,7 +2037,18 @@ export default function PDVCaixa({
           }}
         />
 
-        {/* Comprovante de Caixa - aparece imediatamente após confirmar pagamento */}
+        <ConfirmarImpressaoDialog
+          open={showConfirmarImpressao}
+          onOpenChange={setShowConfirmarImpressao}
+          onSim={() => setShowComprovanteCaixa(true)}
+          onNao={() => {
+            if (dadosPromissoria) {
+              setShowPromissoria(true);
+            }
+          }}
+        />
+
+        {/* Comprovante de Caixa - aparece após confirmar impressão */}
         <ComprovanteCompra
           pedido={vendaFinalizada}
           open={showComprovanteCaixa}
