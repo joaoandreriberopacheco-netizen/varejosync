@@ -130,6 +130,13 @@ button:focus-visible {
     --p38-fab-gap: 16px;
     --p38-fab-size: 56px;
     --p38-scroll-pad-below-nav: calc(var(--p38-bottom-nav-total) + 1.5rem);
+
+    /* Scrollbar — inspirado no Cursor; área de toque ~10px (Cursor ~6px) */
+    --scrollbar-size: 10px;
+    --scrollbar-thumb: rgba(0, 0, 0, 0.38);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.58);
+    --scrollbar-thumb-active: rgba(0, 0, 0, 0.72);
+    --scrollbar-track: transparent;
   }
   /* Dark: cinzas dessaturados P38 (#1f1d22 / #2d333b) */
   .dark {
@@ -165,6 +172,10 @@ button:focus-visible {
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 216 10% 28%;
     --sidebar-ring: 76 61% 50%;
+
+    --scrollbar-thumb: rgba(161, 161, 161, 0.55);
+    --scrollbar-thumb-hover: rgba(191, 191, 191, 0.72);
+    --scrollbar-thumb-active: rgba(212, 212, 212, 0.88);
   }
 }
 
@@ -215,6 +226,20 @@ button:focus-visible {
   .p38-layout-mobile-scroll-pad {
     padding-bottom: max(6rem, var(--p38-scroll-pad-below-nav));
   }
+
+  /* Scroll oculto de propósito (tabs horizontais, carrosséis) */
+  .no-scrollbar,
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -253,4 +278,44 @@ button:focus-visible {
 [data-sonner-toaster] {
   --width: 420px;
   z-index: 99999;
+}
+
+/* ==========================================
+   SCROLLBAR GLOBAL — estilo Cursor (P38)
+   Preto no claro, cinza no escuro; trilho transparente.
+   ========================================== */
+
+*,
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  min-height: 48px;
+  transition: background-color 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }

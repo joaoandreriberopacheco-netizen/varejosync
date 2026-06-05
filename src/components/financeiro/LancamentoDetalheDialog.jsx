@@ -408,7 +408,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         <div className="h-px bg-muted" />
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
 
         {ehDespesaEditavel && (
           <>

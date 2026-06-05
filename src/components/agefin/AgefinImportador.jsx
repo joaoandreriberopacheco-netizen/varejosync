@@ -887,7 +887,7 @@ ${blocoTextoLocal}`,
 
   return (
     <div className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] [scrollbar-gutter:stable] md:[scrollbar-width:thin] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-5 pb-4 pt-2 touch-pan-y max-md:pb-[calc(5rem+env(safe-area-inset-bottom))] [scrollbar-gutter:stable] [-ms-overflow-style:auto] [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
           <div className="rounded-[28px] bg-card p-5 shadow-sm dark:bg-muted">
             <div className="flex items-start gap-3">
