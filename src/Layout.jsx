@@ -256,12 +256,20 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
+  const globalQuickAccessLaunchers = (
+    <>
+      <QuickBudgetLauncher />
+      <CaixaRapidoLauncher />
+    </>
+  );
+
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
         <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background">
           {children}
         </div>
+        {globalQuickAccessLaunchers}
       </div>
     );
   }
@@ -341,8 +349,7 @@ export default function Layout({ children, currentPageName }) {
           />
         )}
       </div>
-      <QuickBudgetLauncher />
-      <CaixaRapidoLauncher />
+      {globalQuickAccessLaunchers}
       {showPinSetup && (
         <PinSetupDialog
           isOpen={showPinSetup}
