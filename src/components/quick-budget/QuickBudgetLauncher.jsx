@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronUp, Search } from 'lucide-react';
+import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import QuickBudgetPanel from './QuickBudgetPanel';
-
-/** Acima de drawers/modais comuns (ex. z-310) para o atalho continuar acessível. */
-const LAUNCHER_Z = 520;
 
 export default function QuickBudgetLauncher() {
   const [open, setOpen] = useState(false);
@@ -65,7 +63,7 @@ export default function QuickBudgetLauncher() {
       <div
         className="pointer-events-none fixed left-0 p38-bottom-fab1"
         style={{
-          zIndex: LAUNCHER_Z,
+          zIndex: QUICK_ACCESS_Z.launcher,
           transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
           transition: dragging ? 'none' : 'transform 180ms ease-out',
         }}

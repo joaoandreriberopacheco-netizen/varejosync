@@ -15,6 +15,7 @@ import {
 } from './quickBudgetUtils';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
+import { QUICK_ACCESS_PANEL_CLASS } from '@/lib/quickAccessOverlay';
 
 export default function QuickBudgetPanel({ open, onOpenChange }) {
   const [produtos, setProdutos] = useState([]);
@@ -373,7 +374,10 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 bg-muted/40 p-0 dark:bg-background [&>div:first-child]:hidden">
+        <DrawerContent
+          overlayClassName={QUICK_ACCESS_PANEL_CLASS}
+          className={`${QUICK_ACCESS_PANEL_CLASS} mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 bg-muted/40 p-0 dark:bg-background [&>div:first-child]:hidden`}
+        >
           {content}
         </DrawerContent>
       </Drawer>
@@ -382,7 +386,10 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-muted/40 p-0 shadow-2xl dark:bg-background [&>button.absolute]:hidden">
+      <DialogContent
+        overlayClassName={QUICK_ACCESS_PANEL_CLASS}
+        className={`${QUICK_ACCESS_PANEL_CLASS} flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-muted/40 p-0 shadow-2xl dark:bg-background [&>button.absolute]:hidden`}
+      >
         <DialogHeader className="hidden" />
         {content}
       </DialogContent>
