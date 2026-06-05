@@ -21,7 +21,7 @@ const R = (v) => {
 };
 
 const STATUS_CONFIG = {
-  'Rascunho': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted text-muted-foreground' },
+  'Rascunho': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted/80 text-foreground/85' },
   'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
   'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Cancelado': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted text-muted-foreground' },
+  'Cancelado': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted/80 text-foreground/85' },
 };
 
 // Adiciona animação de piscar ao CSS global
@@ -61,12 +61,12 @@ function EmbarquesInfo({ pedido }) {
   if (embarqueDormindo) return null;
 
   return (
-    <div className="flex items-center gap-3 flex-wrap text-sm leading-normal text-muted-foreground">
+    <div className="flex items-center gap-3 flex-wrap text-sm leading-normal text-foreground/85">
       <span className="flex items-center gap-1.5">
-        <CalendarClock className="w-3.5 h-3.5 flex-none" />
+        <CalendarClock className="w-3.5 h-3.5 flex-none text-foreground/70" />
         <span>{embarque?.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
       </span>
-      <span className="text-muted-foreground tabular-nums">
+      <span className="text-foreground/75 tabular-nums">
         {pedido._display_ordinal || '#01'}
       </span>
       {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
@@ -167,7 +167,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
+        className="group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden font-din-1451"
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
@@ -199,10 +199,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden" style={{maxWidth: '55%'}}>
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-foreground leading-normal font-mono">
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-foreground leading-normal">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
-                    <p className="mt-0.5 text-sm font-medium text-muted-foreground leading-normal truncate">
+                    <p className="mt-0.5 text-sm font-medium text-foreground/85 leading-normal truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-0.5">
@@ -220,7 +220,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <p className="text-sm font-bold text-foreground leading-normal whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
                 {R(valorExibido)}
               </p>
-              <p className="text-sm text-muted-foreground leading-normal whitespace-nowrap">
+              <p className="text-sm text-foreground/80 leading-normal whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
@@ -229,8 +229,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           {/* Linha de metadados */}
           <div className="mt-1.5 flex flex-col gap-1 text-sm leading-normal">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Package2 className="w-3.5 h-3.5 flex-none" />
+              <span className="flex items-center gap-1.5 text-foreground/85">
+                <Package2 className="w-3.5 h-3.5 flex-none text-foreground/70" />
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
                   {pedido._is_necessidade
@@ -297,14 +297,14 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       }, 0);
 
   return (
-    <div className={`w-full space-y-2 ${className}`}>
+    <div className={`w-full space-y-2 font-din-1451 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-0.5 gap-2 group">
-        <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground leading-normal truncate min-w-0 flex-1">
+        <p className="text-sm font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
           {label}
         </p>
         <div className="flex items-center gap-1.5 flex-none shrink-0">
-          <span className="text-sm font-bold text-muted-foreground leading-normal whitespace-nowrap tabular-nums">{R(valorTotal)}</span>
-          <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+          <span className="text-sm font-bold text-foreground/80 leading-normal whitespace-nowrap tabular-nums">{R(valorTotal)}</span>
+          <ChevronDown className={`w-3.5 h-3.5 text-foreground/70 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
         </div>
       </button>
       {open && (
@@ -340,13 +340,13 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
     return (
       <div className="bg-card rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
         <Package2 className="w-9 h-9 text-muted-foreground dark:text-foreground/90" />
-        <p className="text-sm text-muted-foreground">Nenhum embarque encontrado</p>
+        <p className="text-sm text-foreground/85">Nenhum embarque encontrado</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 font-din-1451">
       {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (
