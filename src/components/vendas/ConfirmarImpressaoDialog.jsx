@@ -12,10 +12,28 @@ import { Button } from '@/components/ui/button';
 /**
  * Pergunta "Imprimir?" antes de abrir a tela de comprovante.
  * Sim: clique, S ou Enter. Não: clique, N ou Esc.
+ *
+ * @param {'senha'|'cupom'} tipo — identifica o documento na pergunta
+ * @param {string} [numero] — número exibido (senha ou cupom)
+ * @param {string} [numeroCompleto] — senha completa (quando o número principal são os 4 dígitos)
  */
-export default function ConfirmarImpressaoDialog({ open, onOpenChange, onSim, onNao }) {
+export default function ConfirmarImpressaoDialog({
+  open,
+  onOpenChange,
+  onSim,
+  onNao,
+  tipo = 'senha',
+  numero,
+  numeroCompleto,
+}) {
   const simRef = useRef(null);
   const respostaRef = useRef(null);
+
+  const rotulo = tipo === 'cupom' ? 'Cupom' : 'Senha';
+  const numeroExibicao = (numero || '').trim();
+  const titulo = numeroExibicao
+    ? `Imprimir ${rotulo.toLowerCase()} ${tipo === 'cupom' ? 'nº ' : ''}${numeroExibicao}?`
+    : 'Imprimir?';
 
   const fecharCom = (resposta) => {
     if (!open || respostaRef.current) return;
@@ -69,7 +87,20 @@ export default function ConfirmarImpressaoDialog({ open, onOpenChange, onSim, on
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-[28px] border-0 bg-card p-5 shadow-2xl sm:w-full sm:max-w-lg sm:p-6 dark:bg-background">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-center text-xl">Imprimir?</AlertDialogTitle>
+          <AlertDialogTitle className="text-center text-xl">{titulo}</AlertDialogTitle>
+          {numeroExibicao ? (
+            <div className="py-3 text-center">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                {rotulo}
+              </div>
+              <div className="mt-1 font-mono text-4xl font-bold tracking-wider text-foreground">
+                {tipo === 'cupom' ? `nº ${numeroExibicao}` : numeroExibicao}
+              </div>
+              {numeroCompleto && numeroCompleto !== numeroExibicao ? (
+                <div className="mt-1 font-mono text-xs text-muted-foreground">{numeroCompleto}</div>
+              ) : null}
+            </div>
+          ) : null}
           <AlertDialogDescription className="text-center">
             Deseja abrir a tela de impressão do comprovante?
           </AlertDialogDescription>

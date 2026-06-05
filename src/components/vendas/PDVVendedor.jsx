@@ -1802,6 +1802,9 @@ export default function PDVVendedor() {
       <ConfirmarImpressaoDialog
         open={showConfirmarImpressao}
         onOpenChange={setShowConfirmarImpressao}
+        tipo="senha"
+        numero={(ultimaPreVenda?.senha_atendimento || '').slice(-4)}
+        numeroCompleto={ultimaPreVenda?.senha_atendimento}
         onSim={() => setShowComprovante(true)}
         onNao={() => {}}
       />

@@ -2039,6 +2039,13 @@ export default function PDVCaixa({
         <ConfirmarImpressaoDialog
           open={showConfirmarImpressao}
           onOpenChange={setShowConfirmarImpressao}
+          tipo="cupom"
+          numero={vendaFinalizada?.numero || (vendaFinalizada?.senha_atendimento || '').slice(-4) || 'S/N'}
+          numeroCompleto={
+            vendaFinalizada?.numero && vendaFinalizada?.senha_atendimento
+              ? `Senha ${(vendaFinalizada.senha_atendimento || '').slice(-4)}`
+              : vendaFinalizada?.senha_atendimento || undefined
+          }
           onSim={() => setShowComprovanteCaixa(true)}
           onNao={() => {
             if (dadosPromissoria) {
