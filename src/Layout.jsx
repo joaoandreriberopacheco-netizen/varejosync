@@ -17,6 +17,7 @@ import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import QuickBudgetLauncher from '@/components/quick-budget/QuickBudgetLauncher';
+import CaixaRapidoLauncher from '@/components/vendas/caixa/CaixaRapidoLauncher';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem', 'RelatorioCatalogoEstoque']);
@@ -341,6 +342,7 @@ export default function Layout({ children, currentPageName }) {
         )}
       </div>
       <QuickBudgetLauncher />
+      <CaixaRapidoLauncher />
       {showPinSetup && (
         <PinSetupDialog
           isOpen={showPinSetup}

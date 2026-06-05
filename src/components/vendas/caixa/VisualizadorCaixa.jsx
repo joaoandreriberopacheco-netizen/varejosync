@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw, RotateCcw } from 'lucide-react';
-import { formatarDataHora } from '@/components/utils/dateUtils';
 import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
@@ -12,8 +11,20 @@ import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
-import { CAIXA_PRINT, caixaClasses, caixaTypo, movimentoTone } from '@/lib/caixaP38Theme';
+import {
+  CAIXA_PRINT,
+  caixaClasses,
+  caixaMobileTabBar,
+  caixaOverlayShell,
+  caixaTabPanel,
+  caixaTabPanelPad,
+  caixaTabsRoot,
+  caixaTypo,
+  movimentoTone,
+} from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
+import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
+import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({
@@ -341,7 +352,7 @@ export default function VisualizadorCaixa({
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-background ${caixaTypo.screen}`}>
+    <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
@@ -381,8 +392,8 @@ export default function VisualizadorCaixa({
       </div>
 
       {/* Conteúdo */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
           {/* KPIs - Desktop */}
           <div className="hidden md:block p-4 pb-0 bg-background">
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
@@ -419,70 +430,23 @@ export default function VisualizadorCaixa({
             </TabsList>
           </div>
 
-          <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 bg-background">
-            <div className="max-w-4xl mx-auto space-y-4">
+          <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad} bg-background`}>
+            <div className="max-w-4xl mx-auto space-y-4 pb-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Movimentações */}
-                <div className="bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-foreground mb-4 text-base font-semibold">Movimentações do Turno</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <div className="w-7"></div>
-                        <span className="text-sm text-muted-foreground">Saldo Inicial</span>
-                      </div>
-                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.saldoInicial)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowVendasDialog(true)} className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Total Vendas</span>
-                      </div>
-                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.totalVendas)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowReforcosDialog(true)} className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Reforços</span>
-                      </div>
-                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.reforcos)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowSangriasDialog(true)} className={`p-1 rounded transition-colors flex-shrink-0 ${caixaClasses('info').hover}`} style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className={`w-4 h-4 ${caixaClasses('info').icon}`} />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Recolhimentos</span>
-                      </div>
-                      <div style={{ minWidth: '120px', textAlign: 'right' }}><CaixaValorDisplay valor={caixaData.sangrias} tone="info" signed size="md" /></div>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowDespesasDialog(true)} className={`p-1 rounded transition-colors flex-shrink-0 ${caixaClasses('danger').hover}`} style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className={`w-4 h-4 ${caixaClasses('danger').icon}`} />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Despesas</span>
-                      </div>
-                      <div style={{ minWidth: '120px', textAlign: 'right' }}><CaixaValorDisplay valor={caixaData.despesas} tone="danger" signed size="md" /></div>
-                    </div>
-                    <div className="pt-3 mt-1 border-t border-border/40">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-foreground/90">Liquidez do Turno</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setShowSaldoConsolidadoDialog(true)} className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                            <Eye className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                          <span className="text-2xl font-bold text-foreground font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.liquidez)}</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
-                    </div>
-                  </div>
-                </div>
+                <CaixaMovimentacoesTurno
+                  saldoInicial={caixaData.saldoInicial}
+                  totalVendas={caixaData.totalVendas}
+                  reforcos={caixaData.reforcos}
+                  sangrias={caixaData.sangrias}
+                  despesas={caixaData.despesas}
+                  liquidez={caixaData.liquidez}
+                  fiado={caixaData.fiado || 0}
+                  onVendas={() => setShowVendasDialog(true)}
+                  onReforcos={() => setShowReforcosDialog(true)}
+                  onSangrias={() => setShowSangriasDialog(true)}
+                  onDespesas={() => setShowDespesasDialog(true)}
+                  onLiquidez={() => setShowSaldoConsolidadoDialog(true)}
+                />
 
                 {/* Recebimentos - BLOQUEADO */}
                 <div className="bg-card rounded-2xl p-5 shadow-sm">
@@ -612,32 +576,16 @@ export default function VisualizadorCaixa({
             </div>
           </TabsContent>
 
-          <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0">
-            <div className="max-w-4xl mx-auto space-y-3">
-              <div className="mb-4">
-                <div className="text-xs text-muted-foreground mb-1">Finalizadas</div>
-                <div className="text-2xl font-bold text-foreground font-glacial">
-                  {(vendasFinalizadas || []).length} {(vendasFinalizadas || []).length === 1 ? 'Venda' : 'Vendas'}
-                </div>
-              </div>
-              {(vendasFinalizadas || []).map(v => (
-                <div key={v.id} className="bg-card rounded-2xl p-5 shadow-sm cursor-pointer" onClick={() => setVendaDetalhada(v)}>
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-medium text-foreground truncate">{v.cliente_nome}</div>
-                      <div className="text-sm text-muted-foreground mt-1">{v.numero} · {v.created_date ? formatarDataHora(v.created_date).split(' ')[1] : ''}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-foreground font-glacial">{formatValor(v.valor_total)}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{v.itens?.length || 0} itens</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
+            <div className="max-w-4xl mx-auto pb-4">
+              <ConsultaVendasCaixa
+                vendasFinalizadas={vendasFinalizadas}
+                onVerDetalhes={setVendaDetalhada}
+              />
             </div>
           </TabsContent>
 
-          <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0">
+          <TabsContent value="movimentos" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, tone: movimentoTone(m.tipo) }));
@@ -681,14 +629,14 @@ export default function VisualizadorCaixa({
           </TabsContent>
 
           {/* Bottom Nav - Mobile */}
-          <TabsList className="md:hidden grid grid-cols-3 h-16 bg-card border-t border-border/40 rounded-none p-0 flex-shrink-0">
+          <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-16 bg-card border-t border-border/40 rounded-none p-0`}>
             <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <PieChart className="w-5 h-5" />
               <span className="text-xs">Balanço</span>
             </TabsTrigger>
             <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <Receipt className="w-5 h-5" />
-              <span className="text-xs">Vendas</span>
+              <span className={caixaTypo.labelSm}>Vendas</span>
             </TabsTrigger>
             <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <Wallet className="w-5 h-5" />

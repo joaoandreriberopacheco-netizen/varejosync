@@ -1,11 +1,96 @@
 import React, { useMemo, useState } from 'react';
-import { Package2, Receipt } from 'lucide-react';
-import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { Receipt } from 'lucide-react';
+import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { formatCommercialQuantity } from '@/lib/productUnits';
 import { formatarDataHora } from '@/components/utils/dateUtils';
+
+/** Coluna Qtd (cima) + Un (baixo) + barra vertical — como relatório de compras / margem mobile */
+function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
+  const dotClass = accent === 'muted' ? p38Accent.muted.dot : p38Table.accentDot;
+  return (
+    <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
+      <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
+      <p className="text-base font-din-1451 tabular-nums text-foreground leading-none">
+        {formatCommercialQuantity(qtd, unidade)}
+      </p>
+      <p className={`${caixaTypo.labelSm} mt-1.5 leading-none truncate`}>
+        {(unidade || 'UN').toUpperCase()}
+      </p>
+    </div>
+  );
+}
+
+function resolvePrecoUnitarioEfetivo({ quantidade, total, precoLista, descontoUnitario }) {
+  const qtd = Number(quantidade) || 0;
+  const totalNum = Number(total);
+  if (qtd > 0 && Number.isFinite(totalNum)) {
+    return roundToTwoDecimals(totalNum / qtd);
+  }
+  const preco = Number(precoLista) || 0;
+  const desconto = Number(descontoUnitario) || 0;
+  return roundToTwoDecimals(preco - desconto);
+}
+
+function ConsultaProdutoRow({
+  quantidade,
+  unidade,
+  nome,
+  valorTotal,
+  precoLista,
+  descontoUnitario,
+  striped = false,
+  accent = 'success',
+}) {
+  const borderClass = accent === 'muted' ? p38Accent.muted.border : p38Accent.success.border;
+  const precoEfetivo = resolvePrecoUnitarioEfetivo({
+    quantidade,
+    total: valorTotal,
+    precoLista,
+    descontoUnitario,
+  });
+  const precoTabela = Number(precoLista) || 0;
+  const temDesconto = precoTabela > precoEfetivo + 0.009;
+
+  return (
+    <div
+      className={cn(
+        p38Table.mobileLineThin,
+        borderClass,
+        'flex min-w-0',
+        striped && 'bg-secondary/15 dark:bg-secondary/20',
+      )}
+    >
+      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
+      <div className="flex-1 min-w-0 py-2 pr-3 pl-2">
+        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug')}>{nome}</p>
+        <div className="flex items-baseline justify-between gap-3 mt-1">
+          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0`}>
+            {temDesconto && (
+              <span className="line-through text-muted-foreground/70 mr-1.5">
+                {formatCaixaR(precoTabela)}
+              </span>
+            )}
+            <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
+          </p>
+          <div className="shrink-0">
+            <CaixaValorDisplay
+              valor={valorTotal}
+              tone={accent === 'muted' ? 'neutral' : 'success'}
+              signed={accent !== 'muted'}
+              size="sm"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function parseNumeroComprovante(numero) {
   const digits = String(numero || '').replace(/\D/g, '');
@@ -92,17 +177,15 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
       </div>
 
       {modo === 'produto' ? (
-        <P38MobileLineList className="rounded-lg">
+        <P38MobileLineList allViewports className="rounded-lg">
           {produtosAgregados.map((p, index) => (
-            <P38MobileLine
+            <ConsultaProdutoRow
               key={p.key}
-              thinAccent
+              quantidade={p.quantidade}
+              unidade={p.unidade}
+              nome={p.nome}
+              valorTotal={p.total}
               striped={index % 2 === 1}
-              accent="success"
-              title={p.nome}
-              subtitle={`${p.quantidade.toLocaleString('pt-BR')} ${p.unidade}`}
-              value={<CaixaValorDisplay valor={p.total} tone="success" size="sm" />}
-              leading={<Package2 className="w-4 h-4 text-muted-foreground shrink-0" />}
             />
           ))}
         </P38MobileLineList>
@@ -124,16 +207,18 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
                 </div>
                 <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
               </button>
-              <P38MobileLineList className="rounded-none border-0">
+              <P38MobileLineList allViewports className="rounded-none border-0">
                 {(venda.itens || []).map((item, idx) => (
-                  <P38MobileLine
+                  <ConsultaProdutoRow
                     key={`${venda.id}-${idx}`}
-                    thinAccent
+                    quantidade={item.quantidade}
+                    unidade={item.unidade_medida}
+                    nome={item.produto_nome}
+                    valorTotal={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
+                    precoLista={item.preco_unitario_praticado}
+                    descontoUnitario={item.desconto_unitario}
                     striped={idx % 2 === 1}
                     accent="muted"
-                    title={item.produto_nome}
-                    subtitle={`${Number(item.quantidade) || 0} ${item.unidade_medida || 'UN'} · ${formatCaixaR(item.preco_unitario_praticado)}`}
-                    value={formatCaixaR(item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0))}
                   />
                 ))}
               </P38MobileLineList>

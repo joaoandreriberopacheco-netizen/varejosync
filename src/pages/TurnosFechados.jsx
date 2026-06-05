@@ -8,11 +8,8 @@ import { toast } from 'sonner';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
-
-const formatValor = (valor) => {
-  const num = valor || 0;
-  return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+import { caixaTypo, conferenciaTone } from '@/lib/caixaP38Theme';
+import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
 export default function TurnosFechadosPage() {
   const [turnos, setTurnos] = useState([]);
@@ -156,15 +153,15 @@ export default function TurnosFechadosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background font-din-1451 -m-4 md:-m-6 p-4 md:p-6">
+    <div className={`min-h-screen bg-background -m-4 md:-m-6 p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6 ${caixaTypo.screen}`}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+            <h1 className={`${caixaTypo.title} text-2xl mb-2 flex items-center gap-2`}>
               <Lock className="w-6 h-6 text-muted-foreground" />
               Turnos Fechados
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className={caixaTypo.meta}>
               Consulte o balanço e a conferência de turnos encerrados
             </p>
           </div>
@@ -205,8 +202,8 @@ export default function TurnosFechadosPage() {
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum turno fechado</h3>
-            <p className="text-muted-foreground">
+            <h3 className={`${caixaTypo.title} text-lg mb-2`}>Nenhum turno fechado</h3>
+            <p className={caixaTypo.meta}>
               {busca || filtroData ? 'Ajuste os filtros para ver outros resultados' : 'Não há turnos encerrados no momento'}
             </p>
           </div>
@@ -216,6 +213,7 @@ export default function TurnosFechadosPage() {
               {turnosFiltrados.map((turno, index) => {
                 const diferenca = turno.diferenca || 0;
                 const diffOk = Math.abs(diferenca) < 0.01;
+                const diffTone = conferenciaTone({ temDiferenca: !diffOk, diferenca });
                 return (
                   <P38MobileLine
                     key={turno.id}
@@ -232,9 +230,15 @@ export default function TurnosFechadosPage() {
                             ? format(new Date(turno.data_fechamento), 'dd/MM HH:mm', { locale: ptBR })
                             : '—'}
                         </span>
+                        {!diffOk && (
+                          <span className="inline-flex items-center gap-1">
+                            Dif.:
+                            <CaixaValorDisplay valor={diferenca} tone={diffTone} signed size="sm" />
+                          </span>
+                        )}
                       </>
                     }
-                    value={formatValor(turno.total_vendas)}
+                    value={<CaixaValorDisplay valor={turno.total_vendas} tone="success" signed size="sm" />}
                     valueSub="vendas"
                   />
                 );
