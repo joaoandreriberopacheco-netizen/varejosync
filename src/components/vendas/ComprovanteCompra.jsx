@@ -488,12 +488,18 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosCliente, setDadosCliente] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
-  const [formato, setFormato] = useState('80mm');
+  const [formato, setFormato] = useState(() => localStorage.getItem('comprovante_formato_venda') || 'a4');
   const [gerando, setGerando] = useState(false);
   const [templates, setTemplates] = useState({ '80mm': null, 'a4': null });
 
+  const escolherFormato = (novoFormato) => {
+    setFormato(novoFormato);
+    localStorage.setItem('comprovante_formato_venda', novoFormato);
+  };
+
   useEffect(() => {
     if (!open) return;
+    setFormato(localStorage.getItem('comprovante_formato_venda') || 'a4');
     setDadosCliente(null);
     base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
     if (pedido?.cliente_id) {
@@ -684,7 +690,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Formato:</span>
           <Button
-            onClick={() => setFormato('80mm')}
+            onClick={() => escolherFormato('80mm')}
             size="sm"
             variant={formato === '80mm' ? 'default' : 'outline'}
             className="h-8 text-xs"
@@ -692,7 +698,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             80mm
           </Button>
           <Button
-            onClick={() => setFormato('a4')}
+            onClick={() => escolherFormato('a4')}
             size="sm"
             variant={formato === 'a4' ? 'default' : 'outline'}
             className="h-8 text-xs"
@@ -734,11 +740,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         ) : (
           <div className="w-full flex justify-center py-4 px-4">
             <div style={{ width: `${210 * 3.7795}px`, transformOrigin: 'top center' }} className="shadow-2xl rounded-sm overflow-hidden">
-              {templates['a4'] && dadosEmpresa !== undefined ? (
-                <TemplateRenderer htmlContent={renderTemplate(templates['a4'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
-              ) : (
-                <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} dadosCliente={dadosCliente} />
-              )}
+              <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} dadosCliente={dadosCliente} />
             </div>
           </div>
         )}
