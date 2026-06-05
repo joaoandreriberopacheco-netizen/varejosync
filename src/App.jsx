@@ -41,6 +41,7 @@ import AuditoriaCodigoProjeto from '@/pages/AuditoriaCodigoProjeto';
 import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 import LoginPage from '@/components/auth/LoginPage';
+import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
 
 const { Pages, Layout } = pagesConfig;
 
@@ -200,6 +201,7 @@ const AuthenticatedApp = () => {
       <Route path="/AuditoriaCodigoProjeto" element={<LayoutWrapper currentPageName="AuditoriaCodigoProjeto"><AuditoriaCodigoProjeto /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
+      <GlobalQuickAccessLaunchers />
     </>
   );
 };

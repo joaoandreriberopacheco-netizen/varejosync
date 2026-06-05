@@ -16,8 +16,6 @@ import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
-import QuickBudgetLauncher from '@/components/quick-budget/QuickBudgetLauncher';
-import CaixaRapidoLauncher from '@/components/vendas/caixa/CaixaRapidoLauncher';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set(['Produtos', 'RelatorioMargem', 'RelatorioCatalogoEstoque']);
@@ -256,20 +254,12 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const globalQuickAccessLaunchers = (
-    <>
-      <QuickBudgetLauncher />
-      <CaixaRapidoLauncher />
-    </>
-  );
-
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
         <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background">
           {children}
         </div>
-        {globalQuickAccessLaunchers}
       </div>
     );
   }
@@ -349,7 +339,6 @@ export default function Layout({ children, currentPageName }) {
           />
         )}
       </div>
-      {globalQuickAccessLaunchers}
       {showPinSetup && (
         <PinSetupDialog
           isOpen={showPinSetup}
