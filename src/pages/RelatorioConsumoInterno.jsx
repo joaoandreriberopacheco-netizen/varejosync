@@ -34,19 +34,24 @@ import {
   groupConsumos,
   describeFiltrosAplicados,
   buildPrintHtml,
+  agregarProdutosDoGrupo,
 } from '@/lib/relatorioConsumoInterno';
-import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import RelatorioConsumoInternoMobile from '@/components/consumo-interno/RelatorioConsumoInternoMobile';
+import { cn } from '@/components/utils';
+import { brandSurface } from '@/lib/brandSurfaces';
+import { p38Mobile, P38MobileKpiGrid } from '@/lib/p38MobileSurfaces';
+import { p38Table } from '@/lib/p38TableSurfaces';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 
-function FilterChip({ active, onClick, children }) {
+function PeriodFilterChip({ active, onClick, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
-        active
-          ? 'bg-background text-white dark:bg-card dark:text-foreground'
-          : 'bg-card text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90'
-      }`}
+      className={cn(
+        'rounded-lg px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors whitespace-nowrap',
+        active ? 'bg-primary text-primary-foreground' : p38Mobile.filterChip
+      )}
     >
       {children}
     </button>
@@ -54,69 +59,64 @@ function FilterChip({ active, onClick, children }) {
 }
 
 function GrupoResumidoCard({ grupo, agrupamento }) {
-  const itensAgrupados = useMemo(() => {
-    if (agrupamento === 'produto') {
-      return [{ nome: grupo.label, qtd: grupo.qtd, unidade: grupo.unidade, subtotal: grupo.total }];
-    }
-    const map = {};
-    (grupo.consumos || []).forEach((c) => {
-      (c.itens || []).forEach((it) => {
-        const nome = it.produto_nome || 'Sem nome';
-        if (!map[nome]) map[nome] = { qtd: 0, subtotal: 0, unidade: it.unidade_medida || '' };
-        map[nome].qtd += it.quantidade || 0;
-        map[nome].subtotal += it.subtotal || 0;
-      });
-    });
-    return Object.entries(map)
-      .map(([nome, v]) => ({ nome, ...v }))
-      .sort((a, b) => b.subtotal - a.subtotal);
-  }, [grupo, agrupamento]);
+  const itensAgrupados = useMemo(() => agregarProdutosDoGrupo(grupo, agrupamento), [grupo, agrupamento]);
 
   return (
-    <div className="rounded-[24px] bg-card p-4 shadow-sm dark:bg-muted">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <p className="font-semibold text-foreground">{grupo.label}</p>
-          {grupo.registros != null && (
-            <p className="text-xs text-muted-foreground">
-              {grupo.registros} registro{grupo.registros !== 1 ? 's' : ''}
-              {grupo.itens != null ? ` · ${grupo.itens} item(ns)` : ''}
-            </p>
-          )}
+    <div className={cn('relative rounded-[24px] px-4 py-3.5', brandSurface.card)}>
+      <div className={cn('absolute left-0 top-3 bottom-3 w-[3px] rounded-sm', p38Table.panelAccentBar)} aria-hidden />
+      <div className="pl-3">
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-semibold uppercase tracking-wide text-foreground">{grupo.label}</p>
+            {grupo.registros != null && (
+              <p className="text-xs text-muted-foreground">
+                {grupo.registros} registro{grupo.registros !== 1 ? 's' : ''}
+                {grupo.itens != null ? ` · ${grupo.itens} item(ns)` : ''}
+              </p>
+            )}
+          </div>
+          <p className={cn('text-lg font-semibold tabular-nums shrink-0', p38Accent.success.text)}>
+            {formatCurrency(grupo.total)}
+          </p>
         </div>
-        <p className="text-lg font-semibold text-foreground shrink-0">{formatCurrency(grupo.total)}</p>
+        {itensAgrupados.length > 0 && (
+          <div className="space-y-1 border-t border-border/40 pt-3 dark:border-white/10">
+            {itensAgrupados.map((it) => (
+              <div key={it.nome} className="flex items-center justify-between gap-2 text-sm">
+                <span className="truncate text-foreground">{it.nome}</span>
+                <span className="shrink-0 text-muted-foreground">
+                  {it.qtd} {it.unidade}
+                </span>
+                <span className={cn('shrink-0 font-medium tabular-nums', p38Accent.success.text)}>
+                  {formatCurrency(it.subtotal)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      {itensAgrupados.length > 0 && (
-        <div className="space-y-1 border-t border-border/40 pt-3">
-          {itensAgrupados.map((it) => (
-            <div key={it.nome} className="flex items-center justify-between text-sm gap-2">
-              <span className="text-foreground truncate">{it.nome}</span>
-              <span className="text-muted-foreground shrink-0">
-                {it.qtd} {it.unidade}
-              </span>
-              <span className="font-medium shrink-0">{formatCurrency(it.subtotal)}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
 function GrupoCompletoCard({ grupo }) {
   return (
-    <div className="rounded-[24px] bg-card p-4 shadow-sm dark:bg-muted space-y-3">
+    <div className={cn('space-y-3 rounded-[24px] p-4', brandSurface.card)}>
       <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold text-foreground">{grupo.label}</p>
-        <p className="text-lg font-semibold text-foreground shrink-0">{formatCurrency(grupo.total)}</p>
+        <p className="font-semibold uppercase tracking-wide text-foreground">{grupo.label}</p>
+        <p className={cn('text-lg font-semibold tabular-nums shrink-0', p38Accent.success.text)}>
+          {formatCurrency(grupo.total)}
+        </p>
       </div>
       {(grupo.consumos || []).map((c) => {
         const quando = c.data_confirmacao || c.created_date;
         return (
-          <div key={c.id} className="rounded-2xl bg-muted/40 px-3 py-2.5 dark:bg-background">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div key={c.id} className={cn('rounded-2xl px-3 py-2.5', p38Mobile.detailPanel)}>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-foreground">{c.numero}</p>
-              <p className="text-sm font-semibold">{formatCurrency(c.valor_total)}</p>
+              <p className={cn('text-sm font-semibold tabular-nums', p38Accent.success.text)}>
+                {formatCurrency(c.valor_total)}
+              </p>
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
@@ -136,17 +136,17 @@ function GrupoCompletoCard({ grupo }) {
             </div>
             <div className="mt-2 space-y-1">
               {(c.itens || []).map((it, idx) => (
-                <div key={idx} className="flex justify-between text-xs gap-2">
-                  <span>{it.produto_nome}</span>
+                <div key={idx} className="flex justify-between gap-2 text-xs">
+                  <span className="text-foreground">{it.produto_nome}</span>
                   <span className="text-muted-foreground">
                     {it.quantidade} {it.unidade_medida}
                   </span>
-                  <span>{formatCurrency(it.subtotal)}</span>
+                  <span className="tabular-nums">{formatCurrency(it.subtotal)}</span>
                 </div>
               ))}
             </div>
             {c.observacoes && (
-              <p className="mt-2 text-xs text-muted-foreground italic">Obs: {c.observacoes}</p>
+              <p className="mt-2 text-xs italic text-muted-foreground">Obs: {c.observacoes}</p>
             )}
           </div>
         );
@@ -287,238 +287,244 @@ export default function RelatorioConsumoInternoPage() {
     }
   };
 
+  const mobileProps = {
+    loading,
+    empresa,
+    totais,
+    grupos,
+    filtrosTexto,
+    consumosFiltrados,
+    filtroTemporal,
+    setFiltroTemporal,
+    dataInicio,
+    setDataInicio,
+    dataFim,
+    setDataFim,
+    destinacaoFiltro,
+    setDestinacaoFiltro,
+    responsavelFiltro,
+    setResponsavelFiltro,
+    agrupamento,
+    setAgrupamento,
+    modo,
+    setModo,
+    search,
+    setSearch,
+    destinacoesUnicas,
+    responsaveisUnicos,
+    onPrint: handlePrint,
+  };
+
+  const kpiItems = [
+    { label: 'Valor total', value: formatCurrency(totais.valor), accent: true },
+    { label: 'Registros', value: String(totais.registros) },
+    { label: 'Itens (qtd)', value: String(totais.itens) },
+    { label: 'Grupos', value: String(grupos.length), accent: grupos.length > 0 },
+  ];
+
   return (
-    <div className="min-h-screen bg-muted/40 p-4 dark:bg-background md:p-6">
-      <div className="mx-auto max-w-6xl space-y-5 pb-24">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-2xl" asChild>
-              <Link to="/ConsumoInterno" title="Voltar ao consumo interno">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div>
-              <p className="text-2xl font-semibold text-foreground">Relatório — Consumo Interno</p>
-              <p className="text-sm text-muted-foreground">
-                Consulta com agrupamento e impressão dos filtros aplicados.
+    <>
+      <RelatorioConsumoInternoMobile {...mobileProps} />
+
+      <div className={cn('hidden min-h-screen md:block md:p-6 font-din-1451', brandSurface.pageScreen)}>
+        <div className="mx-auto max-w-6xl space-y-5 pb-12">
+          <div className={cn('rounded-[28px] p-5', brandSurface.card)}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-2xl" asChild>
+                  <Link to="/ConsumoInterno" title="Voltar ao consumo interno">
+                    <ArrowLeft className="h-5 w-5" />
+                  </Link>
+                </Button>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Relatório</p>
+                  <h1 className="text-2xl font-semibold text-foreground md:text-3xl">Consumo Interno</h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Consulta com agrupamento e impressão dos filtros aplicados.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={loadData}
+                  className={cn('rounded-2xl border border-border/40 p-3 transition-colors hover:bg-primary/10', brandSurface.card)}
+                  style={{ minWidth: 48, minHeight: 48 }}
+                  aria-label="Atualizar"
+                >
+                  <RefreshCw className={cn('h-5 w-5 text-muted-foreground', loading && 'animate-spin')} />
+                </button>
+                <Button
+                  onClick={handlePrint}
+                  disabled={loading || consumosFiltrados.length === 0}
+                  className="h-12 gap-2 rounded-2xl px-4"
+                >
+                  <Printer className="h-4 w-4" />
+                  Imprimir
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <P38MobileKpiGrid items={kpiItems} columns={4} className="px-1" />
+
+          <div className={cn('space-y-4 rounded-[28px] p-5', brandSurface.card)}>
+            <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Período</p>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(FILTRO_TEMPORAL_LABELS).map(([key, label]) => (
+                <PeriodFilterChip
+                  key={key}
+                  active={filtroTemporal === key}
+                  onClick={() => setFiltroTemporal(key)}
+                >
+                  {label}
+                </PeriodFilterChip>
+              ))}
+            </div>
+            {filtroTemporal === 'personalizado' && (
+              <div className="flex flex-wrap gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Data início</label>
+                  <Input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                    className={cn(p38Mobile.searchInput, 'h-10 w-40')}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">Data fim</label>
+                  <Input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                    className={cn(p38Mobile.searchInput, 'h-10 w-40')}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={cn('space-y-4 rounded-[28px] p-5', brandSurface.card)}>
+            <p className="text-sm font-semibold uppercase tracking-wide text-foreground">Filtros e visualização</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Destinação</label>
+                <Select value={destinacaoFiltro} onValueChange={setDestinacaoFiltro}>
+                  <SelectTrigger className={cn(p38Mobile.searchInput, 'h-10')}>
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__todos__">Todas</SelectItem>
+                    {destinacoesUnicas.map((nome) => (
+                      <SelectItem key={nome} value={nome}>
+                        {nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Responsável</label>
+                <Select value={responsavelFiltro} onValueChange={setResponsavelFiltro}>
+                  <SelectTrigger className={cn(p38Mobile.searchInput, 'h-10')}>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__todos__">Todos</SelectItem>
+                    {responsaveisUnicos.map((nome) => (
+                      <SelectItem key={nome} value={nome}>
+                        {nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Agrupar por</label>
+                <Select value={agrupamento} onValueChange={setAgrupamento}>
+                  <SelectTrigger className={cn(p38Mobile.searchInput, 'h-10')}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AGRUPAMENTO_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Modo</label>
+                <Select value={modo} onValueChange={setModo}>
+                  <SelectTrigger className={cn(p38Mobile.searchInput, 'h-10')}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(MODO_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar número, destinação, produto…"
+                className={cn(p38Mobile.searchInput, 'h-11 pl-9')}
+              />
+            </div>
+          </div>
+
+          <div className={cn('rounded-2xl border border-dashed border-border/60 px-4 py-3', p38Mobile.detailPanel)}>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Filtros aplicados (aparecem na impressão)
+            </p>
+            <ul className="list-disc space-y-0.5 pl-4 text-sm text-foreground">
+              {filtrosTexto.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className={cn('h-5 w-5', brandSurface.accent)} />
+              <p className="text-lg font-semibold text-foreground">
+                {grupos.length} grupo{grupos.length !== 1 ? 's' : ''} · {MODO_LABELS[modo]}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={loadData}
-              className="rounded-[24px] bg-card p-3 shadow-sm transition-colors hover:bg-muted/50"
-              style={{ minWidth: 48, minHeight: 48 }}
-              aria-label="Atualizar"
-            >
-              <RefreshCw className={`h-5 w-5 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            <Button
-              onClick={handlePrint}
-              disabled={loading || consumosFiltrados.length === 0}
-              className="h-12 rounded-2xl gap-2 px-4"
-            >
-              <Printer className="h-4 w-4" />
-              Imprimir
-            </Button>
-          </div>
-        </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Valor total</p>
-            <p className="text-lg font-semibold text-foreground">{formatCurrency(totais.valor)}</p>
-          </div>
-          <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Registros</p>
-            <p className="text-lg font-semibold text-foreground">{totais.registros}</p>
-          </div>
-          <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Itens (qtd)</p>
-            <p className="text-lg font-semibold text-foreground">{totais.itens}</p>
-          </div>
-        </div>
-
-        {/* Filtros período */}
-        <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted space-y-4">
-          <p className="text-sm font-semibold text-foreground">Período</p>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(FILTRO_TEMPORAL_LABELS).map(([key, label]) => (
-              <FilterChip
-                key={key}
-                active={filtroTemporal === key}
-                onClick={() => setFiltroTemporal(key)}
-              >
-                {label}
-              </FilterChip>
-            ))}
-          </div>
-          {filtroTemporal === 'personalizado' && (
-            <div className="flex flex-wrap gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Data início</label>
-                <Input
-                  type="date"
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
-                  className="h-10 rounded-2xl w-40"
-                />
+            {loading ? (
+              <div className="flex justify-center py-16">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Data fim</label>
-                <Input
-                  type="date"
-                  value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
-                  className="h-10 rounded-2xl w-40"
-                />
+            ) : consumosFiltrados.length === 0 ? (
+              <div className={cn('rounded-[24px] px-4 py-12 text-center text-sm text-muted-foreground', brandSurface.card)}>
+                Nenhum consumo encontrado com os filtros atuais.
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Filtros avançados */}
-        <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted space-y-4">
-          <p className="text-sm font-semibold text-foreground">Filtros e visualização</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Destinação</label>
-              <Select value={destinacaoFiltro} onValueChange={setDestinacaoFiltro}>
-                <SelectTrigger className="h-10 rounded-2xl">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__todos__">Todas</SelectItem>
-                  {destinacoesUnicas.map((nome) => (
-                    <SelectItem key={nome} value={nome}>
-                      {nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Responsável</label>
-              <Select value={responsavelFiltro} onValueChange={setResponsavelFiltro}>
-                <SelectTrigger className="h-10 rounded-2xl">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__todos__">Todos</SelectItem>
-                  {responsaveisUnicos.map((nome) => (
-                    <SelectItem key={nome} value={nome}>
-                      {nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Agrupar por</label>
-              <Select value={agrupamento} onValueChange={setAgrupamento}>
-                <SelectTrigger className="h-10 rounded-2xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(AGRUPAMENTO_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Modo</label>
-              <Select value={modo} onValueChange={setModo}>
-                <SelectTrigger className="h-10 rounded-2xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(MODO_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            ) : modo === 'resumido' || agrupamento === 'produto' ? (
+              <div className="space-y-3">
+                {grupos.map((grupo) => (
+                  <GrupoResumidoCard key={grupo.key} grupo={grupo} agrupamento={agrupamento} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {grupos.map((grupo) => (
+                  <GrupoCompletoCard key={grupo.key} grupo={grupo} />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar número, destinação, produto…"
-              className="h-10 rounded-2xl border-0 bg-muted pl-9 shadow-sm dark:bg-background"
-            />
-          </div>
-        </div>
-
-        {/* Resumo filtros (espelho da impressão) */}
-        <div className="rounded-[24px] border border-dashed border-border/60 bg-card/60 px-4 py-3 dark:bg-muted/40">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-            Filtros aplicados (aparecem na impressão)
-          </p>
-          <ul className="text-sm text-foreground space-y-0.5 list-disc pl-4">
-            {filtrosTexto.map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Resultados */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-muted-foreground" />
-            <p className="text-lg font-semibold text-foreground">
-              {grupos.length} grupo{grupos.length !== 1 ? 's' : ''} · {MODO_LABELS[modo]}
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground" />
-            </div>
-          ) : consumosFiltrados.length === 0 ? (
-            <div className="rounded-[24px] bg-card px-4 py-12 text-center text-sm text-muted-foreground shadow-sm">
-              Nenhum consumo encontrado com os filtros atuais.
-            </div>
-          ) : modo === 'resumido' ? (
-            <div className="space-y-3">
-              {grupos.map((grupo) => (
-                <GrupoResumidoCard key={grupo.key} grupo={grupo} agrupamento={agrupamento} />
-              ))}
-            </div>
-          ) : agrupamento === 'produto' ? (
-            <P38MobileLineList>
-              {grupos.map((grupo, index) => (
-                <P38MobileLine
-                  key={grupo.key}
-                  striped={index % 2 === 1}
-                  accent="muted"
-                  title={grupo.label}
-                  meta={
-                    <span className="inline-flex items-center gap-1">
-                      <Package className="h-3 w-3" />
-                      {grupo.qtd} {grupo.unidade}
-                    </span>
-                  }
-                  value={formatCurrency(grupo.total)}
-                />
-              ))}
-            </P38MobileLineList>
-          ) : (
-            <div className="space-y-4">
-              {grupos.map((grupo) => (
-                <GrupoCompletoCard key={grupo.key} grupo={grupo} />
-              ))}
-            </div>
-          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

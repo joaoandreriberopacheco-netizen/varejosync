@@ -73,6 +73,25 @@ function somaItens(consumos) {
   return consumos.reduce((s, c) => s + (c.quantidade_total_itens || (c.itens || []).reduce((a, it) => a + (it.quantidade || 0), 0)), 0);
 }
 
+/** Produtos agregados de um grupo (para UI resumida). */
+export function agregarProdutosDoGrupo(grupo, agrupamento) {
+  if (agrupamento === 'produto') {
+    return [{ nome: grupo.label, qtd: grupo.qtd, unidade: grupo.unidade || '', subtotal: grupo.total }];
+  }
+  const map = {};
+  (grupo.consumos || []).forEach((c) => {
+    (c.itens || []).forEach((it) => {
+      const nome = it.produto_nome || 'Sem nome';
+      if (!map[nome]) map[nome] = { qtd: 0, subtotal: 0, unidade: it.unidade_medida || '' };
+      map[nome].qtd += it.quantidade || 0;
+      map[nome].subtotal += it.subtotal || 0;
+    });
+  });
+  return Object.entries(map)
+    .map(([nome, v]) => ({ nome, ...v }))
+    .sort((a, b) => b.subtotal - a.subtotal);
+}
+
 /** Agrupa itens de vários consumos por nome de produto. */
 function agregarProdutos(consumos) {
   const map = {};
