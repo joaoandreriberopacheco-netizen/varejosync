@@ -8,6 +8,7 @@ import {
   User, 
   Menu as MenuIcon 
 } from 'lucide-react';
+import { openGlobalSearch } from '@/lib/openGlobalSearch';
 
 export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentPageName }) {
   const location = useLocation();
@@ -31,7 +32,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
       onMenuClick?.();
     } else if (item.action === 'search') {
       e.preventDefault();
-      window.dispatchEvent(new CustomEvent('open-global-search'));
+      openGlobalSearch();
     } else if (item.action === 'profile') {
       e.preventDefault();
       onProfileClick?.();

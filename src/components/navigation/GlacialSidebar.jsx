@@ -5,6 +5,7 @@ import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } 
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
+import MenuSearchBar from '@/components/navigation/MenuSearchBar';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
 
 function useDarkMode() {
@@ -150,6 +151,13 @@ export default function GlacialSidebar({
               Menu
             </p>
           )}
+
+          <MenuSearchBar
+            isDark={isDark}
+            expanded={isOpen}
+            onOpen={isMobile ? closeMobileMenu : undefined}
+            className={isOpen ? "mb-2 mx-1" : "mb-1"}
+          />
 
           {menuItems.map(item => {
             const Icon = item.icon;
