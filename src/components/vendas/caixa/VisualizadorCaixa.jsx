@@ -14,6 +14,7 @@ import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pd
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { CAIXA_PRINT, caixaClasses, caixaTypo, movimentoTone } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
+import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({
@@ -422,67 +423,20 @@ export default function VisualizadorCaixa({
           <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 bg-background">
             <div className="max-w-4xl mx-auto space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Movimentações */}
-                <div className="bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-foreground mb-4 text-base font-semibold">Movimentações do Turno</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <div className="w-7"></div>
-                        <span className="text-sm text-muted-foreground">Saldo Inicial</span>
-                      </div>
-                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.saldoInicial)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowVendasDialog(true)} className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Total Vendas</span>
-                      </div>
-                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.totalVendas)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowReforcosDialog(true)} className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Reforços</span>
-                      </div>
-                      <span className="text-base font-medium text-foreground tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.reforcos)}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowSangriasDialog(true)} className={`p-1 rounded transition-colors flex-shrink-0 ${caixaClasses('info').hover}`} style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className={`w-4 h-4 ${caixaClasses('info').icon}`} />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Recolhimentos</span>
-                      </div>
-                      <div style={{ minWidth: '120px', textAlign: 'right' }}><CaixaValorDisplay valor={caixaData.sangrias} tone="info" signed size="md" /></div>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setShowDespesasDialog(true)} className={`p-1 rounded transition-colors flex-shrink-0 ${caixaClasses('danger').hover}`} style={{ minWidth: '28px', minHeight: '28px' }}>
-                          <Eye className={`w-4 h-4 ${caixaClasses('danger').icon}`} />
-                        </button>
-                        <span className="text-sm text-muted-foreground">Despesas</span>
-                      </div>
-                      <div style={{ minWidth: '120px', textAlign: 'right' }}><CaixaValorDisplay valor={caixaData.despesas} tone="danger" signed size="md" /></div>
-                    </div>
-                    <div className="pt-3 mt-1 border-t border-border/40">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-foreground/90">Liquidez do Turno</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setShowSaldoConsolidadoDialog(true)} className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
-                            <Eye className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                          <span className="text-2xl font-bold text-foreground font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.liquidez)}</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
-                    </div>
-                  </div>
-                </div>
+                <CaixaMovimentacoesTurno
+                  saldoInicial={caixaData.saldoInicial}
+                  totalVendas={caixaData.totalVendas}
+                  reforcos={caixaData.reforcos}
+                  sangrias={caixaData.sangrias}
+                  despesas={caixaData.despesas}
+                  liquidez={caixaData.liquidez}
+                  fiado={caixaData.fiado || 0}
+                  onVendas={() => setShowVendasDialog(true)}
+                  onReforcos={() => setShowReforcosDialog(true)}
+                  onSangrias={() => setShowSangriasDialog(true)}
+                  onDespesas={() => setShowDespesasDialog(true)}
+                  onLiquidez={() => setShowSaldoConsolidadoDialog(true)}
+                />
 
                 {/* Recebimentos - BLOQUEADO */}
                 <div className="bg-card rounded-2xl p-5 shadow-sm">

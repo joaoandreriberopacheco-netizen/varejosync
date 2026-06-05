@@ -105,6 +105,10 @@ export function conferenciaTone({ temDiferenca, diferenca }) {
   return 'danger';
 }
 
+/** Painel P38 com barra oliva (black olive / limão no escuro) */
+export const caixaPanel = 'p38-panel rounded-2xl border border-border/40 dark:border-white/10';
+export const caixaPanelBody = 'p38-panel__body';
+
 /** Tipografia da tela de caixa — maiúsculas + corpo maior (alinhado ao fluxo P38) */
 export const caixaTypo = {
   screen: 'caixa-screen font-din-1451',

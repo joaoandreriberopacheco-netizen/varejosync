@@ -52,6 +52,7 @@ import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pd
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { CAIXA_PRINT, CAIXA_TOAST_SUCCESS, caixaClasses, caixaTypo, conferenciaTone, movimentoTone } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
+import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
@@ -1498,63 +1499,20 @@ export default function PDVCaixa() {
                 <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 data-[state=inactive]:hidden">
                   <div className="max-w-4xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Movimentações do Turno */}
-                <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
-                  <h3 className={`${caixaTypo.title} mb-4 text-foreground dark:text-white`}>
-                    Movimentações do Turno
-                  </h3>
-                  {(() => {
-                    const ValorRow = ({ label, valor, tone = 'neutral', signed = false, onEye, eyeColor, eyeIconColor }) => (
-                      <div className="flex items-center justify-between py-1">
-                        <div className="flex items-center gap-1 min-w-0">
-                          {onEye ? (
-                            <button
-                              onClick={onEye}
-                              className={`p-1 rounded transition-colors flex-shrink-0 ${eyeColor || 'hover:bg-muted dark:hover:bg-muted'}`}
-                              style={{ minWidth: '28px', minHeight: '28px' }}>
-                              <Eye className={`w-4 h-4 ${eyeIconColor || 'text-muted-foreground dark:text-muted-foreground'}`} />
-                            </button>
-                          ) : <div className="w-7 flex-shrink-0" />}
-                          <span className={`${caixaTypo.label} truncate`}>{label}</span>
-                        </div>
-                        <div className="flex-shrink-0 text-right" style={{ minWidth: '120px' }}>
-                          <CaixaValorDisplay valor={valor} tone={tone} signed={signed} size="md" />
-                        </div>
-                      </div>
-                    );
-                    return (
-                      <div className="space-y-3">
-                        <ValorRow label="Saldo Inicial" valor={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0} />
-                        <ValorRow label="Total Vendas" valor={caixaData.totalVendas} tone="success" signed onEye={() => setShowVendasDialog(true)} />
-                        <ValorRow label="Reforços" valor={caixaData.reforcos} tone="success" signed onEye={() => setShowReforcosDialog(true)} />
-                        <ValorRow label="Recolhimentos" valor={caixaData.sangrias} tone="info" signed onEye={() => setShowSangriasDialog(true)} eyeColor={caixaClasses('info').hover} eyeIconColor={caixaClasses('info').icon} />
-                        <ValorRow label="Despesas" valor={caixaData.despesas} tone="danger" signed onEye={() => setShowDespesasDialog(true)} eyeColor={caixaClasses('danger').hover} eyeIconColor={caixaClasses('danger').icon} />
-                        {(caixaData.recebimentos?.fiado || 0) > 0 && (
-                          <ValorRow label="Conta a Receber" valor={caixaData.recebimentos.fiado} tone="success" signed eyeColor={caixaClasses('warning').hover} eyeIconColor={caixaClasses('warning').icon} />
-                        )}
-                        <div className="pt-3 mt-1 border-t border-border/40 dark:border-border/40">
-                          <div className="flex items-center justify-between">
-                            <span className={caixaTypo.section}>Liquidez do Turno</span>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => setShowSaldoConsolidadoDialog(true)}
-                                className="p-1 hover:bg-muted dark:hover:bg-muted rounded transition-colors flex-shrink-0"
-                                style={{ minWidth: '28px', minHeight: '28px' }}>
-                                <Eye className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
-                              </button>
-                              <div style={{ minWidth: '120px', textAlign: 'right' }}>
-                                <CaixaValorDisplay valor={caixaData.liquidez} tone="neutral" signed={false} size="lg" />
-                              </div>
-                            </div>
-                          </div>
-                          <p className={`${caixaTypo.meta} mt-1 text-right`}>
-                            Inicial + vendas + reforços − recolhimentos
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
+                <CaixaMovimentacoesTurno
+                  saldoInicial={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0}
+                  totalVendas={caixaData.totalVendas}
+                  reforcos={caixaData.reforcos}
+                  sangrias={caixaData.sangrias}
+                  despesas={caixaData.despesas}
+                  liquidez={caixaData.liquidez}
+                  fiado={caixaData.recebimentos?.fiado || 0}
+                  onVendas={() => setShowVendasDialog(true)}
+                  onReforcos={() => setShowReforcosDialog(true)}
+                  onSangrias={() => setShowSangriasDialog(true)}
+                  onDespesas={() => setShowDespesasDialog(true)}
+                  onLiquidez={() => setShowSaldoConsolidadoDialog(true)}
+                />
 
                 {/* Recebimentos do Turno */}
                 <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">

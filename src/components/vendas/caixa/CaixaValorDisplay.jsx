@@ -21,6 +21,7 @@ const SIZE_CLASS = {
 /**
  * @param {'success'|'danger'|'info'|'neutral'} tone
  * @param {boolean} signed — exibe +/− (como fluxo de caixa)
+ * @param {boolean} reserveSignSpace — coluna fixa para alinhar decimais entre linhas
  */
 export default function CaixaValorDisplay({
   valor,
@@ -28,29 +29,37 @@ export default function CaixaValorDisplay({
   signed = true,
   size = 'md',
   className = '',
+  reserveSignSpace = false,
 }) {
   const n = Math.abs(Number(valor) || 0);
   const sizeCls = SIZE_CLASS[size] || SIZE_CLASS.md;
+  const showSign = signed && tone !== 'neutral';
+  const isEntrada = tone === 'success' || tone === 'info';
+  const sign = showSign ? (isEntrada ? '+' : '−') : '+';
+  const signClass = showSign
+    ? (tone === 'info'
+      ? SIGN_CLASS.info
+      : isEntrada
+        ? SIGN_CLASS.success
+        : SIGN_CLASS.danger)
+    : '';
 
-  if (tone === 'neutral' || !signed) {
+  if (reserveSignSpace || showSign) {
     return (
-      <span className={`tabular-nums ${sizeCls} ${className}`}>
-        {formatCaixaR(n)}
+      <span className={`inline-flex items-baseline justify-end tabular-nums ${sizeCls} ${className}`}>
+        <span
+          className={`w-[0.75em] shrink-0 text-right ${showSign ? signClass : 'invisible select-none'}`}
+          aria-hidden={!showSign}
+        >
+          {sign}
+        </span>
+        <span>{formatCaixaR(n)}</span>
       </span>
     );
   }
 
-  const isEntrada = tone === 'success' || tone === 'info';
-  const sign = isEntrada ? '+' : '−';
-  const signClass = tone === 'info'
-    ? SIGN_CLASS.info
-    : isEntrada
-      ? SIGN_CLASS.success
-      : SIGN_CLASS.danger;
-
   return (
     <span className={`tabular-nums ${sizeCls} ${className}`}>
-      <span className={signClass}>{sign}</span>
       {formatCaixaR(n)}
     </span>
   );
