@@ -10,6 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import GestaoCodigosConferencia from '@/components/logistica/GestaoCodigosConferencia';
+import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+  p38StatusTone,
+} from '@/components/ui/p38-mobile-line';
 
 export default function HubLogistico() {
   const navigate = useNavigate();
@@ -121,7 +128,7 @@ export default function HubLogistico() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6">
+    <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6 font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-light text-foreground">Hub Logístico Inbound</h1>
@@ -143,12 +150,12 @@ export default function HubLogistico() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-4 border border-border/40">
+      <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background p-3">
         <Input
           placeholder="Buscar por manifesto ou transportadora..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md"
+          className="max-w-md p38-search-field border-0 h-11"
         />
       </div>
 

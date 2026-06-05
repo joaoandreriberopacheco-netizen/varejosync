@@ -242,9 +242,9 @@ export default function PDVAuditoria() {
   }
 
   return (
-    <div className="min-h-screen bg-card flex flex-col w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-background font-din-1451 flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-card/90 dark:bg-background/90 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-border/40">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-border/40">
         <button
           onClick={() => navigate(createPageUrl("AuditoriaEstoque"))}
           className="w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground"

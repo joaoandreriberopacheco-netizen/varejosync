@@ -309,10 +309,10 @@ export default function ConferenciaVolumes() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="min-h-screen bg-background font-din-1451 p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)]">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-card rounded-2xl shadow-lg p-6">
+        <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background p-6">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
               <Package className="w-7 h-7 text-foreground/90" />
@@ -323,12 +323,12 @@ export default function ConferenciaVolumes() {
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+          <div className="bg-muted/40 border border-border/40 dark:border-white/10 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">Conferência Cega de Quantidade</p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+                <p className="font-medium text-foreground mb-1">Conferência Cega de Quantidade</p>
+                <p className="text-xs text-muted-foreground">
                   Os tipos de volumes esperados estão listados abaixo. Informe a quantidade REAL recebida de cada tipo sem consultar documentos.
                 </p>
               </div>
@@ -337,9 +337,9 @@ export default function ConferenciaVolumes() {
         </div>
 
         {/* Formulário de Volumes */}
-        <div className="space-y-3">
+        <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background overflow-hidden">
           {volumes.map((volume, index) => (
-            <div key={index} className="bg-card rounded-xl shadow-sm p-4">
+            <div key={index} className="border-b border-border/50 dark:border-white/10 p-4 last:border-b-0">
               <div className="flex items-start gap-3">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>

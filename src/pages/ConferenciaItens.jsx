@@ -270,10 +270,10 @@ export default function ConferenciaItens() {
   const itemAtual = modalLote.itemIndex !== null ? itensConferidos[modalLote.itemIndex] : null;
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background font-din-1451 p-4 pb-[var(--p38-scroll-pad-below-nav)]">
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
-        <div className="bg-card rounded-2xl shadow-sm p-6">
+        <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
               <Package className="w-6 h-6 text-foreground/90" />
@@ -284,10 +284,10 @@ export default function ConferenciaItens() {
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
+          <div className="bg-muted/40 border border-border/40 dark:border-white/10 rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700 dark:text-blue-300">
+              <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
                 Confira as quantidades dos itens recebidos. Os itens esperados já estão listados abaixo.
               </p>
             </div>
@@ -295,8 +295,9 @@ export default function ConferenciaItens() {
         </div>
 
         {/* Itens a Conferir */}
+        <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background overflow-hidden">
         {itensConferidos.map((item, index) => (
-          <div key={index} className="bg-card rounded-xl shadow-sm p-4 space-y-3">
+          <div key={index} className="border-b border-border/50 dark:border-white/10 p-4 space-y-3 last:border-b-0">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="font-medium text-sm text-foreground">{item.produto_nome}</div>
@@ -353,9 +354,10 @@ export default function ConferenciaItens() {
             )}
           </div>
         ))}
+        </div>
 
         {/* Ações */}
-        <div className="sticky bottom-4 bg-card rounded-2xl shadow-lg p-4">
+        <div className="sticky bottom-4 rounded-lg border border-border/40 dark:border-white/10 bg-background p-4">
           <div className="flex gap-3">
             <Button
               variant="outline"

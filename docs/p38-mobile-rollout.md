@@ -163,10 +163,10 @@ Legenda estado: ✅ já usa linhas P38 ou Margem · 🟡 parcial (só sub-compon
 | **MovimentosInventario** | M-B | H | ✅ | |
 | **ConferenciaEstoque** | M-B | H | ✅ | |
 | **AuditoriaEstoque** / **V2** | M-B | H | ✅ | |
-| **Armazenagem** | M-B | H | ⏳ | Tabs + listas internas |
+| **Armazenagem** | M-B | H | ✅ | Shell P38; Fila/Histórico/ListaConferências já com linhas |
 | **InterfaceSeparador** | M-F | — | — | Operacional |
 | **TabelaPrecosConsulta** | M-B | H | 🟡 | Lista P38; confirmar shell |
-| **ConferenciaVolumes** / **Itens** | M-B | H | ⏳ | |
+| **ConferenciaVolumes** / **Itens** | M-G + linhas | H | ✅ | Formulário operacional; divisores finos |
 | **Expedicao** / **HubLogistico** | M-B | H | ✅ | |
 | **ImportacaoProdutos** | (ver Produtos) | | | |
 
@@ -242,7 +242,7 @@ Ordem sugerida para reduzir duplicação do Margem:
 | **M0** | Fundação | Tokens + `p38-mobile-line` + doc; Margem ✅; audit gray ✅ |
 | **M1** | Financeiro + caixa | ✅ ContasFinanceiras, Agefin, Fluxo/ExecucaoOrcamentaria, FinanceiroModulo; barra lateral **1px** (`thinAccent`) |
 | **M2** | Vendas + compras | ✅ PedidosCompra (lista mobile), Cotacoes, VendasPerdidas, SugestoesCompra shell |
-| **M3** | Estoque + logística | Armazenagem, ConferenciaVolumes/Itens, templates expedição |
+| **M3** | Estoque + logística | ✅ Armazenagem, HubLogistico, Expedição, Conferência Volumes/Itens, PDV Auditoria shell |
 | **M4** | Relatórios + produtos | Catálogo estoque, Performance, Produtos mobile wrapper |
 | **M5** | Home + dashboards + admin restante | M-E consistente; Config managers |
 | **M6** | Refino PDV (opcional) | Linhas finas só onde não atrapalha toque (M-F) |

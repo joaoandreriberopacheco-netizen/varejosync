@@ -24,7 +24,7 @@ export default function Armazenagem() {
   };
 
   return (
-    <div className="min-h-screen bg-background w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-background font-din-1451 w-full max-w-full overflow-x-hidden pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="p-4 md:p-6 space-y-6 w-full max-w-full overflow-x-hidden">
         <div>
           <h1 className="text-2xl font-light text-foreground">Módulo de Estoque</h1>
@@ -34,7 +34,7 @@ export default function Armazenagem() {
         </div>
 
         <Tabs defaultValue="separacao" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-card rounded-xl p-1 shadow-sm overflow-hidden gap-0.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-muted/40 rounded-xl p-1 border border-border/40 dark:border-white/10 overflow-hidden gap-0.5">
             <TabsTrigger
               value="separacao"
               title="Fila de Separação"
@@ -102,7 +102,7 @@ export default function Armazenagem() {
               </TabsList>
 
               <TabsContent value="contagem">
-                <div className="border border-border bg-card rounded-xl p-4 w-full max-w-full overflow-x-hidden">
+                <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background overflow-hidden w-full max-w-full">
                   {conferenciaAtiva ? (
                     <ConferenciaEditor
                       conferencia={conferenciaAtiva}
@@ -119,7 +119,7 @@ export default function Armazenagem() {
               </TabsContent>
 
               <TabsContent value="auditoria-sub">
-                <div className="bg-card rounded-2xl p-4 shadow-sm w-full max-w-full overflow-x-hidden">
+                <div className="rounded-lg border border-border/40 dark:border-white/10 bg-background p-4 w-full max-w-full overflow-x-hidden">
                   {conferenciaAuditoria ? (
                     <ConferenciaAuditoria
                       conferencia={conferenciaAuditoria}
