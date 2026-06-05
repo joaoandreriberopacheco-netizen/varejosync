@@ -19,7 +19,7 @@ const STATUS_CONFIG = {
   'Vencido':   { icon: AlertTriangle, color: 'text-red-400',  bg: 'bg-red-50 dark:bg-red-900/20',  label: 'Vencido' },
 };
 
-export default function LancamentosCompraPanel({ pedidoId }) {
+export default function LancamentosCompraPanel({ pedidoId, refreshKey = 0 }) {
   const [lancs, setLancs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +38,7 @@ export default function LancamentosCompraPanel({ pedidoId }) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [pedidoId]);
+  }, [pedidoId, refreshKey]);
 
   if (!pedidoId) return null;
 

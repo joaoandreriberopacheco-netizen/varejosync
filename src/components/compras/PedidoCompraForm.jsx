@@ -37,6 +37,7 @@ import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
+import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
@@ -54,7 +55,7 @@ import {
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
-export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImporter = false }) {
+export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
   const isRestoringDraftRef = useRef(false);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -133,8 +134,28 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
   const [importerLaunchPdfPicker, setImporterLaunchPdfPicker] = useState(false);
   const autoImporterHandledRef = useRef(false);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
-  const [abaPedidoDesktop, setAbaPedidoDesktop] = useState('dados-gerais');
+  const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
+  const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
   const { toast } = useToast();
+
+  const pedidoAtual = pedidoLogistica || pedido;
+
+  const handlePedidoFinanceiroAtualizado = async () => {
+    if (onPedidoRefresh) {
+      await onPedidoRefresh();
+    } else if (pedido?.id) {
+      const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+      if (atualizado) {
+        setFormData((prev) => ({ ...prev, ...atualizado }));
+        setPedidoLogistica((prev) => ({ ...(prev || {}), ...atualizado }));
+      }
+    }
+    setLancamentosRefreshKey((k) => k + 1);
+  };
+
+  useEffect(() => {
+    if (abaInicial) setAbaPedidoDesktop(abaInicial);
+  }, [abaInicial]);
 
   useEffect(() => {
     if (pedido) {
@@ -762,25 +783,25 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
     }
   };
 
-  const isAprovado = pedido && pedido.status === 'Aprovado';
+  const isAprovado = pedidoAtual && (pedidoAtual.status === 'Aprovado' || pedidoAtual.status === 'Aguardando Recepção');
 
-  const isLocked = pedido && (
-    pedido.status === 'Aguardando Aprovação Financeira' ||
-    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
-    pedido.status_aprovacao_financeira === 'Aprovado' ||
-    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ||
-    pedido.status_aprovacao_financeira === 'Rejeitado' ||
-    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ||
-    pedido.status_aprovacao_financeira === 'Solicitação de Edição Pendente'
+  const isLocked = pedidoAtual && (
+    pedidoAtual.status === 'Aguardando Aprovação Financeira' ||
+    pedidoAtual.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
+    pedidoAtual.status_aprovacao_financeira === 'Aprovado' ||
+    pedidoAtual.status_aprovacao_financeira === 'Aprovado Financeiramente' ||
+    pedidoAtual.status_aprovacao_financeira === 'Rejeitado' ||
+    pedidoAtual.status_aprovacao_financeira === 'Rejeitado Financeiramente' ||
+    pedidoAtual.status_aprovacao_financeira === 'Solicitação de Edição Pendente'
   );
 
-  const solicitacaoEdicaoPendente = pedido?.status_aprovacao_financeira === 'Solicitação de Edição Pendente';
+  const solicitacaoEdicaoPendente = pedidoAtual?.status_aprovacao_financeira === 'Solicitação de Edição Pendente';
   const podeSolicitarCorrecao =
     !!pedido?.id &&
     isLocked &&
     !solicitacaoEdicaoPendente &&
-    pedido.status_aprovacao_financeira !== 'Rejeitado' &&
-    pedido.status_aprovacao_financeira !== 'Rejeitado Financeiramente';
+    pedidoAtual.status_aprovacao_financeira !== 'Rejeitado' &&
+    pedidoAtual.status_aprovacao_financeira !== 'Rejeitado Financeiramente';
 
   const isLogisticaEnabled = true;
 
@@ -1170,7 +1191,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
             {[
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
-              { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Pgto', disabled: false },
+              { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Fin.', disabled: false },
               { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: false },
               { value: 'recepcao',     icon: <Package className="w-4 h-4 flex-shrink-0" />, short: 'Rec', disabled: !pedido?.id },
               { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'Pend', disabled: !pedido?.id },
@@ -1410,17 +1431,23 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, autoOpenImpo
               />
             </div>
 
-            {/* Total */}
-            <div className="pt-6 border-t border-border/40">
-              <div className="text-right mb-8">
+            {/* Central financeira + lançamentos */}
+            <div className="pt-6 border-t border-border/40 space-y-6">
+              <div className="text-right">
                 <span className="text-xs text-muted-foreground block mb-0.5">Total do Pedido</span>
                 <span className="text-2xl font-bold text-foreground dark:text-foreground">{formatCurrency(valorTotal)}</span>
               </div>
 
-              {/* Contas a pagar geradas para este pedido */}
+              {pedido?.id && (
+                <PainelCentralFinanceiroPedido
+                  pedido={pedidoAtual}
+                  onPedidoAtualizado={handlePedidoFinanceiroAtualizado}
+                />
+              )}
+
               {pedido?.id && (
                 <div className="space-y-2">
-                  <LancamentosCompraPanel pedidoId={pedido.id} />
+                  <LancamentosCompraPanel pedidoId={pedido.id} refreshKey={lancamentosRefreshKey} />
                 </div>
               )}
             </div>

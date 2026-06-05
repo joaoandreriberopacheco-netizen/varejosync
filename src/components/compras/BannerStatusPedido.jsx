@@ -35,7 +35,7 @@ export default function BannerStatusPedido({ pedido, isMobile = false }) {
             <span className="font-medium">Correção solicitada.</span>{' '}
             {isMobile
               ? 'Aguarde o financeiro liberar a edição.'
-              : 'O financeiro vê este pedido em Aprovações Financeiras e libera a edição quando possível.'}
+              : 'Libere a edição na aba Financeiro deste pedido ou em Aprovações Financeiras.'}
           </div>
         </div>
       </div>
@@ -50,8 +50,8 @@ export default function BannerStatusPedido({ pedido, isMobile = false }) {
           <div className="text-xs text-yellow-800 dark:text-yellow-200">
             <span className="font-medium">Aguardando aprovação financeira.</span>{' '}
             {isMobile
-              ? 'Edição bloqueada até o financeiro aprovar.'
-              : 'Edição bloqueada até o financeiro aprovar. Se precisar alterar antes da decisão, peça ao financeiro rejeitar ou use o fluxo de correção após aprovação.'}
+              ? 'Edição bloqueada. Aprove na aba Financeiro ou em Aprovações.'
+              : 'Edição bloqueada até aprovar o pagamento. Use a aba Financeiro deste pedido (atalho) ou o módulo Aprovações Financeiras.'}
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function BannerStatusPedido({ pedido, isMobile = false }) {
             <span className="font-medium">Aprovado financeiramente.</span>{' '}
             {isMobile
               ? 'Valores já passaram pelo financeiro. Para corrigir: menu flutuante → Solicitar correção.'
-              : 'Valores já passaram pelo financeiro. Para corrigir dados (ex.: valor digitado errado): abra o menu flutuante (canto inferior direito) e toque em Solicitar correção — o financeiro libera a edição em Aprovações Financeiras.'}
+              : 'Para corrigir dados: menu flutuante → Solicitar correção; depois libere a edição na aba Financeiro ou em Aprovações.'}
           </div>
         </div>
       </div>

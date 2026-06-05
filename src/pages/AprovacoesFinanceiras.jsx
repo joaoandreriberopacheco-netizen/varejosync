@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { AlertCircle, CheckCircle, XCircle, Eye, DollarSign, ArrowUpRight, ArrowDownLeft, Clock, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,22 +7,20 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter } from '@/components/
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import PedidoCompraResumoDialog from '@/components/compras/PedidoCompraResumoDialog';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
-import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { aprovarPedidoCompraFinanceiro } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function AprovacoesFinanceirasPage() {
+  const navigate = useNavigate();
   const [pendingTransactions, setPendingTransactions] = useState([]);
   const [contas, setContas] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedPedidosIds, setSelectedPedidosIds] = useState([]);
   const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
-  const [selectedPedido, setSelectedPedido] = useState(null);
-  const [showPedidoDetails, setShowPedidoDetails] = useState(false);
   const [contaSelecionada, setContaSelecionada] = useState('');
   const [showHistorico, setShowHistorico] = useState(false);
   const [historico, setHistorico] = useState([]);
@@ -71,13 +70,9 @@ export default function AprovacoesFinanceirasPage() {
     setLoadingHistorico(false);
   };
 
-  const handleViewPedido = async (transaction) => {
+  const handleViewPedido = (transaction) => {
     if (transaction.referencia_tipo === 'PedidoCompra' && transaction.referencia_id) {
-      const pedidos = await base44.entities.PedidoCompra.filter({ id: transaction.referencia_id });
-      if (pedidos.length > 0) {
-        setSelectedPedido(pedidos[0]);
-        setShowPedidoDetails(true);
-      }
+      navigate(`/PedidoCompraDetalhe?id=${transaction.referencia_id}&tab=pagamento`);
     }
   };
 
@@ -148,8 +143,6 @@ export default function AprovacoesFinanceirasPage() {
           return;
         }
 
-        const agora = new Date().toISOString();
-        const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
         const contaSelecionadaNome = contas.find(c => c.id === contaId)?.nome || '';
         let aprovadosOk = 0;
         let aprovadosErro = 0;
@@ -157,72 +150,13 @@ export default function AprovacoesFinanceirasPage() {
 
         for (const pedido of pedidosParaAprovar) {
           try {
-            const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
-            const statusAnterior = pedido.status || 'Aguardando Liberação';
-            const historicoAtualizado = (pedido.historico || '') + notaAprovacao;
-
-            await base44.entities.PedidoCompra.update(pedido.id, {
-              status: 'Aprovado',
-              status_aprovacao_financeira: 'Aprovado Financeiramente',
-              conta_pagamento_id: contaId,
-              conta_pagamento_nome: contaSelecionadaNome,
-              data_aprovacao_financeira: agora,
-              historico: historicoAtualizado,
+            await aprovarPedidoCompraFinanceiro({
+              base44,
+              pedido,
+              contaId,
+              contaNome: contaSelecionadaNome,
+              authData,
             });
-
-            await registrarTransicao({
-              pedidoId: pedido.id,
-              pedidoNumero: pedido.numero,
-              statusAnterior,
-              statusNovo: 'Aprovado',
-              responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
-              tipoAutenticacao: 'Interveniente',
-              codigoOperacao: authData.codigoOperacao || authData.operationCode || '',
-              observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaId}`,
-              historicoAtual: historicoAtualizado,
-            });
-
-            const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
-
-            if (lancamentos.length === 0) {
-              await base44.entities.LancamentoFinanceiro.create({
-                tipo: 'Despesa',
-                descricao: `Compra - ${pedido.fornecedor_nome || pedido.numero}`,
-                terceiro_id: pedido.fornecedor_id,
-                terceiro_nome: pedido.fornecedor_nome,
-                valor: calcValorTotalPedidoCompra(pedido),
-                valor_liquido: calcValorTotalPedidoCompra(pedido),
-                data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
-                status: 'Em Aberto',
-                status_conciliacao: 'N/A',
-                conta_financeira_id: contaId,
-                conta_financeira_nome: contaSelecionadaNome,
-                referencia_id: pedido.id,
-                referencia_tipo: 'PedidoCompra',
-                referencia_numero: pedido.numero,
-                observacoes: notaAprovacao.trim(),
-                is_custo_mercadoria: true,
-                pedido_compra_vinculado_id: pedido.id,
-                pedido_compra_vinculado_numero: pedido.numero,
-                forma_pagamento_tipo: pedido.forma_pagamento_compra || undefined,
-                forma_pagamento_compra: pedido.forma_pagamento_compra || undefined,
-              });
-            } else {
-              for (const l of lancamentos) {
-                await base44.entities.LancamentoFinanceiro.update(l.id, {
-                  tipo: 'Despesa',
-                  status: 'Em Aberto',
-                  conta_financeira_id: contaId,
-                  conta_financeira_nome: contaSelecionadaNome,
-                  is_custo_mercadoria: true,
-                  pedido_compra_vinculado_id: pedido.id,
-                  pedido_compra_vinculado_numero: pedido.numero,
-                  observacoes: (l.observacoes || '') + notaAprovacao,
-                  forma_pagamento_tipo: l.forma_pagamento_tipo || pedido.forma_pagamento_compra || undefined,
-                  forma_pagamento_compra: l.forma_pagamento_compra || pedido.forma_pagamento_compra || undefined,
-                });
-              }
-            }
             aprovadosOk += 1;
           } catch (itemError) {
             console.error('[AprovacoesFinanceiras] falha no pedido', pedido?.numero || pedido?.id, itemError);
@@ -290,6 +224,8 @@ export default function AprovacoesFinanceirasPage() {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {Object.keys(groupedTransactions).length} pendente{Object.keys(groupedTransactions).length !== 1 ? 's' : ''}
+              {' · '}
+              <span className="text-teal-600 dark:text-teal-400">Toque no olho para aprovar na aba Financeiro do pedido</span>
             </p>
           </div>
           <Button
@@ -425,14 +361,6 @@ export default function AprovacoesFinanceirasPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        )}
-
-        {showPedidoDetails && selectedPedido && (
-          <PedidoCompraResumoDialog
-            open={showPedidoDetails}
-            onOpenChange={setShowPedidoDetails}
-            pedido={selectedPedido}
-          />
         )}
 
         {isProcessingApproval && (
