@@ -177,7 +177,7 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
       </div>
 
       {modo === 'produto' ? (
-        <P38MobileLineList className="rounded-lg">
+        <P38MobileLineList allViewports className="rounded-lg">
           {produtosAgregados.map((p, index) => (
             <ConsultaProdutoRow
               key={p.key}
@@ -207,7 +207,7 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
                 </div>
                 <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
               </button>
-              <P38MobileLineList className="rounded-none border-0">
+              <P38MobileLineList allViewports className="rounded-none border-0">
                 {(venda.itens || []).map((item, idx) => (
                   <ConsultaProdutoRow
                     key={`${venda.id}-${idx}`}
