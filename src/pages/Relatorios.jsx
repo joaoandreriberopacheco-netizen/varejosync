@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate, ClipboardPenLine } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
@@ -131,6 +131,12 @@ export default function RelatoriosPage() {
       nome: "Movimentações", 
       descricao: "Rastreabilidade de entradas/saídas",
       icon: TrendingUp
+    },
+    { 
+      id: 'consumo-interno',
+      nome: "Consumo Interno", 
+      descricao: "Saídas internas por destinação, produto e período",
+      icon: ClipboardPenLine
     },
     { 
       id: 'performance-produto',
@@ -297,6 +303,8 @@ export default function RelatoriosPage() {
                   onClickAbrir={(id) => {
                     if (id === 'inventario-valorizado') {
                       window.location.href = '/RelatorioCatalogoEstoque';
+                    } else if (id === 'consumo-interno') {
+                      window.location.href = '/RelatorioConsumoInterno';
                     } else if (id === 'performance-produto') {
                       setShowSeletor(true);
                     }
