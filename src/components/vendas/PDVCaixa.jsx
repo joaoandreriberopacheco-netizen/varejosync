@@ -147,8 +147,20 @@ function MovimentoTimelineCard({ item }) {
   );
 }
 
-export default function PDVCaixa() {
+export default function PDVCaixa({
+  overlayMode = false,
+  onClose,
+  initialActiveTab = 'balanco',
+  initialVendasView = 'aguardando',
+} = {}) {
   const navigate = useNavigate();
+  const handleClose = () => {
+    if (overlayMode && onClose) {
+      onClose();
+      return;
+    }
+    navigateBackOr(navigate);
+  };
   const [configVenda, setConfigVenda] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -259,8 +271,8 @@ export default function PDVCaixa() {
   const [showReforcosDialog, setShowReforcosDialog] = useState(false);
   const [showSangriasDialog, setShowSangriasDialog] = useState(false);
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
-  const [activeTab, setActiveTab] = useState('balanco');
-  const [vendasView, setVendasView] = useState('aguardando');
+  const [activeTab, setActiveTab] = useState(initialActiveTab);
+  const [vendasView, setVendasView] = useState(initialVendasView);
   const [showDespesaDialog, setShowDespesaDialog] = useState(false);
   const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
@@ -1403,14 +1415,18 @@ export default function PDVCaixa() {
     // Não faz nada, pois o balanço está sempre visível
   };
 
+  const rootClassName = overlayMode
+    ? `h-full min-h-0 flex flex-col bg-muted/40 dark:bg-background ${caixaTypo.screen}`
+    : `${caixaShell} bg-muted/40 dark:bg-background ${caixaTypo.screen}`;
+
   return (
-    <div className={`${caixaShell} bg-muted/40 dark:bg-background ${caixaTypo.screen}`}>
+    <div className={rootClassName}>
       {showSeletorCaixa && (
         <SeletorCaixaPDV 
           open={showSeletorCaixa} 
           onSelect={handleSelecionarCaixa}
           currentUser={currentUser}
-          onClose={() => navigateBackOr(navigate)}
+          onClose={handleClose}
         />
       )}
 
@@ -1427,7 +1443,7 @@ export default function PDVCaixa() {
       <div className="bg-card dark:bg-card border-b border-border/40 dark:border-border/40 px-4 py-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigateBackOr(navigate)}
+          onClick={handleClose}
           className="p-2 -ml-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
           style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-foreground/90 dark:text-muted-foreground" />
