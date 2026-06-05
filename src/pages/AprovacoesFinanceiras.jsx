@@ -12,6 +12,7 @@ import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function AprovacoesFinanceirasPage() {
   const [pendingTransactions, setPendingTransactions] = useState([]);
