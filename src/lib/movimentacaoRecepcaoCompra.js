@@ -7,6 +7,7 @@
  */
 
 import { invokeRecalcularEstoqueProduto } from './p38StockRecalc.js';
+import { getCustoCompraLiquidoFator1 } from './productUnits.js';
 
 /** Compara código do embarque com observações/documento (Base44 pode gravar maiúsculas diferentes). */
 export function movimentoCombinaCodigoEmbarque(mov, codigoExibicao) {
@@ -24,6 +25,7 @@ export function buildMovimentacaoRecepcaoCompraPayload({
   quantidade,
   pedido,
   embarque,
+  purchaseItem,
 }) {
   const refTipo = 'PedidoCompra';
   const refId = pedido?.id;
@@ -38,6 +40,7 @@ export function buildMovimentacaoRecepcaoCompraPayload({
   const observacoes = embCodigo
     ? `Recepção pedido ${refNumero} · embarque ${embCodigo}`
     : `Recepção pedido ${refNumero}`;
+  const custoLiquido = getCustoCompraLiquidoFator1(purchaseItem);
 
   return {
     produto_id: produtoId,
@@ -45,6 +48,7 @@ export function buildMovimentacaoRecepcaoCompraPayload({
     tipo: 'Entrada',
     motivo: 'Compra',
     quantidade,
+    ...(custoLiquido > 0 ? { custo_unitario: custoLiquido } : {}),
     referencia_tipo: refTipo,
     referencia_id: refId,
     referencia_numero: refNumero,
@@ -95,6 +99,7 @@ export async function criarMovimentosStockRecepcaoEmFalta(base44, { pedido, emba
         quantidade: qRec,
         pedido,
         embarque,
+        purchaseItem: (Array.isArray(pedido?.itens) ? pedido.itens : []).find((pi) => String(pi?.produto_id) === String(item?.produto_id)) || item,
       })
     );
     await invokeRecalcularEstoqueProduto(base44, produtoId);

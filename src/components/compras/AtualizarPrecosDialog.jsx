@@ -15,6 +15,7 @@ import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
   hasAlternativeUnits,
+  getCustoCompraLiquidoFator1,
 } from '@/lib/productUnits';
 
 // Formata número para string BR
@@ -158,27 +159,16 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       const p = produtos.find(x => x.id === item.produto_id);
       if (!p) return;
 
-      const fatorPedido = resolveFatorPedidoParaBase(item, p);
-      const custoNaUnidadePedido = item.custo_unitario ?? p.valor_compra ?? 0;
-      const valorCompraBase = fatorPedido > 0 ? custoNaUnidadePedido / fatorPedido : custoNaUnidadePedido;
-
-      let descontoPct = item.desconto_pct_item || 0;
-      if (!descontoPct && item.valor_desconto_item && custoNaUnidadePedido > 0) {
-        descontoPct = (Math.abs(item.valor_desconto_item) / custoNaUnidadePedido) * 100;
-      }
-      if (item.valor_desconto_item < 0) descontoPct = -Math.abs(descontoPct);
-
-      const descontoValorCalcBase = valorCompraBase * Math.abs(descontoPct) / 100;
-      const descontoComSinal = descontoPct < 0 ? -descontoValorCalcBase : descontoValorCalcBase;
+      const valorCompraLiquidoBase = getCustoCompraLiquidoFator1(item) || (p.valor_compra || 0);
 
       const c = {
-        valor_compra: valorCompraBase,
+        valor_compra: valorCompraLiquidoBase,
         custo_frete_padrao: p.custo_frete_padrao || 0,
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
         custo_outros_padrao: p.custo_outros_padrao || 0,
-        desconto_compra_padrao: descontoComSinal,
-        desconto_pct: descontoPct,
+        desconto_compra_padrao: 0,
+        desconto_pct: 0,
         preco_venda_percentual: p.preco_venda_percentual || 40,
         preco_venda_padrao: p.preco_venda_padrao || 0,
       };
