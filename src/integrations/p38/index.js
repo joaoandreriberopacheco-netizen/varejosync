@@ -93,8 +93,13 @@ const activeAdapter = shouldUseSupabase
   : shouldUseSubpayze
     ? subpayzeAdapter
     : base44Adapter || supabaseAdapter;
+const activeLegacyClient = activeAdapter.legacyClient || linkedLegacyClient;
 
 function withSafeFallback(sectionName, candidateSection, fallbackSection) {
+  if (!candidateSection) {
+    return fallbackSection || {};
+  }
+
   if (!safeMode || !fallbackSection) {
     return candidateSection;
   }
@@ -144,14 +149,14 @@ export const p38 = {
   supabaseAdapter,
   createRequestContext,
   // Mantemos acesso ao client legado durante a fase de compatibilidade.
-  legacyClient: linkedLegacyClient,
-  auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter?.auth),
-  entities: withSafeFallback('entities', activeAdapter.entities, base44Adapter?.entities),
-  functions: withSafeFallback('functions', activeAdapter.functions, base44Adapter?.functions),
+  legacyClient: activeLegacyClient,
+  auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter?.auth || activeLegacyClient?.auth),
+  entities: withSafeFallback('entities', activeAdapter.entities, base44Adapter?.entities || activeLegacyClient?.entities),
+  functions: withSafeFallback('functions', activeAdapter.functions, base44Adapter?.functions || activeLegacyClient?.functions),
   integrations: withSafeFallback(
     'integrations',
     activeAdapter.integrations,
-    base44Adapter?.integrations
+    base44Adapter?.integrations || activeLegacyClient?.integrations
   )
 };
 
