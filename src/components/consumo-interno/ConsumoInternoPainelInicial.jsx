@@ -99,7 +99,7 @@ export default function ConsumoInternoPainelInicial({
                   </p>
                 </div>
 
-                <P38MobileLineList>
+                <P38MobileLineList allViewports>
                   {itens.map((item, index) => (
                     <P38MobileLine
                       key={item.id}
