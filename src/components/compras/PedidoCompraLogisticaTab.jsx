@@ -140,15 +140,15 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
       }
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-background max-w-sm">
+        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl bg-card max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-white">Excluir embarque?</AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-muted-foreground">
+            <AlertDialogTitle>Excluir embarque?</AlertDialogTitle>
+            <AlertDialogDescription>
               O embarque <strong>{codigoExibicao}</strong> será removido da logística deste pedido.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-0 shadow-sm dark:bg-muted dark:text-foreground">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-0 shadow-sm bg-muted text-foreground">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-700 text-white">
               {deleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
@@ -250,7 +250,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-muted/50/60 px-4 py-4 shadow-sm">
+      <div className="rounded-2xl bg-muted/50 px-4 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Dashboard de embarques</p>
@@ -310,7 +310,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
 
       {/* Estado vazio */}
       {semEmbarques &&
-      <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-muted/50/50 text-center space-y-2">
+      <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-muted/50 text-center space-y-2">
           <Clock className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Nenhum despacho registrado</p>
           <p className="text-xs text-muted-foreground">Use o botão acima para registrar o primeiro embarque</p>

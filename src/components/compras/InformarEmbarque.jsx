@@ -183,7 +183,7 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
               />
               <div className="flex gap-2">
                 <Button type="button" size="sm" onClick={handleSalvarNova} disabled={salvando || !nomeNova.trim()}
-                  className="flex-1 h-9 text-xs bg-background dark:bg-card dark:text-foreground text-white border-0">
+                  className="flex-1 h-9 text-xs bg-primary text-primary-foreground hover:bg-primary/90 border-0">
                   {salvando ? 'Salvando...' : 'Salvar'}
                 </Button>
                 <Button type="button" size="sm" variant="outline" onClick={() => setCriando(false)}
@@ -553,7 +553,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       {/* modal=false enquanto há portal por cima: Radix bloqueia pointer-events no resto da página em modal=true */}
       <Dialog open={isOpen} onOpenChange={onClose} modal={!bloquearFecharPorPortalAberto}>
         <DialogContent
-          className="max-w-2xl max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0 rounded-2xl bg-[#0f172a] border border-white/10 text-white shadow-2xl"
+          className="max-w-2xl max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0 rounded-2xl bg-card border border-border/40 text-foreground shadow-2xl"
           onInteractOutside={(e) => {
             if (bloquearFecharPorPortalAberto) {
               e.preventDefault();
@@ -574,40 +574,40 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           }}
         >
 
-        <div className="flex flex-shrink-0 items-center gap-3 px-6 pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#0f172a] to-[#111827]">
-          <div className="w-10 h-10 rounded-3xl bg-[#1e293b] flex items-center justify-center shadow-sm">
-            <Truck className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <div className="flex flex-shrink-0 items-center gap-3 px-6 pt-6 pb-4 border-b border-border/40 bg-gradient-to-b from-card to-muted/60 dark:from-muted/40 dark:to-muted/60">
+          <div className="w-10 h-10 rounded-3xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center shadow-sm">
+            <Truck className="w-4 h-4 text-teal-600 dark:text-teal-400 flex-shrink-0" />
           </div>
-          <h2 className="text-base font-semibold text-white font-quicksand flex-1">
+          <h2 className="text-base font-semibold text-foreground font-quicksand flex-1">
             {isEdicao ? 'Editar Despacho' : 'Informar Despacho'}
             <span className="text-muted-foreground font-normal"> — {pedido.numero}</span>
           </h2>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 pb-10 scroll-smooth bg-[#111827]">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 pb-10 scroll-smooth bg-card">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 pb-2">
-            <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-[#0b1220] p-1 w-full border border-white/10">
+            <TabsList className="grid grid-cols-2 gap-1 h-auto rounded-2xl bg-muted p-1 w-full border border-border/40">
               <TabsTrigger value="transporte" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><Route className="w-4 h-4" />Transporte</TabsTrigger>
               <TabsTrigger value="itens" className="rounded-2xl py-2.5 text-sm flex items-center gap-2"><ClipboardList className="w-4 h-4" />Itens relacionados</TabsTrigger>
             </TabsList>
 
               <TabsContent value="transporte" className="space-y-5 mt-0">
-                <div className="space-y-2 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
+                <div className="space-y-2 rounded-2xl border border-border/40 bg-muted/50 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Fornecedor do pedido</p>
-                      <p className="text-sm font-medium text-white truncate">{fornecedorLocal.nome || '—'}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{fornecedorLocal.nome || '—'}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setPodeEscolherFornecedor(true)}
-                      className="shrink-0 rounded-lg bg-card/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-card/20"
+                      className="shrink-0 rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80"
                     >
                       Alterar fornecedor
                     </button>
                   </div>
                   {podeEscolherFornecedor && (
-                    <div className="space-y-2 pt-1 border-t border-white/10">
+                    <div className="space-y-2 pt-1 border-t border-border/40">
                       <label className="text-xs text-muted-foreground">Selecionar fornecedor</label>
                       <select
                         value={fornecedorLocal.id}
@@ -615,7 +615,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                           const fn = fornecedores.find((f) => f.id === e.target.value);
                           setFornecedorLocal({ id: fn?.id || '', nome: fn?.nome || '' });
                         }}
-                        className="w-full h-11 rounded-xl border-0 bg-[#1f2937] px-3 text-sm text-white"
+                        className="w-full h-11 rounded-xl border-0 bg-muted px-3 text-sm text-foreground"
                       >
                         <option value="">Selecione...</option>
                         {fornecedores.map((f) => (
@@ -639,7 +639,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg bg-card/10 px-4 py-2 text-xs font-medium text-white hover:bg-card/20"
+                          className="rounded-lg bg-muted px-4 py-2 text-xs font-medium text-foreground hover:bg-muted/80"
                           onClick={() => {
                             setPodeEscolherFornecedor(false);
                             setFornecedorLocal({ id: pedido.fornecedor_id || '', nome: pedido.fornecedor_nome || '' });
@@ -652,7 +652,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-border/40 bg-muted/50 p-4">
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
@@ -662,24 +662,24 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                       type="date"
                       value={dataDespacho}
                       onChange={e => setDataDespacho(e.target.value)}
-                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white"
+                      className="h-12 rounded-xl border-0 bg-muted shadow-sm text-sm text-foreground"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
-                      ETA — Chegada <span className="text-red-400">*</span>
+                      ETA — Chegada <span className="text-red-500 dark:text-red-400">*</span>
                     </label>
                     <Input
                       type="date"
                       value={eta}
                       onChange={e => setEta(e.target.value)}
-                      className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white"
+                      className="h-12 rounded-xl border-0 bg-muted shadow-sm text-sm text-foreground"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
+                <div className="space-y-1.5 rounded-2xl border border-border/40 bg-muted/50 p-4">
                   <label className="text-sm text-muted-foreground">
                     Transportadora <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                   </label>
@@ -691,7 +691,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   />
                 </div>
 
-                <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
+                <div className="space-y-1.5 rounded-2xl border border-border/40 bg-muted/50 p-4">
                   <label className="text-sm text-muted-foreground">
                     Viagem vinculada <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                   </label>
@@ -701,10 +701,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                       logDespachoAudit({ action: 'click_informar_viagem' });
                       setShowTripSelector(true);
                     }}
-                    className="w-full h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white px-4 flex items-center gap-3 text-left"
+                    className="w-full h-12 rounded-xl border-0 bg-muted shadow-sm text-sm text-foreground px-4 flex items-center gap-3 text-left"
                   >
                     <ShipWheel className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-white' : 'text-muted-foreground'}`}>
+                    <span className={`flex-1 truncate ${eventoSelecionado ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {eventoSelecionado ? `${eventoSelecionado.codigo || 'Sem código'} · ${eventoSelecionado.nome || eventoSelecionado.embarcacao_nome || 'Viagem'}` : 'Informar viagem no itinerário'}
                     </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -721,13 +721,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   ) : null}
                 </div>
 
-                <div className="space-y-1.5 rounded-2xl border border-white/10 bg-[#1a2230] p-4">
+                <div className="space-y-1.5 rounded-2xl border border-border/40 bg-muted/50 p-4">
                   <label className="text-sm text-muted-foreground">Observações</label>
                   <Input
                     placeholder="Observações sobre este embarque..."
                     value={observacoes}
                     onChange={e => setObservacoes(e.target.value)}
-                    className="h-12 rounded-xl border-0 bg-[#1f2937] shadow-sm text-sm text-white placeholder:text-muted-foreground"
+                    className="h-12 rounded-xl border-0 bg-muted shadow-sm text-sm text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </TabsContent>
@@ -766,9 +766,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                           <button
                             type="button"
                             onClick={() => toggleItem(item.produto_id)}
-                            className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-muted dark:bg-muted' : 'bg-muted dark:bg-muted'}`}
+                            className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-primary' : 'bg-muted'}`}
                           >
-                            {selecionado && <Check className="w-3 h-3 text-white dark:text-foreground" />}
+                            {selecionado && <Check className="w-3 h-3 text-primary-foreground" />}
                           </button>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground leading-tight">{item.produto_nome}</p>
@@ -803,13 +803,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
           </div>
 
           {/* Footer — fixo na base do modal; corpo acima rola com respiro (evita “fim seco”) */}
-          <div className="flex flex-shrink-0 justify-end gap-3 px-6 pt-4 pb-6 border-t border-white/10 bg-gradient-to-r from-[#0f172a] to-[#111827]">
+          <div className="flex flex-shrink-0 justify-end gap-3 px-6 pt-4 pb-6 border-t border-border/40 bg-gradient-to-b from-card to-muted/60 dark:from-muted/40 dark:to-muted/60">
             <Button variant="outline" onClick={onClose} disabled={loading}
-              className="h-12 px-6 rounded-xl border-0 shadow-sm bg-muted/50 text-foreground/90 disabled:opacity-50">
+              className="h-12 px-6 rounded-xl border-0 shadow-sm bg-muted text-foreground hover:bg-muted/80 disabled:opacity-50">
               Cancelar
             </Button>
             <Button onClick={handleSalvar} disabled={loading}
-              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-background hover:bg-primary dark:bg-card dark:text-foreground text-white min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
+              className="h-12 px-8 rounded-xl border-0 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground min-w-[180px] disabled:opacity-70 disabled:pointer-events-none inline-flex items-center justify-center gap-0">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
