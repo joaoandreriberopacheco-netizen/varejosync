@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
-import { caixaClasses, caixaPanel, caixaPanelBody, caixaTypo } from '@/lib/caixaP38Theme';
+import { caixaPanel, caixaPanelBody, caixaTypo } from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
 const ROW_GRID = 'grid grid-cols-[28px_minmax(0,1fr)_minmax(8.5rem,auto)] items-center gap-x-2';
@@ -11,9 +11,7 @@ function MovimentoRow({
   tone = 'neutral',
   signed = false,
   onEye,
-  eyeTone = 'success',
 }) {
-  const eye = caixaClasses(eyeTone);
   return (
     <div className={`${ROW_GRID} py-1.5`}>
       <div className="flex justify-center">
@@ -21,11 +19,11 @@ function MovimentoRow({
           <button
             type="button"
             onClick={onEye}
-            className={`p-1 rounded-lg transition-colors ${eye.hover}`}
+            className="p-1 rounded-lg transition-colors hover:bg-white/10 dark:hover:bg-white/10"
             style={{ minWidth: '28px', minHeight: '28px' }}
             aria-label={`Ver detalhes: ${label}`}
           >
-            <Eye className={`w-4 h-4 ${eye.icon}`} />
+            <Eye className="w-4 h-4 text-foreground/70 dark:text-white" />
           </button>
         ) : (
           <span className="w-7" aria-hidden />
@@ -77,7 +75,6 @@ export default function CaixaMovimentacoesTurno({
           tone="success"
           signed
           onEye={onVendas}
-          eyeTone="success"
         />
         <MovimentoRow
           label="Reforços"
@@ -85,7 +82,6 @@ export default function CaixaMovimentacoesTurno({
           tone="success"
           signed
           onEye={onReforcos}
-          eyeTone="success"
         />
         <MovimentoRow
           label="Recolhimentos"
@@ -93,7 +89,6 @@ export default function CaixaMovimentacoesTurno({
           tone="info"
           signed
           onEye={onSangrias}
-          eyeTone="info"
         />
         <MovimentoRow
           label="Despesas"
@@ -101,7 +96,6 @@ export default function CaixaMovimentacoesTurno({
           tone="danger"
           signed
           onEye={onDespesas}
-          eyeTone="danger"
         />
         {fiado > 0 && (
           <MovimentoRow
@@ -109,7 +103,6 @@ export default function CaixaMovimentacoesTurno({
             valor={fiado}
             tone="success"
             signed
-            eyeTone="warning"
           />
         )}
 
@@ -120,11 +113,11 @@ export default function CaixaMovimentacoesTurno({
                 <button
                   type="button"
                   onClick={onLiquidez}
-                  className={`p-1 rounded-lg transition-colors ${caixaClasses('success').hover}`}
+                  className="p-1 rounded-lg transition-colors hover:bg-white/10 dark:hover:bg-white/10"
                   style={{ minWidth: '28px', minHeight: '28px' }}
                   aria-label="Ver liquidez consolidada"
                 >
-                  <Eye className={`w-4 h-4 ${caixaClasses('success').icon}`} />
+                  <Eye className="w-4 h-4 text-foreground/70 dark:text-white" />
                 </button>
               ) : (
                 <span className="w-7" aria-hidden />

@@ -214,6 +214,10 @@
     background-color: hsl(var(--p38-accent-olive));
   }
 
+  .caixa-screen .p38-panel__accent-bar {
+    @apply w-px md:w-[3px];
+  }
+
   .dark .p38-panel__accent-bar {
     background-color: hsl(var(--p38-accent-lime));
   }
