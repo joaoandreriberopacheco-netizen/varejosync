@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut, Search } from 'lucide-react';
+import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
+import MenuSearchBar from '@/components/navigation/MenuSearchBar';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
 
 function useDarkMode() {
@@ -31,7 +32,6 @@ export default function GlacialSidebar({
   toggleDarkMode,
 }) {
   const [expandedMenus, setExpandedMenus] = useState({});
-  const [query, setQuery] = useState('');
   const [currentUser, setCurrentUser] = useState(currentUserProp || null);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [userPanelOpen, setUserPanelOpen] = useState(false);
@@ -97,21 +97,6 @@ export default function GlacialSidebar({
 
   const closeMobileMenu = () => { if (isMobile) onClose?.(); };
 
-  const visibleMenuItems = useMemo(() => {
-    if (!query.trim()) return menuItems;
-    const q = query.toLowerCase();
-    return menuItems
-      .map(item => ({
-        ...item,
-        submenu: item.submenu?.filter(sub => sub.name.toLowerCase().includes(q)) || item.submenu,
-      }))
-      .filter(item => item.name.toLowerCase().includes(q) || item.page || (item.submenu && item.submenu.length > 0));
-  }, [menuItems, query]);
-
-  const openGlobalSearch = () => {
-    window.dispatchEvent(new CustomEvent('open-global-search'));
-  };
-
   // Desktop: recolhido=64px, expandido=300px
   const desktopWidth = isOpen ? '300px' : '64px';
   const mobileTranslate = isOpen ? 'translateX(0)' : 'translateX(-100%)';
@@ -167,37 +152,18 @@ export default function GlacialSidebar({
             </p>
           )}
 
-          {isOpen ? (
-            <div className="flex items-center gap-2 px-3 h-11 rounded-2xl mb-2 mx-1" style={{ background: c.searchBg }}>
-              <Search className="w-4 h-4 flex-none" style={{ color: c.iconColor }} />
-              <input
-                autoComplete="off"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Pesquisar função..."
-                className="flex-1 bg-transparent text-sm outline-none min-w-0"
-                style={{ color: c.text }}
-              />
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={openGlobalSearch}
-              className="w-full flex items-center justify-center rounded-xl transition-colors mb-1"
-              style={{ padding: '10px' }}
-              title="Pesquisar função..."
-            >
-              <Search size={18} style={{ color: c.iconColor }} />
-            </button>
-          )}
+          <MenuSearchBar
+            isDark={isDark}
+            expanded={isOpen}
+            onOpen={isMobile ? closeMobileMenu : undefined}
+            className="mb-2 mx-1"
+          />
 
-          {visibleMenuItems.map(item => {
+          {menuItems.map(item => {
             const Icon = item.icon;
             const isActive = isPageActive(item);
             const hasSubmenu = item.submenu && item.submenu.length > 0;
-            const q = query.trim().toLowerCase();
-            const hasMatchingSubmenu = q && item.submenu?.some(sub => sub.name.toLowerCase().includes(q));
-            const isExpanded = expandedMenus[item.name] || hasMatchingSubmenu || (q && item.name.toLowerCase().includes(q) && hasSubmenu);
+            const isExpanded = expandedMenus[item.name];
 
             return (
               <div key={item.name}>

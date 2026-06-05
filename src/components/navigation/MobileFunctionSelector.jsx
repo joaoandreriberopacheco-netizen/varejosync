@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
+import MenuSearchBar from '@/components/navigation/MenuSearchBar';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
 
 function useDarkMode() {
@@ -22,20 +23,8 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   const location = useLocation();
   const isDark = useDarkMode();
   const [activeGroup, setActiveGroup] = useState(null);
-  const [query, setQuery] = useState('');
 
   const groupedItems = useMemo(() => menuItems.filter(item => item.submenu?.length || item.page), [menuItems]);
-
-  const visibleGroups = useMemo(() => {
-    if (!query.trim()) return groupedItems;
-    const q = query.toLowerCase();
-    return groupedItems
-      .map(item => ({
-        ...item,
-        submenu: item.submenu?.filter(sub => sub.name.toLowerCase().includes(q)) || item.submenu,
-      }))
-      .filter(item => item.name.toLowerCase().includes(q) || item.page || (item.submenu && item.submenu.length > 0));
-  }, [groupedItems, query]);
 
   const currentList = activeGroup?.submenu || [];
   const isItemActive = (page) => location.pathname.includes(page);
@@ -67,16 +56,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-3 h-11 rounded-2xl" style={{ background: c.searchBg }}>
-          <Search className="w-4 h-4 flex-none" style={{ color: c.iconColor }} />
-          <input autoComplete="off"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Pesquisar função..."
-            className="flex-1 bg-transparent text-sm outline-none"
-            style={{ color: c.text }}
-          />
-        </div>
+        <MenuSearchBar isDark={isDark} onOpen={onClose} />
       </div>
 
       {!activeGroup ? (
@@ -85,7 +65,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
           <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
-              {visibleGroups.map((item) => {
+              {groupedItems.map((item) => {
                 const Icon = item.icon;
                 const active = item.submenu?.some(sub => isItemActive(sub.page)) || (item.page && isItemActive(item.page));
 

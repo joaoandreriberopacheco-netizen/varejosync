@@ -170,8 +170,11 @@ export default function Layout({ children, currentPageName }) {
     document.addEventListener("keydown", down);
     
     // Listener para evento global de busca
-    const handleGlobalSearch = () => {
+    const handleGlobalSearch = (e) => {
+      const query = e.detail?.query ?? '';
+      setSearchQuery(query);
       setIsSearchOpen(true);
+      setShowMobileMenu(false);
     };
     window.addEventListener('open-global-search', handleGlobalSearch);
     
@@ -345,7 +348,13 @@ export default function Layout({ children, currentPageName }) {
           user={currentUser}
         />
       )}
-      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+      <Dialog
+        open={isSearchOpen}
+        onOpenChange={(open) => {
+          setIsSearchOpen(open);
+          if (!open) setSearchQuery('');
+        }}
+      >
         <DialogContent className="p-0 gap-0 max-w-xl bg-card border-border/40 fixed top-4 md:top-[20%] translate-y-0 font-din-1451">
           <div className="flex items-center px-4 border-b border-border/40 sticky top-0 bg-card z-10">
             <Search className="w-5 h-5 mr-3 text-muted-foreground" />
