@@ -9,8 +9,19 @@ import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { getCachedUserSession } from '@/lib/userSessionCache';
+import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
-export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
+function normalizeCaixaId(id) {
+  return String(id ?? '').trim();
+}
+
+function isCaixaAutorizado(caixaId, autorizados = []) {
+  const key = normalizeCaixaId(caixaId);
+  return autorizados.some((id) => normalizeCaixaId(id) === key);
+}
+
+export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, elevatedStack = false }) {
   const navigate = useNavigate();
   const [caixasDisponiveis, setCaixasDisponiveis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,13 +49,24 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
   };
 
   useEffect(() => {
-    if (open && currentUser) {
-      loadCaixas();
-    }
+    if (!open) return;
+    loadCaixas();
   }, [open, currentUser]);
 
   const loadCaixas = async () => {
+    setLoading(true);
     try {
+      let user = currentUser;
+      if (!user) {
+        user = getCachedUserSession()?.user ?? null;
+      }
+      if (!user) {
+        user = await base44.auth.me().catch(() => null);
+      }
+      if (!user) {
+        setCaixasDisponiveis([]);
+        return;
+      }
       const [todasContas, todosTurnos, todasVendas, todosMovimentos, todasDespesas, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
@@ -121,7 +143,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
 
       // Filtrar por permissão — PROTEÇÃO TOTAL
       // Usuário só vê caixas explicitamente autorizados (mesmo admin)
-      const caixasAutorizados = currentUser.caixas_pdv_autorizados_ids || currentUser.caixas_vinculados || [];
+      const caixasAutorizados = user.caixas_pdv_autorizados_ids || user.caixas_vinculados || [];
       
       let caixasFiltrados;
       if (caixasAutorizados.length === 0) {
@@ -129,7 +151,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
         caixasFiltrados = [];
       } else {
         // Vê APENAS os caixas autorizados (independente de admin ou não)
-        caixasFiltrados = caixasPDV.filter(c => caixasAutorizados.includes(c.id));
+        caixasFiltrados = caixasPDV.filter((c) => isCaixaAutorizado(c.id, caixasAutorizados));
       }
 
       setCaixasDisponiveis(caixasFiltrados);
@@ -202,10 +224,16 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
     }
   };
 
+  const elevatedDialogClass = elevatedStack ? QUICK_ACCESS_NESTED_DIALOG_CLASS : undefined;
+
   return (
     <>
       <Dialog open={open && !showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-2xl dark:bg-background" hideClose>
+        <DialogContent
+          overlayClassName={elevatedDialogClass}
+          className={`max-w-2xl dark:bg-background ${elevatedDialogClass || ''}`}
+          hideClose
+        >
           <DialogHeader className="relative">
             <button
               onClick={() => onClose ? onClose() : navigate(-1)}
@@ -282,7 +310,11 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
       </Dialog>
 
       <Dialog open={showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-sm dark:bg-background border-0 p-0 shadow-2xl" hideClose>
+        <DialogContent
+          overlayClassName={elevatedDialogClass}
+          className={`max-w-sm dark:bg-background border-0 p-0 shadow-2xl ${elevatedDialogClass || ''}`}
+          hideClose
+        >
           <div className="flex flex-col h-full">
             {/* Header com abas */}
             <div className="flex items-center justify-between px-4 pt-4 border-b border-border/40">

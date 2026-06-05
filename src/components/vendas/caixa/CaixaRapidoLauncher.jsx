@@ -5,10 +5,8 @@ import { ChevronUp, Wallet } from 'lucide-react';
 import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
+import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
-
-/** Acima de drawers/modais comuns; empilhado acima do orçamento rápido (mesmo z). */
-const LAUNCHER_Z = 520;
 
 function userCanAccessCaixa(user, perfilDeAcesso) {
   if (!user) return false;
@@ -113,7 +111,7 @@ export default function CaixaRapidoLauncher() {
       <div
         className="pointer-events-none fixed left-0 p38-bottom-fab2"
         style={{
-          zIndex: LAUNCHER_Z,
+          zIndex: QUICK_ACCESS_Z.launcher,
           transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
           transition: dragging ? 'none' : 'transform 180ms ease-out',
         }}
