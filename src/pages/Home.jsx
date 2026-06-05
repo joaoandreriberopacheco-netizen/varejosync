@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import {
-  Eye, EyeOff, BarChart3, AlertCircle, ChevronRight,
+  Eye, EyeOff, AlertCircle, ChevronRight,
   Package, Receipt, ShoppingCart, Wallet, Settings2, ClipboardPenLine
 } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
@@ -183,16 +183,6 @@ export default function HomePage() {
             ) : (
               <div className="text-3xl font-bold text-muted-foreground/50 mb-1">••••••</div>
             )}
-            <Link
-              to={createPageUrl('Dashboard')}
-              className="mt-4 flex items-center justify-between px-4 py-3 bg-muted rounded-xl hover:bg-muted/80 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground/90">Ver Dashboard Completo</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
           </div>
         )}
 

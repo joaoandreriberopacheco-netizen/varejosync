@@ -3,13 +3,13 @@ import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import P38Logo from '@/components/brand/P38Logo';
-import GeralTab from '../components/dashboard/tabs/GeralTab';
-import VendasTab from '../components/dashboard/tabs/VendasTab';
-import ComprasTab from '../components/dashboard/tabs/ComprasTab';
-import EstoqueTab from '../components/dashboard/tabs/EstoqueTab';
-import FinanceiroTab from '../components/dashboard/tabs/FinanceiroTab';
-import DashboardVendedor from './DashboardVendedor';
-import DashboardCaixa from './DashboardCaixa';
+import GeralTab from '@/paiol/components/dashboard/tabs/GeralTab';
+import VendasTab from '@/paiol/components/dashboard/tabs/VendasTab';
+import ComprasTab from '@/paiol/components/dashboard/tabs/ComprasTab';
+import EstoqueTab from '@/paiol/components/dashboard/tabs/EstoqueTab';
+import FinanceiroTab from '@/paiol/components/dashboard/tabs/FinanceiroTab';
+import DashboardVendedor from '@/pages/DashboardVendedor';
+import DashboardCaixa from '@/pages/DashboardCaixa';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('geral');

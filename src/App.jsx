@@ -7,7 +7,7 @@ import { FLARE_AND_INSPECTION_UI_ENABLED } from '@/config/devToolsFlags';
 import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
@@ -84,8 +84,9 @@ const AuthenticatedApp = () => {
   return (
     <>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/Dashboard" element={<Navigate to="/" replace />} />
+      <Route path="/" element={
         <LayoutWrapper currentPageName="Home">
           <Home />
         </LayoutWrapper>

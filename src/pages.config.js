@@ -66,7 +66,6 @@ import Configuracoes from './pages/Configuracoes';
 import ContasFinanceiras from './pages/ContasFinanceiras';
 import ControleCaixasAtivos from './pages/ControleCaixasAtivos';
 import ControleEntregas from './pages/ControleEntregas';
-import Dashboard from './pages/Dashboard';
 import DashboardCaixa from './pages/DashboardCaixa';
 import DashboardVendedor from './pages/DashboardVendedor';
 import DevolucaoTroca from './pages/DevolucaoTroca';
@@ -134,7 +133,6 @@ export const PAGES = {
     "ContasFinanceiras": ContasFinanceiras,
     "ControleCaixasAtivos": ControleCaixasAtivos,
     "ControleEntregas": ControleEntregas,
-    "Dashboard": Dashboard,
     "DashboardCaixa": DashboardCaixa,
     "DashboardVendedor": DashboardVendedor,
     "DevolucaoTroca": DevolucaoTroca,
@@ -182,7 +180,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Dashboard",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: __Layout,
 };
