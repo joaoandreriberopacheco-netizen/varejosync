@@ -181,7 +181,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       COST_FIELDS.forEach(field => {
         initialInputs[`${item.produto_id}_${field}`] = fmt((c[field] || 0) * mult);
       });
-      initialInputs[`${item.produto_id}_desconto_pct`] = String(Math.round((descontoPct) * 100) / 100);
+      initialInputs[`${item.produto_id}_desconto_pct`] = String(Math.round((c.desconto_pct || 0) * 100) / 100);
       initialInputs[`${item.produto_id}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
       initialInputs[`${item.produto_id}_preco`] = fmt((c.preco_venda_padrao || 0) * mult);
     });
