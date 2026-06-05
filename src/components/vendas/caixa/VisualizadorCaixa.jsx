@@ -17,6 +17,7 @@ import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import {
   CAIXA_PRINT,
   caixaClasses,
+  caixaMain,
   caixaMobileTabBar,
   caixaOverlayShell,
   caixaTabPanel,
@@ -526,8 +527,8 @@ export default function VisualizadorCaixa({
         </div>
       </div>
 
-      {/* Conteúdo */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Conteúdo — caixaMain estabelece flex-col para TabsContent poder rolar no mobile */}
+      <div className={`${caixaMain} bg-background`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
           {/* KPIs - Desktop */}
           <div className="hidden md:block p-4 pb-0 bg-background">

@@ -117,7 +117,8 @@ export const caixaTabPanel = 'flex-1 min-h-0 overflow-y-auto overscroll-y-contai
 export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]';
 export const caixaMobileTabBar = 'md:hidden flex-shrink-0 pb-[env(safe-area-inset-bottom)]';
 /** Detalhe embutido (Caixas Ativos / Turnos Fechados) — portal no body, acima do layout mobile */
-export const caixaOverlayShell = 'fixed inset-0 z-[1180] flex flex-col overflow-hidden bg-background';
+export const caixaOverlayShell =
+  'fixed inset-0 z-[1180] h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background';
 
 /** Tipografia da tela de caixa — maiúsculas + corpo maior (alinhado ao fluxo P38) */
 export const caixaTypo = {
