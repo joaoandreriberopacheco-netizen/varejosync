@@ -109,6 +109,16 @@ export function conferenciaTone({ temDiferenca, diferenca }) {
 export const caixaPanel = 'p38-panel rounded-2xl border border-border/40 dark:border-white/10';
 export const caixaPanelBody = 'p38-panel__body';
 
+/** Layout fullscreen — scroll interno sem cortar botões sob a barra inferior */
+export const caixaShell = 'h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden';
+export const caixaMain = 'flex-1 min-h-0 overflow-hidden';
+export const caixaTabsRoot = 'h-full min-h-0 flex flex-col';
+export const caixaTabPanel = 'flex-1 min-h-0 overflow-y-auto overscroll-y-contain mt-0 data-[state=inactive]:hidden';
+export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]';
+export const caixaMobileTabBar = 'md:hidden flex-shrink-0 pb-[env(safe-area-inset-bottom)]';
+/** Detalhe embutido (Caixas Ativos / Turnos Fechados) — cobre o menu global */
+export const caixaOverlayShell = 'fixed inset-0 z-[55] flex flex-col overflow-hidden bg-background';
+
 /** Tipografia da tela de caixa — maiúsculas + corpo maior (alinhado ao fluxo P38) */
 export const caixaTypo = {
   screen: 'caixa-screen font-din-1451',

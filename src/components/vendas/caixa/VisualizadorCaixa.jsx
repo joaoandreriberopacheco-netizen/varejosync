@@ -12,7 +12,17 @@ import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
-import { CAIXA_PRINT, caixaClasses, caixaTypo, movimentoTone } from '@/lib/caixaP38Theme';
+import {
+  CAIXA_PRINT,
+  caixaClasses,
+  caixaMobileTabBar,
+  caixaOverlayShell,
+  caixaTabPanel,
+  caixaTabPanelPad,
+  caixaTabsRoot,
+  caixaTypo,
+  movimentoTone,
+} from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 
@@ -342,7 +352,7 @@ export default function VisualizadorCaixa({
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-background ${caixaTypo.screen}`}>
+    <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <button onClick={onVoltar} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
@@ -382,8 +392,8 @@ export default function VisualizadorCaixa({
       </div>
 
       {/* Conteúdo */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
           {/* KPIs - Desktop */}
           <div className="hidden md:block p-4 pb-0 bg-background">
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
@@ -420,8 +430,8 @@ export default function VisualizadorCaixa({
             </TabsList>
           </div>
 
-          <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 bg-background">
-            <div className="max-w-4xl mx-auto space-y-4">
+          <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad} bg-background`}>
+            <div className="max-w-4xl mx-auto space-y-4 pb-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
                   saldoInicial={caixaData.saldoInicial}
@@ -566,7 +576,7 @@ export default function VisualizadorCaixa({
             </div>
           </TabsContent>
 
-          <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0">
+          <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
             <div className="max-w-4xl mx-auto space-y-3">
               <div className="mb-4">
                 <div className="text-xs text-muted-foreground mb-1">Finalizadas</div>
@@ -591,7 +601,7 @@ export default function VisualizadorCaixa({
             </div>
           </TabsContent>
 
-          <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0">
+          <TabsContent value="movimentos" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, tone: movimentoTone(m.tipo) }));
@@ -635,7 +645,7 @@ export default function VisualizadorCaixa({
           </TabsContent>
 
           {/* Bottom Nav - Mobile */}
-          <TabsList className="md:hidden grid grid-cols-3 h-16 bg-card border-t border-border/40 rounded-none p-0 flex-shrink-0">
+          <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-16 bg-card border-t border-border/40 rounded-none p-0`}>
             <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
               <PieChart className="w-5 h-5" />
               <span className="text-xs">Balanço</span>

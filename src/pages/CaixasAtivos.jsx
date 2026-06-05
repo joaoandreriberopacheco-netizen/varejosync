@@ -249,7 +249,7 @@ export default function CaixasAtivosPage() {
 
   // Tela de seleção de caixa
   return (
-    <div className={`min-h-screen bg-background -m-4 md:-m-6 p-4 md:p-6 ${caixaTypo.screen}`}>
+    <div className={`min-h-screen bg-background -m-4 md:-m-6 p-4 md:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6 ${caixaTypo.screen}`}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>

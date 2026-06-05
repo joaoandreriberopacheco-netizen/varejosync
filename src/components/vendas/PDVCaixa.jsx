@@ -50,7 +50,20 @@ import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
-import { CAIXA_PRINT, CAIXA_TOAST_SUCCESS, caixaClasses, caixaTypo, conferenciaTone, movimentoTone } from '@/lib/caixaP38Theme';
+import {
+  CAIXA_PRINT,
+  CAIXA_TOAST_SUCCESS,
+  caixaClasses,
+  caixaMain,
+  caixaMobileTabBar,
+  caixaShell,
+  caixaTabPanel,
+  caixaTabPanelPad,
+  caixaTabsRoot,
+  caixaTypo,
+  conferenciaTone,
+  movimentoTone,
+} from '@/lib/caixaP38Theme';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
@@ -1391,7 +1404,7 @@ export default function PDVCaixa() {
   };
 
   return (
-    <div className={`h-screen flex flex-col bg-muted/40 dark:bg-background ${caixaTypo.screen}`}>
+    <div className={`${caixaShell} bg-muted/40 dark:bg-background ${caixaTypo.screen}`}>
       {showSeletorCaixa && (
         <SeletorCaixaPDV 
           open={showSeletorCaixa} 
@@ -1445,7 +1458,7 @@ export default function PDVCaixa() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="flex-1 overflow-auto bg-muted/40 dark:bg-background">
+      <div className={`${caixaMain} bg-muted/40 dark:bg-background`}>
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground dark:text-muted-foreground">
@@ -1456,8 +1469,8 @@ export default function PDVCaixa() {
         ) : view === 'dashboard' &&
         <>
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
-            <div className="h-full flex flex-col">
-              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
+            <div className={`${caixaMain} flex flex-col`}>
+              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={caixaTabsRoot}>
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
@@ -1496,8 +1509,8 @@ export default function PDVCaixa() {
                   </TabsList>
                 </div>
 
-                <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 data-[state=inactive]:hidden">
-                  <div className="max-w-4xl mx-auto">
+                <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
+                  <div className="max-w-4xl mx-auto space-y-4 pb-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
                   saldoInicial={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0}
@@ -1758,7 +1771,7 @@ export default function PDVCaixa() {
                      })()}
                  </TabsContent>
 
-                 <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
+                 <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
                    <div className="max-w-4xl mx-auto space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
@@ -1819,7 +1832,7 @@ export default function PDVCaixa() {
                             </div>
                             </TabsContent>
 
-                <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
+                <TabsContent value="movimentos" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
                   <div className="max-w-4xl mx-auto space-y-3">
                     {/* Botões de ação */}
                     <div className="grid grid-cols-3 gap-2">
@@ -1873,7 +1886,7 @@ export default function PDVCaixa() {
 
 
                 {/* Barra de Navegação - Mobile */}
-                <TabsList className="md:hidden grid grid-cols-4 h-16 bg-card dark:bg-card border-t border-border/40 dark:border-border/40 rounded-none p-0 flex-shrink-0">
+                <TabsList className={`${caixaMobileTabBar} grid grid-cols-4 h-16 bg-card dark:bg-card border-t border-border/40 dark:border-border/40 rounded-none p-0`}>
                 <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
                 <PieChart className="w-5 h-5" />
                 <span className={caixaTypo.labelSm}>Balanço</span>
