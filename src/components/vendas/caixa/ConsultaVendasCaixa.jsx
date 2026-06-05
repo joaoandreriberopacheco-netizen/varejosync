@@ -10,40 +10,83 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
-/** Mesmo padrão do relatório de compras mobile: Qtd | Un | Descrição | Valor */
-const CONSULTA_ROW_GRID = 'grid grid-cols-[2.75rem_2.5rem_minmax(0,1fr)_auto] items-start gap-x-2';
+/** Coluna Qtd (cima) + Un (baixo) + barra vertical — como relatório de compras / margem mobile */
+function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
+  const dotClass = accent === 'muted' ? p38Accent.muted.dot : p38Table.accentDot;
+  return (
+    <div className="relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right">
+      <span className={`absolute left-0 top-3 ${dotClass}`} aria-hidden />
+      <p className="text-base font-din-1451 tabular-nums text-foreground leading-none">
+        {formatCommercialQuantity(qtd, unidade)}
+      </p>
+      <p className={`${caixaTypo.labelSm} mt-1.5 leading-none truncate`}>
+        {(unidade || 'UN').toUpperCase()}
+      </p>
+    </div>
+  );
+}
+
+function resolvePrecoUnitarioEfetivo({ quantidade, total, precoLista, descontoUnitario }) {
+  const qtd = Number(quantidade) || 0;
+  const totalNum = Number(total);
+  if (qtd > 0 && Number.isFinite(totalNum)) {
+    return roundToTwoDecimals(totalNum / qtd);
+  }
+  const preco = Number(precoLista) || 0;
+  const desconto = Number(descontoUnitario) || 0;
+  return roundToTwoDecimals(preco - desconto);
+}
 
 function ConsultaProdutoRow({
   quantidade,
   unidade,
   nome,
-  valor,
+  valorTotal,
+  precoLista,
+  descontoUnitario,
   striped = false,
   accent = 'success',
-  detalhe,
 }) {
   const borderClass = accent === 'muted' ? p38Accent.muted.border : p38Accent.success.border;
+  const precoEfetivo = resolvePrecoUnitarioEfetivo({
+    quantidade,
+    total: valorTotal,
+    precoLista,
+    descontoUnitario,
+  });
+  const precoTabela = Number(precoLista) || 0;
+  const temDesconto = precoTabela > precoEfetivo + 0.009;
+
   return (
     <div
       className={cn(
         p38Table.mobileLineThin,
         borderClass,
-        CONSULTA_ROW_GRID,
+        'flex min-w-0',
         striped && 'bg-secondary/15 dark:bg-secondary/20',
       )}
     >
-      <span className="text-sm font-semibold tabular-nums text-foreground pt-0.5 text-right">
-        {formatCommercialQuantity(quantidade, unidade)}
-      </span>
-      <span className={`${caixaTypo.labelSm} pt-0.5 text-muted-foreground`}>
-        {(unidade || 'UN').toUpperCase()}
-      </span>
-      <div className="min-w-0 pt-0.5">
-        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3')}>{nome}</p>
-        {detalhe ? <p className={`${caixaTypo.meta} mt-0.5 normal-case`}>{detalhe}</p> : null}
-      </div>
-      <div className="pt-0.5 shrink-0">
-        <CaixaValorDisplay valor={valor} tone={accent === 'muted' ? 'neutral' : 'success'} signed={accent !== 'muted'} size="sm" />
+      <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} />
+      <div className="flex-1 min-w-0 py-2 pr-3 pl-2">
+        <p className={cn(p38Table.mobileLineTitle, 'line-clamp-3 leading-snug')}>{nome}</p>
+        <div className="flex items-baseline justify-between gap-3 mt-1">
+          <p className={`${caixaTypo.meta} normal-case tabular-nums min-w-0`}>
+            {temDesconto && (
+              <span className="line-through text-muted-foreground/70 mr-1.5">
+                {formatCaixaR(precoTabela)}
+              </span>
+            )}
+            <span className="text-foreground/90">{formatCaixaR(precoEfetivo)} un.</span>
+          </p>
+          <div className="shrink-0">
+            <CaixaValorDisplay
+              valor={valorTotal}
+              tone={accent === 'muted' ? 'neutral' : 'success'}
+              signed={accent !== 'muted'}
+              size="sm"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -135,19 +178,13 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
 
       {modo === 'produto' ? (
         <P38MobileLineList className="rounded-lg">
-          <div className={`${CONSULTA_ROW_GRID} gap-x-2 px-4 py-2 border-b border-border/50 ${caixaTypo.labelSm} text-muted-foreground`}>
-            <span className="text-right">Qtd</span>
-            <span>Un</span>
-            <span>Produto</span>
-            <span className="text-right">Total</span>
-          </div>
           {produtosAgregados.map((p, index) => (
             <ConsultaProdutoRow
               key={p.key}
               quantidade={p.quantidade}
               unidade={p.unidade}
               nome={p.nome}
-              valor={p.total}
+              valorTotal={p.total}
               striped={index % 2 === 1}
             />
           ))}
@@ -177,8 +214,9 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
                     quantidade={item.quantidade}
                     unidade={item.unidade_medida}
                     nome={item.produto_nome}
-                    valor={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
-                    detalhe={`${formatCaixaR(item.preco_unitario_praticado)} un.`}
+                    valorTotal={item.total || (Number(item.preco_unitario_praticado) || 0) * (Number(item.quantidade) || 0)}
+                    precoLista={item.preco_unitario_praticado}
+                    descontoUnitario={item.desconto_unitario}
                     striped={idx % 2 === 1}
                     accent="muted"
                   />
