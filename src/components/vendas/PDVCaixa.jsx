@@ -68,6 +68,7 @@ import {
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import { getCachedUserSession } from '@/lib/userSessionCache';
 
 /** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
 const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
@@ -163,7 +164,7 @@ export default function PDVCaixa({
     navigateBackOr(navigate);
   };
   const [configVenda, setConfigVenda] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => getCachedUserSession()?.user ?? null);
 
   useEffect(() => {
     base44.entities.ConfiguracoesVenda.list().
@@ -172,7 +173,6 @@ export default function PDVCaixa({
     }).
     catch(console.error);
     
-    // Carregar usuário
     base44.auth.me().then(setCurrentUser).catch(console.error);
   }, []);
   const [pedidosAguardando, setPedidosAguardando] = useState([]);
@@ -1432,6 +1432,7 @@ export default function PDVCaixa({
           onSelect={handleSelecionarCaixa}
           currentUser={currentUser}
           onClose={handleClose}
+          elevatedStack={overlayMode}
         />
       )}
 
