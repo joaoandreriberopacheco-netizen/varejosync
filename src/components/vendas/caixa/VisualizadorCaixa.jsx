@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
+import { createPageUrl } from '@/components/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, RefreshCw, RotateCcw } from 'lucide-react';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, Printer, ArrowLeft, Clock, RefreshCw, RotateCcw, Edit, Package, X, ShoppingCart } from 'lucide-react';
 import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
@@ -25,6 +27,81 @@ import {
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+
+function RascunhoAguardandoCardEspelho({ rascunho, onDetalhes, onEditar, formatarValorExibicao }) {
+  return (
+    <div
+      className="bg-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onDetalhes(rascunho)}
+    >
+      <div className="flex items-start justify-between gap-4 mb-3">
+        {rascunho.senha_atendimento && (
+          <div className="px-4 py-2 bg-muted/40 rounded-xl">
+            <div className="text-xs text-muted-foreground mb-1">Senha</div>
+            <div className="text-3xl font-bold text-foreground font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="text-base font-medium text-foreground truncate">{rascunho.cliente_nome}</div>
+          <div className="text-sm text-muted-foreground mt-1">{rascunho.vendedor_nome}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-foreground font-glacial">
+            R$ {formatarValorExibicao(rascunho.valor_total)}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDetalhes(rascunho); }}
+          className="h-12 px-4 bg-muted/40 text-foreground/90 rounded-xl font-medium hover:bg-muted transition-colors flex items-center justify-center"
+          style={{ minHeight: '48px' }}
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onEditar(rascunho); }}
+          className="flex-1 h-12 bg-muted/40 text-foreground/90 rounded-xl font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2"
+          style={{ minHeight: '48px' }}
+        >
+          <Edit className="w-4 h-4" />
+          <span>Ver no PDV</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MovimentoTimelineCard({ item }) {
+  const toneKey = item.tone || item.cor;
+  const tone = caixaClasses(toneKey);
+  const Icon = toneKey === 'success' || toneKey === 'emerald' ? Plus : toneKey === 'info' || toneKey === 'blue' ? Minus : DollarSign;
+  const valorTone = toneKey === 'muted' ? 'neutral' : (toneKey === 'emerald' ? 'success' : toneKey === 'blue' ? 'info' : toneKey === 'red' ? 'danger' : toneKey);
+  return (
+    <div className="bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
+        <Icon className={`w-4 h-4 ${tone.icon}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className={`${caixaTypo.section} truncate normal-case`}>{item.descricao}</div>
+        <div className={caixaTypo.meta}>{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
+      </div>
+      <div className="flex-shrink-0">
+        <CaixaValorDisplay valor={item.valor} tone={valorTone} signed={valorTone !== 'neutral'} size="md" />
+      </div>
+    </div>
+  );
+}
+
+const normalizarRascunho = (r) => {
+  const registro = r.data || r;
+  return { ...registro, id: r.id || registro.id };
+};
 
 /** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
 export default function VisualizadorCaixa({
@@ -60,6 +137,9 @@ export default function VisualizadorCaixa({
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
   const [loading, setLoading] = useState(true);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
+  const [rascunhosAguardando, setRascunhosAguardando] = useState([]);
+  const [vendasView, setVendasView] = useState(modoFechado ? 'consulta' : 'aguardando');
+  const [rascunhoDetalhesTab, setRascunhoDetalhesTab] = useState(null);
 
   const formatarValorExibicaoLocal = (valor) => {
     const n = roundToTwoDecimals(valor ?? 0);
@@ -90,10 +170,15 @@ export default function VisualizadorCaixa({
 
     if (showSpinner) setLoading(true);
     try {
-      const [turnoFresh, caixaFresh, todosPedidos, todasMovimentacoes, todasDespesasRaw, receitasTurno, todosVales, todasDevolucoes] = await Promise.all([
+      const fetchRascunhos = modoFechado
+        ? Promise.resolve([])
+        : base44.entities.RascunhoPedidoVenda.list();
+
+      const [turnoFresh, caixaFresh, todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw, receitasTurno, todosVales, todasDevolucoes] = await Promise.all([
         base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
         base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
         base44.entities.PedidoVenda.list(),
+        fetchRascunhos,
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita' }),
@@ -192,6 +277,21 @@ export default function VisualizadorCaixa({
       });
       setMovimentos(movimentosTurno);
 
+      if (modoFechado) {
+        setRascunhosAguardando([]);
+      } else {
+        const rascunhosAguardandoCaixa = (todosRascunhos || [])
+          .map(normalizarRascunho)
+          .filter((r) => {
+            const status = r.status;
+            const pedidoVendaVinculado = r.pedido_venda_final_id || r.pedido_venda_id;
+            const temSenha = !!r.senha_atendimento;
+            const temItens = Array.isArray(r.itens) && r.itens.length > 0;
+            return status === 'Aguardando Caixa' && temSenha && !pedidoVendaVinculado && temItens;
+          });
+        setRascunhosAguardando(rascunhosAguardandoCaixa);
+      }
+
       const dinheiroNaGaveta = roundToTwoDecimals(
         liquidez - roundToTwoDecimals(totalPix) - roundToTwoDecimals(totalCredito) - roundToTwoDecimals(totalDebito) - roundToTwoDecimals(totalVale)
       );
@@ -202,7 +302,7 @@ export default function VisualizadorCaixa({
     } finally {
       if (showSpinner) setLoading(false);
     }
-  }, [turnoAtivo, caixaSelecionado]);
+  }, [turnoAtivo, caixaSelecionado, modoFechado]);
 
   useEffect(() => {
     if (turnoAtivo && caixaSelecionado) {
@@ -263,6 +363,26 @@ export default function VisualizadorCaixa({
       ? roundToTwoDecimals(turnoAtivo.diferenca)
       : roundToTwoDecimals(totalConferidoFechamento - esperadoFechamento);
   const conferenciaOk = Math.abs(diferencaFechamento) < 0.01;
+
+  const movimentosTimelineItems = useMemo(() => {
+    const itensMovimentos = movimentos.map((m) => ({
+      id: m.id,
+      tipo: m.tipo,
+      valor: m.valor,
+      descricao: m.observacao || m.tipo,
+      hora: m.created_date,
+      tone: movimentoTone(m.tipo),
+    }));
+    const itensDespesas = (caixaData.despesasLista || []).map((d) => ({
+      id: d.id,
+      tipo: 'Despesa',
+      valor: d.valor,
+      descricao: d.descricao,
+      hora: d.created_date,
+      tone: 'danger',
+    }));
+    return [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
+  }, [movimentos, caixaData.despesasLista]);
 
   const imprimirRelatorio = async () => {
     const linhasVendas = (vendasFinalizadas || []).map(v => {
@@ -420,7 +540,7 @@ export default function VisualizadorCaixa({
                 <span className="text-sm">Balanço</span>
               </TabsTrigger>
               <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
-                <Receipt className="w-4 h-4" />
+                <ShoppingCart className="w-4 h-4" />
                 <span className="text-sm">Vendas</span>
               </TabsTrigger>
               <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
@@ -576,55 +696,90 @@ export default function VisualizadorCaixa({
             </div>
           </TabsContent>
 
-          <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
-            <div className="max-w-4xl mx-auto pb-4">
-              <ConsultaVendasCaixa
-                vendasFinalizadas={vendasFinalizadas}
-                onVerDetalhes={setVendaDetalhada}
-              />
+          <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
+            <div className="max-w-4xl mx-auto space-y-4 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
+                  {!modoFechado && (
+                    <button
+                      type="button"
+                      onClick={() => setVendasView('aguardando')}
+                      className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'aguardando' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    >
+                      Aguardando ({rascunhosAguardando.length})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setVendasView('consulta')}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl ${caixaTypo.tab} transition-colors ${vendasView === 'consulta' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                  >
+                    Consulta ({vendasFinalizadas.length})
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => loadData({ showSpinner: false })}
+                  className="p-2 hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  title="Atualizar"
+                >
+                  <RefreshCw className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {vendasView === 'consulta' || modoFechado ? (
+                <ConsultaVendasCaixa
+                  vendasFinalizadas={vendasFinalizadas}
+                  onVerDetalhes={setVendaDetalhada}
+                />
+              ) : rascunhosAguardando.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
+                    <Receipt className="w-10 h-10 text-muted-foreground" />
+                  </div>
+                  <p className={caixaTypo.meta}>Nenhuma venda aguardando</p>
+                </div>
+              ) : (
+                <VirtualizedList
+                  items={rascunhosAguardando}
+                  estimateSize={150}
+                  className="pr-1 md:h-[calc(100vh-220px)]"
+                  itemClassName="pb-3"
+                  getItemKey={(rascunho) => rascunho.id}
+                  renderItem={(rascunho) => (
+                    <RascunhoAguardandoCardEspelho
+                      rascunho={rascunho}
+                      onDetalhes={setRascunhoDetalhesTab}
+                      onEditar={(item) => window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${item.id}`, '_blank')}
+                      formatarValorExibicao={formatarValorExibicaoLocal}
+                    />
+                  )}
+                />
+              )}
             </div>
           </TabsContent>
 
-          <TabsContent value="movimentos" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
-            <div className="max-w-4xl mx-auto space-y-2">
-              {(() => {
-                const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, tone: movimentoTone(m.tipo) }));
-                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, tone: 'danger' }));
-                const itensFiado = (caixaData?.fiadoLista || []).map(f => ({ id: f.id, tipo: 'Fiado', valor: f.valor, descricao: f.descricao || 'Lançamento fiado', hora: f.created_date, tone: 'muted' }));
-                const todos = [...itensMovimentos, ...itensDespesas, ...itensFiado].sort(
-                  (a, b) => new Date(a.hora).getTime() - new Date(b.hora).getTime()
-                );
-                
-                if (todos.length === 0) return (
-                  <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                    <Wallet className="w-10 h-10 mb-2" />
-                    <p className="text-sm">Nenhuma movimentação</p>
-                  </div>
-                );
-
-                return todos.map(item => {
-                  const tone = caixaClasses(item.tone);
-                  const Icon = item.tone === 'success' ? Plus : item.tone === 'info' ? Minus : item.tone === 'muted' ? Receipt : DollarSign;
-                  return (
-                  <div key={item.id} className="bg-card rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${tone.well}`}>
-                      <Icon className={`w-4 h-4 ${item.tone === 'muted' ? 'text-muted-foreground' : tone.icon}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">{item.descricao}</div>
-                      <div className="text-xs text-muted-foreground">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <CaixaValorDisplay
-                        valor={item.valor}
-                        tone={item.tone === 'muted' ? 'neutral' : item.tone}
-                        signed={item.tone !== 'muted'}
-                        size="md"
-                      />
-                    </div>
-                  </div>
-                );});
-              })()}
+          <TabsContent value="movimentos" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
+            <div className="max-w-4xl mx-auto space-y-3 pb-4">
+              {movimentosTimelineItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                  <Wallet className="w-10 h-10 mb-2" />
+                  <p className="text-sm">Nenhuma movimentação registrada</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className={`${caixaTypo.meta} px-1`}>Histórico do turno (somente leitura)</p>
+                  <VirtualizedList
+                    items={movimentosTimelineItems}
+                    estimateSize={68}
+                    className="pr-1 md:h-[calc(100vh-220px)]"
+                    itemClassName="pb-2"
+                    getItemKey={(item) => item.id}
+                    renderItem={(item) => <MovimentoTimelineCard item={item} />}
+                  />
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -635,7 +790,7 @@ export default function VisualizadorCaixa({
               <span className="text-xs">Balanço</span>
             </TabsTrigger>
             <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
-              <Receipt className="w-5 h-5" />
+              <ShoppingCart className="w-5 h-5" />
               <span className={caixaTypo.labelSm}>Vendas</span>
             </TabsTrigger>
             <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
@@ -670,6 +825,54 @@ export default function VisualizadorCaixa({
         movimentos={movimentos}
         formatValor={formatValor}
       />
+
+      {rascunhoDetalhesTab && (
+        <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+              <div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Senha</div>
+                <div className="text-3xl font-bold font-mono text-foreground">{rascunhoDetalhesTab.senha_atendimento?.slice(-4)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-medium text-foreground/90">{rascunhoDetalhesTab.cliente_nome || 'Avulso'}</div>
+                <div className="text-xs text-muted-foreground">{rascunhoDetalhesTab.vendedor_nome}</div>
+              </div>
+              <button type="button" onClick={() => setRascunhoDetalhesTab(null)} className="p-2 hover:bg-muted rounded-xl">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Itens</div>
+              {(rascunhoDetalhesTab.itens || []).map((item, i) => (
+                <div key={i} className="flex items-start gap-3 py-2 border-b border-border/30 last:border-0">
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    <Package className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground leading-snug">{item.produto_nome}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
+                  </div>
+                  <div className="text-sm font-semibold text-foreground flex-shrink-0">R$ {formatarValorExibicaoLocal(item.total || 0)}</div>
+                </div>
+              ))}
+              {rascunhoDetalhesTab.valor_desconto > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Desconto</span>
+                  <span>-R$ {formatarValorExibicaoLocal(rascunhoDetalhesTab.valor_desconto)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border/40">
+                <span>Total</span>
+                <span>R$ {formatarValorExibicaoLocal(rascunhoDetalhesTab.valor_total || 0)}</span>
+              </div>
+              <p className="text-xs text-center text-muted-foreground pt-2">
+                Visualização apenas — confirme o pagamento no PDV Caixa
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
