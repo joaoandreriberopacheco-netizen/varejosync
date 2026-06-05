@@ -156,7 +156,7 @@ export default function GlacialSidebar({
             isDark={isDark}
             expanded={isOpen}
             onOpen={isMobile ? closeMobileMenu : undefined}
-            className="mb-2 mx-1"
+            className={isOpen ? "mb-2 mx-1" : "mb-1"}
           />
 
           {menuItems.map(item => {
