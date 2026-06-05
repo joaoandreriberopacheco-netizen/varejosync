@@ -7,6 +7,8 @@ import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel } from '@/components/ui/p38-mobile-line';
+import { caixaTypo } from '@/lib/caixaP38Theme';
+import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -247,12 +249,12 @@ export default function CaixasAtivosPage() {
 
   // Tela de seleção de caixa
   return (
-    <div className="min-h-screen bg-background font-din-1451 -m-4 md:-m-6 p-4 md:p-6">
+    <div className={`min-h-screen bg-background -m-4 md:-m-6 p-4 md:p-6 ${caixaTypo.screen}`}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Caixas Ativos</h1>
-            <p className="text-sm text-muted-foreground">Visualize o balanço de caixas em operação</p>
+            <h1 className={`${caixaTypo.title} text-2xl mb-2`}>Caixas Ativos</h1>
+            <p className={caixaTypo.meta}>Visualize o balanço de caixas em operação</p>
           </div>
           <button onClick={loadTurnos} className="p-3 rounded-2xl bg-card border border-border/40 shadow-sm hover:bg-muted transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
             <RefreshCw className="w-5 h-5 text-muted-foreground" />
@@ -268,8 +270,8 @@ export default function CaixasAtivosPage() {
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum caixa aberto</h3>
-            <p className="text-muted-foreground">Não há turnos ativos no momento</p>
+            <h3 className={`${caixaTypo.title} text-lg mb-2`}>Nenhum caixa aberto</h3>
+            <p className={caixaTypo.meta}>Não há turnos ativos no momento</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -284,18 +286,26 @@ export default function CaixasAtivosPage() {
                     accent="success"
                     onClick={() => handleSelecionarCaixa(turno)}
                     title={turno.conta_caixa_pdv_nome}
-                    subtitle={liq?.turnoAberto ? `Liquidez: ${formatValor(liq.liquidez)}` : 'Turno aberto'}
+                    subtitle={liq?.turnoAberto ? (
+                      <span className="inline-flex items-center gap-1 flex-wrap">
+                        <span>Liquidez:</span>
+                        <CaixaValorDisplay valor={liq.liquidez} tone="neutral" signed={false} size="sm" />
+                      </span>
+                    ) : 'Turno aberto'}
                     meta={
                       liq ? (
                         <>
                           <P38StatusLabel tone="success">Aberto</P38StatusLabel>
-                          <span>Gaveta: {formatValor(liq.dinheiroNaGaveta)}</span>
+                          <span className="inline-flex items-center gap-1">
+                            Gaveta:
+                            <CaixaValorDisplay valor={liq.dinheiroNaGaveta} tone="neutral" signed={false} size="sm" />
+                          </span>
                         </>
                       ) : (
                         <P38StatusLabel tone="muted">Sem dados</P38StatusLabel>
                       )
                     }
-                    value={liq ? formatValor(liq.totalVendas) : '—'}
+                    value={liq ? <CaixaValorDisplay valor={liq.totalVendas} tone="success" signed size="sm" /> : '—'}
                     valueSub="vendas"
                   />
                 );
@@ -309,8 +319,8 @@ export default function CaixasAtivosPage() {
                       <Ticket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-foreground">Senhas aguardando caixa</h2>
-                      <p className="text-xs text-muted-foreground">Acompanhe o volume pendente antes do processamento</p>
+                      <h2 className={caixaTypo.section}>Senhas aguardando caixa</h2>
+                      <p className={caixaTypo.meta}>Acompanhe o volume pendente antes do processamento</p>
                     </div>
                   </div>
                   <button
@@ -318,22 +328,22 @@ export default function CaixasAtivosPage() {
                     className="text-right disabled:cursor-default"
                     disabled={senhasNaoProcessadas.length === 0}
                   >
-                    <p className="text-2xl font-bold text-foreground">{senhasNaoProcessadas.length}</p>
-                    <p className="text-xs text-muted-foreground">pendente{senhasNaoProcessadas.length === 1 ? '' : 's'}</p>
+                    <p className={`${caixaTypo.valueLg} text-foreground`}>{senhasNaoProcessadas.length}</p>
+                    <p className={caixaTypo.meta}>pendente{senhasNaoProcessadas.length === 1 ? '' : 's'}</p>
                   </button>
                 </div>
 
                 {senhasNaoProcessadas.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma senha aguardando processamento.</p>
+                  <p className={`${caixaTypo.meta} text-center py-4`}>Nenhuma senha aguardando processamento.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-muted/60 px-3 py-3">
-                      <p className="text-xs text-muted-foreground">Senhas</p>
-                      <p className="text-lg font-bold text-foreground">{senhasNaoProcessadas.length}</p>
+                      <p className={caixaTypo.meta}>Senhas</p>
+                      <p className={`${caixaTypo.valueLg} text-foreground`}>{senhasNaoProcessadas.length}</p>
                     </div>
                     <div className="rounded-xl bg-muted/60 px-3 py-3">
-                      <p className="text-xs text-muted-foreground">Valor</p>
-                      <p className="text-sm font-bold text-foreground">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
+                      <p className={caixaTypo.meta}>Valor</p>
+                      <CaixaValorDisplay valor={senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0)} tone="warning" signed={false} size="md" />
                     </div>
                   </div>
                 )}
@@ -345,10 +355,10 @@ export default function CaixasAtivosPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <PackageCheck className="w-5 h-5 text-muted-foreground" />
-                  <h2 className="text-base font-semibold text-foreground">Consumo Interno — Hoje</h2>
+                  <h2 className={caixaTypo.section}>Consumo Interno — Hoje</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-foreground/90">{formatValor(totalConsumoHoje)}</span>
+                  <CaixaValorDisplay valor={totalConsumoHoje} tone="danger" signed size="sm" />
                   {consumosPorDestinacao.length > 0 && (
                     <button onClick={imprimirRelatorioConsumo} className="p-1.5 rounded-xl bg-muted hover:bg-muted/80 transition-colors" title="Imprimir relatório consolidado">
                       <Printer className="w-4 h-4 text-muted-foreground" />
@@ -357,7 +367,7 @@ export default function CaixasAtivosPage() {
                 </div>
               </div>
               {consumosPorDestinacao.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum consumo registrado hoje.</p>
+                <p className={`${caixaTypo.meta} text-center py-4`}>Nenhum consumo registrado hoje.</p>
               ) : (
                 <div className="space-y-2">
                   {consumosPorDestinacao.map(([dest, data]) => {
@@ -377,7 +387,7 @@ export default function CaixasAtivosPage() {
                             <p className="text-xs text-muted-foreground">{data.registros} registro{data.registros > 1 ? 's' : ''} · {data.qtdItens} item(ns)</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-foreground/90">{formatValor(data.total)}</p>
+                            <CaixaValorDisplay valor={data.total} tone="danger" signed size="sm" />
                             <button onClick={() => toggleDestinacao(dest)} className="p-1 rounded-lg hover:bg-muted transition-colors">
                               {expanded ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                             </button>
@@ -402,7 +412,7 @@ export default function CaixasAtivosPage() {
                                     <p className="truncate text-xs text-muted-foreground">{consumo.usuario_solicitante_nome || consumo.created_by || '—'} · {consumo.interveniente_nome || consumo.interveniente || 'Sem interveniente'}</p>
                                   </div>
                                   <div className="ml-3 flex items-center gap-2">
-                                    <p className="text-sm font-semibold text-foreground/90">{formatValor(consumo.valor_total)}</p>
+                                    <CaixaValorDisplay valor={consumo.valor_total} tone="danger" signed size="sm" />
                                     <button
                                       type="button"
                                       onClick={() => setConsumoSelecionado(consumo)}
@@ -427,11 +437,11 @@ export default function CaixasAtivosPage() {
         )}
 
         {showSenhasPage && (
-          <div className="fixed inset-0 z-50 bg-background flex flex-col font-din-1451">
+          <div className={`fixed inset-0 z-50 bg-background flex flex-col ${caixaTypo.screen}`}>
             <div className="flex items-center justify-between px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] bg-card border-b border-border/40 flex-shrink-0">
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider">Controle</div>
-                <div className="text-xl font-bold text-foreground">Senhas aguardando caixa</div>
+                <div className={caixaTypo.meta}>Controle</div>
+                <div className={`${caixaTypo.title} text-xl`}>Senhas aguardando caixa</div>
               </div>
               <button onClick={() => setShowSenhasPage(false)} className="p-2 hover:bg-muted rounded-xl text-muted-foreground text-sm font-medium">
                 Fechar
@@ -442,12 +452,12 @@ export default function CaixasAtivosPage() {
               <div className="max-w-2xl mx-auto space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-card p-4 shadow-sm border border-border/40">
-                    <p className="text-xs text-muted-foreground">Senhas</p>
-                    <p className="text-2xl font-bold text-foreground">{senhasNaoProcessadas.length}</p>
+                    <p className={caixaTypo.meta}>Senhas</p>
+                    <p className={`${caixaTypo.valueLg} text-foreground`}>{senhasNaoProcessadas.length}</p>
                   </div>
                   <div className="rounded-2xl bg-card p-4 shadow-sm border border-border/40">
-                    <p className="text-xs text-muted-foreground">Valor total</p>
-                    <p className="text-lg font-bold text-foreground">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
+                    <p className={caixaTypo.meta}>Valor total</p>
+                    <CaixaValorDisplay valor={senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0)} tone="warning" signed={false} size="lg" />
                   </div>
                 </div>
 
@@ -459,7 +469,7 @@ export default function CaixasAtivosPage() {
                       accent="warning"
                       title={`Senha ${String(rascunho.senha_atendimento || '').slice(-4) || '----'}`}
                       subtitle={`${rascunho.cliente_nome || 'Avulso'} · ${rascunho.vendedor_nome || 'Sem vendedor'}`}
-                      value={formatValor(rascunho.valor_total)}
+                      value={<CaixaValorDisplay valor={rascunho.valor_total} tone="warning" signed={false} size="sm" />}
                       trailing={
                         <button
                           type="button"
@@ -521,7 +531,8 @@ export default function CaixasAtivosPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border/40">
-                  <span>Total</span><span>{formatValor(rascunhoSelecionado.valor_total || 0)}</span>
+                  <span>Total</span>
+                  <CaixaValorDisplay valor={rascunhoSelecionado.valor_total || 0} tone="success" signed size="md" />
                 </div>
               </div>
             </div>
