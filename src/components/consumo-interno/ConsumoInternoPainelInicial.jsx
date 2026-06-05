@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus, Tags, ImageIcon } from 'lucide-react';
+import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus, Tags, ImageIcon, BarChart3 } from 'lucide-react';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -37,6 +37,14 @@ export default function ConsumoInternoPainelInicial({
             <p className="text-sm text-muted-foreground">Movimentações internas.</p>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              to="/RelatorioConsumoInterno"
+              className="flex items-center gap-2 rounded-[24px] bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90"
+              title="Relatório de consumo interno"
+            >
+              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+              <span className="hidden sm:inline">Relatório</span>
+            </Link>
             <button onClick={onRefresh} className="rounded-[24px] bg-card p-3 shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90" style={{ minWidth: '48px', minHeight: '48px' }}>
               <RefreshCw className="h-5 w-5 text-muted-foreground" />
             </button>
@@ -91,7 +99,7 @@ export default function ConsumoInternoPainelInicial({
                   </p>
                 </div>
 
-                <P38MobileLineList>
+                <P38MobileLineList allViewports>
                   {itens.map((item, index) => (
                     <P38MobileLine
                       key={item.id}

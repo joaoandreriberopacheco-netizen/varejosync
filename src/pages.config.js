@@ -101,6 +101,7 @@ import ProdutosPage from './pages/Produtos';
 import ReimpressaoDocumentos from './pages/ReimpressaoDocumentos';
 import RelatorioMargem from './pages/RelatorioMargem';
 import RelatorioCatalogoEstoque from './pages/RelatorioCatalogoEstoque';
+import RelatorioConsumoInterno from './pages/RelatorioConsumoInterno';
 import RelatorioPerformance from './pages/RelatorioPerformance';
 import Relatorios from './pages/Relatorios';
 import TabelasPreco from './pages/TabelasPreco';
@@ -168,6 +169,7 @@ export const PAGES = {
     "ReimpressaoDocumentos": ReimpressaoDocumentos,
     "RelatorioMargem": RelatorioMargem,
     "RelatorioCatalogoEstoque": RelatorioCatalogoEstoque,
+    "RelatorioConsumoInterno": RelatorioConsumoInterno,
     "RelatorioPerformance": RelatorioPerformance,
     "Relatorios": Relatorios,
     "TabelasPreco": TabelasPreco,
