@@ -72,6 +72,7 @@ export const ALL_QUICK_ACTIONS = [
     label: 'Dashboard',
     page: 'Dashboard',
     permissaoCheck: (p) => p?.dashboard?.acesso,
+    deprecated: true,
   },
   {
     id: 'tabelaprecos',

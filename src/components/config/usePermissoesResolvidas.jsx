@@ -22,7 +22,7 @@ import {
 import {
   LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
-  BarChart2, Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
+  Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
   ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle
 } from 'lucide-react';
@@ -103,25 +103,6 @@ export const ALL_MENU_ITEMS = [
     icon: LayoutDashboard,
     page: 'Home',
     permissaoCheck: () => true
-  },
-  {
-    name: 'Dashboard',
-    icon: LayoutDashboard,
-    permissaoCheck: (p) => p?.dashboard?.acesso,
-    submenu: [
-      {
-        name: 'Dashboard Completo',
-        page: 'Dashboard',
-        icon: BarChart2,
-        permissaoCheck: (p) => p?.dashboard?.acesso
-      },
-      {
-        name: 'Painel Gerencial',
-        page: 'PainelGerente',
-        icon: Activity,
-        permissaoCheck: (p) => p?.vendas?.painel_gerencial
-      }
-    ]
   },
   {
     name: 'PDV',

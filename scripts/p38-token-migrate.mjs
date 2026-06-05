@@ -95,7 +95,7 @@ const defaultRoots = [
   'src/components/terceiros',
   'src/components/relatorios',
   'src/components/config',
-  'src/components/dashboard',
+  'src/paiol/components/dashboard',
   'src/components/ui/table',
 ];
 
