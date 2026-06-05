@@ -1,14 +1,146 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, RefreshCw, MapPin, UserRound, Package, MoreVertical, Pencil, Paperclip, Trash2, Eye, Plus, Tags, ImageIcon, BarChart3 } from 'lucide-react';
-import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import {
+  Search,
+  RefreshCw,
+  MapPin,
+  UserRound,
+  Package,
+  MoreVertical,
+  Pencil,
+  Paperclip,
+  Trash2,
+  Eye,
+  Plus,
+  Tags,
+  ImageIcon,
+  BarChart3,
+} from 'lucide-react';
+import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { brandSurface } from '@/lib/brandSurfaces';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+function ConsumoAcoesMenu({ item, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary"
+          aria-label="Mais opções"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={() => onView(item)} className="cursor-pointer gap-2">
+          <Eye className="h-4 w-4" /> Visualizar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2">
+          <Pencil className="h-4 w-4" /> Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onViewAttachments(item)} className="cursor-pointer gap-2">
+          <ImageIcon className="h-4 w-4" /> Ver anexos
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2">
+          <Paperclip className="h-4 w-4" /> Anexar doc / foto
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onDelete(item)} className="cursor-pointer gap-2 text-destructive">
+          <Trash2 className="h-4 w-4" /> Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Mobile — linha compacta P38 (sem card). */
+function ConsumoHistoricoLinha({ item, index, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
+  const subtitulo = [item.destinacao, item.responsavel_recebimento].filter(Boolean).join(' · ');
+  return (
+    <P38MobileLine
+      thinAccent
+      striped={index % 2 === 1}
+      accent="muted"
+      onClick={() => onView(item)}
+      title={item.numero}
+      subtitle={subtitulo || 'Sem destinação'}
+      meta={
+        <>
+          <span>{item.quantidade_total_itens ?? (item.itens?.length || 0)} item(ns)</span>
+          {!!item.assinatura_recolhedor_url && <span>Assinatura</span>}
+          {!!item.tags?.length && <span>{item.tags.join(', ')}</span>}
+        </>
+      }
+      value={formatCurrency(item.valor_total)}
+      trailing={<ConsumoAcoesMenu item={item} onView={onView} onEdit={onEdit} onViewAttachments={onViewAttachments} onAttach={onAttach} onDelete={onDelete} />}
+    />
+  );
+}
+
+/** Desktop — card com detalhes. */
+function ConsumoHistoricoCard({ item, onView, onEdit, onViewAttachments, onAttach, onDelete }) {
+  return (
+    <div className={`rounded-[24px] px-4 py-3.5 shadow-sm ${brandSurface.card}`}>
+      <div className="flex items-start justify-between gap-3">
+        <button type="button" onClick={() => onView(item)} className="min-w-0 flex-1 text-left">
+          <p className="text-sm font-semibold text-foreground">{item.numero}</p>
+          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" />
+              {item.destinacao || '—'}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <UserRound className="h-3 w-3 shrink-0" />
+              {item.responsavel_recebimento || '—'}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Package className="h-3 w-3 shrink-0" />
+              {item.quantidade_total_itens ?? (item.itens?.length || 0)} item(ns)
+            </span>
+            {!!item.assinatura_recolhedor_url && (
+              <span className="inline-flex items-center gap-1">
+                <Paperclip className="h-3 w-3 shrink-0" />
+                assinatura
+              </span>
+            )}
+            {!!item.tags?.length && (
+              <span className="inline-flex items-center gap-1">
+                <Tags className="h-3 w-3 shrink-0" />
+                {item.tags.join(', ')}
+              </span>
+            )}
+          </div>
+        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <p className="text-base font-semibold text-foreground tabular-nums">{formatCurrency(item.valor_total)}</p>
+          <button
+            type="button"
+            onClick={() => onView(item)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary"
+            aria-label="Visualizar consumo"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <ConsumoAcoesMenu
+            item={item}
+            onView={onView}
+            onEdit={onEdit}
+            onViewAttachments={onViewAttachments}
+            onAttach={onAttach}
+            onDelete={onDelete}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ConsumoInternoPainelInicial({
   filtroTemporal,
@@ -28,6 +160,8 @@ export default function ConsumoInternoPainelInicial({
   setShowFabMenu,
   onNovoFormulario,
 }) {
+  const acoesProps = { onView, onEdit, onViewAttachments, onAttach, onDelete };
+
   return (
     <div className="min-h-screen bg-muted/40 p-4 dark:bg-background md:p-6">
       <div className="mx-auto max-w-6xl space-y-5 pb-24">
@@ -39,18 +173,28 @@ export default function ConsumoInternoPainelInicial({
           <div className="flex items-center gap-2">
             <Link
               to="/RelatorioConsumoInterno"
-              className="flex items-center gap-2 rounded-[24px] bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90"
+              className="flex items-center gap-2 rounded-[24px] bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90 md:shadow-sm"
               title="Relatório de consumo interno"
             >
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
               <span className="hidden sm:inline">Relatório</span>
             </Link>
-            <button onClick={onRefresh} className="rounded-[24px] bg-card p-3 shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90" style={{ minWidth: '48px', minHeight: '48px' }}>
+            <button
+              onClick={onRefresh}
+              className="rounded-[24px] bg-card p-3 shadow-sm transition-colors hover:bg-muted/50 dark:hover:bg-primary/90 md:shadow-sm"
+              style={{ minWidth: 48, minHeight: 48 }}
+              type="button"
+              aria-label="Atualizar"
+            >
               <RefreshCw className="h-5 w-5 text-muted-foreground" />
             </button>
-            <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Total — {labelFiltro[filtroTemporal]}</p>
-              <p className="text-lg font-semibold text-foreground">{formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}</p>
+            <div className="rounded-[24px] bg-card px-4 py-3 shadow-sm dark:bg-muted md:shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Total — {labelFiltro[filtroTemporal]}
+              </p>
+              <p className="text-lg font-semibold text-foreground">
+                {formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}
+              </p>
             </div>
           </div>
         </div>
@@ -64,7 +208,7 @@ export default function ConsumoInternoPainelInicial({
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 filtroTemporal === key
                   ? 'bg-background text-white dark:bg-card dark:text-foreground'
-                  : 'bg-card text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90'
+                  : 'bg-card text-muted-foreground shadow-sm dark:bg-muted dark:text-foreground/90 md:shadow-sm'
               }`}
             >
               {label}
@@ -72,88 +216,53 @@ export default function ConsumoInternoPainelInicial({
           ))}
         </div>
 
-        <div className="rounded-[30px] bg-card p-5 shadow-sm dark:bg-muted">
+        {/* Mobile: layout plano; desktop: bloco card */}
+        <div className="md:rounded-[30px] md:bg-card md:p-5 md:shadow-sm dark:md:bg-muted">
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-lg font-semibold text-foreground">Histórico</p>
             <div className="relative w-full max-w-[220px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-muted pl-9 shadow-sm dark:bg-background" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar"
+                className="h-10 rounded-2xl border-0 bg-muted pl-9 shadow-sm dark:bg-background md:shadow-sm"
+              />
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5 md:space-y-4">
             {consumosAgrupadosPorDia.length === 0 && (
-              <div className="rounded-[24px] bg-muted/40 px-4 py-10 text-center text-sm text-muted-foreground shadow-sm dark:bg-background dark:text-muted-foreground">
+              <div className="rounded-[24px] bg-muted/40 px-4 py-10 text-center text-sm text-muted-foreground md:shadow-sm dark:bg-background dark:text-muted-foreground">
                 Nenhuma movimentação encontrada.
               </div>
             )}
 
             {consumosAgrupadosPorDia.map(([dia, itens]) => (
-              <div key={dia}>
-                <div className="mb-2 flex items-center justify-between px-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <section key={dia} className="space-y-2">
+                <div className="flex items-baseline justify-between gap-2 px-0.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     {format(new Date(dia + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
                   </p>
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <span className="text-xs font-semibold tabular-nums text-muted-foreground">
                     {formatCurrency(itens.reduce((s, i) => s + (i.valor_total || 0), 0))}
-                  </p>
+                  </span>
                 </div>
 
-                <P38MobileLineList allViewports>
+                {/* Mobile: linhas P38 */}
+                <P38MobileLineList className="block md:hidden rounded-lg border-0 md:border">
                   {itens.map((item, index) => (
-                    <P38MobileLine
-                      key={item.id}
-                      striped={index % 2 === 1}
-                      accent="muted"
-                      title={item.numero}
-                      meta={
-                        <>
-                          <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" />{item.destinacao}</span>
-                          <span className="inline-flex items-center gap-1"><UserRound className="h-3 w-3 shrink-0" />{item.responsavel_recebimento}</span>
-                          <span className="inline-flex items-center gap-1"><Package className="h-3 w-3 shrink-0" />{item.quantidade_total_itens} item(ns)</span>
-                          {!!item.assinatura_recolhedor_url && <span className="inline-flex items-center gap-1"><Paperclip className="h-3 w-3 shrink-0" />assinatura</span>}
-                          {!!item.tags?.length && <span className="inline-flex items-center gap-1"><Tags className="h-3 w-3 shrink-0" />{item.tags.join(', ')}</span>}
-                        </>
-                      }
-                      value={formatCurrency(item.valor_total)}
-                      trailing={
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => onView(item)}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary"
-                            aria-label="Visualizar consumo"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button type="button" onClick={(e) => e.stopPropagation()} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary">
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer gap-2">
-                                <Pencil className="h-4 w-4" /> Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onViewAttachments(item)} className="cursor-pointer gap-2">
-                                <ImageIcon className="h-4 w-4" /> Ver anexos
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onAttach(item)} className="cursor-pointer gap-2">
-                                <Paperclip className="h-4 w-4" /> Anexar doc / foto
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => onDelete(item)} className="cursor-pointer gap-2 text-destructive">
-                                <Trash2 className="h-4 w-4" /> Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      }
-                    />
+                    <ConsumoHistoricoLinha key={item.id} item={item} index={index} {...acoesProps} />
                   ))}
                 </P38MobileLineList>
-              </div>
+
+                {/* Desktop: cards */}
+                <div className="hidden space-y-2 md:block">
+                  {itens.map((item) => (
+                    <ConsumoHistoricoCard key={item.id} item={item} {...acoesProps} />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         </div>
