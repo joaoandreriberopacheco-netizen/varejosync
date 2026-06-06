@@ -46,7 +46,7 @@ export const brandSurface = {
   iconCapsule: 'rounded-2xl bg-muted flex items-center justify-center shadow-sm',
   textMuted: 'text-muted-foreground',
   textLabel: 'text-muted-foreground',
-  accent: 'text-[#4A5D23] dark:text-[#a4ce33]',
+  accent: 'text-[#4a5240] dark:text-[#a4ce33]',
   accentBg: 'bg-primary/10 text-primary',
   /** Contentor de tabela — ver p38TableSurfaces.js */
   tableShell: 'rounded-xl border border-border bg-background shadow-sm overflow-auto',

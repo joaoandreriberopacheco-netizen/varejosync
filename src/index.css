@@ -88,27 +88,27 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* P38 claro — base neutra quente + acento verde oliva */
-    --background: 68 20% 97%;
-    --foreground: 221 39% 11%;
+    /* P38 claro — branco limpo + cinza editorial + verde mediterrâneo queimado */
+    --background: 220 8% 98%;
+    --foreground: 220 16% 18%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 220 16% 18%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 68 36% 31%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 68 18% 93%;
-    --secondary-foreground: 68 36% 22%;
-    --muted: 68 14% 93%;
-    --muted-foreground: 221 12% 42%;
-    --accent: 68 22% 90%;
-    --accent-foreground: 68 36% 24%;
+    --popover-foreground: 220 16% 18%;
+    --primary: 82 18% 28%;
+    --primary-foreground: 0 0% 99%;
+    --secondary: 220 10% 95%;
+    --secondary-foreground: 82 16% 24%;
+    --muted: 220 10% 96%;
+    --muted-foreground: 220 8% 42%;
+    --accent: 82 10% 93%;
+    --accent-foreground: 82 18% 26%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 68 12% 86%;
-    --input: 68 12% 86%;
-    --ring: 68 36% 31%;
-    --chart-1: 68 36% 38%;
+    --border: 220 12% 90%;
+    --input: 220 12% 90%;
+    --ring: 82 18% 28%;
+    --chart-1: 82 18% 32%;
     --chart-2: 173 58% 39%;
     --chart-3: 221 39% 22%;
     --chart-4: 43 74% 55%;

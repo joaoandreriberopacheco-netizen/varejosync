@@ -35,12 +35,12 @@
 @layer base {
   :root {
     /* Superfícies */
-    --p38-bg: 68 20% 97%;
+    --p38-bg: 220 8% 98%;
     --p38-surface: 0 0% 100%;
-    --p38-search: 68 12% 92%;
-    --p38-table-head: 68 12% 92%;
-    /* Acento verde (oliva claro / limão escuro) */
-    --p38-accent-olive: 74 36% 25%;
+    --p38-search: 220 10% 96%;
+    --p38-table-head: 220 8% 94%;
+    /* Claro: mediterrâneo queimado · escuro: limão */
+    --p38-accent-olive: 82 18% 28%;
     --p38-accent-lime: 78 55% 51%;
     --p38-divider: 0 0% 0% / 0.06;
     /* Tipografia mobile */

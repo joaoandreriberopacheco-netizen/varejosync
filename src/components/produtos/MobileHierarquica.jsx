@@ -405,7 +405,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
             event.stopPropagation();
             onOpenPricing(p);
           }}
-          className="h-9 w-9 rounded-lg bg-secondary/80 text-[#4A5D23] dark:text-[#a4ce33] hover:bg-secondary"
+          className="h-9 w-9 rounded-lg bg-secondary/80 text-primary dark:text-[#a4ce33] hover:bg-secondary"
           title="Ver precificação"
         >
           <DollarSign className="w-4 h-4" />

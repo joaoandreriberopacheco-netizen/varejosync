@@ -24,7 +24,7 @@ export const p38Table = {
   cellNumeric: 'tabular-nums text-right',
   cellMuted: 'text-muted-foreground',
   cellStrong: 'font-semibold text-foreground',
-  cellAccent: 'font-semibold text-[#4A5D23] dark:text-[#a4ce33]',
+  cellAccent: 'font-semibold text-[#4a5240] dark:text-[#a4ce33]',
 
   /** Colunas sticky (TreeGrid, catálogo) */
   stickyHead: 'sticky z-40 bg-background text-foreground',
@@ -34,8 +34,8 @@ export const p38Table = {
 
   /** Painéis mobile / resumo */
   panel: 'bg-card text-white rounded-lg border border-border/40 dark:border-white/10',
-  panelAccentBar: 'bg-[#4A5D23] dark:bg-[#a4ce33]',
-  accentDot: 'w-1.5 h-1.5 rounded-full bg-[#4A5D23] dark:bg-[#a4ce33]',
+  panelAccentBar: 'bg-[#4a5240] dark:bg-[#a4ce33]',
+  accentDot: 'w-1.5 h-1.5 rounded-full bg-[#4a5240] dark:bg-[#a4ce33]',
 
   bodyText: 'text-base font-din-1451',
   microText: 'text-xs',
