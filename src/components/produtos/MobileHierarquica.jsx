@@ -13,16 +13,62 @@ import {
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
 import { P38StatusDot } from '@/components/ui/p38-mobile-line';
-import { p38Table, MARGIN_TABLE_BORDER, MARGIN_TABLE_MICRO, MARGIN_TABLE_PANEL } from '@/lib/p38TableSurfaces';
+import {
+  p38Table,
+  MARGIN_TABLE_BORDER,
+  MARGIN_TABLE_MICRO,
+  MARGIN_TABLE_PANEL,
+  MARGIN_ACCENT_VALUE,
+  MARGIN_BODY_TEXT,
+} from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
-const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-2 gap-x-1 min-w-0';
+const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = `${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0`;
 const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right';
-const CATALOGO_MOBILE_BODY_TEXT = `${p38Table.bodyText} leading-none`;
+const CATALOGO_MOBILE_BODY_TEXT = `${MARGIN_BODY_TEXT} leading-none`;
+
+/** Mesma diagramação do relatório de margem mobile (2×3 valores). */
+const CATALOGO_MOBILE_VALUE_ROWS = [
+  [
+    { key: 'valorCompra', label: 'Valor compra' },
+    { key: 'custoCalculado', label: 'Custo calc.' },
+    { key: 'inventarioValorizado', label: 'Invent. R$' },
+  ],
+  [
+    { key: 'precoVenda', label: 'Preço venda' },
+    { key: 'inventarioValorizado2', label: 'Invent. R$' },
+    { key: 'categoriaAbcd', label: 'Curva' },
+  ],
+];
+
+function formatCatalogoMobileNum(val) {
+  return (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function buildCatalogoMobileTabulatedValues(produto) {
+  const cat = getCatalogoComercialView(produto);
+  const custoBase = resolveCustoTotalUnitBaseProduto(produto);
+  const inventario = produto?.inventario_valorizado ?? custoBase * (produto?.estoque_atual || 0);
+  const inventarioFmt = inventario > 0 ? formatCatalogoMobileNum(inventario) : '—';
+
+  return {
+    valorCompra: cat.valorCompraNaEmbalagem > 0 ? formatCatalogoMobileNum(cat.valorCompraNaEmbalagem) : '—',
+    custoCalculado: cat.custoNaEmbalagem > 0 ? formatCatalogoMobileNum(cat.custoNaEmbalagem) : '—',
+    inventarioValorizado: inventarioFmt,
+    precoVenda: cat.precoVenda > 0 ? formatCatalogoMobileNum(cat.precoVenda) : '—',
+    inventarioValorizado2: inventarioFmt,
+    categoriaAbcd: produto?.abcd || '—',
+  };
+}
+
+function catalogoMetricValueClass(colIndex) {
+  if (colIndex === 2) return `${MARGIN_ACCENT_VALUE} font-semibold`;
+  return 'text-foreground dark:text-foreground font-medium dark:font-normal';
+}
 
 function buildUnitOptions(produto) {
   const purchaseOptions = buildPurchaseUnitOptions(produto);
@@ -194,11 +240,45 @@ function CatalogoMobileColumnHeader({ className = '' }) {
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>Estoque</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-2`}>Un</p>
         </div>
-        <div className={`flex-1 min-w-0 py-2 pr-11 pl-2 ${CATALOGO_MOBILE_VALUES_GRID}`}>
-          <p className={CATALOGO_MOBILE_HEADER_LABEL}>Preço venda</p>
-          <p className={CATALOGO_MOBILE_HEADER_LABEL}>Status</p>
+        <div className="flex-1 min-w-0 py-2 pr-11 pl-2">
+          {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
+            <div
+              key={rowIdx}
+              className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1.5'}`}
+            >
+              {valueRow.map(({ label }) => (
+                <p key={label} className={CATALOGO_MOBILE_HEADER_LABEL}>
+                  {label}
+                </p>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CatalogoMobileTabulatedValues({ produto, className = '' }) {
+  const values = buildCatalogoMobileTabulatedValues(produto);
+
+  return (
+    <div className={className}>
+      {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
+        <div
+          key={rowIdx}
+          className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
+        >
+          {valueRow.map(({ key }, colIdx) => (
+            <p
+              key={key}
+              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(colIdx)}`}
+            >
+              {values[key]}
+            </p>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -222,10 +302,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const p = row.produto;
   const e = p.estoque_atual || 0;
   const m = p.estoque_minimo || 0;
-  const statusLabel = !p.ativo ? 'Inativo' : e <= 0 ? 'Crítico' : e <= m ? 'Baixo' : 'OK';
   const stockTone = !p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success';
 
-  const cat = getCatalogoComercialView(p);
   const apresent = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresent ? apresent.quantidade : e;
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
@@ -257,17 +335,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
               #{p.codigo_interno}
             </p>
           )}
-          <div className={`${CATALOGO_MOBILE_VALUES_GRID} mt-1`}>
-            <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate text-foreground font-semibold`}>
-              {cat.precoVenda > 0 ? (
-                <>R$ {fmtR(cat.precoVenda)}</>
-              ) : '-'}
-            </p>
-            <p className={`${CATALOGO_MOBILE_BODY_TEXT} text-right truncate text-muted-foreground flex items-center justify-end gap-1`}>
-              <P38StatusDot tone={stockTone} />
-              <span className="truncate">{statusLabel}</span>
-            </p>
-          </div>
+          <CatalogoMobileTabulatedValues produto={p} className="mt-1" />
           {apresent && (
             <p className="mt-0.5 text-[9px] text-muted-foreground truncate">
               {apresent.rotulo || 'unidade de exibição'}
