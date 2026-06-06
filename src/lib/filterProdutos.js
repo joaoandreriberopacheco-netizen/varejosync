@@ -1,4 +1,5 @@
 import { isCadastroIncompleto } from '@/components/produtos/ProdutosHelpers';
+import { parseSearchTerms } from '@/lib/searchTokens';
 
 export const DEFAULT_PRODUTO_FILTERS = {
   searchTerm: '',
@@ -15,15 +16,8 @@ export const DEFAULT_PRODUTO_FILTERS = {
   quantidadeValorAte: '',
 };
 
-function normalizeSearchToken(value) {
-  return String(value || '').trim().toLowerCase();
-}
-
 function getSearchTokens(rawTerm) {
-  return String(rawTerm || '')
-    .split(';')
-    .map(normalizeSearchToken)
-    .filter(Boolean);
+  return parseSearchTerms(rawTerm);
 }
 
 function parseQuantityFilterNumber(value) {
@@ -43,7 +37,7 @@ function hasActiveQuantityFilter(filters) {
   return parseQuantityFilterNumber(filters.quantidadeValor) !== null;
 }
 
-/** Busca por nome/descrição/códigos; use ";" para exigir múltiplos termos. */
+/** Busca por nome/descrição/códigos; espaço ou ";" exigem múltiplos termos. */
 export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
   const terms = getSearchTokens(rawTerm);
   if (terms.length === 0) return true;

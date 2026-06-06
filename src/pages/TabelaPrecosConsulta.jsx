@@ -195,7 +195,7 @@ export default function TabelaPrecosConsulta() {
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Nome ou código (use ; para combinar termos)..."
+            placeholder="Nome ou código (espaço ou ; para combinar termos)..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className={cn(p38Mobile.searchInput, "text-sm pl-10 w-full")}

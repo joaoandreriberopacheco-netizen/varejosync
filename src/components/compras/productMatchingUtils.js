@@ -1,3 +1,5 @@
+import { parseSearchTerms } from '@/lib/searchTokens';
+
 export function getProdutoLabel(produto) {
   if (!produto) return '';
 
@@ -38,12 +40,9 @@ export function getProductSearchText(produto) {
   ].filter(Boolean).join(' '));
 }
 
-/** Termos separados por ";" — todos devem aparecer (mesmo conceito da tela Produtos). */
+/** Termos separados por espaço ou ";" — todos devem aparecer (mesmo conceito da tela Produtos). */
 export function getSemicolonSearchTokens(query) {
-  return String(query || '')
-    .split(';')
-    .map(normalizeProductSearchText)
-    .filter(Boolean);
+  return parseSearchTerms(query, normalizeProductSearchText);
 }
 
 export function matchesProductQuery(produto, query) {

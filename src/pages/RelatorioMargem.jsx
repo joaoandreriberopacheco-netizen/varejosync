@@ -30,6 +30,7 @@ import {
   MARGIN_TABLE_MICRO,
 } from '@/lib/p38TableSurfaces';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { parseSearchTerms } from '@/lib/searchTokens';
 
 
 const PDF_COL_GAP_MM = 2;
@@ -343,7 +344,6 @@ function MargemDescricaoTexto({
 /** Corpo: entrelinha +50% (~1,5) e padding +20% (~1,2) em relação ao layout compacto anterior. */
 const BODY_LINE_HEIGHT_MULT = 1.5;
 const BODY_PAD_MULT = 1.2;
-const MARGIN_SEARCH_SEPARATOR = ';';
 
 function MargemMobileReportHeader({ filtrosDesc }) {
   return (
@@ -701,11 +701,8 @@ export default function RelatorioMargemVendas() {
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
 
-    // Mesmo padrão do catálogo: ";" separa termos que devem aparecer no produto.
-    const searchTokens = String(searchTerm || '')
-      .split(MARGIN_SEARCH_SEPARATOR)
-      .map((term) => term.trim().toLowerCase())
-      .filter(Boolean);
+    // Mesmo padrão do catálogo: espaço ou ";" separa termos que devem aparecer no produto.
+    const searchTokens = parseSearchTerms(searchTerm);
     if (searchTokens.length > 0) {
       sorted = sorted.filter((item) => {
         const haystack = [
@@ -1770,7 +1767,7 @@ export default function RelatorioMargemVendas() {
                 <input
                   autoComplete="off"
                   type="text"
-                  placeholder="Produto, código, categoria ou tag (use ; para combinar termos)..."
+                  placeholder="Produto, código, categoria ou tag (espaço ou ; para combinar termos)..."
                   value={searchDraft}
                   onChange={(event) => setSearchDraft(event.target.value)}
                   onKeyDown={(event) => {

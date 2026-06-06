@@ -144,7 +144,7 @@ export default function ProdutosHeader({
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Nome ou descrição (use ; para combinar termos)..."
+              placeholder="Nome ou descrição (espaço ou ; para combinar termos)..."
               className="border-none bg-muted h-10 text-sm pl-9 text-foreground/90 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
               value={filters.searchTerm}
               onChange={e => handleFilterChange('searchTerm', e.target.value)}
