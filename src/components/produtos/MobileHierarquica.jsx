@@ -24,9 +24,9 @@ import { cn } from '@/components/utils';
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
-const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1 min-w-0';
+const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = `${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0`;
-const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right';
+const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-3.5 text-right';
 const CATALOGO_MOBILE_BODY_TEXT = `${MARGIN_BODY_TEXT} leading-none`;
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
@@ -246,11 +246,11 @@ function CatalogoMobileColumnHeader({ className = '' }) {
   return (
     <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
       <div className="flex min-w-0">
-        <div className="w-[3.25rem] flex-shrink-0 border-r border-white/15 px-1.5 py-2 text-right">
+        <div className="w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-2.5 text-right">
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>Estoque</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-2`}>Un</p>
         </div>
-        <div className="flex-1 min-w-0 py-2 pr-11 pl-2">
+        <div className="flex-1 min-w-0 py-2.5 pr-12 pl-2.5">
           {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
@@ -277,7 +277,7 @@ function CatalogoMobileTabulatedValues({ produto, className = '' }) {
       {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
         <div
           key={rowIdx}
-          className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
+          className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1.5'}`}
         >
           {valueRow.map(({ key }) => (
             <p
@@ -296,7 +296,7 @@ function CatalogoMobileTabulatedValues({ produto, className = '' }) {
 function CatalogoMobileEstoqueCol({ quantidade, unidade, stockTone }) {
   return (
     <div className={CATALOGO_MOBILE_ESTOQUE_COL}>
-      <P38StatusDot tone={stockTone} className="absolute left-0 top-3" />
+      <P38StatusDot tone={stockTone} className="absolute left-0 top-4" />
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-foreground`}>
         {fmtN(quantidade)}
       </p>
@@ -333,19 +333,19 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
           unidade={unidadeExibicao}
           stockTone={stockTone}
         />
-        <div className="flex-1 min-w-0 py-2 pr-2 pl-2">
+        <div className="flex-1 min-w-0 py-1 pr-3 pl-2.5">
           <p
             lang="pt-BR"
-            className="text-[12px] font-normal text-foreground/90 leading-snug uppercase break-words [overflow-wrap:anywhere] line-clamp-2"
+            className="text-[12px] font-normal text-foreground/90 leading-relaxed uppercase break-words [overflow-wrap:anywhere] line-clamp-2"
           >
             {p.nome}
           </p>
           {p.codigo_interno && (
-            <p className="mt-0.5 text-[10px] text-muted-foreground font-mono truncate">
+            <p className="mt-1 text-[10px] text-muted-foreground font-mono truncate">
               #{p.codigo_interno}
             </p>
           )}
-          <CatalogoMobileTabulatedValues produto={p} className="mt-1" />
+          <CatalogoMobileTabulatedValues produto={p} className="mt-1.5" />
           {apresent && (
             <p className="mt-0.5 text-[9px] text-muted-foreground truncate">
               {apresent.rotulo || 'unidade de exibição'}
@@ -354,7 +354,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         </div>
       </button>
 
-      <div className="flex items-start justify-center pt-2 pr-2 w-11 flex-shrink-0">
+      <div className="flex items-start justify-center pt-3.5 pr-3 w-12 flex-shrink-0">
         <Button
           type="button"
           variant="ghost"
@@ -384,7 +384,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       className={cn(
         p38Table.catalogMobileRow,
         'flex items-center gap-2 overflow-hidden',
-        isRoot ? 'px-4' : 'pl-8 pr-4',
+        isRoot ? 'px-4' : 'pl-9 pr-4',
       )}
     >
       <ChevronRight
