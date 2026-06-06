@@ -226,7 +226,7 @@ button:focus-visible {
   .p38-bottom-fab-xl {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap));
   }
-  /* Atalhos globais à esquerda (orçamento + caixa) — acima dos FABs de página */
+  /* Atalhos globais à esquerda (orçamento + caixa + PDV vendedor) — acima dos FABs de página */
   .p38-quick-access-launcher1 {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift));
   }
@@ -234,6 +234,12 @@ button:focus-visible {
     bottom: calc(
       var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift) +
         var(--p38-quick-access-size) + var(--p38-quick-access-gap)
+    );
+  }
+  .p38-quick-access-launcher3 {
+    bottom: calc(
+      var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift) +
+        2 * (var(--p38-quick-access-size) + var(--p38-quick-access-gap))
     );
   }
   /* Área de conteúdo sob o header mobile: padding inferior ≥ nav + safe + folga */

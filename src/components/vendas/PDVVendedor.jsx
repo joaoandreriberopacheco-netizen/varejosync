@@ -33,8 +33,16 @@ import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelector
 import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 
-export default function PDVVendedor() {
+export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
+
+  const handleClose = () => {
+    if (overlayMode && onClose) {
+      onClose();
+      return;
+    }
+    navigateBackOr(navigate);
+  };
   const [carrinho, setCarrinho] = useState([]);
   const [buscaProduto, setBuscaProduto] = useState('');
   const [produtosSugeridos, setProdutosSugeridos] = useState([]);
@@ -337,7 +345,7 @@ export default function PDVVendedor() {
         e.preventDefault();
         const confirmExit = confirm('Deseja sair do PDV e voltar à tela anterior?');
         if (confirmExit) {
-          navigateBackOr(navigate);
+          handleClose();
         }
         return;
       }
@@ -896,7 +904,7 @@ export default function PDVVendedor() {
   const handleSair = () => {
     const confirmExit = confirm('Deseja sair do PDV e voltar à tela anterior?');
     if (confirmExit) {
-      navigateBackOr(navigate);
+      handleClose();
     }
   };
 
@@ -989,7 +997,7 @@ export default function PDVVendedor() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-muted/40 dark:bg-background relative">
+    <div className={`${overlayMode ? 'h-full min-h-0' : 'h-screen'} flex flex-col bg-muted/40 dark:bg-background relative`}>
       {/* Feedback Inline - Glacial Style */}
       <AnimatePresence>
         {feedback.message &&

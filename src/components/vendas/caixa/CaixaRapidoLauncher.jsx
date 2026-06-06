@@ -7,6 +7,7 @@ import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import { shouldHideQuickAccessLaunchers } from '@/lib/caixaQuickAccessHide';
+import { useQuickAccessViewport } from '@/lib/quickAccessViewport';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
 
 function userCanAccessCaixa(user, perfilDeAcesso) {
@@ -28,19 +29,12 @@ function useHideOnCaixaPage() {
 
 export default function CaixaRapidoLauncher() {
   const [open, setOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const showInViewport = useQuickAccessViewport();
   const [canAccess, setCanAccess] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const startPointRef = useRef(null);
   const hideOnCaixaPage = useHideOnCaixaPage();
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +95,7 @@ export default function CaixaRapidoLauncher() {
 
   const launcher =
     showLauncher &&
-    isMobile &&
+    showInViewport &&
     !open &&
     typeof document !== 'undefined' &&
     createPortal(
