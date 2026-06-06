@@ -1,5 +1,5 @@
 /**
- * Camadas z-index dos atalhos globais (orçamento rápido + caixa rápido).
+ * Camadas z-index dos atalhos globais (orçamento rápido + caixa rápido + PDV vendedor).
  * Acima de PDV fullscreen (z-70), drawers (z-310) e FABs de página (ex. compras z-999).
  */
 export const QUICK_ACCESS_Z = {
