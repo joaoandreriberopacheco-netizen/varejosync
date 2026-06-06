@@ -244,7 +244,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       )}
 
       {/* FAB container */}
-      <div className="fixed right-4 z-[55] flex max-h-[70vh] flex-col-reverse items-end gap-2 overflow-y-auto p38-bottom-fab1 lg:bottom-6 lg:right-6">
+      <div className="fixed right-4 z-[55] flex max-h-[70vh] flex-col-reverse items-end gap-2 overflow-y-auto p38-bottom-fab1 md:bottom-6 md:right-6">
         {/* FAB principal */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}

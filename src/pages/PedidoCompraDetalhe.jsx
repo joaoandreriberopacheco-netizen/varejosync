@@ -7,7 +7,7 @@ import { normalizeItemToCanonicalFactorOne } from '@/lib/productUnits';
 import { hydrateEmbarquesLinhasDesdeCanonical } from '@/lib/embarqueLogisticaHelpers';
 
 /**
- * Página inteira de detalhe/criação de Pedido de Compra — apenas Desktop.
+ * Página inteira de detalhe/criação de Pedido de Compra — fullscreen em todos os viewports.
  * Recebe ?id=<id> ou ?id=novo via query string.
  */
 export default function PedidoCompraDetalhe() {

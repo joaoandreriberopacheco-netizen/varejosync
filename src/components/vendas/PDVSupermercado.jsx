@@ -366,7 +366,7 @@ export default function PDVSupermercado() {
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Product List */}
-        <div className="flex-1 flex flex-col p-4 overflow-hidden">
+        <div className="flex-1 flex flex-col p-4 overflow-hidden pb-28 md:pb-4">
           {/* Search and Add Product Area - MATCHING PDV VENDEDOR STYLE */}
           <div className="mb-4 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2">
@@ -511,7 +511,7 @@ export default function PDVSupermercado() {
                            else setCarrinho(carrinho.map(i => (i.item_key || i.produto_id) === (item.item_key || item.produto_id)
                              ? {...i, quantidade: newQtd, quantidade_base: calculateBaseQuantity(newQtd, i.fator_conversao || 1), total: newQtd * i.preco_unitario_praticado}
                              : i));
-                        }} className="w-6 h-6 bg-muted rounded hover:bg-muted font-bold">-</button>
+                        }} className="min-h-11 min-w-11 bg-muted rounded hover:bg-muted font-bold text-base">-</button>
                         <span className="w-8 font-semibold">{item.quantidade}</span>
                         <button onClick={() => {
                            const newQtd = item.quantidade + 1;
@@ -523,7 +523,7 @@ export default function PDVSupermercado() {
                            } else {
                              toast({ title: 'Estoque insuficiente', variant: "destructive" });
                            }
-                        }} className="w-6 h-6 bg-muted rounded hover:bg-muted font-bold">+</button>
+                        }} className="min-h-11 min-w-11 bg-muted rounded hover:bg-muted font-bold text-base">+</button>
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-1">{item.unidade_medida || 'UN'}</div>
                     </td>
@@ -546,8 +546,8 @@ export default function PDVSupermercado() {
           </div>
         </div>
 
-        {/* Right: Summary & Actions */}
-        <div className="w-96 bg-card dark:bg-card border-l p-6 flex flex-col shadow-lg z-10">
+        {/* Right: Summary & Actions — tablet+ split; telemóvel usa barra inferior */}
+        <div className="hidden md:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-card dark:bg-card border-l p-4 lg:p-6 shadow-lg z-10">
           <div className="mb-6">
             <h2 className="text-muted-foreground uppercase text-xs font-bold tracking-wider mb-2">Resumo</h2>
             <div className="text-4xl font-bold text-foreground dark:text-white mb-1">R$ {totalCarrinho.toFixed(2)}</div>
@@ -584,13 +584,29 @@ export default function PDVSupermercado() {
         </div>
       </div>
 
+      {/* Barra inferior — smartphone */}
+      <div className="md:hidden fixed left-0 right-0 bottom-0 z-50 flex items-center gap-3 border-t border-border/40 bg-card/95 backdrop-blur-md px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground">{carrinho.reduce((acc, i) => acc + i.quantidade, 0)} itens</p>
+          <p className="text-xl font-bold text-foreground tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>
+        </div>
+        <Button
+          size="lg"
+          className="h-12 px-6 font-bold bg-emerald-600 hover:bg-emerald-700"
+          onClick={handlePaymentOpen}
+          disabled={carrinho.length === 0}
+        >
+          Finalizar
+        </Button>
+      </div>
+
       {/* Payment Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Pagamento</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
              <div className="space-y-4">
                 {/* Input fields for payment methods */}
                 {['Dinheiro', 'PIX', 'Cartão Débito', 'Cartão Crédito'].map((label, i) => {

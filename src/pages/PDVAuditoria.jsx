@@ -320,7 +320,7 @@ export default function PDVAuditoria() {
                            <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                       <button
                         onClick={() => atualizarQtd(entrada.idx, -1)}
-                        className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center"
+                        className="min-h-11 min-w-11 rounded-lg bg-muted flex items-center justify-center"
                       >
                         <Minus className="w-3 h-3 text-muted-foreground" />
                       </button>
@@ -342,7 +342,7 @@ export default function PDVAuditoria() {
                       />
                       <button
                         onClick={() => atualizarQtd(entrada.idx, 1)}
-                        className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center"
+                        className="min-h-11 min-w-11 rounded-lg bg-muted flex items-center justify-center"
                       >
                         <Plus className="w-3 h-3 text-muted-foreground" />
                       </button>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -10,8 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Search, Edit, Monitor, Receipt, Eye, Package } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
-import PDVVendedor from '@/components/vendas/PDVVendedor';
-import PDVCaixa from '@/components/vendas/PDVCaixa';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
 
 const PedidosTab = () => {
@@ -237,16 +237,21 @@ const PedidosTab = () => {
 };
 
 export default function VendasPage() {
+  const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const activeTab = urlParams.get('tab') || 'pedidos';
 
-  // Se for PDV, renderizar em tela inteira
-  if (activeTab === 'pdv-vendedor') {
-    return <PDVVendedor />;
-  }
+  // PDV deve abrir nas rotas fullscreen (sem sidebar do shell)
+  useEffect(() => {
+    if (activeTab === 'pdv-vendedor') {
+      navigate(createPageUrl('PDVVendedor'), { replace: true });
+    } else if (activeTab === 'pdv-caixa') {
+      navigate(createPageUrl('PDVCaixa'), { replace: true });
+    }
+  }, [activeTab, navigate]);
 
-  if (activeTab === 'pdv-caixa') {
-    return <PDVCaixa />;
+  if (activeTab === 'pdv-vendedor' || activeTab === 'pdv-caixa') {
+    return null;
   }
 
   // Caso contrário, renderizar tabs normais

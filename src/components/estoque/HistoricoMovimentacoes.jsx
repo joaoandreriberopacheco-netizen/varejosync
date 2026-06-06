@@ -131,9 +131,9 @@ export default function HistoricoMovimentacoes() {
 
         {/* Lista Mobile */}
         {isLoading ? (
-          <div className="md:hidden text-center py-8 text-muted-foreground">Carregando...</div>
+          <div className="lg:hidden text-center py-8 text-muted-foreground">Carregando...</div>
         ) : filteredMovimentacoes.length === 0 ? (
-          <div className="md:hidden text-center py-8 text-muted-foreground">Nenhuma movimentação encontrada</div>
+          <div className="lg:hidden text-center py-8 text-muted-foreground">Nenhuma movimentação encontrada</div>
         ) : (
           <P38MobileLineList>
             {filteredMovimentacoes.map((mov, index) => {
@@ -163,7 +163,7 @@ export default function HistoricoMovimentacoes() {
         )}
 
         {/* Tabela Desktop */}
-        <P38TableShell className="hidden md:block">
+        <P38TableShell className="hidden lg:block">
           <Table>
             <TableHeader>
               <TableRow>

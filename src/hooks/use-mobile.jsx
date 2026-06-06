@@ -1,17 +1,19 @@
 import * as React from "react"
+import { TABLET_MIN } from "@/hooks/use-breakpoint"
 
-const MOBILE_BREAKPOINT = 768
+/** Smartphone (<768px). Para tablet/desktop use `useBreakpoint` / `useIsDesktop`. */
+const PHONE_BREAKPOINT = TABLET_MIN
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(undefined)
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const mql = window.matchMedia(`(max-width: ${PHONE_BREAKPOINT - 1}px)`)
     const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+      setIsMobile(window.innerWidth < PHONE_BREAKPOINT)
     }
     mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    setIsMobile(window.innerWidth < PHONE_BREAKPOINT)
     return () => mql.removeEventListener("change", onChange);
   }, [])
 

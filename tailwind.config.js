@@ -3,6 +3,16 @@ module.exports = {
     darkMode: ["class"],
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
+  	screens: {
+  		sm: '640px',
+  		md: '768px',
+  		lg: '1024px',
+  		xl: '1280px',
+  		'2xl': '1536px',
+  		/* Semânticos P38: phone < md · tablet md–lg · desktop ≥ lg */
+  		tablet: '768px',
+  		desktop: '1024px',
+  	},
   	extend: {
   		fontFamily: {
   			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],

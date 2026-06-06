@@ -510,7 +510,7 @@ export default function CotacoesManager() {
           </div>
         ) : (
           <>
-            <P38MobileLineList className="md:hidden">
+            <P38MobileLineList className="lg:hidden">
               {cotacoes.map((cotacao, index) => (
                 <P38MobileLine
                   key={cotacao.id}
@@ -534,7 +534,7 @@ export default function CotacoesManager() {
                 />
               ))}
             </P38MobileLineList>
-            <div className="hidden md:grid gap-3">
+            <div className="hidden lg:grid gap-3">
           {cotacoes.map(cotacao => (
             <div key={cotacao.id} className="bg-card rounded-xl border border-border/40 p-4 transition-all hover:border-teal-200">
             <div className="flex flex-col gap-3">

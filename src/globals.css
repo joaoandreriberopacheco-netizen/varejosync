@@ -209,8 +209,8 @@ input[type="password"]:focus {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Mobile Touch Targets - Botões de ação maiores para toque fácil */
-@media (max-width: 767px) {
+/* Touch targets — smartphone e tablet (até sidebar + listas touch) */
+@media (max-width: 1023px) {
   /* Botões primários de ação - tamanho mínimo de 44px (recomendação Apple/Google) */
   button[data-action="primary"],
   .btn-action-primary,

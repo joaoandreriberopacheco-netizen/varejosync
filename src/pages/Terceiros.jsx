@@ -193,7 +193,7 @@ export default function TerceirosPage() {
         </div>
       ) : (
         <>
-          <P38MobileLineList className="md:hidden">
+          <P38MobileLineList className="lg:hidden">
             {filteredTerceiros.map((terceiro, index) => (
               <P38MobileLine
                 key={terceiro.id}
@@ -235,7 +235,7 @@ export default function TerceirosPage() {
             ))}
           </P38MobileLineList>
 
-          <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+          <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

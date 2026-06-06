@@ -13,6 +13,7 @@ import {
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
 import { P38StatusDot } from '@/components/ui/p38-mobile-line';
+import { P38Paginator } from '@/components/ui/p38-paginator';
 import {
   p38Table,
   MARGIN_ACCENT_VALUE,
@@ -28,6 +29,7 @@ const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base font-light leading-none';
 const CATALOG_CONTENT_PL_BASE = 10;
 const CATALOG_INDENT_STEP = 10;
+const PAGE_SIZE = 50;
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
 const CATALOGO_MOBILE_VALUE_ROWS = [
@@ -466,6 +468,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
 export default function MobileHierarquica({ produtos, onEdit }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
+  const [page, setPage] = useState(0);
 
   const tree = useTreeGrid(produtos);
   const produtosSig = useMemo(
@@ -476,12 +479,20 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   // Reinicia expansão só quando o conjunto de produtos filtrados muda — não a cada rebuild da árvore.
   useEffect(() => {
     setExpandedKeys(buildExpandedForLevel(tree, 1));
+    setPage(0);
   }, [produtosSig]);
 
   const rows = useMemo(() => {
     const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
     return all.filter(r => !(r.type === 'group' && r.count === 0));
   }, [tree, expandedKeys]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pagedRows = useMemo(
+    () => rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
+    [rows, safePage]
+  );
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys(prev => {
@@ -507,7 +518,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
       <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
       <div className="rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
-        {rows.map(row => (
+        {pagedRows.map(row => (
           <div key={row.key} className="contain-layout">
             {row.type === 'group' ? (
               <GroupHeader
@@ -525,6 +536,15 @@ export default function MobileHierarquica({ produtos, onEdit }) {
           </div>
         ))}
       </div>
+      <P38Paginator
+        page={safePage}
+        totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        totalItems={rows.length}
+        onPageChange={setPage}
+        itemLabel="linhas"
+        className="rounded-b-lg border-x border-b border-border/40"
+      />
       <PricingDialog
         produto={pricingProduto}
         open={!!pricingProduto}

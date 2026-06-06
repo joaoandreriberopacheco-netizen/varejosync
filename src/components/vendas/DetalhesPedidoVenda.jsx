@@ -234,7 +234,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 </div>
                 
                 {/* Desktop Table */}
-                <P38TableShell className="hidden md:block">
+                <P38TableShell className="hidden lg:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -283,7 +283,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                     ))}
                   </P38MobileLineList>
                 ) : (
-                  <div className="md:hidden p-8 text-center text-muted-foreground">
+                  <div className="lg:hidden p-8 text-center text-muted-foreground">
                     Nenhum item cadastrado
                   </div>
                 )}

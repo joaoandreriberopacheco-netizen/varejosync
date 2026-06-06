@@ -78,7 +78,7 @@ export default function CampanhasPage() {
           </div>
         ) : (
           <>
-            <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+            <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -115,7 +115,7 @@ export default function CampanhasPage() {
               </Table>
             </P38TableShell>
 
-            <P38MobileLineList className="md:hidden">
+            <P38MobileLineList className="lg:hidden">
               {campanhas.map((campanha, index) => {
                 const status = getStatusCampanha(campanha);
                 const periodo = `${format(new Date(campanha.data_inicio), 'dd/MM/yy')} – ${format(new Date(campanha.data_fim), 'dd/MM/yy')}`;

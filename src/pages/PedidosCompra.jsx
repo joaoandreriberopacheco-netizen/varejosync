@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useIsPhone } from '@/hooks/use-breakpoint';
+import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -346,6 +348,7 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
 };
 
 export default function PedidosCompraPage() {
+  const isPhone = useIsPhone();
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
@@ -771,7 +774,7 @@ export default function PedidosCompraPage() {
   const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
+    <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">

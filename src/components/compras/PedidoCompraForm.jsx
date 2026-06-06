@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsPhone } from '@/hooks/use-breakpoint';
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
@@ -59,6 +60,7 @@ import {
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
+  const isPhone = useIsPhone();
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
   const isRestoringDraftRef = useRef(false);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -1131,7 +1133,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   return (
     <div className="fixed inset-0 flex flex-col bg-card dark:text-foreground overflow-hidden">
       {/* Alerta de Bloqueio Desktop */}
-      {isLocked && <BannerStatusPedido pedido={pedido} isMobile={false} />}
+      {isLocked && <BannerStatusPedido pedido={pedido} isMobile={isPhone} />}
       {/* Header compacto */}
       <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-border/40 relative">
         <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
@@ -1219,7 +1221,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           currentStatus={formData.status} 
           aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
           dataEmissao={formData.data_emissao}
-          isMobile={false}
+          isMobile={isPhone}
         />
       </div>
 

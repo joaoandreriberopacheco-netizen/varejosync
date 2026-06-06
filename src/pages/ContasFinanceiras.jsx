@@ -109,7 +109,7 @@ export default function ContasFinanceirasPage() {
           </Button>
         </div>
 
-        <P38MobileLineList className="md:hidden">
+        <P38MobileLineList className="lg:hidden">
           {accounts.map((account, index) => {
             const saldo = calcularSaldoConta(account);
             const isNegativo = saldo < 0;

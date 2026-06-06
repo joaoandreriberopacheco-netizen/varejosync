@@ -110,7 +110,7 @@ export default function IntervenientesPage() {
                         <p className="text-center py-8 text-muted-foreground">Nenhum interveniente encontrado.</p>
                     ) : (
                         <>
-                            <P38MobileLineList className="md:hidden">
+                            <P38MobileLineList className="lg:hidden">
                                 {filteredItems.map((item, index) => {
                                     const statusLabel = item.active ? 'Ativo' : 'Inativo';
                                     const tone = item.active ? 'success' : 'muted';
@@ -137,7 +137,7 @@ export default function IntervenientesPage() {
                                 })}
                             </P38MobileLineList>
 
-                            <P38TableShell className="hidden md:block min-w-0 overflow-x-auto -mx-1">
+                            <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto -mx-1">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
