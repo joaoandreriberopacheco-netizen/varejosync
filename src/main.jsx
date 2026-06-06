@@ -26,12 +26,13 @@ document.addEventListener('focusin', (e) => {
 
 const UPPERCASE_SKIP_TYPES = new Set([
   'password', 'number', 'date', 'time', 'datetime-local', 'month', 'week',
-  'file', 'hidden', 'checkbox', 'radio', 'range', 'color',
+  'file', 'hidden', 'checkbox', 'radio', 'range', 'color', 'search',
 ]);
 
 function normalizeInputElement(el) {
   if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
   if (el.closest('[data-preserve-case="true"]')) return;
+  if (el.getAttribute('name') === 'p38-search-q') return;
   if (el instanceof HTMLInputElement && UPPERCASE_SKIP_TYPES.has(el.type)) return;
 
   const upper = normalizeDataText(el.value);

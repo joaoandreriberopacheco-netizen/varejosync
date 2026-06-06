@@ -300,11 +300,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 ref={buscaRef}
+                variant="search"
                 placeholder="Buscar produto por nome ou código..."
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 className="pl-9 pr-9 rounded-xl border-0 bg-muted dark:bg-muted text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring"
-                autoComplete="off"
               />
               {busca && (
                 <button onClick={() => setBusca("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground">
