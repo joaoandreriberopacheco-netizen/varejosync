@@ -41,7 +41,7 @@ export default function ProdutosHeader({
   };
 
   return (
-    <div className="flex-none bg-card border-b border-border/40 w-full min-w-0">
+    <div className="flex-none bg-background border-b border-border/40 w-full min-w-0">
       <div className="w-full min-w-0 px-3 py-2 space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">

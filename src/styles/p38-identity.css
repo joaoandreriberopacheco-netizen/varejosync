@@ -55,10 +55,10 @@
   }
 
   .dark {
-    --p38-bg: 67 10% 17%;
-    --p38-surface: 67 10% 23%;
-    --p38-search: 66 10% 20%;
-    --p38-table-head: 66 12% 28%;
+    --p38-bg: 264 8% 12%;
+    --p38-surface: 214 13% 20%;
+    --p38-search: 240 6% 16%;
+    --p38-table-head: 216 10% 25%;
     --p38-accent-olive: 78 55% 51%;
     --p38-accent-lime: 78 55% 51%;
     --p38-divider: 0 0% 100% / 0.06;

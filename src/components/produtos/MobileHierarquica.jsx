@@ -15,9 +15,7 @@ import {
 import { P38StatusDot } from '@/components/ui/p38-mobile-line';
 import {
   p38Table,
-  MARGIN_TABLE_BORDER,
   MARGIN_TABLE_MICRO,
-  MARGIN_TABLE_PANEL,
   MARGIN_ACCENT_VALUE,
   MARGIN_BODY_TEXT,
 } from '@/lib/p38TableSurfaces';
@@ -234,7 +232,7 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
 function CatalogoMobileColumnHeader({ className = '' }) {
   return (
-    <div className={cn(`overflow-hidden border-b ${MARGIN_TABLE_BORDER} ${MARGIN_TABLE_PANEL}`, className)}>
+    <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
       <div className="flex min-w-0">
         <div className="w-[3.25rem] flex-shrink-0 border-r border-white/15 px-1.5 py-2 text-right">
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>Estoque</p>
@@ -310,8 +308,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
 
   return (
     <div className={cn(
-      p38Table.mobileLine,
-      'flex min-w-0 max-w-full border-l-transparent p-0 pr-0 pl-0',
+      p38Table.catalogMobileRow,
+      'flex min-w-0 max-w-full p-0 pr-0 pl-0',
     )}>
       <button
         type="button"
@@ -372,9 +370,9 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       type="button"
       onClick={() => onToggle(row.key)}
       className={cn(
-        p38Table.mobileLine,
-        'flex items-center gap-2 border-l-transparent overflow-hidden',
-        isRoot ? 'px-4' : 'pl-8 pr-4 bg-secondary/15 dark:bg-secondary/20',
+        p38Table.catalogMobileRow,
+        'flex items-center gap-2 overflow-hidden',
+        isRoot ? 'px-4' : 'pl-8 pr-4',
       )}
     >
       <ChevronRight
@@ -451,7 +449,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
-      <div className="rounded-lg border border-border/40 dark:border-white/10 overflow-hidden">
+      <div className="rounded-lg border border-border/40 dark:border-white/10 overflow-hidden bg-background">
         <CatalogoMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
         {rows.map(row => (
           <div key={row.key} className="contain-layout">

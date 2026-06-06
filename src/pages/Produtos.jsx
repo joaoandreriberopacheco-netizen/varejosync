@@ -1060,7 +1060,7 @@ function ProdutosPageContent() {
   const headerStats = filteredStats;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-card">
+    <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-background">
       <ProdutosHeader
         stats={headerStats}
         filters={filters}

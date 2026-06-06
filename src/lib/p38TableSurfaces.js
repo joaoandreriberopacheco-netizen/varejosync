@@ -8,8 +8,8 @@ export const p38Table = {
   shell: 'rounded-xl border border-border bg-background shadow-sm overflow-auto',
   shellFlat: 'rounded-lg border border-border bg-background overflow-hidden',
 
-  /** thead sticky — cinza médio #2d333b (bg-card) */
-  header: 'sticky top-0 z-30 backdrop-blur-sm bg-card text-white [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
+  /** thead sticky — mesmo fundo da tabela; separação só por borda */
+  header: 'sticky top-0 z-30 backdrop-blur-sm bg-background text-foreground [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
   head: 'h-auto py-2 px-2 align-middle text-xs font-bold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground/90',
   headSortable: 'cursor-pointer hover:text-foreground dark:hover:text-white',
   headRight: 'text-right',
@@ -27,8 +27,8 @@ export const p38Table = {
   cellAccent: 'font-semibold text-[#4A5D23] dark:text-[#a4ce33]',
 
   /** Colunas sticky (TreeGrid, catálogo) */
-  stickyHead: 'sticky z-40 bg-card text-white',
-  stickyHeadLeft: 'sticky left-0 z-40 bg-card text-white border-r border-border/40 dark:border-white/10',
+  stickyHead: 'sticky z-40 bg-background text-foreground',
+  stickyHeadLeft: 'sticky left-0 z-40 bg-background text-foreground border-r border-border/40 dark:border-white/10',
   stickyCell: 'sticky z-20 bg-background border-r border-border/40 dark:border-white/10',
   stickyCellLeft: 'sticky left-0 z-20 bg-background',
 
@@ -42,6 +42,9 @@ export const p38Table = {
 
   /** Linhas mobile compactas (substituem cards em smartphone) */
   mobileLine: 'border-b border-border/50 dark:border-white/10 border-l-2 py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
+  /** Catálogo mobile — fundo transparente; evita blocos cinza sobre a lista */
+  catalogMobileRow: 'border-b border-border/50 dark:border-white/10 py-2.5 min-w-0 bg-transparent font-din-1451',
+  catalogMobileHeader: 'sticky top-0 z-20 border-b border-border/40 dark:border-white/10 bg-background/95 backdrop-blur-sm',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] touch-pan-y',
