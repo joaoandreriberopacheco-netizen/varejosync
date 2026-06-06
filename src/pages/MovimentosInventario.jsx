@@ -33,6 +33,12 @@ import {
   resolvePrimaryFromFactorOne,
 } from '@/lib/productUnits';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
+
+const P38_ACCENT_TEXT = p38Accent.success.text;
+const P38_ACCENT_RING = 'ring-1 ring-[#4A5D23]/40 dark:ring-[#a4ce33]/40';
+const P38_STEP_ACTIVE = 'border-[#4A5D23]/30 bg-secondary/60 text-foreground dark:border-[#a4ce33]/30 dark:bg-secondary/40';
+const P38_STEP_ACTIVE_DOT = 'bg-[#4A5D23] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]';
 
 const REFERENCIA_MOVIMENTO_INVENTARIO = 'MovimentoInventario';
 const MOTIVOS_ENTRADA = ['Ajuste pontual de inventário', 'Entrada manual', 'Devolução ao estoque', 'Correção de saldo'];
@@ -142,15 +148,15 @@ function StepPill({ number, title, description, active = false, done = false, on
   return (
     <button type="button" onClick={onClick} className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${
       active
-        ? 'border-blue-500/40 bg-blue-50 text-blue-950 dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-50'
+        ? P38_STEP_ACTIVE
         : 'border-border/40 bg-card text-foreground/90 dark:border-border/40 dark:bg-background dark:text-foreground/90'
     }`}>
       <div className="flex items-start gap-3">
         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
           done
-            ? 'bg-emerald-600 text-white'
+            ? 'bg-[#4A5D23] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]'
             : active
-              ? 'bg-blue-600 text-white'
+              ? P38_STEP_ACTIVE_DOT
               : 'bg-muted text-muted-foreground dark:bg-muted'
         }`}>
           {done ? <CheckCircle2 className="h-4 w-4" /> : number}
@@ -175,7 +181,7 @@ function ProductRow({ product, active, inCart, onSelect, striped }) {
       striped={striped}
       accent={p38AccentKeyFromTone(accent)}
       onClick={() => onSelect(product)}
-      className={`w-full text-left flex items-start gap-3 p-4 min-h-[52px] ${active ? 'ring-1 ring-blue-500/50' : ''}`}
+      className={`w-full text-left flex items-start gap-3 p-4 min-h-[52px] ${active ? P38_ACCENT_RING : ''}`}
     >
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary">
         <Package className="h-5 w-5 text-muted-foreground" />
@@ -226,10 +232,10 @@ function SelectedProductEditor({
     : 0;
 
   return (
-    <div className="rounded-2xl border border-blue-200 bg-card p-4 shadow-sm dark:border-blue-900/60 dark:bg-background">
+    <div className="rounded-2xl border border-border/40 bg-card p-4 shadow-sm dark:bg-background">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+          <p className={`text-xs font-semibold uppercase tracking-wide ${P38_ACCENT_TEXT}`}>
             Produto selecionado
           </p>
           <h3 className="mt-1 line-clamp-2 font-semibold text-foreground dark:text-white">{getProdutoNome(product)}</h3>
@@ -723,12 +729,12 @@ export default function MovimentosInventario() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 p-4 dark:bg-background md:p-8">
+    <div className="min-h-screen bg-background font-din-1451 p-4 pb-[var(--p38-scroll-pad-below-nav)] md:p-8 md:pb-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">Estoque</p>
-            <h1 className="text-2xl font-semibold text-foreground dark:text-white">Movimentos de Inventário</h1>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${P38_ACCENT_TEXT}`}>Estoque</p>
+            <h1 className="text-2xl font-light text-foreground dark:text-white">Movimentos de Inventário</h1>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
               Ajuste pontual com caminho único: configure o tipo, adicione produtos ao carrinho, confira antes/depois e conclua.
             </p>
@@ -769,7 +775,7 @@ export default function MovimentosInventario() {
         <Card className="border-border/40">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <ClipboardCheck className="h-5 w-5 text-blue-600" />
+              <ClipboardCheck className={`h-5 w-5 ${P38_ACCENT_TEXT}`} />
               1. Configuração do ajuste
             </CardTitle>
           </CardHeader>
@@ -845,7 +851,7 @@ export default function MovimentosInventario() {
           <Card className="border-border/40">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Search className="h-5 w-5 text-blue-600" />
+                <Search className={`h-5 w-5 ${P38_ACCENT_TEXT}`} />
                 2. Adicionar produtos
               </CardTitle>
             </CardHeader>
@@ -856,7 +862,7 @@ export default function MovimentosInventario() {
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Buscar produto por nome, código ou marca..."
-                  className="h-13 rounded-2xl border-border/40 bg-card pl-12 text-base shadow-sm dark:border-border/40 dark:bg-background"
+                  className="h-12 rounded-2xl p38-search-field border-0 pl-12 text-base shadow-none"
                 />
               </div>
 
@@ -875,7 +881,7 @@ export default function MovimentosInventario() {
                       Nenhum produto encontrado para "{searchTerm}".
                     </div>
                   ) : (
-                    <P38MobileLineList className="md:hidden">
+                    <P38MobileLineList allViewports className="max-h-[420px] overflow-y-auto rounded-2xl">
                       {filteredProdutos.map((product, index) => {
                         const units = getUnitOptions(product);
                         const anyInCart = units.some((unit) => cartByKey.has(getCartKey(product.id, unit.unidade)));
@@ -920,7 +926,7 @@ export default function MovimentosInventario() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-lg">
                   <span className="flex items-center gap-2">
-                    <ShoppingCart className="h-5 w-5 text-blue-600" />
+                    <ShoppingCart className={`h-5 w-5 ${P38_ACCENT_TEXT}`} />
                     3. Carrinho e conclusão
                   </span>
                   <Badge variant="secondary">{cartItems.length} {cartItems.length === 1 ? 'item' : 'itens'}</Badge>
@@ -950,7 +956,7 @@ export default function MovimentosInventario() {
             <Card className="border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <ShoppingCart className="h-5 w-5 text-blue-600" />
+                  <ShoppingCart className={`h-5 w-5 ${P38_ACCENT_TEXT}`} />
                   3. Conferir carrinho
                 </CardTitle>
               </CardHeader>
