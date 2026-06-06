@@ -15,9 +15,7 @@ import {
 import { P38StatusDot } from '@/components/ui/p38-mobile-line';
 import {
   p38Table,
-  MARGIN_TABLE_MICRO,
   MARGIN_ACCENT_VALUE,
-  MARGIN_BODY_TEXT,
 } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
 
@@ -25,23 +23,41 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
-const CATALOGO_MOBILE_HEADER_LABEL = `${MARGIN_TABLE_MICRO} uppercase tracking-wide text-right leading-none opacity-90 truncate min-w-0`;
-const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-3.5 text-right';
-const CATALOGO_MOBILE_BODY_TEXT = `${MARGIN_BODY_TEXT} leading-none`;
+const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
+const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-4.5 text-right';
+const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base font-light leading-none';
+const CATALOG_CONTENT_PL_BASE = 10;
+const CATALOG_INDENT_STEP = 10;
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
 const CATALOGO_MOBILE_VALUE_ROWS = [
   [
-    { key: 'valorCompra', label: 'Valor compra' },
-    { key: 'custoCalculado', label: 'Custo calc.' },
-    { key: 'markup', label: 'MK %' },
+    { key: 'valorCompra', label: 'COMPRA' },
+    { key: 'custoCalculado', label: 'CUSTO' },
+    { key: 'markup', label: 'MK%' },
   ],
   [
-    { key: 'precoVenda', label: 'Preço venda' },
-    { key: 'inventarioValorizado', label: 'Invent. R$' },
-    { key: 'categoriaAbcd', label: 'Curva' },
+    { key: 'precoVenda', label: 'VENDA' },
+    { key: 'inventarioValorizado', label: 'INVENT.' },
+    { key: 'categoriaAbcd', label: 'ABC' },
   ],
 ];
+
+function getCatalogRowTier(row) {
+  if (row?.type === 'group') return (row.level ?? 1) <= 1 ? 'pai' : 'pai-filho';
+  return (row.level ?? 1) <= 1 ? 'solteiro' : 'filho';
+}
+
+function catalogContentPad(level = 1) {
+  return CATALOG_CONTENT_PL_BASE + Math.max(0, level - 1) * CATALOG_INDENT_STEP;
+}
+
+function catalogNomeClass(tier) {
+  if (tier === 'filho' || tier === 'pai-filho') {
+    return 'text-[12px] font-light text-muted-foreground leading-relaxed';
+  }
+  return 'text-[12px] font-light text-foreground leading-relaxed';
+}
 
 function formatCatalogoMobileNum(val) {
   return (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -72,12 +88,15 @@ function buildCatalogoMobileTabulatedValues(produto) {
   };
 }
 
-function catalogoMetricValueClass(key) {
-  if (key === 'markup' || key === 'categoriaAbcd') return `${MARGIN_ACCENT_VALUE} font-semibold`;
-  if (key === 'valorCompra' || key === 'custoCalculado') {
-    return 'text-muted-foreground font-medium dark:font-normal';
+function catalogoMetricValueClass(key, tier = 'solteiro') {
+  const isChild = tier === 'filho';
+  if (key === 'markup' || key === 'categoriaAbcd') {
+    return `${MARGIN_ACCENT_VALUE} font-normal ${isChild ? 'opacity-90' : ''}`;
   }
-  return 'text-foreground dark:text-foreground font-medium dark:font-normal';
+  if (key === 'valorCompra' || key === 'custoCalculado') {
+    return 'text-muted-foreground font-light';
+  }
+  return isChild ? 'text-muted-foreground font-light' : 'text-foreground/90 font-light';
 }
 
 function buildUnitOptions(produto) {
@@ -247,8 +266,8 @@ function CatalogoMobileColumnHeader({ className = '' }) {
     <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
       <div className="flex min-w-0">
         <div className="w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-2.5 text-right">
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>Estoque</p>
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-2`}>Un</p>
+          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
+          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-2`}>UN</p>
         </div>
         <div className="flex-1 min-w-0 py-2.5 pr-12 pl-2.5">
           {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
@@ -269,7 +288,7 @@ function CatalogoMobileColumnHeader({ className = '' }) {
   );
 }
 
-function CatalogoMobileTabulatedValues({ produto, className = '' }) {
+function CatalogoMobileTabulatedValues({ produto, className = '', tier = 'solteiro' }) {
   const values = buildCatalogoMobileTabulatedValues(produto);
 
   return (
@@ -282,7 +301,7 @@ function CatalogoMobileTabulatedValues({ produto, className = '' }) {
           {valueRow.map(({ key }) => (
             <p
               key={key}
-              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(key)}`}
+              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(key, tier)}`}
             >
               {values[key]}
             </p>
@@ -293,11 +312,12 @@ function CatalogoMobileTabulatedValues({ produto, className = '' }) {
   );
 }
 
-function CatalogoMobileEstoqueCol({ quantidade, unidade, stockTone }) {
+function CatalogoMobileEstoqueCol({ quantidade, unidade, stockTone, tier = 'solteiro' }) {
+  const isChild = tier === 'filho';
   return (
     <div className={CATALOGO_MOBILE_ESTOQUE_COL}>
-      <P38StatusDot tone={stockTone} className="absolute left-0 top-4" />
-      <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-foreground`}>
+      <P38StatusDot tone={stockTone} className="absolute left-0 top-5" />
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums ${isChild ? 'text-muted-foreground' : 'text-foreground'}`}>
         {fmtN(quantidade)}
       </p>
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 truncate`}>
@@ -313,6 +333,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const e = p.estoque_atual || 0;
   const m = p.estoque_minimo || 0;
   const stockTone = !p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success';
+  const tier = getCatalogRowTier(row);
+  const isChild = tier === 'filho';
 
   const apresent = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresent ? apresent.quantidade : e;
@@ -332,29 +354,33 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
           quantidade={estoqueExibicao}
           unidade={unidadeExibicao}
           stockTone={stockTone}
+          tier={tier}
         />
-        <div className="flex-1 min-w-0 py-1 pr-3 pl-2.5">
+        <div
+          className="flex-1 min-w-0 py-2 pr-3"
+          style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
+        >
           <p
             lang="pt-BR"
-            className="text-[12px] font-normal text-foreground/90 leading-relaxed uppercase break-words [overflow-wrap:anywhere] line-clamp-2"
+            className={`uppercase break-words [overflow-wrap:anywhere] line-clamp-2 ${catalogNomeClass(tier)}`}
           >
             {p.nome}
           </p>
           {p.codigo_interno && (
-            <p className="mt-1 text-[10px] text-muted-foreground font-mono truncate">
+            <p className={`mt-1 text-[10px] font-mono truncate ${isChild ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
               #{p.codigo_interno}
             </p>
           )}
-          <CatalogoMobileTabulatedValues produto={p} className="mt-1.5" />
+          <CatalogoMobileTabulatedValues produto={p} className="mt-2" tier={tier} />
           {apresent && (
-            <p className="mt-0.5 text-[9px] text-muted-foreground truncate">
+            <p className="mt-1 text-[9px] text-muted-foreground truncate">
               {apresent.rotulo || 'unidade de exibição'}
             </p>
           )}
         </div>
       </button>
 
-      <div className="flex items-start justify-center pt-3.5 pr-3 w-12 flex-shrink-0">
+      <div className="flex items-start justify-center pt-4.5 pr-3 w-12 flex-shrink-0">
         <Button
           type="button"
           variant="ghost"
@@ -375,7 +401,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
 
 // ── Cabeçalho de grupo ─────────────────────────────────────────────────────────
 const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle }) {
-  const isRoot = row.level === 1;
+  const tier = getCatalogRowTier(row);
 
   return (
     <button
@@ -383,36 +409,38 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       onClick={() => onToggle(row.key)}
       className={cn(
         p38Table.catalogMobileRow,
-        'flex items-center gap-2 overflow-hidden',
-        isRoot ? 'px-4' : 'pl-9 pr-4',
+        'flex w-full min-w-0 text-left overflow-hidden',
       )}
     >
-      <ChevronRight
-        className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-      />
-      <span className={`flex-1 min-w-0 truncate ${
-        isRoot
-          ? 'text-[12px] font-semibold text-foreground uppercase tracking-wide'
-          : 'text-[11px] font-medium text-muted-foreground dark:text-foreground/90 uppercase'
-      }`}>
-        {row.label}
-      </span>
-      <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[45%]">
-        {row.criticalCount > 0 && (
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400 truncate">
-            {row.criticalCount} {row.criticalCount > 1 ? 'críticos' : 'crítico'}
+      <div className="w-[3.25rem] flex-shrink-0 flex items-center justify-end pr-2 border-r border-border/40 dark:border-white/10 self-stretch">
+        <ChevronRight
+          className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+        />
+      </div>
+      <div
+        className="flex-1 min-w-0 flex items-center gap-2 py-2 pr-3"
+        style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
+      >
+        <span className={`flex-1 min-w-0 line-clamp-2 break-words uppercase ${catalogNomeClass(tier)}`}>
+          {row.label}
+        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[45%]">
+          {row.criticalCount > 0 && (
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-red-200 text-red-600 dark:border-red-800 dark:text-red-400 truncate">
+              {row.criticalCount} {row.criticalCount > 1 ? 'críticos' : 'crítico'}
+            </Badge>
+          )}
+          <Badge
+            variant="outline"
+            className={`h-5 px-1.5 text-[10px] font-light flex-shrink-0 ${
+              tier === 'pai'
+                ? 'border-border/40 text-foreground dark:border-border/40 dark:text-foreground'
+                : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground'
+            }`}
+          >
+            {row.count}
           </Badge>
-        )}
-        <Badge
-          variant="outline"
-          className={`h-5 px-1.5 text-[10px] font-medium flex-shrink-0 ${
-            isRoot
-              ? 'border-border/40 text-foreground dark:border-border/40 dark:text-foreground'
-              : 'border-border/40 text-muted-foreground dark:border-border/40 dark:text-foreground/90'
-          }`}
-        >
-          {row.count}
-        </Badge>
+        </div>
       </div>
     </button>
   );
