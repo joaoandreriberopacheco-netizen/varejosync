@@ -256,7 +256,8 @@ button:focus-visible {
   }
 }
 
-@media (min-width: 1024px) {
+/* Tablet+ (≥768): sem bottom nav — FABs e docks encostam ao fundo do ecrã */
+@media (min-width: 768px) {
   .p38-bottom-fab1 {
     bottom: 1.5rem;
   }
@@ -274,6 +275,13 @@ button:focus-visible {
   }
   .p38-bottom-dock {
     bottom: 0;
+  }
+  .p38-quick-access-launcher1,
+  .p38-quick-access-launcher2 {
+    bottom: 1.5rem;
+  }
+  .p38-quick-access-launcher2 {
+    bottom: calc(1.5rem + var(--p38-quick-access-size) + var(--p38-quick-access-gap));
   }
   .p38-layout-mobile-scroll-pad {
     padding-bottom: 0;

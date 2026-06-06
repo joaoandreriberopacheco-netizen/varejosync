@@ -568,7 +568,7 @@ export default function VisualizadorCaixa({
 
           <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad} bg-background`}>
             <div className="max-w-4xl mx-auto space-y-4 pb-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
                   saldoInicial={caixaData.saldoInicial}
                   totalVendas={caixaData.totalVendas}

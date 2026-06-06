@@ -177,7 +177,7 @@ export default function PedidoCompraFAB({
   return (
     <>
       {!showAnexosModal && (
-        <div data-pedido-compra-fab className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 lg:bottom-6 lg:right-6">
+        <div data-pedido-compra-fab className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 md:bottom-6 md:right-6">
             <button
               onClick={() => setIsExpanded(prev => !prev)}
               className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${

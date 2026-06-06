@@ -173,7 +173,7 @@ export default function ProdutosHeader({
 
         {isFilterOpen && (
           <div className="grid grid-cols-1 md:grid-cols-6 gap-2 pb-1">
-            <div className="flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
+            <div className="hidden lg:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
               <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
               <LevelControl level={treeLevel} onChange={setTreeLevel} />
             </div>

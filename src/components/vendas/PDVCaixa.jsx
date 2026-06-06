@@ -1533,7 +1533,7 @@ export default function PDVCaixa({
 
                 <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
                   <div className="max-w-4xl mx-auto space-y-4 pb-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
                   saldoInicial={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0}
                   totalVendas={caixaData.totalVendas}
