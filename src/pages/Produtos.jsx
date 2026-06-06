@@ -1059,30 +1059,36 @@ function ProdutosPageContent() {
   const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
   const headerStats = filteredStats;
 
+  const produtosHeader = (
+    <ProdutosHeader
+      stats={headerStats}
+      filters={filters}
+      categorias={categorias}
+      fornecedores={fornecedores}
+      activeFilterCount={activeFilterCount}
+      isSummaryFiltered={activeFilterCount > 0 || filteredStats.total !== stats.total}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      handleFilterChange={handleFilterChange}
+      handleExportarCatalogo={handleExportarCatalogo}
+      handleBaixarTemplateUnificado={handleBaixarTemplateUnificado}
+      setIsMassImageUploaderOpen={setIsMassImageUploaderOpen}
+      handleAddNew={handleAddNew}
+      setFilters={setFilters}
+      formatarNumero={formatarNumero}
+      filteredProdutos={filteredProdutos}
+      loadData={loadData}
+      treeLevel={treeLevel}
+      setTreeLevel={setTreeLevel}
+      setIsColumnSelectorOpen={setIsColumnSelectorOpen}
+    />
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-background">
-      <ProdutosHeader
-        stats={headerStats}
-        filters={filters}
-        categorias={categorias}
-        fornecedores={fornecedores}
-        activeFilterCount={activeFilterCount}
-        isSummaryFiltered={activeFilterCount > 0 || filteredStats.total !== stats.total}
-        isFilterOpen={isFilterOpen}
-        setIsFilterOpen={setIsFilterOpen}
-        handleFilterChange={handleFilterChange}
-        handleExportarCatalogo={handleExportarCatalogo}
-        handleBaixarTemplateUnificado={handleBaixarTemplateUnificado}
-        setIsMassImageUploaderOpen={setIsMassImageUploaderOpen}
-        handleAddNew={handleAddNew}
-        setFilters={setFilters}
-        formatarNumero={formatarNumero}
-        filteredProdutos={filteredProdutos}
-        loadData={loadData}
-        treeLevel={treeLevel}
-        setTreeLevel={setTreeLevel}
-        setIsColumnSelectorOpen={setIsColumnSelectorOpen}
-      />
+      <div className="hidden md:block flex-none">
+        {produtosHeader}
+      </div>
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
         <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4 overflow-x-hidden">
@@ -1096,6 +1102,7 @@ function ProdutosPageContent() {
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div className="md:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]">
+                {produtosHeader}
                 <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
               </div>
 

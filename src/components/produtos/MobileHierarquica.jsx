@@ -154,31 +154,31 @@ function getPricingForUnit(produto, unitOption) {
   return { fator, precoVenda, custo, valorCompra, frete, imposto1, imposto2, desconto, outros, margem, markup };
 }
 
-function PricingLine({ label, value, tone = 'default', hint }) {
-  const toneClass = tone === 'positive'
-    ? 'text-[#4A5D23] dark:text-[#a4ce33]'
-    : tone === 'warning'
-      ? 'text-orange-600 dark:text-orange-300'
-      : tone === 'danger'
-        ? 'text-red-600 dark:text-red-400'
-        : 'text-foreground dark:text-foreground';
+const PRICING_LABEL_CLASS = 'text-[0.625rem] uppercase tracking-tight text-muted-foreground leading-none';
+const PRICING_VALUE_CLASS = 'text-[0.75rem] font-light tabular-nums text-foreground leading-tight';
+const PRICING_EXTRA_LABEL_CLASS = 'text-[0.625rem] uppercase tracking-tight text-muted-foreground/90';
 
+function pricingValueClass(tone = 'default') {
+  if (tone === 'positive') return `${MARGIN_ACCENT_VALUE} font-normal`;
+  if (tone === 'warning') return 'text-amber-600 dark:text-amber-400 font-normal';
+  if (tone === 'danger') return 'text-red-600 dark:text-red-400 font-normal';
+  return 'text-foreground font-light';
+}
+
+function PricingMetric({ label, value, tone = 'default' }) {
   return (
-    <div className="flex items-start justify-between gap-2 py-1.5 border-b border-border/40 last:border-b-0 dark:border-border/40/70">
-      <div className="min-w-0">
-        <div className="text-[9px] uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">{label}</div>
-        {hint && <div className="text-[9px] text-muted-foreground truncate">{hint}</div>}
-      </div>
-      <div className={`text-xs font-semibold tabular-nums text-right ${toneClass}`}>{value}</div>
+    <div className="min-w-0 text-right">
+      <p className={PRICING_LABEL_CLASS}>{label}</p>
+      <p className={`${PRICING_VALUE_CLASS} mt-0.5 truncate ${pricingValueClass(tone)}`}>{value}</p>
     </div>
   );
 }
 
-function PricingSection({ title, children }) {
+function PricingExtraLine({ label, value, tone = 'default' }) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
-      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
-      {children}
+    <div className="flex items-center justify-between gap-2 py-1 border-t border-border/30 dark:border-white/10 first:border-t-0">
+      <span className={`${PRICING_EXTRA_LABEL_CLASS} shrink-0`}>{label}</span>
+      <span className={`text-[0.6875rem] tabular-nums text-right truncate ${pricingValueClass(tone)}`}>{value}</span>
     </div>
   );
 }
@@ -203,58 +203,65 @@ function PricingDialog({ produto, open, onOpenChange }) {
   const margemTone = pricing.margem >= 30 ? 'positive' : pricing.margem > 0 ? 'warning' : 'danger';
   const markupTone = pricing.markup >= 40 ? 'positive' : pricing.markup > 0 ? 'warning' : 'danger';
 
+  const extraCosts = [
+    pricing.frete !== 0 && { label: 'FRET.', value: `R$ ${fmtR(pricing.frete)}` },
+    pricing.imposto1 !== 0 && { label: 'IMP.1', value: `R$ ${fmtR(pricing.imposto1)}` },
+    pricing.imposto2 !== 0 && { label: 'IMP.2', value: `R$ ${fmtR(pricing.imposto2)}` },
+    pricing.desconto !== 0 && { label: 'DESC.', value: `- R$ ${fmtR(pricing.desconto)}`, tone: pricing.desconto > 0 ? 'positive' : 'default' },
+    pricing.outros !== 0 && { label: 'OUT.', value: `R$ ${fmtR(pricing.outros)}` },
+  ].filter(Boolean);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border-border/40 bg-muted/40 p-3 text-foreground shadow-2xl dark:border-border/40 dark:bg-background dark:text-foreground">
-        <DialogHeader className="text-left space-y-1 pr-8">
-          <DialogTitle className="text-base font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-            <span className="w-8 h-8 rounded-2xl p38-catalog-icon-well flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
+      <DialogContent className="w-[92vw] max-w-sm rounded-3xl border border-border/40 bg-card p-3 text-foreground shadow-2xl dark:border-border/40 dark:bg-card">
+        <DialogHeader className="text-left space-y-1 pr-8 pb-1">
+          <DialogTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+            <span className="w-7 h-7 rounded-xl p38-catalog-icon-well flex items-center justify-center shrink-0">
+              <DollarSign className="w-3.5 h-3.5" />
             </span>
             Precificação
           </DialogTitle>
-          <p className="text-[11px] text-muted-foreground uppercase leading-snug line-clamp-1">{produto.nome}</p>
+          <p className="text-[0.6875rem] text-muted-foreground uppercase leading-snug line-clamp-2 font-light">{produto.nome}</p>
         </DialogHeader>
 
         <div className="space-y-2">
-          <div className="rounded-2xl border border-border/40 bg-card px-3 py-2 shadow-sm dark:border-border/40 dark:bg-background/70 dark:shadow-none">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[9px] uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">Unidade</div>
-                <div className="text-[11px] text-muted-foreground dark:text-foreground/90 truncate">consulta, sem editar</div>
-              </div>
-              <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                <SelectTrigger className="h-8 w-24 rounded-xl border-border/40 bg-muted/40 text-xs text-foreground focus:ring-0 dark:border-border/40 dark:bg-background dark:text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[80] border-border/40 bg-card text-foreground dark:border-border/40 dark:bg-background dark:text-foreground">
-                  {unitOptions.map((option) => (
-                    <SelectItem key={option.sigla} value={option.sigla} className="text-xs">
-                      {option.sigla}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-border/40 bg-muted/50 px-2.5 py-2 dark:border-border/40 dark:bg-secondary/70">
+            <span className={PRICING_LABEL_CLASS}>UN</span>
+            <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+              <SelectTrigger className="h-7 w-20 rounded-lg border-border/40 bg-background text-[0.75rem] font-light text-foreground focus:ring-0 dark:border-border/40 dark:bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="z-[80] border border-border/40 bg-card text-foreground dark:border-border/40 dark:bg-card">
+                {unitOptions.map((option) => (
+                  <SelectItem key={option.sigla} value={option.sigla} className="text-[0.75rem]">
+                    {option.sigla}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <PricingSection title="Custos">
-              <PricingLine label="Valor compra" value={`R$ ${fmtR(pricing.valorCompra)}`} hint={`/${unidadeSelecionada}`} />
-              {pricing.frete !== 0 && <PricingLine label="Frete" value={`R$ ${fmtR(pricing.frete)}`} hint={`/${unidadeSelecionada}`} />}
-              {pricing.imposto1 !== 0 && <PricingLine label="Imposto 1" value={`R$ ${fmtR(pricing.imposto1)}`} hint={`/${unidadeSelecionada}`} />}
-              {pricing.imposto2 !== 0 && <PricingLine label="Imposto 2" value={`R$ ${fmtR(pricing.imposto2)}`} hint={`/${unidadeSelecionada}`} />}
-              {pricing.desconto !== 0 && <PricingLine label="Desconto" value={`- R$ ${fmtR(pricing.desconto)}`} hint={`/${unidadeSelecionada}`} tone={pricing.desconto > 0 ? 'positive' : 'default'} />}
-              {pricing.outros !== 0 && <PricingLine label="Outros" value={`R$ ${fmtR(pricing.outros)}`} hint={`/${unidadeSelecionada}`} />}
-              <PricingLine label="Custo total" value={`R$ ${fmtR(pricing.custo)}`} hint={`/${unidadeSelecionada}`} />
-            </PricingSection>
-            <PricingSection title="Venda">
-              <PricingLine label="Preço venda" value={`R$ ${fmtR(pricing.precoVenda)}`} hint={`/${unidadeSelecionada}`} />
-              <PricingLine label="Markup" value={`${fmtN(pricing.markup)}%`} tone={markupTone} />
-              <PricingLine label="Margem" value={`${fmtN(pricing.margem)}%`} tone={margemTone} />
-              <PricingLine label="Estoque" value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} hint={`base ${fmtN(estoqueBase)} ${produto.unidade_principal || 'UN'}`} />
-            </PricingSection>
+          <div className="rounded-xl border border-border/40 bg-background/80 px-2.5 py-2 dark:border-border/40 dark:bg-background/60">
+            <div className="grid grid-cols-3 gap-x-2 gap-y-2">
+              <PricingMetric label="COMPRA" value={`R$ ${fmtR(pricing.valorCompra)}`} />
+              <PricingMetric label="CUSTO" value={`R$ ${fmtR(pricing.custo)}`} />
+              <PricingMetric label="VENDA" value={`R$ ${fmtR(pricing.precoVenda)}`} />
+              <PricingMetric label="MK%" value={`${fmtN(pricing.markup)}%`} tone={markupTone} />
+              <PricingMetric label="MARG%" value={`${fmtN(pricing.margem)}%`} tone={margemTone} />
+              <PricingMetric label="EST." value={`${fmtN(estoqueNaUnidade)} ${unidadeSelecionada}`} />
+            </div>
+            <p className="mt-1.5 text-[0.625rem] text-muted-foreground text-right font-light">
+              base {fmtN(estoqueBase)} {produto.unidade_principal || 'UN'}
+            </p>
           </div>
+
+          {extraCosts.length > 0 && (
+            <div className="rounded-xl border border-border/40 bg-muted/30 px-2.5 py-1 dark:border-border/40 dark:bg-secondary/50">
+              {extraCosts.map((item) => (
+                <PricingExtraLine key={item.label} label={item.label} value={item.value} tone={item.tone} />
+              ))}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -489,7 +496,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
-      <CatalogoMobileColumnHeader className="sticky top-0 z-30 shadow-sm border border-border/40 dark:border-white/10 rounded-t-lg" />
+      <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
       <div className="rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
         {rows.map(row => (
           <div key={row.key} className="contain-layout">
