@@ -8,6 +8,7 @@ export const SEARCH_INPUT_PROPS = {
   autoCapitalize: 'none',
   autoCorrect: 'off',
   name: 'p38-search-q',
+  'data-preserve-case': 'true',
   'data-1p-ignore': true,
   'data-lpignore': true,
   'data-form-type': 'other',
