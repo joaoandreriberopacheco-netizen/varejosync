@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Search, Trash2, AlertTriangle, CheckCircle2, ChevronRight, FileText, ShoppingCart, DollarSign, Package, Calendar, Plus, Minus } from 'lucide-react';
 import { format } from 'date-fns';
+import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 const TIPOS = [
   { value: 'PedidoVenda', label: 'Pedido de Venda', icon: ShoppingCart, cor: 'emerald' },
@@ -100,35 +101,44 @@ export default function ExclusaoDocumentosPage() {
     setConfirmando(false);
     setExcluido(false);
 
-    const t = termo.trim().toUpperCase();
-    let docs = [];
+    try {
+      const t = termo.trim().toUpperCase();
+      let docs = [];
 
-    if (tipoSelecionado === 'PedidoVenda') docs = await base44.entities.PedidoVenda.list();
-    else if (tipoSelecionado === 'PedidoCompra') docs = await base44.entities.PedidoCompra.list();
-    else if (tipoSelecionado === 'LancamentoFinanceiro') docs = await base44.entities.LancamentoFinanceiro.list();
-    else if (tipoSelecionado === 'MovimentacaoEstoque') docs = await base44.entities.MovimentacaoEstoque.list();
-    else if (tipoSelecionado === 'MovimentosCaixaReforco') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Reforço');
-    else if (tipoSelecionado === 'MovimentosCaixaRecolhimento') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Sangria' || d.tipo === 'Recolhimento de Caixa');
-    else if (tipoSelecionado === 'DespesaTurno') docs = (await base44.entities.LancamentoFinanceiro.list()).filter(d => d.tipo === 'Despesa' && d.turno_caixa_id);
-    else if (tipoSelecionado === 'Embarque') docs = await base44.entities.Embarque.list();
-    else if (tipoSelecionado === 'AgendaLogistica') docs = await base44.entities.AgendaLogistica.list();
+      if (tipoSelecionado === 'PedidoVenda') docs = await base44.entities.PedidoVenda.list();
+      else if (tipoSelecionado === 'PedidoCompra') docs = await base44.entities.PedidoCompra.list();
+      else if (tipoSelecionado === 'LancamentoFinanceiro') docs = await base44.entities.LancamentoFinanceiro.list();
+      else if (tipoSelecionado === 'MovimentacaoEstoque') docs = await base44.entities.MovimentacaoEstoque.list();
+      else if (tipoSelecionado === 'MovimentosCaixaReforco') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Reforço');
+      else if (tipoSelecionado === 'MovimentosCaixaRecolhimento') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Sangria' || d.tipo === 'Recolhimento de Caixa');
+      else if (tipoSelecionado === 'DespesaTurno') docs = (await base44.entities.LancamentoFinanceiro.list()).filter(d => d.tipo === 'Despesa' && d.turno_caixa_id);
+      else if (tipoSelecionado === 'Embarque') docs = await base44.entities.Embarque.list();
+      else if (tipoSelecionado === 'AgendaLogistica') docs = await base44.entities.AgendaLogistica.list();
 
-    const encontrado = docs.find(d =>
-      (d.numero || d.descricao || d.produto_nome || d.pedido_numero || d.observacao || '')
-        .toUpperCase().includes(t) ||
-      d.id === t
-    );
+      const encontrado = docs.find(d =>
+        (d.numero || d.descricao || d.produto_nome || d.pedido_numero || d.observacao || '')
+          .toUpperCase().includes(t) ||
+        d.id === t
+      );
 
-    setBuscando(false);
+      if (!encontrado) {
+        toast({ title: 'Documento não encontrado', variant: 'destructive' });
+        return;
+      }
 
-    if (!encontrado) {
-      toast({ title: 'Documento não encontrado', variant: 'destructive' });
-      return;
+      const fs = await buscarFilhos(tipoSelecionado, encontrado);
+      setDocumento(encontrado);
+      setFilhos(fs);
+    } catch (error) {
+      console.error('[ExclusaoDocumentos] buscar:', error);
+      toast({
+        title: 'Erro ao buscar documento',
+        description: error?.message || 'Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBuscando(false);
     }
-
-    const fs = await buscarFilhos(tipoSelecionado, encontrado);
-    setDocumento(encontrado);
-    setFilhos(fs);
   };
 
   const handleExcluir = async () => {
