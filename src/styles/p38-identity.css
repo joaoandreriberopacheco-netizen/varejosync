@@ -197,6 +197,11 @@
     @apply overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background;
   }
 
+  /* Inputs operacionais — visual maiúsculo instantâneo; valor normalizado no onChange/blur */
+  .p38-data-uppercase {
+    text-transform: uppercase;
+  }
+
   /* Campo busca / filtro */
   .p38-search-field {
     background-color: hsl(var(--p38-search));

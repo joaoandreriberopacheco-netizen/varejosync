@@ -2,7 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
-import { normalizeDataText } from '@/lib/normalizeDataText'
+import { installMobileFocusPolicy } from '@/lib/focusPolicy'
+import { uppercaseInputValue } from '@/lib/uppercaseInputHandlers'
 
 // Tema antes da primeira pintura (splash, login, etc.)
 try {
@@ -24,30 +25,10 @@ document.addEventListener('focusin', (e) => {
   }
 });
 
-const UPPERCASE_SKIP_TYPES = new Set([
-  'password', 'number', 'date', 'time', 'datetime-local', 'month', 'week',
-  'file', 'hidden', 'checkbox', 'radio', 'range', 'color', 'search',
-]);
+// Maiúsculas ao sair do campo — evita piscar minúscula/maiúscula a cada tecla (visual via CSS).
+document.addEventListener('blur', (e) => uppercaseInputValue(e.target), true);
 
-function normalizeInputElement(el) {
-  if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
-  if (el.closest('[data-preserve-case="true"]')) return;
-  if (el.getAttribute('name') === 'p38-search-q') return;
-  if (el instanceof HTMLInputElement && UPPERCASE_SKIP_TYPES.has(el.type)) return;
-
-  const upper = normalizeDataText(el.value);
-  if (el.value === upper) return;
-
-  const { selectionStart, selectionEnd } = el;
-  el.value = upper;
-  if (selectionStart != null && selectionEnd != null) {
-    el.setSelectionRange(selectionStart, selectionEnd);
-  }
-}
-
-// Maiúsculas na digitação — grava o valor já em maiúsculas (exceto tipos sensíveis)
-document.addEventListener('input', (e) => normalizeInputElement(e.target));
-document.addEventListener('blur', (e) => normalizeInputElement(e.target), true);
+installMobileFocusPolicy();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>

@@ -1,7 +1,11 @@
 import React from "react"
 import { cn } from "@/components/utils"
+import { shouldAllowAutoFocus } from "@/lib/focusPolicy"
+import { createUppercaseInputChangeHandler } from "@/lib/uppercaseInputHandlers"
 
-const Textarea = React.forwardRef(({ className, autoComplete, ...props }, ref) => {
+const Textarea = React.forwardRef(({ className, autoComplete, autoCapitalize, onChange, autoFocus, ...props }, ref) => {
+  const handleChange = createUppercaseInputChangeHandler(onChange)
+
   return (
     <textarea
       className={cn(
@@ -10,7 +14,10 @@ const Textarea = React.forwardRef(({ className, autoComplete, ...props }, ref) =
       )}
       ref={ref}
       {...props}
+      onChange={handleChange}
       autoComplete={autoComplete ?? 'off'}
+      autoCapitalize={autoCapitalize ?? 'characters'}
+      autoFocus={autoFocus && shouldAllowAutoFocus()}
     />
   )
 })
