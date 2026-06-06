@@ -55,10 +55,10 @@
   }
 
   .dark {
-    --p38-bg: 264 8% 12%;
-    --p38-surface: 214 13% 20%;
-    --p38-search: 240 6% 16%;
-    --p38-table-head: 216 10% 25%;
+    --p38-bg: 67 10% 17%;
+    --p38-surface: 67 10% 23%;
+    --p38-search: 66 10% 20%;
+    --p38-table-head: 66 12% 28%;
     --p38-accent-olive: 78 55% 51%;
     --p38-accent-lime: 78 55% 51%;
     --p38-divider: 0 0% 100% / 0.06;
@@ -315,6 +315,25 @@
   .dark .p38-catalog-icon-well {
     background-color: hsl(var(--p38-accent-lime) / 0.15);
     color: hsl(var(--p38-accent-lime));
+  }
+
+  /* Cartão de opção (modal unidade, seletores PDV) */
+  .p38-option-card {
+    @apply w-full rounded-2xl p-4 text-left transition-all shadow-sm bg-muted/50 text-foreground border border-transparent;
+  }
+
+  .p38-option-card:hover {
+    @apply bg-muted/70;
+  }
+
+  .p38-option-card--selected {
+    @apply ring-2 ring-primary;
+    background-color: hsl(var(--primary) / 0.12);
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  .p38-btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-sm;
   }
 
 }

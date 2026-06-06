@@ -362,15 +362,15 @@ textarea,
 }
 
 .dark .pdv-button-static {
-  background-color: rgb(20 26 43) !important;
-  color: rgb(241 245 249) !important;
+  background-color: rgb(62 64 52) !important;
+  color: rgb(242 242 232) !important;
 }
 
 .dark .pdv-button-static:hover,
 .dark .pdv-button-static:active,
 .dark .pdv-button-static:focus {
-  background-color: rgb(20 26 43) !important;
-  color: rgb(241 245 249) !important;
+  background-color: rgb(62 64 52) !important;
+  color: rgb(242 242 232) !important;
 }
 
 /* ==========================================

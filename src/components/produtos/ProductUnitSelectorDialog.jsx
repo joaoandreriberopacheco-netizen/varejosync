@@ -49,29 +49,25 @@ export default function ProductUnitSelectorDialog({
                 key={option.unidade}
                 type="button"
                 onClick={() => setSelectedUnit(option)}
-                className={`w-full rounded-2xl p-4 text-left transition-all shadow-sm ${
-                  isSelected
-                    ? 'bg-background text-white dark:bg-card dark:text-foreground'
-                    : 'bg-muted/40 text-foreground dark:bg-muted dark:text-white'
-                }`}
+                className={`p38-option-card ${isSelected ? 'p38-option-card--selected' : ''}`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-semibold">{option.unidade}</span>
+                      <span className="text-base font-semibold text-foreground">{option.unidade}</span>
                       {option.is_primary && (
-                        <Badge className={`border-0 ${isSelected ? 'bg-card/15 text-white dark:bg-muted dark:text-foreground' : 'bg-card text-foreground/90 dark:bg-background dark:text-foreground'}`}>
+                        <Badge className="border-0 bg-primary/20 text-primary dark:bg-primary/25 dark:text-primary">
                           Principal
                         </Badge>
                       )}
                     </div>
-                    <p className={`text-xs mt-1 ${isSelected ? 'text-white/75 dark:text-muted-foreground' : 'text-muted-foreground'}`}>
+                    <p className="text-xs mt-1 text-muted-foreground">
                       {formatUnitConversion(option, product?.unidade_principal)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs opacity-70">{moneyLabel}</div>
-                    <div className="text-lg font-bold">
+                    <div className="text-xs text-muted-foreground">{moneyLabel}</div>
+                    <div className="text-lg font-bold text-foreground tabular-nums">
                       R$ {(option.valor_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </div>
@@ -82,14 +78,14 @@ export default function ProductUnitSelectorDialog({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={onClose} className="border-0 shadow-sm rounded-xl">
+          <Button type="button" variant="outline" onClick={onClose} className="border-border/40 shadow-sm rounded-xl">
             Cancelar
           </Button>
           <Button
             type="button"
             onClick={() => selectedUnit && onConfirm?.(selectedUnit)}
             disabled={!selectedUnit}
-            className="rounded-xl"
+            className="rounded-xl p38-btn-primary"
           >
             Confirmar
           </Button>

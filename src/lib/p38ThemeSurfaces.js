@@ -1,24 +1,24 @@
 /**
  * Superfícies P38 — alinhado ao Relatório de Margem mobile (screenshot) e tokens em index.css.
- * Escuro: carvão #1f1d22, cartão #2d333b, busca #26262e, cabeçalho tabela #383e47, limão #a4ce33.
+ * Escuro: cinza oliva #2f3027, cartão #3e4034, busca #35372e, cabeçalho tabela #4a4d3f, limão #a4ce33.
  * Claro: fundo suave + acento verde oliva.
  */
 
 export const P38_THEME = {
   dark: {
-    bg: '#1f1d22',
-    headerBg: '#1f1d22',
-    searchBg: '#26262e',
-    cardBg: '#2d333b',
-    tableHeaderBg: '#383e47',
-    text: '#ffffff',
-    textMuted: '#8b8b93',
-    textSub: '#d1d5db',
-    iconColor: '#8b8b93',
-    chevron: '#6b7280',
+    bg: '#2f3027',
+    headerBg: '#2f3027',
+    searchBg: '#35372e',
+    cardBg: '#3e4034',
+    tableHeaderBg: '#4a4d3f',
+    text: '#f2f2e8',
+    textMuted: '#a6a896',
+    textSub: '#d8d9ce',
+    iconColor: '#a6a896',
+    chevron: '#8c916b',
     divider: 'rgba(255,255,255,0.06)',
-    btnBg: '#26262e',
-    backBg: '#26262e',
+    btnBg: '#35372e',
+    backBg: '#35372e',
     closeBg: 'rgba(255,255,255,0.08)',
     closeColor: '#ffffff',
     accent: '#a4ce33',

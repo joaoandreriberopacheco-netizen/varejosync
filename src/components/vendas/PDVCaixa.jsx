@@ -119,7 +119,7 @@ function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, f
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onConfirmar(rascunho); }}
-          className="flex-1 h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-xl font-medium hover:shadow-md transition-shadow"
+          className="flex-1 h-12 p38-btn-primary rounded-xl font-medium hover:shadow-md transition-shadow"
           style={{ minHeight: '48px' }}
         >
           Confirmar
@@ -2146,7 +2146,7 @@ export default function PDVCaixa({
                 </div>
                 <button
                   onClick={() => { setRascunhoDetalhesTab(null); handleAbrirPedido(rascunhoDetalhesTab); }}
-                  className="w-full h-12 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold mt-2">
+                  className="w-full h-12 p38-btn-primary rounded-2xl font-semibold mt-2">
                   Confirmar Pagamento
                 </button>
               </div>

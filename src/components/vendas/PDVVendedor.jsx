@@ -1013,8 +1013,8 @@ export default function PDVVendedor() {
         <div className="rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3 md:px-5 md:py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-background dark:bg-card flex items-center justify-center shadow-sm shrink-0">
-                <ShoppingCart className="w-4.5 h-4.5 text-white dark:text-foreground" />
+              <div className="w-10 h-10 rounded-2xl bg-muted dark:bg-card flex items-center justify-center shadow-sm shrink-0">
+                <ShoppingCart className="w-4.5 h-4.5 text-foreground" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] text-muted-foreground dark:text-muted-foreground uppercase tracking-[0.18em]">Operação de vendas</p>
@@ -1055,7 +1055,7 @@ export default function PDVVendedor() {
                   <Input
                   ref={inputProdutoRef}
                   placeholder="Nome ou código (use ; para combinar termos)..."
-                  className="w-full pl-12 pr-14 bg-card dark:bg-background border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground dark:text-muted-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
+                  className="w-full pl-12 pr-14 bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -1072,7 +1072,7 @@ export default function PDVVendedor() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="Qtd"
-                  className="w-full bg-card dark:bg-background border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground dark:text-muted-foreground h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent]"
+                  className="w-full bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent]"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
@@ -1125,7 +1125,7 @@ export default function PDVVendedor() {
                         {variasUnidades && (
                           <button
                             type="button"
-                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline ml-auto sm:ml-0"
+                            className="text-xs font-medium text-primary hover:underline ml-auto sm:ml-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               setUnitSelector({ open: true, product: produto });
@@ -1182,7 +1182,7 @@ export default function PDVVendedor() {
                   ) : (
                     <p className="text-sm text-muted-foreground mt-1">
                       R$ {((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)} × {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}
-                      {' '}= <span className="font-semibold text-foreground/90 dark:text-muted-foreground">R$ {(((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
+                      {' '}= <span className="font-semibold text-foreground">R$ {(((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">Equivale a {produtoSelecionado.fator_conversao || 1} {produtoSelecionado.unidade_principal || 'UN'} por {produtoSelecionado.unidade_medida || 'UN'}</p>
@@ -1194,7 +1194,7 @@ export default function PDVVendedor() {
                     <X className="w-4 h-4" />
                   </Button>
                   <Button onClick={handleConfirmarAdicao}
-                    className="flex-1 h-10 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white text-sm font-semibold rounded-xl shadow-none">
+                    className="flex-1 h-10 p38-btn-primary text-sm rounded-xl shadow-none">
                     + Adicionar
                   </Button>
                 </div>
@@ -1232,7 +1232,7 @@ export default function PDVVendedor() {
                             <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                       }
-                      <p className="text-sm font-medium text-foreground dark:text-muted-foreground leading-snug flex-1 break-words">{item.produto_nome}</p>
+                      <p className="text-sm font-medium text-foreground leading-snug flex-1 break-words">{item.produto_nome}</p>
                       <button onClick={() => handleRemoveItem(item.item_key)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
@@ -1262,7 +1262,7 @@ export default function PDVVendedor() {
                           className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted dark:hover:bg-card transition-colors">
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-sm font-bold w-9 text-center text-foreground dark:text-muted-foreground">{item.quantidade}</span>
+                        <span className="text-sm font-bold w-9 text-center text-foreground">{item.quantidade}</span>
                         <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
                           disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                           className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted dark:hover:bg-card transition-colors disabled:opacity-40">
@@ -1335,7 +1335,7 @@ export default function PDVVendedor() {
             </div>
 
             <Button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="w-full h-12 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white font-semibold rounded-xl shadow-none border-0 text-base disabled:opacity-40">
+              className="w-full h-12 p38-btn-primary rounded-xl shadow-none border-0 text-base disabled:opacity-40">
               Avançar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -1375,7 +1375,7 @@ export default function PDVVendedor() {
               )}
             </button>
             <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="flex items-center gap-1.5 h-10 px-4 bg-muted dark:bg-muted hover:bg-muted dark:hover:bg-muted text-foreground dark:text-foreground font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0">
+              className="flex items-center gap-1.5 h-10 px-4 bg-primary/20 border border-primary/35 hover:bg-primary/30 text-foreground font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none">
               <UserPlus className="w-4 h-4" />
               Cliente
             </button>
@@ -1639,7 +1639,7 @@ export default function PDVVendedor() {
                   </Button>
                   <Button
                   type="submit"
-                  className="flex-1 h-12 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white font-medium rounded-xl">
+                  className="flex-1 h-12 p38-btn-primary rounded-xl">
 
                     <UserPlus className="w-5 h-5 mr-2" />
                     Cadastrar
@@ -1792,7 +1792,7 @@ export default function PDVVendedor() {
 
             <Button onClick={() => { setShowCarrinhoMobile(false); handleAvancarParaCliente(); }}
               disabled={carrinho.length === 0 || ajusteExcedido}
-              className="w-full h-12 bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white font-semibold rounded-2xl shadow-none border-0 disabled:opacity-40">
+              className="w-full h-12 p38-btn-primary rounded-2xl shadow-none border-0 disabled:opacity-40">
               Avançar <ArrowRight className="w-4 h-4 ml-1.5 inline" />
             </Button>
           </div>
@@ -1915,7 +1915,7 @@ export default function PDVVendedor() {
             <Button
               onClick={handleReeditarRascunho}
               disabled={senhaReeditar.length < 4}
-              className="bg-background hover:bg-card dark:bg-card dark:hover:bg-muted dark:text-foreground text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl disabled:opacity-50">
+              className="p38-btn-primary w-full sm:w-auto h-12 text-base rounded-xl disabled:opacity-50">
 
               Carregar Rascunho
             </Button>
