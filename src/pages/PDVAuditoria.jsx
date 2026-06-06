@@ -2,11 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { invokeRecalcularEstoqueProduto } from "@/lib/p38StockRecalc";
 import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from "@/lib/movimentacaoEstoqueSaldo";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Plus, Minus, Trash2,
-  CheckCircle2, Loader2, Package, ChevronDown, ChevronUp, ClipboardCheck, Boxes
+  CheckCircle2, Loader2, Package, ChevronDown, ChevronUp, Boxes, Send
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -242,7 +241,7 @@ export default function PDVAuditoria() {
   }
 
   return (
-    <div className="min-h-screen bg-background font-din-1451 flex flex-col w-full max-w-full overflow-x-hidden">
+    <div className="h-dvh bg-background font-din-1451 flex flex-col w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-border/40">
         <button
@@ -264,7 +263,7 @@ export default function PDVAuditoria() {
       </div>
 
       {/* Lista de itens agrupados */}
-      <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3 pb-[calc(10rem+68px+env(safe-area-inset-bottom,0px))]">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-3 pb-[calc(var(--p38-bottom-nav-total)+10rem+env(safe-area-inset-bottom,0px))]">
         {itensAgrupados.length === 0 && (
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
@@ -407,30 +406,33 @@ export default function PDVAuditoria() {
           </div>
         )}
 
-        <div className="flex gap-2 min-w-0">
-          <div className="flex-1 relative min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
-            <Input
-              ref={buscaRef}
-              placeholder="Buscar produto..."
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              onFocus={() => setMostrarBusca(true)}
-              className="pl-9 rounded-xl border-0 bg-muted/50 h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring w-full"
-            />
-          </div>
-          <Button
-            onClick={finalizar}
-            disabled={finalizando || itens.length === 0}
-            className="h-11 px-3 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-none flex-shrink-0 text-sm"
-          >
-            {finalizando
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <><ClipboardCheck className="w-4 h-4 mr-1.5" /> Finalizar</>
-            }
-          </Button>
+        <div className="relative min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
+          <Input
+            ref={buscaRef}
+            placeholder="Buscar produto..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            onFocus={() => setMostrarBusca(true)}
+            className="pl-9 rounded-xl border-0 bg-muted/50 h-11 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring w-full"
+          />
         </div>
       </div>
+
+      {/* FAB Finalizar — acima da barra de busca */}
+      <button
+        type="button"
+        onClick={finalizar}
+        disabled={finalizando || itens.length === 0}
+        title="Finalizar conferência"
+        aria-label="Finalizar conferência"
+        className="fixed right-4 z-[56] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:shadow-xl active:scale-95 disabled:pointer-events-none disabled:opacity-40 bottom-[calc(var(--p38-bottom-nav-total)+4.75rem)]"
+      >
+        {finalizando
+          ? <Loader2 className="w-6 h-6 animate-spin" />
+          : <Send className="w-6 h-6" />
+        }
+      </button>
 
       <ProductUnitSelectorDialog
         open={unitSelector.open}
