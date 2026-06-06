@@ -232,7 +232,7 @@ export default function FilaSeparacao() {
       </P38MobileLineList>
 
       {/* Tabela Desktop */}
-      <Card className="hidden md:block">
+      <Card className="hidden lg:block">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-lg font-normal text-foreground/90">
             <div className="p-2 bg-muted/40 rounded-lg">

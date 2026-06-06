@@ -321,7 +321,7 @@ Retorne JSON:
                     {step === 'review' && (
                         <div className="space-y-6">
                             <div className="bg-card rounded-xl overflow-hidden border border-border">
-                                <P38TableShell className="hidden md:block overflow-x-auto">
+                                <P38TableShell className="hidden lg:block overflow-x-auto">
                                     <table className="w-full">
                                         <thead className="bg-background/50">
                                             <tr>
@@ -405,7 +405,7 @@ Retorne JSON:
                                         </tbody>
                                     </table>
                                 </P38TableShell>
-                                <P38MobileLineList className="md:hidden">
+                                <P38MobileLineList className="lg:hidden">
                                     {analyzedItems.map((item, idx) => {
                                         const product = products.find(p => p.id === item.selected_product_id);
                                         return (

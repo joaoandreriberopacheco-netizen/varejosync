@@ -55,8 +55,8 @@ export const p38Table = {
   mobileLineValue: 'font-semibold text-base text-foreground text-right tabular-nums font-din-1451',
   mobileLineValueSub: 'text-xs text-muted-foreground text-right font-din-1451',
   mobileMicroLabel: 'text-xs uppercase tracking-wide text-muted-foreground leading-none font-din-1451',
-  /** Lista de linhas só em mobile/tablet quando existe tabela desktop (md+). */
-  mobileListShell: 'md:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background',
+  /** Lista de linhas em phone/tablet; tabela densa só em desktop (lg+). */
+  mobileListShell: 'lg:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background',
   /** Lista de linhas em todos os viewports (caixa, home-style lists). */
   lineListShell: 'overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background',
 };

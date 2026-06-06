@@ -267,7 +267,7 @@ export default function ConsumoInternoPainelInicial({
                   </span>
                 </div>
 
-                <P38MobileLineList className="block rounded-lg border border-border/40 dark:border-white/10 md:hidden">
+                <P38MobileLineList className="block rounded-lg border border-border/40 dark:border-white/10 lg:hidden">
                   {itens.map((item, index) => (
                     <ConsumoHistoricoLinha key={item.id} item={item} index={index} {...acoesProps} />
                   ))}

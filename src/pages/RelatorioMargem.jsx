@@ -1735,7 +1735,7 @@ export default function RelatorioMargemVendas() {
                       <span className="truncate text-muted-foreground">{periodLabel}</span>
                     ) : null}
                   </div>
-                  <p className="md:hidden text-[11px] text-muted-foreground truncate">
+                  <p className="lg:hidden text-xs text-muted-foreground truncate">
                     {productCount} produto{productCount === 1 ? '' : 's'}
                     {periodLabel ? ` · ${periodLabel}` : ''}
                   </p>
@@ -1964,7 +1964,7 @@ export default function RelatorioMargemVendas() {
             <>
 
               {/* Desktop: painel resumo + KPIs (mesmo visual mobile) */}
-              <div className="hidden md:block mb-3 space-y-3">
+              <div className="hidden lg:block mb-3 space-y-3">
                 <MargemMobileReportHeader
                   filtrosDesc={buildMarginFiltrosDesc({
                     dateRange,
@@ -1977,7 +1977,7 @@ export default function RelatorioMargemVendas() {
               {/* Desktop Table View */}
               <div
                 ref={desktopScrollRef}
-                className="hidden md:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-border bg-background shadow-sm"
+                className="hidden lg:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-border bg-background shadow-sm"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 <table className={`w-full table-fixed ${MARGIN_BODY_TEXT}`}>
@@ -2060,7 +2060,7 @@ export default function RelatorioMargemVendas() {
               {/* Mobile: mesma diagramação do PDF mobile */}
               <div
                 ref={mobileScrollRef}
-                className="md:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-border bg-background pb-[var(--p38-scroll-pad-below-nav)]"
+                className="lg:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-border bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-4"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 <MargemMobileReportHeader

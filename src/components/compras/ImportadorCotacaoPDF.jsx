@@ -477,7 +477,7 @@ Retorne um JSON com:
                                     <h4 className="font-medium text-foreground">Itens para Importação</h4>
                                 </div>
                             </div>
-                            <P38TableShell className="hidden md:block overflow-x-auto">
+                            <P38TableShell className="hidden lg:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead className="bg-background/50">
                                         <tr>
@@ -551,7 +551,7 @@ Retorne um JSON com:
                                     </tbody>
                                 </table>
                             </P38TableShell>
-                            <P38MobileLineList className="md:hidden">
+                            <P38MobileLineList className="lg:hidden">
                                 {mappings.map((m, idx) => (
                                     <P38MobileLine
                                         key={idx}

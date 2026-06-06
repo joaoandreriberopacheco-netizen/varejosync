@@ -201,7 +201,7 @@ button:focus-visible {
   }
 }
 
-/* GlacialBottomNav + FAB — mobile (<lg). Usar variáveis em :root. */
+/* GlacialBottomNav + FAB — smartphone (<md). Tablet+ usa sidebar. */
 @layer utilities {
   /* FAB principal / pilha flex-col-reverse: encostado acima do menu com folga fixa */
   .p38-bottom-fab1 {

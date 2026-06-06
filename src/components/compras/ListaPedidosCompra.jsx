@@ -440,7 +440,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       </button>
       {open && (
         <>
-          <P38MobileLineList className="md:hidden">
+          <P38MobileLineList className="lg:hidden">
             {pedidos.map((p, index) => (
               <PedidoMobileLine
                 key={p._virtual_key || p.id}
@@ -455,7 +455,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
               />
             ))}
           </P38MobileLineList>
-          <div className="hidden md:block space-y-2">
+          <div className="hidden lg:block space-y-2">
             {pedidos.map(p => (
               <PedidoCard
                 key={p._virtual_key || p.id}

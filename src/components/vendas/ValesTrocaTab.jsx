@@ -89,7 +89,7 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
         </div>
       ) : (
         <>
-          <P38MobileLineList className="md:hidden">
+          <P38MobileLineList className="lg:hidden">
             {filteredVales.map((vale, index) => {
               const tone = p38StatusTone(vale.status);
               return (
@@ -120,7 +120,7 @@ export default function ValesTrocaTab({ searchTerm, statusFiltro, dataInicio, da
             })}
           </P38MobileLineList>
 
-          <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+          <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

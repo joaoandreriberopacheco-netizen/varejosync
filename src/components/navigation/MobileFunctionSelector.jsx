@@ -33,9 +33,9 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
   if (!isOpen) return null;
 
-  // Deve aparecer em todos os viewports em que o bottom nav existe (< lg = 1024px). `md:hidden` ocultava tablets (768px+).
+  // Menu full-screen só com bottom nav (smartphone < md = 768px).
   return (
-    <div className="fixed inset-0 z-[60] lg:hidden font-din-1451" style={{ background: c.bg }}>
+    <div className="fixed inset-0 z-[60] md:hidden font-din-1451" style={{ background: c.bg }}>
       {/* Header */}
       <div style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }} className="px-4 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">

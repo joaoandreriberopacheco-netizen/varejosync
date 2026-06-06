@@ -16,6 +16,7 @@ import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
+import { TABLET_MIN } from '@/hooks/use-breakpoint';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -56,7 +57,8 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 1024;
+      // Smartphone: bottom nav. Tablet+ (≥768): sidebar como no desktop.
+      const mobile = window.innerWidth < TABLET_MIN;
       setIsMobile(mobile);
       if (!mobile) {
         setIsOpen(false);

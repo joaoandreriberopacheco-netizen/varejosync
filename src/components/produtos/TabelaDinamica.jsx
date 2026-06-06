@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { ChevronRight, ChevronDown, Package, MoreHorizontal, Edit, Copy, Archive, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronDown, Package, MoreHorizontal, Edit, Copy, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { P38Paginator } from '@/components/ui/p38-paginator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -479,47 +480,14 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
         )}
       </div>
 
-      {/* Paginação */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border/40 bg-card">
-          <span className="text-[11px] text-muted-foreground">
-            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, produtos.length)} de {produtos.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => setPage(i)}
-                className={`h-6 w-6 text-[11px] rounded transition-colors ${
-                  i === page
-                    ? 'bg-primary dark:bg-muted text-white dark:text-foreground font-semibold'
-                    : 'text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              disabled={page === totalPages - 1}
-              onClick={() => setPage(p => p + 1)}
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <P38Paginator
+        page={page}
+        totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        totalItems={produtos.length}
+        onPageChange={setPage}
+        itemLabel="produtos"
+      />
     </div>
   );
 }

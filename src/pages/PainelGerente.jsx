@@ -259,7 +259,7 @@ export default function PainelGerente() {
             <p className="text-center py-8 text-sm text-muted-foreground">NENHUM PEDIDO ENCONTRADO</p>
           ) : (
             <>
-              <P38TableShell className="hidden md:block min-w-0 overflow-x-auto">
+              <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -304,7 +304,7 @@ export default function PainelGerente() {
                 </Table>
               </P38TableShell>
 
-              <P38MobileLineList className="md:hidden">
+              <P38MobileLineList className="lg:hidden">
                 {pedidos.map((pedido, index) => {
                   const statusTxt = statusLabelPedido(pedido.status);
                   const tone = p38StatusTone(pedido.status);

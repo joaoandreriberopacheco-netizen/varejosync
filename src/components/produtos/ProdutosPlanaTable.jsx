@@ -189,7 +189,7 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
   const colSpan = 3 + visibleColumns.length;
 
   return (
-    <div ref={scrollContainerRef} className="hidden md:block w-full h-full overflow-auto border border-border/40 rounded bg-card">
+    <div ref={scrollContainerRef} className="hidden lg:block w-full h-full overflow-auto border border-border/40 rounded bg-card">
       <Table>
         <TableHeader className="bg-muted/40 sticky top-0 z-20 dark:bg-muted">
           <TableRow>

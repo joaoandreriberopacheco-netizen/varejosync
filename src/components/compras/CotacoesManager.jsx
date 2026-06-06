@@ -510,7 +510,7 @@ export default function CotacoesManager() {
           </div>
         ) : (
           <>
-            <P38MobileLineList className="md:hidden">
+            <P38MobileLineList className="lg:hidden">
               {cotacoes.map((cotacao, index) => (
                 <P38MobileLine
                   key={cotacao.id}
