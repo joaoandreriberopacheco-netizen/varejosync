@@ -34,11 +34,11 @@ const CATALOGO_MOBILE_VALUE_ROWS = [
   [
     { key: 'valorCompra', label: 'Valor compra' },
     { key: 'custoCalculado', label: 'Custo calc.' },
-    { key: 'inventarioValorizado', label: 'Invent. R$' },
+    { key: 'markup', label: 'MK %' },
   ],
   [
     { key: 'precoVenda', label: 'Preço venda' },
-    { key: 'inventarioValorizado2', label: 'Invent. R$' },
+    { key: 'inventarioValorizado', label: 'Invent. R$' },
     { key: 'categoriaAbcd', label: 'Curva' },
   ],
 ];
@@ -47,24 +47,36 @@ function formatCatalogoMobileNum(val) {
   return (val ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatCatalogoMobilePct(val) {
+  const n = Number(val);
+  if (!Number.isFinite(n) || n <= 0) return '—';
+  return `${n.toFixed(1).replace('.', ',')}%`;
+}
+
 function buildCatalogoMobileTabulatedValues(produto) {
   const cat = getCatalogoComercialView(produto);
   const custoBase = resolveCustoTotalUnitBaseProduto(produto);
   const inventario = produto?.inventario_valorizado ?? custoBase * (produto?.estoque_atual || 0);
   const inventarioFmt = inventario > 0 ? formatCatalogoMobileNum(inventario) : '—';
+  const markupPct = cat.markupSobreCustoPct > 0
+    ? cat.markupSobreCustoPct
+    : (produto?.preco_venda_percentual || 0);
 
   return {
     valorCompra: cat.valorCompraNaEmbalagem > 0 ? formatCatalogoMobileNum(cat.valorCompraNaEmbalagem) : '—',
     custoCalculado: cat.custoNaEmbalagem > 0 ? formatCatalogoMobileNum(cat.custoNaEmbalagem) : '—',
+    markup: formatCatalogoMobilePct(markupPct),
     inventarioValorizado: inventarioFmt,
     precoVenda: cat.precoVenda > 0 ? formatCatalogoMobileNum(cat.precoVenda) : '—',
-    inventarioValorizado2: inventarioFmt,
     categoriaAbcd: produto?.abcd || '—',
   };
 }
 
-function catalogoMetricValueClass(colIndex) {
-  if (colIndex === 2) return `${MARGIN_ACCENT_VALUE} font-semibold`;
+function catalogoMetricValueClass(key) {
+  if (key === 'markup' || key === 'categoriaAbcd') return `${MARGIN_ACCENT_VALUE} font-semibold`;
+  if (key === 'valorCompra' || key === 'custoCalculado') {
+    return 'text-muted-foreground font-medium dark:font-normal';
+  }
   return 'text-foreground dark:text-foreground font-medium dark:font-normal';
 }
 
@@ -267,10 +279,10 @@ function CatalogoMobileTabulatedValues({ produto, className = '' }) {
           key={rowIdx}
           className={`${CATALOGO_MOBILE_VALUES_GRID} ${rowIdx === 0 ? '' : 'mt-1'}`}
         >
-          {valueRow.map(({ key }, colIdx) => (
+          {valueRow.map(({ key }) => (
             <p
               key={key}
-              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(colIdx)}`}
+              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(key)}`}
             >
               {values[key]}
             </p>
@@ -449,8 +461,8 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
-      <div className="rounded-lg border border-border/40 dark:border-white/10 overflow-hidden bg-background">
-        <CatalogoMobileColumnHeader className="sticky top-0 z-20 shadow-sm" />
+      <CatalogoMobileColumnHeader className="sticky top-0 z-30 shadow-sm border border-border/40 dark:border-white/10 rounded-t-lg" />
+      <div className="rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
         {rows.map(row => (
           <div key={row.key} className="contain-layout">
             {row.type === 'group' ? (
