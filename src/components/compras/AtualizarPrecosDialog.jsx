@@ -16,7 +16,12 @@ import {
   pickDefaultPurchaseUnit,
   hasAlternativeUnits,
   getCustoCompraLiquidoFator1,
+  getDescontoPctApresentacaoItem,
+  isItemAcrescimoCompra,
 } from '@/lib/productUnits';
+
+const findProduto = (produtos, produtoId) =>
+  produtos.find((p) => String(p.id) === String(produtoId));
 
 // Formata número para string BR
 const fmt = (v) => (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -124,7 +129,7 @@ const sanitizeTwoDecimalInput = (value) => {
   return `${isNegative ? '-' : ''}${normalizedInteger}`;
 };
 
-export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos }) {
+export default function AtualizarPrecosDialog({ isOpen, onClose, itens = [], produtos = [] }) {
   const [selecionados, setSelecionados] = useState({});
   const [processando, setProcessando] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState(null);
@@ -146,6 +151,30 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // Recalcula desconto absoluto a partir do %
+  const recalcDesconto = (c) => {
+    const pct = c.desconto_pct || 0;
+    const base = c.valor_compra || 0;
+    const absVal = parseFloat((base * Math.abs(pct) / 100).toFixed(2));
+    return pct < 0 ? -absVal : absVal;
+  };
+
+  const resolveFatorLinha = (item, produto) => {
+    const ov = unidadeExibicaoLinha[item?.produto_id];
+    if (ov?.fator > 0) return ov.fator;
+    return resolveFatorExibicaoComercial(item, produto);
+  };
+
+  const resolveDescontoPctItem = (item) => {
+    const storedPct = parseFloat(item?.desconto_pct_item);
+    if (Number.isFinite(storedPct) && storedPct !== 0) {
+      return isItemAcrescimoCompra(item) ? -Math.abs(storedPct) : Math.abs(storedPct);
+    }
+    const pct = getDescontoPctApresentacaoItem(item);
+    if (!pct) return 0;
+    return isItemAcrescimoCompra(item) ? -pct : pct;
+  };
+
   // Inicializa estado ao abrir — custos sempre na unidade base do cadastro; custo_unitario da linha pode estar na unidade do pedido
   useEffect(() => {
     if (!isOpen || !itens.length) return;
@@ -156,10 +185,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const initialCosts = {};
     const initialInputs = {};
     itens.forEach(item => {
-      const p = produtos.find(x => x.id === item.produto_id);
+      const p = findProduto(produtos, item.produto_id);
       if (!p) return;
 
       const valorCompraLiquidoBase = getCustoCompraLiquidoFator1(item) || (p.valor_compra || 0);
+      const descontoPct = resolveDescontoPctItem(item);
 
       const c = {
         valor_compra: valorCompraLiquidoBase,
@@ -167,11 +197,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
         custo_outros_padrao: p.custo_outros_padrao || 0,
+        desconto_pct: descontoPct,
         desconto_compra_padrao: 0,
-        desconto_pct: 0,
         preco_venda_percentual: p.preco_venda_percentual || 40,
         preco_venda_padrao: p.preco_venda_padrao || 0,
       };
+      c.desconto_compra_padrao = recalcDesconto(c);
       if (!c.preco_venda_padrao) {
         c.preco_venda_padrao = calcPreco(calcCusto(c), c.preco_venda_percentual);
       }
@@ -189,20 +220,6 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     setInputs(initialInputs);
   }, [isOpen, itens, produtos]);
 
-  // Recalcula desconto absoluto a partir do %
-  const recalcDesconto = (c) => {
-    const pct = c.desconto_pct || 0;
-    const base = c.valor_compra || 0;
-    const absVal = parseFloat((base * Math.abs(pct) / 100).toFixed(2));
-    return pct < 0 ? -absVal : absVal;
-  };
-
-  const resolveFatorLinha = (item, produto) => {
-    const ov = unidadeExibicaoLinha[item?.produto_id];
-    if (ov?.fator > 0) return ov.fator;
-    return resolveFatorExibicaoComercial(item, produto);
-  };
-
   const resolveSiglaLinha = (item, produto, fallbackLegenda) => {
     const ov = unidadeExibicaoLinha[item?.produto_id];
     if (ov?.unidade) return normalizarSiglaUnidade(ov.unidade);
@@ -212,7 +229,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const refreshInputsProduto = (produtoId, fatorExibicao) => {
     const c = costs[produtoId];
     if (!c) return;
-    const item = itens.find((i) => i.produto_id === produtoId);
+    const item = itens.find((i) => String(i.produto_id) === String(produtoId));
     const mult = multiplicadorVisual(unidadeVisualizacao, fatorExibicao);
     setInputs((prev) => {
       const next = { ...prev };
@@ -248,7 +265,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         const id = item.produto_id;
         const c = costs[id];
         if (!c) return;
-        const pRow = produtos.find((x) => x.id === id);
+        const pRow = findProduto(produtos, id);
         const mult = multiplicadorVisual(modo, resolveFatorLinha(item, pRow));
         COST_FIELDS.forEach((field) => {
           next[`${id}_${field}`] = fmt((c[field] || 0) * mult);
@@ -264,11 +281,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Ao sair de um campo de custo: commita valor e recalcula preço venda mantendo markup
   const handleCostBlur = (produtoId, field) => {
     const raw = inputs[`${produtoId}_${field}`];
-    const item = itens.find((i) => i.produto_id === produtoId);
-    const prodRow = produtos.find((x) => x.id === produtoId);
+    const item = itens.find((i) => String(i.produto_id) === String(produtoId));
+    const prodRow = findProduto(produtos, produtoId);
     const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
     const val = parse(raw) / m;
     setCosts(prev => {
+      if (!prev[produtoId]) return prev;
       const c = { ...prev[produtoId], [field]: val };
       // Se mudou valor_compra, recalcular desconto absoluto baseado no %
       if (field === 'valor_compra') {
@@ -298,10 +316,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
   // Versão direta (usada pelo toggle)
   const handleDescontoPctBlurDirect = (produtoId, pct) => {
-    const linha = itens.find((i) => i.produto_id === produtoId);
-    const prodRow = produtos.find((x) => x.id === produtoId);
+    const linha = itens.find((i) => String(i.produto_id) === String(produtoId));
+    const prodRow = findProduto(produtos, produtoId);
     const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
     setCosts(prev => {
+      if (!prev[produtoId]) return prev;
       const c = { ...prev[produtoId], desconto_pct: pct };
       c.desconto_compra_padrao = recalcDesconto(c);
       const custo = calcCusto(c);
@@ -321,10 +340,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const handleMarkupBlur = (produtoId) => {
     const raw = inputs[`${produtoId}_markup`];
     const markup = parseFloat(raw) || 0;
-    const linha = itens.find((i) => i.produto_id === produtoId);
-    const prodRow = produtos.find((x) => x.id === produtoId);
+    const linha = itens.find((i) => String(i.produto_id) === String(produtoId));
+    const prodRow = findProduto(produtos, produtoId);
     const dm = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(linha || {}, prodRow));
     setCosts(prev => {
+      if (!prev[produtoId]) return prev;
       const c = { ...prev[produtoId], preco_venda_percentual: markup };
       const custo = calcCusto(c);
       const novoPreco = calcPreco(custo, markup);
@@ -341,12 +361,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Ao sair do preço venda: recalcula markup
   const handlePrecoBlur = (produtoId) => {
     const raw = inputs[`${produtoId}_preco`];
-    const item = itens.find((i) => i.produto_id === produtoId);
-    const prodRow = produtos.find((x) => x.id === produtoId);
+    const item = itens.find((i) => String(i.produto_id) === String(produtoId));
+    const prodRow = findProduto(produtos, produtoId);
     const m = multiplicadorVisual(unidadeVisualizacao, resolveFatorLinha(item || {}, prodRow));
     const preco = parse(raw) / m;
     setCosts(prev => {
       const c = prev[produtoId];
+      if (!c) return prev;
       const custo = calcCusto(c);
       const novoMarkup = Math.max(0, calcMarkup(custo, preco));
       const next = { ...c, preco_venda_padrao: preco, preco_venda_percentual: novoMarkup };
@@ -362,7 +383,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
   // Dados calculados por item para exibição (custos internos sempre na unidade base do cadastro)
   const itensCalc = itens.map(item => {
-    const p = produtos.find(x => x.id === item.produto_id);
+    const p = findProduto(produtos, item.produto_id);
     if (!p) return null;
     const c = costs[item.produto_id] || {};
     const novoCusto = calcCusto(c);
@@ -415,6 +436,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const siglasComerciais = [...new Set(itensCalc.filter((i) => i.fatorExibicao !== 1).map((i) => i.unidadeComercialLegenda).filter(Boolean))];
 
   const qtdComDiferenca = itensCalc.filter(i => i.temDiferenca).length;
+  const itensSemCadastro = itens.length - itensCalc.length;
 
   const handleToggle = (id) => setSelecionados(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -431,15 +453,16 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       return;
     }
     setPendingUpdate(sel);
-    void runOperacaoAuthBypass(handleAuthSuccess);
+    void runOperacaoAuthBypass((authData) => handleAuthSuccess(authData, sel));
   };
 
-  const handleAuthSuccess = async (authData) => {
-    if (!pendingUpdate) return;
+  const handleAuthSuccess = async (authData, itensParaAtualizar = pendingUpdate) => {
+    if (!itensParaAtualizar?.length) return;
     setProcessando(true);
     try {
-      for (const item of pendingUpdate) {
+      for (const item of itensParaAtualizar) {
         const c = costs[item.produto_id];
+        if (!c) continue;
         await base44.entities.Produto.update(item.produto_id, {
           valor_compra: c.valor_compra,
           custo_frete_padrao: c.custo_frete_padrao,
@@ -452,7 +475,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           preco_venda_padrao: c.preco_venda_padrao,
         });
       }
-      toast({ title: "✓ Preços atualizados", description: `${pendingUpdate.length} produto(s) atualizado(s) [Auth: ${authData.intervenienteName}]`, className: "bg-emerald-100 text-emerald-800" });
+      toast({ title: "✓ Preços atualizados", description: `${itensParaAtualizar.length} produto(s) atualizado(s) [Auth: ${authData.intervenienteName}]`, className: "bg-emerald-100 text-emerald-800" });
       onClose(true);
     } catch (error) {
       toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -468,7 +491,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const numSel = Object.keys(selecionados).filter(k => selecionados[k]).length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(false); }}>
       <DialogContent className={`${isMobile ? '!max-w-[100vw] !w-[100vw] h-[100vh] !rounded-none p-0' : '!max-w-[95vw]'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader className={isMobile ? 'px-4 pt-4 pb-3' : ''}>
           <DialogTitle className="flex items-center gap-2 text-foreground">
@@ -526,7 +549,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             )}
           </div>
 
-          {isMobile ? (
+          {itensSemCadastro > 0 && (
+            <div className={`mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200 ${isMobile ? 'mx-4' : ''}`}>
+              {itensSemCadastro} {itensSemCadastro === 1 ? 'item não foi encontrado' : 'itens não foram encontrados'} no cadastro de produtos e não aparecem na grade abaixo.
+            </div>
+          )}
+
+          {itensCalc.length === 0 ? (
+            <div className={`rounded-lg border border-dashed border-border/60 px-4 py-10 text-center text-sm text-muted-foreground ${isMobile ? 'mx-4' : ''}`}>
+              Nenhum produto do pedido pôde ser carregado para revisão. Verifique se os itens têm produto vinculado no cadastro.
+            </div>
+          ) : isMobile ? (
             <div className="space-y-3 px-4 pb-4">
               {itensCalc.map(item => (
                 <div key={item.produto_id} className="bg-card rounded-2xl shadow-md p-4 space-y-4">
@@ -719,7 +752,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               ))}
             </div>
           ) : (
-            <div className="rounded-lg overflow-hidden shadow-sm">
+            <div className="rounded-lg overflow-x-auto shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-muted/90 text-foreground/90">
                   <tr>
