@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useCaixaTurnoData } from '@/hooks/useCaixaTurnoData';
 import { createPortal } from 'react-dom';
-import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
@@ -12,8 +12,7 @@ import ListaMovimentosDialog from './ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
-import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { CAIXA_POLL_MS } from '@/lib/caixaTurnoData';
 import {
   CAIXA_PRINT,
   caixaClasses,
@@ -100,12 +99,7 @@ function MovimentoTimelineCard({ item }) {
   );
 }
 
-const normalizarRascunho = (r) => {
-  const registro = r.data || r;
-  return { ...registro, id: r.id || registro.id };
-};
-
-/** Mesma regra de apuração do PDVCaixa.loadData — evita filter() da API retornar vazio. */
+/** Espelho do PDVCaixa — dados via cache partilhado (useCaixaTurnoData). */
 export default function VisualizadorCaixa({
   turnoAtivo,
   caixaSelecionado,
@@ -148,169 +142,34 @@ export default function VisualizadorCaixa({
     return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  /** Igual ao PDVCaixa: list() + filtro em memória (filter() por turno pode voltar vazio sem erro). */
-  const parsePagamentosVenda = (venda) => {
-    let p = venda.pagamentos;
-    if (p == null) return [];
-    if (typeof p === 'string') {
-      try {
-        p = JSON.parse(p);
-      } catch {
-        return [];
-      }
-    }
-    return Array.isArray(p) ? p : [];
+  const { data: snapshot, isLoading, refetch } = useCaixaTurnoData(turnoAtivo, caixaSelecionado, {
+    enabled: !!turnoAtivo?.id && !!caixaSelecionado?.id,
+    incluirRascunhos: !modoFechado,
+    rascunhoExigirItens: true,
+  });
+
+  const refreshCaixa = () => {
+    void refetch();
   };
 
-  const loadData = useCallback(async ({ showSpinner = true } = {}) => {
-    const turnoId = turnoAtivo?.id;
-    const caixaId = caixaSelecionado?.id;
-    if (!turnoId || !caixaId) return;
-
-    const sameTurno = (v) => String(v?.turno_caixa_id ?? '') === String(turnoId ?? '');
-    const sameConta = (m) => String(m?.conta_id ?? '') === String(caixaId ?? '');
-
-    if (showSpinner) setLoading(true);
-    try {
-      const fetchRascunhos = modoFechado
-        ? Promise.resolve([])
-        : base44.entities.RascunhoPedidoVenda.list();
-
-      const [turnoFresh, caixaFresh, todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw, receitasTurno, todosVales, todasDevolucoes] = await Promise.all([
-        base44.entities.TurnoCaixa.get(turnoId).catch(() => null),
-        base44.entities.ContasFinanceiras.get(caixaId).catch(() => null),
-        base44.entities.PedidoVenda.list(),
-        fetchRascunhos,
-        base44.entities.MovimentosCaixa.list(),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoId, tipo: 'Receita' }),
-        base44.entities.ValeCompra.list(),
-        base44.entities.DevolucaoTroca.list(),
-      ]);
-
-      const turnoBase = turnoFresh || turnoAtivo;
-      if (turnoBase.conta_caixa_pdv_id && String(turnoBase.conta_caixa_pdv_id) !== String(caixaId)) {
-        console.warn('[espelho] Turno não corresponde ao caixa selecionado.');
-      }
-      if (caixaFresh?.id && String(caixaFresh.id) !== String(caixaId)) {
-        console.warn('[espelho] Conta retornada difere do id selecionado.');
-      }
-
-      const todasDespesas = todasDespesasRaw.filter((d) => d.referencia_tipo !== 'MovimentosCaixa');
-
-      const fiados = (receitasTurno || []).filter((l) => l.forma_pagamento === 'Conta a Pagar');
-
-      const pedidoIdsReceitaTurno = buildPedidoIdsReceitasTurno(receitasTurno || []);
-      const vendas = todosPedidos.filter((p) =>
-        isPedidoVendaNoTurnoCaixa(p, {
-          turno: turnoBase,
-          caixa: caixaFresh || caixaSelecionado,
-          pedidoIdsDasReceitasDoTurno: pedidoIdsReceitaTurno,
-          incluirRetrocompatSemTurno: !turnoBase.data_fechamento,
-        })
-      );
-
-      const movimentosTurno = todasMovimentacoes.filter((m) => sameTurno(m) && sameConta(m));
-
-      const subCtx = buildSubstituicoesVendaCaixa({
-        vendas,
-        vales: todosVales,
-        devolucoes: todasDevolucoes,
-      });
-      setSubstituicoesCtx(subCtx);
-      setVendasFinalizadas(subCtx.vendasParaExibicao);
-
-      const totalVendas = roundToTwoDecimals(subCtx.totalVendasUtil);
-
-      let totalDinheiro = 0;
-      let totalPix = 0;
-      let totalCredito = 0;
-      let totalDebito = 0;
-      let totalVale = 0;
-      let totalFiado = 0;
-
-      vendas.forEach((venda) => {
-        parsePagamentosVenda(venda).forEach((pag) => {
-          const fp = (pag.forma_pagamento || '').toLowerCase();
-          if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
-          else if (fp === 'pix') totalPix += pag.valor || 0;
-          else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
-          else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
-          else if (fp.includes('vale')) totalVale += pag.valor || 0;
-          else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiado += pag.valor || 0;
-        });
-      });
-
-      const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
-
-      const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
-      const totalSangrias = movimentosTurno
-        .filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')
-        .reduce((s, m) => s + (m.valor || 0), 0);
-
-      // Igual PDVCaixa: total de despesas do turno (sem filtrar cancelado no somatório)
-      const totalDespesas = todasDespesas.reduce((s, d) => s + (d.valor || 0), 0);
-
-      const saldoInicial = roundToTwoDecimals(turnoBase.saldo_inicial || 0);
-      const liquidez = roundToTwoDecimals(
-        saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
-      );
-
-      setCaixaData({
-        saldoInicial,
-        liquidez,
-        totalVendas,
-        qtdSubstituicoes: subCtx.qtdSubstituicoes,
-        valorSubstituidoNaoSoma: subCtx.valorSubstituidoNaoSoma,
-        recebimentos: {
-          dinheiro: roundToTwoDecimals(totalDinheiro),
-          pix: roundToTwoDecimals(totalPix),
-          credito: roundToTwoDecimals(totalCredito),
-          debito: roundToTwoDecimals(totalDebito),
-          vale: roundToTwoDecimals(totalVale),
-          fiado: roundToTwoDecimals(totalFiado),
-        },
-        reforcos: roundToTwoDecimals(totalReforcos),
-        sangrias: roundToTwoDecimals(totalSangrias),
-        despesas: roundToTwoDecimals(totalDespesas),
-        despesasLista: todasDespesas,
-        fiado: roundToTwoDecimals(totalFiado),
-        fiadoLista: fiados,
-      });
-      setMovimentos(movimentosTurno);
-
-      if (modoFechado) {
-        setRascunhosAguardando([]);
-      } else {
-        const rascunhosAguardandoCaixa = (todosRascunhos || [])
-          .map(normalizarRascunho)
-          .filter((r) => {
-            const status = r.status;
-            const pedidoVendaVinculado = r.pedido_venda_final_id || r.pedido_venda_id;
-            const temSenha = !!r.senha_atendimento;
-            const temItens = Array.isArray(r.itens) && r.itens.length > 0;
-            return status === 'Aguardando Caixa' && temSenha && !pedidoVendaVinculado && temItens;
-          });
-        setRascunhosAguardando(rascunhosAguardandoCaixa);
-      }
-
-      const dinheiroNaGaveta = roundToTwoDecimals(
-        liquidez - roundToTwoDecimals(totalPix) - roundToTwoDecimals(totalCredito) - roundToTwoDecimals(totalDebito) - roundToTwoDecimals(totalVale)
-      );
-      setRecebimentosDinheiro(formatarValorExibicaoLocal(dinheiroNaGaveta));
-      setUltimaAtualizacao(new Date());
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      if (showSpinner) setLoading(false);
-    }
-  }, [turnoAtivo, caixaSelecionado, modoFechado]);
+  useEffect(() => {
+    setLoading(isLoading);
+  }, [isLoading]);
 
   useEffect(() => {
-    if (turnoAtivo && caixaSelecionado) {
-      loadData({ showSpinner: true });
-    }
-  }, [turnoAtivo, caixaSelecionado, loadData]);
+    if (!snapshot) return;
+    setSubstituicoesCtx(snapshot.substituicoesCtx);
+    setVendasFinalizadas(snapshot.vendasFinalizadas);
+    setCaixaData(snapshot.caixaData);
+    setMovimentos(snapshot.movimentos);
+    setRascunhosAguardando(modoFechado ? [] : snapshot.rascunhosAguardando);
+
+    const liquidez = snapshot.caixaData.liquidez || 0;
+    const { pix = 0, credito = 0, debito = 0, vale = 0 } = snapshot.caixaData.recebimentos || {};
+    const dinheiroNaGaveta = roundToTwoDecimals(liquidez - pix - credito - debito - vale);
+    setRecebimentosDinheiro(formatarValorExibicaoLocal(dinheiroNaGaveta));
+    setUltimaAtualizacao(new Date());
+  }, [snapshot, modoFechado]);
 
   // Portal no body: evita contentor overflow-hidden do Layout bloquear toque/scroll no mobile.
   useEffect(() => {
@@ -322,17 +181,15 @@ export default function VisualizadorCaixa({
   }, []);
 
   // Realtime: no cliente P38, subscribe() é no-op — mantemos vínculo com polling + foco na aba.
-  const POLL_MS = 12000;
-
   useEffect(() => {
     if (modoFechado) return undefined;
     if (!turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
 
     const poll = () => {
-      loadData({ showSpinner: false });
+      void refetch();
     };
 
-    const id = window.setInterval(poll, POLL_MS);
+    const id = window.setInterval(poll, CAIXA_POLL_MS);
 
     const onVisibility = () => {
       if (document.visibilityState === 'visible') poll();
@@ -343,7 +200,7 @@ export default function VisualizadorCaixa({
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [modoFechado, turnoAtivo?.id, caixaSelecionado?.id, loadData]);
+  }, [modoFechado, turnoAtivo?.id, caixaSelecionado?.id, refetch]);
 
   const formatValor = (valor) => {
     const num = valor || 0;
@@ -513,7 +370,7 @@ export default function VisualizadorCaixa({
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
             type="button"
-            onClick={() => loadData({ showSpinner: false })}
+            onClick={refreshCaixa}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar"
@@ -735,7 +592,7 @@ export default function VisualizadorCaixa({
                 </div>
                 <button
                   type="button"
-                  onClick={() => loadData({ showSpinner: false })}
+                  onClick={refreshCaixa}
                   className="p-2 hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
                   style={{ minWidth: '44px', minHeight: '44px' }}
                   title="Atualizar"
@@ -829,9 +686,9 @@ export default function VisualizadorCaixa({
         onVerDetalhes={setVendaDetalhada}
       />
       <VendaDetalheDialog venda={vendaDetalhada} onClose={() => setVendaDetalhada(null)} formatValor={formatValor} />
-      <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
-      <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
-      <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={() => loadData({ showSpinner: false })} />
+      <ListaMovimentosDialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog} tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={refreshCaixa} />
+      <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={refreshCaixa} />
+      <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={refreshCaixa} />
       <SaldoConsolidadoDialog
         open={showSaldoConsolidadoDialog}
         onOpenChange={setShowSaldoConsolidadoDialog}
