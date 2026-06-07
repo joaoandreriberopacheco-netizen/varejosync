@@ -25,15 +25,19 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
-/** Divisor vertical entre coluna qtd/un e bloco descrição+valores (relatório margem expandido). */
+/** Largura fixa da coluna qtd/un — eixo da linha divisória sagrada (nunca se move). */
+const CATALOGO_MOBILE_QTD_W = '3.25rem';
 const CATALOGO_MOBILE_QTD_COL =
-  'relative w-[3.25rem] shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 pt-2 pb-2.5 text-right';
+  'relative shrink-0 border-r border-border/50 dark:border-white/15 pr-1.5 pt-3 pb-3 text-right self-stretch';
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
-const CATALOG_CONTENT_PL_BASE = 10;
-/** Recuo dos filhos em relação ao pai (só cor muda; layout igual). */
-const CATALOG_INDENT_STEP = 14;
+const CATALOG_ROW_PL = 'pl-2.5';
+/** Respiro entre a linha vertical e o texto da descrição. */
+const CATALOG_DESC_PL_AFTER_LINE = 12;
+/** Recuo dos filhos só à direita da linha (qtd e divisor ficam fixos). */
+const CATALOG_INDENT_STEP = 12;
 /** Altura fixa para 3 linhas de descrição (12px × leading-relaxed). */
-const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.65rem]';
+const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.75rem]';
+const CATALOGO_MOBILE_DESC_GAP = 'mb-2.5';
 const CATALOGO_MOBILE_NOME_TYPO =
   'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const PAGE_SIZE = 50;
@@ -57,8 +61,12 @@ function getCatalogRowTier(row) {
   return (row.level ?? 1) <= 1 ? 'solteiro' : 'filho';
 }
 
-function catalogContentPad(level = 1) {
-  return CATALOG_CONTENT_PL_BASE + Math.max(0, level - 1) * CATALOG_INDENT_STEP;
+function catalogDescIndent(level = 1) {
+  return Math.max(0, level - 1) * CATALOG_INDENT_STEP;
+}
+
+function catalogContentPadAfterLine(level = 1) {
+  return CATALOG_DESC_PL_AFTER_LINE + catalogDescIndent(level);
 }
 
 function catalogNomeColorClass(tier) {
@@ -68,10 +76,19 @@ function catalogNomeColorClass(tier) {
 
 function CatalogoMobileDescBlock({ nome, tier }) {
   return (
-    <div className={cn(CATALOGO_MOBILE_DESC_MIN_H, 'min-w-0 overflow-hidden')}>
+    <div className={cn(CATALOGO_MOBILE_DESC_MIN_H, CATALOGO_MOBILE_DESC_GAP, 'min-w-0 overflow-hidden')}>
       <p lang="pt-BR" className={cn('line-clamp-3', CATALOGO_MOBILE_NOME_TYPO, catalogNomeColorClass(tier))}>
         {nome}
       </p>
+    </div>
+  );
+}
+
+/** Coluna qtd/un com largura fixa (mantém o eixo da linha divisória). */
+function CatalogoMobileQtdColShell({ children, className = '' }) {
+  return (
+    <div className={cn(CATALOGO_MOBILE_QTD_COL, className)} style={{ width: CATALOGO_MOBILE_QTD_W }}>
+      {children}
     </div>
   );
 }
@@ -118,15 +135,15 @@ function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success' }) 
   const dotClass = p38Accent[accentKey]?.dot || p38Table.accentDot;
 
   return (
-    <div className={CATALOGO_MOBILE_QTD_COL}>
-      <span className={`absolute left-0 top-3 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
+    <CatalogoMobileQtdColShell>
+      <span className={`absolute left-0 top-3.5 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none text-foreground`}>
         {fmtN(quantidade)}
       </p>
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate`}>
         {unidade}
       </p>
-    </div>
+    </CatalogoMobileQtdColShell>
   );
 }
 
@@ -321,15 +338,15 @@ function PricingDialog({ produto, open, onOpenChange }) {
 function CatalogoMobileColumnHeader({ className = '' }) {
   return (
     <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
-      <div
-        className="flex min-w-0 py-2.5 pr-12"
-        style={{ paddingLeft: catalogContentPad(1) }}
-      >
-        <div className={`${CATALOGO_MOBILE_QTD_COL} !py-2.5`}>
+      <div className={cn('flex min-w-0 py-3 pr-12', CATALOG_ROW_PL)}>
+        <CatalogoMobileQtdColShell className="!py-2.5">
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
-        </div>
-        <div className="flex-1 min-w-0">
+        </CatalogoMobileQtdColShell>
+        <div
+          className="flex-1 min-w-0"
+          style={{ paddingLeft: catalogContentPadAfterLine(1) }}
+        >
           {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
@@ -384,31 +401,31 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const estoqueExibicao = apresent ? apresent.quantidade : e;
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
   return (
-    <div className={cn(p38Table.catalogMobileRow, 'flex min-w-0 max-w-full')}>
+    <div className={cn(p38Table.catalogMobileRow, 'flex min-w-0 max-w-full py-5 tablet-portrait:py-6')}>
       <button
         type="button"
         className="flex flex-1 min-w-0 text-left active:bg-secondary/30 dark:active:bg-secondary/50"
         onClick={() => onEdit(p)}
       >
-        <div
-          className="flex flex-1 min-w-0 items-start"
-          style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
-        >
+        <div className={cn('flex flex-1 min-w-0 items-stretch', CATALOG_ROW_PL)}>
           <CatalogoMobileQtdUnCol
             quantidade={estoqueExibicao}
             unidade={unidadeExibicao}
             stockTone={stockTone}
           />
-          <div className="flex-1 min-w-0 overflow-hidden py-2 pr-2">
+          <div
+            className="flex-1 min-w-0 overflow-hidden py-1 pr-2"
+            style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
+          >
             <CatalogoMobileDescBlock nome={p.nome} tier={tier} />
             {p.codigo_interno && (
-              <p className="mt-1 text-[10px] font-mono truncate text-muted-foreground">
+              <p className="mb-2 text-[10px] font-mono truncate text-muted-foreground">
                 #{p.codigo_interno}
               </p>
             )}
-            <CatalogoMobileTabulatedValues produto={p} className="mt-1" />
+            <CatalogoMobileTabulatedValues produto={p} className="mt-0.5" />
             {apresent && (
-              <p className="mt-1 text-[9px] text-muted-foreground truncate">
+              <p className="mt-2 text-[9px] text-muted-foreground truncate">
                 {apresent.rotulo || 'unidade de exibição'}
               </p>
             )}
@@ -416,7 +433,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         </div>
       </button>
 
-      <div className="flex items-start justify-center pt-4.5 pr-3 w-12 flex-shrink-0">
+      <div className="flex items-start justify-center pt-5 pr-3 w-12 flex-shrink-0">
         <Button
           type="button"
           variant="ghost"
@@ -448,15 +465,16 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
         'flex w-full min-w-0 text-left overflow-hidden',
       )}
     >
-      <div className="w-[3.25rem] flex-shrink-0 flex items-center justify-end pr-2 border-r border-border/40 dark:border-white/10 self-stretch">
-        <ChevronRight
-          className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-        />
-      </div>
-      <div
-        className="flex-1 min-w-0 flex items-center gap-2 py-2 pr-3"
-        style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
-      >
+      <div className={cn('flex flex-1 min-w-0 items-stretch', CATALOG_ROW_PL)}>
+        <CatalogoMobileQtdColShell className="flex items-center justify-end !pr-2">
+          <ChevronRight
+            className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 md:transition-transform md:duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+          />
+        </CatalogoMobileQtdColShell>
+        <div
+          className="flex-1 min-w-0 flex items-center gap-2 py-3 pr-3"
+          style={{ paddingLeft: catalogContentPadAfterLine(row.level ?? 1) }}
+        >
         <span
           className={cn(
             'flex-1 min-w-0 line-clamp-2',
@@ -482,6 +500,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
           >
             {row.count}
           </Badge>
+        </div>
         </div>
       </div>
     </button>
