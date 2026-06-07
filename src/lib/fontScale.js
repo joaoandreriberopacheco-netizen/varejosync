@@ -1,6 +1,8 @@
 const FONT_SCALE_KEY = 'p38_font_scale';
 const DEFAULT_FONT_SCALE = 1;
 
+export const FONT_SCALE_CHANGE_EVENT = 'p38-font-scale-change';
+
 export const FONT_SCALE_OPTIONS = [
   { label: 'A', value: 1 },
   { label: 'A+', value: 1.125 },
@@ -28,6 +30,7 @@ export const setStoredFontScale = (value) => {
   const scale = applyFontScale(value);
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(FONT_SCALE_KEY, String(scale));
+    window.dispatchEvent(new CustomEvent(FONT_SCALE_CHANGE_EVENT, { detail: { scale } }));
   }
   return scale;
 };
