@@ -27,10 +27,15 @@ const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
 /** Divisor vertical entre coluna qtd/un e bloco descrição+valores (relatório margem expandido). */
 const CATALOGO_MOBILE_QTD_COL =
-  'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right';
+  'relative w-[3.25rem] shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 pt-2 pb-2.5 text-right';
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 const CATALOG_CONTENT_PL_BASE = 10;
-const CATALOG_INDENT_STEP = 10;
+/** Recuo dos filhos em relação ao pai (só cor muda; layout igual). */
+const CATALOG_INDENT_STEP = 14;
+/** Altura fixa para 3 linhas de descrição (12px × leading-relaxed). */
+const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.65rem]';
+const CATALOGO_MOBILE_NOME_TYPO =
+  'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const PAGE_SIZE = 50;
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
@@ -56,11 +61,19 @@ function catalogContentPad(level = 1) {
   return CATALOG_CONTENT_PL_BASE + Math.max(0, level - 1) * CATALOG_INDENT_STEP;
 }
 
-function catalogNomeClass(tier) {
-  if (tier === 'filho' || tier === 'pai-filho') {
-    return 'text-[12px] font-light text-muted-foreground leading-relaxed';
-  }
-  return 'text-[12px] font-light text-foreground leading-relaxed';
+function catalogNomeColorClass(tier) {
+  if (tier === 'filho' || tier === 'pai-filho') return 'text-muted-foreground';
+  return 'text-foreground';
+}
+
+function CatalogoMobileDescBlock({ nome, tier }) {
+  return (
+    <div className={cn(CATALOGO_MOBILE_DESC_MIN_H, 'min-w-0 overflow-hidden')}>
+      <p lang="pt-BR" className={cn('line-clamp-3', CATALOGO_MOBILE_NOME_TYPO, catalogNomeColorClass(tier))}>
+        {nome}
+      </p>
+    </div>
+  );
 }
 
 function formatCatalogoMobileNum(val) {
@@ -100,19 +113,14 @@ function catalogStockAccentKey(stockTone) {
 }
 
 /** Coluna esquerda: qtd + UN empilhados; border-r separa do bloco descrição/valores à direita. */
-function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success', tier = 'solteiro' }) {
+function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success' }) {
   const accentKey = catalogStockAccentKey(stockTone);
   const dotClass = p38Accent[accentKey]?.dot || p38Table.accentDot;
-  const isChild = tier === 'filho';
 
   return (
     <div className={CATALOGO_MOBILE_QTD_COL}>
       <span className={`absolute left-0 top-3 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
-      <p
-        className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none ${
-          isChild ? 'text-muted-foreground' : 'text-foreground'
-        }`}
-      >
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none text-foreground`}>
         {fmtN(quantidade)}
       </p>
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate`}>
@@ -122,15 +130,14 @@ function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success', ti
   );
 }
 
-function catalogoMetricValueClass(key, tier = 'solteiro') {
-  const isChild = tier === 'filho';
+function catalogoMetricValueClass(key) {
   if (key === 'markup' || key === 'categoriaAbcd') {
-    return `${MARGIN_ACCENT_VALUE} font-normal ${isChild ? 'opacity-90' : ''}`;
+    return `${MARGIN_ACCENT_VALUE} font-normal`;
   }
   if (key === 'valorCompra' || key === 'custoCalculado') {
     return 'text-muted-foreground font-light';
   }
-  return isChild ? 'text-muted-foreground font-light' : 'text-foreground/90 font-light';
+  return 'text-foreground/90 font-light';
 }
 
 function buildUnitOptions(produto) {
@@ -341,11 +348,11 @@ function CatalogoMobileColumnHeader({ className = '' }) {
   );
 }
 
-function CatalogoMobileTabulatedValues({ produto, className = '', tier = 'solteiro' }) {
+function CatalogoMobileTabulatedValues({ produto, className = '' }) {
   const values = buildCatalogoMobileTabulatedValues(produto);
 
   return (
-    <div className={className}>
+    <div className={cn('min-w-0 overflow-hidden', className)}>
       {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
         <div
           key={rowIdx}
@@ -354,7 +361,7 @@ function CatalogoMobileTabulatedValues({ produto, className = '', tier = 'soltei
           {valueRow.map(({ key }) => (
             <p
               key={key}
-              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(key, tier)}`}
+              className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums text-right truncate ${catalogoMetricValueClass(key)}`}
             >
               {values[key]}
             </p>
@@ -372,7 +379,6 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const m = p.estoque_minimo || 0;
   const stockTone = !p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success';
   const tier = getCatalogRowTier(row);
-  const isChild = tier === 'filho';
 
   const apresent = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresent ? apresent.quantidade : e;
@@ -385,28 +391,22 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         onClick={() => onEdit(p)}
       >
         <div
-          className="flex flex-1 min-w-0"
+          className="flex flex-1 min-w-0 items-start"
           style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
         >
           <CatalogoMobileQtdUnCol
             quantidade={estoqueExibicao}
             unidade={unidadeExibicao}
             stockTone={stockTone}
-            tier={tier}
           />
-          <div className="flex-1 min-w-0 py-2 pr-2">
-            <p
-              lang="pt-BR"
-              className={`line-clamp-2 break-words [overflow-wrap:anywhere] leading-snug ${catalogNomeClass(tier)}`}
-            >
-              {p.nome}
-            </p>
+          <div className="flex-1 min-w-0 overflow-hidden py-2 pr-2">
+            <CatalogoMobileDescBlock nome={p.nome} tier={tier} />
             {p.codigo_interno && (
-              <p className={`mt-1 text-[10px] font-mono truncate ${isChild ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
+              <p className="mt-1 text-[10px] font-mono truncate text-muted-foreground">
                 #{p.codigo_interno}
               </p>
             )}
-            <CatalogoMobileTabulatedValues produto={p} className="mt-1" tier={tier} />
+            <CatalogoMobileTabulatedValues produto={p} className="mt-1" />
             {apresent && (
               <p className="mt-1 text-[9px] text-muted-foreground truncate">
                 {apresent.rotulo || 'unidade de exibição'}
@@ -457,7 +457,13 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
         className="flex-1 min-w-0 flex items-center gap-2 py-2 pr-3"
         style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
       >
-        <span className={`flex-1 min-w-0 line-clamp-2 break-words uppercase ${catalogNomeClass(tier)}`}>
+        <span
+          className={cn(
+            'flex-1 min-w-0 line-clamp-2',
+            CATALOGO_MOBILE_NOME_TYPO,
+            catalogNomeColorClass(tier),
+          )}
+        >
           {row.label}
         </span>
         <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[45%]">
