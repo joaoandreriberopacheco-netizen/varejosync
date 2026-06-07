@@ -134,7 +134,7 @@ export default function HomePage() {
     };
 
     loadUser();
-  }, [loadKPIs]);
+  }, []);
 
   const handleSaveActions = (ids) => {
     const limited = normalizeQuickActionIds(ids);
