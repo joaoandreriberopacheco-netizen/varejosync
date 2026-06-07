@@ -12,12 +12,12 @@ import {
   getCatalogoComercialView,
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
-import { P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { P38Paginator } from '@/components/ui/p38-paginator';
 import {
   p38Table,
   MARGIN_ACCENT_VALUE,
 } from '@/lib/p38TableSurfaces';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { cn } from '@/components/utils';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -25,10 +25,8 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
-/** Colunas: indicador · estoque · conteúdo (valores alinham só sob o nome). */
-const CATALOGO_MOBILE_ROW_GRID =
-  'grid grid-cols-[0.375rem_3.25rem_minmax(0,1fr)] grid-rows-[auto_auto] gap-x-2 gap-y-1.5 items-baseline min-w-0';
-const CATALOGO_MOBILE_QTY_TEXT = 'font-din-1451 text-[12px] font-light tabular-nums leading-snug';
+const CATALOGO_MOBILE_QTD_COL =
+  'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right';
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 const CATALOG_CONTENT_PL_BASE = 10;
 const CATALOG_INDENT_STEP = 10;
@@ -91,6 +89,36 @@ function buildCatalogoMobileTabulatedValues(produto) {
     precoVenda: cat.precoVenda > 0 ? formatCatalogoMobileNum(cat.precoVenda) : '—',
     categoriaAbcd: produto?.abcd || '—',
   };
+}
+
+function catalogStockAccentKey(stockTone) {
+  if (stockTone === 'danger') return 'danger';
+  if (stockTone === 'warning') return 'warning';
+  if (stockTone === 'muted') return 'muted';
+  return 'success';
+}
+
+/** Igual MargemMobileQtdUnCol / relatório compras expandido mobile */
+function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success', tier = 'solteiro' }) {
+  const accentKey = catalogStockAccentKey(stockTone);
+  const dotClass = p38Accent[accentKey]?.dot || p38Table.accentDot;
+  const isChild = tier === 'filho';
+
+  return (
+    <div className={CATALOGO_MOBILE_QTD_COL}>
+      <span className={`absolute left-0 top-3 w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden />
+      <p
+        className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums leading-none ${
+          isChild ? 'text-muted-foreground' : 'text-foreground'
+        }`}
+      >
+        {fmtN(quantidade)}
+      </p>
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 leading-none truncate`}>
+        {unidade}
+      </p>
+    </div>
+  );
 }
 
 function catalogoMetricValueClass(key, tier = 'solteiro') {
@@ -286,15 +314,14 @@ function CatalogoMobileColumnHeader({ className = '' }) {
   return (
     <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
       <div
-        className={`${CATALOGO_MOBILE_ROW_GRID} py-2.5 pr-12`}
+        className="flex min-w-0 py-2.5 pr-12"
         style={{ paddingLeft: catalogContentPad(1) }}
       >
-        <div aria-hidden="true" />
-        <div className="self-start text-left leading-none">
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} !text-left`}>EST.</p>
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} !text-left mt-1.5`}>UN</p>
+        <div className={`${CATALOGO_MOBILE_QTD_COL} !py-2.5`}>
+          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
+          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
         </div>
-        <div className="min-w-0 self-start">
+        <div className="flex-1 min-w-0 pl-2">
           {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
@@ -337,19 +364,7 @@ function CatalogoMobileTabulatedValues({ produto, className = '', tier = 'soltei
   );
 }
 
-function CatalogoMobileEstoqueInline({ quantidade, unidade, tier = 'solteiro' }) {
-  const isChild = tier === 'filho';
-  return (
-    <p
-      className={`${CATALOGO_MOBILE_QTY_TEXT} whitespace-nowrap ${isChild ? 'text-muted-foreground' : 'text-foreground'}`}
-    >
-      <span className="tabular-nums">{fmtN(quantidade)}</span>
-      <span className="ml-1 text-[10px] uppercase text-muted-foreground">{unidade}</span>
-    </p>
-  );
-}
-
-// ── Linha de SKU (grelha mobile, padrão Margem / pedido de compras) ───────────
+// ── Linha de SKU (padrão relatório compras / margem mobile expandido) ─────────
 const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const p = row.produto;
   const e = p.estoque_atual || 0;
@@ -361,40 +376,44 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const apresent = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresent ? apresent.quantidade : e;
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
+  const accentBorder = p38Accent[catalogStockAccentKey(stockTone)].border;
 
   return (
-    <div className={cn(
-      p38Table.catalogMobileRow,
-      'flex min-w-0 max-w-full p-0 pr-0 pl-0',
-    )}>
+    <div
+      className={cn(
+        p38Table.catalogMobileRow,
+        'flex min-w-0 max-w-full border-l',
+        accentBorder,
+      )}
+    >
       <button
         type="button"
         className="flex flex-1 min-w-0 text-left active:bg-secondary/30 dark:active:bg-secondary/50"
         onClick={() => onEdit(p)}
       >
         <div
-          className={`${CATALOGO_MOBILE_ROW_GRID} py-2 pr-3`}
+          className="flex flex-1 min-w-0"
           style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
         >
-          <P38StatusDot tone={stockTone} className="row-span-2 self-start mt-1" />
-          <CatalogoMobileEstoqueInline
+          <CatalogoMobileQtdUnCol
             quantidade={estoqueExibicao}
             unidade={unidadeExibicao}
+            stockTone={stockTone}
             tier={tier}
           />
-          <p
-            lang="pt-BR"
-            className={`min-w-0 uppercase break-words [overflow-wrap:anywhere] line-clamp-2 leading-snug ${catalogNomeClass(tier)}`}
-          >
-            {p.nome}
-          </p>
-          <div className="col-start-3 min-w-0">
+          <div className="flex-1 min-w-0 py-2 pr-2">
+            <p
+              lang="pt-BR"
+              className={`line-clamp-2 break-words [overflow-wrap:anywhere] leading-snug ${catalogNomeClass(tier)}`}
+            >
+              {p.nome}
+            </p>
             {p.codigo_interno && (
-              <p className={`text-[10px] font-mono truncate ${isChild ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
+              <p className={`mt-1 text-[10px] font-mono truncate ${isChild ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
                 #{p.codigo_interno}
               </p>
             )}
-            <CatalogoMobileTabulatedValues produto={p} className={p.codigo_interno ? 'mt-1.5' : ''} tier={tier} />
+            <CatalogoMobileTabulatedValues produto={p} className="mt-1" tier={tier} />
             {apresent && (
               <p className="mt-1 text-[9px] text-muted-foreground truncate">
                 {apresent.rotulo || 'unidade de exibição'}
