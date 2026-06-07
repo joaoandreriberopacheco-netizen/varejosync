@@ -1104,7 +1104,7 @@ function ProdutosPageContent() {
       </div>
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-        <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4 overflow-x-hidden">
+        <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4">
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
             <ProdutosCommandBar
               sortOrder={sortOrder}
@@ -1114,7 +1114,10 @@ function ProdutosPageContent() {
             />
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-              <div className="desktop-layout:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
+              <div
+                className="desktop-layout:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 {produtosHeader}
                 <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
               </div>

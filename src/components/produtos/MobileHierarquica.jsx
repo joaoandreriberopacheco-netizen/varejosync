@@ -578,12 +578,13 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full">
-      <div className="relative border-x border-border/40 dark:border-white/10">
+      {/* Cabeçalho de colunas — ancora no topo ao rolar (fora do wrapper relativo da lista). */}
+      <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
+      <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
-        <CatalogoMobileColumnHeader />
         <div className="relative rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
           {pagedRows.map(row => (
-            <div key={row.key} className="contain-layout">
+            <div key={row.key}>
               {row.type === 'group' ? (
                 <GroupHeader
                   row={row}
@@ -600,16 +601,16 @@ export default function MobileHierarquica({ produtos, onEdit }) {
             </div>
           ))}
         </div>
+        <P38Paginator
+          page={safePage}
+          totalPages={totalPages}
+          pageSize={PAGE_SIZE}
+          totalItems={rows.length}
+          onPageChange={setPage}
+          itemLabel="linhas"
+          className="rounded-b-lg border-x border-b border-border/40 border-t-0"
+        />
       </div>
-      <P38Paginator
-        page={safePage}
-        totalPages={totalPages}
-        pageSize={PAGE_SIZE}
-        totalItems={rows.length}
-        onPageChange={setPage}
-        itemLabel="linhas"
-        className="rounded-b-lg border-x border-b border-border/40"
-      />
       <PricingDialog
         produto={pricingProduto}
         open={!!pricingProduto}
