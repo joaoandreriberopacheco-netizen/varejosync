@@ -2,6 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Anchor, ChevronDown, Plus, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import {
+  useLogisticaContasPrevistasQuery,
+  useLogisticaEmbarquesQuery,
+  useLogisticaEventosQuery,
+} from '@/hooks/useP38Entities';
+import { p38Keys } from '@/lib/p38QueryConfig';
 import { buildBoatViewModels, buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,23 +54,9 @@ export default function BoatsTab() {
     initialData: [],
   });
 
-  const { data: eventosData = [] } = useQuery({
-    queryKey: ['eventos-logisticos-fluvial'],
-    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 500),
-    initialData: [],
-  });
-
-  const { data: embarquesData = [] } = useQuery({
-    queryKey: ['embarques-logistica-boats'],
-    queryFn: () => base44.entities.Embarque.list('-created_date', 500),
-    initialData: [],
-  });
-
-  const { data: contasPrevistasData = [] } = useQuery({
-    queryKey: ['contas-previstas-boats'],
-    queryFn: () => base44.entities.ContaPrevista.list('-data_vencimento', 500),
-    initialData: [],
-  });
+  const { data: eventosData = [] } = useLogisticaEventosQuery({ initialData: [] });
+  const { data: embarquesData = [] } = useLogisticaEmbarquesQuery({ initialData: [] });
+  const { data: contasPrevistasData = [] } = useLogisticaContasPrevistasQuery({ initialData: [] });
 
   const eventosEnriquecidos = useMemo(() => buildFluvialEvents({
     eventosLogisticos: eventosData,
@@ -92,9 +84,9 @@ export default function BoatsTab() {
 
   const handleSaveBoat = async (updatedBoat) => {
     await queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
-    await queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
-    await queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
-    await queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
+    await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.eventos() });
+    await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.embarques() });
+    await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.contasPrevistas() });
 
     const boatAtualizada = transportadorasNormalizadas.find((item) => item.id === updatedBoat.id) || updatedBoat;
     setSelectedBoat(boatAtualizada);
@@ -102,9 +94,9 @@ export default function BoatsTab() {
 
   const handleCreatedBoat = async (createdBoat) => {
     await queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
-    await queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
-    await queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
-    await queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
+    await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.eventos() });
+    await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.embarques() });
+    await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.contasPrevistas() });
     setSelectedBoat(createdBoat);
   };
 

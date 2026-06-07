@@ -1,6 +1,11 @@
 import { memo, useState, useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
+import {
+  usePedidosVendaListQuery,
+  useRascunhosPedidoVendaListQuery,
+  useP38QueryInvalidation,
+} from '@/hooks/useP38Entities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
@@ -396,8 +401,17 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
 }
 
 function VendasGestaoPage() {
-  const [pedidos, setPedidos] = useState([]);
-  const [rascunhos, setRascunhos] = useState([]);
+  const { invalidateHomeKpis } = useP38QueryInvalidation();
+  const {
+    data: pedidos = [],
+    isLoading: pedidosLoading,
+    refetch: refetchPedidos,
+  } = usePedidosVendaListQuery();
+  const {
+    data: rascunhos = [],
+    isLoading: rascunhosLoading,
+    refetch: refetchRascunhos,
+  } = useRascunhosPedidoVendaListQuery();
   const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
   const [rascunhosFiltrados, setRascunhosFiltrados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -423,31 +437,32 @@ function VendasGestaoPage() {
     totalMes: 0
   });
 
-  useEffect(() => {
-    loadPedidos();
-  }, []);
-
   const loadPedidos = async () => {
     setIsLoading(true);
-    const data = await base44.entities.PedidoVenda.list('-created_date');
-    setPedidos(data);
-    
-    const rascData = await base44.entities.RascunhoPedidoVenda.list('-created_date');
-    setRascunhos(rascData);
-    
-    // Calcular estatísticas
-    const stats = {
-      orcamentos: data.filter(p => p.status === 'Orçamento').length,
-      aprovados: data.filter(p => p.status === 'Aprovado').length,
-      finalizados: data.filter(p => p.status === 'Finalizado').length,
-      totalMes: data.filter(p => 
-        p.status === 'Finalizado' &&
-        toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
-      ).reduce((acc, p) => acc + (p.valor_total || 0), 0)
-    };
-    setStats(stats);
+    await Promise.all([refetchPedidos(), refetchRascunhos()]);
+    await Promise.all([invalidateHomeKpis()]);
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    setIsLoading(pedidosLoading || rascunhosLoading);
+  }, [pedidosLoading, rascunhosLoading]);
+
+  useEffect(() => {
+    const nextStats = {
+      orcamentos: pedidos.filter((p) => p.status === 'Orçamento').length,
+      aprovados: pedidos.filter((p) => p.status === 'Aprovado').length,
+      finalizados: pedidos.filter((p) => p.status === 'Finalizado').length,
+      totalMes: pedidos
+        .filter(
+          (p) =>
+            p.status === 'Finalizado' &&
+            toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
+        )
+        .reduce((acc, p) => acc + (p.valor_total || 0), 0),
+    };
+    setStats(nextStats);
+  }, [pedidos]);
 
   useEffect(() => {
     let currentFiltered = pedidos;

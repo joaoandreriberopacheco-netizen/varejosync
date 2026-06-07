@@ -34,7 +34,18 @@ export default function HomePage() {
   const [quickActionIds, setQuickActionIds] = useState([]);
   const [showBalance, setShowBalance] = useState(true);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
-  const { kpis, loadKPIs } = useKPIsCache();
+  const podeVerResumoVendasEarly = useMemo(() => {
+    const cached = getCachedUserSession();
+    const user = cached?.user;
+    if (!user) return true;
+    if (user.role === 'admin') return true;
+    const perfil = perfilResolvidoParaUsuario(user, cached?.perfilDeAcesso);
+    if (usuarioLegadoSemMatrizPerfil(user)) return true;
+    const perms = resolverPermissoes(perfil, user?.override_permissoes);
+    return !!(perms?.dashboard?.acesso || perms?.dashboard?.resumo_vendas_home || perms?.vendas?.acesso);
+  }, []);
+
+  const { kpis } = useKPIsCache({ enabled: podeVerResumoVendasEarly });
 
   // Mesma árvore que o menu lateral (inclui cache do perfil enquanto carrega)
   const permissoes = useMemo(() => {
@@ -92,7 +103,6 @@ export default function HomePage() {
         setPerfilDeAcesso(perfil);
         setCachedUserSession(user, perfil);
         applyQuickActions(user, perfil);
-        await loadKPIs();
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
       }

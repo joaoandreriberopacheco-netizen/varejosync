@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTerceirosListQuery, useP38QueryInvalidation } from '@/hooks/useP38Entities';
+import { p38Keys } from '@/lib/p38QueryConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +15,9 @@ import { useToast } from "@/components/ui/use-toast";
 import ImportacaoTerceiros from '../components/terceiros/ImportacaoTerceiros';
 
 export default function TerceirosPage() {
-  const [terceiros, setTerceiros] = useState([]);
+  const queryClient = useQueryClient();
+  const { invalidateTerceiros } = useP38QueryInvalidation();
+  const { data: terceiros = [], isLoading, refetch } = useTerceirosListQuery();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTerceiro, setSelectedTerceiro] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,14 +38,7 @@ export default function TerceirosPage() {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadTerceiros();
-  }, []);
-
-  const loadTerceiros = async () => {
-    const data = await base44.entities.Terceiro.list();
-    setTerceiros(data);
-  };
+  const loadTerceiros = () => refetch();
 
   const handleSave = async () => {
     try {
@@ -51,7 +49,8 @@ export default function TerceirosPage() {
           className: "bg-card border border-border/40 dark:border-border/40"
         });
       } else {
-        const allTerceiros = await base44.entities.Terceiro.list();
+        const cached = queryClient.getQueryData(p38Keys.terceiros());
+        const allTerceiros = Array.isArray(cached) ? cached : terceiros;
         const nextNumber = (allTerceiros.length > 0 
           ? Math.max(...allTerceiros.map(t => parseInt(t.codigo_interno?.split('-')[1] || 0))) 
           : 0) + 1;
@@ -67,9 +66,8 @@ export default function TerceirosPage() {
           className: "bg-card border border-border/40 dark:border-border/40"
         });
       }
-      loadTerceiros();
-      // setIsDialogOpen(false); // Mantendo aberto para feedback ou cadastro contínuo
-      if (!selectedTerceiro) resetForm(); // Limpa apenas se for novo cadastro (Save & New)
+      await invalidateTerceiros();
+      if (!selectedTerceiro) resetForm();
     } catch (error) {
       toast({ 
         title: "Erro ao salvar", 
@@ -82,7 +80,7 @@ export default function TerceirosPage() {
   const handleDelete = async (id) => {
     if (confirm('Deseja realmente excluir este terceiro?')) {
       await base44.entities.Terceiro.delete(id);
-      loadTerceiros();
+      await invalidateTerceiros();
       toast({ 
         title: "Terceiro excluído!", 
         className: "bg-card border border-border/40 dark:border-border/40"
