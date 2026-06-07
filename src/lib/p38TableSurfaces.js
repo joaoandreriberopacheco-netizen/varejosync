@@ -41,20 +41,20 @@ export const p38Table = {
   microText: 'text-xs',
 
   /** Linhas mobile compactas (substituem cards em smartphone) */
-  mobileLine: 'border-b border-border/50 dark:border-white/10 border-l-2 py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
+  mobileLine: 'border-b border-border/50 dark:border-white/10 border-l-2 py-3 pr-3 pl-4 md:max-lg:py-4 md:max-lg:pr-4 md:max-lg:pl-5 min-w-0 bg-background font-din-1451',
   /** Catálogo mobile — fundo transparente; evita blocos cinza sobre a lista */
-  catalogMobileRow: 'border-b border-border/50 dark:border-white/10 py-4.5 min-w-0 bg-transparent font-din-1451',
+  catalogMobileRow: 'border-b border-border/50 dark:border-white/10 py-4.5 md:max-lg:py-5 min-w-0 bg-transparent font-din-1451',
   catalogMobileHeader: 'sticky top-0 z-40 border-b border-border/40 dark:border-white/10 bg-muted text-foreground shadow-[0_1px_0_rgba(255,255,255,0.06)] supports-[backdrop-filter]:backdrop-blur-sm supports-[backdrop-filter]:bg-muted/98',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
-  mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] touch-pan-y',
-  mobileLineTitle: 'font-din-1451 font-medium text-base uppercase tracking-wide text-foreground leading-tight break-words',
-  mobileLineSubtitle: 'text-xs text-muted-foreground break-all mt-0.5 font-din-1451',
-  mobileLineMeta: 'text-xs uppercase tracking-wide text-muted-foreground font-din-1451',
-  mobileLineMetaInline: 'text-xs normal-case tracking-normal text-muted-foreground font-din-1451',
-  mobileLineValue: 'font-semibold text-base text-foreground text-right tabular-nums font-din-1451',
-  mobileLineValueSub: 'text-xs text-muted-foreground text-right font-din-1451',
-  mobileMicroLabel: 'text-xs uppercase tracking-wide text-muted-foreground leading-none font-din-1451',
+  mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] md:max-lg:min-h-[60px] touch-pan-y',
+  mobileLineTitle: 'font-din-1451 font-medium text-base md:max-lg:text-lg uppercase tracking-wide text-foreground leading-tight break-words',
+  mobileLineSubtitle: 'text-xs md:max-lg:text-sm text-muted-foreground break-all mt-0.5 font-din-1451',
+  mobileLineMeta: 'text-xs md:max-lg:text-sm uppercase tracking-wide text-muted-foreground font-din-1451',
+  mobileLineMetaInline: 'text-xs md:max-lg:text-sm normal-case tracking-normal text-muted-foreground font-din-1451',
+  mobileLineValue: 'font-semibold text-base md:max-lg:text-lg text-foreground text-right tabular-nums font-din-1451',
+  mobileLineValueSub: 'text-xs md:max-lg:text-sm text-muted-foreground text-right font-din-1451',
+  mobileMicroLabel: 'text-xs md:max-lg:text-sm uppercase tracking-wide text-muted-foreground leading-none font-din-1451',
   /** Lista de linhas em phone/tablet; tabela densa só em desktop (lg+). */
   mobileListShell: 'lg:hidden overflow-y-auto rounded-lg border border-border/40 dark:border-white/10 bg-background',
   /** Lista de linhas em todos os viewports (caixa, home-style lists). */

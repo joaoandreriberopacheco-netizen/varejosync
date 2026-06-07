@@ -1,0 +1,57 @@
+/**
+ * P38 Tablet (768–1023px)
+ * Tipografia e toque um degrau acima do telemóvel — confortável, sem exagero.
+ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  html {
+    font-size: calc(16px * var(--app-font-scale, 1));
+  }
+
+  :root {
+    --p38-body-size: 1rem;
+    --p38-title-size: 1.125rem;
+    --p38-label-size: 1rem;
+    --p38-meta-size: 1rem;
+    --p38-type-lg: 1.25rem;
+    --p38-type-xl: 1.375rem;
+    --p38-touch-target: 48px;
+  }
+
+  /* Sidebar — alvos de toque e leitura */
+  .p38-sidebar nav button,
+  .p38-sidebar nav a[href] {
+    min-height: var(--p38-touch-target);
+  }
+
+  .p38-sidebar .p38-sidebar-section-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+  }
+
+  .p38-sidebar nav .text-sm {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  /* Inputs e selects globais no tablet */
+  [data-radix-select-trigger],
+  [role='combobox'] {
+    min-height: var(--p38-touch-target) !important;
+    font-size: 1rem !important;
+  }
+
+  /* Ícones de ação em listas */
+  button[aria-label],
+  .btn-icon {
+    min-height: var(--p38-touch-target) !important;
+    min-width: var(--p38-touch-target) !important;
+  }
+
+  /* Diálogos — confirmações confortáveis */
+  [role='dialog'] footer button,
+  [data-dialog-footer] button {
+    min-height: var(--p38-touch-target) !important;
+    font-size: 1rem !important;
+  }
+}

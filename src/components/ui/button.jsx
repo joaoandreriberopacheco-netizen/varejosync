@@ -14,10 +14,10 @@ const buttonVariants = ({ variant = "default", size = "default", className = "" 
   };
 
   const sizes = {
-    default: "h-10 px-4 py-2",
-    sm: "h-9 rounded-md px-3",
-    lg: "h-11 rounded-md px-8",
-    icon: "h-10 w-10",
+    default: "h-10 px-4 py-2 md:max-lg:h-11 md:max-lg:px-5 md:max-lg:text-base",
+    sm: "h-9 rounded-md px-3 md:max-lg:h-10 md:max-lg:px-4 md:max-lg:text-base",
+    lg: "h-11 rounded-md px-8 md:max-lg:h-12 md:max-lg:px-9 md:max-lg:text-base",
+    icon: "h-10 w-10 md:max-lg:h-11 md:max-lg:w-11",
   };
 
   return cn(baseStyles, variants[variant], sizes[size], className);

@@ -307,7 +307,7 @@ export default function Layout({ children, currentPageName }) {
               {children}
             </div>
           ) : (
-            <div className="p-4 md:p-6 overflow-x-hidden max-w-full">
+            <div className="p-4 md:p-6 md:max-lg:p-7 overflow-x-hidden max-w-full">
               {children}
             </div>
           )}

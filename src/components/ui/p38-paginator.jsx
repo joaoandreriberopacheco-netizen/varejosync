@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { useBreakpoint, useIsTablet } from '@/hooks/use-breakpoint';
 
 /** Gera páginas visíveis com reticências para muitas páginas. */
 export function getVisiblePageNumbers(current, total, { siblingCount = 1 } = {}) {
@@ -41,6 +41,7 @@ export function P38Paginator({
   itemLabel = 'itens',
 }) {
   const breakpoint = useBreakpoint();
+  const isTablet = useIsTablet();
   const isCompact = breakpoint !== 'desktop';
   const from = totalItems === 0 ? 0 : page * pageSize + 1;
   const to = Math.min((page + 1) * pageSize, totalItems);
@@ -50,9 +51,11 @@ export function P38Paginator({
   const goPrev = () => onPageChange(Math.max(0, page - 1));
   const goNext = () => onPageChange(Math.min(totalPages - 1, page + 1));
 
-  const navButtonClass = isCompact
-    ? 'h-11 w-11 min-h-[44px] min-w-[44px] shrink-0'
-    : 'h-9 w-9';
+  const navButtonClass = isTablet
+    ? 'h-12 w-12 min-h-[48px] min-w-[48px] shrink-0'
+    : isCompact
+      ? 'h-11 w-11 min-h-[44px] min-w-[44px] shrink-0'
+      : 'h-9 w-9';
 
   return (
     <div
@@ -61,7 +64,7 @@ export function P38Paginator({
         className
       )}
     >
-      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+      <span className="text-xs md:max-lg:text-sm text-muted-foreground tabular-nums shrink-0">
         {from}–{to} de {totalItems} {itemLabel}
       </span>
 
@@ -79,7 +82,7 @@ export function P38Paginator({
         </Button>
 
         {isCompact ? (
-          <span className="px-2 text-sm font-medium text-foreground tabular-nums whitespace-nowrap">
+          <span className="px-2 text-sm md:max-lg:text-base font-medium text-foreground tabular-nums whitespace-nowrap">
             {page + 1} / {totalPages}
           </span>
         ) : (

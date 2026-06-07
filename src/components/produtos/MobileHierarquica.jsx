@@ -24,9 +24,9 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
-const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
+const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] md:max-lg:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
 const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-4.5 text-right';
-const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base font-light leading-none';
+const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base md:max-lg:text-lg font-light leading-none';
 const CATALOG_CONTENT_PL_BASE = 10;
 const CATALOG_INDENT_STEP = 10;
 const PAGE_SIZE = 50;
@@ -407,7 +407,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
             event.stopPropagation();
             onOpenPricing(p);
           }}
-          className="h-9 w-9 rounded-lg bg-secondary/80 text-primary dark:text-[#a4ce33] hover:bg-secondary"
+          className="h-9 w-9 md:max-lg:h-11 md:max-lg:w-11 rounded-lg bg-secondary/80 text-primary dark:text-[#a4ce33] hover:bg-secondary"
           title="Ver precificação"
         >
           <DollarSign className="w-4 h-4" />

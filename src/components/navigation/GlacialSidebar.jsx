@@ -114,7 +114,7 @@ export default function GlacialSidebar({
       )}
 
       <aside
-        className="fixed left-0 top-0 z-40 flex flex-col font-din-1451"
+        className="p38-sidebar fixed left-0 top-0 z-40 flex flex-col font-din-1451"
         style={{
           height: '100dvh',
           overflow: 'hidden',
@@ -147,7 +147,7 @@ export default function GlacialSidebar({
         <nav className="px-2 py-3 space-y-0.5" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
           {isOpen && (
             <p
-              className="text-[10px] px-3 mb-2 uppercase tracking-widest"
+              className="p38-sidebar-section-label text-[10px] md:max-lg:text-xs px-3 mb-2 uppercase tracking-widest"
               style={{ color: c.sectionLabel }}
             >
               Menu
@@ -184,10 +184,10 @@ export default function GlacialSidebar({
                         color: isActive ? c.text : c.textSub,
                       }}
                     >
-                      <Icon className="flex-shrink-0" size={18} style={{ color: c.iconColor }} />
+                      <Icon className="flex-shrink-0 md:max-lg:w-5 md:max-lg:h-5" size={18} style={{ color: c.iconColor }} />
                       {isOpen && (
                         <>
-                          <span className="flex-1 text-left text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
+                          <span className="flex-1 text-left text-sm md:max-lg:text-base font-medium" style={{ color: c.text }}>{item.name}</span>
                           <ChevronRight
                             size={14}
                             style={{ color: c.chevron, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
@@ -234,9 +234,9 @@ export default function GlacialSidebar({
                       color: isActive ? c.text : c.textSub,
                     }}
                   >
-                    <Icon className="flex-shrink-0" size={18} style={{ color: c.iconColor }} />
+                    <Icon className="flex-shrink-0 md:max-lg:w-5 md:max-lg:h-5" size={18} style={{ color: c.iconColor }} />
                     {isOpen && (
-                      <span className="text-sm font-medium" style={{ color: c.text }}>{item.name}</span>
+                      <span className="text-sm md:max-lg:text-base font-medium" style={{ color: c.text }}>{item.name}</span>
                     )}
                   </Link>
                 )}
