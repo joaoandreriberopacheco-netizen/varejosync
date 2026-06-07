@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useProdutosListQuery, useTerceirosListQuery } from '@/hooks/useP38Entities';
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
@@ -61,6 +62,8 @@ import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
   const isPhone = useCompactShell();
+  const { data: produtosCached, refetch: refetchProdutosCatalog } = useProdutosListQuery();
+  const { data: terceirosCached } = useTerceirosListQuery();
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
   const isRestoringDraftRef = useRef(false);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -264,24 +267,28 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   }, [autoOpenImporter, pedido?.id]);
 
   useEffect(() => {
+    if (produtosCached) setProdutos(produtosCached);
+  }, [produtosCached]);
+
+  useEffect(() => {
+    if (terceirosCached) {
+      setFornecedores(terceirosCached.filter((t) => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
+    }
+  }, [terceirosCached]);
+
+  useEffect(() => {
     const loadDependencies = async () => {
       const user = await base44.auth.me();
       setCurrentUser(user);
 
-      const [terceirosRes, produtosRes, contasRes, empresaRes] = await Promise.allSettled([
-        base44.entities.Terceiro.list(),
-        base44.entities.Produto.list(),
+      const [contasRes, empresaRes] = await Promise.allSettled([
         base44.entities.ContasFinanceiras.list(),
-        base44.entities.DadosEmpresa.list()
+        base44.entities.DadosEmpresa.list(),
       ]);
 
-      const terceiros = terceirosRes.status === 'fulfilled' ? (terceirosRes.value || []) : [];
-      const produtosLista = produtosRes.status === 'fulfilled' ? (produtosRes.value || []) : [];
       const contasLista = contasRes.status === 'fulfilled' ? (contasRes.value || []) : [];
       const empresaLista = empresaRes.status === 'fulfilled' ? (empresaRes.value || []) : [];
 
-      setFornecedores(terceiros.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
-      setProdutos(produtosLista);
       setContas(contasLista);
       if (empresaLista.length > 0) {
         setEmpresa(empresaLista[0]);
@@ -1557,7 +1564,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           setShowAtualizarPrecos(false);
           if (updated) {
             // Recarregar produtos se houve atualização
-            base44.entities.Produto.list().then(setProdutos);
+            refetchProdutosCatalog().then(({ data }) => data && setProdutos(data));
           }
         }}
         itens={formData.itens || []}

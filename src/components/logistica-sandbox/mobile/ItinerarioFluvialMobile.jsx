@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useLogisticaEventosQuery, useLogisticaLancamentosFretesQuery } from '@/hooks/useP38Entities';
+import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
@@ -32,11 +34,7 @@ export default function ItinerarioFluvialMobile() {
   const todayRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: eventosLogisticos = [] } = useQuery({
-    queryKey: ['evento-logistico'],
-    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 50),
-    initialData: []
-  });
+  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({ initialData: [] });
 
   const { data: embarques = [] } = useQuery({
     queryKey: ['embarques-logistica'],
@@ -56,17 +54,13 @@ export default function ItinerarioFluvialMobile() {
     initialData: []
   });
 
-  const { data: lancamentosFinanceiros = [] } = useQuery({
-    queryKey: ['lancamentos-financeiros-fretes'],
-    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ referencia_tipo: 'EventosLogisticos' }, '-created_date', 500),
-    initialData: []
-  });
+  const { data: lancamentosFinanceiros = [] } = useLogisticaLancamentosFretesQuery({ initialData: [] });
 
   useEffect(() => {
     const unsub = base44.entities.LancamentoFinanceiro.subscribe((ev) => {
       const d = ev.data || {};
       if (d.referencia_tipo === 'EventosLogisticos' || ev.type === 'delete') {
-        queryClient.invalidateQueries({ queryKey: ['lancamentos-financeiros-fretes'] });
+        queryClient.invalidateQueries({ queryKey: p38Keys.logistica.lancamentosFretes() });
       }
     });
     return typeof unsub === 'function' ? unsub : undefined;

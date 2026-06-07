@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { p38Keys } from '@/lib/p38QueryConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +27,7 @@ export default function IntervenientesPage() {
 
     // Fetch Intervenientes
     const { data: intervenientes = [], isLoading } = useQuery({
-        queryKey: ['intervenientes'],
+        queryKey: p38Keys.intervenientes(),
         queryFn: () => base44.entities.Interveniente.list(),
     });
 
@@ -34,7 +35,7 @@ export default function IntervenientesPage() {
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Interveniente.create(data),
         onSuccess: () => {
-            queryClient.invalidateQueries(['intervenientes']);
+            queryClient.invalidateQueries({ queryKey: p38Keys.intervenientes() });
             toast({ title: "Sucesso", description: "Interveniente criado com sucesso." });
             setIsDialogOpen(false);
         }
@@ -43,7 +44,7 @@ export default function IntervenientesPage() {
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.Interveniente.update(id, data),
         onSuccess: () => {
-            queryClient.invalidateQueries(['intervenientes']);
+            queryClient.invalidateQueries({ queryKey: p38Keys.intervenientes() });
             toast({ title: "Sucesso", description: "Interveniente atualizado." });
             setIsDialogOpen(false);
         }
@@ -52,7 +53,7 @@ export default function IntervenientesPage() {
     const deleteMutation = useMutation({
         mutationFn: (id) => base44.entities.Interveniente.delete(id),
         onSuccess: () => {
-            queryClient.invalidateQueries(['intervenientes']);
+            queryClient.invalidateQueries({ queryKey: p38Keys.intervenientes() });
             toast({ title: "Sucesso", description: "Interveniente removido." });
         }
     });

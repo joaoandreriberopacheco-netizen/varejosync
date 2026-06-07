@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import {
+  useLogisticaContasPrevistasQuery,
+  useLogisticaEmbarquesQuery,
+  useLogisticaEventosQuery,
+} from '@/hooks/useP38Entities';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Anchor, Check, Sliders } from 'lucide-react';
@@ -26,26 +30,9 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
   const [onlyLinked, setOnlyLinked] = useState(false);
   const todayRef = useRef(null);
 
-  const { data: eventosLogisticos = [] } = useQuery({
-    queryKey: ['evento-logistico-selector'],
-    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 500),
-    initialData: [],
-    enabled: open,
-  });
-
-  const { data: embarques = [] } = useQuery({
-    queryKey: ['embarques-logistica-selector'],
-    queryFn: () => base44.entities.Embarque.list('-created_date', 500),
-    initialData: [],
-    enabled: open,
-  });
-
-  const { data: contasPrevistas = [] } = useQuery({
-    queryKey: ['contas-previstas-frete-selector'],
-    queryFn: () => base44.entities.ContaPrevista.list('-data_vencimento', 500),
-    initialData: [],
-    enabled: open,
-  });
+  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({ initialData: [], enabled: open });
+  const { data: embarques = [] } = useLogisticaEmbarquesQuery({ initialData: [], enabled: open });
+  const { data: contasPrevistas = [] } = useLogisticaContasPrevistasQuery({ initialData: [], enabled: open });
 
   const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, contasPrevistas }), [eventosLogisticos, embarques, contasPrevistas]);
 

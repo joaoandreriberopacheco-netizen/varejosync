@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,10 @@ import {
   saveCatalogProdutoColumns,
 } from '@/lib/catalogProdutoColumnsStorage';
 import { useDesktopContent } from '@/hooks/use-breakpoint';
+import {
+  useProdutosListQuery,
+  useFornecedoresQuery,
+} from '@/hooks/useP38Entities';
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
 function isEmptyishVitrine(v) {
@@ -138,15 +142,40 @@ function ProdutosPageContent() {
 
   const { toast } = useToast();
   const isDesktop = useDesktopContent();
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosListQuery();
+  const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
   const produtoDetailFetchGenRef = useRef(0);
   /** Pacote de unidades/vitrine recém-gravado pelo `ProdutoFormCompleto` — aplicado em `loadData` antes de repassar a prop ao form. */
   const justSavedUnitSnapshotRef = useRef(null);
 
-  useEffect(() => {
-    loadData();
+  const applyCatalogSnapshot = useCallback((produtosData, fornecedoresData) => {
+    const safeProdutos = Array.isArray(produtosData)
+      ? produtosData.filter((p) => p && typeof p === 'object' && p !== null)
+      : [];
+    const safeFornecedores = Array.isArray(fornecedoresData)
+      ? fornecedoresData.filter((f) => f && typeof f === 'object' && f !== null)
+      : [];
+
+    setProdutos(safeProdutos);
+    setFornecedores(safeFornecedores);
+
+    const catSet = new Set();
+    safeProdutos.forEach((p) => {
+      if (p.categoria_nome) catSet.add(p.categoria_nome);
+    });
+
+    setStats(calculateProdutoStats(safeProdutos));
+    setCategorias(Array.from(catSet));
+    return safeProdutos;
   }, []);
+
+  useEffect(() => {
+    if (produtosQuery) {
+      applyCatalogSnapshot(produtosQuery, fornecedoresQuery ?? []);
+    }
+  }, [produtosQuery, fornecedoresQuery, applyCatalogSnapshot]);
 
   useEffect(() => {
     saveCatalogProdutoFilters(filters);
@@ -157,21 +186,12 @@ function ProdutosPageContent() {
   }, [visibleColumns]);
 
   const loadData = async () => {
-    const produtosData = await base44.entities.Produto.list('-created_date');
-    const fornecedoresData = await base44.entities.Terceiro.filter(
-      { $or: [{ tipo: 'Fornecedor' }, { tipo: 'Ambos' }] }
-    );
-    
-    // Defensive filtering to ensure only valid objects with proper prototypes are used
-    const safeProdutos = Array.isArray(produtosData) 
-      ? produtosData.filter(p => p && typeof p === 'object' && p !== null) 
-      : [];
-    const safeFornecedores = Array.isArray(fornecedoresData) 
-      ? fornecedoresData.filter(f => f && typeof f === 'object' && f !== null) 
-      : [];
-    
-    setProdutos(safeProdutos);
-    setFornecedores(safeFornecedores);
+    const [{ data: produtosData }, { data: fornecedoresData }] = await Promise.all([
+      refetchProdutos(),
+      refetchFornecedores(),
+    ]);
+    const safeProdutos = applyCatalogSnapshot(produtosData ?? [], fornecedoresData ?? []);
+
     if (isFormOpen && selectedProduto?.id) {
       const editingId = selectedProduto.id;
       const savedSnap = justSavedUnitSnapshotRef.current;
@@ -201,13 +221,6 @@ function ProdutosPageContent() {
       }
     }
 
-    const catSet = new Set();
-    safeProdutos.forEach(p => {
-      if(p.categoria_nome) catSet.add(p.categoria_nome);
-    });
-
-    setStats(calculateProdutoStats(safeProdutos));
-    setCategorias(Array.from(catSet));
   };
 
   const handleSave = async (unitSnapshot) => {

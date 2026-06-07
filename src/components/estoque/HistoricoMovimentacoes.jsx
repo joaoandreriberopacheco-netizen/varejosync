@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useProdutosListQuery } from '@/hooks/useP38Entities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { format } from 'date-fns';
 
 export default function HistoricoMovimentacoes() {
   const [movimentacoes, setMovimentacoes] = useState([]);
-  const [produtos, setProdutos] = useState([]);
+  const { data: produtos = [] } = useProdutosListQuery();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('all');
   const [filtroProduto, setFiltroProduto] = useState('all');
@@ -25,12 +26,8 @@ export default function HistoricoMovimentacoes() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [movData, prodData] = await Promise.all([
-        base44.entities.MovimentacaoEstoque.list('-created_date'),
-        base44.entities.Produto.list()
-      ]);
+      const movData = await base44.entities.MovimentacaoEstoque.list('-created_date');
       setMovimentacoes(movData);
-      setProdutos(prodData);
     } catch (error) {
       console.error("Erro ao carregar movimentações:", error);
     }
