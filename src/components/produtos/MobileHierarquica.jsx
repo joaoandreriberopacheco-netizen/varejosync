@@ -27,10 +27,12 @@ const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
 /** Largura fixa da coluna qtd/un — eixo da linha divisória sagrada (nunca se move). */
 const CATALOGO_MOBILE_QTD_W = '3.25rem';
-const CATALOGO_MOBILE_QTD_COL =
-  'relative shrink-0 border-r border-border/50 dark:border-white/15 pr-1.5 pt-3 pb-3 text-right self-stretch';
-const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 const CATALOG_ROW_PL = 'pl-2.5';
+/** Posição horizontal fixa do eixo (pl da linha + largura qtd). Tudo varia exceto isto. */
+const CATALOG_AXIS_LEFT = 'calc(0.625rem + 3.25rem)';
+const CATALOGO_MOBILE_QTD_COL =
+  'relative shrink-0 pr-1.5 pt-3 pb-3 text-right self-stretch';
+const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 /** Respiro entre a linha vertical e o texto da descrição. */
 const CATALOG_DESC_PL_AFTER_LINE = 12;
 /** Recuo dos filhos só à direita da linha (qtd e divisor ficam fixos). */
@@ -90,6 +92,20 @@ function CatalogoMobileQtdColShell({ children, className = '' }) {
     <div className={cn(CATALOGO_MOBILE_QTD_COL, className)} style={{ width: CATALOGO_MOBILE_QTD_W }}>
       {children}
     </div>
+  );
+}
+
+/** Eixo vertical contínuo — uma só linha ininterrupta, não recua com indentação. */
+function CatalogoMobileSacredAxis({ className = '' }) {
+  return (
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-y-0 z-[1] w-px bg-border/50 dark:bg-white/15',
+        className,
+      )}
+      style={{ left: CATALOG_AXIS_LEFT }}
+      aria-hidden
+    />
   );
 }
 
@@ -337,8 +353,9 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
 function CatalogoMobileColumnHeader({ className = '' }) {
   return (
-    <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
-      <div className={cn('flex min-w-0 py-3 pr-12', CATALOG_ROW_PL)}>
+    <div className={cn(p38Table.catalogMobileHeader, 'relative overflow-hidden', className)}>
+      <CatalogoMobileSacredAxis />
+      <div className={cn('relative z-[2] flex min-w-0 py-3 pr-12', CATALOG_ROW_PL)}>
         <CatalogoMobileQtdColShell className="!py-2.5">
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
@@ -559,25 +576,28 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden">
-      <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
-      <div className="rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
-        {pagedRows.map(row => (
-          <div key={row.key} className="contain-layout">
-            {row.type === 'group' ? (
-              <GroupHeader
-                row={row}
-                isExpanded={expandedKeys.has(row.key)}
-                onToggle={handleToggle}
-              />
-            ) : (
-              <SkuCard
-                row={row}
-                onEdit={onEdit}
-                onOpenPricing={setPricingProduto}
-              />
-            )}
-          </div>
-        ))}
+      <div className="relative border-x border-border/40 dark:border-white/10">
+        <CatalogoMobileSacredAxis />
+        <CatalogoMobileColumnHeader />
+        <div className="relative z-[2] rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
+          {pagedRows.map(row => (
+            <div key={row.key} className="contain-layout">
+              {row.type === 'group' ? (
+                <GroupHeader
+                  row={row}
+                  isExpanded={expandedKeys.has(row.key)}
+                  onToggle={handleToggle}
+                />
+              ) : (
+                <SkuCard
+                  row={row}
+                  onEdit={onEdit}
+                  onOpenPricing={setPricingProduto}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
       <P38Paginator
         page={safePage}
