@@ -25,7 +25,7 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
-const CATALOGO_MOBILE_ESTOQUE_COL = 'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-4.5 text-right';
+const CATALOGO_MOBILE_ESTOQUE_BLOCK = 'flex items-baseline gap-1.5 mb-1';
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 const CATALOG_CONTENT_PL_BASE = 10;
 const CATALOG_INDENT_STEP = 10;
@@ -283,11 +283,10 @@ function CatalogoMobileColumnHeader({ className = '' }) {
   return (
     <div className={cn(p38Table.catalogMobileHeader, 'overflow-hidden', className)}>
       <div className="flex min-w-0">
-        <div className="w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pl-1 pr-2 py-2.5 text-right">
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
-          <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-2`}>UN</p>
-        </div>
-        <div className="flex-1 min-w-0 py-2.5 pr-12 pl-2.5">
+        <div
+          className="flex-1 min-w-0 py-2.5 pr-12"
+          style={{ paddingLeft: catalogContentPad(1) }}
+        >
           {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
@@ -330,15 +329,14 @@ function CatalogoMobileTabulatedValues({ produto, className = '', tier = 'soltei
   );
 }
 
-function CatalogoMobileEstoqueCol({ quantidade, unidade, stockTone, tier = 'solteiro' }) {
+function CatalogoMobileEstoqueBlock({ quantidade, unidade, tier = 'solteiro' }) {
   const isChild = tier === 'filho';
   return (
-    <div className={CATALOGO_MOBILE_ESTOQUE_COL}>
-      <P38StatusDot tone={stockTone} className="absolute left-0 top-5" />
+    <div className={CATALOGO_MOBILE_ESTOQUE_BLOCK}>
       <p className={`${CATALOGO_MOBILE_BODY_TEXT} tabular-nums ${isChild ? 'text-muted-foreground' : 'text-foreground'}`}>
         {fmtN(quantidade)}
       </p>
-      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground mt-1.5 truncate`}>
+      <p className={`${CATALOGO_MOBILE_BODY_TEXT} uppercase text-muted-foreground truncate`}>
         {unidade}
       </p>
     </div>
@@ -368,16 +366,17 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         className="flex flex-1 min-w-0 text-left active:bg-secondary/30 dark:active:bg-secondary/50"
         onClick={() => onEdit(p)}
       >
-        <CatalogoMobileEstoqueCol
-          quantidade={estoqueExibicao}
-          unidade={unidadeExibicao}
-          stockTone={stockTone}
-          tier={tier}
-        />
         <div
-          className="flex-1 min-w-0 py-2 pr-3"
+          className="relative flex flex-1 min-w-0 gap-2 py-2 pr-3"
           style={{ paddingLeft: catalogContentPad(row.level ?? 1) }}
         >
+          <P38StatusDot tone={stockTone} className="flex-shrink-0 mt-1" />
+          <div className="flex-1 min-w-0">
+            <CatalogoMobileEstoqueBlock
+              quantidade={estoqueExibicao}
+              unidade={unidadeExibicao}
+              tier={tier}
+            />
           <p
             lang="pt-BR"
             className={`uppercase break-words [overflow-wrap:anywhere] line-clamp-2 ${catalogNomeClass(tier)}`}
@@ -395,6 +394,7 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
               {apresent.rotulo || 'unidade de exibição'}
             </p>
           )}
+          </div>
         </div>
       </button>
 
