@@ -1106,17 +1106,22 @@ function ProdutosPageContent() {
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
         <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4">
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
-            <ProdutosCommandBar
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-            />
+            <div className="hidden desktop-layout:block">
+              <ProdutosCommandBar
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+              />
+            </div>
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div className="desktop-layout:hidden flex flex-col h-full min-h-0 min-w-0 max-w-full">
-                <div className="flex-shrink-0">{produtosHeader}</div>
-                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
+                <MobileHierarquica
+                  produtos={filteredProdutos}
+                  onEdit={handleEdit}
+                  catalogChrome={produtosHeader}
+                />
               </div>
 
               {isDesktop && viewMode === 'dinamica' && (
