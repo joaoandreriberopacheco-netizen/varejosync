@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ChevronRight, DollarSign, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -353,22 +353,9 @@ function PricingDialog({ produto, open, onOpenChange }) {
   );
 }
 
-const CatalogoMobileColumnHeader = React.forwardRef(function CatalogoMobileColumnHeader(
-  { className = '', invisible = false, pinStyle = null },
-  ref,
-) {
+function CatalogoMobileColumnHeader({ className = '' }) {
   return (
-    <div
-      ref={ref}
-      className={cn(
-        p38Table.catalogMobileHeader,
-        pinStyle && p38Table.catalogMobileHeaderPinned,
-        'relative',
-        invisible && 'invisible pointer-events-none',
-        className,
-      )}
-      style={pinStyle || undefined}
-    >
+    <div className={cn(p38Table.catalogMobileHeader, 'relative', className)}>
       <CatalogoMobileSacredAxis />
       <div className={cn('relative flex min-w-0 py-3.5 pr-12', CATALOG_ROW_PL)}>
         <CatalogoMobileQtdColShell className="!py-2">
@@ -395,59 +382,6 @@ const CatalogoMobileColumnHeader = React.forwardRef(function CatalogoMobileColum
       </div>
     </div>
   );
-});
-
-function useCatalogMobilePinnedHeader(scrollRef) {
-  const sentinelRef = useRef(null);
-  const [pinned, setPinned] = useState(false);
-  const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const sync = () => {
-      const scrollEl = scrollRef?.current;
-      const usesInnerScroll = Boolean(
-        scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
-      );
-      const anchorRect = usesInnerScroll && scrollEl
-        ? scrollEl.getBoundingClientRect()
-        : { top: 0, left: 0, width: window.innerWidth };
-      const sentinelRect = sentinel.getBoundingClientRect();
-
-      setPinned(sentinelRect.top < anchorRect.top + 0.5);
-      setPinFrame({
-        top: anchorRect.top,
-        left: anchorRect.left,
-        width: anchorRect.width,
-      });
-    };
-
-    const scrollEl = scrollRef?.current;
-    scrollEl?.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync);
-    window.addEventListener('orientationchange', sync);
-
-    const resizeObserver = new ResizeObserver(sync);
-    if (scrollEl) resizeObserver.observe(scrollEl);
-    resizeObserver.observe(sentinel);
-
-    sync();
-    const frame = window.requestAnimationFrame(sync);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      scrollEl?.removeEventListener('scroll', sync);
-      window.removeEventListener('scroll', sync);
-      window.removeEventListener('resize', sync);
-      window.removeEventListener('orientationchange', sync);
-      resizeObserver.disconnect();
-    };
-  }, [scrollRef]);
-
-  return { sentinelRef, pinned, pinFrame };
 }
 
 function CatalogoMobileTabulatedValues({ produto, className = '' }) {
@@ -593,11 +527,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
 });
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, scrollRef }) {
-  const { sentinelRef, pinned, pinFrame } = useCatalogMobilePinnedHeader(scrollRef);
-  const pinStyle = pinned
-    ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width }
-    : null;
+export default function MobileHierarquica({ produtos, onEdit }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const [page, setPage] = useState(0);
@@ -636,32 +566,28 @@ export default function MobileHierarquica({ produtos, onEdit, scrollRef }) {
 
   if (produtos.length === 0) {
     return (
-      <div className="py-16 text-center px-8">
-        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
-          <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
+      <div className="flex flex-col flex-1 min-h-0 w-full min-w-0 max-w-full">
+        <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
+        <div className="py-16 text-center px-8 border-x border-t-0 border-border/40 dark:border-white/10">
+          <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
+          <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
         </div>
-        <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
-        <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-w-0 max-w-full">
-      <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
-      <CatalogoMobileColumnHeader
-        className="border-x border-border/40 dark:border-white/10"
-        invisible={pinned}
-      />
-      {pinned ? (
-        <CatalogoMobileColumnHeader
-          className="border-x border-border/40 dark:border-white/10"
-          pinStyle={pinStyle}
-        />
-      ) : null}
-      <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
+    <div className="flex flex-col flex-1 min-h-0 w-full min-w-0 max-w-full">
+      <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
+      <div
+        className="relative flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y border-x border-t-0 border-border/40 dark:border-white/10 pb-[var(--p38-scroll-pad-below-nav)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <CatalogoMobileSacredAxis />
-        <div className="relative rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
+        <div className="relative border-b border-border/40 dark:border-white/10 bg-background">
           {pagedRows.map(row => (
             <div key={row.key}>
               {row.type === 'group' ? (
@@ -687,7 +613,7 @@ export default function MobileHierarquica({ produtos, onEdit, scrollRef }) {
           totalItems={rows.length}
           onPageChange={setPage}
           itemLabel="linhas"
-          className="rounded-b-lg border-x border-b border-border/40 border-t-0"
+          className="border-t border-border/40 dark:border-white/10"
         />
       </div>
       <PricingDialog
