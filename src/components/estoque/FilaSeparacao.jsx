@@ -190,7 +190,7 @@ export default function FilaSeparacao() {
   return (
     <div className="space-y-4">
       {/* Header Mobile */}
-      <Card className="lg:hidden">
+      <Card className="desktop-layout:hidden">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-3 text-lg font-normal text-foreground/90">
             <div className="p-2 bg-muted/40 rounded-lg">
@@ -232,7 +232,7 @@ export default function FilaSeparacao() {
       </P38MobileLineList>
 
       {/* Tabela Desktop */}
-      <Card className="hidden lg:block">
+      <Card className="hidden desktop-layout:block">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-lg font-normal text-foreground/90">
             <div className="p-2 bg-muted/40 rounded-lg">

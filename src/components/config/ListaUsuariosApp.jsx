@@ -196,7 +196,7 @@ export default function ListaUsuariosApp() {
                 <TableHead className="text-xs text-muted-foreground font-medium hidden sm:table-cell">Email</TableHead>
                 <TableHead className="text-xs text-muted-foreground font-medium">Perfil</TableHead>
                 <TableHead className="text-xs text-muted-foreground font-medium hidden md:table-cell">Caixas</TableHead>
-                <TableHead className="text-xs text-muted-foreground font-medium hidden lg:table-cell">Tabela Preço</TableHead>
+                <TableHead className="text-xs text-muted-foreground font-medium hidden desktop-layout:table-cell">Tabela Preço</TableHead>
                 <TableHead className="text-right text-xs text-muted-foreground font-medium">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -235,7 +235,7 @@ export default function ListaUsuariosApp() {
                            <span className="text-xs text-muted-foreground dark:text-muted-foreground">—</span>
                          )}
                        </TableCell>
-                       <TableCell className="hidden lg:table-cell">
+                       <TableCell className="hidden desktop-layout:table-cell">
                          {user.tabela_preco_nome ? (
                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
                              <Tag className="w-3 h-3" />

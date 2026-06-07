@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Boxes, Camera, Undo2, X, Edit, FileText, CreditCard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { useIsPhone } from '@/hooks/use-breakpoint';
+import { useMobileLayout } from '@/hooks/use-breakpoint';
 import { format } from 'date-fns';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -167,7 +167,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     setTimeout(() => setFeedback({ type: '', message: '' }), duration);
   };
 
-  const isMobile = useIsPhone();
+  const isMobile = useMobileLayout();
 
   const { subtotal, valorTotal, valorAjusteCalculado, percentualAjuste, ajusteExcedido } = useMemo(() => {
     const sub = carrinho.reduce((acc, item) => acc + (item.total || 0), 0);
@@ -1097,7 +1097,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {produtosSugeridos.length} resultado{produtosSugeridos.length > 1 ? 's' : ''}
                     </span>
-                    <span className="text-xs text-muted-foreground hidden md:block">Tab para quantidade · Enter para adicionar</span>
+                    <span className="text-xs text-muted-foreground hidden desktop-layout:block">Tab para quantidade · Enter para adicionar</span>
                   </div>
                   {produtosSugeridos.map((produto, index) => {
                 const mult = tabelaPreco?.fator_ajuste || 1;
@@ -1213,7 +1213,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
         </div>
 
         {/* Sidebar Carrinho - Desktop Only */}
-        <div className="hidden md:flex w-80 lg:w-[22rem] bg-muted/40 dark:bg-background px-0 pr-5 pb-5 flex-col flex-shrink-0">
+        <div className="hidden desktop-layout:flex w-80 lg:w-[22rem] bg-muted/40 dark:bg-background px-0 pr-5 pb-5 flex-col flex-shrink-0">
           <div className="rounded-[28px] bg-card dark:bg-background shadow-sm flex flex-col min-h-0 h-full overflow-hidden">
             <div className="px-5 py-4 flex items-center justify-between flex-shrink-0">
               <h2 className="text-base font-semibold text-foreground font-glacial">Carrinho</h2>
@@ -1356,7 +1356,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
       {/* Barra inferior mobile: z-[55] fica acima do Dialog (z-50) — esconder com qualquer modal full-screen */}
       {!showClienteDialog && !showReeditarDialog && !unitSelector.open && (
-          <div className="pointer-events-auto fixed left-0 right-0 z-[55] flex items-center gap-2 rounded-t-[26px] border-t border-border/40 bg-card/90 px-3 pt-3 backdrop-blur-md dark:border-border/40 dark:bg-muted/95 md:hidden p38-bottom-dock shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
+          <div className="pointer-events-auto fixed left-0 right-0 z-[55] flex items-center gap-2 rounded-t-[26px] border-t border-border/40 bg-card/90 px-3 pt-3 backdrop-blur-md dark:border-border/40 dark:bg-muted/95 desktop-layout:hidden p38-bottom-dock shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-muted-foreground leading-none mb-0.5">Total</div>
               <div className="text-xl font-bold text-foreground dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
@@ -1680,7 +1680,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       </Dialog>
 
       {showCarrinhoMobile &&
-      <div className="md:hidden fixed inset-0 z-[70] bg-muted/40 dark:bg-background flex flex-col">
+      <div className="desktop-layout:hidden fixed inset-0 z-[70] bg-muted/40 dark:bg-background flex flex-col">
           {/* Header */}
           <div className="px-4 py-3 bg-card dark:bg-background border-b border-border/40 dark:border-border/40 flex items-center justify-between flex-shrink-0">
             <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-card">

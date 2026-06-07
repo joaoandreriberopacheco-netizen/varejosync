@@ -906,7 +906,7 @@ function AutoLostSales({ open, onClose }) {
 
 function SuggestedProductsSidebar({ recommendations, onAddRec }) {
   return (
-    <div className="hidden lg:flex w-64 bg-card border-l border-border/40 flex-col overflow-y-auto shrink-0 pb-32">
+    <div className="hidden desktop-layout:flex w-64 bg-card border-l border-border/40 flex-col overflow-y-auto shrink-0 pb-32">
       <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800">
         <h3 className="text-sm font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wide flex items-center gap-2">
           <Plus className="w-4 h-4" /> Aproveite

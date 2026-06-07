@@ -37,7 +37,7 @@ import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
 } from '@/lib/catalogProdutoColumnsStorage';
-import { useIsDesktop } from '@/hooks/use-breakpoint';
+import { useDesktopContent } from '@/hooks/use-breakpoint';
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
 function isEmptyishVitrine(v) {
@@ -137,7 +137,7 @@ function ProdutosPageContent() {
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
 
   const { toast } = useToast();
-  const isDesktop = useIsDesktop();
+  const isDesktop = useDesktopContent();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
   const produtoDetailFetchGenRef = useRef(0);
@@ -1086,7 +1086,7 @@ function ProdutosPageContent() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-background">
-      <div className="hidden lg:block flex-none">
+      <div className="hidden desktop-layout:block flex-none">
         {produtosHeader}
       </div>
 
@@ -1101,7 +1101,7 @@ function ProdutosPageContent() {
             />
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-              <div className="lg:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] md:pb-4">
+              <div className="desktop-layout:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
                 {produtosHeader}
                 <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
               </div>

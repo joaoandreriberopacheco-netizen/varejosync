@@ -353,7 +353,7 @@ export default function PDVSupermercado() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right hidden md:block">
+          <div className="text-right hidden desktop-layout:block">
              <p className="text-xs opacity-80">Operador</p>
              <p className="font-semibold text-sm">{currentUser?.full_name}</p>
           </div>
@@ -547,7 +547,7 @@ export default function PDVSupermercado() {
         </div>
 
         {/* Right: Summary & Actions — tablet+ split; telemóvel usa barra inferior */}
-        <div className="hidden md:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-card dark:bg-card border-l p-4 lg:p-6 shadow-lg z-10">
+        <div className="hidden desktop-layout:flex flex-col w-72 lg:w-80 xl:w-96 flex-shrink-0 bg-card dark:bg-card border-l p-4 lg:p-6 shadow-lg z-10">
           <div className="mb-6">
             <h2 className="text-muted-foreground uppercase text-xs font-bold tracking-wider mb-2">Resumo</h2>
             <div className="text-4xl font-bold text-foreground dark:text-white mb-1">R$ {totalCarrinho.toFixed(2)}</div>
@@ -585,7 +585,7 @@ export default function PDVSupermercado() {
       </div>
 
       {/* Barra inferior — smartphone */}
-      <div className="md:hidden fixed left-0 right-0 bottom-0 z-50 flex items-center gap-3 border-t border-border/40 bg-card/95 backdrop-blur-md px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+      <div className="desktop-layout:hidden fixed left-0 right-0 bottom-0 z-50 flex items-center gap-3 border-t border-border/40 bg-card/95 backdrop-blur-md px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground">{carrinho.reduce((acc, i) => acc + i.quantidade, 0)} itens</p>
           <p className="text-xl font-bold text-foreground tabular-nums">R$ {totalCarrinho.toFixed(2)}</p>

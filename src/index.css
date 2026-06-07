@@ -263,8 +263,8 @@ button:focus-visible {
   }
 }
 
-/* Tablet+ (≥768): sem bottom nav — FABs e docks encostam ao fundo do ecrã */
-@media (min-width: 768px) {
+/* Desktop + tablet paisagem: sem bottom nav — FABs encostam ao fundo */
+@media (min-width: 1024px), ((min-width: 768px) and (orientation: landscape)) {
   .p38-bottom-fab1 {
     bottom: 1.5rem;
   }

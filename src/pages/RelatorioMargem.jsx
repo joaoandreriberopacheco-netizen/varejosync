@@ -1732,7 +1732,7 @@ export default function RelatorioMargemVendas() {
                       <span className="truncate text-muted-foreground">{periodLabel}</span>
                     ) : null}
                   </div>
-                  <p className="lg:hidden text-xs text-muted-foreground truncate">
+                  <p className="desktop-layout:hidden text-xs text-muted-foreground truncate">
                     {productCount} produto{productCount === 1 ? '' : 's'}
                     {periodLabel ? ` · ${periodLabel}` : ''}
                   </p>
@@ -1950,7 +1950,7 @@ export default function RelatorioMargemVendas() {
            </div>
 
            {/* Table - Desktop Table / Mobile Cards */}
-        <div className="flex-1 min-h-0 p-3 md:px-4 md:pt-0 md:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
+        <div className="flex-1 min-h-0 p-3 desktop-layout:px-4 desktop-layout:pt-0 desktop-layout:pb-4 min-w-0 max-w-full overflow-hidden" id="relatorio-table">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-border/40 dark:border-border bg-card/60 dark:bg-background/60">
               <Loader2 className="w-9 h-9 animate-spin text-muted-foreground mb-4" />
@@ -1961,7 +1961,7 @@ export default function RelatorioMargemVendas() {
             <>
 
               {/* Desktop: painel resumo + KPIs (mesmo visual mobile) */}
-              <div className="hidden lg:block mb-3 space-y-3">
+              <div className="hidden desktop-layout:block mb-3 space-y-3">
                 <MargemMobileReportHeader
                   filtrosDesc={buildMarginFiltrosDesc({
                     dateRange,
@@ -1974,7 +1974,7 @@ export default function RelatorioMargemVendas() {
               {/* Desktop Table View */}
               <div
                 ref={desktopScrollRef}
-                className="hidden lg:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-border bg-background shadow-sm"
+                className="hidden desktop-layout:block h-full min-h-0 min-w-0 overflow-auto overscroll-contain rounded-xl border border-border bg-background shadow-sm"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 <table className={`w-full table-fixed ${MARGIN_BODY_TEXT}`}>
@@ -2057,7 +2057,7 @@ export default function RelatorioMargemVendas() {
               {/* Mobile: mesma diagramação do PDF mobile */}
               <div
                 ref={mobileScrollRef}
-                className="lg:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-border bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-4"
+                className="desktop-layout:hidden h-full min-h-0 min-w-0 max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-border bg-background pb-[var(--p38-scroll-pad-below-nav)]"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 <MargemMobileReportHeader

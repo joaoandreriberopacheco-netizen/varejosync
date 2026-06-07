@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import { useIsPhone } from '@/hooks/use-breakpoint';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
@@ -60,7 +60,7 @@ import {
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
-  const isPhone = useIsPhone();
+  const isPhone = useCompactShell();
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
   const isRestoringDraftRef = useRef(false);
   const [draftRestored, setDraftRestored] = useState(false);

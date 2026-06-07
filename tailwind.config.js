@@ -116,5 +116,15 @@ module.exports = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addVariant }) {
+      // Mobile: telemóvel OU tablet retrato
+      addVariant('mobile-layout', '@media (max-width: 767px), ((max-width: 1023px) and (orientation: portrait))');
+      // Desktop: monitor OU tablet paisagem
+      addVariant('desktop-layout', '@media (min-width: 1024px), ((min-width: 768px) and (orientation: landscape))');
+      addVariant('tablet-landscape', '@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape)');
+      addVariant('tablet-portrait', '@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait)');
+    },
+  ],
 }

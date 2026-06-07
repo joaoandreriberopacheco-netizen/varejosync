@@ -368,7 +368,7 @@ export default function CatalogOverlay() {
   return createPortal(
     <>
       <div
-        className="fixed right-3 top-[max(3.5rem,env(safe-area-inset-top)+2.5rem)] z-[10040] flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100/80 text-emerald-700 shadow-sm backdrop-blur-sm opacity-75 transition-opacity hover:opacity-95 active:opacity-100 dark:bg-emerald-900/75 dark:text-emerald-200 md:hidden"
+        className="fixed right-3 top-[max(3.5rem,env(safe-area-inset-top)+2.5rem)] z-[10040] flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100/80 text-emerald-700 shadow-sm backdrop-blur-sm opacity-75 transition-opacity hover:opacity-95 active:opacity-100 dark:bg-emerald-900/75 dark:text-emerald-200 desktop-layout:hidden"
         style={{ touchAction: 'none' }}
         onTouchStart={startMobileLongPress}
         onTouchEnd={stopMobileLongPress}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useIsPhone } from '@/hooks/use-breakpoint';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
@@ -348,7 +348,7 @@ const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
 };
 
 export default function PedidosCompraPage() {
-  const isPhone = useIsPhone();
+  const isPhone = useCompactShell();
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);

@@ -109,7 +109,7 @@ export default function ContasFinanceirasPage() {
           </Button>
         </div>
 
-        <P38MobileLineList className="lg:hidden">
+        <P38MobileLineList className="desktop-layout:hidden">
           {accounts.map((account, index) => {
             const saldo = calcularSaldoConta(account);
             const isNegativo = saldo < 0;
@@ -173,7 +173,7 @@ export default function ContasFinanceirasPage() {
           })}
         </P38MobileLineList>
 
-        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="hidden desktop-layout:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {accounts.map((account) => {
             const Icon = tipoIconMap[account.tipo] || Wallet;
             const saldo = calcularSaldoConta(account);

@@ -23,7 +23,7 @@ export default function ProdutosCommandBar({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="hidden lg:flex items-center gap-2 flex-wrap">
+      <div className="hidden desktop-layout:flex items-center gap-2 flex-wrap">
         <div className="flex items-center bg-muted rounded p-0.5 gap-0.5">
           <button onClick={() => setViewMode('dinamica')} className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'dinamica' ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium' : 'text-muted-foreground'}`}>Tree Grid</button>
           <button onClick={() => setViewMode('plana')} className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'plana' ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium' : 'text-muted-foreground'}`}>Plana</button>

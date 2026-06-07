@@ -162,7 +162,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
   const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
 
   return (
-    <div ref={parentRef} className="hidden lg:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
+    <div ref={parentRef} className="hidden desktop-layout:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
       <P38TableShell className="overflow-visible">
         <Table>
           <TableHeader>
@@ -328,7 +328,7 @@ function VirtualizedRascunhosTable({ rascunhos, onInutilizar }) {
   const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
 
   return (
-    <div ref={parentRef} className="hidden lg:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
+    <div ref={parentRef} className="hidden desktop-layout:block min-w-0 overflow-auto" style={VIRTUAL_LIST_STYLE}>
       <Table>
         <TableHeader>
           <TableRow className="border-b border-border/40">

@@ -206,7 +206,7 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-                className="h-8 w-8 md:max-lg:h-11 md:max-lg:w-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500"
+                className="h-8 w-8 tablet-landscape:h-11 tablet-landscape:w-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500"
                 aria-label="Excluir rascunho"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -298,14 +298,14 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden font-din-1451 md:max-lg:min-h-[88px]"
+        className="group relative w-full min-w-0 box-border bg-muted rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden font-din-1451 tablet-landscape:min-h-[88px]"
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
           <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
         )}
 
-        <div className="w-full min-w-0 px-2 py-1.5 md:max-lg:px-4 md:max-lg:py-3 overflow-hidden">
+        <div className="w-full min-w-0 px-2 py-1.5 tablet-landscape:px-4 tablet-landscape:py-3 overflow-hidden">
           {/* Linha principal */}
           <div className="flex w-full min-w-0 items-center justify-between gap-1.5 overflow-hidden">
             <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
@@ -330,10 +330,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden" style={{maxWidth: '55%'}}>
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm md:max-lg:text-base font-semibold text-foreground leading-normal">
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm tablet-landscape:text-base font-semibold text-foreground leading-normal">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
-                    <p className="mt-0.5 text-sm md:max-lg:text-base font-medium text-foreground/85 leading-normal truncate">
+                    <p className="mt-0.5 text-sm tablet-landscape:text-base font-medium text-foreground/85 leading-normal truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-0.5">
@@ -430,7 +430,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
   return (
     <div className={`w-full space-y-2 font-din-1451 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between border-b border-border/50 dark:border-white/10 px-1 py-2 gap-2 group">
-        <p className="text-sm md:max-lg:text-base font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
+        <p className="text-sm tablet-landscape:text-base font-bold uppercase tracking-wide text-foreground/80 leading-normal truncate min-w-0 flex-1">
           {label}
         </p>
         <div className="flex items-center gap-1.5 flex-none shrink-0">
@@ -440,7 +440,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       </button>
       {open && (
         <>
-          <P38MobileLineList className="md:hidden">
+          <P38MobileLineList className="desktop-layout:hidden">
             {pedidos.map((p, index) => (
               <PedidoMobileLine
                 key={p._virtual_key || p.id}
@@ -455,7 +455,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
               />
             ))}
           </P38MobileLineList>
-          <div className="hidden md:block space-y-2">
+          <div className="hidden desktop-layout:block space-y-2">
             {pedidos.map(p => (
               <PedidoCard
                 key={p._virtual_key || p.id}

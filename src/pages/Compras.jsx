@@ -246,7 +246,7 @@ const PedidosCompraTab = () => {
         ) : (
           <>
             {/* Desktop Table View */}
-            <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto">
+            <P38TableShell className="hidden desktop-layout:block min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

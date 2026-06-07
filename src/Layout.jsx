@@ -13,7 +13,7 @@ import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
-import { TABLET_MIN } from '@/hooks/use-breakpoint';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -29,7 +29,7 @@ const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useCompactShell();
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -50,18 +50,12 @@ export default function Layout({ children, currentPageName }) {
   const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);
 
   useEffect(() => {
-    const checkMobile = () => {
-      // Smartphone: bottom nav. Tablet+ (≥768): sidebar como no desktop.
-      const mobile = window.innerWidth < TABLET_MIN;
-      setIsMobile(mobile);
-      if (!mobile) {
-        setIsOpen(false);
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
+    if (!isMobile) {
+      setIsOpen(false);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
     loadUser();
     
     const savedTheme = localStorage.getItem('theme');
@@ -70,7 +64,6 @@ export default function Layout({ children, currentPageName }) {
       document.documentElement.classList.add('dark');
     }
     
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const loadUser = async () => {
@@ -307,7 +300,7 @@ export default function Layout({ children, currentPageName }) {
               {children}
             </div>
           ) : (
-            <div className="p-4 md:p-6 md:max-lg:p-7 overflow-x-hidden max-w-full">
+            <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
               {children}
             </div>
           )}

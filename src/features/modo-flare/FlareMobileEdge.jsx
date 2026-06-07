@@ -61,7 +61,7 @@ export default function FlareMobileEdge() {
 
   return (
     <div
-      className="fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[10040] flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/80 text-muted-foreground shadow-sm backdrop-blur-sm opacity-65 transition-opacity hover:opacity-90 active:opacity-100 dark:bg-muted/85 dark:text-muted-foreground md:hidden"
+      className="fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[10040] flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/80 text-muted-foreground shadow-sm backdrop-blur-sm opacity-65 transition-opacity hover:opacity-90 active:opacity-100 dark:bg-muted/85 dark:text-muted-foreground desktop-layout:hidden"
       style={{ touchAction: 'none' }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}

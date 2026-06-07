@@ -393,7 +393,7 @@ export default function SugestaoCompra() {
         </DrawerContent>
       </Drawer>
 
-      <div className="hidden lg:block px-2 lg:px-0">
+      <div className="hidden desktop-layout:block px-2 lg:px-0">
         <div className="rounded-2xl bg-card p-4 shadow-sm">
           {filtersPanel}
         </div>
@@ -405,7 +405,7 @@ export default function SugestaoCompra() {
           <p className="text-muted-foreground">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
       ) : (
-        <div className="hidden lg:block rounded-xl min-w-0 overflow-x-auto bg-card shadow-sm">
+        <div className="hidden desktop-layout:block rounded-xl min-w-0 overflow-x-auto bg-card shadow-sm">
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr className="border-b border-border/40">

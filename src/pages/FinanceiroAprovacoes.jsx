@@ -368,7 +368,7 @@ export default function FinanceiroAprovacoesPage() {
             </div>
           ) : (
             <>
-              <P38TableShell className="hidden lg:block min-w-0 overflow-x-auto">
+              <P38TableShell className="hidden desktop-layout:block min-w-0 overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-background/80">
                     <TableRow className="border-0">
@@ -457,7 +457,7 @@ export default function FinanceiroAprovacoesPage() {
                 </Table>
               </P38TableShell>
 
-              <P38MobileLineList className="lg:hidden">
+              <P38MobileLineList className="desktop-layout:hidden">
                 {filteredPedidos.map((pedido, index) => {
                   const statusLabel =
                     activeTab === 'aprovados' ? 'Aprovado' : activeTab === 'rejeitados' ? 'Rejeitado' : 'Pendente';

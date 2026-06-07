@@ -822,7 +822,7 @@ export default function AgefinConsulta() {
                     {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
                   </span>
                 </div>
-                <P38MobileLineList className="block lg:hidden rounded-lg">
+                <P38MobileLineList className="block desktop-layout:hidden rounded-lg">
                   {grupo.contas.map((conta, index) => (
                     <ContaLinhaP38
                       key={conta.id}
@@ -836,7 +836,7 @@ export default function AgefinConsulta() {
                     />
                   ))}
                 </P38MobileLineList>
-                <div className="hidden lg:block space-y-2">
+                <div className="hidden desktop-layout:block space-y-2">
                   {grupo.contas.map((conta, index) => (
                     <ContaCard
                       key={conta.id}

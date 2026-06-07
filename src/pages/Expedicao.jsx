@@ -95,7 +95,7 @@ export default function ExpedicaoPage() {
               ))}
             </P38MobileLineList>
 
-            <Card className="hidden lg:block">
+            <Card className="hidden desktop-layout:block">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-indigo-600" />
