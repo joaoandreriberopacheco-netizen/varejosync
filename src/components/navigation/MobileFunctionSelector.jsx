@@ -19,7 +19,7 @@ function useDarkMode() {
   return isDark;
 }
 
-export default function MobileFunctionSelector({ isOpen, onClose, menuItems = [], currentUser }) {
+export default function MobileFunctionSelector({ isOpen, onClose, menuItems = [], currentUser, searchableItems = [] }) {
   const location = useLocation();
   const isDark = useDarkMode();
   const [activeGroup, setActiveGroup] = useState(null);
@@ -56,7 +56,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
           </button>
         </div>
 
-        <MenuSearchBar isDark={isDark} onOpen={onClose} />
+        <MenuSearchBar isDark={isDark} onOpen={onClose} searchableItems={searchableItems} />
       </div>
 
       {!activeGroup ? (

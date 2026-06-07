@@ -30,6 +30,8 @@ export default function GlacialSidebar({
   currentUser: currentUserProp,
   darkMode: darkModeProp,
   toggleDarkMode,
+  searchableItems = [],
+  onSearchCollapsedActivate,
 }) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [currentUser, setCurrentUser] = useState(currentUserProp || null);
@@ -156,6 +158,8 @@ export default function GlacialSidebar({
             isDark={isDark}
             expanded={isOpen}
             onOpen={isMobile ? closeMobileMenu : undefined}
+            onCollapsedActivate={onSearchCollapsedActivate}
+            searchableItems={searchableItems}
             className={isOpen ? "mb-2 mx-1" : "mb-1"}
           />
 

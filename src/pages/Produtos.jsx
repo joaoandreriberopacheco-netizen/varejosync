@@ -1130,7 +1130,7 @@ function ProdutosPageContent() {
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 bg-card">
+        <div className="fixed inset-0 z-50 bg-background dark:bg-[#1f1d22]">
           <ProdutoFormCompleto
             produto={selectedProduto}
             produtoSimilarBase={produtoSimilarBase}

@@ -36,6 +36,17 @@ import {
 import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } from '@/lib/produtoEmbalagensAdapter';
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 
+const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
+const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
+const P38_TAB_LIST = 'grid grid-cols-5 w-full bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
+const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#4a5240] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#26262e]/35 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
+const P38_TAB_ICON = 'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#4a5240] dark:group-data-[state=active]:text-[#a4ce33]';
+const P38_TAB_LABEL = 'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-foreground';
+const P38_INPUT = 'bg-secondary/80 dark:bg-[#26262e] border-0 rounded-lg h-10 text-sm text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-border/60';
+const P38_INPUT_UNDERLINE = 'bg-transparent border-0 border-b border-border/40 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#4a5240] dark:focus:border-[#a4ce33]';
+const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-card/70 dark:bg-[#2d333b]/90 p-4';
+const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
+
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
   let h = 5381;
@@ -1088,9 +1099,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   ]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-card">
+    <div className={P38_FORM_ROOT}>
       {/* Header */}
-      <div className="flex-none border-b border-border/40 bg-card">
+      <div className={P38_FORM_HEADER}>
         <div className="p-4 md:p-6">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -1137,7 +1148,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
                 <X className="w-5 h-5 text-muted-foreground" />
               </Button>
-              <Button size="icon" onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-muted text-white h-10 w-10">
+              <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
                 <Save className="w-5 h-5" />
               </Button>
             </div>
@@ -1147,7 +1158,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
       {vendasUnitOptions.length > 0 && (
         <div
-          className="flex-none border-b border-border/40 bg-gradient-to-r from-muted/40 to-muted/60 dark:from-muted/40 dark:to-muted/60 px-4 md:px-6 py-3"
+          className="flex-none border-b border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50 px-4 md:px-6 py-3"
           title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1180,8 +1191,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     title={opt.is_primary ? 'Precificação na unidade base' : `Precificação em ${opt.unidade}`}
                     className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
                       active
-                        ? 'border-border/40 bg-background text-white dark:border-white dark:bg-card dark:text-foreground'
-                        : 'border-border/40 bg-card text-foreground/90 hover:border-border/40 dark:border-border/40 dark:bg-muted dark:text-foreground dark:hover:border-border/40'
+                        ? 'border-[#4a5240]/40 bg-[#4a5240] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+                        : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#4a5240]/30 dark:hover:border-[#a4ce33]/30'
                     }`}
                   >
                     {opt.unidade}
@@ -1207,26 +1218,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       )}
 
       <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="grid grid-cols-5 w-full bg-transparent border-b border-border/40 rounded-none h-auto p-0 flex-shrink-0">
-          <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-3 text-xs md:text-sm">
-            <Package className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
-            <span className="hidden sm:inline ml-2 text-foreground/90">Identificação</span>
+        <TabsList className={P38_TAB_LIST}>
+          <TabsTrigger value="descritivo" className={P38_TAB_TRIGGER}>
+            <Package className={P38_TAB_ICON} />
+            <span className={P38_TAB_LABEL}>Identificação</span>
           </TabsTrigger>
-          <TabsTrigger value="comercial" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-3 text-xs md:text-sm">
-            <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
-            <span className="hidden sm:inline ml-2 text-foreground/90">Precificação</span>
+          <TabsTrigger value="comercial" className={P38_TAB_TRIGGER}>
+            <DollarSign className={P38_TAB_ICON} />
+            <span className={P38_TAB_LABEL}>Precificação</span>
           </TabsTrigger>
-          <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-3 text-xs md:text-sm">
-            <Warehouse className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
-            <span className="hidden sm:inline ml-2 text-foreground/90">Embalagens e logística</span>
+          <TabsTrigger value="logistico" className={P38_TAB_TRIGGER}>
+            <Warehouse className={P38_TAB_ICON} />
+            <span className={P38_TAB_LABEL}>Embalagens e logística</span>
           </TabsTrigger>
-          <TabsTrigger value="historico" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-3 text-xs md:text-sm" disabled={!produto?.id}>
-            <History className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
-            <span className="hidden sm:inline ml-2 text-foreground/90">Histórico</span>
+          <TabsTrigger value="historico" className={P38_TAB_TRIGGER} disabled={!produto?.id}>
+            <History className={P38_TAB_ICON} />
+            <span className={P38_TAB_LABEL}>Histórico</span>
           </TabsTrigger>
-          <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-border/40 dark:data-[state=active]:border-border/40 rounded-none py-3 text-xs md:text-sm">
-            <Settings className="w-4 h-4 md:w-5 md:h-5 text-foreground/90 dark:text-muted-foreground" />
-            <span className="hidden sm:inline ml-2 text-foreground/90">Avançado</span>
+          <TabsTrigger value="sistema" className={P38_TAB_TRIGGER}>
+            <Settings className={P38_TAB_ICON} />
+            <span className={P38_TAB_LABEL}>Avançado</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1234,35 +1245,41 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           {/* ABA IDENTIFICAÇÃO — `descritivo` no estado interno das abas */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
             {!produto?.id && (
-              <div className="rounded-3xl bg-muted/50/50 p-4 md:p-5 shadow-sm space-y-3">
+              <div className={`${P38_SECTION} space-y-3`}>
                 <div className="flex items-center gap-2">
-                  <Copy className="w-4 h-4 text-muted-foreground" />
+                  <Copy className="w-4 h-4 p38-text-accent" />
                   <Label className="text-sm font-semibold text-foreground/90">Produto similar</Label>
                 </div>
-                <Input
-                  value={similarSearch}
-                  onChange={(e) => setSimilarSearch(e.target.value)}
-                  placeholder="Buscar produto irmão para usar como base"
-                  className="h-12 rounded-2xl border-0 bg-card shadow-sm text-sm text-foreground"
-                />
-                <div className="space-y-2">
-                  {produtosSimilaresFiltrados.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => applyProdutoSimilar(item)}
-                      className="w-full rounded-2xl bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted dark:hover:bg-background"
-                    >
-                      <p className="text-sm font-medium text-foreground">{item.nome}</p>
-                      <p className="text-xs text-muted-foreground">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
-                    </button>
-                  ))}
+                <div className="relative">
+                  <Input
+                    value={similarSearch}
+                    onChange={(e) => setSimilarSearch(e.target.value)}
+                    placeholder="Buscar produto irmão para usar como base"
+                    className={`${P38_INPUT} h-11`}
+                  />
+                  {similarSearch.trim() && produtosSimilaresFiltrados.length > 0 ? (
+                    <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl border border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b] shadow-lg">
+                      <div className="max-h-48 overflow-y-auto p-1">
+                        {produtosSimilaresFiltrados.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => applyProdutoSimilar(item)}
+                            className="w-full rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-secondary/60 dark:hover:bg-[#26262e]"
+                          >
+                            <p className="text-sm font-medium text-foreground">{item.nome}</p>
+                            <p className="text-xs text-muted-foreground">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 items-start p-4 bg-muted/50/50 rounded-lg">
-              <div className="w-28 h-28 shrink-0 bg-card dark:bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+            <div className={`flex flex-col sm:flex-row gap-4 items-start ${P38_SECTION}`}>
+              <div className="w-28 h-28 shrink-0 bg-secondary/80 dark:bg-[#26262e] rounded-lg flex items-center justify-center overflow-hidden border border-border/40 dark:border-white/10">
                 {formData.imagem_url ? (
                   <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -1276,7 +1293,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     value={formData.imagem_url || ''} 
                     onChange={e => handleChange('imagem_url', e.target.value)} 
                     placeholder="https://..." 
-                    className="flex-1 bg-card border-border/40 dark:border-border/40 h-10 text-sm"
+                    className={`flex-1 ${P38_INPUT}`}
                   />
                   <div className="relative">
                     <input
@@ -1291,7 +1308,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="h-10 px-4 text-sm border-border/40 dark:border-border/40 dark:text-foreground"
+                      className={`h-10 px-4 text-sm ${P38_INPUT} border border-border/40 dark:border-white/10`}
                       disabled={isUploading}
                       onClick={() => document.getElementById('image-upload').click()}
                     >
@@ -1313,14 +1330,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             {/* Campos Hierárquicos */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-3">
-                <Label className="text-sm font-semibold text-foreground/90">Descrição Hierárquica</Label>
+                <Label className="text-sm font-semibold p38-text-accent">Descrição Hierárquica</Label>
               </div>
 
               {/* Preview do nome gerado */}
               {formData.nome && (
-                <div className="mb-4 px-3 py-2 bg-muted/50/60 rounded-lg">
+                <div className="mb-4 px-3 py-2 rounded-lg border border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50">
                   <p className="text-[10px] text-muted-foreground uppercase mb-1">Preview da Descrição Completa</p>
-                  <p className="text-sm font-medium text-foreground font-glacial">{formData.nome}</p>
+                  <p className="text-sm font-medium text-foreground font-din-1451 uppercase tracking-wide">{formData.nome}</p>
                 </div>
               )}
 
@@ -1339,7 +1356,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                       value={formData[field] || ''}
                       onChange={e => handleChange(field, e.target.value)}
                       placeholder={placeholder}
-                      className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-9 text-sm text-foreground focus:border-border/40"
+                      className={P38_INPUT_UNDERLINE}
                     />
                   </div>
                 </div>
@@ -1353,7 +1370,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 value={formData.marca || ''}
                 onChange={e => handleChange('marca', e.target.value)}
                 placeholder="Ex: Knauf, Placo, Eternit"
-                className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                className={P38_INPUT_UNDERLINE}
               />
             </div>
 
@@ -1374,7 +1391,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={formData.codigo_barras} 
                   onChange={e => handleChange('codigo_barras', e.target.value)} 
                   placeholder="7891234567890" 
-                  className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                  className={P38_INPUT_UNDERLINE}
                 />
               </div>
             </div>
@@ -1382,7 +1399,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
               <Select value={formData.categoria_id} onValueChange={v => handleChange('categoria_id', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none h-10 text-sm text-foreground">
+                <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Selecione a categoria..." />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -1400,7 +1417,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 handleChange('fornecedor_padrao_id', v);
                 handleChange('fornecedor_padrao_codigo', forn?.codigo_interno || '');
               }}>
-                <SelectTrigger className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none h-10 text-sm text-foreground">
+                <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Selecione o fornecedor..." />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
@@ -1431,7 +1448,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                   placeholder="Ex: torneira, banheiro" 
-                  className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                  className={P38_INPUT_UNDERLINE}
                 />
                 <Button type="button" onClick={handleAddTag} size="sm" variant="ghost" className="h-10 px-3">
                   <Plus className="w-5 h-5 text-foreground/90 dark:text-muted-foreground" />
@@ -1681,7 +1698,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={formData.dimensoes_cm}
                   onChange={(e) => handleChange('dimensoes_cm', e.target.value)}
                   placeholder="30x20x15"
-                  className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                  className={P38_INPUT_UNDERLINE}
                 />
               </div>
 
@@ -1703,7 +1720,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={formData.peso_kg}
                   onChange={(e) => handleChange('peso_kg', parseFloat(e.target.value) || 0)}
                   placeholder="0,000"
-                  className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                  className={P38_INPUT_UNDERLINE}
                 />
               </div>
 
@@ -1714,7 +1731,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={formData.tempo_reposicao_dias}
                   onChange={(e) => handleChange('tempo_reposicao_dias', parseInt(e.target.value, 10) || 0)}
                   placeholder="0"
-                  className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                  className={P38_INPUT_UNDERLINE}
                 />
               </div>
 
@@ -1886,7 +1903,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     value={formData.estoque_minimo}
                     onChange={(e) => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
-                    className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                    className={P38_INPUT_UNDERLINE}
                   />
                 </div>
                 <div>
@@ -1897,7 +1914,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     value={formData.estoque_ideal}
                     onChange={(e) => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
-                    className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                    className={P38_INPUT_UNDERLINE}
                   />
                 </div>
                 <div>
@@ -1908,7 +1925,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     value={formData.estoque_maximo}
                     onChange={(e) => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)}
                     placeholder="0,0000"
-                    className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground"
+                    className={P38_INPUT_UNDERLINE}
                   />
                 </div>
                 <div>
@@ -1940,7 +1957,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Tipo de Produto *</Label>
               <Select value={formData.tipo} onValueChange={v => handleChange('tipo', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none h-10 text-sm text-foreground">
+                <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
