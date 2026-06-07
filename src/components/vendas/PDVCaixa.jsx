@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { navigateBackOr } from '@/lib/navigateBackOr';
 import { createPageUrl } from '@/components/utils';
@@ -49,8 +50,13 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { buildPedidoIdsReceitasTurno, isPedidoVendaNoTurnoCaixa } from '@/lib/pdvCaixaTurnoVendas';
-import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import {
+  caixaTurnoQueryKey,
+  fetchCaixaTurnoSnapshot,
+  CAIXA_IDLE_SYNC_AFTER_MS,
+  CAIXA_IDLE_SYNC_TICK_MS,
+  CAIXA_SUBSCRIBE_DEBOUNCE_MS,
+} from '@/lib/caixaTurnoData';
 import {
   CAIXA_PRINT,
   CAIXA_TOAST_SUCCESS,
@@ -70,10 +76,6 @@ import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoe
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { getCachedUserSession } from '@/lib/userSessionCache';
-
-/** Sem interação por este tempo → `loadData()` em silêncio (se não houver fluxo bloqueante aberto). */
-const PDV_CAIXA_IDLE_SYNC_AFTER_MS = 4 * 60 * 1000;
-const PDV_CAIXA_IDLE_SYNC_TICK_MS = 45 * 1000;
 
 function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, formatarValorExibicao }) {
   return (
@@ -157,6 +159,7 @@ export default function PDVCaixa({
   initialVendasView = 'aguardando',
 } = {}) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const handleClose = () => {
     if (overlayMode && onClose) {
       onClose();
@@ -292,6 +295,7 @@ export default function PDVCaixa({
 
   const lastUserActivityAtRef = useRef(Date.now());
   const loadDataRef = useRef(null);
+  const subscribeDebounceRef = useRef(null);
   const idleSyncBlockedRef = useRef(false);
 
   // Renamed stats to caixaData and updated structure based on outline
@@ -378,14 +382,32 @@ export default function PDVCaixa({
     }
   };
 
-  // Subscription em tempo real para novos rascunhos
+  const applySnapshot = useCallback((snapshot) => {
+    if (!snapshot) return;
+    setContaCaixaPDV(snapshot.caixa);
+    setPedidosAguardando(snapshot.pedidosAguardando);
+    setRascunhosAguardando(snapshot.rascunhosAguardando);
+    setSubstituicoesCtx(snapshot.substituicoesCtx);
+    setVendasTurnoTodos(snapshot.vendasTurno);
+    setVendasFinalizadas(snapshot.vendasFinalizadas);
+    setMovimentos(snapshot.movimentos);
+    setCaixaData(snapshot.caixaData);
+  }, []);
+
+  // Subscription em tempo real para novos rascunhos (debounce evita rajadas)
   useEffect(() => {
     const unsubscribe = base44.entities.RascunhoPedidoVenda.subscribe((event) => {
       if (event.type === 'create' || event.type === 'update') {
-        loadData();
+        if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
+        subscribeDebounceRef.current = setTimeout(() => {
+          loadDataRef.current?.();
+        }, CAIXA_SUBSCRIBE_DEBOUNCE_MS);
       }
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe?.();
+      if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
+    };
   }, [caixaSelecionado, turnoAtivo]);
 
   useEffect(() => {
@@ -513,127 +535,24 @@ export default function PDVCaixa({
 
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
-  const loadData = async (caixaParam, turnoParam) => {
+  const loadData = useCallback(async (caixaParam, turnoParam) => {
     const caixa = caixaParam || caixaSelecionado;
     const turno = turnoParam || turnoAtivo;
     if (!caixa || !turno) return;
 
     try {
-      // Recarregar conta atualizada do banco
-      const contaAtualizada = await base44.entities.ContasFinanceiras.get(caixa.id);
-      const caixaAtual = contaAtualizada || caixa;
-      setContaCaixaPDV(caixaAtual);
-
-      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw, receitasTurno, todosVales, todasDevolucoes] = await Promise.all([
-        base44.entities.PedidoVenda.list(),
-        base44.entities.RascunhoPedidoVenda.list(),
-        base44.entities.MovimentosCaixa.list(),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Receita' }),
-        base44.entities.ValeCompra.list(),
-        base44.entities.DevolucaoTroca.list(),
-      ]);
-
-      // Filtrar despesas: excluir as que foram geradas automaticamente para sangrias/recolhimentos
-      const todasDespesas = todasDespesasRaw.filter(d => {
-        if (d.referencia_tipo === 'MovimentosCaixa') return false;
-        return true;
+      const snapshot = await queryClient.fetchQuery({
+        queryKey: [...caixaTurnoQueryKey(turno.id, caixa.id), 'live', 'sem-itens'],
+        queryFn: () =>
+          fetchCaixaTurnoSnapshot({
+            turno,
+            caixa,
+            incluirRascunhos: true,
+            rascunhoExigirItens: false,
+          }),
+        staleTime: 30_000,
       });
-
-      const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
-        p.status === 'Aguardando Caixa'
-      );
-
-      const rascunhosAguardandoCaixa = todosRascunhos.filter((r) => {
-        const status = r.status;
-        const pedidoVendaVinculado = r.pedido_venda_final_id || r.pedido_venda_id;
-        const temSenha = !!r.senha_atendimento;
-        return status === 'Aguardando Caixa' && temSenha && !pedidoVendaVinculado;
-      });
-
-      setPedidosAguardando(pedidosAguardandoCaixa);
-      setRascunhosAguardando(rascunhosAguardandoCaixa);
-
-      // Vendas do turno: turno_caixa_id no pedido, snapshot vendas_ids, receitas com referencia PedidoVenda,
-      // ou (turno aberto) legado sem selo no pedido mas mesma conta e data dentro do turno.
-      const pedidoIdsReceitaTurno = buildPedidoIdsReceitasTurno(receitasTurno || []);
-      const vendasTurno = todosPedidos.filter((p) =>
-        isPedidoVendaNoTurnoCaixa(p, {
-          turno,
-          caixa: caixaAtual,
-          pedidoIdsDasReceitasDoTurno: pedidoIdsReceitaTurno,
-          incluirRetrocompatSemTurno: !turno.data_fechamento,
-        })
-      );
-      const subCtx = buildSubstituicoesVendaCaixa({
-        vendas: vendasTurno,
-        vales: todosVales,
-        devolucoes: todasDevolucoes,
-      });
-      setSubstituicoesCtx(subCtx);
-      setVendasTurnoTodos(vendasTurno);
-      setVendasFinalizadas(subCtx.vendasParaExibicao);
-
-      // Filtrar movimentos do turno ativo
-      const movimentosTurno = todasMovimentacoes.filter((m) =>
-        m.turno_caixa_id === turno.id &&
-        m.conta_id === caixa.id
-      );
-      setMovimentos(movimentosTurno);
-
-      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0, totalFiado = 0;
-      vendasTurno.forEach((venda) => {
-        if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
-          venda.pagamentos.forEach((pag) => {
-            const fp = (pag.forma_pagamento || '').toLowerCase();
-            if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
-            else if (fp === 'pix') totalPix += pag.valor || 0;
-            else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
-            else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
-            else if (fp.includes('vale')) totalVale += pag.valor || 0;
-            else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiado += pag.valor || 0;
-          });
-        }
-      });
-
-      // Fiado NÃO entra na liquidez do caixa (é a receber, não está na gaveta)
-      const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
-      const totalVendas = subCtx.totalVendasUtil;
-
-      const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + (m.valor || 0), 0);
-      const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + (m.valor || 0), 0);
-      const totalDespesas = todasDespesas.reduce((sum, d) => sum + (d.valor || 0), 0);
-
-      const saldoInicial = roundToTwoDecimals(turno.saldo_inicial || 0);
-      // Saldo em caixa (dinheiro na gaveta) = saldo inicial + dinheiro recebido + reforços - recolhimentos - despesas
-      const saldoCaixaCalculado = roundToTwoDecimals(
-        saldoInicial + totalDinheiro + totalReforcos - totalSangrias - totalDespesas
-      );
-      // Liquidez total do turno = apenas vendas MONETÁRIAS (excluindo fiado que não entrou no caixa)
-      const liquidezTurno = roundToTwoDecimals(
-        saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas
-      );
-
-      setCaixaData({
-        saldoInicial: saldoInicial,
-        saldoAtual: saldoCaixaCalculado,
-        liquidez: liquidezTurno,
-        totalVendas: roundToTwoDecimals(totalVendas),
-        qtdSubstituicoes: subCtx.qtdSubstituicoes,
-        valorSubstituidoNaoSoma: subCtx.valorSubstituidoNaoSoma,
-        recebimentos: {
-          dinheiro: roundToTwoDecimals(totalDinheiro),
-          pix: roundToTwoDecimals(totalPix),
-          credito: roundToTwoDecimals(totalCredito),
-          debito: roundToTwoDecimals(totalDebito),
-          vale: roundToTwoDecimals(totalVale),
-          fiado: roundToTwoDecimals(totalFiado),
-        },
-        reforcos: roundToTwoDecimals(totalReforcos),
-        sangrias: roundToTwoDecimals(totalSangrias),
-        despesas: roundToTwoDecimals(totalDespesas),
-        despesasLista: todasDespesas,
-      });
+      applySnapshot(snapshot);
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
       toast({
@@ -642,7 +561,7 @@ export default function PDVCaixa({
         variant: "destructive"
       });
     }
-  };
+  }, [caixaSelecionado, turnoAtivo, queryClient, applySnapshot, toast]);
 
   loadDataRef.current = loadData;
 
@@ -692,14 +611,14 @@ export default function PDVCaixa({
     if (showSeletorCaixa || !turnoAtivo?.id || !caixaSelecionado?.id) return undefined;
     const tick = window.setInterval(() => {
       if (idleSyncBlockedRef.current) return;
-      if (Date.now() - lastUserActivityAtRef.current < PDV_CAIXA_IDLE_SYNC_AFTER_MS) return;
+      if (Date.now() - lastUserActivityAtRef.current < CAIXA_IDLE_SYNC_AFTER_MS) return;
       const run = loadDataRef.current;
       if (typeof run === 'function') {
         void run().finally(() => {
           lastUserActivityAtRef.current = Date.now();
         });
       }
-    }, PDV_CAIXA_IDLE_SYNC_TICK_MS);
+    }, CAIXA_IDLE_SYNC_TICK_MS);
     return () => window.clearInterval(tick);
   }, [showSeletorCaixa, turnoAtivo?.id, caixaSelecionado?.id]);
 
