@@ -100,7 +100,8 @@ function CatalogoMobileSacredAxis({ className = '' }) {
   return (
     <div
       className={cn(
-        'pointer-events-none absolute inset-y-0 z-[1] w-px bg-border/50 dark:bg-white/15',
+        'pointer-events-none absolute inset-y-0 z-[10] w-0',
+        'border-l border-border/50 dark:border-white/20',
         className,
       )}
       style={{ left: CATALOG_AXIS_LEFT }}
@@ -355,7 +356,7 @@ function CatalogoMobileColumnHeader({ className = '' }) {
   return (
     <div className={cn(p38Table.catalogMobileHeader, 'relative overflow-hidden', className)}>
       <CatalogoMobileSacredAxis />
-      <div className={cn('relative z-[2] flex min-w-0 py-3 pr-12', CATALOG_ROW_PL)}>
+      <div className={cn('relative flex min-w-0 py-3 pr-12', CATALOG_ROW_PL)}>
         <CatalogoMobileQtdColShell className="!py-2.5">
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
@@ -579,7 +580,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
       <div className="relative border-x border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
         <CatalogoMobileColumnHeader />
-        <div className="relative z-[2] rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
+        <div className="relative rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">
           {pagedRows.map(row => (
             <div key={row.key} className="contain-layout">
               {row.type === 'group' ? (
