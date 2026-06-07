@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { ChevronRight, DollarSign, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -353,9 +353,22 @@ function PricingDialog({ produto, open, onOpenChange }) {
   );
 }
 
-function CatalogoMobileColumnHeader({ className = '' }) {
+const CatalogoMobileColumnHeader = React.forwardRef(function CatalogoMobileColumnHeader(
+  { className = '', invisible = false, pinStyle = null },
+  ref,
+) {
   return (
-    <div className={cn(p38Table.catalogMobileHeader, 'relative', className)}>
+    <div
+      ref={ref}
+      className={cn(
+        p38Table.catalogMobileHeader,
+        pinStyle && p38Table.catalogMobileHeaderPinned,
+        'relative',
+        invisible && 'invisible pointer-events-none',
+        className,
+      )}
+      style={pinStyle || undefined}
+    >
       <CatalogoMobileSacredAxis />
       <div className={cn('relative flex min-w-0 py-3.5 pr-12', CATALOG_ROW_PL)}>
         <CatalogoMobileQtdColShell className="!py-2">
@@ -382,6 +395,59 @@ function CatalogoMobileColumnHeader({ className = '' }) {
       </div>
     </div>
   );
+});
+
+function useCatalogMobilePinnedHeader(scrollRef) {
+  const sentinelRef = useRef(null);
+  const [pinned, setPinned] = useState(false);
+  const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const sync = () => {
+      const scrollEl = scrollRef?.current;
+      const usesInnerScroll = Boolean(
+        scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
+      );
+      const anchorRect = usesInnerScroll && scrollEl
+        ? scrollEl.getBoundingClientRect()
+        : { top: 0, left: 0, width: window.innerWidth };
+      const sentinelRect = sentinel.getBoundingClientRect();
+
+      setPinned(sentinelRect.top < anchorRect.top + 0.5);
+      setPinFrame({
+        top: anchorRect.top,
+        left: anchorRect.left,
+        width: anchorRect.width,
+      });
+    };
+
+    const scrollEl = scrollRef?.current;
+    scrollEl?.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', sync);
+
+    const resizeObserver = new ResizeObserver(sync);
+    if (scrollEl) resizeObserver.observe(scrollEl);
+    resizeObserver.observe(sentinel);
+
+    sync();
+    const frame = window.requestAnimationFrame(sync);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      scrollEl?.removeEventListener('scroll', sync);
+      window.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+      window.removeEventListener('orientationchange', sync);
+      resizeObserver.disconnect();
+    };
+  }, [scrollRef]);
+
+  return { sentinelRef, pinned, pinFrame };
 }
 
 function CatalogoMobileTabulatedValues({ produto, className = '' }) {
@@ -527,7 +593,11 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
 });
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit }) {
+export default function MobileHierarquica({ produtos, onEdit, scrollRef }) {
+  const { sentinelRef, pinned, pinFrame } = useCatalogMobilePinnedHeader(scrollRef);
+  const pinStyle = pinned
+    ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width }
+    : null;
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const [page, setPage] = useState(0);
@@ -578,8 +648,17 @@ export default function MobileHierarquica({ produtos, onEdit }) {
 
   return (
     <div className="w-full min-w-0 max-w-full">
-      {/* Cabeçalho de colunas — ancora no topo ao rolar (fora do wrapper relativo da lista). */}
-      <CatalogoMobileColumnHeader className="border-x border-border/40 dark:border-white/10" />
+      <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
+      <CatalogoMobileColumnHeader
+        className="border-x border-border/40 dark:border-white/10"
+        invisible={pinned}
+      />
+      {pinned ? (
+        <CatalogoMobileColumnHeader
+          className="border-x border-border/40 dark:border-white/10"
+          pinStyle={pinStyle}
+        />
+      ) : null}
       <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
         <div className="relative rounded-b-lg border border-t-0 border-border/40 dark:border-white/10 bg-background">

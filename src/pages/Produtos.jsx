@@ -126,6 +126,7 @@ function ProdutosPageContent() {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
+  const mobileCatalogScrollRef = useRef(null);
   // States for unified import (products + costs)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -1115,11 +1116,16 @@ function ProdutosPageContent() {
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div
+                ref={mobileCatalogScrollRef}
                 className="desktop-layout:hidden w-full h-full min-h-0 min-w-0 max-w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 {produtosHeader}
-                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
+                <MobileHierarquica
+                  produtos={filteredProdutos}
+                  onEdit={handleEdit}
+                  scrollRef={mobileCatalogScrollRef}
+                />
               </div>
 
               {isDesktop && viewMode === 'dinamica' && (
