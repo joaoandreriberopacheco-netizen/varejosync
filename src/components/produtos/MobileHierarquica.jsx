@@ -25,6 +25,7 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
+/** Divisor vertical entre coluna qtd/un e bloco descrição+valores (relatório margem expandido). */
 const CATALOGO_MOBILE_QTD_COL =
   'relative w-[3.25rem] flex-shrink-0 border-r border-border/40 dark:border-white/10 pr-1.5 py-2.5 text-right';
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
@@ -98,7 +99,7 @@ function catalogStockAccentKey(stockTone) {
   return 'success';
 }
 
-/** Igual MargemMobileQtdUnCol / relatório compras expandido mobile */
+/** Coluna esquerda: qtd + UN empilhados; border-r separa do bloco descrição/valores à direita. */
 function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success', tier = 'solteiro' }) {
   const accentKey = catalogStockAccentKey(stockTone);
   const dotClass = p38Accent[accentKey]?.dot || p38Table.accentDot;
@@ -321,7 +322,7 @@ function CatalogoMobileColumnHeader({ className = '' }) {
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
         </div>
-        <div className="flex-1 min-w-0 pl-2">
+        <div className="flex-1 min-w-0">
           {CATALOGO_MOBILE_VALUE_ROWS.map((valueRow, rowIdx) => (
             <div
               key={rowIdx}
@@ -376,16 +377,8 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
   const apresent = formatEstoqueApresentacao(p);
   const estoqueExibicao = apresent ? apresent.quantidade : e;
   const unidadeExibicao = apresent ? apresent.sigla : (p.unidade_principal || 'UN');
-  const accentBorder = p38Accent[catalogStockAccentKey(stockTone)].border;
-
   return (
-    <div
-      className={cn(
-        p38Table.catalogMobileRow,
-        'flex min-w-0 max-w-full border-l',
-        accentBorder,
-      )}
-    >
+    <div className={cn(p38Table.catalogMobileRow, 'flex min-w-0 max-w-full')}>
       <button
         type="button"
         className="flex flex-1 min-w-0 text-left active:bg-secondary/30 dark:active:bg-secondary/50"
