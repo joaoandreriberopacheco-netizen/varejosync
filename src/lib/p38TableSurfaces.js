@@ -44,7 +44,8 @@ export const p38Table = {
   mobileLine: 'border-b border-border/50 dark:border-white/10 border-l-2 py-3 pr-3 pl-4 tablet-portrait:py-4 tablet-portrait:pr-4 tablet-portrait:pl-5 tablet-landscape:py-3.5 tablet-landscape:pl-4 min-w-0 bg-background font-din-1451',
   /** Catálogo mobile — fundo transparente; evita blocos cinza sobre a lista */
   catalogMobileRow: 'border-b border-border/50 dark:border-white/10 py-4.5 tablet-portrait:py-5 min-w-0 bg-transparent font-din-1451',
-  catalogMobileHeader: 'sticky top-0 z-40 border-b border-border/40 dark:border-white/10 bg-muted text-foreground shadow-[0_1px_0_rgba(255,255,255,0.06)] supports-[backdrop-filter]:backdrop-blur-sm supports-[backdrop-filter]:bg-muted/98',
+  catalogMobileHeader:
+    'sticky top-0 z-50 border-t-2 border-t-[#4a5240] dark:border-t-[#a4ce33] border-b border-border/40 dark:border-white/10 bg-muted text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.14)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.45)] supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:bg-muted/98',
   /** Mesma linha com barra lateral semântica mais fina (1px) — financeiro */
   mobileLineThin: 'border-b border-border/50 dark:border-white/10 border-l py-3 pr-3 pl-4 min-w-0 bg-background font-din-1451',
   mobileLineInteractive: 'active:bg-secondary/30 cursor-pointer select-none min-h-[52px] tablet-portrait:min-h-[60px] touch-pan-y',

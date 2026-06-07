@@ -24,7 +24,9 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
-const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
+const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
+/** Mesmo tamanho dos valores da tabela; cor mais suave para distinguir rótulos. */
+const CATALOGO_MOBILE_HEADER_LABEL = `${CATALOGO_MOBILE_BODY_TEXT} uppercase tracking-tight text-right text-muted-foreground min-w-0`;
 /** Largura fixa da coluna qtd/un — eixo da linha divisória sagrada (nunca se move). */
 const CATALOGO_MOBILE_QTD_W = '3.25rem';
 const CATALOG_ROW_PL = 'pl-2.5';
@@ -32,7 +34,6 @@ const CATALOG_ROW_PL = 'pl-2.5';
 const CATALOG_AXIS_LEFT = 'calc(0.625rem + 3.25rem)';
 const CATALOGO_MOBILE_QTD_COL =
   'relative shrink-0 pr-1.5 pt-3 pb-3 text-right self-stretch';
-const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 /** Respiro entre a linha vertical e o texto da descrição. */
 const CATALOG_DESC_PL_AFTER_LINE = 12;
 /** Recuo dos filhos só à direita da linha (qtd e divisor ficam fixos). */
@@ -354,10 +355,10 @@ function PricingDialog({ produto, open, onOpenChange }) {
 
 function CatalogoMobileColumnHeader({ className = '' }) {
   return (
-    <div className={cn(p38Table.catalogMobileHeader, 'relative overflow-hidden', className)}>
+    <div className={cn(p38Table.catalogMobileHeader, 'relative', className)}>
       <CatalogoMobileSacredAxis />
-      <div className={cn('relative flex min-w-0 py-3 pr-12', CATALOG_ROW_PL)}>
-        <CatalogoMobileQtdColShell className="!py-2.5">
+      <div className={cn('relative flex min-w-0 py-3.5 pr-12', CATALOG_ROW_PL)}>
+        <CatalogoMobileQtdColShell className="!py-2">
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right`}>EST.</p>
           <p className={`${CATALOGO_MOBILE_HEADER_LABEL} text-right mt-1.5`}>UN</p>
         </CatalogoMobileQtdColShell>
@@ -576,7 +577,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
   }
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-full">
       <div className="relative border-x border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
         <CatalogoMobileColumnHeader />
