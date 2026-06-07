@@ -25,7 +25,7 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 
 const CATALOGO_MOBILE_VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const CATALOGO_MOBILE_HEADER_LABEL = 'font-din-1451 text-[0.6875rem] tablet-landscape:text-xs uppercase tracking-tight text-right leading-none text-muted-foreground min-w-0';
-const CATALOGO_MOBILE_ESTOQUE_BLOCK = 'flex items-baseline gap-1.5 mb-1';
+const CATALOGO_MOBILE_ESTOQUE_BLOCK = 'flex items-baseline gap-1.5 flex-shrink-0';
 const CATALOGO_MOBILE_BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 const CATALOG_CONTENT_PL_BASE = 10;
 const CATALOG_INDENT_STEP = 10;
@@ -372,17 +372,19 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing }) {
         >
           <P38StatusDot tone={stockTone} className="flex-shrink-0 mt-1" />
           <div className="flex-1 min-w-0">
-            <CatalogoMobileEstoqueBlock
-              quantidade={estoqueExibicao}
-              unidade={unidadeExibicao}
-              tier={tier}
-            />
-          <p
-            lang="pt-BR"
-            className={`uppercase break-words [overflow-wrap:anywhere] line-clamp-2 ${catalogNomeClass(tier)}`}
-          >
-            {p.nome}
-          </p>
+            <div className="flex items-start gap-2 min-w-0">
+              <CatalogoMobileEstoqueBlock
+                quantidade={estoqueExibicao}
+                unidade={unidadeExibicao}
+                tier={tier}
+              />
+              <p
+                lang="pt-BR"
+                className={`flex-1 min-w-0 uppercase break-words [overflow-wrap:anywhere] line-clamp-2 ${catalogNomeClass(tier)}`}
+              >
+                {p.nome}
+              </p>
+            </div>
           {p.codigo_interno && (
             <p className={`mt-1 text-[10px] font-mono truncate ${isChild ? 'text-muted-foreground/80' : 'text-muted-foreground'}`}>
               #{p.codigo_interno}
