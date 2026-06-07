@@ -15,8 +15,10 @@ import {
   Clock
 } from 'lucide-react';
 
-import moment from 'moment';
+import { format, startOfDay, startOfMonth, subDays } from 'date-fns';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const dateKey = (value) => format(value instanceof Date ? value : new Date(value), 'yyyy-MM-dd');
 
 export default function DashboardVendedor() {
   const [userData, setUserData] = useState(null);
@@ -39,7 +41,7 @@ export default function DashboardVendedor() {
       setUserData(user);
 
       // Vendas de hoje
-      const hoje = moment().startOf('day').format('YYYY-MM-DD');
+      const hoje = dateKey(startOfDay(new Date()));
       const vendasHj = await base44.entities.PedidoVenda.filter({
         vendedor_id: user.id,
         created_date: { $gte: hoje }
@@ -47,7 +49,7 @@ export default function DashboardVendedor() {
       setVendasHoje(vendasHj);
 
       // Vendas do mês
-      const inicioMes = moment().startOf('month').format('YYYY-MM-DD');
+      const inicioMes = dateKey(startOfMonth(new Date()));
       const vendasM = await base44.entities.PedidoVenda.filter({
         vendedor_id: user.id,
         created_date: { $gte: inicioMes }
@@ -62,7 +64,7 @@ export default function DashboardVendedor() {
 
       // Agendamentos logísticos
       const agenda = await base44.entities.AgendaLogistica.filter({
-        data_agendada: { $gte: moment().format('YYYY-MM-DD') }
+        data_agendada: { $gte: dateKey(new Date()) }
       });
       setAgendamentos(agenda.slice(0, 5));
 
@@ -83,17 +85,15 @@ export default function DashboardVendedor() {
 
   // Dados para gráfico mensal
   const vendasPorDia = React.useMemo(() => {
-    const hoje = moment();
     const dias = [];
     for (let i = 6; i >= 0; i--) {
-      const dia = moment().subtract(i, 'days');
-      const vendasDia = vendasMes.filter(v => 
-        moment(v.created_date).format('YYYY-MM-DD') === dia.format('YYYY-MM-DD')
-      );
+      const dia = subDays(new Date(), i);
+      const diaKey = dateKey(dia);
+      const vendasDia = vendasMes.filter((v) => dateKey(v.created_date) === diaKey);
       const total = vendasDia.reduce((acc, v) => acc + (v.valor_total || 0), 0);
       dias.push({
-        dia: dia.format('DD/MM'),
-        valor: total
+        dia: format(dia, 'dd/MM'),
+        valor: total,
       });
     }
     return dias;
@@ -326,7 +326,7 @@ export default function DashboardVendedor() {
                           {agenda.cliente_nome || 'Cliente'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {moment(agenda.data_entrega).format('DD/MM/YYYY')}
+                          {format(new Date(agenda.data_entrega), 'dd/MM/yyyy')}
                         </p>
                       </div>
                     </div>

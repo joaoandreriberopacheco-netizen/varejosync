@@ -478,7 +478,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     overscan: 10,
     scrollElementRef: scrollContainerRef,
   });
-  const shouldVirtualizeRows = rows.length > 300;
+  const shouldVirtualizeRows = rows.length > 100;
   const visibleRows = useMemo(
     () => shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows,
     [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex]

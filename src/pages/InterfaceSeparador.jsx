@@ -17,8 +17,6 @@ import {
   Camera,
   X
 } from 'lucide-react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
-
 export default function InterfaceSeparador() {
   const queryClient = useQueryClient();
   const [qrInput, setQrInput] = useState('');
@@ -88,13 +86,20 @@ export default function InterfaceSeparador() {
   };
 
   useEffect(() => {
-    if (scannerAtivo && !scannerRef.current) {
+    let cancelled = false;
+
+    async function startScanner() {
+      if (!scannerAtivo || scannerRef.current) return;
+
+      const { Html5QrcodeScanner } = await import('html5-qrcode');
+      if (cancelled) return;
+
       const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        { 
-          fps: 10, 
+        'qr-reader',
+        {
+          fps: 10,
           qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          aspectRatio: 1.0,
         },
         false
       );
@@ -104,21 +109,26 @@ export default function InterfaceSeparador() {
           buscarPedidoMutation.mutate(decodedText);
           pararScanner();
         },
-        (error) => {
-          // Ignora erros de scan contínuo
+        () => {
+          /* ignora erros de scan contínuo */
         }
       );
 
       scannerRef.current = scanner;
     }
 
+    if (scannerAtivo) {
+      startScanner();
+    }
+
     return () => {
+      cancelled = true;
       if (scannerRef.current) {
         scannerRef.current.clear();
         scannerRef.current = null;
       }
     };
-  }, [scannerAtivo]);
+  }, [scannerAtivo, buscarPedidoMutation]);
 
   const handleMarcarItem = (index) => {
     if (itensSeparados.includes(index)) {

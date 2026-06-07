@@ -129,7 +129,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const navigateToLogin = React.useCallback(() => {
+    try {
+      base44.auth.redirectToLogin(window.location.href);
+    } catch (err) {
+      console.warn('redirectToLogin falhou; tentando fallback /login.', err);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+  }, []);
+
+  const logout = React.useCallback((shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
 
@@ -145,31 +156,34 @@ export const AuthProvider = ({ children }) => {
         window.location.href = '/';
       }
     }
-  };
+  }, []);
 
-  const navigateToLogin = () => {
-    try {
-      base44.auth.redirectToLogin(window.location.href);
-    } catch (err) {
-      console.warn('redirectToLogin falhou; tentando fallback /login.', err);
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
-    }
-  };
-
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
+  const contextValue = React.useMemo(
+    () => ({
+      user,
+      isAuthenticated,
       isLoadingAuth,
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
       logout,
       navigateToLogin,
-      checkAppState
-    }}>
+      checkAppState,
+    }),
+    [
+      user,
+      isAuthenticated,
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      authError,
+      appPublicSettings,
+      logout,
+      navigateToLogin,
+    ]
+  );
+
+  return (
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,3 @@
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-
 /**
  * Mobile/tablet: popups e `window.print()` em iframe costumam falhar ou ser bloqueados.
  * Preferimos PDF/HTML via blob + Web Share API ou download.
@@ -50,8 +47,20 @@ export async function shareOrDownloadBlob(blob, filename, mimeType, title) {
 /**
  * Mesma lógica dos comprovantes: captura do DOM → PDF (80mm ou A4).
  */
+async function loadPdfCaptureLibs() {
+  const [html2canvasModule, jspdfModule] = await Promise.all([
+    import('html2canvas'),
+    import('jspdf'),
+  ]);
+  return {
+    html2canvas: html2canvasModule.default,
+    jsPDF: jspdfModule.jsPDF,
+  };
+}
+
 export async function renderElementToPdfBlob(element, { formato = '80mm' } = {}) {
   if (!element) throw new Error('Elemento inválido');
+  const { html2canvas, jsPDF } = await loadPdfCaptureLibs();
   const isA4 = formato === 'a4';
   const canvas = await html2canvas(element, {
     scale: 2,

@@ -26,6 +26,10 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
 const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
 
+const LayoutOutlet = React.memo(function LayoutOutlet({ children }) {
+  return children;
+});
+
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -297,11 +301,11 @@ export default function Layout({ children, currentPageName }) {
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
             <div className="h-full min-h-0 overflow-hidden">
-              {children}
+              <LayoutOutlet>{children}</LayoutOutlet>
             </div>
           ) : (
             <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
-              {children}
+              <LayoutOutlet>{children}</LayoutOutlet>
             </div>
           )}
         </div>

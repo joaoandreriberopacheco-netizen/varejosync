@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,12 @@ import { brandSurface } from '@/lib/brandSurfaces';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { p38Mobile } from '@/lib/p38MobileSurfaces';
+import {
+  measureVirtualItem,
+  P38_VIRTUAL_LIST_MAX_HEIGHT,
+  P38_VIRTUAL_MIN_ROWS,
+  P38_VIRTUAL_OVERSCAN,
+} from '@/lib/p38VirtualList';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -255,6 +262,109 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
       value={formatCurrency(conta.valor)}
       trailing={<Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
     />
+  );
+}
+
+function AgefinGruposVirtualList({
+  grupos,
+  modoSelecao,
+  selecionadosIds,
+  toggleSelecaoConta,
+  setSelectedConta,
+  idsComAvisoDuplicadoGrupo,
+}) {
+  const flatRows = useMemo(() => {
+    const rows = [];
+    grupos.forEach((grupo) => {
+      rows.push({ kind: 'header', key: `h-${grupo.key}`, grupo });
+      grupo.contas.forEach((conta, index) => {
+        rows.push({ kind: 'conta', key: conta.id, conta, index, grupoKey: grupo.key });
+      });
+    });
+    return rows;
+  }, [grupos]);
+
+  const parentRef = useRef(null);
+  const virtualizer = useVirtualizer({
+    count: flatRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: (index) => (flatRows[index]?.kind === 'header' ? 44 : 88),
+    getItemKey: (index) => flatRows[index]?.key ?? index,
+    measureElement: measureVirtualItem,
+    overscan: P38_VIRTUAL_OVERSCAN,
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+
+  return (
+    <div
+      ref={parentRef}
+      className="mx-auto w-full max-w-3xl overflow-y-auto md:max-w-4xl"
+      style={{ maxHeight: P38_VIRTUAL_LIST_MAX_HEIGHT }}
+    >
+      <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        {virtualItems.map((virtualRow) => {
+          const row = flatRows[virtualRow.index];
+          if (!row) return null;
+
+          if (row.kind === 'header') {
+            const { grupo } = row;
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                id={grupoDomId(grupo.key)}
+                className="absolute left-0 top-0 w-full scroll-mt-24 px-0.5 pt-4 first:pt-0"
+                style={{ transform: `translateY(${virtualRow.start}px)` }}
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-muted-foreground">
+                    {grupo.label}
+                  </h2>
+                  <span className="text-[11px] text-muted-foreground">
+                    {grupo.contas.length} · {formatCurrency(grupo.contas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
+                  </span>
+                </div>
+              </div>
+            );
+          }
+
+          const { conta, index } = row;
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              className="absolute left-0 top-0 w-full px-0.5 py-0.5"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <div className="block desktop-layout:hidden">
+                <ContaLinhaP38
+                  conta={conta}
+                  striped={index % 2 === 1}
+                  modoSelecao={modoSelecao}
+                  selecionado={selecionadosIds.includes(conta.id)}
+                  onToggleSelecao={toggleSelecaoConta}
+                  onOpen={() => setSelectedConta(conta)}
+                  avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
+                />
+              </div>
+              <div className="hidden desktop-layout:block">
+                <ContaCard
+                  conta={conta}
+                  striped={index % 2 === 1}
+                  modoSelecao={modoSelecao}
+                  selecionado={selecionadosIds.includes(conta.id)}
+                  onToggleSelecao={toggleSelecaoConta}
+                  onOpen={() => setSelectedConta(conta)}
+                  avisoMesmoGrupoDuplicado={idsComAvisoDuplicadoGrupo.has(conta.id)}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -812,6 +922,15 @@ export default function AgefinConsulta() {
           <div className={`rounded-[24px] p-10 text-center md:rounded-[28px] md:p-12 ${brandSurface.textMuted} ${brandSurface.card}`}>
             Nenhuma conta a pagar encontrada para esse mês e filtros.
           </div>
+        ) : grupos.reduce((acc, g) => acc + g.contas.length, 0) >= P38_VIRTUAL_MIN_ROWS ? (
+          <AgefinGruposVirtualList
+            grupos={grupos}
+            modoSelecao={modoSelecao}
+            selecionadosIds={selecionadosIds}
+            toggleSelecaoConta={toggleSelecaoConta}
+            setSelectedConta={setSelectedConta}
+            idsComAvisoDuplicadoGrupo={idsComAvisoDuplicadoGrupo}
+          />
         ) : (
           <div className="mx-auto w-full max-w-3xl space-y-6 md:max-w-4xl">
             {grupos.map((grupo) => (
