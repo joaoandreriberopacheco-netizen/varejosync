@@ -353,7 +353,7 @@ function PricingDialog({ produto, open, onOpenChange }) {
   );
 }
 
-function CatalogoMobileColumnHeader({ className = '', invisible = false, pinStyle = null }) {
+export function CatalogoMobileColumnHeader({ className = '', invisible = false, pinStyle = null }) {
   return (
     <div
       className={cn(
@@ -546,19 +546,28 @@ function useCatalogColumnHeaderPin(scrollRef) {
 
     const sync = () => {
       const scrollEl = scrollRef.current;
-      if (!scrollEl) return;
-      const scrollRect = scrollEl.getBoundingClientRect();
       const sentinelRect = sentinel.getBoundingClientRect();
-      setPinned(sentinelRect.top < scrollRect.top + 0.5);
+      const usesInnerScroll = Boolean(
+        scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1,
+      );
+      const scrollRect = scrollEl?.getBoundingClientRect();
+      const anchorTop = usesInnerScroll && scrollRect
+        ? scrollRect.top
+        : 48;
+      const anchorLeft = scrollRect?.left ?? 0;
+      const anchorWidth = scrollRect?.width ?? window.innerWidth;
+
+      setPinned(sentinelRect.top < anchorTop + 0.5);
       setPinFrame({
-        top: scrollRect.top,
-        left: scrollRect.left,
-        width: scrollRect.width,
+        top: anchorTop,
+        left: anchorLeft,
+        width: anchorWidth,
       });
     };
 
     const scrollEl = scrollRef.current;
     scrollEl?.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('resize', sync);
     window.addEventListener('orientationchange', sync);
     const resizeObserver = new ResizeObserver(sync);
@@ -570,6 +579,7 @@ function useCatalogColumnHeaderPin(scrollRef) {
     return () => {
       window.cancelAnimationFrame(frame);
       scrollEl?.removeEventListener('scroll', sync);
+      window.removeEventListener('scroll', sync);
       window.removeEventListener('resize', sync);
       window.removeEventListener('orientationchange', sync);
       resizeObserver.disconnect();
@@ -579,10 +589,8 @@ function useCatalogColumnHeaderPin(scrollRef) {
   return { sentinelRef, pinned, pinFrame };
 }
 
-function CatalogoMobileScrollBody({
-  catalogChrome,
-  children,
-}) {
+/** Scroll mobile: amarelo (catalogChrome) some; azul (colunas) fixa ao atingir o topo. */
+export function CatalogoMobileScrollShell({ catalogChrome, children }) {
   const scrollRef = useRef(null);
   const { sentinelRef, pinned, pinFrame } = useCatalogColumnHeaderPin(scrollRef);
   const pinStyle = pinned
@@ -592,7 +600,7 @@ function CatalogoMobileScrollBody({
   return (
     <div
       ref={scrollRef}
-      className="relative flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+      className="flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {catalogChrome}
@@ -613,7 +621,7 @@ function CatalogoMobileScrollBody({
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, catalogChrome = null }) {
+export default function MobileHierarquica({ produtos, onEdit }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const [page, setPage] = useState(0);
@@ -652,55 +660,49 @@ export default function MobileHierarquica({ produtos, onEdit, catalogChrome = nu
 
   if (produtos.length === 0) {
     return (
-      <div className="flex flex-col flex-1 min-h-0 w-full min-w-0 max-w-full">
-        <CatalogoMobileScrollBody catalogChrome={catalogChrome}>
-          <div className="py-16 text-center px-8 border-x border-t-0 border-border/40 dark:border-white/10">
-            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
-            <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
-          </div>
-        </CatalogoMobileScrollBody>
+      <div className="py-16 text-center px-8 border-x border-t-0 border-border/40 dark:border-white/10">
+        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
+        <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 w-full min-w-0 max-w-full">
-      <CatalogoMobileScrollBody catalogChrome={catalogChrome}>
-        <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
-          <CatalogoMobileSacredAxis />
-          <div className="relative border-b border-border/40 dark:border-white/10 bg-background">
-            {pagedRows.map(row => (
-              <div key={row.key}>
-                {row.type === 'group' ? (
-                  <GroupHeader
-                    row={row}
-                    isExpanded={expandedKeys.has(row.key)}
-                    onToggle={handleToggle}
-                  />
-                ) : (
-                  <SkuCard
-                    row={row}
-                    onEdit={onEdit}
-                    onOpenPricing={setPricingProduto}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-          <P38Paginator
-            page={safePage}
-            totalPages={totalPages}
-            pageSize={PAGE_SIZE}
-            totalItems={rows.length}
-            onPageChange={setPage}
-            itemLabel="linhas"
-            className="border-t border-border/40 dark:border-white/10"
-          />
+    <div className="w-full min-w-0 max-w-full">
+      <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
+        <CatalogoMobileSacredAxis />
+        <div className="relative border-b border-border/40 dark:border-white/10 bg-background">
+          {pagedRows.map(row => (
+            <div key={row.key}>
+              {row.type === 'group' ? (
+                <GroupHeader
+                  row={row}
+                  isExpanded={expandedKeys.has(row.key)}
+                  onToggle={handleToggle}
+                />
+              ) : (
+                <SkuCard
+                  row={row}
+                  onEdit={onEdit}
+                  onOpenPricing={setPricingProduto}
+                />
+              )}
+            </div>
+          ))}
         </div>
-      </CatalogoMobileScrollBody>
+        <P38Paginator
+          page={safePage}
+          totalPages={totalPages}
+          pageSize={PAGE_SIZE}
+          totalItems={rows.length}
+          onPageChange={setPage}
+          itemLabel="linhas"
+          className="border-t border-border/40 dark:border-white/10"
+        />
+      </div>
       <PricingDialog
         produto={pricingProduto}
         open={!!pricingProduto}

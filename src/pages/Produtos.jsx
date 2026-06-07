@@ -21,7 +21,7 @@ import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassImageUploader from '../components/produtos/MassImageUploader';
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
-import MobileHierarquica from '../components/produtos/MobileHierarquica';
+import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
 import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
 import ProdutosHeader from '../components/produtos/ProdutosHeader';
@@ -1104,7 +1104,7 @@ function ProdutosPageContent() {
       </div>
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-        <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-4">
+        <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-0 md:pb-4">
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
             <div className="hidden desktop-layout:block">
               <ProdutosCommandBar
@@ -1116,12 +1116,10 @@ function ProdutosPageContent() {
             </div>
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-              <div className="desktop-layout:hidden flex flex-col h-full min-h-0 min-w-0 max-w-full">
-                <MobileHierarquica
-                  produtos={filteredProdutos}
-                  onEdit={handleEdit}
-                  catalogChrome={produtosHeader}
-                />
+              <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
+                <CatalogoMobileScrollShell catalogChrome={produtosHeader}>
+                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
+                </CatalogoMobileScrollShell>
               </div>
 
               {isDesktop && viewMode === 'dinamica' && (
