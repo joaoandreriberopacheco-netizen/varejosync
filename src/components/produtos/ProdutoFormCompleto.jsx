@@ -1254,7 +1254,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <Input
                     value={similarSearch}
                     onChange={(e) => setSimilarSearch(e.target.value)}
-                    placeholder="Buscar produto irmão para usar como base"
+                    placeholder="Buscar similar"
                     className={`${P38_INPUT} h-11`}
                   />
                   {similarSearch.trim() && produtosSimilaresFiltrados.length > 0 ? (
@@ -1292,7 +1292,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <Input 
                     value={formData.imagem_url || ''} 
                     onChange={e => handleChange('imagem_url', e.target.value)} 
-                    placeholder="https://..." 
+                    placeholder="URL"
                     className={`flex-1 ${P38_INPUT}`}
                   />
                   <div className="relative">
@@ -1342,11 +1342,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               )}
 
               {[
-                { field: 'campo_hierarquico_1', label: 'Campo 1 (Produto base) *', placeholder: 'Ex: Placa Dry Wall, Cimento Portland' },
-                { field: 'campo_hierarquico_2', label: 'Campo 2 (Subtipo)', placeholder: 'Ex: Standard, RU, CPIV' },
-                { field: 'campo_hierarquico_3', label: 'Campo 3 (Espessura / Gramatura)', placeholder: 'Ex: 12,5mm, 50kg' },
-                { field: 'campo_hierarquico_4', label: 'Campo 4 (Dimensão / Embalagem)', placeholder: 'Ex: 1200x2400mm, Saco' },
-                { field: 'campo_hierarquico_5', label: 'Campo 5 (Marca / Variante)', placeholder: 'Ex: Knauf, Votorantim' },
+                { field: 'campo_hierarquico_1', label: 'Campo 1 (Produto base) *', placeholder: '' },
+                { field: 'campo_hierarquico_2', label: 'Campo 2 (Subtipo)', placeholder: '' },
+                { field: 'campo_hierarquico_3', label: 'Campo 3 (Espessura / Gramatura)', placeholder: '…' },
+                { field: 'campo_hierarquico_4', label: 'Campo 4 (Dimensão / Embalagem)', placeholder: '…' },
+                { field: 'campo_hierarquico_5', label: 'Campo 5 (Marca / Variante)', placeholder: '…' },
               ].map(({ field, label, placeholder }, idx) => (
                 <div key={field} className="grid grid-cols-[20px_1fr] items-center gap-3 py-1">
                   <span className="text-xs font-bold text-muted-foreground text-center">{idx + 1}</span>
@@ -1369,7 +1369,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               <Input
                 value={formData.marca || ''}
                 onChange={e => handleChange('marca', e.target.value)}
-                placeholder="Ex: Knauf, Placo, Eternit"
+                placeholder=""
                 className={P38_INPUT_UNDERLINE}
               />
             </div>
@@ -1379,7 +1379,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <Label className="text-sm text-muted-foreground mb-2 block">Código Interno</Label>
                 <Input 
                   value={formData.codigo_interno} 
-                  placeholder="Gerado ao salvar"
+                  placeholder="Automático"
                   disabled 
                   className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                 />
@@ -1390,7 +1390,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <Input 
                   value={formData.codigo_barras} 
                   onChange={e => handleChange('codigo_barras', e.target.value)} 
-                  placeholder="7891234567890" 
+                  placeholder=""
                   className={P38_INPUT_UNDERLINE}
                 />
               </div>
@@ -1400,7 +1400,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
               <Select value={formData.categoria_id} onValueChange={v => handleChange('categoria_id', v)}>
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
-                  <SelectValue placeholder="Selecione a categoria..." />
+                  <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
                   {categorias.map(cat => (
@@ -1418,7 +1418,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 handleChange('fornecedor_padrao_codigo', forn?.codigo_interno || '');
               }}>
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
-                  <SelectValue placeholder="Selecione o fornecedor..." />
+                  <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-muted dark:border-border/40">
                   {fornecedores.map(f => (
@@ -1447,7 +1447,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                  placeholder="Ex: torneira, banheiro" 
+                  placeholder="…" 
                   className={P38_INPUT_UNDERLINE}
                 />
                 <Button type="button" onClick={handleAddTag} size="sm" variant="ghost" className="h-10 px-3">
@@ -1592,7 +1592,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                             onChange={(val) => handleChange(field, sc !== 1 ? val / sc : val)}
                             dataIndex={field}
                             navIndex={custoIdx}
-                            placeholder="0,00"
+                            placeholder="0"
                             className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
                           />
                           <span className="text-xs text-muted-foreground w-8">(R$)</span>
@@ -1632,7 +1632,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                         value={precoCatalogo.valor}
                         onChange={aplicarPrecoVendaCatalogo}
                         dataIndex="preco_venda"
-                        placeholder="0,00"
+                        placeholder="0"
                         className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
                       />
                       <span className="text-xs text-muted-foreground w-8">(R$)</span>
@@ -1655,7 +1655,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                           handleChange('preco_venda_tipo', 'percentual');
                         }}
                         dataIndex="markup"
-                        placeholder="0,00"
+                        placeholder="0"
                         isPercentage={true}
                         className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-20 text-right text-foreground focus:border-border/40 font-glacial"
                       />
@@ -1697,7 +1697,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <Input
                   value={formData.dimensoes_cm}
                   onChange={(e) => handleChange('dimensoes_cm', e.target.value)}
-                  placeholder="30x20x15"
+                  placeholder="…"
                   className={P38_INPUT_UNDERLINE}
                 />
               </div>
@@ -1707,7 +1707,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <Input
                   value={formData.volume_cm3 ? formatarNumero(formData.volume_cm3 / 1000) : '0,00'}
                   disabled
-                  placeholder="Calculado"
+                  placeholder="Auto"
                   className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-muted-foreground dark:text-muted-foreground"
                 />
               </div>
@@ -1719,7 +1719,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   step="0.001"
                   value={formData.peso_kg}
                   onChange={(e) => handleChange('peso_kg', parseFloat(e.target.value) || 0)}
-                  placeholder="0,000"
+                  placeholder="0"
                   className={P38_INPUT_UNDERLINE}
                 />
               </div>
@@ -1741,7 +1741,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   <Input
                     value={formData.unidade_principal}
                     onChange={(e) => handleChange('unidade_principal', e.target.value.toUpperCase())}
-                    placeholder="UN, M2, KG…"
+                    placeholder="…"
                     className="bg-transparent border-0 border-b-2 border-border/40 dark:border-border/40 rounded-none px-0 h-10 text-sm text-foreground flex-1 min-w-0"
                   />
                   <div className="flex items-center gap-2 shrink-0 pb-1 rounded-full bg-muted/90 dark:bg-background/50 px-3 py-1.5 border border-border/40/80 dark:border-border/80">
@@ -1838,7 +1838,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     className="bg-muted/40 dark:bg-background border border-border/40 rounded-xl max-w-md h-11"
                     disabled={formData.unidade_show_ativa === false}
                   >
-                    <SelectValue placeholder="Selecione a sigla da vitrine" />
+                    <SelectValue placeholder="Sigla" />
                   </SelectTrigger>
                   <SelectContent>
                     {commercialSelectOptions.map((sigla) => (
@@ -1902,7 +1902,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     step="0.0001"
                     value={formData.estoque_minimo}
                     onChange={(e) => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)}
-                    placeholder="0,0000"
+                    placeholder="0"
                     className={P38_INPUT_UNDERLINE}
                   />
                 </div>
@@ -1913,7 +1913,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     step="0.0001"
                     value={formData.estoque_ideal}
                     onChange={(e) => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)}
-                    placeholder="0,0000"
+                    placeholder="0"
                     className={P38_INPUT_UNDERLINE}
                   />
                 </div>
@@ -1924,7 +1924,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     step="0.0001"
                     value={formData.estoque_maximo}
                     onChange={(e) => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)}
-                    placeholder="0,0000"
+                    placeholder="0"
                     className={P38_INPUT_UNDERLINE}
                   />
                 </div>

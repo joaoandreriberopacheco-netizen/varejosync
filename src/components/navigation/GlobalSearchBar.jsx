@@ -21,7 +21,7 @@ export default function GlobalSearchBar({
   isDark,
   expanded = true,
   className = '',
-  placeholder = 'O que você procura?',
+  placeholder = 'Buscar…',
   autoFocus = false,
   showClose = false,
   onClose,

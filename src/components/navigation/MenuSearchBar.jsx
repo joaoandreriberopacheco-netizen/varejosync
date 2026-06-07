@@ -7,7 +7,7 @@ export default function MenuSearchBar({
   onOpen,
   onCollapsedActivate,
   className = '',
-  placeholder = 'O que você procura?',
+  placeholder = 'Buscar…',
   searchableItems = [],
 }) {
   return (
