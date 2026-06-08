@@ -3,7 +3,23 @@
  * sessionStorage sobrevive ao mesmo origem; clipboard.write é tentado em paralelo (gesto do utilizador).
  */
 
+import { createPageUrl } from '@/utils';
+
 export const STORAGE_PEDIDO_IMPORT_BRIDGE = 'p38_pedido_import_torre_v1';
+
+/** Entrada da Torre: { file, nome, tipo } */
+export async function navegarParaNovoPedidoImport(arquivoEntry) {
+  try {
+    const file = arquivoEntry?.file;
+    if (file) {
+      await guardarArquivoParaPedidoImport(file, arquivoEntry.nome, arquivoEntry.tipo);
+      void copiarArquivoParaClipboardOpcional(file);
+    }
+  } catch (e) {
+    console.warn('[Torre→Pedido] não foi possível guardar cópia do arquivo:', e);
+  }
+  window.location.href = `${createPageUrl('PedidoCompraDetalhe')}?id=novo&autoImportador=1`;
+}
 
 export function guardarArquivoParaPedidoImport(file, nome, tipo) {
   return new Promise((resolve, reject) => {

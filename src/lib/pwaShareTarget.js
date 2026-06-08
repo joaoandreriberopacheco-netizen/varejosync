@@ -5,8 +5,9 @@
  * - lancamento — LançamentoFinanceiro
  * - pedido_compra | pedido — PedidoCompra
  * - frete | evento | itinerario — EventosLogisticos (viagem fluvial)
+ * - importar_pedido | novo_pedido | importar_itens — novo pedido + importador PDF
  *
- * Deep link opcional (abre já no passo de busca): ?destino=lancamento|pedido|frete
+ * Deep link opcional (abre já no passo de busca): ?destino=lancamento|pedido|frete|importar_pedido
  */
 export const SHARE_DESTINO_QUERY = 'destino';
 
@@ -28,6 +29,11 @@ export const SHARE_SUBTARGET_KEYS = {
   atualizar_boleto: 'atualizar_boleto',
   boletos: 'atualizar_boleto',
   atualizador: 'atualizar_boleto',
+  /** Novo pedido de compra + importador de itens (PDF) */
+  importar_pedido: 'importar_pedido_novo',
+  novo_pedido: 'importar_pedido_novo',
+  importar_itens: 'importar_pedido_novo',
+  pdf_pedido: 'importar_pedido_novo',
 };
 
 export function mapDestinoQueryToEtapa(destinoRaw) {

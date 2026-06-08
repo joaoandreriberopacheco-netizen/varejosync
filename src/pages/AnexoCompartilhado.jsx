@@ -29,10 +29,7 @@ import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarge
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
 import { brandSurface } from '@/lib/brandSurfaces';
-import {
-  guardarArquivoParaPedidoImport,
-  copiarArquivoParaClipboardOpcional,
-} from '@/lib/torrePedidoImportBridge';
+import { navegarParaNovoPedidoImport } from '@/lib/torrePedidoImportBridge';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -44,6 +41,7 @@ export default function AnexoCompartilhado() {
   const pollingRef = useRef(null);
   const inputArquivoManualRef = useRef(null);
   const destinoDeepLinkHandled = useRef(false);
+  const importPedidoDeepLinkHandled = useRef(false);
   const [tipoDocumento, setTipoDocumento] = useState('Comprovante');
   const [tiposDocumentoCustom, setTiposDocumentoCustom] = useState(() => loadTiposCustomAnexo());
   const [ajudaTorreAberta, setAjudaTorreAberta] = useState(false);
@@ -291,12 +289,6 @@ export default function AnexoCompartilhado() {
         }
       }
 
-      if (focoClipboard || String(destino || '').toLowerCase() === 'torre') {
-        setCarregando(false);
-        clearTimeout(pollingRef.current);
-        return;
-      }
-
       if (shareTarget) {
         const achouNoCache = await consumirArquivoMaisRecenteDoCache();
         if (achouNoCache) {
@@ -304,6 +296,12 @@ export default function AnexoCompartilhado() {
           clearTimeout(pollingRef.current);
           return;
         }
+      }
+
+      if (focoClipboard || String(destino || '').toLowerCase() === 'torre') {
+        setCarregando(false);
+        clearTimeout(pollingRef.current);
+        return;
       }
 
       if (params.get('text') || params.get('url')) {
@@ -414,12 +412,23 @@ export default function AnexoCompartilhado() {
   useEffect(() => {
     if (carregando) return;
     const precisaArquivo =
-      etapa === 'importar_pdf_conta' || etapa === 'atualizar_boleto' || etapa === 'atualizar_boleto_import';
+      etapa === 'importar_pdf_conta' ||
+      etapa === 'atualizar_boleto' ||
+      etapa === 'atualizar_boleto_import' ||
+      etapa === 'importar_pedido_novo';
     if (precisaArquivo && !arquivo?.file) {
       setContaMesBoletoAlvo(null);
       setEtapa('opcoes');
     }
   }, [carregando, etapa, arquivo?.file]);
+
+  /** Deep link ?destino=importar_pedido: após carregar o PDF, abre pedido novo + importador */
+  useEffect(() => {
+    if (carregando || importPedidoDeepLinkHandled.current) return;
+    if (etapa !== 'importar_pedido_novo' || !arquivo?.file) return;
+    importPedidoDeepLinkHandled.current = true;
+    void navegarParaNovoPedidoImport(arquivo);
+  }, [carregando, etapa, arquivo]);
 
   const handleVincular = async (lancamento) => {
     if (!arquivo?.file) return;
@@ -832,17 +841,8 @@ export default function AnexoCompartilhado() {
             icon={FileUp}
             titulo="Novo pedido (importar itens)"
             descricao="Criar pedido novo e abrir direto o importador de itens"
-            onClick={async () => {
-              try {
-                if (arquivo?.file) {
-                  await guardarArquivoParaPedidoImport(arquivo.file, arquivo.nome, arquivo.tipo);
-                  void copiarArquivoParaClipboardOpcional(arquivo.file);
-                }
-              } catch (e) {
-                console.warn('[Torre→Pedido] não foi possível guardar cópia do arquivo:', e);
-              }
-              window.location.href = `${createPageUrl('PedidoCompraDetalhe')}?id=novo&autoImportador=1`;
-            }}
+            disabled={!arquivo?.file}
+            onClick={() => void navegarParaNovoPedidoImport(arquivo)}
           />
           <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
           <OpcaoCard

@@ -36,7 +36,7 @@ Não duplicadas em `PAGES` ou com path dedicado: `Notificacoes`, `ReimpressaoDoc
 
 ## Partilha de ficheiros / PWA
 
-- `AnexoCompartilhado` — fluxo por etapas (torre de controlo → destinos → vincular lançamento, pedido, evento, importar PDF AGEFIN, atualizar boleto, novo lançamento). Integra `BuscarLancamentoSheet`, `AgefinImportador`, `BoletoRecorrentePicker`, etc.
+- `AnexoCompartilhado` — fluxo por etapas (torre de controlo → destinos → vincular lançamento, pedido, evento, importar PDF AGEFIN, atualizar boleto, novo lançamento, **novo pedido + importador PDF**). Deep link: `?destino=importar_pedido`. Integra `BuscarLancamentoSheet`, `AgefinImportador`, `BoletoRecorrentePicker`, `torrePedidoImportBridge`, etc.
 
 ## Nota sobre “voltar” no browser
 
