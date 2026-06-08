@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
 import { ChevronDown, Trash2, Check, Package2, CalendarClock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -16,9 +16,7 @@ import {
 import {
   P38MobileLine,
   P38MobileLineList,
-  P38StatusLabel,
   p38AccentKeyFromTone,
-  p38StatusTone,
 } from '@/components/ui/p38-mobile-line';
 
 const R = (v) => {
@@ -27,7 +25,7 @@ const R = (v) => {
 };
 
 const STATUS_CONFIG = {
-  'Rascunho': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted/80 text-foreground/85' },
+  'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-400', pill: 'bg-slate-100 dark:bg-slate-800/55 text-slate-700 dark:text-slate-300' },
   'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
@@ -35,8 +33,38 @@ const STATUS_CONFIG = {
   'Aprovado': { dot: 'bg-lime-400 dark:bg-lime-400', pill: 'bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Cancelado': { dot: 'bg-muted dark:bg-muted', pill: 'bg-muted/80 text-foreground/85' },
+  'Cancelado': { dot: 'bg-rose-400 dark:bg-rose-400', pill: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300' },
 };
+
+function resolveStatusConfig(displayStatus, fallbackStatus) {
+  return STATUS_CONFIG[displayStatus] || STATUS_CONFIG[fallbackStatus] || STATUS_CONFIG['Rascunho'];
+}
+
+function getDisplayStatusLabel(displayStatus) {
+  if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
+    return 'Aguard. Pgto';
+  }
+  return displayStatus;
+}
+
+function StatusLed({ displayStatus, fallbackStatus, blink = false, className = '' }) {
+  const cfg = resolveStatusConfig(displayStatus, fallbackStatus);
+  return (
+    <span
+      className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${blink ? 'animate-blink-led' : cfg.dot} ${className}`}
+      aria-hidden
+    />
+  );
+}
+
+function StatusPill({ displayStatus, fallbackStatus, children, className = '' }) {
+  const cfg = resolveStatusConfig(displayStatus, fallbackStatus);
+  return (
+    <span className={`inline-flex max-w-full text-sm px-2 py-0.5 rounded-full font-semibold leading-normal whitespace-nowrap truncate ${cfg.pill} ${className}`}>
+      {children}
+    </span>
+  );
+}
 
 // Adiciona animação de piscar ao CSS global
 if (typeof document !== 'undefined' && !document.getElementById('blink-animation')) {
@@ -84,38 +112,11 @@ function EmbarquesInfo({ pedido }) {
   );
 }
 
-function getLEDStatus(pedido) {
-  const embarque = pedido._embarque;
-  const statusPedido = pedido._display_status || pedido.status;
-  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
-  const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
-  const temTransporte = !!(embarque?.transportadora_id || embarque?.transportadora_nome || embarque?.data_embarque || embarque?.eta);
-
-  if (embarque?.tipo === 'Necessidade' && !temItensAssociados && !temTransporte) {
-    return { isVermelho: true, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
-  }
-
-  if (statusPedido === 'Concluído') {
-    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
-  }
-
-  if (statusPedido === 'Despachado') {
-    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: true, hasActiveDivergence: false };
-  }
-
-  if (statusPedido === 'Aguardando Aprovação Financeira' || statusPedido === 'Aguardando Liberação') {
-    return { isVermelho: false, isAmbar: true, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
-  }
-
-  return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
-}
-
-function pedidoAccentFromStatus(displayStatus, led) {
-  if (led?.isVerde || displayStatus === 'Concluído') return 'success';
-  if (led?.isCyan || displayStatus === 'Despachado') return 'info';
-  if (led?.isAmbar || String(displayStatus).includes('Aguard') || String(displayStatus).includes('Aprovação')) return 'warning';
-  if (led?.isVermelho || displayStatus === 'Cancelado') return 'danger';
-  if (displayStatus === 'Aprovado') return 'success';
+function pedidoAccentFromStatus(displayStatus) {
+  if (displayStatus === 'Concluído' || displayStatus === 'Aprovado') return 'success';
+  if (displayStatus === 'Despachado') return 'info';
+  if (displayStatus === 'Aguardando' || String(displayStatus).includes('Aguard') || String(displayStatus).includes('Aprovação')) return 'warning';
+  if (displayStatus === 'Cancelado') return 'danger';
   return 'muted';
 }
 
@@ -123,11 +124,8 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isVirtualCard = !!pedido._display_status;
   const displayStatus = pedido._display_status || pedido.status;
-  const displayStatusLabel = displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira'
-    ? 'Aguard. Pgto'
-    : displayStatus;
+  const displayStatusLabel = getDisplayStatusLabel(displayStatus);
 
   const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
     ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
@@ -142,23 +140,7 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
     : pedido.valor_total);
 
-  const led = useMemo(() => {
-    if (isVirtualCard) {
-      const quantidadePendente = pedido._quantidade_pendente ?? 0;
-      return {
-        isVerde: displayStatus === 'Concluído',
-        isAmbar: displayStatus === 'Aguardando Aprovação Financeira',
-        isVermelho: pedido._embarque?.tipo === 'Necessidade' && !(pedido._embarque?.transportadora_id || pedido._embarque?.transportadora_nome || pedido._embarque?.data_embarque || pedido._embarque?.eta) && (
-          !((pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0)) || quantidadePendente > 0
-        ),
-        isPisca: false,
-        isCyan: displayStatus === 'Despachado',
-      };
-    }
-    return getLEDStatus(pedido);
-  }, [pedido, displayStatus, isVirtualCard]);
-
-  const accent = pedidoAccentFromStatus(displayStatus, led);
+  const accent = pedidoAccentFromStatus(displayStatus);
   const codigo = String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '');
 
   const handleDelete = async () => {
@@ -184,11 +166,16 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
           if (modoSelecao) { if (!desabilitadoSelecao) onToggleSelecao?.(pedido); return; }
           onEdit(pedido);
         }}
-        title={codigo}
+        title={
+          <span className="inline-flex items-center gap-1.5 min-w-0">
+            <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} className="w-2 h-2 mt-0" />
+            <span className="truncate">{codigo}</span>
+          </span>
+        }
         subtitle={pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
         meta={
           <>
-            <P38StatusLabel tone={p38StatusTone(displayStatus)}>{displayStatusLabel}</P38StatusLabel>
+            <StatusPill displayStatus={displayStatus} fallbackStatus={pedido.status}>{displayStatusLabel}</StatusPill>
             <span>{totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}{qtdLabel ? ` · ${qtdLabel}` : ''}</span>
             {pedido._display_date ? <span>{formatarDataCurta(pedido._display_date)}</span> : null}
           </>
@@ -238,13 +225,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isVirtualCard = !!pedido._display_status;
   const displayStatus = pedido._display_status || pedido.status;
-  const displayStatusLabel = displayStatus === 'Aguardando Liberação Financeira'
-    ? 'Aguard. Pgto'
-    : displayStatus === 'Aguardando Aprovação Financeira'
-      ? 'Aguard. Pgto'
-      : displayStatus;
+  const displayStatusLabel = getDisplayStatusLabel(displayStatus);
 
   const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
     ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
@@ -258,27 +240,6 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
     : pedido.valor_total);
-  const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
-
-  // LED: cards virtuais refletem seu próprio status; cards pai usam lógica FASE 2+
-  const { isVermelho, isAmbar, isPisca, isVerde, isCyan } = useMemo(() => {
-    if (isVirtualCard) {
-      const quantidadePendente = pedido._quantidade_pendente ?? 0;
-      return {
-        isVerde: displayStatus === 'Concluído',
-        isAmbar: displayStatus === 'Aguardando Aprovação Financeira',
-        isVermelho: pedido._embarque?.tipo === 'Necessidade' && !(pedido._embarque?.transportadora_id || pedido._embarque?.transportadora_nome || pedido._embarque?.data_embarque || pedido._embarque?.eta) && (
-          !((pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0)) || quantidadePendente > 0
-        ),
-        isPisca: false,
-        isCyan: displayStatus === 'Despachado',
-      };
-    }
-    return getLEDStatus(pedido);
-  }, [pedido.id, pedido.status, displayStatus, isVirtualCard, pedido._embarque]);
-
-
-
   const handleDelete = async () => {
     setDeleting(true);
     await base44.entities.PedidoCompra.delete(pedido.id);
@@ -315,16 +276,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 </div>
               )}
 
-              {/* LED com lógica de status */}
-              <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${
-                isPisca ? 'animate-blink-led' :
-                isVerde ? 'bg-emerald-500 dark:bg-emerald-400' :
-                displayStatus === 'Aprovado' ? 'bg-lime-400 dark:bg-lime-400' :
-                isCyan ? 'bg-cyan-400 dark:bg-cyan-400' :
-                isVermelho ? 'bg-red-500 dark:bg-red-500' :
-                isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
-                cfg.dot
-              }`} />
+              <StatusLed displayStatus={displayStatus} fallbackStatus={pedido.status} />
 
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
@@ -336,9 +288,9 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-0.5">
-                      <span className={`inline-flex max-w-full text-sm px-2 py-0.5 rounded-full font-semibold leading-normal whitespace-nowrap truncate ${cfg.pill}`}>
+                      <StatusPill displayStatus={displayStatus} fallbackStatus={pedido.status}>
                         {displayStatusLabel}
-                      </span>
+                      </StatusPill>
                     </div>
                   </div>
                 </div>
