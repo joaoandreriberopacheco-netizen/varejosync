@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { CaixaDialogContent } from '@/components/vendas/caixa/CaixaDialogContent';
+import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Boxes, Camera, Undo2, X, Edit, FileText, CreditCard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useMobileLayout } from '@/hooks/use-breakpoint';
@@ -789,9 +791,13 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       if (rascunhoEmEdicaoId) {
         const rascunhoExistente = await base44.entities.RascunhoPedidoVenda.get(rascunhoEmEdicaoId);
         
+        const clienteParaUsar = clienteSelecionado || {
+          id: rascunhoExistente?.cliente_id ?? null,
+          nome: rascunhoExistente?.cliente_nome || 'Avulso',
+        };
         const rascunhoData = {
-          cliente_id: clienteSelecionado.id,
-          cliente_nome: clienteSelecionado.nome,
+          cliente_id: clienteParaUsar.id,
+          cliente_nome: clienteParaUsar.nome,
           vendedor_id: currentUser.id,
           vendedor_nome: currentUser.full_name,
           tabela_preco_id: tabelaPreco?.id,
@@ -998,6 +1004,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   return (
+    <CaixaOverlayStackProvider active={overlayMode}>
     <div className={`${overlayMode ? 'h-full min-h-0' : 'h-screen'} flex flex-col bg-muted/40 dark:bg-background relative`}>
       {/* Feedback Inline - Glacial Style */}
       <AnimatePresence>
@@ -1006,7 +1013,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm ${
+          className={`fixed top-4 left-1/2 -translate-x-1/2 ${overlayMode ? 'z-[1230]' : 'z-[100]'} px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm ${
           feedback.type === 'success' ? 'bg-emerald-500/90 text-white' :
           feedback.type === 'error' ? 'bg-red-500/90 text-white' :
           'bg-muted/90 text-white'}`
@@ -1393,7 +1400,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
       {/* Dialog de cliente - GLACIAL PROTOCOL */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card dark:bg-background text-foreground dark:text-foreground p-6 rounded-3xl border-0 shadow-2xl">
+        <CaixaDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card dark:bg-background text-foreground dark:text-foreground p-6 rounded-3xl border-0 shadow-2xl">
           <DialogHeader className="pb-4 border-b border-border/40 dark:border-border/40">
             <DialogTitle className="text-xl font-medium text-foreground dark:text-white">Selecionar Cliente</DialogTitle>
           </DialogHeader>
@@ -1676,11 +1683,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               </Button>
             </DialogFooter>
           }
-        </DialogContent>
+        </CaixaDialogContent>
       </Dialog>
 
       {showCarrinhoMobile &&
-      <div className="desktop-layout:hidden fixed inset-0 z-[70] bg-muted/40 dark:bg-background flex flex-col">
+      <div className={`desktop-layout:hidden fixed inset-0 ${overlayMode ? 'z-[1220]' : 'z-[70]'} bg-muted/40 dark:bg-background flex flex-col`}>
           {/* Header */}
           <div className="px-4 py-3 bg-card dark:bg-background border-b border-border/40 dark:border-border/40 flex items-center justify-between flex-shrink-0">
             <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-card">
@@ -1874,7 +1881,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
       {/* Dialog de Reeditar Rascunho */}
       <Dialog open={showReeditarDialog} onOpenChange={setShowReeditarDialog}>
-        <DialogContent className="max-w-md bg-card dark:bg-background text-foreground dark:text-foreground p-6 rounded-3xl border-0 shadow-2xl">
+        <CaixaDialogContent className="max-w-md bg-card dark:bg-background text-foreground dark:text-foreground p-6 rounded-3xl border-0 shadow-2xl">
           <DialogHeader className="pb-4 border-b border-border/40 dark:border-border/40">
             <DialogTitle className="text-xl font-medium text-foreground dark:text-white">Reeditar Rascunho</DialogTitle>
           </DialogHeader>
@@ -1929,9 +1936,10 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
               Carregar Rascunho
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </CaixaDialogContent>
       </Dialog>
     </div>
+    </CaixaOverlayStackProvider>
   );
 
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import {
@@ -32,6 +32,12 @@ export default function ConfirmarPagamentoDialog({
   const [showSeletorFiado, setShowSeletorFiado] = useState(false);
   const [fiadoConfig, setFiadoConfig] = useState(null);
   const [valoresVisiveis, setValoresVisiveis] = useState(true);
+
+  useEffect(() => {
+    setFiadoConfig(null);
+    setShowSeletorFiado(false);
+    setSeletorMaquininha(null);
+  }, [pedidoSelecionado?.id]);
 
   // Bloqueia dígitos sem maquininha (valor só após botão + seleção); não abre o seletor automaticamente
   const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {

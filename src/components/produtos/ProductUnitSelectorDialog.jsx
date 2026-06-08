@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { CaixaDialogContent } from '@/components/vendas/caixa/CaixaDialogContent';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { buildPurchaseUnitOptions, buildSaleUnitOptions, formatUnitConversion } from '@/lib/productUnits';
@@ -29,7 +30,7 @@ export default function ProductUnitSelectorDialog({
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose?.()}>
-      <DialogContent className="max-w-lg bg-card border-0 shadow-2xl rounded-3xl">
+      <CaixaDialogContent className="max-w-lg bg-card border-0 shadow-2xl rounded-3xl">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Selecionar unidade
@@ -90,7 +91,7 @@ export default function ProductUnitSelectorDialog({
             Confirmar
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </CaixaDialogContent>
     </Dialog>
   );
 }

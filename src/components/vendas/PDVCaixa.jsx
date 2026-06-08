@@ -457,8 +457,6 @@ export default function PDVCaixa({
   // Callback para abrir seletor de maquininha a partir do ConfirmarPagamentoDialog
   const [solicitarMaquininha, setSolicitarMaquininha] = React.useState(null); // 'debito' | 'credito' | null
 
-
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (showConfirmarImpressao) return;
@@ -532,7 +530,6 @@ export default function PDVCaixa({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, showConfirmarImpressao, valorRestante, pedidosAguardando]); // Updated telaAtual to view
-
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
   const loadData = useCallback(async (caixaParam, turnoParam) => {
@@ -807,105 +804,19 @@ export default function PDVCaixa({
 
       // Não altera saldo_atual localmente; o financeiro deve ser apurado pelos lançamentos válidos.
 
-      // Buscar dados do cliente para o comprovante
-      let cliente = null;
+      // Buscar dados do cliente para o comprovante (falha não bloqueia o fluxo pós-venda)
       if (pedidoSelecionado.cliente_id) {
-        cliente = await base44.entities.Terceiro.get(pedidoSelecionado.cliente_id);
-        setClienteVenda(cliente);
+        try {
+          const cliente = await base44.entities.Terceiro.get(pedidoSelecionado.cliente_id);
+          setClienteVenda(cliente);
+        } catch (clienteErr) {
+          console.warn('Cliente não carregado para comprovante:', clienteErr);
+        }
       }
-
-      // Mescla dados do pedido retornado com itens do rascunho (backend pode não retornar itens completos)
-      // NÃO inicializa aqui — será iniciado junto com setShowComprovanteCaixa
 
       if (configVenda?.fluxo_venda_padrao === 'Completo') {
         toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       toast({
         title: "✓ Pagamento aprovado!",
@@ -913,6 +824,8 @@ export default function PDVCaixa({
         className: CAIXA_TOAST_SUCCESS,
         duration: 2000
       });
+
+      const rascunhoProcessado = pedidoSelecionado;
 
       setIsDialogOpen(false);
 
@@ -925,12 +838,13 @@ export default function PDVCaixa({
 
       // Sempre mostra o comprovante primeiro; ao fechar, segue o fluxo normal
       setVendaFinalizada({
-        ...pedidoSelecionado,
+        ...rascunhoProcessado,
         ...pedidoVenda,
-        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : pedidoSelecionado.itens,
+        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : rascunhoProcessado.itens,
         pagamentos: pagamentosArray,
       });
       setShowConfirmarImpressao(true);
+      setPedidoSelecionado(null);
 
       loadData();
     } catch (error) {
@@ -1038,7 +952,6 @@ export default function PDVCaixa({
           despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
         });
       }
-
 
       toast({
         title: "✓ Despesa registrada!",
@@ -1824,8 +1737,6 @@ export default function PDVCaixa({
                   </div>
                 </TabsContent>
 
-
-
                 {/* Barra de Navegação - Mobile */}
                 <TabsList className={`${caixaMobileTabBar} grid grid-cols-4 h-16 bg-card dark:bg-card border-t border-border/40 dark:border-border/40 rounded-none p-0`}>
                 <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
@@ -1859,8 +1770,6 @@ export default function PDVCaixa({
                 </>
                 }
 
-
-
         {view === 'processar' && (
           <ProcessarVendasView
             rascunhosAguardando={rascunhosAguardando}
@@ -1870,8 +1779,6 @@ export default function PDVCaixa({
             formatarValorExibicao={formatarValorExibicao}
           />
         )}
-
-
 
         <ConfirmarPagamentoDialog
           open={isDialogOpen}
@@ -1958,7 +1865,12 @@ export default function PDVCaixa({
 
         <ConfirmarImpressaoDialog
           open={showConfirmarImpressao}
-          onOpenChange={setShowConfirmarImpressao}
+          onOpenChange={(open) => {
+            setShowConfirmarImpressao(open);
+            if (!open) {
+              setPedidoSelecionado(null);
+            }
+          }}
           tipo="cupom"
           numero={vendaFinalizada?.numero || (vendaFinalizada?.senha_atendimento || '').slice(-4) || 'S/N'}
           numeroCompleto={
@@ -1968,6 +1880,7 @@ export default function PDVCaixa({
           }
           onSim={() => setShowComprovanteCaixa(true)}
           onNao={() => {
+            setPedidoSelecionado(null);
             if (dadosPromissoria) {
               setShowPromissoria(true);
             }
