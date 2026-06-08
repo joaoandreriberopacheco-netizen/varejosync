@@ -8,9 +8,19 @@ export const OPERACAO_AUTH_PHOTO_ENABLED =
     OPERACAO_AUTH_ENABLED &&
     String(import.meta.env.VITE_OPERACAO_AUTH_PHOTO_ENABLED ?? 'false').toLowerCase() === 'true';
 
-/** Salvar / enviar pedido de compra ao financeiro — PIN sem foto (desligar: VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN=false). */
+/**
+ * Enviar pedido de compra ao financeiro — PIN sem foto (desligar: VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN=false).
+ * Salvar rascunho não exige PIN; só o envio para "Aguardando Aprovação Financeira".
+ */
 export const PEDIDO_COMPRA_SAVE_AUTH_ENABLED =
     String(import.meta.env.VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN ?? 'true').toLowerCase() !== 'false';
+
+export const PEDIDO_COMPRA_STATUS_AGUARDANDO_FINANCEIRO = 'Aguardando Aprovação Financeira';
+
+export function pedidoCompraSaveRequerPin(saveOptions = {}) {
+    if (!PEDIDO_COMPRA_SAVE_AUTH_ENABLED) return false;
+    return saveOptions?.status === PEDIDO_COMPRA_STATUS_AGUARDANDO_FINANCEIRO;
+}
 
 export function makeOperationCode() {
     return `OP-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;

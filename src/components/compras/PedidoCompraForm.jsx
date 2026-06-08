@@ -30,7 +30,7 @@ import { registrarTransicao } from './transicaoHelper';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
-import { PEDIDO_COMPRA_SAVE_AUTH_ENABLED, buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
+import { buildBypassAuthPayload, pedidoCompraSaveRequerPin } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
@@ -758,7 +758,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       return;
     }
 
-    if (!PEDIDO_COMPRA_SAVE_AUTH_ENABLED) {
+    if (!pedidoCompraSaveRequerPin(saveOptions)) {
       void executarSaveComAuth(saveOptions);
       return;
     }
@@ -770,7 +770,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         setShowPinSetupForSave(true);
         toast({
           title: 'Cadastre seu PIN',
-          description: 'Defina um PIN de 6 dígitos para poder salvar pedidos de compra.',
+          description: 'Defina um PIN de 6 dígitos para enviar pedidos ao financeiro.',
         });
         return;
       }
