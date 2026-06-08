@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
+import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -96,11 +97,16 @@ const getBorrowedStatus = (pedido, embarque) => {
   }
 
   if (!ehNecessidade && !temDespachoVinculado) {
-    if (pedido?.status === 'Aguardando Aprovação Financeira' || pedido?.status === 'Aguardando Liberação') {
+    const saf = pedido?.status_aprovacao_financeira || '';
+    if (
+      pedido?.status === 'Aguardando Aprovação Financeira' ||
+      pedido?.status === 'Aguardando Liberação' ||
+      saf === 'Aguardando Aprovação Financeira'
+    ) {
       return 'Aguardando Liberação Financeira';
     }
 
-    if (pedido?.status === 'Aprovado') {
+    if (pedidoLiberadoParaLogistica(pedido)) {
       return 'Aprovado';
     }
 
@@ -705,7 +711,9 @@ export default function PedidosCompraPage() {
 
   const pedidosPagosPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
-      const aprovadoFinanceiro = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado' || pedido._display_status === 'Aprovado';
+      const aprovadoFinanceiro =
+        pedidoLiberadoParaLogistica(pedido) ||
+        pedido._display_status === 'Aprovado';
       const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
       const aindaNaoRecebido = pedido._display_status !== 'Concluído';
       const aindaNaoEhAguardandoPagamento = ehNecessidade || !['Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aguardando'].includes(pedido._display_status);

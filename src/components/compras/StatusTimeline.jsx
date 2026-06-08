@@ -36,15 +36,19 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
 
   const getStageIndex = (status) => {
     const map = {
-      'Rascunho':             0,
-      'Devolvido':            0,
-      'Aguardando Liberação': 1,
-      'Aprovado':             2,
-      'Despachado':           3,
-      'Em Trânsito':          3,
-      'Entregue':             4,
-      'Concluído':            4,
-      'Cancelado':            -1,
+      'Rascunho':                          0,
+      'Devolvido':                         0,
+      'Aguardando Liberação':              1,
+      'Aguardando Aprovação Financeira':   1,
+      'Aguardando Liberação Financeira':   1,
+      'Aprovado':                          2,
+      'Aguardando Recepção':               2,
+      'Em Recepção':                       3,
+      'Despachado':                        3,
+      'Em Trânsito':                       3,
+      'Entregue':                          4,
+      'Concluído':                         4,
+      'Cancelado':                         -1,
     };
     return map[status] ?? 0;
   };

@@ -31,6 +31,12 @@ export function pedidoAprovadoFinanceiramente(pedido = {}) {
   );
 }
 
+/** Financeiro liberou compra/logística, mas embarque ainda sem despacho (card = Aprovado). */
+export function pedidoLiberadoParaLogistica(pedido = {}) {
+  if (pedidoAguardandoAprovacaoFinanceira(pedido)) return false;
+  return pedidoAprovadoFinanceiramente(pedido);
+}
+
 function nomeAprovador(authData = {}) {
   return authData.intervenienteName || authData.userName || 'Usuário';
 }
