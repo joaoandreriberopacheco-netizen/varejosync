@@ -6,6 +6,11 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
+import {
+  calcValorItensPedidoCompra,
+  calcValorTotalPedidoCompra,
+  getTotalLinhaPedidoCompra,
+} from '@/lib/pedidoCompraFinanceiro';
 
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -22,7 +27,6 @@ import {
   syncPedidoCompraItemQuantities,
   syncItemDescontoApresentacao,
   linhaPrecoNoEixoFatorUm,
-  calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -233,7 +237,7 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
       : qEmbInput;
   }
 
-  const totalLinha = calcTotalItemCompraPedido(linhaComercial);
+  const totalLinha = getTotalLinhaPedidoCompra({ ...linhaComercial, ...pedidoItem, ...item });
 
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
@@ -257,31 +261,17 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   });
 };
 
-/** Mesma regra do PedidoCompraForm: soma `calcTotalItemCompraPedido` + frete − desconto. */
-const getValorTotalPedidoCalculado = (pedido) => {
-  const valorItens = (pedido?.itens || []).reduce(
-    (acc, item) => acc + calcTotalItemCompraPedido(item),
-    0,
-  );
-  const frete = Number(pedido?.valor_frete) || 0;
-  const desconto = Number(pedido?.valor_desconto) || 0;
-  return Number((valorItens + frete - desconto).toFixed(2));
-};
-
-const somaItensPedidoCalculada = (pedido) =>
-  (pedido?.itens || []).reduce((acc, item) => acc + calcTotalItemCompraPedido(item), 0);
-
 /** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
 const getDisplayValorEmbarque = (pedido, embarque) => {
   const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
-  const valorItensPedido = somaItensPedidoCalculada(pedido);
-  if (!itensEmbarque.length) return getValorTotalPedidoCalculado(pedido);
+  const valorItensPedido = calcValorItensPedidoCompra(pedido);
+  if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
 
   let valorEmbarqueItens = 0;
   for (const itemEmb of itensEmbarque) {
     const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
     if (!pedidoItem) continue;
-    const lineTotal = calcTotalItemCompraPedido(pedidoItem);
+    const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
     const qtyEmb =
       Number(itemEmb.quantidade_embarcada) ||
       Number(itemEmb.quantidade_pedida) ||
@@ -408,7 +398,7 @@ export default function PedidosCompraPage() {
 
       const pedidosComResumoReal = pcs.map((pedido) => {
         const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
-        const totalPedido = getValorTotalPedidoCalculado(pedido);
+        const totalPedido = calcValorTotalPedidoCompra(pedido);
         const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
             const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
             const pedidoItem = (pedido.itens || []).find((candidate) => candidate.produto_id === item.produto_id);
@@ -497,7 +487,7 @@ export default function PedidosCompraPage() {
             _display_code: getDisplayEmbarqueCode(pedido, embarque),
             _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
             _display_status: getBorrowedStatus(pedido, embarque),
-            _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : getValorTotalPedidoCalculado(pedido),
+            _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque, produtosMap) : calcValorTotalPedidoCompra(pedido),
             _display_itens: itensDoCard,
             _display_date: getEmbarqueDisplayDate(pedido),
             _display_fornecedor: pedido.fornecedor_nome || '—',

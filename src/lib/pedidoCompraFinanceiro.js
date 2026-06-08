@@ -6,18 +6,19 @@ import { calcTotalItemCompraPedido } from '@/lib/productUnits';
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-const totalLinhaPedidoCompra = (item = {}) => {
+/** Total da linha: prioriza `total` gravado no item (formulário); senão recalcula. */
+export function getTotalLinhaPedidoCompra(item = {}) {
   const totalDireto = Number(item?.total ?? item?.valor_total_item ?? item?.subtotal);
   if (Number.isFinite(totalDireto) && totalDireto > 0) return totalDireto;
   return calcTotalItemCompraPedido(item);
-};
+}
 
 /** Soma dos totais de linha; `valor_itens` só entra se não houver itens no espelho. */
 export function calcValorItensPedidoCompra(pedido = {}) {
   const itens = pedido.itens || [];
   if (itens.length > 0) {
     return roundToTwoDecimals(
-      itens.reduce((acc, item) => acc + totalLinhaPedidoCompra(item), 0),
+      itens.reduce((acc, item) => acc + getTotalLinhaPedidoCompra(item), 0),
     );
   }
   const valorItensDireto = Number(pedido.valor_itens);

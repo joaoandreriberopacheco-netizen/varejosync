@@ -22,7 +22,7 @@ import {
 
 const R = (v) => {
   const n = v || 0;
-  return `R$ ${n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}`;
+  return `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 function formatCardQuantity(value, unitSuffix) {
