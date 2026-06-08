@@ -179,20 +179,26 @@ const PDF_DISCRETE_QTY_SNAP_EPSILON = 0.02;
 const PDF_IS_EFFECTIVELY_INT = (v: number) => Number.isFinite(v) && Math.abs(v - Math.round(v)) < 1e-9;
 const PDF_ROUND2 = (v: number) => Math.round(v * 100) / 100;
 /** Espelho de `commercialQuantityFromBase` em @/lib/productUnits (PAC/CX: inteiro + snap perto de inteiro). */
+const PDF_FATOR_EH_INTEIRO = (fator: number) => {
+  const f = PDF_NN(fator, 1) || 1;
+  return Math.abs(f - Math.round(f)) < 1e-6;
+};
 const PDF_COMMERCIAL_QTY_FROM_BASE = (quantityBase: number, fatorConversao = 1, unitCode = '') => {
   const base = PDF_NN(quantityBase, 0);
   const fator = PDF_NN(fatorConversao, 1) || 1;
   if (!(fator > 0)) return PDF_ROUND2(base);
   const u = PDF_NORM_CODE(unitCode);
+  const raw = base / fator;
   if (PDF_DISCRETE_UNITS.has(u)) {
-    const bi = Math.round(base);
-    const fi = Math.round(fator);
-    if (fi > 0 && bi % fi === 0) return bi / fi;
-    const raw = base / fator;
+    if (PDF_FATOR_EH_INTEIRO(fator)) {
+      const bi = Math.round(base);
+      const fi = Math.round(fator);
+      if (fi > 0 && bi % fi === 0) return bi / fi;
+    }
     const nearest = Math.round(raw);
     if (nearest > 0 && Math.abs(raw - nearest) <= PDF_DISCRETE_QTY_SNAP_EPSILON) return nearest;
   }
-  return PDF_ROUND2(base / fator);
+  return PDF_ROUND2(raw);
 };
 const PDF_RESOLVE_COMMERCIAL_DISPLAY = (product, quantityBase, fallbackUnit = 'UN') => {
   if (!PDF_IS_SHOW(product)) {

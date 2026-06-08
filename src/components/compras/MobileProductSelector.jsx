@@ -220,7 +220,7 @@ export default function MobileProductSelector({
 
     const itemComQtyAtual = mergeEditingQuantidadeFromInput(editingItem);
     const quantidade = parseFloat(itemComQtyAtual.quantidade) || 0;
-    const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
+    const fatorConversao = parseFloat(itemComQtyAtual.fator_conversao) || 1;
     const custoApres = roundToTwoDecimals(parsePtBr(custoInput));
     const isAcrescimo = isItemAcrescimoCompra(editingItem);
     const descApres = roundToTwoDecimals(parsePtBr(descontoValorInput));

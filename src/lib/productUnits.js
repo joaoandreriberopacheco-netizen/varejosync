@@ -10,7 +10,11 @@ function normalizeNumber(value, fallback = 0) {
 }
 
 export function normalizeUnitCode(value) {
-  return String(value || "").trim().toUpperCase();
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/²/g, "2")
+    .replace(/\s/g, "");
 }
 
 const MAX_ALTERNATIVE_UNITS = 5;
@@ -564,18 +568,33 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
 }
 
 /**
- * Quantidade em unidade base (fator-1) efetiva para conversões.
- * Se `quantidade_base` estiver desatualizada face a quantidade×fator na UI, confia na UI.
+ * Quantidade em unidade base (fator-1) a partir do que o utilizador vê na unidade atual.
+ * A conversão M²↔CX deve partir de quantidade×fator da unidade em edição, não de
+ * `quantidade_base` possivelmente desatualizada (ex.: 205,4 m² presos de 79 CX antigos).
  */
 export function resolveEffectiveQuantidadeBase(item = {}) {
   const qty = normalizeNumber(item.quantidade, 0);
   const fator = normalizeNumber(item.fator_conversao, 1) || 1;
-  const baseFromDisplay = calculateBaseQuantity(qty, fator);
+  return calculateBaseQuantity(qty, fator);
+}
+
+/** Alinha qty comercial e base ao carregar linha do pedido (espelho Base44). */
+export function syncPedidoCompraItemQuantities(item = {}) {
+  const fator = normalizeNumber(item.fator_conversao, 1) || 1;
+  const unit = item.unidade_medida || item.unidade_apresentacao || "UN";
   const qbStored = normalizeNumber(item.quantidade_base, NaN);
-  if (!Number.isFinite(qbStored)) return baseFromDisplay;
+  const baseFromDisplay = calculateBaseQuantity(normalizeNumber(item.quantidade, 0), fator);
+  let quantidadeBase = Number.isFinite(qbStored) && qbStored > 0 ? qbStored : baseFromDisplay;
   const tolerance = Math.max(0.05, Math.abs(baseFromDisplay) * 0.001);
-  if (Math.abs(qbStored - baseFromDisplay) <= tolerance) return qbStored;
-  return baseFromDisplay;
+  if (Number.isFinite(qbStored) && qbStored > 0 && Math.abs(qbStored - baseFromDisplay) > tolerance) {
+    quantidadeBase = baseFromDisplay;
+  }
+  quantidadeBase = roundToTwoDecimals(quantidadeBase);
+  return {
+    ...item,
+    quantidade_base: quantidadeBase,
+    quantidade: commercialQuantityFromBase(quantidadeBase, fator, unit),
+  };
 }
 
 /** Mantém `quantidade_base` alinhada à quantidade comercial × fator (UI mobile compras). */
@@ -623,24 +642,33 @@ function isEffectivelyInteger(value) {
  * A base é a fonte da verdade; esta função só lê, nunca “corrige” a base.
  * PAC/CX: se base e fator são inteiros e a divisão é exata (360÷18), devolve o inteiro 20.
  */
+function fatorConversaoEhInteiro(fator) {
+  const f = normalizeNumber(fator, 1) || 1;
+  return Math.abs(f - Math.round(f)) < 1e-6;
+}
+
 export function commercialQuantityFromBase(quantityBase, fatorConversao = 1, unitCode = "") {
   const base = normalizeNumber(quantityBase, 0);
   const fator = normalizeNumber(fatorConversao, 1) || 1;
   if (!(fator > 0)) return roundToTwoDecimals(base);
 
   const unit = normalizeUnitCode(unitCode);
+  const raw = base / fator;
   if (isDiscretePackagingUnit(unit)) {
-    const bi = Math.round(base);
-    const fi = Math.round(fator);
-    if (fi > 0 && bi % fi === 0) return bi / fi;
-    const raw = base / fator;
+    // Só usa divisibilidade inteira quando o fator é inteiro (18 PAC, etc.).
+    // Fator decimal (2,6 m²/CX) com Math.round(2.6)=3 gerava 105 em vez de 121.
+    if (fatorConversaoEhInteiro(fator)) {
+      const bi = Math.round(base);
+      const fi = Math.round(fator);
+      if (fi > 0 && bi % fi === 0) return bi / fi;
+    }
     const nearest = Math.round(raw);
     if (nearest > 0 && Math.abs(raw - nearest) <= DISCRETE_QTY_SNAP_EPSILON) {
       return nearest;
     }
   }
 
-  return roundToTwoDecimals(base / fator);
+  return roundToTwoDecimals(raw);
 }
 
 /** Exibição de quantidade comercial: PAC/CX etc. sem casas quando o valor é (quase) inteiro. */
@@ -930,7 +958,10 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
   const { preserveQuantidadeBase = true, usarCustoSugerido = false } = options;
   const fator = normalizeNumber(option.fator_conversao, 1) || 1;
   const oldFator = normalizeNumber(item.fator_conversao, 1) || 1;
-  const quantidadeBase = resolveEffectiveQuantidadeBase(item);
+  const qtyNaUnidadeAtual = normalizeNumber(item.quantidade, 0);
+  const quantidadeBase = preserveQuantidadeBase
+    ? calculateBaseQuantity(qtyNaUnidadeAtual, oldFator)
+    : calculateBaseQuantity(1, fator);
 
   const unidadeAnterior = normalizeUnitCode(item.unidade_medida);
   const unidadeNova = normalizeUnitCode(option.unidade);
@@ -978,9 +1009,7 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
   const unitCode = normalizeUnitCode(item?.unidade_medida || item?.unidade_apresentacao);
   let quantidadeBaseFinal = Number.isFinite(quantidadeBase) ? quantidadeBase : quantidade * fator;
   if (isDiscretePackagingUnit(unitCode) && fator > 0) {
-    const qComm = commercialQuantityFromBase(quantidadeBaseFinal, fator, unitCode);
-    quantidade = qComm;
-    quantidadeBaseFinal = roundToTwoDecimals(qComm * fator);
+    quantidade = commercialQuantityFromBase(quantidadeBaseFinal, fator, unitCode);
   }
 
   const unitField = axisPrefix === "preco" ? "preco_unitario_praticado" : "custo_unitario";

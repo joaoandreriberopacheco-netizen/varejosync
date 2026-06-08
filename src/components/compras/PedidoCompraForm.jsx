@@ -52,6 +52,7 @@ import {
   normalizePurchaseItemToCommercial,
   commercialQuantityFromBase,
   resolveEffectiveQuantidadeBase,
+  syncPedidoCompraItemQuantities,
   normalizeItemToCanonicalFactorOne,
   custoApresentacaoParaFator1,
   resolveValorDescontoCompraPadraoFator1,
@@ -180,6 +181,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       const pedidoComData = {
         ...pedido,
         data_emissao: dataEmissao,
+        itens: (pedido.itens || []).map((item) => syncPedidoCompraItemQuantities(item)),
       };
       setFormData(pedidoComData);
       setPedidoLogistica(pedidoComData);
@@ -465,7 +467,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     }
 
     const produtoItem = produtos.find((p) => p.id === item.produto_id);
-    if (produtoItem) {
+    const itemJaCanonico =
+      item.preco_eixo === 'FATOR_1' &&
+      Number(item.quantidade_base) > 0 &&
+      item.unidade_medida;
+    if (produtoItem && !itemJaCanonico) {
       // `custo_unitario` é fator-1 (R$/[unidade base]); o total em R$ é qty_base × custo_unitario.
       const fatorAtual = parseFloat(item.fator_conversao) || 1;
       const totalBase = (parseFloat(item.quantidade) || 0) * fatorAtual * (parseFloat(item.custo_unitario) || 0);
