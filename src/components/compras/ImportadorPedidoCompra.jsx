@@ -46,6 +46,7 @@ export default function ImportadorPedidoCompra({
   const pdfAutoPickConsumedRef = useRef(false);
   /** PDF trazido pela Torre via sessionStorage — não abrir o seletor de ficheiros em duplicado. */
   const arquivoDaTorreRef = useRef(false);
+  const tipoDocumentoTorreRef = useRef('Comprovante');
   /** Só repor estado ao passar de fechado → aberto; enquanto o modal fica aberto não limpar (senão some o PDF a meio do fluxo). */
   const modalEstavaAbertoRef = useRef(false);
   const { toast } = useToast();
@@ -55,6 +56,7 @@ export default function ImportadorPedidoCompra({
       modalEstavaAbertoRef.current = false;
       pdfAutoPickConsumedRef.current = false;
       arquivoDaTorreRef.current = false;
+      tipoDocumentoTorreRef.current = 'Comprovante';
       return;
     }
     if (modalEstavaAbertoRef.current) {
@@ -285,9 +287,10 @@ Retorne JSON:
   useEffect(() => {
     if (!isOpen) return;
     const fromTorre = consumirArquivoPedidoImportDoBridge();
-    if (!fromTorre) return;
+    if (!fromTorre?.file) return;
     arquivoDaTorreRef.current = true;
-    void aplicarArquivoSelecionado(fromTorre, { assumePdf: true }).finally(() => {
+    tipoDocumentoTorreRef.current = fromTorre.tipoDocumento || 'Comprovante';
+    void aplicarArquivoSelecionado(fromTorre.file, { assumePdf: true }).finally(() => {
       onLaunchPdfFilePickerConsumed?.();
     });
   }, [isOpen]);
@@ -382,7 +385,13 @@ Retorne JSON:
         importedItems.push(itemImportado);
       }
 
-      onImportComplete({ fornecedorId, fornecedorNome: fornecedorInfo.nome, items: importedItems });
+      onImportComplete({
+        fornecedorId,
+        fornecedorNome: fornecedorInfo.nome,
+        items: importedItems,
+        anexoFonte: selectedFileRef.current,
+        tipoDocumentoAnexo: tipoDocumentoTorreRef.current || 'Comprovante',
+      });
       onClose();
       toast({ title: 'Itens importados com sucesso' });
     } catch (error) {

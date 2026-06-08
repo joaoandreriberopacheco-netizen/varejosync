@@ -60,6 +60,7 @@ import {
   calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
+import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefresh, abaInicial = 'dados-gerais', autoOpenImporter = false }) {
   const isPhone = useCompactShell();
@@ -142,6 +143,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   /** Quando true, o importador dispara o input file (PDF) uma vez — fluxo ?autoImportador=1 */
   const [importerLaunchPdfPicker, setImporterLaunchPdfPicker] = useState(false);
   const autoImporterHandledRef = useRef(false);
+  const pendingAnexoImportRef = useRef(null);
+  const anexoImportUploadedRef = useRef(false);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
@@ -257,6 +260,35 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const handleImporterLaunchPdfPickerConsumed = useCallback(() => {
     setImporterLaunchPdfPicker(false);
   }, []);
+
+  const enviarAnexoImportacaoPendente = useCallback(
+    async (pedidoId, pedidoNumero, pending = pendingAnexoImportRef.current) => {
+      if (!pedidoId || !pending?.file || anexoImportUploadedRef.current) return;
+      try {
+        await uploadAnexoParaPedidoCompra(base44, {
+          file: pending.file,
+          pedidoId,
+          pedidoNumero: pedidoNumero || '',
+          tipoDocumento: pending.tipoDocumentoAnexo || 'Comprovante',
+          origem: 'torre_importador_pedido',
+        });
+        anexoImportUploadedRef.current = true;
+        pendingAnexoImportRef.current = null;
+        toast({
+          title: 'PDF anexado ao pedido',
+          description: `Documento classificado como ${pending.tipoDocumentoAnexo || 'Comprovante'}.`,
+        });
+      } catch (anexoErr) {
+        console.warn('Anexo PDF (importação pedido):', anexoErr);
+        toast({
+          title: 'Itens importados, mas o PDF não foi anexado',
+          description: anexoErr?.message || 'Tente anexar manualmente na aba de anexos.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [toast]
+  );
 
   useEffect(() => {
     if (!autoOpenImporter || autoImporterHandledRef.current) return;
@@ -925,6 +957,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       const pedidoSalvo = await onSave(dataToSave);
       const pedidoId = pedidoSalvo?.id || pedido?.id;
 
+      if (pedidoId && pendingAnexoImportRef.current) {
+        await enviarAnexoImportacaoPendente(
+          pedidoId,
+          pedidoSalvo?.numero || pedido?.numero,
+          pendingAnexoImportRef.current
+        );
+      }
+
       // ── Sincroniza linhas canonicas em PedidoCompraItem ──
       // O servico replaceAll persiste cada linha com produto_unidade_id, recompoe
       // o espelho `PedidoCompra.itens[]` e atualiza `valor_total`. Os erros nao
@@ -1573,7 +1613,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         }}
         launchPdfFilePickerOnce={importerLaunchPdfPicker}
         onLaunchPdfFilePickerConsumed={handleImporterLaunchPdfPickerConsumed}
-        onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems }) => {
+        onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems, anexoFonte, tipoDocumentoAnexo }) => {
+          if (anexoFonte && !anexoImportUploadedRef.current) {
+            pendingAnexoImportRef.current = {
+              file: anexoFonte,
+              tipoDocumentoAnexo: tipoDocumentoAnexo || 'Comprovante',
+            };
+            if (pedido?.id) {
+              void enviarAnexoImportacaoPendente(pedido.id, pedido.numero, pendingAnexoImportRef.current);
+            }
+          }
           setFormData(prev => {
             const novosItens = importedItems.map((item) => {
               const produtoItem = produtos.find((p) => p.id === item.produto_id);

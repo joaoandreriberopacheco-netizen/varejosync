@@ -27,6 +27,25 @@ export async function uploadAnexoParaLancamentoFinanceiro(base44, { file, lancam
   });
 }
 
+export async function uploadAnexoParaPedidoCompra(
+  base44,
+  { file, pedidoId, pedidoNumero = '', tipoDocumento = 'Comprovante', origem = 'varejosync' }
+) {
+  if (!file || !pedidoId) return;
+  const base64 = await fileBlobToBase64(file);
+  await base44.functions.invoke('uploadAnexoDrive', {
+    file_base64: base64,
+    file_name: file.name || 'documento.pdf',
+    file_type: file.type || 'application/pdf',
+    file_size: file.size,
+    referencia_tipo: 'PedidoCompra',
+    referencia_id: pedidoId,
+    referencia_numero: pedidoNumero || '',
+    tipo_documento: tipoDocumento,
+    origem,
+  });
+}
+
 export async function uploadAnexoParaContaPrevista(base44, { file, contaPrevistaId, descricao = '', tipoDocumento = 'Boleto', origem = 'varejosync' }) {
   if (!file || !contaPrevistaId) return;
   const base64 = await fileBlobToBase64(file);

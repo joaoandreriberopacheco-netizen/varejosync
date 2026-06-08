@@ -427,8 +427,8 @@ export default function AnexoCompartilhado() {
     if (carregando || importPedidoDeepLinkHandled.current) return;
     if (etapa !== 'importar_pedido_novo' || !arquivo?.file) return;
     importPedidoDeepLinkHandled.current = true;
-    void navegarParaNovoPedidoImport(arquivo);
-  }, [carregando, etapa, arquivo]);
+    void navegarParaNovoPedidoImport(arquivo, tipoDocumento);
+  }, [carregando, etapa, arquivo, tipoDocumento]);
 
   const handleVincular = async (lancamento) => {
     if (!arquivo?.file) return;
@@ -625,6 +625,7 @@ export default function AnexoCompartilhado() {
                     : 'agefin'
                 }
                 initialFile={arquivo.file}
+                tipoDocumentoAnexo={tipoDocumento}
                 onSuccess={(_data, meta) => {
                   if (meta?.close) setEtapa('sucesso_conta');
                 }}
@@ -679,6 +680,7 @@ export default function AnexoCompartilhado() {
               <AgefinImportador
                 key={contaMesBoletoAlvo.id}
                 initialFile={arquivo.file}
+                tipoDocumentoAnexo={tipoDocumento}
                 modoAtualizacao
                 contaPrevistaId={contaMesBoletoAlvo.referencia_id || undefined}
                 lancamentoFinanceiroId={contaMesBoletoAlvo.id}
@@ -842,7 +844,7 @@ export default function AnexoCompartilhado() {
             titulo="Novo pedido (importar itens)"
             descricao="Criar pedido novo e abrir direto o importador de itens"
             disabled={!arquivo?.file}
-            onClick={() => void navegarParaNovoPedidoImport(arquivo)}
+            onClick={() => void navegarParaNovoPedidoImport(arquivo, tipoDocumento)}
           />
           <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
           <OpcaoCard

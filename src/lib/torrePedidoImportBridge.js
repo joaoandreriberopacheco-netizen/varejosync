@@ -8,11 +8,11 @@ import { createPageUrl } from '@/utils';
 export const STORAGE_PEDIDO_IMPORT_BRIDGE = 'p38_pedido_import_torre_v1';
 
 /** Entrada da Torre: { file, nome, tipo } */
-export async function navegarParaNovoPedidoImport(arquivoEntry) {
+export async function navegarParaNovoPedidoImport(arquivoEntry, tipoDocumento = 'Comprovante') {
   try {
     const file = arquivoEntry?.file;
     if (file) {
-      await guardarArquivoParaPedidoImport(file, arquivoEntry.nome, arquivoEntry.tipo);
+      await guardarArquivoParaPedidoImport(file, arquivoEntry.nome, arquivoEntry.tipo, tipoDocumento);
       void copiarArquivoParaClipboardOpcional(file);
     }
   } catch (e) {
@@ -21,7 +21,7 @@ export async function navegarParaNovoPedidoImport(arquivoEntry) {
   window.location.href = `${createPageUrl('PedidoCompraDetalhe')}?id=novo&autoImportador=1`;
 }
 
-export function guardarArquivoParaPedidoImport(file, nome, tipo) {
+export function guardarArquivoParaPedidoImport(file, nome, tipo, tipoDocumento = 'Comprovante') {
   return new Promise((resolve, reject) => {
     if (!file) {
       resolve(false);
@@ -37,6 +37,7 @@ export function guardarArquivoParaPedidoImport(file, nome, tipo) {
           JSON.stringify({
             nome: nome || file.name || 'documento',
             tipo: tipo || file.type || 'application/octet-stream',
+            tipoDocumento: String(tipoDocumento || 'Comprovante').trim() || 'Comprovante',
             base64,
             ts: Date.now(),
           })
@@ -77,7 +78,7 @@ export async function copiarArquivoParaClipboardOpcional(file) {
 }
 
 /**
- * Lê e remove. Devolve File ou null.
+ * Lê e remove. Devolve { file, tipoDocumento } ou null.
  */
 const TTL_MS = 30 * 60 * 1000;
 
@@ -87,7 +88,7 @@ export function consumirArquivoPedidoImportDoBridge() {
     if (!raw) return null;
     sessionStorage.removeItem(STORAGE_PEDIDO_IMPORT_BRIDGE);
     const parsed = JSON.parse(raw);
-    const { nome, tipo, base64, ts } = parsed;
+    const { nome, tipo, base64, ts, tipoDocumento } = parsed;
     if (ts && Date.now() - Number(ts) > TTL_MS) {
       return null;
     }
@@ -97,10 +98,14 @@ export function consumirArquivoPedidoImportDoBridge() {
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     const blob = new Blob([bytes], { type: tipo || 'application/octet-stream' });
     const safeName = nome || 'documento.pdf';
-    return new File([blob], safeName, {
+    const file = new File([blob], safeName, {
       type: tipo || blob.type || 'application/octet-stream',
       lastModified: Date.now(),
     });
+    return {
+      file,
+      tipoDocumento: String(tipoDocumento || 'Comprovante').trim() || 'Comprovante',
+    };
   } catch {
     try {
       sessionStorage.removeItem(STORAGE_PEDIDO_IMPORT_BRIDGE);

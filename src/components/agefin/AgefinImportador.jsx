@@ -156,6 +156,8 @@ export default function AgefinImportador({
   modoAtualizacao = false,
   /** Ficheiro j? escolhido (ex.: partilha Web) ??? inicia leitura autom?tica */
   initialFile = null,
+  /** Tipo escolhido na Torre de controle (ex.: Boleto, Comprovante) */
+  tipoDocumentoAnexo = 'Boleto',
   /** Lista recorrentes: descri??o/terceiro da conta j? criada; sucesso volta ao painel */
   fluxoLoopAtualizadorRecorrente = false,
   /** { descricao, terceiro_nome?, conta_financeira_id? } ??? ap?s ler o PDF */
@@ -580,6 +582,7 @@ ${blocoTextoLocal}`,
             file: file.original,
             contaPrevistaId: contaCriada.id,
             descricao: descricaoFinal,
+            tipoDocumento: tipoDocumentoAnexo,
             origem: 'importador_agefin_pdf',
           });
         } catch (anexoContaErr) {
@@ -610,6 +613,7 @@ ${blocoTextoLocal}`,
               file: file.original,
               lancamentoId: lancamentoFinanceiroId,
               descricao: descricaoFinal,
+              tipoDocumento: tipoDocumentoAnexo,
               origem: 'importador_agefin_pdf',
             });
           } catch (anexoErr) {
@@ -687,6 +691,7 @@ ${blocoTextoLocal}`,
               file: file.original,
               lancamentoId: lancamentoCriado?.id || lfMesmoMes.id,
               descricao: descricaoFinal,
+              tipoDocumento: tipoDocumentoAnexo,
               origem: 'importador_agefin_pdf',
             });
           } catch (anexoErr) {
