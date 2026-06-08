@@ -32,7 +32,6 @@ import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import { buildBypassAuthPayload, pedidoCompraSaveRequerPin } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
-import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
@@ -1261,16 +1260,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Timeline */}
-      <div className="px-2 pt-2 pb-1">
-        <StatusTimeline 
-          currentStatus={formData.status} 
-          aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
-          dataEmissao={formData.data_emissao}
-          isMobile={isPhone}
-        />
-      </div>
 
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
