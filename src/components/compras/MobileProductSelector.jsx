@@ -106,7 +106,7 @@ export default function MobileProductSelector({
   };
 
   const hydrateEditInputs = (item) => {
-    const synced = syncItemDescontoApresentacao(item);
+    const synced = syncItemQuantidadeBaseComercial(syncItemDescontoApresentacao(item));
     setQuantidadeInput((parseFloat(synced.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     applyDescontoInputsFromItem(synced);
     return synced;

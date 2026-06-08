@@ -563,6 +563,21 @@ export function calculateBaseQuantity(quantity, fatorConversao = 1) {
   return normalizeNumber(quantity, 0) * normalizeNumber(fatorConversao, 1);
 }
 
+/**
+ * Quantidade em unidade base (fator-1) efetiva para conversões.
+ * Se `quantidade_base` estiver desatualizada face a quantidade×fator na UI, confia na UI.
+ */
+export function resolveEffectiveQuantidadeBase(item = {}) {
+  const qty = normalizeNumber(item.quantidade, 0);
+  const fator = normalizeNumber(item.fator_conversao, 1) || 1;
+  const baseFromDisplay = calculateBaseQuantity(qty, fator);
+  const qbStored = normalizeNumber(item.quantidade_base, NaN);
+  if (!Number.isFinite(qbStored)) return baseFromDisplay;
+  const tolerance = Math.max(0.05, Math.abs(baseFromDisplay) * 0.001);
+  if (Math.abs(qbStored - baseFromDisplay) <= tolerance) return qbStored;
+  return baseFromDisplay;
+}
+
 /** Mantém `quantidade_base` alinhada à quantidade comercial × fator (UI mobile compras). */
 export function syncItemQuantidadeBaseComercial(item = {}) {
   const qty = normalizeNumber(item.quantidade, 0);
@@ -915,10 +930,7 @@ export function applyPurchaseUnitOptionToItem(item = {}, product = {}, option = 
   const { preserveQuantidadeBase = true, usarCustoSugerido = false } = options;
   const fator = normalizeNumber(option.fator_conversao, 1) || 1;
   const oldFator = normalizeNumber(item.fator_conversao, 1) || 1;
-  const qbInformada = normalizeNumber(item.quantidade_base, NaN);
-  const quantidadeBase = Number.isFinite(qbInformada)
-    ? qbInformada
-    : calculateBaseQuantity(normalizeNumber(item.quantidade, 0), oldFator);
+  const quantidadeBase = resolveEffectiveQuantidadeBase(item);
 
   const unidadeAnterior = normalizeUnitCode(item.unidade_medida);
   const unidadeNova = normalizeUnitCode(option.unidade);
@@ -1083,10 +1095,11 @@ export function resolveCommercialDisplay(product, quantityBase = 0, fallbackUnit
 export function normalizePurchaseItemToCommercial(product, item = {}) {
   const quantidadeInput = normalizeNumber(item.quantidade, 0);
   const fatorInput = normalizeNumber(item.fator_conversao, 1) || 1;
-  const quantidadeBaseInformada = normalizeNumber(item.quantidade_base, NaN);
-  const quantidadeBase = Number.isFinite(quantidadeBaseInformada)
-    ? quantidadeBaseInformada
-    : calculateBaseQuantity(quantidadeInput, fatorInput);
+  const quantidadeBase = resolveEffectiveQuantidadeBase({
+    ...item,
+    quantidade: quantidadeInput,
+    fator_conversao: fatorInput,
+  });
   const fallbackUnit = item.unidade_medida || product?.unidade_principal || "UN";
   const purchaseOptions = buildPurchaseUnitOptions(product);
   const purchaseUnitExplicit = normalizeUnitCode(fallbackUnit);

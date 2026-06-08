@@ -51,6 +51,7 @@ import {
   pickDefaultPurchaseUnit,
   normalizePurchaseItemToCommercial,
   commercialQuantityFromBase,
+  resolveEffectiveQuantidadeBase,
   normalizeItemToCanonicalFactorOne,
   custoApresentacaoParaFator1,
   resolveValorDescontoCompraPadraoFator1,
@@ -431,9 +432,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
         }
     }
 
-    const quantidadeBaseAntes = parseFloat(item.quantidade_base);
-    const tinhaBaseExplicita = Number.isFinite(quantidadeBaseAntes) && quantidadeBaseAntes > 0;
-
     const produtoItem = produtos.find((p) => p.id === item.produto_id);
     if (produtoItem) {
       // `custo_unitario` é fator-1 (R$/[unidade base]); o total em R$ é qty_base × custo_unitario.
@@ -443,17 +441,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
     }
 
     const fatorConversao = parseFloat(item.fator_conversao) || 1;
-    if (tinhaBaseExplicita && fatorConversao > 0) {
-      item.quantidade_base = quantidadeBaseAntes;
-      item.quantidade = commercialQuantityFromBase(
-        quantidadeBaseAntes,
-        fatorConversao,
-        item.unidade_medida || item.unidade_apresentacao,
-      );
-    } else {
-      const qty = parseFloat(item.quantidade) || 0;
-      item.quantidade_base = roundToTwoDecimals(qty * fatorConversao);
-    }
+    const quantidadeBase = roundToTwoDecimals(resolveEffectiveQuantidadeBase(item));
+    item.quantidade_base = quantidadeBase;
+    item.quantidade = commercialQuantityFromBase(
+      quantidadeBase,
+      fatorConversao,
+      item.unidade_medida || item.unidade_apresentacao,
+    );
 
     const qty = parseFloat(item.quantidade) || 0;
     const qBaseLinha = parseFloat(item.quantidade_base) || qty * fatorConversao;
