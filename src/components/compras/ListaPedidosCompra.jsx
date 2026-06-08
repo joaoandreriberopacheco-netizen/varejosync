@@ -3,6 +3,7 @@ import { formatarDataCurta } from '@/components/utils/dateUtils';
 import { ChevronDown, Trash2, Check, Package2, CalendarClock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { formatQuantity } from '@/lib/financialUtils';
+import { formatCommercialQuantity } from '@/lib/productUnits';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,11 @@ const R = (v) => {
   const n = v || 0;
   return `R$ ${n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}`;
 };
+
+function formatCardQuantity(value, unitSuffix) {
+  if (!unitSuffix || unitSuffix === 'un.') return formatQuantity(value);
+  return formatCommercialQuantity(value, unitSuffix);
+}
 
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-400', pill: 'bg-slate-100 dark:bg-slate-800/55 text-slate-700 dark:text-slate-300' },
@@ -152,10 +158,10 @@ function PedidoMobileLine({ pedido, onEdit, onDelete, selecionado, desabilitadoS
   };
 
   const qtdLabel = pedido._is_necessidade
-    ? (totalQtd > 0 ? `${formatQuantity(totalQtd)} ${sufixoUnidade} pend.` : '')
+    ? (totalQtd > 0 ? `${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade} pend.` : '')
     : totalQtdEmbarcada > 0
-      ? `${formatQuantity(totalQtdEmbarcada)} / ${formatQuantity(totalQtdPedidaCard)} ${sufixoUnidade}`
-      : (totalQtd > 0 ? `${formatQuantity(totalQtd)} ${sufixoUnidade}` : '');
+      ? `${formatCardQuantity(totalQtdEmbarcada, sufixoUnidade)} / ${formatCardQuantity(totalQtdPedidaCard, sufixoUnidade)} ${sufixoUnidade}`
+      : (totalQtd > 0 ? `${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade}` : '');
 
   return (
     <>
@@ -316,10 +322,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
                   {pedido._is_necessidade
-                    ? (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} ${sufixoUnidade} pend.` : '')
+                    ? (totalQtd > 0 ? ` · ${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade} pend.` : '')
                     : totalQtdEmbarcada > 0
-                      ? ` · ${formatQuantity(totalQtdEmbarcada)} de ${formatQuantity(totalQtdPedidaCard)} ${sufixoUnidade}`
-                      : (totalQtd > 0 ? ` · ${formatQuantity(totalQtd)} ${sufixoUnidade}` : '')}
+                      ? ` · ${formatCardQuantity(totalQtdEmbarcada, sufixoUnidade)} de ${formatCardQuantity(totalQtdPedidaCard, sufixoUnidade)} ${sufixoUnidade}`
+                      : (totalQtd > 0 ? ` · ${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade}` : '')}
                 </span>
               </span>
 

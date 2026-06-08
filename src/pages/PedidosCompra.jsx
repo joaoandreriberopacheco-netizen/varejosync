@@ -16,12 +16,10 @@ import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer'
 import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
-  resolveCommercialDisplay,
   commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
-  resolveUnidadeExibicaoParaCompras,
-  buildSnapshotExibicaoComercial,
-  resolveCustoUnitarioComercialLinha,
+  normalizePurchaseItemToCommercial,
+  syncPedidoCompraItemQuantities,
   linhaPrecoNoEixoFatorUm,
   calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
@@ -201,78 +199,48 @@ const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
   return baseUnit * multiplicadorPedido;
 };
 
-const getFatorEntradaItem = (produto = null, pedidoItem = {}, item = {}) => {
-  const fatorDireto = Number(item?.fator_conversao) || Number(pedidoItem?.fator_conversao);
-  if (Number.isFinite(fatorDireto) && fatorDireto > 0) return fatorDireto;
+/** Mesma normalização do PedidoCompraForm — respeita a UM da linha (CX, M²…), não a vitrine PDV. */
+const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = {}) => {
+  const linhaMerged = { ...pedidoItem, ...item };
+  let linhaComercial = { ...linhaMerged };
 
-  if (!produto) return 1;
-  const opcoes = buildPurchaseUnitOptions(produto);
-  const unidadeEntrada = normalizeUnitCode(item?.unidade_medida || pedidoItem?.unidade_medida);
-  if (!unidadeEntrada) return 1;
-  const opt = opcoes.find((o) => normalizeUnitCode(o.unidade) === unidadeEntrada);
-  return Number(opt?.fator_conversao) || 1;
-};
-
-const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = {}, pedido = {}) => {
-  const qtdRaw = Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || Number(item?.quantidade) || 0;
-  const fatorEntrada = getFatorEntradaItem(produto, pedidoItem, item);
-  const quantidadeBase = Number(item?.quantidade_base) > 0
-    ? Number(item.quantidade_base)
-    : (qtdRaw * fatorEntrada);
-  const fallback = item?.unidade_apresentacao_default || item?.unidade_medida || pedidoItem?.unidade_medida || produto?.unidade_principal || 'UN';
-  const pdvResolvido = produto ? resolveUnidadeExibicaoParaCompras(produto, item, fallback) : fallback;
-  const snapshotForcandoPdv = produto ? buildSnapshotExibicaoComercial(produto, pdvResolvido) : null;
-  const commercial = snapshotForcandoPdv
-    ? resolveCommercialDisplay(snapshotForcandoPdv, quantidadeBase, fallback)
-    : { unidade: pedidoItem?.unidade_medida || item?.unidade_medida || '', fator_conversao: Number(pedidoItem?.fator_conversao) || 1, quantidade: qtdRaw };
-
-  const fatorComercial = Number(commercial?.fator_conversao) || 1;
-  const unidadeComercial = commercial?.unidade || pedidoItem?.unidade_medida || item?.unidade_medida || '';
-  const quantidadeComercial =
-    Number(commercial?.quantidade) ||
-    (fatorComercial > 0
-      ? commercialQuantityFromBase(quantidadeBase, fatorComercial, unidadeComercial)
-      : qtdRaw);
-
-  const linhaPedido = pedidoItem || item;
-  const linhaCusto = {
-    ...linhaPedido,
-    quantidade: quantidadeComercial,
-    quantidade_base: quantidadeBase,
-    fator_conversao: fatorComercial,
-    unidade_medida: unidadeComercial,
-  };
-  let custoUnitarioComercial = resolveCustoUnitarioComercialLinha(linhaCusto, 'final');
-  if (!(custoUnitarioComercial > 0)) {
-    custoUnitarioComercial = resolveCustoUnitarioComercialLinha(linhaCusto, 'custo');
+  if (produto && Object.keys(produto).length > 0) {
+    const itemJaCanonico =
+      linhaMerged.preco_eixo === 'FATOR_1' &&
+      Number(linhaMerged.quantidade_base) > 0 &&
+      linhaMerged.unidade_medida;
+    if (!itemJaCanonico) {
+      linhaComercial = normalizePurchaseItemToCommercial(produto, linhaMerged);
+    }
   }
 
-  const qLinhaPedido = Number(linhaPedido?.quantidade) || 0;
-  const totalOrig =
-    calcTotalItemCompraPedido(linhaPedido) ||
-    Number(linhaPedido?.total) ||
-    Number(linhaPedido?.valor_total_item) ||
-    Number(linhaPedido?.valor_total) ||
-    Number(linhaPedido?.subtotal) ||
-    0;
+  linhaComercial = syncPedidoCompraItemQuantities(linhaComercial);
 
-  let totalLinha;
-  if (Number.isFinite(totalOrig) && totalOrig > 0 && qLinhaPedido > 0) {
-    totalLinha = (quantidadeComercial / qLinhaPedido) * totalOrig;
-  } else {
-    totalLinha = quantidadeComercial * custoUnitarioComercial;
+  const quantidadePedida = Number(linhaComercial.quantidade) || 0;
+  const quantidadeBase = Number(linhaComercial.quantidade_base) || 0;
+  const fatorComercial = Number(linhaComercial.fator_conversao) || 1;
+  const unidadeComercial = linhaComercial.unidade_medida || '';
+
+  const qEmbInput = Number(item?.quantidade_embarcada);
+  const hasEmbarqueQty = Number.isFinite(qEmbInput) && qEmbInput > 0;
+  let quantidadeEmbarcada = 0;
+  if (hasEmbarqueQty) {
+    const embBase = Number(item?.quantidade_base);
+    quantidadeEmbarcada = embBase > 0
+      ? commercialQuantityFromBase(embBase, fatorComercial, unidadeComercial)
+      : qEmbInput;
   }
-  totalLinha = Number(Number(totalLinha).toFixed(2));
+
+  const totalLinha = calcTotalItemCompraPedido(linhaComercial);
 
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
     produto_nome: item.produto_nome || pedidoItem?.produto_nome,
-    quantidade: quantidadeComercial,
-    quantidade_embarcada: quantidadeComercial,
-    quantidade_pedida: quantidadeComercial,
+    quantidade: quantidadePedida,
+    quantidade_embarcada: quantidadeEmbarcada,
+    quantidade_pedida: quantidadePedida,
     quantidade_base: quantidadeBase,
     fator_conversao: fatorComercial,
-    custo_unitario: custoUnitarioComercial,
     unidade_medida: unidadeComercial,
     total: totalLinha,
     valor_total_item: totalLinha,
@@ -283,7 +251,7 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
     const produto = produtosMap[item.produto_id] || produtosMap[pedidoItem?.produto_id] || null;
-    return normalizeDisplayItemCommercial(produto, pedidoItem, item, pedido);
+    return normalizeDisplayItemCommercial(produto, pedidoItem, item);
   });
 };
 
