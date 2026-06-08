@@ -112,6 +112,14 @@ export default function MobileProductSelector({
     return synced;
   };
 
+  /** Garante que a qty digitada no input (estado React) entra no item antes de converter unidade ou salvar. */
+  const mergeEditingQuantidadeFromInput = (item) => {
+    if (!item) return item;
+    const qtyInput = parsePtBr(quantidadeInput);
+    const qty = qtyInput > 0 ? qtyInput : (parseFloat(item.quantidade) || 0);
+    return syncItemQuantidadeBaseComercial({ ...item, quantidade: qty });
+  };
+
   const syncDescontoFromPct = (item, custoApres, pctRaw) => {
     const pct = roundToTwoDecimals(parsePtBr(pctRaw));
     return applyItemDescontoPctApresentacao(item, custoApres, pct, isItemAcrescimoCompra(item));
@@ -196,7 +204,8 @@ export default function MobileProductSelector({
     if (!editingItem || !unitOption) return;
     const product = products.find((p) => p.id === editingItem.produto_id);
     if (!product) return;
-    const updated = applyPurchaseUnitOptionToItem(editingItem, product, unitOption, {
+    const itemComQtyAtual = mergeEditingQuantidadeFromInput(editingItem);
+    const updated = applyPurchaseUnitOptionToItem(itemComQtyAtual, product, unitOption, {
       preserveQuantidadeBase: true,
     });
     const custoApres = roundToTwoDecimals(unitOption.valor_unitario || getCustoApresentacaoItem(updated));
@@ -209,7 +218,8 @@ export default function MobileProductSelector({
   const handleSaveEdit = () => {
     if (!editingItem) return;
 
-    const quantidade = parseFloat(editingItem.quantidade) || 0;
+    const itemComQtyAtual = mergeEditingQuantidadeFromInput(editingItem);
+    const quantidade = parseFloat(itemComQtyAtual.quantidade) || 0;
     const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
     const custoApres = roundToTwoDecimals(parsePtBr(custoInput));
     const isAcrescimo = isItemAcrescimoCompra(editingItem);
@@ -217,7 +227,7 @@ export default function MobileProductSelector({
     const pctItem = roundToTwoDecimals(parsePtBr(descontoPctInput));
 
     let itemDraft = {
-      ...editingItem,
+      ...itemComQtyAtual,
       quantidade,
       quantidade_base: calculateBaseQuantity(quantidade, fatorConversao),
     };
@@ -505,7 +515,10 @@ export default function MobileProductSelector({
             <button
               type="button"
               disabled={isLocked}
-              onClick={() => setEditUnitSelector({ open: true })}
+              onClick={() => {
+                setEditingItem((prev) => mergeEditingQuantidadeFromInput(prev));
+                setEditUnitSelector({ open: true });
+              }}
               className="flex items-center gap-1 shrink-0"
             >
               <Badge className="bg-muted text-foreground/90 dark:bg-muted dark:text-foreground border-0 shadow-sm">
