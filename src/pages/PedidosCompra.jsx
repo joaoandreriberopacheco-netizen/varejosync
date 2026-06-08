@@ -22,6 +22,7 @@ import {
   buildSnapshotExibicaoComercial,
   resolveCustoUnitarioComercialLinha,
   linhaPrecoNoEixoFatorUm,
+  calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -242,6 +243,7 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
 
   const qLinhaPedido = Number(linhaPedido?.quantidade) || 0;
   const totalOrig =
+    calcTotalItemCompraPedido(linhaPedido) ||
     Number(linhaPedido?.total) ||
     Number(linhaPedido?.valor_total_item) ||
     Number(linhaPedido?.valor_total) ||
@@ -279,27 +281,50 @@ const buildDisplayItensFromEmbarque = (pedido, embarque, produtosMap = {}) => {
   });
 };
 
+/** Mesma regra do PedidoCompraForm: soma `calcTotalItemCompraPedido` + frete − desconto. */
 const getValorTotalPedidoCalculado = (pedido) => {
-  const valorPedidoConhecido = Number(pedido?.valor_total);
-  if (Number.isFinite(valorPedidoConhecido) && valorPedidoConhecido > 0) return valorPedidoConhecido;
-  return (pedido?.itens || []).reduce((acc, item) => {
-    const qtd = Number(item?.quantidade) || 0;
-    return acc + (qtd * getValorUnitarioEfetivoItemPedido(item, pedido));
-  }, 0);
+  const valorItens = (pedido?.itens || []).reduce(
+    (acc, item) => acc + calcTotalItemCompraPedido(item),
+    0,
+  );
+  const frete = Number(pedido?.valor_frete) || 0;
+  const desconto = Number(pedido?.valor_desconto) || 0;
+  return Number((valorItens + frete - desconto).toFixed(2));
 };
 
-const getDisplayValorEmbarque = (pedido, embarque, produtosMap = {}) => {
-  const itensDisplay = buildDisplayItensFromEmbarque(pedido, embarque, produtosMap);
-  const valorItens = itensDisplay.reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
-  const valorTotalPedido = getValorTotalPedidoCalculado(pedido);
-  const valorBaseItens = (pedido?.itens || []).reduce((acc, item) => {
-    const qtd = Number(item?.quantidade) || 0;
-    return acc + (qtd * getValorUnitarioEfetivoItemPedido(item, pedido));
-  }, 0);
+const somaItensPedidoCalculada = (pedido) =>
+  (pedido?.itens || []).reduce((acc, item) => acc + calcTotalItemCompraPedido(item), 0);
 
-  if (!valorItens || !valorBaseItens || !valorTotalPedido) return valorItens;
+/** Valor do card de embarque: parcela proporcional do total do pedido (itens + frete/desconto rateados). */
+const getDisplayValorEmbarque = (pedido, embarque) => {
+  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const valorItensPedido = somaItensPedidoCalculada(pedido);
+  if (!itensEmbarque.length) return getValorTotalPedidoCalculado(pedido);
 
-  return Number(((valorItens / valorBaseItens) * valorTotalPedido).toFixed(2));
+  let valorEmbarqueItens = 0;
+  for (const itemEmb of itensEmbarque) {
+    const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
+    if (!pedidoItem) continue;
+    const lineTotal = calcTotalItemCompraPedido(pedidoItem);
+    const qtyEmb =
+      Number(itemEmb.quantidade_embarcada) ||
+      Number(itemEmb.quantidade_pedida) ||
+      Number(itemEmb.quantidade) ||
+      0;
+    const qtyPed = Number(pedidoItem.quantidade) || 0;
+    if (qtyPed > 0 && lineTotal > 0) {
+      valorEmbarqueItens += (qtyEmb / qtyPed) * lineTotal;
+    } else if (lineTotal > 0) {
+      valorEmbarqueItens += lineTotal;
+    }
+  }
+
+  if (!valorItensPedido) return Number(valorEmbarqueItens.toFixed(2));
+
+  const frete = Number(pedido?.valor_frete) || 0;
+  const desconto = Number(pedido?.valor_desconto) || 0;
+  const proporcao = valorEmbarqueItens / valorItensPedido;
+  return Number((valorEmbarqueItens + proporcao * (frete - desconto)).toFixed(2));
 };
 
 const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
