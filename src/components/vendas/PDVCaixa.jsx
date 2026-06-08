@@ -400,7 +400,7 @@ export default function PDVCaixa({
       if (event.type === 'create' || event.type === 'update') {
         if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
         subscribeDebounceRef.current = setTimeout(() => {
-          loadDataRef.current?.();
+          loadDataRef.current?.(undefined, undefined, { force: true });
         }, CAIXA_SUBSCRIBE_DEBOUNCE_MS);
       }
     });
@@ -505,7 +505,7 @@ export default function PDVCaixa({
 
       if (e.key === 'F7') {
         e.preventDefault();
-        loadData();
+        loadData(undefined, undefined, { force: true });
         toast({
           title: "✓ Atualizado!",
           className: CAIXA_TOAST_SUCCESS,
@@ -532,14 +532,20 @@ export default function PDVCaixa({
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, showConfirmarImpressao, valorRestante, pedidosAguardando]); // Updated telaAtual to view
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
-  const loadData = useCallback(async (caixaParam, turnoParam) => {
+  const loadData = useCallback(async (caixaParam, turnoParam, { force = false } = {}) => {
     const caixa = caixaParam || caixaSelecionado;
     const turno = turnoParam || turnoAtivo;
     if (!caixa || !turno) return;
 
+    const queryKey = [...caixaTurnoQueryKey(turno.id, caixa.id), 'live', 'sem-itens'];
+
     try {
+      if (force) {
+        await queryClient.invalidateQueries({ queryKey: caixaTurnoQueryKey(turno.id, caixa.id) });
+      }
+
       const snapshot = await queryClient.fetchQuery({
-        queryKey: [...caixaTurnoQueryKey(turno.id, caixa.id), 'live', 'sem-itens'],
+        queryKey,
         queryFn: () =>
           fetchCaixaTurnoSnapshot({
             turno,
@@ -547,7 +553,7 @@ export default function PDVCaixa({
             incluirRascunhos: true,
             rascunhoExigirItens: false,
           }),
-        staleTime: 30_000,
+        staleTime: force ? 0 : 30_000,
       });
       applySnapshot(snapshot);
     } catch (error) {
@@ -667,10 +673,13 @@ export default function PDVCaixa({
         className: CAIXA_TOAST_SUCCESS
       });
 
+      const rascunhoId = pedidoSelecionado.id;
+      setRascunhosAguardando((prev) => prev.filter((r) => r.id !== rascunhoId));
       setShowRetornoDialog(false);
       setIsDialogOpen(false);
       setMotivoRetorno('');
-      loadData();
+      setPedidoSelecionado(null);
+      loadData(undefined, undefined, { force: true });
     } catch (error) {
       toast({
         title: "Erro",
@@ -826,7 +835,9 @@ export default function PDVCaixa({
       });
 
       const rascunhoProcessado = pedidoSelecionado;
+      const rascunhoId = rascunhoProcessado.id;
 
+      setRascunhosAguardando((prev) => prev.filter((r) => r.id !== rascunhoId));
       setIsDialogOpen(false);
 
       // Prepara promissória se houver fiado (será aberta após fechar o comprovante)
@@ -846,7 +857,7 @@ export default function PDVCaixa({
       setShowConfirmarImpressao(true);
       setPedidoSelecionado(null);
 
-      loadData();
+      loadData(undefined, undefined, { force: true });
     } catch (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } finally {
@@ -1299,7 +1310,7 @@ export default function PDVCaixa({
         
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
+            onClick={() => { loadData(undefined, undefined, { force: true }); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
             className="p-2 hover:bg-muted dark:hover:bg-muted rounded-lg transition-colors"
             style={{ minWidth: '44px', minHeight: '44px' }}
             title="Atualizar (F7)">
@@ -1645,7 +1656,7 @@ export default function PDVCaixa({
                          </button>
                        </div>
                        <button
-                         onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
+                         onClick={() => { loadData(undefined, undefined, { force: true }); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
                          className="p-2 hover:bg-muted dark:hover:bg-muted rounded-xl transition-colors self-end sm:self-auto"
                          style={{ minWidth: '44px', minHeight: '44px' }}
                          title="Atualizar">
@@ -1774,7 +1785,7 @@ export default function PDVCaixa({
           <ProcessarVendasView
             rascunhosAguardando={rascunhosAguardando}
             onBack={() => setView('dashboard')}
-            onRefresh={() => { loadData(); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
+            onRefresh={() => { loadData(undefined, undefined, { force: true }); toast({ title: "✓ Atualizado!", className: CAIXA_TOAST_SUCCESS, duration: 1000 }); }}
             onAbrirPedido={handleAbrirPedido}
             formatarValorExibicao={formatarValorExibicao}
           />
