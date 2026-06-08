@@ -936,17 +936,31 @@ export function calcTotalItemCompraPedido(item = {}) {
   const qBase = Number.isFinite(qb) && qb > 0 ? qb : qty * fator;
   const custoF1 = normalizeNumber(item?.custo_unitario, 0);
   const descF1 = normalizeNumber(item?.valor_desconto_item, 0);
+  const custoLiquidoF1 = custoF1 - descF1;
+
+  const totalViaBase = () => roundToTwoDecimals(qBase * custoLiquidoF1);
+
+  if (item?.preco_eixo === "FATOR_1") {
+    return totalViaBase();
+  }
 
   // Embalagem (CX/PAC…): total = qtd comercial × preço/embalagem. Evita (preço÷fator)×(qtd×fator)
   // arredondar o unitário fator-1 antes do produto (ex.: 110,26÷200 → 0,55 → total 2.200 em vez de 2.205,20).
   if (fator > 1 && qty > 0) {
     const custoFinalApres = getCustoFinalApresentacaoItem(item);
     if (custoFinalApres > 0 || custoF1 > 0) {
+      // Sem snapshot de apresentação: custo ainda em fator-1 (R$/UN) — não fazer 30 CX × 0,37.
+      if (
+        custoLiquidoF1 > 0 &&
+        Math.abs(custoFinalApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1)
+      ) {
+        return totalViaBase();
+      }
       return roundToTwoDecimals(qty * custoFinalApres);
     }
   }
 
-  return roundToTwoDecimals(qBase * (custoF1 - descF1));
+  return totalViaBase();
 }
 
 /**

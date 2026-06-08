@@ -20,6 +20,7 @@ import {
   normalizeItemToCanonicalFactorOne,
   normalizePurchaseItemToCommercial,
   syncPedidoCompraItemQuantities,
+  syncItemDescontoApresentacao,
   linhaPrecoNoEixoFatorUm,
   calcTotalItemCompraPedido,
 } from '@/lib/productUnits';
@@ -215,6 +216,7 @@ const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = 
   }
 
   linhaComercial = syncPedidoCompraItemQuantities(linhaComercial);
+  linhaComercial = syncItemDescontoApresentacao(linhaComercial);
 
   const quantidadePedida = Number(linhaComercial.quantidade) || 0;
   const quantidadeBase = Number(linhaComercial.quantidade_base) || 0;
