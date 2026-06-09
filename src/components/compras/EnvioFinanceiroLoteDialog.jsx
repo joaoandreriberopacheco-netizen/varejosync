@@ -62,7 +62,11 @@ export default function EnvioFinanceiroLoteDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} className="border-0 shadow-sm">
             Cancelar
           </Button>
-          <Button onClick={onConfirm} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Button
+            onClick={onConfirm}
+            disabled={loading || !dataPrimeiroVencimento}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
             {loading ? 'Enviando...' : 'Confirmar envio'}
           </Button>
         </DialogFooter>

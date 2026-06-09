@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
+import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
+import { enviarPedidoCompraFinanceiroLote } from '@/lib/enviarPedidoCompraFinanceiro';
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import {
   calcValorItensPedidoCompra,
@@ -557,32 +558,65 @@ export default function PedidosCompraPage() {
       toast.error('Selecione ao menos um pedido');
       return;
     }
+    if (!dataPrimeiroVencimentoLote) {
+      setDataPrimeiroVencimentoLote(dataHoje());
+    }
     setShowEnvioDialog(true);
   };
 
   const confirmarEnvioFinanceiroLote = async () => {
-    const pedidosSelecionados = filtrados.filter((p) => selecionadosIds.includes(p.id));
-
-    if (!pedidosSelecionados.length) {
+    if (!selecionadosIds.length) {
       toast.error('Selecione ao menos um pedido');
+      return;
+    }
+
+    if (!dataPrimeiroVencimentoLote) {
+      toast.error('Informe a data de pagamento ou primeiro vencimento');
+      return;
+    }
+
+    const pedidosPorId = Object.fromEntries(
+      pedidos.filter((p) => selecionadosIds.includes(p.id)).map((p) => [p.id, p]),
+    );
+    const idsUnicos = [...new Set(selecionadosIds)];
+
+    if (!idsUnicos.length) {
+      toast.error('Nenhum pedido válido na seleção');
       return;
     }
 
     setEnviandoLote(true);
     try {
-      await enviarFinanceiroLote({
-        pedidos: pedidosSelecionados,
+      const user = await base44.auth.me();
+      const authData = await buildBypassAuthPayload(() => base44.auth.me());
+      const { enviados, erros } = await enviarPedidoCompraFinanceiroLote({
+        base44,
+        pedidoIds: idsUnicos,
+        pedidosPorId,
+        user,
         formaPagamento: formaPagamentoLote,
         dataPrimeiroVencimento: dataPrimeiroVencimentoLote,
+        authData,
       });
+
       setSelecionadosIds([]);
       setModoSelecao(false);
       setShowEnvioDialog(false);
-      toast.success(`${pedidosSelecionados.length} pedido(s) enviados ao financeiro`);
+
+      if (enviados.length) {
+        toast.success(`${enviados.length} pedido(s) enviados ao financeiro com conta a pagar criada`);
+      }
+      if (erros.length) {
+        toast.error(
+          `${erros.length} pedido(s) não enviados`,
+          { description: erros.map((e) => `${e.numero}: ${e.mensagem}`).join(' · ') },
+        );
+      }
+
       await loadData();
     } catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.error || 'Erro ao enviar pedidos em lote');
+      toast.error(error?.message || 'Erro ao enviar pedidos em lote');
     } finally {
       setEnviandoLote(false);
     }

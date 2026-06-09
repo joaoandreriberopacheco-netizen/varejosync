@@ -30,6 +30,14 @@ function formatCardQuantity(value, unitSuffix) {
   return formatCommercialQuantity(value, unitSuffix);
 }
 
+/** Rascunhos elegíveis para envio em lote ao financeiro (inclui rejeitados que voltaram a rascunho). */
+function pedidoSelecionavelEnvioFinanceiroLote(pedido = {}) {
+  if (pedido.status !== 'Rascunho') return false;
+  const saf = String(pedido.status_aprovacao_financeira || '');
+  if (!saf || saf === 'Pendente') return true;
+  return saf === 'Rejeitado' || saf === 'Rejeitado Financeiramente';
+}
+
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-slate-500 dark:bg-slate-400', pill: 'bg-slate-100 dark:bg-slate-800/55 text-slate-700 dark:text-slate-300' },
   'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
@@ -401,7 +409,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
                 onDelete={onDelete}
                 modoSelecao={modoSelecao}
                 selecionado={selecionadosIds.includes(p.id)}
-                desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
+                desabilitadoSelecao={!pedidoSelecionavelEnvioFinanceiroLote(p)}
                 onToggleSelecao={onToggleSelecao}
               />
             ))}
@@ -415,7 +423,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
                 onDelete={onDelete}
                 modoSelecao={modoSelecao}
                 selecionado={selecionadosIds.includes(p.id)}
-                desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
+                desabilitadoSelecao={!pedidoSelecionavelEnvioFinanceiroLote(p)}
                 onToggleSelecao={onToggleSelecao}
               />
             ))}
