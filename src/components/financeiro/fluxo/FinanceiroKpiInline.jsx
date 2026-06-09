@@ -5,32 +5,75 @@ import { P38_ACCENT, P38_KPI_SHELL } from './financeiroP38';
 export const formatKpiValor = (v) =>
   `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-export function FinanceiroKpiItem({ icon: Icon, iconClass, label, value, sub, valueClass = 'text-foreground', className }) {
+/** layout: inline = desktop na faixa do header; stack = mobile (lista vertical) */
+export function FinanceiroKpiItem({
+  icon: Icon,
+  iconClass,
+  label,
+  value,
+  sub,
+  valueClass = 'text-foreground',
+  className,
+  layout = 'inline',
+}) {
+  if (layout === 'stack') {
+    return (
+      <div className={cn('flex min-w-0 items-center justify-between gap-3 py-1.5', className)}>
+        <span className="flex min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-foreground/60">
+          {Icon && <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass)} />}
+          <span className="truncate">{label}</span>
+        </span>
+        <div className="shrink-0 text-right">
+          <span className={cn('text-sm font-semibold tabular-nums leading-tight', valueClass)}>{value}</span>
+          {sub && <p className="text-[10px] text-foreground/45">{sub}</p>}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn('flex min-w-0 flex-col gap-0.5 md:flex-row md:flex-wrap md:items-baseline md:gap-x-1.5 md:gap-y-0', className)}>
-      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[9px] uppercase tracking-wide text-foreground/55 md:text-muted-foreground">
+    <div className={cn('flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0', className)}>
+      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[9px] uppercase tracking-wide text-muted-foreground">
         {Icon && <Icon className={cn('h-3 w-3 shrink-0', iconClass)} />}
         {label}
       </span>
-      <span className={cn('text-[13px] font-semibold leading-tight tabular-nums md:text-sm', valueClass)}>{value}</span>
-      {sub && (
-        <span className="whitespace-nowrap text-[9px] text-foreground/45 md:text-muted-foreground">{sub}</span>
-      )}
+      <span className={cn('text-[13px] font-semibold leading-none tabular-nums md:text-sm', valueClass)}>{value}</span>
+      {sub && <span className="whitespace-nowrap text-[9px] text-muted-foreground">{sub}</span>}
     </div>
   );
 }
 
-export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, className }) {
-  return (
-    <div className={cn('flex min-w-0 flex-col gap-1 md:flex-row md:flex-wrap md:items-center md:gap-x-1.5 md:gap-y-0.5', className)}>
-      <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0">
-        <span className="shrink-0 whitespace-nowrap text-[9px] uppercase tracking-wide text-foreground/55 md:text-muted-foreground">{label}</span>
-        <span className={cn('text-[13px] font-semibold leading-tight tabular-nums md:text-sm', positive ? P38_ACCENT : 'text-foreground/80')}>
-          {value}
-        </span>
+export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, className, layout = 'inline' }) {
+  if (layout === 'stack') {
+    return (
+      <div className={cn('space-y-1.5 py-1.5', className)}>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <span className="text-[10px] uppercase tracking-wide text-foreground/60">{label}</span>
+          <span className={cn('text-sm font-semibold tabular-nums', positive ? P38_ACCENT : 'text-foreground/80')}>
+            {value}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47]">
+            <div
+              className="h-full rounded-full bg-[#4a5240] transition-all dark:bg-[#a4ce33]"
+              style={{ width: `${Math.min(Number(percent), 100)}%` }}
+            />
+          </div>
+          <span className="shrink-0 text-[10px] tabular-nums text-foreground/50">{percent}%</span>
+        </div>
       </div>
-      <div className="flex w-full min-w-0 items-center gap-1.5 md:w-auto md:min-w-[3.5rem]">
-        <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47] md:w-12 md:flex-none">
+    );
+  }
+
+  return (
+    <div className={cn('flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5', className)}>
+      <span className="shrink-0 whitespace-nowrap text-[9px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className={cn('text-[13px] font-semibold leading-none tabular-nums md:text-sm', positive ? P38_ACCENT : 'text-foreground/80')}>
+        {value}
+      </span>
+      <div className="flex min-w-[3.5rem] items-center gap-1">
+        <div className="h-1 w-10 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47] sm:w-12">
           <div
             className="h-full rounded-full bg-[#4a5240] transition-all dark:bg-[#a4ce33]"
             style={{ width: `${Math.min(Number(percent), 100)}%` }}
@@ -42,17 +85,28 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, 
   );
 }
 
-export function FinanceiroKpiStrip({ children, footer, embedded = false }) {
+export function FinanceiroKpiStrip({ children, footer, layout = 'card' }) {
+  if (layout === 'stack') {
+    return (
+      <div className={cn(P38_KPI_SHELL, 'relative z-0')}>
+        <div className="divide-y divide-border/30 dark:divide-white/10">{children}</div>
+        {footer}
+      </div>
+    );
+  }
+
+  if (layout === 'inline') {
+    return (
+      <div className="min-w-0 py-0.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 md:gap-x-4">{children}</div>
+        {footer}
+      </div>
+    );
+  }
+
   return (
-    <div className={cn(embedded ? 'min-w-0 md:py-0.5' : P38_KPI_SHELL, !embedded && 'space-y-1.5')}>
-      <div
-        className={cn(
-          'min-w-0',
-          embedded
-            ? 'hidden flex-wrap items-center gap-x-3 gap-y-1 md:flex md:gap-x-4'
-            : 'grid grid-cols-2 gap-x-3 gap-y-2.5 py-0.5 md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-1 md:py-0',
-        )}
-      >
+    <div className={cn(P38_KPI_SHELL, 'space-y-1.5')}>
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 md:flex-nowrap md:justify-between md:gap-x-4">
         {children}
       </div>
       {footer}

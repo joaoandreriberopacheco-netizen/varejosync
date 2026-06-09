@@ -61,10 +61,11 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-function KpiAbertas({ kpis, embedded = false }) {
+function KpiAbertas({ kpis, layout = 'card' }) {
   return (
-    <FinanceiroKpiStrip embedded={embedded}>
+    <FinanceiroKpiStrip layout={layout}>
       <FinanceiroKpiItem
+        layout={layout}
         icon={ArrowDownLeft}
         iconClass={P38_ACCENT}
         label="A receber"
@@ -72,6 +73,7 @@ function KpiAbertas({ kpis, embedded = false }) {
         sub={kpis.qtdReceber > 0 ? `${kpis.qtdReceber} lç.` : null}
       />
       <FinanceiroKpiItem
+        layout={layout}
         icon={ArrowUpRight}
         iconClass="text-foreground/50"
         label="A pagar"
@@ -79,7 +81,7 @@ function KpiAbertas({ kpis, embedded = false }) {
         sub={kpis.qtdPagar > 0 ? `${kpis.qtdPagar} lç.` : null}
       />
       <FinanceiroKpiItem
-        className="col-span-2 md:col-span-auto"
+        layout={layout}
         label="Saldo proj."
         value={
           <>
@@ -92,7 +94,7 @@ function KpiAbertas({ kpis, embedded = false }) {
       />
       {kpis.vencidas > 0 && (
         <FinanceiroKpiItem
-          className="col-span-2 md:col-span-auto"
+          layout={layout}
           icon={AlertTriangle}
           iconClass="text-amber-600 dark:text-amber-400"
           label="Vencidas"
@@ -417,10 +419,10 @@ export function ContasAbertasProvider({ active, onOpenImportador, children }) {
 }
 
 /** KPIs — dentro do card cinza (box amarelo). */
-export function ContasAbertasKpis({ embedded = false }) {
+export function ContasAbertasKpis({ layout = 'card' }) {
   const m = useContext(ContasAbertasCtx);
   if (!m) return null;
-  return <KpiAbertas kpis={m.kpis} embedded={embedded} />;
+  return <KpiAbertas kpis={m.kpis} layout={layout} />;
 }
 
 /** Busca + filtros recolhíveis — fora do card, como Fluxo de Caixa. */

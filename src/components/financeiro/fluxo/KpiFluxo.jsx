@@ -8,12 +8,13 @@ import {
   formatKpiValor,
 } from './FinanceiroKpiInline';
 
-export default function KpiFluxo({ kpis, embedded = false }) {
+export default function KpiFluxo({ kpis, layout = 'card' }) {
   const taxa = kpis.entrou > 0 ? (kpis.saiu / kpis.entrou * 100).toFixed(0) : 0;
+  const isStack = layout === 'stack';
 
   return (
     <FinanceiroKpiStrip
-      embedded={embedded}
+      layout={layout}
       footer={
         kpis.totalTransferencias > 0 ? (
           <div className="flex items-center gap-2 border-t border-border/40 pt-1.5 dark:border-white/10">
@@ -25,21 +26,23 @@ export default function KpiFluxo({ kpis, embedded = false }) {
       }
     >
       <FinanceiroKpiItem
+        layout={layout}
         icon={TrendingUp}
         iconClass={P38_ACCENT}
         label="Receitas"
         value={formatKpiValor(kpis.entrou)}
-        sub={kpis.pEntrou > 0 ? `+${formatKpiValor(kpis.pEntrou)} prev.` : null}
+        sub={!isStack && kpis.pEntrou > 0 ? `+${formatKpiValor(kpis.pEntrou)} prev.` : null}
       />
       <FinanceiroKpiItem
+        layout={layout}
         icon={TrendingDown}
         iconClass="text-foreground/50"
         label="Despesas"
         value={formatKpiValor(kpis.saiu)}
-        sub={kpis.pSaiu > 0 ? `+${formatKpiValor(kpis.pSaiu)} prev.` : null}
+        sub={!isStack && kpis.pSaiu > 0 ? `+${formatKpiValor(kpis.pSaiu)} prev.` : null}
       />
       <FinanceiroKpiSaldo
-        className="col-span-2 md:col-span-auto"
+        layout={layout}
         value={
           <>
             {kpis.saldo >= 0 ? '+' : '−'}
@@ -51,7 +54,7 @@ export default function KpiFluxo({ kpis, embedded = false }) {
       />
       {kpis.vencidos > 0 && (
         <FinanceiroKpiItem
-          className="col-span-2 md:col-span-auto"
+          layout={layout}
           icon={AlertTriangle}
           iconClass="text-amber-600 dark:text-amber-400"
           label="Vencidos"
@@ -61,7 +64,7 @@ export default function KpiFluxo({ kpis, embedded = false }) {
               {formatKpiValor(kpis.vencidos)}
             </>
           }
-          sub={`${kpis.qtdVencidos} lç.`}
+          sub={kpis.qtdVencidos > 0 ? `${kpis.qtdVencidos} lç.` : null}
         />
       )}
     </FinanceiroKpiStrip>
