@@ -3,9 +3,9 @@ import { TrendingUp, TrendingDown, ArrowRightLeft, AlertTriangle } from 'lucide-
 
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-const P38_ACCENT = 'text-[#4a5240] dark:text-[#a4ce33]';
-const kpiShell =
-  'rounded-xl border border-border/40 bg-card/80 px-2.5 py-2 dark:border-white/10 dark:bg-[#26262e] sm:px-3 sm:py-2.5';
+import { P38_ACCENT, P38_KPI_SHELL } from './financeiroP38';
+
+const kpiShell = P38_KPI_SHELL;
 
 function KpiCell({ icon: Icon, iconClass, label, value, sub, valueClass = 'text-foreground' }) {
   return (

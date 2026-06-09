@@ -7,10 +7,11 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  AlertTriangle, AlertCircle, CheckCircle2, FileText, SlidersHorizontal, Upload, ChevronRight, Scale, Clock
+  ArrowDownLeft, ArrowUpRight, Plus,
+  AlertTriangle, AlertCircle, FileText, Upload, ChevronRight, Scale, Clock
 } from 'lucide-react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import FiltrosContasAbertas from './fluxo/FiltrosContasAbertas';
+import { P38_ACCENT, P38_KPI_SHELL } from './fluxo/financeiroP38';
 import { Checkbox } from '@/components/ui/checkbox';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
@@ -67,85 +68,63 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-// ─── KPI Cards (alinhado a KpiFluxo — gap e padding uniformes no mobile) ─────
-const kpiGap = 'gap-3';
-const kpiCardTop =
-  'min-w-0 rounded-[16px] border border-transparent bg-[hsl(var(--background))] px-3 py-2.5 sm:rounded-[22px] sm:px-3.5 sm:py-3 dark:border-border dark:bg-card';
-const kpiCardSaldo =
-  'rounded-[16px] border border-transparent bg-[hsl(var(--background))] sm:rounded-[22px] dark:border-border dark:bg-card';
-const kpiSaldoPad = 'px-4 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-5';
-
-function KpiAbertas({ kpis }) {
-  const saldoBody = (
+function KpiCell({ icon: Icon, iconClass, label, value, sub }) {
+  return (
     <div className="min-w-0">
-      <p className="mb-0.5 pl-0.5 text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:mb-1 sm:tracking-[0.16em] dark:text-muted-foreground">Saldo projetado</p>
-      <p className="break-words text-[15px] font-semibold leading-tight tabular-nums text-foreground sm:text-[17px] md:text-[19px] dark:text-foreground">
-        <span className={kpis.saldoProjetado >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>
-        {R(Math.abs(kpis.saldoProjetado))}
+      <p className="mb-0.5 flex min-w-0 items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+        {Icon && <Icon className={`h-3 w-3 shrink-0 ${iconClass || ''}`} />}
+        <span className="truncate">{label}</span>
       </p>
+      <p className="text-[13px] font-semibold leading-tight tabular-nums text-foreground sm:text-sm">{value}</p>
+      {sub && <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{sub}</p>}
     </div>
   );
+}
+
+function KpiAbertas({ kpis }) {
+  const gridClass = kpis.vencidas > 0 ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3';
 
   return (
-    <div className={`flex min-w-0 w-full max-w-full flex-col ${kpiGap}`}>
-      <div className={`grid min-w-0 grid-cols-2 ${kpiGap}`}>
-        <div className={kpiCardTop}>
-          <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-card sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
-              <ArrowDownLeft className="h-2.5 w-2.5 text-green-600 sm:h-3 sm:w-3 dark:text-green-400" />
-            </div>
-            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">A receber</p>
-          </div>
-          <p className="break-words text-[13px] font-semibold leading-tight text-foreground tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.aReceber)}</p>
-          {kpis.qtdReceber > 0 && (
-            <p className="mt-0.5 text-[8px] text-muted-foreground sm:mt-1 sm:text-[9px] dark:text-muted-foreground">
-              {kpis.qtdReceber} <span className="sm:hidden">lç.</span>
-              <span className="hidden sm:inline">lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</span>
-            </p>
-          )}
+    <div className={P38_KPI_SHELL}>
+      <div className={`grid min-w-0 gap-x-3 gap-y-2 ${gridClass}`}>
+        <KpiCell
+          icon={ArrowDownLeft}
+          iconClass={P38_ACCENT}
+          label="A receber"
+          value={R(kpis.aReceber)}
+          sub={kpis.qtdReceber > 0 ? `${kpis.qtdReceber} lç.` : null}
+        />
+        <KpiCell
+          icon={ArrowUpRight}
+          iconClass="text-red-500 dark:text-red-400"
+          label="A pagar"
+          value={R(kpis.aPagar)}
+          sub={kpis.qtdPagar > 0 ? `${kpis.qtdPagar} lç.` : null}
+        />
+        <div className="min-w-0">
+          <p className="mb-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">Saldo projetado</p>
+          <p className="text-[13px] font-semibold leading-tight tabular-nums sm:text-sm">
+            <span className={kpis.saldoProjetado >= 0 ? P38_ACCENT : 'text-red-600 dark:text-red-400'}>
+              {kpis.saldoProjetado >= 0 ? '+' : '−'}
+            </span>
+            {R(Math.abs(kpis.saldoProjetado))}
+          </p>
         </div>
-        <div className={kpiCardTop}>
-          <div className="mb-1 flex min-w-0 items-center gap-2 sm:mb-1.5 sm:gap-2.5">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-card sm:h-7 sm:w-7 sm:rounded-[10px] dark:bg-muted">
-              <ArrowUpRight className="h-2.5 w-2.5 text-red-500 sm:h-3 sm:w-3 dark:text-red-400" />
-            </div>
-            <p className="min-w-0 truncate text-[8px] uppercase leading-tight tracking-normal text-muted-foreground sm:tracking-[0.16em] dark:text-muted-foreground">A pagar</p>
-          </div>
-          <p className="break-words text-[13px] font-semibold leading-tight text-foreground tabular-nums sm:text-[14px] md:text-[15px] dark:text-foreground">{R(kpis.aPagar)}</p>
-          {kpis.qtdPagar > 0 && (
-            <p className="mt-0.5 text-[8px] text-muted-foreground sm:mt-1 sm:text-[9px] dark:text-muted-foreground">
-              {kpis.qtdPagar} <span className="sm:hidden">lç.</span>
-              <span className="hidden sm:inline">lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</span>
-            </p>
-          )}
-        </div>
-      </div>
-
-      {kpis.vencidas > 0 ? (
-        <div className={`flex min-w-0 flex-col sm:flex-row sm:items-stretch ${kpiGap}`}>
-          <div className={`${kpiCardSaldo} ${kpiSaldoPad} min-w-0 flex-1`}>{saldoBody}</div>
-          <div className={`${kpiCardSaldo} ${kpiSaldoPad} flex min-h-0 min-w-0 flex-1 items-center gap-2 sm:gap-3`}>
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500 sm:h-4 sm:w-4 dark:text-red-400" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[8px] uppercase tracking-wider text-muted-foreground sm:text-[9px] dark:text-muted-foreground">Vencidas</p>
-              <p className="break-words text-[11px] font-semibold leading-snug text-foreground sm:text-sm dark:text-foreground">
+        {kpis.vencidas > 0 && (
+          <KpiCell
+            icon={AlertTriangle}
+            iconClass="text-red-500 dark:text-red-400"
+            label="Vencidas"
+            value={
+              <>
                 <span className="text-red-600 dark:text-red-400">−</span>
                 {R(kpis.vencidas)}
-                {kpis.qtdVencidas > 0 && (
-                  <span className="text-muted-foreground dark:text-muted-foreground">
-                    {' '}
-                    · {kpis.qtdVencidas}{' '}
-                    <span className="sm:hidden">lç.</span>
-                    <span className="hidden sm:inline">lançamento{kpis.qtdVencidas !== 1 ? 's' : ''}</span>
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className={`${kpiCardSaldo} ${kpiSaldoPad}`}>{saldoBody}</div>
-      )}
+              </>
+            }
+            sub={kpis.qtdVencidas > 0 ? `${kpis.qtdVencidas} lç.` : null}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -293,7 +272,7 @@ function useContasAbertasModel(onOpenImportador) {
   const [detalhe, setDetalhe]         = useState(null);
   const [mostrarPagas, setMostrarPagas] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showPagamentoLote, setShowPagamentoLote] = useState(false);
@@ -521,8 +500,8 @@ function useContasAbertasModel(onOpenImportador) {
     filtrados,
     search,
     setSearch,
-    showFilters,
-    setShowFilters,
+    filtersOpen,
+    setFiltersOpen,
     periodo,
     setPeriodo,
     cs,
@@ -592,8 +571,8 @@ export function ContasAbertasChrome() {
     filtrados,
     search,
     setSearch,
-    showFilters,
-    setShowFilters,
+    filtersOpen,
+    setFiltersOpen,
     periodo,
     setPeriodo,
     cs,
@@ -612,123 +591,45 @@ export function ContasAbertasChrome() {
   } = m;
 
   return (
-    <div className="min-w-0 w-full max-w-full space-y-4 overflow-x-hidden sm:space-y-6">
+    <div className="min-w-0 w-full max-w-full space-y-3 overflow-x-hidden">
       <KpiAbertas kpis={kpis} />
 
-      <div className="min-w-0 rounded-[20px] border border-transparent p-0 dark:border-transparent">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-transparent bg-card px-2.5 sm:h-12 sm:rounded-[16px] sm:px-3 dark:border-border/70 dark:bg-muted">
-            <Search className="h-3.5 w-3.5 flex-none shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
-            <input autoComplete="off"
-              value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar..."
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground sm:text-sm dark:text-foreground"
-            />
-            {search && <button type="button" onClick={() => setSearch('')} aria-label="Limpar busca"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>}
-          </div>
-
+      <FiltrosContasAbertas
+        search={search}
+        onSearch={setSearch}
+        filtersOpen={filtersOpen}
+        onFiltersOpenChange={setFiltersOpen}
+        periodo={periodo}
+        onPeriodo={setPeriodo}
+        cs={cs}
+        ce={ce}
+        onCs={setCs}
+        onCe={setCe}
+        tipoFiltro={tipoFiltro}
+        onTipoFiltro={setTipoFiltro}
+        mostrarPagas={mostrarPagas}
+        onMostrarPagas={setMostrarPagas}
+        totalFiltrados={filtrados.length}
+        onLimparFiltros={() => {
+          setPeriodo('mes');
+          setTipoFiltro('todos');
+          setMostrarPagas(false);
+          setCs('');
+          setCe('');
+        }}
+        footerActions={
           <button
             type="button"
-            onClick={() => setShowFilters(true)}
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-card text-foreground sm:h-12 sm:w-12 sm:rounded-[16px] dark:border-border/70 dark:bg-muted dark:text-foreground"
+            onClick={() => {
+              setModoSelecaoLote((prev) => !prev);
+              setSelectedIds([]);
+            }}
+            className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
           >
-            <SlidersHorizontal className="h-4 w-4" />
-            {(periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || cs || ce) && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white dark:bg-card dark:text-foreground">•</span>
-            )}
+            {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
           </button>
-        </div>
-
-        <div className="mt-2 flex flex-col gap-2 border-t border-white/70 pt-2 sm:mt-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-1.5 sm:pt-2.5 dark:border-border/70">
-          <p className="shrink-0 text-[10px] text-muted-foreground sm:text-[11px] dark:text-muted-foreground">
-            <span className="sm:hidden">{filtrados.length} lç.</span>
-            <span className="hidden sm:inline">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</span>
-          </p>
-          <div className="flex min-w-0 flex-wrap gap-1 sm:justify-end sm:gap-1.5">
-            <button
-              onClick={() => {
-                setModoSelecaoLote((prev) => !prev);
-                setSelectedIds([]);
-              }}
-              className={`px-2 py-1 rounded-full text-[10px] transition-colors ${modoSelecaoLote ? 'bg-primary text-white dark:bg-primary dark:text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}
-            >
-              {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
-            </button>
-            <span className="px-2 py-1 rounded-full text-[10px] bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90">{PERIODOS.find(p => p.v === periodo)?.l || 'Período'}</span>
-            {tipoFiltro !== 'todos' && <span className="px-2 py-1 rounded-full text-[10px] bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90">{tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : 'Compras'}</span>}
-            {mostrarPagas && <span className="px-2 py-1 rounded-full text-[10px] bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Pagas</span>}
-          </div>
-        </div>
-      </div>
-
-      <Drawer open={showFilters} onOpenChange={setShowFilters}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
-          <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
-          </DrawerHeader>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Período</label>
-              <div className="flex flex-wrap gap-2">
-                {PERIODOS.map(p => (
-                  <button key={p.v} onClick={() => setPeriodo(p.v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${periodo === p.v ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
-                    {p.l}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {periodo === 'personalizado' && (
-              <div className="flex gap-2">
-                <input autoComplete="off" type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-muted dark:bg-muted text-sm text-foreground/90 dark:text-foreground rounded-2xl px-3 py-3 outline-none border-0" />
-                <input autoComplete="off" type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-muted dark:bg-muted text-sm text-foreground/90 dark:text-foreground rounded-2xl px-3 py-3 outline-none border-0" />
-              </div>
-            )}
-
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Tipo</label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { v: 'todos', l: 'Todos' },
-                  { v: 'Receita', l: 'A Receber' },
-                  { v: 'Despesa', l: 'A Pagar' },
-                  { v: 'compras', l: 'Compras' },
-                ].map(({ v, l }) => (
-                  <button key={v} onClick={() => setTipoFiltro(v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${tipoFiltro === v ? 'bg-primary text-primary-foreground' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Exibição</label>
-              <button onClick={() => setMostrarPagas(p => !p)} className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-muted dark:bg-muted text-muted-foreground dark:text-foreground/90'}`}>
-                <CheckCircle2 className="w-3 h-3" /> Pagas
-              </button>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setPeriodo('mes');
-                  setTipoFiltro('todos');
-                  setMostrarPagas(false);
-                  setCs('');
-                  setCe('');
-                }}
-                className="flex-1 h-11 rounded-2xl bg-muted dark:bg-muted text-sm text-muted-foreground"
-              >
-                Limpar
-              </button>
-              <button onClick={() => setShowFilters(false)} className="flex-1 h-11 rounded-2xl bg-primary dark:bg-muted text-sm text-white dark:text-foreground">
-                Aplicar
-              </button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+        }
+      />
 
       {modoSelecaoLote && (
         <div className="min-w-0 overflow-hidden rounded-2xl bg-card p-4 shadow-sm dark:bg-muted">
@@ -830,9 +731,9 @@ export function ContasAbertasListaPane() {
         <button
           type="button"
           onClick={() => setFabOpen(o => !o)}
-          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-muted' : 'bg-primary dark:bg-muted'}`}
+          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-[#383e47]' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}
         >
-          <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-foreground'}`} />
+          <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
         </button>
       </div>
 

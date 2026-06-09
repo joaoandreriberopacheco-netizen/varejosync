@@ -1,32 +1,37 @@
 import React, { useState } from 'react';
 import {
-  Search, X, Wallet, BarChart3, Clock, ChevronDown,
-  ChevronLeft, ChevronRight, SlidersHorizontal, Layers, RefreshCw
+  X, Wallet, BarChart3, Clock, ChevronDown,
+  ChevronLeft, ChevronRight, Layers, RefreshCw
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import {
   format, isWithinInterval, subDays,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   isSameDay, isBefore, eachDayOfInterval, getDay, addMonths
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import FinanceiroFiltrosShell, { FinanceiroSummaryChip } from './FinanceiroFiltrosShell';
+import {
+  P38_CHIP_ACTIVE,
+  P38_CHIP_INACTIVE,
+  P38_POPOVER,
+} from './financeiroP38';
 
-// ─── P38 tokens (alinhado a p38ThemeSurfaces / Relatório de Margem) ───────────
-const P38_CHIP_ACTIVE =
-  'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]';
-const P38_CHIP_INACTIVE =
-  'bg-secondary/80 text-muted-foreground dark:bg-[#26262e] dark:text-foreground/80 hover:bg-secondary dark:hover:bg-[#383e47]';
-const P38_SEARCH =
-  'p38-search-field border-0 shadow-none focus-visible:ring-1 focus-visible:ring-border/60';
-const P38_POPOVER =
-  'border border-border/40 dark:border-white/10 shadow-xl rounded-2xl bg-card dark:bg-[#2d333b]';
 const P38_CAL_SELECTED =
   'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22] font-bold';
 const P38_CAL_IN_RANGE =
   'bg-[#4a5240]/15 text-foreground/90 dark:bg-[#a4ce33]/15 dark:text-foreground';
+
+const PERIODO_LABELS = {
+  hoje: 'Hoje',
+  ontem: 'Ontem',
+  semana: 'Semana',
+  mes: 'Mês',
+  tudo: 'Tudo',
+  periodo: 'Período',
+};
 
 // ─── Mini Calendar ────────────────────────────────────────────────────────────
 const DIAS_SEMANA = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
@@ -346,26 +351,22 @@ function FiltrosFluxoPainel({
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
   onOpenConciliacao,
-  onLimparFiltros,
-  onClose,
-  inline = false,
-  showActions = false,
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
-        <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Período</label>
+        <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Período</p>
         <PeriodoPicker
           periodo={periodo}
           onPeriodo={onPeriodo}
           customStart={customStart}
           customEnd={customEnd}
           onCustom={onCustom}
-          inline={inline}
+          inline
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
         <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
@@ -373,17 +374,6 @@ function FiltrosFluxoPainel({
         <PendentesFiltro pendentes={pendentes} onPendentes={onPendentes} />
         <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
       </div>
-
-      {showActions && (
-        <div className="flex gap-2 pt-2 md:hidden">
-          <button type="button" onClick={onLimparFiltros} className={`flex-1 h-11 rounded-2xl text-sm ${P38_CHIP_INACTIVE}`}>
-            Limpar
-          </button>
-          <button type="button" onClick={onClose} className={`flex-1 h-11 rounded-2xl text-sm ${P38_CHIP_ACTIVE}`}>
-            Aplicar
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -402,77 +392,58 @@ export default function FiltrosFluxoCaixa({
   onOpenConciliacao,
   totalFiltrados, hasActiveFilters, onLimparFiltros,
 }) {
-  const [open, setOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const painelProps = {
-    periodo, onPeriodo, customStart, customEnd, onCustom,
-    contas, contasSel, onContasSel,
-    tiposSel, onTiposSel,
-    statusSel, onStatusSel,
-    pendentes, onPendentes,
-    cmvOnly, onCmvOnly,
-    onOpenConciliacao,
-    onLimparFiltros,
-    onClose: () => setOpen(false),
-  };
+  const todasContas = contas.length > 0 && contasSel.length === contas.length;
 
   return (
-    <>
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <div className={`flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] px-2.5 sm:h-12 sm:rounded-[16px] sm:px-3 ${P38_SEARCH}`}>
-            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
-            <input
-              autoComplete="off"
-              value={search}
-              onChange={e => onSearch(e.target.value)}
-              placeholder="Buscar lançamento, categoria, tag..."
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground sm:text-sm"
-            />
-            {search && (
-              <button type="button" onClick={() => onSearch('')}>
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-
-          {/* Botão filtros — só mobile */}
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] text-foreground sm:h-12 sm:w-12 sm:rounded-[16px] md:hidden ${P38_SEARCH}`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            {hasActiveFilters && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#4a5240] dark:bg-[#a4ce33] text-[10px] text-white dark:text-[#1f1d22] flex items-center justify-center">•</span>
-            )}
-          </button>
-        </div>
-
-        {/* Filtros inline — desktop */}
-        <div className="hidden md:block mt-3 pt-3 border-t border-border/40 dark:border-white/10">
-          <FiltrosFluxoPainel {...painelProps} inline showActions={false} />
-        </div>
-
-        <div className="mt-2.5 flex items-center justify-between border-t border-border/40 px-1.5 pt-2.5 dark:border-white/10">
-          <p className="text-[11px] text-muted-foreground">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
-          {hasActiveFilters && (
-            <button type="button" onClick={onLimparFiltros} className="text-[11px] text-muted-foreground hover:text-foreground/90 flex items-center gap-1">
-              <X className="w-3 h-3" /> Limpar
-            </button>
+    <FinanceiroFiltrosShell
+      search={search}
+      onSearch={onSearch}
+      searchPlaceholder="Buscar lançamento, categoria, tag..."
+      filtersOpen={filtersOpen}
+      onFiltersOpenChange={setFiltersOpen}
+      hasActiveFilters={hasActiveFilters}
+      onLimparFiltros={onLimparFiltros}
+      totalLabel={`${totalFiltrados} lançamento${totalFiltrados !== 1 ? 's' : ''}`}
+      summaryChips={
+        <>
+          {periodo !== 'mes' && (
+            <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
           )}
-        </div>
-      </div>
-
-      {/* Drawer — só mobile */}
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-[#2d333b] px-4 pb-6 md:hidden">
-          <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
-          </DrawerHeader>
-          <FiltrosFluxoPainel {...painelProps} inline={false} showActions />
-        </DrawerContent>
-      </Drawer>
-    </>
+          {!todasContas && contasSel.length > 0 && (
+            <FinanceiroSummaryChip>{contasSel.length} conta{contasSel.length > 1 ? 's' : ''}</FinanceiroSummaryChip>
+          )}
+          {tiposSel.length > 0 && (
+            <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
+          )}
+          {statusSel.length > 0 && (
+            <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
+          )}
+          {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+          {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+        </>
+      }
+    >
+      <FiltrosFluxoPainel
+        periodo={periodo}
+        onPeriodo={onPeriodo}
+        customStart={customStart}
+        customEnd={customEnd}
+        onCustom={onCustom}
+        contas={contas}
+        contasSel={contasSel}
+        onContasSel={onContasSel}
+        tiposSel={tiposSel}
+        onTiposSel={onTiposSel}
+        statusSel={statusSel}
+        onStatusSel={onStatusSel}
+        pendentes={pendentes}
+        onPendentes={onPendentes}
+        cmvOnly={cmvOnly}
+        onCmvOnly={onCmvOnly}
+        onOpenConciliacao={onOpenConciliacao}
+      />
+    </FinanceiroFiltrosShell>
   );
 }
