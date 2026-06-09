@@ -279,7 +279,7 @@ export default function ExecucaoOrcamentaria() {
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header + tabs (painel mediterrâneo — até KPIs/controles) */}
-      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-border/40 bg-muted/40 px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-white/10 dark:bg-card">
+      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-border/40 bg-secondary/40 px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-white/10 dark:bg-[#2d333b]">
         <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
           <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
             <p className="text-[24px] leading-none font-semibold text-foreground sm:text-[32px] dark:text-foreground font-glacial">Financeiro</p>
@@ -288,7 +288,7 @@ export default function ExecucaoOrcamentaria() {
           {aba === 'fluxo' && (
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-card/90 dark:bg-muted"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-card/90 dark:bg-[#26262e] hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors"
               aria-label="Imprimir extrato"
             >
               <Printer className="w-4 h-4 text-foreground/90" />
@@ -299,9 +299,9 @@ export default function ExecucaoOrcamentaria() {
           <button
             type="button"
             onClick={() => setAba('fluxo')}
-            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'fluxo' ? 'bg-card dark:bg-muted opacity-100' : 'bg-card/80 dark:bg-muted/70 opacity-85'}`}
+            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'fluxo' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
           >
-            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'fluxo' ? 'bg-[#E5E7EB] dark:bg-muted' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'fluxo' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
               <Scale className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
             </div>
             <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Fluxo de Caixa</p>
@@ -310,9 +310,9 @@ export default function ExecucaoOrcamentaria() {
           <button
             type="button"
             onClick={() => setAba('contas')}
-            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'contas' ? 'bg-card dark:bg-muted opacity-100' : 'bg-card/80 dark:bg-muted/70 opacity-85'}`}
+            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'contas' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
           >
-            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'contas' ? 'bg-[#E5E7EB] dark:bg-muted' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'contas' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
               <Clock className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
             </div>
             <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Contas Abertas</p>
@@ -328,7 +328,7 @@ export default function ExecucaoOrcamentaria() {
             {/* Alerta conciliação pendente */}
             {totalPend > 0 && !pendentes && (
               <button onClick={() => setPendentes(true)}
-                className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-card dark:bg-muted text-foreground/90 text-xs text-left">
+                className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-card dark:bg-[#26262e] text-foreground/90 text-xs text-left hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors">
                 <Clock className="w-3.5 h-3.5 flex-none text-muted-foreground" />
                 <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
                 <span className="font-semibold flex-none text-muted-foreground">Ver →</span>
@@ -361,9 +361,9 @@ export default function ExecucaoOrcamentaria() {
               <button
                 type="button"
                 onClick={() => setAbaContas('contas')}
-                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'contas' ? 'bg-card dark:bg-muted opacity-100' : 'bg-card/80 dark:bg-muted/70 opacity-85'}`}
+                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'contas' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
               >
-                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'contas' ? 'bg-[#E5E7EB] dark:bg-muted' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'contas' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
                   <ArrowUpRight className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
                 </div>
                 <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Contas a pagar</p>
@@ -372,9 +372,9 @@ export default function ExecucaoOrcamentaria() {
               <button
                 type="button"
                 onClick={() => setAbaContas('agefin')}
-                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'agefin' ? 'bg-card dark:bg-muted opacity-100' : 'bg-card/80 dark:bg-muted/70 opacity-85'}`}
+                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'agefin' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
               >
-                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'agefin' ? 'bg-[#E5E7EB] dark:bg-muted' : 'bg-[#ECEFF3] dark:bg-muted'}`}>
+                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'agefin' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
                   <Upload className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
                 </div>
                 <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Atualizar boletos</p>
@@ -438,8 +438,8 @@ export default function ExecucaoOrcamentaria() {
             ))}
             <button
               onClick={() => setFabOpen(o => !o)}
-              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-muted rotate-45' : 'bg-primary dark:bg-muted'}`}>
-              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-foreground'}`} />
+              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-[#383e47] rotate-45' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}>
+              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
             </button>
           </div>
 
