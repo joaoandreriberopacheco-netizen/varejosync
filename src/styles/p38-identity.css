@@ -202,7 +202,13 @@
     text-transform: uppercase;
   }
 
-  /* Campo busca / filtro */
+  /* Superfície operacional (KPIs, pills, painéis) — só cor, altura automática */
+  .p38-field-surface {
+    background-color: hsl(var(--p38-search));
+    @apply border-0 shadow-none;
+  }
+
+  /* Campo busca — altura fixa para inputs */
   .p38-search-field {
     background-color: hsl(var(--p38-search));
     @apply border-0 h-11 rounded-lg shadow-none focus-visible:ring-1 focus-visible:ring-border;

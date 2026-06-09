@@ -88,7 +88,7 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, 
 export function FinanceiroKpiStrip({ children, footer, layout = 'card' }) {
   if (layout === 'stack') {
     return (
-      <div className={cn(P38_KPI_SHELL, 'relative z-0')}>
+      <div className={P38_KPI_SHELL}>
         <div className="divide-y divide-border/30 dark:divide-white/10">{children}</div>
         {footer}
       </div>

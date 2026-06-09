@@ -6,7 +6,7 @@ export default function FinanceiroPillTabs({ items, value, onChange, className =
   return (
     <div
       className={cn(
-        'flex rounded-2xl p-1 gap-1 p38-search-field',
+        'flex rounded-2xl p-1 gap-1 p38-field-surface',
         stretch ? 'w-full' : 'shrink-0',
         className,
       )}

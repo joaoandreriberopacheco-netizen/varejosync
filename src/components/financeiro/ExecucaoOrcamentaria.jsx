@@ -294,7 +294,7 @@ export default function ExecucaoOrcamentaria() {
             {aba === 'fluxo' && (
               <button
                 onClick={() => setShowPrintDialog(true)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-search-field border-0 hover:opacity-90 transition-opacity"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
                 aria-label="Imprimir extrato"
               >
                 <Printer className="w-4 h-4 text-foreground/90" />
@@ -335,7 +335,7 @@ export default function ExecucaoOrcamentaria() {
             {aba === 'fluxo' && (
               <button
                 onClick={() => setShowPrintDialog(true)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-search-field border-0 hover:opacity-90 transition-opacity"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
                 aria-label="Imprimir extrato"
               >
                 <Printer className="w-4 h-4 text-foreground/90" />
