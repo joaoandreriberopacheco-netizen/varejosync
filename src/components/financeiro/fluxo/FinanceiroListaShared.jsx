@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { P38_FIELD_SURFACE } from './financeiroP38';
 
 export const formatFinanceiroValor = (v) =>
   `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -13,6 +14,7 @@ export function FinanceiroGrupo({
   receitas = 0,
   despesas = 0,
   variant = 'default',
+  card = false,
   children,
   defaultOpen = true,
 }) {
@@ -23,12 +25,15 @@ export function FinanceiroGrupo({
 
   const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
-  return (
-    <div className="w-full min-w-0">
+  const content = (
+    <>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="group mb-0.5 flex w-full min-w-0 items-center justify-between gap-2 border-b border-border/50 px-1 py-1.5 dark:border-white/10"
+        className={cn(
+          'group flex w-full min-w-0 items-center justify-between gap-2 px-1 py-1.5',
+          card ? 'px-3 py-2.5' : 'mb-0.5 border-b border-border/50 dark:border-white/10',
+        )}
       >
         <p
           className={cn(
@@ -64,12 +69,24 @@ export function FinanceiroGrupo({
         </div>
       </button>
       {open && (
-        <P38MobileLineList className="block md:!block rounded-lg">
+        <P38MobileLineList className={cn('block md:!block', card ? 'rounded-none' : 'rounded-lg')}>
           {children}
         </P38MobileLineList>
       )}
-    </div>
+    </>
   );
+
+  if (card) {
+    return (
+      <div className={cn('w-full min-w-0 overflow-hidden rounded-xl border border-amber-500/25 dark:border-amber-400/20', P38_FIELD_SURFACE)}>
+        <div className="border-l-2 border-amber-500/70 dark:border-amber-400/60">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return <div className="w-full min-w-0">{content}</div>;
 }
 
 export function FinanceiroListaEstado({

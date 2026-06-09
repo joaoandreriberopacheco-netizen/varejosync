@@ -216,26 +216,71 @@ function useContasAbertasModel(onOpenImportador) {
     const hStr = hojeStr();
     const oStr = format(subDays(new Date(), 1), 'yyyy-MM-dd');
     const map = {};
-    filtrados.forEach(l => {
+    filtrados.forEach((l) => {
       const k = getVencimento(l) || 'sem-data';
       (map[k] = map[k] || []).push(l);
     });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, items]) => {
-        const itemsOrdenados = sortLancamentosPorDescricao(items);
-        const isVencido = k !== 'sem-data' && k < hStr;
-        let label = 'Sem vencimento';
-        if (k !== 'sem-data') {
-          const d = parseVencimento(k);
-          label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' :
-            isVencido ? `Venceu ${format(d, "dd 'de' MMMM", { locale: ptBR })}` :
-            format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
-        }
-        const aReceberDia = itemsOrdenados.filter(l => l.tipo === 'Receita').reduce((s, l) => s + (l.valor || 0), 0);
-        const aPagarDia   = itemsOrdenados.filter(l => l.tipo === 'Despesa').reduce((s, l) => s + (l.valor || 0), 0);
-        return { k, label, items: itemsOrdenados, aReceberDia, aPagarDia, isVencido };
+
+    const totaisGrupo = (items) => ({
+      aReceberDia: items.filter((l) => l.tipo === 'Receita').reduce((s, l) => s + (l.valor || 0), 0),
+      aPagarDia: items.filter((l) => l.tipo === 'Despesa').reduce((s, l) => s + (l.valor || 0), 0),
+    });
+
+    const sortPorVencimentoAntigo = (items) =>
+      [...items].sort((a, b) => {
+        const da = getVencimento(a) || '';
+        const db = getVencimento(b) || '';
+        if (da !== db) return da.localeCompare(db);
+        return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
       });
+
+    const vencidasItems = [];
+    const outros = [];
+
+    Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([k, items]) => {
+        const isVencido = k !== 'sem-data' && k < hStr;
+        if (isVencido) {
+          vencidasItems.push(...items);
+        } else {
+          outros.push([k, items]);
+        }
+      });
+
+    const resultado = [];
+
+    if (vencidasItems.length > 0) {
+      const itemsOrdenados = sortPorVencimentoAntigo(vencidasItems);
+      resultado.push({
+        k: 'vencidas',
+        label: 'Vencidas',
+        items: itemsOrdenados,
+        ...totaisGrupo(itemsOrdenados),
+        isVencido: true,
+        isTreeBucket: true,
+      });
+    }
+
+    outros.forEach(([k, items]) => {
+      const itemsOrdenados = sortLancamentosPorDescricao(items);
+      let label = 'Sem vencimento';
+      if (k !== 'sem-data') {
+        const d = parseVencimento(k);
+        label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' :
+          format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
+      }
+      resultado.push({
+        k,
+        label,
+        items: itemsOrdenados,
+        ...totaisGrupo(itemsOrdenados),
+        isVencido: false,
+        isTreeBucket: false,
+      });
+    });
+
+    return resultado;
   }, [filtrados]);
 
   // Marcar como pago rapidamente (abre detalhe pre-configurado)

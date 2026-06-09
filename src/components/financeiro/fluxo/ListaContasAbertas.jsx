@@ -131,11 +131,12 @@ export default function ListaContasAbertas({
       vazioMensagem="Nenhuma conta em aberto"
       vazioIcon={Scale}
     >
-      {grupos.map(({ k, label, items, aReceberDia, aPagarDia, isVencido }) => (
+      {grupos.map(({ k, label, items, aReceberDia, aPagarDia, isVencido, isTreeBucket }) => (
         <FinanceiroGrupo
           key={k}
           label={label}
           variant={isVencido ? 'overdue' : 'default'}
+          card={!!isTreeBucket}
           labelClassName={isVencido ? 'text-amber-600/90 dark:text-amber-400/90' : undefined}
           receitas={aReceberDia}
           despesas={aPagarDia}
