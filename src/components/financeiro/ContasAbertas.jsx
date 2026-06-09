@@ -13,6 +13,7 @@ import {
 import FiltrosContasAbertas, { PERIODOS_CONTAS } from './fluxo/FiltrosContasAbertas';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import ListaContasAbertas from './fluxo/ListaContasAbertas';
+import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import { P38_ACCENT } from './fluxo/financeiroP38';
 import {
   FinanceiroKpiItem,
@@ -114,11 +115,11 @@ function KpiAbertas({ kpis, layout = 'card' }) {
 // ─── Context (layout espelha Fluxo: KPIs no card; filtros + lista fora) ───────
 const ContasAbertasCtx = createContext(null);
 
-function useContasAbertasModel(onOpenImportador) {
+function useContasAbertasModel(onOpenImportador, shared) {
   const { toast } = useToast();
-  const [lancs, setLancs]         = useState([]);
-  const [contas, setContas]       = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [lancsLocal, setLancsLocal] = useState([]);
+  const [contasLocal, setContasLocal] = useState([]);
+  const [loadingLocal, setLoadingLocal] = useState(!shared);
   const [periodo, setPeriodo]     = useState('mes');
   const [cs, setCs]               = useState('');
   const [ce, setCe]               = useState('');
@@ -139,16 +140,29 @@ function useContasAbertasModel(onOpenImportador) {
   const [dataPagamentoLote, setDataPagamentoLote] = useState(dataHoje());
   const [processingLote, setProcessingLote] = useState(false);
 
+  const lancs = shared?.lancs ?? lancsLocal;
+  const contas = shared?.contas ?? contasLocal;
+  const loading = shared ? shared.loading : loadingLocal;
+
   const load = async () => {
-    setLoading(true);
+    if (shared?.reload) {
+      await shared.reload();
+      return;
+    }
+    setLoadingLocal(true);
     const [ls, cts] = await Promise.all([
       base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
       base44.entities.ContasFinanceiras.filter({ ativo: true }),
     ]);
-    setLancs(ls); setContas(cts); setLoading(false);
+    setLancsLocal(ls);
+    setContasLocal(cts);
+    setLoadingLocal(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (shared) return;
+    load();
+  }, []);
 
   // Lançamentos não cancelados (inclui pagas se mostrarPagas ativo)
   const emAberto = useMemo(() =>
@@ -264,12 +278,7 @@ function useContasAbertasModel(onOpenImportador) {
 
     outros.forEach(([k, items]) => {
       const itemsOrdenados = sortLancamentosPorDescricao(items);
-      let label = 'Sem vencimento';
-      if (k !== 'sem-data') {
-        const d = parseVencimento(k);
-        label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' :
-          format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
-      }
+      const label = k === 'sem-data' ? 'Sem vencimento' : formatFinanceiroGrupoLabel(k, hStr, oStr);
       resultado.push({
         k,
         label,
@@ -364,7 +373,7 @@ function useContasAbertasModel(onOpenImportador) {
     setGerandoRelatorio(true);
     try {
       const filtrosDesc = [
-        PERIODOS.find(p => p.v === periodo)?.l || periodo,
+        PERIODOS_CONTAS.find(p => p.v === periodo)?.l || periodo,
         tipoFiltro !== 'todos' ? tipoFiltro : null,
         search || null,
         cs && ce ? `${cs} a ${ce}` : null,
@@ -444,8 +453,8 @@ function useContasAbertasModel(onOpenImportador) {
   };
 }
 
-function ContasAbertasInnerProvider({ onOpenImportador, children }) {
-  const value = useContasAbertasModel(onOpenImportador);
+function ContasAbertasInnerProvider({ onOpenImportador, shared, children }) {
+  const value = useContasAbertasModel(onOpenImportador, shared);
   return (
     <ContasAbertasCtx.Provider value={value}>
       {children}
@@ -453,11 +462,11 @@ function ContasAbertasInnerProvider({ onOpenImportador, children }) {
   );
 }
 
-/** Ativa dados só na aba Contas a pagar (evita fetch duplicado no Fluxo). */
-export function ContasAbertasProvider({ active, onOpenImportador, children }) {
+/** Ativa dados só na aba Contas a pagar; reutiliza lançamentos do Fluxo quando disponíveis. */
+export function ContasAbertasProvider({ active, onOpenImportador, shared, children }) {
   if (!active) return <>{children}</>;
   return (
-    <ContasAbertasInnerProvider onOpenImportador={onOpenImportador}>
+    <ContasAbertasInnerProvider onOpenImportador={onOpenImportador} shared={shared}>
       {children}
     </ContasAbertasInnerProvider>
   );
