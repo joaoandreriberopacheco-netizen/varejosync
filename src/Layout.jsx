@@ -14,6 +14,7 @@ import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -52,6 +53,13 @@ export default function Layout({ children, currentPageName }) {
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);
+  const bottomNavScrollEnabled =
+    isMobile &&
+    !isFullscreen &&
+    !showMobileMenu &&
+    !searchOverlayOpen &&
+    !showMobileUserMenu;
+  const bottomNavVisible = useBottomNavScrollVisibility(bottomNavScrollEnabled);
 
   useEffect(() => {
     if (!isMobile) {
@@ -314,6 +322,7 @@ export default function Layout({ children, currentPageName }) {
             onMenuClick={() => setShowMobileMenu(true)}
             onProfileClick={() => setShowMobileUserMenu(true)}
             currentPageName={currentPageName}
+            visible={bottomNavVisible}
           />
         )}
         {!isFullscreen && (
@@ -345,7 +354,7 @@ export default function Layout({ children, currentPageName }) {
         <div
           className={`fixed z-[70] px-3 font-din-1451 ${
             isMobile
-              ? 'left-0 right-0 bottom-[calc(68px+env(safe-area-inset-bottom))]'
+              ? 'left-0 right-0 p38-bottom-dock transition-[bottom] duration-300 ease-out'
               : 'top-4 left-1/2 -translate-x-1/2 w-full max-w-xl'
           }`}
         >

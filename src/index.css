@@ -135,6 +135,9 @@ button:focus-visible {
     --p38-quick-access-size: 44px;
     --p38-quick-access-gap: 8px;
     --p38-scroll-pad-below-nav: calc(var(--p38-bottom-nav-total) + 1.5rem);
+    /* Com menu escondido (scroll para baixo): só safe-area + folga mínima */
+    --p38-bottom-nav-total-hidden: env(safe-area-inset-bottom, 0px);
+    --p38-scroll-pad-below-nav-hidden: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
 
     /* Scrollbar — inspirado no Cursor; área de toque ~10px (Cursor ~6px) */
     --scrollbar-size: 10px;
@@ -202,50 +205,66 @@ button:focus-visible {
   }
 }
 
+/* Menu escondido ao scroll: FABs e padding descem com o nav */
+html[data-p38-bottom-nav-hidden] {
+  --p38-bottom-nav-total: var(--p38-bottom-nav-total-hidden);
+  --p38-scroll-pad-below-nav: var(--p38-scroll-pad-below-nav-hidden);
+}
+
 /* GlacialBottomNav + FAB — smartphone (<md). Tablet+ usa sidebar. */
 @layer utilities {
   /* FAB principal / pilha flex-col-reverse: encostado acima do menu com folga fixa */
   .p38-bottom-fab1 {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap));
+    transition: bottom 0.3s ease-out;
   }
   /* Segundo FAB no mesmo canto (ex.: Frete acima do Fluvial) */
   .p38-bottom-fab2 {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-fab-size) + 12px);
+    transition: bottom 0.3s ease-out;
   }
   /* Menu flex-col acima de um FAB h-14 fixo (ex.: Extrato expandido sobre o +) */
   .p38-bottom-fab-mid {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-fab-size) + 12px);
+    transition: bottom 0.3s ease-out;
   }
   /* Terceiro degrau (dois FABs h-14 empilhados + um terceiro) */
   .p38-bottom-fab-high {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap) + 2 * var(--p38-fab-size) + 20px);
+    transition: bottom 0.3s ease-out;
   }
   .p38-bottom-dock {
     bottom: var(--p38-bottom-nav-total);
+    transition: bottom 0.3s ease-out;
   }
   /* Legado: era “muito alto”; alinhar ao principal */
   .p38-bottom-fab-xl {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap));
+    transition: bottom 0.3s ease-out;
   }
   /* Atalhos globais à esquerda (orçamento + caixa + PDV vendedor) — acima dos FABs de página */
   .p38-quick-access-launcher1 {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift));
+    transition: bottom 0.3s ease-out;
   }
   .p38-quick-access-launcher2 {
     bottom: calc(
       var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift) +
         var(--p38-quick-access-size) + var(--p38-quick-access-gap)
     );
+    transition: bottom 0.3s ease-out;
   }
   .p38-quick-access-launcher3 {
     bottom: calc(
       var(--p38-bottom-nav-total) + var(--p38-fab-gap) + var(--p38-quick-access-lift) +
         2 * (var(--p38-quick-access-size) + var(--p38-quick-access-gap))
     );
+    transition: bottom 0.3s ease-out;
   }
   /* Área de conteúdo sob o header mobile: padding inferior ≥ nav + safe + folga */
   .p38-layout-mobile-scroll-pad {
     padding-bottom: max(6rem, var(--p38-scroll-pad-below-nav));
+    transition: padding-bottom 0.3s ease-out;
   }
 
   /* Scroll oculto de propósito (tabs horizontais, carrosséis) */

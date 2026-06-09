@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
+import { cn } from '@/lib/utils';
 import { 
   Home, 
   Search, 
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react';
 import { openGlobalSearch } from '@/lib/openGlobalSearch';
 
-export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentPageName }) {
+export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentPageName, visible = true }) {
   const location = useLocation();
 
   const navItems = [
@@ -41,11 +42,16 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 desktop-layout:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451"
+      className={cn(
+        'fixed bottom-0 left-0 right-0 z-50 desktop-layout:hidden bg-background/96 backdrop-blur-xl border-t border-border/80 font-din-1451',
+        'transition-transform duration-300 ease-out will-change-transform',
+        !visible && 'translate-y-full pointer-events-none'
+      )}
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
         boxShadow: '0 -6px 24px -12px rgba(0,0,0,0.18)'
       }}
+      aria-hidden={!visible}
     >
       <div className="flex items-stretch h-[68px]">
         {navItems.map((item) => {
