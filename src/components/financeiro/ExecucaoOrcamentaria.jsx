@@ -356,14 +356,12 @@ export default function ExecucaoOrcamentaria() {
             cmvOnly={cmvOnly}
             onCmvOnly={setCmvOnly}
             onOpenConciliacao={setConciliacaoConta}
-            hasActiveFilters={hasActiveFilters}
+            conciliacaoPendente={totalPend}
           />
 
           <FinanceiroListaMeta
             total={filtrados.length}
             totalLabel={filtrados.length === 1 ? 'lançamento' : 'lançamentos'}
-            conciliacaoPendente={!pendentes ? totalPend : 0}
-            onConciliacaoClick={() => setPendentes(true)}
             hasActiveFilters={hasActiveFilters}
             onLimparFiltros={() => {
               setPeriodo('mes');

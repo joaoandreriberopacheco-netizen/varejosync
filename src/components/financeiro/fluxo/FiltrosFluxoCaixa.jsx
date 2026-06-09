@@ -330,18 +330,6 @@ function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
   );
 }
 
-function PendentesFiltro({ pendentes, onPendentes }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onPendentes(!pendentes)}
-      className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
-    >
-      <Clock className="w-3 h-3" /> Conciliação
-    </button>
-  );
-}
-
 // ─── Painel de filtros (compartilhado mobile drawer + desktop inline) ─────────
 function FiltrosFluxoPainel({
   periodo, onPeriodo, customStart, customEnd, onCustom,
@@ -371,7 +359,6 @@ function FiltrosFluxoPainel({
         <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
-        <PendentesFiltro pendentes={pendentes} onPendentes={onPendentes} />
         <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
       </div>
     </div>
@@ -390,9 +377,18 @@ export default function FiltrosFluxoCaixa({
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
   onOpenConciliacao,
-  hasActiveFilters,
+  conciliacaoPendente = 0,
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const hasPanelFilters =
+    periodo !== 'mes' ||
+    tiposSel.length > 0 ||
+    statusSel.length > 0 ||
+    cmvOnly ||
+    !!customStart ||
+    !!customEnd ||
+    (contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length);
 
   return (
     <FinanceiroFiltrosShell
@@ -401,7 +397,10 @@ export default function FiltrosFluxoCaixa({
       searchPlaceholder="Buscar lançamento, categoria, tag..."
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
-      hasActiveFilters={hasActiveFilters}
+      hasActiveFilters={hasPanelFilters}
+      conciliacaoPendente={conciliacaoPendente}
+      pendentes={pendentes}
+      onPendentesToggle={onPendentes}
     >
       <FiltrosFluxoPainel
         periodo={periodo}
