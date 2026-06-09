@@ -24,9 +24,7 @@ import {
   normalizeUnitCode,
   commercialQuantityFromBase,
   normalizeItemToCanonicalFactorOne,
-  normalizePurchaseItemToCommercial,
-  syncPedidoCompraItemQuantities,
-  syncItemDescontoApresentacao,
+  getItemCompraExibicaoVitrine,
   linhaPrecoNoEixoFatorUm,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
@@ -205,50 +203,41 @@ const getValorUnitarioEfetivoItemPedido = (item = {}, pedido = {}) => {
   return baseUnit * multiplicadorPedido;
 };
 
-/** Mesma normalização do PedidoCompraForm — respeita a UM da linha (CX, M²…), não a vitrine PDV. */
+/** Exibição em unidade vitrine (CX…); totais vêm do item gravado. */
 const normalizeDisplayItemCommercial = (produto = null, pedidoItem = {}, item = {}) => {
   const linhaMerged = { ...pedidoItem, ...item };
-  let linhaComercial = { ...linhaMerged };
-
-  if (produto && Object.keys(produto).length > 0) {
-    const itemJaCanonico =
-      linhaMerged.preco_eixo === 'FATOR_1' &&
-      Number(linhaMerged.quantidade_base) > 0 &&
-      linhaMerged.unidade_medida;
-    if (!itemJaCanonico) {
-      linhaComercial = normalizePurchaseItemToCommercial(produto, linhaMerged);
-    }
-  }
-
-  linhaComercial = syncPedidoCompraItemQuantities(linhaComercial);
-  linhaComercial = syncItemDescontoApresentacao(linhaComercial);
-
-  const quantidadePedida = Number(linhaComercial.quantidade) || 0;
-  const quantidadeBase = Number(linhaComercial.quantidade_base) || 0;
-  const fatorComercial = Number(linhaComercial.fator_conversao) || 1;
-  const unidadeComercial = linhaComercial.unidade_medida || '';
+  const exib = getItemCompraExibicaoVitrine(linhaMerged, produto);
+  const totalLinha = getTotalLinhaPedidoCompra(linhaMerged);
 
   const qEmbInput = Number(item?.quantidade_embarcada);
   const hasEmbarqueQty = Number.isFinite(qEmbInput) && qEmbInput > 0;
   let quantidadeEmbarcada = 0;
   if (hasEmbarqueQty) {
     const embBase = Number(item?.quantidade_base);
-    quantidadeEmbarcada = embBase > 0
-      ? commercialQuantityFromBase(embBase, fatorComercial, unidadeComercial)
-      : qEmbInput;
+    const basePedido = Number(linhaMerged.quantidade_base) || 0;
+    const qtyPedidoLinha = Number(pedidoItem?.quantidade) || 0;
+    let baseEmb = embBase;
+    if (!(baseEmb > 0) && basePedido > 0 && qtyPedidoLinha > 0) {
+      baseEmb = (qEmbInput / qtyPedidoLinha) * basePedido;
+    } else if (!(baseEmb > 0)) {
+      baseEmb = qEmbInput * (Number(pedidoItem?.fator_conversao) || 1);
+    }
+    quantidadeEmbarcada = commercialQuantityFromBase(
+      baseEmb,
+      exib.fator_conversao,
+      exib.unidade_medida,
+    );
   }
-
-  const totalLinha = getTotalLinhaPedidoCompra({ ...linhaComercial, ...pedidoItem, ...item });
 
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
     produto_nome: item.produto_nome || pedidoItem?.produto_nome,
-    quantidade: quantidadePedida,
+    quantidade: exib.quantidade,
     quantidade_embarcada: quantidadeEmbarcada,
-    quantidade_pedida: quantidadePedida,
-    quantidade_base: quantidadeBase,
-    fator_conversao: fatorComercial,
-    unidade_medida: unidadeComercial,
+    quantidade_pedida: exib.quantidade,
+    quantidade_base: exib.quantidade_base,
+    fator_conversao: exib.fator_conversao,
+    unidade_medida: exib.unidade_medida,
     total: totalLinha,
     valor_total_item: totalLinha,
   };

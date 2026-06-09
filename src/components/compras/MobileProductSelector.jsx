@@ -29,6 +29,7 @@ import {
   resolveDescontoPctCompraProduto,
   syncItemDescontoApresentacao,
   normalizeItemToCanonicalFactorOne,
+  getItemCompraExibicaoVitrine,
 } from '@/lib/productUnits';
 
 export default function MobileProductSelector({ 
@@ -959,11 +960,14 @@ export default function MobileProductSelector({
                             )}
                           </div>
                         </div>
-                        {inCart && (
+                        {inCart && (() => {
+                          const exibCart = getItemCompraExibicaoVitrine(inCart, product);
+                          return (
                           <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200 border-0">
-                            {inCart.quantidade} {inCart.unidade_medida}
+                            {exibCart.quantidade_formatada} {exibCart.unidade_medida}
                           </Badge>
-                        )}
+                          );
+                        })()}
                       </div>
                       {inCart && (
                         <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800 flex justify-between items-center">
@@ -1055,6 +1059,8 @@ export default function MobileProductSelector({
           <div className="space-y-3">
             {sortedItems.map((item, index) => {
               const originalIndex = items.findIndex(i => (i.item_key || getItemUnitKey(i.produto_id, i.unidade_medida || 'UN')) === (item.item_key || getItemUnitKey(item.produto_id, item.unidade_medida || 'UN')));
+              const produtoItem = products.find((p) => p.id === item.produto_id);
+              const exibVitrine = getItemCompraExibicaoVitrine(item, produtoItem);
               return (
               <div 
                 key={originalIndex} 
@@ -1069,7 +1075,7 @@ export default function MobileProductSelector({
                       {item.produto_nome || "Produto"}
                     </div>
                     <div className="text-sm text-muted-foreground mb-1">
-                      {item.quantidade} {item.unidade_medida} × {formatCurrency(getCustoApresentacaoItem(item))}
+                      {exibVitrine.quantidade_formatada} {exibVitrine.unidade_medida} × {formatCurrency(exibVitrine.preco_unitario)}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Total</span>

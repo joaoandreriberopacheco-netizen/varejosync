@@ -1414,6 +1414,30 @@ export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
   };
 }
 
+/**
+ * Exibição na unidade vitrine (CX, PAC…), mesmo quando a linha foi lançada em M²/UN.
+ * Só para UI (carrinho, cards); não altera persistência do pedido.
+ */
+export function getItemCompraExibicaoVitrine(item = {}, produto = null) {
+  const norm = normalizeItemCompraParaExibicao(item, produto);
+  const unit = norm.unidade_medida || item?.unidade_medida || "UN";
+  const qty = Number(norm.quantidade) || 0;
+  const total = Number(norm.valor_total_item ?? item?.total) || 0;
+  const preco =
+    Number(norm.valor_unitario_compra) ||
+    (qty > 0 && total > 0 ? roundToTwoDecimals(total / qty) : 0);
+
+  return {
+    quantidade: qty,
+    unidade_medida: unit,
+    preco_unitario: preco,
+    total,
+    quantidade_base: norm.quantidade_base,
+    fator_conversao: norm.fator_conversao,
+    quantidade_formatada: formatCommercialQuantity(qty, unit),
+  };
+}
+
 export function resolveBoatLogisticsUnit(product, fallbackUnit = "UN") {
   const options = buildPurchaseUnitOptions(product);
   if (!options.length) {
