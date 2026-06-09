@@ -15,6 +15,7 @@ import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -58,7 +59,8 @@ export default function Layout({ children, currentPageName }) {
     !isFullscreen &&
     !showMobileMenu &&
     !searchOverlayOpen &&
-    !showMobileUserMenu;
+    !showMobileUserMenu &&
+    shouldHideBottomNavOnScroll(currentPageName);
   const bottomNavVisible = useBottomNavScrollVisibility(bottomNavScrollEnabled);
 
   useEffect(() => {
