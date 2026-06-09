@@ -284,7 +284,7 @@ export default function ExecucaoOrcamentaria() {
 
   return (
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
+    <div className="w-full min-w-0 max-w-full space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header — mobile e desktop separados para evitar sobreposição */}
       <div className="min-w-0 max-w-full space-y-1.5">
         {/* Mobile */}

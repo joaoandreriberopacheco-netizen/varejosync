@@ -12,3 +12,6 @@ export const P38_POPOVER =
 export const P38_KPI_SHELL =
   `rounded-xl ${P38_FIELD_SURFACE} px-2.5 py-2 sm:px-3 sm:py-2.5`;
 export const P38_ACCENT = 'text-[#4a5240] dark:text-[#a4ce33]';
+/** Mobile: busca + ícones fixos ao rolar; desktop sem sticky. */
+export const P38_FILTROS_STICKY =
+  'sticky top-0 z-30 bg-background/95 py-1 backdrop-blur-sm md:static md:z-auto md:bg-transparent md:py-0 md:backdrop-blur-none';

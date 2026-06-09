@@ -2,7 +2,7 @@ import React from 'react';
 import { Search, X, SlidersHorizontal, Clock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { P38_CHIP_ACTIVE, P38_FIELD_SURFACE, P38_SEARCH } from './financeiroP38';
+import { P38_CHIP_ACTIVE, P38_FIELD_SURFACE, P38_FILTROS_STICKY, P38_SEARCH } from './financeiroP38';
 
 const iconBtnBase = cn(
   'relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-opacity hover:opacity-90',
@@ -28,7 +28,15 @@ export default function FinanceiroFiltrosShell({
     conciliacaoPendente > 99 ? '99+' : conciliacaoPendente > 0 ? String(conciliacaoPendente) : null;
 
   return (
-    <Collapsible open={filtersOpen} onOpenChange={onFiltersOpenChange} className="min-w-0">
+    <Collapsible
+      open={filtersOpen}
+      onOpenChange={onFiltersOpenChange}
+      className={cn(
+        'min-w-0',
+        P38_FILTROS_STICKY,
+        filtersOpen && 'border-b border-border/40 dark:border-white/10 md:border-b-0',
+      )}
+    >
       <div className="flex min-w-0 items-center gap-1.5">
         <div className={cn('flex h-10 min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2.5', P38_SEARCH)}>
           <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
