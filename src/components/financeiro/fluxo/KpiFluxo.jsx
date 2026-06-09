@@ -8,11 +8,12 @@ import {
   formatKpiValor,
 } from './FinanceiroKpiInline';
 
-export default function KpiFluxo({ kpis }) {
+export default function KpiFluxo({ kpis, embedded = false }) {
   const taxa = kpis.entrou > 0 ? (kpis.saiu / kpis.entrou * 100).toFixed(0) : 0;
 
   return (
     <FinanceiroKpiStrip
+      embedded={embedded}
       footer={
         kpis.totalTransferencias > 0 ? (
           <div className="flex items-center gap-2 border-t border-border/40 pt-1.5 dark:border-white/10">
@@ -32,7 +33,7 @@ export default function KpiFluxo({ kpis }) {
       />
       <FinanceiroKpiItem
         icon={TrendingDown}
-        iconClass="text-red-500 dark:text-red-400"
+        iconClass="text-foreground/50"
         label="Despesas"
         value={formatKpiValor(kpis.saiu)}
         sub={kpis.pSaiu > 0 ? `+${formatKpiValor(kpis.pSaiu)} prev.` : null}
@@ -50,11 +51,11 @@ export default function KpiFluxo({ kpis }) {
       {kpis.vencidos > 0 && (
         <FinanceiroKpiItem
           icon={AlertTriangle}
-          iconClass="text-red-500 dark:text-red-400"
+          iconClass="text-amber-600 dark:text-amber-400"
           label="Vencidos"
           value={
             <>
-              <span className="text-red-600 dark:text-red-400">−</span>
+              <span className="text-amber-600 dark:text-amber-400">−</span>
               {formatKpiValor(kpis.vencidos)}
             </>
           }

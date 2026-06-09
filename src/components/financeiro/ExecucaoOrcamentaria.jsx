@@ -285,10 +285,10 @@ export default function ExecucaoOrcamentaria() {
   return (
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
-      {/* Header + KPIs — sem card contrastante; mesma superfície da busca nos KPIs */}
-      <div className="min-w-0 max-w-full space-y-2">
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
+      {/* Header: título + KPIs na mesma faixa + abas à direita */}
+      <div className="min-w-0 max-w-full space-y-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+          <div className="flex min-w-0 shrink-0 items-center gap-2">
             <p className="text-xl leading-none font-semibold text-foreground sm:text-2xl font-glacial">Financeiro</p>
             {aba === 'fluxo' && (
               <button
@@ -300,22 +300,29 @@ export default function ExecucaoOrcamentaria() {
               </button>
             )}
           </div>
-          <FinanceiroPillTabs
-            compact
-            value={aba}
-            onChange={setAba}
-            items={[
-              { value: 'fluxo', label: 'Fluxo de Caixa' },
-              { value: 'contas', label: 'Contas Abertas' },
-            ]}
-          />
-        </div>
 
-        {aba === 'fluxo' && <KpiFluxo kpis={kpis} />}
+          {aba === 'fluxo' && (
+            <div className="min-w-0 flex-1">
+              <KpiFluxo kpis={kpis} embedded />
+            </div>
+          )}
+          {aba === 'contas' && abaContas === 'contas' && (
+            <div className="min-w-0 flex-1">
+              <ContasAbertasKpis embedded />
+            </div>
+          )}
 
-        {aba === 'contas' && (
-          <div className="min-w-0 space-y-2">
-            <div className="flex justify-end">
+          <div className="flex shrink-0 flex-col items-stretch gap-1 sm:items-end md:ml-auto">
+            <FinanceiroPillTabs
+              compact
+              value={aba}
+              onChange={setAba}
+              items={[
+                { value: 'fluxo', label: 'Fluxo de Caixa' },
+                { value: 'contas', label: 'Contas Abertas' },
+              ]}
+            />
+            {aba === 'contas' && (
               <FinanceiroPillTabs
                 compact
                 value={abaContas}
@@ -325,14 +332,13 @@ export default function ExecucaoOrcamentaria() {
                   { value: 'agefin', label: 'Atualizar boletos' },
                 ]}
               />
-            </div>
-            {abaContas === 'contas' ? (
-              <ContasAbertasKpis />
-            ) : (
-              <div className="min-w-0">
-                <AgefinRecorrentes />
-              </div>
             )}
+          </div>
+        </div>
+
+        {aba === 'contas' && abaContas === 'agefin' && (
+          <div className="min-w-0">
+            <AgefinRecorrentes />
           </div>
         )}
       </div>

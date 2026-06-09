@@ -22,7 +22,7 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive }
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
       <span className="shrink-0 whitespace-nowrap text-[9px] uppercase tracking-wide text-muted-foreground">{label}</span>
-      <span className={cn('text-[13px] font-semibold leading-none tabular-nums sm:text-sm', positive ? P38_ACCENT : 'text-red-600 dark:text-red-400')}>
+      <span className={cn('text-[13px] font-semibold leading-none tabular-nums sm:text-sm', positive ? P38_ACCENT : 'text-foreground/80')}>
         {value}
       </span>
       <div className="flex min-w-[3.5rem] items-center gap-1">
@@ -38,10 +38,15 @@ export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive }
   );
 }
 
-export function FinanceiroKpiStrip({ children, footer }) {
+export function FinanceiroKpiStrip({ children, footer, embedded = false }) {
   return (
-    <div className={cn(P38_KPI_SHELL, 'space-y-1.5')}>
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 md:flex-nowrap md:justify-between md:gap-x-4">
+    <div className={cn(embedded ? 'min-w-0 py-0.5' : P38_KPI_SHELL, !embedded && 'space-y-1.5')}>
+      <div
+        className={cn(
+          'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1',
+          embedded ? 'md:gap-x-4' : 'gap-y-1.5 md:flex-nowrap md:justify-between md:gap-x-4',
+        )}
+      >
         {children}
       </div>
       {footer}

@@ -12,11 +12,16 @@ export function FinanceiroGrupo({
   labelClassName,
   receitas = 0,
   despesas = 0,
+  variant = 'default',
   children,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const liquido = receitas - despesas;
+  const showBreakdown = receitas > 0 && despesas > 0;
+  const overdue = variant === 'overdue';
+
+  const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
   return (
     <div className="w-full min-w-0">
@@ -34,20 +39,20 @@ export function FinanceiroGrupo({
           {label}
         </p>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {receitas > 0 && (
+          {showBreakdown && receitas > 0 && (
             <span className="text-[11px] font-semibold tabular-nums text-[#4A5D23] dark:text-[#a4ce33]">
               +{formatFinanceiroValor(receitas)}
             </span>
           )}
-          {despesas > 0 && (
-            <span className="text-[11px] font-semibold tabular-nums text-red-600 dark:text-red-400">
+          {showBreakdown && despesas > 0 && (
+            <span className={cn('text-[11px] font-semibold tabular-nums', negClass)}>
               −{formatFinanceiroValor(despesas)}
             </span>
           )}
           <span
             className={cn(
               'text-[11px] font-bold tabular-nums',
-              liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400',
+              liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
             )}
           >
             {liquido >= 0 ? '+' : '−'}

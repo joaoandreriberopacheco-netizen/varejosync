@@ -16,6 +16,9 @@ function lancStatusTone(status) {
   return p38StatusTone(status);
 }
 
+const LINE_TITLE_CLASS =
+  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
+
 function LancRow({ l, onClick, striped }) {
   const isR = l.tipo === 'Receita';
   const isT = l.tipo === 'Transferência';
@@ -31,7 +34,15 @@ function LancRow({ l, onClick, striped }) {
     formatFinanceiroValor(Math.abs(l.valor || 0))
   ) : (
     <>
-      <span className={isR ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
+      <span
+        className={
+          isR
+            ? 'text-[#4A5D23] dark:text-[#a4ce33]'
+            : l.status === 'Vencido'
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-foreground/85'
+        }
+      >
         {isR ? '+' : '−'}
       </span>
       {formatFinanceiroValor(Math.abs(l.valor || 0))}
@@ -46,7 +57,7 @@ function LancRow({ l, onClick, striped }) {
       striped={striped}
       accent={p38AccentKeyFromTone(accent)}
       onClick={() => onClick(l)}
-      className={`w-full text-left ${cancelado ? 'opacity-60' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} ${cancelado ? 'opacity-60' : ''}`}
       title={<span className={cancelado ? 'line-through' : undefined}>{l.descricao}</span>}
       subtitle={
         <>

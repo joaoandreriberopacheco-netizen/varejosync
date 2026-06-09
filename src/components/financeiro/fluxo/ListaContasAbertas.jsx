@@ -9,10 +9,17 @@ import {
 } from '@/components/ui/p38-mobile-line';
 import { FinanceiroGrupo, FinanceiroListaEstado, formatFinanceiroValor } from './FinanceiroListaShared';
 
+const LINE_TITLE_CLASS =
+  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
+
 function contaRowTone(l, isPago) {
   if (isPago) return 'muted';
-  if (l.status === 'Vencido') return 'danger';
-  return l.tipo === 'Receita' ? 'success' : 'danger';
+  if (l.status === 'Vencido') return 'warning';
+  return l.tipo === 'Receita' ? 'success' : 'muted';
+}
+
+function valorDespesaClass(isVencido) {
+  return isVencido ? 'text-amber-600 dark:text-amber-400' : 'text-foreground/85';
 }
 
 function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, striped }) {
@@ -21,10 +28,11 @@ function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, str
   const conc = l.status_conciliacao || 'N/A';
   const data = l.data_vencimento;
   const tone = contaRowTone(l, isPago);
+  const isVencido = l.status === 'Vencido';
 
   const valueNode = (
     <>
-      <span className={isR ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
+      <span className={isR ? 'text-[#4A5D23] dark:text-[#a4ce33]' : valorDespesaClass(isVencido)}>
         {isR ? '+' : '−'}
       </span>
       {formatFinanceiroValor(Math.abs(l.valor || 0))}
@@ -35,7 +43,7 @@ function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, str
     <>
       {l.categoria && <span>{l.categoria}</span>}
       {l.status && l.status !== 'Pago' && (
-        <P38StatusLabel tone={l.status === 'Vencido' ? 'danger' : tone === 'success' ? 'success' : 'warning'}>
+        <P38StatusLabel tone={l.status === 'Vencido' ? 'warning' : tone === 'success' ? 'success' : 'warning'}>
           {l.status}
         </P38StatusLabel>
       )}
@@ -70,7 +78,7 @@ function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, str
         striped={striped}
         accent={p38AccentKeyFromTone(tone)}
         onClick={() => onToggleSelecionado(l.id)}
-        className="w-full cursor-pointer text-left"
+        className={`w-full cursor-pointer text-left ${LINE_TITLE_CLASS}`}
         title={l.descricao}
         subtitle={
           <>
@@ -93,7 +101,7 @@ function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, str
       striped={striped}
       accent={p38AccentKeyFromTone(tone)}
       onClick={() => onClick(l)}
-      className={`w-full text-left ${isPago ? 'opacity-60' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} ${isPago ? 'opacity-60' : ''}`}
       title={l.descricao}
       subtitle={
         <>
@@ -127,7 +135,8 @@ export default function ListaContasAbertas({
         <FinanceiroGrupo
           key={k}
           label={label}
-          labelClassName={isVencido ? 'text-red-600 dark:text-red-400' : undefined}
+          variant={isVencido ? 'overdue' : 'default'}
+          labelClassName={isVencido ? 'text-amber-600/90 dark:text-amber-400/90' : undefined}
           receitas={aReceberDia}
           despesas={aPagarDia}
         >

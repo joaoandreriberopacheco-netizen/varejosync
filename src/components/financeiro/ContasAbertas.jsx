@@ -61,9 +61,9 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-function KpiAbertas({ kpis }) {
+function KpiAbertas({ kpis, embedded = false }) {
   return (
-    <FinanceiroKpiStrip>
+    <FinanceiroKpiStrip embedded={embedded}>
       <FinanceiroKpiItem
         icon={ArrowDownLeft}
         iconClass={P38_ACCENT}
@@ -73,7 +73,7 @@ function KpiAbertas({ kpis }) {
       />
       <FinanceiroKpiItem
         icon={ArrowUpRight}
-        iconClass="text-red-500 dark:text-red-400"
+        iconClass="text-foreground/50"
         label="A pagar"
         value={formatKpiValor(kpis.aPagar)}
         sub={kpis.qtdPagar > 0 ? `${kpis.qtdPagar} lç.` : null}
@@ -82,7 +82,7 @@ function KpiAbertas({ kpis }) {
         label="Saldo proj."
         value={
           <>
-            <span className={kpis.saldoProjetado >= 0 ? P38_ACCENT : 'text-red-600 dark:text-red-400'}>
+            <span className={kpis.saldoProjetado >= 0 ? P38_ACCENT : 'text-foreground/80'}>
               {kpis.saldoProjetado >= 0 ? '+' : '−'}
             </span>
             {formatKpiValor(Math.abs(kpis.saldoProjetado))}
@@ -92,11 +92,11 @@ function KpiAbertas({ kpis }) {
       {kpis.vencidas > 0 && (
         <FinanceiroKpiItem
           icon={AlertTriangle}
-          iconClass="text-red-500 dark:text-red-400"
+          iconClass="text-amber-600 dark:text-amber-400"
           label="Vencidas"
           value={
             <>
-              <span className="text-red-600 dark:text-red-400">−</span>
+              <span className="text-amber-600 dark:text-amber-400">−</span>
               {formatKpiValor(kpis.vencidas)}
             </>
           }
@@ -415,10 +415,10 @@ export function ContasAbertasProvider({ active, onOpenImportador, children }) {
 }
 
 /** KPIs — dentro do card cinza (box amarelo). */
-export function ContasAbertasKpis() {
+export function ContasAbertasKpis({ embedded = false }) {
   const m = useContext(ContasAbertasCtx);
   if (!m) return null;
-  return <KpiAbertas kpis={m.kpis} />;
+  return <KpiAbertas kpis={m.kpis} embedded={embedded} />;
 }
 
 /** Busca + filtros recolhíveis — fora do card, como Fluxo de Caixa. */
