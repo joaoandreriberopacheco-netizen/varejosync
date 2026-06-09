@@ -20,14 +20,21 @@ export default function FinanceiroPillTabs({ items, value, onChange, className =
             className={cn(
               'rounded-xl uppercase tracking-wide transition-colors',
               compact
-                ? 'flex-none px-3 py-1.5 text-[10px] sm:px-3.5 sm:py-2 sm:text-[11px]'
+                ? 'flex-none px-2 py-1.5 text-[9px] sm:px-3.5 sm:py-2 sm:text-[11px] md:px-3'
                 : 'min-w-0 flex-1 px-3 py-2 text-xs sm:text-sm',
               active
                 ? 'bg-card font-medium text-foreground shadow-sm dark:bg-[#383e47]'
                 : 'text-muted-foreground hover:text-foreground/80',
             )}
           >
-            <span className="block truncate">{item.label}</span>
+            {item.shortLabel ? (
+              <>
+                <span className="block truncate md:hidden">{item.shortLabel}</span>
+                <span className="hidden truncate md:block">{item.label}</span>
+              </>
+            ) : (
+              <span className="block truncate">{item.label}</span>
+            )}
             {item.count != null && <span className="tabular-nums"> ({item.count})</span>}
           </button>
         );

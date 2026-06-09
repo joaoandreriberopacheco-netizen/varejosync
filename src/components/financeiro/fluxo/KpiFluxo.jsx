@@ -39,6 +39,7 @@ export default function KpiFluxo({ kpis, embedded = false }) {
         sub={kpis.pSaiu > 0 ? `+${formatKpiValor(kpis.pSaiu)} prev.` : null}
       />
       <FinanceiroKpiSaldo
+        className="col-span-2 md:col-span-auto"
         value={
           <>
             {kpis.saldo >= 0 ? '+' : '−'}

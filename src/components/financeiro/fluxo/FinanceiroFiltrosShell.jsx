@@ -37,7 +37,7 @@ export default function FinanceiroFiltrosShell({
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground sm:text-sm"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground placeholder:truncate sm:text-sm"
           />
           {search && (
             <button type="button" onClick={() => onSearch('')} aria-label="Limpar busca">
