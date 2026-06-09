@@ -284,7 +284,7 @@ export default function ExecucaoOrcamentaria() {
 
   return (
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header + tabs (painel mediterrâneo — até KPIs/controles) */}
       <div className="min-w-0 max-w-full space-y-3 rounded-[20px] border border-border/40 bg-secondary/40 px-3 py-3 sm:rounded-[24px] sm:px-4 sm:py-4 dark:border-white/10 dark:bg-[#2d333b]">
         <div className="flex min-w-0 items-center justify-between gap-2">

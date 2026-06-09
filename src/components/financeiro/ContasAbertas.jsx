@@ -8,15 +8,13 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus,
-  AlertTriangle, AlertCircle, FileText, Upload, ChevronRight, Scale, Clock
+  AlertTriangle, FileText, Upload,
 } from 'lucide-react';
 import FiltrosContasAbertas, { PERIODOS_CONTAS } from './fluxo/FiltrosContasAbertas';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import ListaContasAbertas from './fluxo/ListaContasAbertas';
 import { P38_ACCENT, P38_KPI_SHELL } from './fluxo/financeiroP38';
-import { Checkbox } from '@/components/ui/checkbox';
-import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { p38Accent } from '@/lib/p38ThemeSurfaces';
-import { dataHoje, formatarDataCurta } from '@/components/utils/dateUtils';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -119,130 +117,7 @@ function KpiAbertas({ kpis }) {
   );
 }
 
-// (ContasFiltro removido — seleção de conta apenas na efetivação)
-
-/** Igual RecorrenciaBadge em ListaLancamentos */
-function ContaRecorrenciaBadge({ l }) {
-  if (!l.frequencia_recorrencia) return null;
-  const label = l.frequencia_recorrencia === 'Parcelado' && l.parcela_atual != null
-    ? `${l.parcela_atual}/${l.numero_parcelas_total ?? '—'}`
-    : l.frequencia_recorrencia;
-  return (
-    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium text-muted-foreground dark:bg-muted">
-      {label}
-    </span>
-  );
-}
-
-// ─── Linha (mesmo layout que LancRow em ListaLancamentos) ───────────────────
-function contaRowTone(l) {
-  const isPago = isLancamentoPago(l);
-  if (isPago) return 'muted';
-  if (l.status === 'Vencido') return 'danger';
-  return l.tipo === 'Receita' ? 'success' : 'warning';
-}
-
-function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecionado, striped }) {
-  const isR = l.tipo === 'Receita';
-  const vStr = getVencimento(l);
-  const val = Math.abs(l.valor || 0);
-  const isPago = isLancamentoPago(l);
-  const conc = l.status_conciliacao || 'N/A';
-  const tone = contaRowTone(l);
-  const dataKey = vStr;
-  const subtitle = `${dataKey ? formatarDataCurta(dataKey) : '—'}${l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}`;
-
-  return (
-    <P38MobileLine
-      thinAccent
-      striped={striped}
-      accent={p38AccentKeyFromTone(tone)}
-      onClick={() => !emSelecao && onClick(l)}
-      className={isPago ? 'opacity-60' : undefined}
-      title={l.descricao}
-      subtitle={subtitle}
-      meta={
-        <>
-          {l.categoria ? <span>{l.categoria}</span> : null}
-          {!isPago && l.status ? <P38StatusLabel tone={l.status === 'Vencido' ? 'danger' : tone}>{l.status}</P38StatusLabel> : null}
-          {isPago ? <P38StatusLabel tone="success">Pago</P38StatusLabel> : null}
-          <ContaRecorrenciaBadge l={l} />
-          {!isPago && !emSelecao && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onPagar(l); }}
-              className="rounded-md bg-secondary px-1.5 py-0.5 text-[0.6rem] font-medium text-muted-foreground"
-            >
-              Pagar
-            </button>
-          )}
-        </>
-      }
-      value={
-        <span className={isPago ? 'text-muted-foreground' : isR ? p38Accent.success.text : p38Accent.danger.text}>
-          {isR ? '+' : '−'}{R(val)}
-        </span>
-      }
-      trailing={
-        <div className="flex items-center gap-1 shrink-0">
-          {emSelecao && !isPago && (
-            <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado(l.id)} />
-          )}
-          {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
-          {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
-        </div>
-      }
-    />
-  );
-}
-
-// ─── Grupo (mesmo padrão que Grupo em ListaLancamentos: colapsável + saldo dia) ─
-function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isVencido, emSelecao, selecionados, onToggleSelecionado }) {
-  const [open, setOpen] = useState(true);
-  const r = aReceberDia || 0;
-  const d = aPagarDia || 0;
-  const liquido = r - d;
-
-  return (
-    <div className="w-full min-w-0">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="group flex w-full min-w-0 items-center justify-between gap-2 border-b border-border/50 dark:border-white/10 px-0.5 py-2 mb-0.5"
-      >
-        <p className={`min-w-0 flex-1 truncate text-left text-[0.62rem] font-semibold uppercase tracking-wide sm:tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-muted-foreground'}`}>
-          {label}
-        </p>
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {r > 0 && <span className="text-[0.62rem] font-medium text-muted-foreground">+{R(r)}</span>}
-          {d > 0 && <span className="text-[0.62rem] font-medium text-muted-foreground">−{R(d)}</span>}
-          <span className={`text-[0.62rem] font-bold ${liquido >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-            {liquido >= 0 ? '+' : '−'}{R(Math.abs(liquido))}
-          </span>
-          <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />
-        </div>
-      </button>
-      {open && (
-        <P38MobileLineList className="block rounded-lg">
-          {items.map((l, index) => (
-            <ContaRow
-              key={l.id}
-              l={l}
-              striped={index % 2 === 1}
-              onPagar={onPagar}
-              onClick={onRow}
-              emSelecao={emSelecao}
-              selecionado={selecionados.includes(l.id)}
-              onToggleSelecionado={onToggleSelecionado}
-            />
-          ))}
-        </P38MobileLineList>
-      )}
-    </div>
-  );
-}
-
-// ─── Context (layout espelha Fluxo: KPIs+filtros no card; lista fora) ───────────
+// ─── Context (layout espelha Fluxo: KPIs no card; filtros + lista fora) ───────
 const ContasAbertasCtx = createContext(null);
 
 function useContasAbertasModel(onOpenImportador) {
@@ -370,7 +245,6 @@ function useContasAbertasModel(onOpenImportador) {
   }, [filtrados]);
 
   // Marcar como pago rapidamente (abre detalhe pre-configurado)
-  const handlePagarRapido = (l) => setDetalhe(l);
 
   const handleToggleSelecionado = (id) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
@@ -509,7 +383,6 @@ function useContasAbertasModel(onOpenImportador) {
     lancamentosSelecionados,
     loading,
     grupos,
-    handlePagarRapido,
     setDetalhe,
     handleToggleSelecionado,
     fabOpen,
@@ -609,7 +482,6 @@ export function ContasAbertasListaPane() {
     loading,
     grupos,
     filtrados,
-    handlePagarRapido,
     setDetalhe,
     modoSelecaoLote,
     setModoSelecaoLote,
@@ -654,7 +526,7 @@ export function ContasAbertasListaPane() {
     <>
       <FinanceiroListaMeta
         total={filtrados.length}
-        totalLabel={filtrados.length === 1 ? 'lançamento' : 'lançamentos'}
+        totalLabel={filtrados.length === 1 ? 'conta' : 'contas'}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setPeriodo('mes');
@@ -705,33 +577,14 @@ export function ContasAbertasListaPane() {
         </div>
       )}
 
-      <div className="min-w-0 w-full max-w-full overflow-x-hidden">
-        {loading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-2xl bg-muted" />
-            ))}
-          </div>
-        ) : grupos.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-2xl bg-card py-16 shadow-sm dark:bg-muted">
-            <Scale className="h-9 w-9 text-muted-foreground dark:text-foreground/90" />
-            <p className="text-sm text-muted-foreground">Nenhuma conta em aberto</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {grupos.map(({ k, label, items, aReceberDia, aPagarDia, isVencido }) => (
-              <GrupoContas key={k} label={label} items={items}
-                onPagar={handlePagarRapido} onRow={setDetalhe}
-                aReceberDia={aReceberDia} aPagarDia={aPagarDia}
-                isVencido={isVencido}
-                emSelecao={modoSelecaoLote}
-                selecionados={selectedIds}
-                onToggleSelecionado={handleToggleSelecionado}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ListaContasAbertas
+        grupos={grupos}
+        loading={loading}
+        onRow={setDetalhe}
+        emSelecao={modoSelecaoLote}
+        selecionados={selectedIds}
+        onToggleSelecionado={handleToggleSelecionado}
+      />
 
       {fabOpen && <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
       <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">

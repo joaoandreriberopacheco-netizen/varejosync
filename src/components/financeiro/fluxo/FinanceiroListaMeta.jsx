@@ -15,7 +15,7 @@ export function FinanceiroSummaryChip({ children, className }) {
   );
 }
 
-/** Contagens e alertas acima da lista — fora do painel de KPIs. */
+/** Meta compacta acima da lista — contagem, conciliação e filtros numa faixa fina. */
 export default function FinanceiroListaMeta({
   total,
   totalLabel = 'lançamentos',
@@ -27,41 +27,39 @@ export default function FinanceiroListaMeta({
   extraActions,
 }) {
   return (
-    <div className="min-w-0 space-y-2">
-      {conciliacaoPendente > 0 && onConciliacaoClick && (
-        <button
-          type="button"
-          onClick={onConciliacaoClick}
-          className="flex w-full items-center gap-2 rounded-xl border border-border/40 bg-card/60 px-3 py-2 text-left text-xs text-foreground/90 dark:border-white/10 dark:bg-[#26262e]/80 hover:bg-secondary/80 dark:hover:bg-[#383e47]/60 transition-colors"
-        >
-          <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate">
-            {conciliacaoPendente} aguardando conciliação
-          </span>
-          <span className="shrink-0 font-semibold text-muted-foreground">Ver →</span>
-        </button>
-      )}
-
-      <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
         <p className="shrink-0 text-[11px] text-muted-foreground">
           {total} {totalLabel}
         </p>
-        {(summaryChips || extraActions || (hasActiveFilters && onLimparFiltros)) && (
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:justify-end">
-            {summaryChips}
-            {extraActions}
-            {hasActiveFilters && onLimparFiltros && (
-              <button
-                type="button"
-                onClick={onLimparFiltros}
-                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground/90"
-              >
-                <X className="h-3 w-3" /> Limpar
-              </button>
-            )}
-          </div>
+        {conciliacaoPendente > 0 && onConciliacaoClick && (
+          <button
+            type="button"
+            onClick={onConciliacaoClick}
+            className="inline-flex min-w-0 max-w-full items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground/90"
+          >
+            <Clock className="h-3 w-3 shrink-0" />
+            <span className="truncate">{conciliacaoPendente} conciliação</span>
+            <span className="shrink-0 font-semibold">→</span>
+          </button>
         )}
       </div>
+
+      {(summaryChips || extraActions || (hasActiveFilters && onLimparFiltros)) && (
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:justify-end">
+          {summaryChips}
+          {extraActions}
+          {hasActiveFilters && onLimparFiltros && (
+            <button
+              type="button"
+              onClick={onLimparFiltros}
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground/90"
+            >
+              <X className="h-3 w-3" /> Limpar
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
