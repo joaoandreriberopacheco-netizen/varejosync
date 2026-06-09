@@ -127,7 +127,7 @@ export default function ListaContasAbertas({
         <FinanceiroGrupo
           key={k}
           label={label}
-          labelClassName={isVencido ? 'text-red-400 dark:text-red-500' : undefined}
+          labelClassName={isVencido ? 'text-red-600 dark:text-red-400' : undefined}
           receitas={aReceberDia}
           despesas={aPagarDia}
         >
