@@ -24,6 +24,7 @@ export default function GlobalSearchBar({
   placeholder = 'Buscar…',
   autoFocus = false,
   showClose = false,
+  atTop = false,
   onClose,
   onNavigate,
   onCollapsedActivate,
@@ -36,6 +37,7 @@ export default function GlobalSearchBar({
 
   const results = useMemo(() => filterSearchItems(searchableItems, query), [searchableItems, query]);
   const showDropdown = focused && query.trim().length > 0;
+  const resultsMaxHeight = atTop ? 'min(70vh, 28rem)' : 'min(50vh, 280px)';
 
   useEffect(() => {
     if (autoFocus) {
@@ -121,9 +123,9 @@ export default function GlobalSearchBar({
       {showDropdown ? (
         <div
           className="absolute left-0 right-0 top-[calc(100%+6px)] z-[80] overflow-hidden rounded-xl border border-border/40 dark:border-white/10 shadow-lg font-din-1451"
-          style={{ background: c.cardBg, maxHeight: 'min(50vh, 280px)' }}
+          style={{ background: c.cardBg, maxHeight: resultsMaxHeight }}
         >
-          <div className="overflow-y-auto overscroll-contain p-1" style={{ maxHeight: 'min(50vh, 280px)' }}>
+          <div className="overflow-y-auto overscroll-contain p-1" style={{ maxHeight: resultsMaxHeight }}>
             {results.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm" style={{ color: c.textMuted }}>
                 Nenhuma funcionalidade encontrada para &quot;{query.trim()}&quot;

@@ -200,6 +200,15 @@ export default function Layout({ children, currentPageName }) {
   }, [openSearchOverlay]);
 
   useEffect(() => {
+    if (!searchOverlayOpen || !isMobile || isFullscreen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [searchOverlayOpen, isMobile, isFullscreen]);
+
+  useEffect(() => {
     if (!showDesktopUserPanel) return;
 
     const handleClickOutside = (event) => {
@@ -360,25 +369,45 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
       {searchOverlayOpen && !isFullscreen ? (
-        <div
-          className={`fixed z-[70] px-3 font-din-1451 ${
-            isMobile
-              ? 'left-0 right-0 p38-bottom-dock transition-[bottom] duration-300 ease-out'
-              : 'top-4 left-1/2 -translate-x-1/2 w-full max-w-xl'
-          }`}
-        >
-          <GlobalSearchBar
-            isDark={darkMode}
-            searchableItems={allSearchableItems}
-            autoFocus
-            showClose
-            onClose={closeSearchOverlay}
-            onNavigate={() => {
-              closeSearchOverlay();
-              if (isMobile) setIsOpen(false);
-            }}
-          />
-        </div>
+        isMobile ? (
+          <div
+            className="fixed inset-0 z-[70] font-din-1451 desktop-layout:hidden"
+            onClick={closeSearchOverlay}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Busca de funcionalidades"
+          >
+            <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden />
+            <div
+              className="relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GlobalSearchBar
+                isDark={darkMode}
+                searchableItems={allSearchableItems}
+                autoFocus
+                showClose
+                atTop
+                onClose={closeSearchOverlay}
+                onNavigate={() => {
+                  closeSearchOverlay();
+                  setIsOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="fixed z-[70] top-4 left-1/2 -translate-x-1/2 w-full max-w-xl px-3 font-din-1451">
+            <GlobalSearchBar
+              isDark={darkMode}
+              searchableItems={allSearchableItems}
+              autoFocus
+              showClose
+              onClose={closeSearchOverlay}
+              onNavigate={closeSearchOverlay}
+            />
+          </div>
+        )
       ) : null}
     </div>
   );
