@@ -116,7 +116,9 @@ export default function ContagemExpressCarrinho({
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{grupo.produto_nome}</p>
+                  <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
+                    {grupo.produto_nome}
+                  </p>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                     <div className="rounded-lg bg-card px-2 py-1.5">
                       <div className="text-muted-foreground">Sistema</div>
