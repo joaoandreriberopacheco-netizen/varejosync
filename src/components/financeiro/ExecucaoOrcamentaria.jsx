@@ -285,15 +285,15 @@ export default function ExecucaoOrcamentaria() {
   return (
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
-      {/* Header + tabs (painel mediterrâneo — até KPIs/controles) */}
-      <div className="min-w-0 max-w-full space-y-2 rounded-[20px] border border-border/40 bg-secondary/40 px-3 py-3 sm:rounded-[24px] sm:px-4 sm:py-3 dark:border-white/10 dark:bg-[#2d333b]">
+      {/* Header + KPIs — sem card contrastante; mesma superfície da busca nos KPIs */}
+      <div className="min-w-0 max-w-full space-y-2">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <p className="text-xl leading-none font-semibold text-foreground sm:text-2xl font-glacial">Financeiro</p>
             {aba === 'fluxo' && (
               <button
                 onClick={() => setShowPrintDialog(true)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card/90 dark:bg-[#26262e] hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-search-field border-0 hover:opacity-90 transition-opacity"
                 aria-label="Imprimir extrato"
               >
                 <Printer className="w-4 h-4 text-foreground/90" />

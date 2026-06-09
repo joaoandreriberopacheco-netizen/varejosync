@@ -2,10 +2,12 @@ import React from 'react';
 import { Search, X, SlidersHorizontal, Clock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { P38_CHIP_ACTIVE, P38_SEARCH } from './financeiroP38';
+import { P38_CHIP_ACTIVE, P38_FIELD_SURFACE, P38_SEARCH } from './financeiroP38';
 
-const iconBtnBase =
-  'relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/40 bg-card/80 transition-colors hover:bg-secondary/60 dark:border-white/10 dark:bg-[#26262e] dark:hover:bg-[#383e47]/80';
+const iconBtnBase = cn(
+  'relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-opacity hover:opacity-90',
+  P38_FIELD_SURFACE,
+);
 
 /**
  * Busca + ícones ao lado: filtros (sliders) e atalho de conciliação pendente (relógio + badge).
@@ -49,10 +51,7 @@ export default function FinanceiroFiltrosShell({
             type="button"
             aria-label="Filtros"
             aria-expanded={filtersOpen}
-            className={cn(
-              iconBtnBase,
-              filtersOpen && 'bg-secondary/60 dark:bg-[#383e47]/80',
-            )}
+            className={cn(iconBtnBase, filtersOpen && 'ring-1 ring-border/60')}
           >
             <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
             {hasActiveFilters && (
@@ -83,7 +82,7 @@ export default function FinanceiroFiltrosShell({
         )}
       </div>
 
-      <CollapsibleContent className="mt-1.5 rounded-xl border border-border/40 bg-card/50 px-3 py-2.5 dark:border-white/10 dark:bg-[#26262e]/60">
+      <CollapsibleContent className={cn('mt-1.5 rounded-xl px-3 py-2.5', P38_FIELD_SURFACE)}>
         {children}
       </CollapsibleContent>
     </Collapsible>
