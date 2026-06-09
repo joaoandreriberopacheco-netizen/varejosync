@@ -4,15 +4,13 @@ import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCou
 
 function CelulaInfo({ label, valor, unidade, tone = 'default' }) {
   const toneClass = tone === 'ok'
-    ? 'text-green-600 dark:text-green-400'
-    : tone === 'sobra'
-      ? 'text-amber-600 dark:text-amber-400'
-      : tone === 'falta'
-        ? 'text-red-600 dark:text-red-400'
-        : 'text-foreground';
+    ? 'text-[#4A5D23] dark:text-[#a4ce33]'
+    : tone === 'falta'
+      ? 'text-red-500 dark:text-red-400'
+      : 'text-foreground';
 
   return (
-    <div className="rounded-xl bg-card/90 px-3 py-2.5 text-center shadow-sm">
+    <div className="rounded-xl bg-muted/50 px-3 py-2.5 text-center">
       <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`mt-1 text-lg font-bold font-glacial ${toneClass}`}>
         {valor}
@@ -65,7 +63,7 @@ export default function ContagemExpressPainelContagem({
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg rounded-3xl bg-muted/40 p-5 shadow-sm">
+    <div className="mx-auto w-full max-w-lg rounded-3xl bg-muted/50 p-5">
       <div className="flex items-start justify-between gap-3">
         <h2 className="min-w-0 flex-1 line-clamp-3 text-base font-semibold text-foreground">{produtoNome}</h2>
         <button

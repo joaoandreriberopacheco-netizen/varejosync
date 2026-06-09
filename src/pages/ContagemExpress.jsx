@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import {
-  ArrowLeft, Search, Loader2, Package, ShoppingCart,
+  ArrowLeft, ClipboardList, Search, Loader2, Package, ShoppingCart,
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
@@ -11,6 +11,7 @@ import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import ContagemExpressCarrinho from '@/components/estoque/contagem-express/ContagemExpressCarrinho';
 import ContagemExpressFaixaCarrinho from '@/components/estoque/contagem-express/ContagemExpressFaixaCarrinho';
 import ContagemExpressPainelContagem from '@/components/estoque/contagem-express/ContagemExpressPainelContagem';
+import ContagemExpressPainelSessoes from '@/components/estoque/contagem-express/ContagemExpressPainelSessoes';
 import {
   buildCountEntry,
   changeCountEntryUnit,
@@ -31,7 +32,8 @@ import {
   createContagemExpressSessionId,
 } from '@/lib/contagemExpressStorage';
 import { aplicarContagemExpress, buildComparativoContagem } from '@/lib/contagemExpressApply';
-import { publicarRelatorioContagemExpress } from '@/lib/contagemExpressReport';
+import { imprimirRelatorioContagemExpress, publicarRelatorioContagemExpress } from '@/lib/contagemExpressReport';
+import { sincronizarSessaoContagemExpress } from '@/lib/contagemExpressSessao';
 import { toast } from 'sonner';
 
 async function carregarSaldoProduto(produtoId) {
@@ -50,10 +52,11 @@ export default function ContagemExpress() {
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sessionId, setSessionId] = useState(null);
+  const [conferenciaId, setConferenciaId] = useState(null);
   const [itens, setItens] = useState([]);
   const [usuario, setUsuario] = useState(null);
 
-  const [view, setView] = useState('contagem');
+  const [view, setView] = useState('sessoes');
   const [busca, setBusca] = useState('');
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
 
@@ -67,27 +70,41 @@ export default function ContagemExpress() {
   const [comparativo, setComparativo] = useState([]);
   const [loadingComparativo, setLoadingComparativo] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [imprimindo, setImprimindo] = useState(false);
   const [showPinDialog, setShowPinDialog] = useState(false);
 
-  const persistItens = useCallback((novosItens, sid = sessionId) => {
+  const persistItens = useCallback(async (novosItens, sid = sessionId, confId = conferenciaId) => {
     setItens(novosItens);
-    if (sid) saveContagemExpressDraft(sid, novosItens);
-  }, [sessionId]);
+    if (sid) saveContagemExpressDraft(sid, novosItens, confId);
+    if (confId) {
+      try {
+        await sincronizarSessaoContagemExpress(base44, confId, novosItens);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }, [sessionId, conferenciaId]);
 
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       const draft = loadContagemExpressDraft();
-      const sid = draft.sessionId || createContagemExpressSessionId();
-      setSessionId(sid);
-      setItens(draft.itens || []);
-
       const [prods, me] = await Promise.all([
         base44.entities.Produto.list('campo_hierarquico_1', 2000),
         base44.auth.me().catch(() => null),
       ]);
       setProdutos(prods);
       setUsuario(me);
+
+      if (draft.conferenciaId) {
+        setConferenciaId(draft.conferenciaId);
+        setSessionId(draft.sessionId || createContagemExpressSessionId());
+        setItens(draft.itens || []);
+        setView('contagem');
+      } else {
+        setSessionId(createContagemExpressSessionId());
+        setView('sessoes');
+      }
       setLoading(false);
     };
     init();
@@ -175,6 +192,29 @@ export default function ContagemExpress() {
     setTimeout(() => buscaRef.current?.focus(), 100);
   };
 
+  const continuarSessao = (sessao) => {
+    const sid = sessao.nome_conferencia || createContagemExpressSessionId();
+    const itensSessao = sessao.itens_conferidos || [];
+    setConferenciaId(sessao.id);
+    setSessionId(sid);
+    setItens(itensSessao);
+    saveContagemExpressDraft(sid, itensSessao, sessao.id);
+    setView('contagem');
+    limparSelecao();
+  };
+
+  const pausarEAbrirSessoes = async () => {
+    if (conferenciaId && itens.length > 0) {
+      try {
+        await sincronizarSessaoContagemExpress(base44, conferenciaId, itens);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    setView('sessoes');
+    limparSelecao();
+  };
+
   const entradaPreview = useMemo(() => {
     if (!produtoSelecionado || !entradaPendente) return null;
     const qtd = parseFloat(quantidadePendente) || 0;
@@ -227,9 +267,31 @@ export default function ContagemExpress() {
     setLoadingComparativo(false);
   };
 
-  const handleLancarClick = () => {
+  const handleSalvarClick = () => {
     if (itens.length === 0) return;
     setShowPinDialog(true);
+  };
+
+  const handleImprimir = async () => {
+    if (itens.length === 0) return;
+    setImprimindo(true);
+    try {
+      const rows = comparativo.length > 0
+        ? comparativo
+        : await buildComparativoContagem(base44, itens, produtos);
+      if (!comparativo.length) setComparativo(rows);
+      await imprimirRelatorioContagemExpress({
+        referenciaNumero: sessionId,
+        usuarioNome: usuario?.nome || usuario?.full_name || usuario?.email || 'Operador',
+        comparativo: rows,
+        produtos,
+        rascunho: true,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível gerar o relatório.');
+    }
+    setImprimindo(false);
   };
 
   const handlePinConfirmado = async () => {
@@ -243,6 +305,7 @@ export default function ContagemExpress() {
         itens,
         produtos,
         sessionId,
+        conferenciaId,
         usuarioNome,
       });
 
@@ -256,11 +319,11 @@ export default function ContagemExpress() {
       });
 
       clearContagemExpressDraft();
-      const novoSid = createContagemExpressSessionId();
-      setSessionId(novoSid);
+      setConferenciaId(null);
+      setSessionId(createContagemExpressSessionId());
       setItens([]);
       setComparativo([]);
-      setView('contagem');
+      setView('sessoes');
       limparSelecao();
 
       toast.success(
@@ -281,6 +344,18 @@ export default function ContagemExpress() {
     );
   }
 
+  if (view === 'sessoes') {
+    return (
+      <div className="flex h-dvh flex-col overflow-hidden bg-background font-din-1451">
+        <ContagemExpressPainelSessoes
+          usuario={usuario}
+          onContinuar={continuarSessao}
+          onVoltar={() => navigate(createPageUrl('Dashboard'))}
+        />
+      </div>
+    );
+  }
+
   if (view === 'carrinho') {
     return (
       <div className="flex h-dvh flex-col overflow-hidden bg-background font-din-1451">
@@ -289,8 +364,10 @@ export default function ContagemExpress() {
           comparativo={comparativo}
           loadingComparativo={loadingComparativo}
           finalizando={finalizando}
+          imprimindo={imprimindo}
           onVoltar={() => setView('contagem')}
-          onLancar={handleLancarClick}
+          onSalvar={handleSalvarClick}
+          onImprimir={handleImprimir}
         />
         <PinValidationDialog
           forceEnabled
@@ -308,7 +385,7 @@ export default function ContagemExpress() {
       <div className="flex shrink-0 items-center gap-2 border-b border-border/40 px-3 py-2.5">
         <button
           type="button"
-          onClick={() => navigate(createPageUrl('Dashboard'))}
+          onClick={pausarEAbrirSessoes}
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -316,6 +393,14 @@ export default function ContagemExpress() {
         <h1 className="min-w-0 flex-1 truncate text-base font-semibold font-glacial text-foreground">
           Contagem Express
         </h1>
+        <button
+          type="button"
+          onClick={pausarEAbrirSessoes}
+          aria-label="Contagens"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground"
+        >
+          <ClipboardList className="h-4 w-4" />
+        </button>
         <button
           type="button"
           onClick={abrirCarrinho}

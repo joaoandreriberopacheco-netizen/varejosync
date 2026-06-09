@@ -160,6 +160,31 @@ export function buildContagemExpressReportHtml({
   `;
 }
 
+export async function imprimirRelatorioContagemExpress(payload) {
+  const linhas = enrichComparativoRows(payload.comparativo, payload.produtos);
+  const resumo = buildResumoContagemExpress(linhas);
+  const dataLancamento = payload.dataLancamento || new Date().toISOString();
+  const referencia = payload.referenciaNumero || 'Rascunho';
+
+  const html = buildContagemExpressReportHtml({
+    referenciaNumero: `${referencia}${payload.rascunho ? ' (rascunho)' : ''}`,
+    usuarioNome: payload.usuarioNome,
+    dataLancamento,
+    linhas,
+    resumo,
+  });
+
+  try {
+    await openPrintWindowOrShareHtml(
+      html,
+      `contagem-express-${String(referencia).replace(/\s+/g, '-')}.html`,
+      `Contagem Express ${referencia}`
+    );
+  } catch {
+    /* popup bloqueado */
+  }
+}
+
 export async function publicarRelatorioContagemExpress(payload) {
   const linhas = enrichComparativoRows(payload.comparativo, payload.produtos);
   const resumo = buildResumoContagemExpress(linhas);
