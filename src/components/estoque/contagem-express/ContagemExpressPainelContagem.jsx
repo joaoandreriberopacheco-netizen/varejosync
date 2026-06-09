@@ -47,6 +47,11 @@ export default function ContagemExpressPainelContagem({
     ? getGroupDisplayFromBase(produto, Math.abs(diferencaBase))
     : null;
 
+  const handleConfirmarSubmit = (event) => {
+    event?.preventDefault?.();
+    if (qtdNum > 0) onConfirmar?.();
+  };
+
   let diffTone = 'default';
   let diffLabel = '—';
   if (diferencaBase != null) {
@@ -75,45 +80,53 @@ export default function ContagemExpressPainelContagem({
         </button>
       </div>
 
-      <div className="mt-6 flex items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={onMenos}
-          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card shadow-sm"
-        >
-          <Minus className="h-5 w-5 text-muted-foreground" />
-        </button>
-
-        <div className="min-w-[7rem]">
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={quantidade}
-            onChange={(e) => onQuantidadeChange(e.target.value)}
-            placeholder="Qtd"
-            className="h-14 border-0 bg-transparent text-center text-3xl font-bold font-glacial shadow-none focus-visible:ring-0"
-            autoFocus
-          />
+      <form onSubmit={handleConfirmarSubmit} className="mt-6">
+        <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            onClick={onTrocarUnidade}
-            className="mx-auto mt-1 flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-card"
+            onClick={onMenos}
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card shadow-sm"
           >
-            <Boxes className="h-3 w-3" />
-            {unidade || 'UN'}
+            <Minus className="h-5 w-5 text-muted-foreground" />
+          </button>
+
+          <div className="min-w-[7rem]">
+            <Input
+              type="number"
+              inputMode="decimal"
+              enterKeyHint="go"
+              value={quantidade}
+              onChange={(e) => onQuantidadeChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleConfirmarSubmit(e);
+                }
+              }}
+              placeholder="Qtd"
+              className="h-14 border-0 bg-transparent text-center text-3xl font-bold font-glacial shadow-none focus-visible:ring-0"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={onTrocarUnidade}
+              className="mx-auto mt-1 flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-card"
+            >
+              <Boxes className="h-3 w-3" />
+              {unidade || 'UN'}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={onMais}
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card shadow-sm"
+          >
+            <Plus className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={onMais}
-          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card shadow-sm"
-        >
-          <Plus className="h-5 w-5 text-muted-foreground" />
-        </button>
-      </div>
-
-      <div className="mt-5 grid grid-cols-3 gap-2">
+        <div className="mt-5 grid grid-cols-3 gap-2">
         <CelulaInfo
           label="Estoque atual"
           valor={saldoInfo?.loading ? '…' : sistemaDisplay ? formatCountQuantity(sistemaDisplay.quantidade) : '—'}
@@ -130,17 +143,17 @@ export default function ContagemExpressPainelContagem({
           unidade={diffTone === 'ok' ? '' : diffDisplay?.unidade}
           tone={diffTone}
         />
-      </div>
+        </div>
 
-      <button
-        type="button"
-        onClick={onConfirmar}
-        disabled={qtdNum <= 0}
-        className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-white disabled:opacity-40"
-      >
-        <CheckCircle2 className="h-4 w-4" />
-        {confirmLabel}
-      </button>
+        <button
+          type="submit"
+          disabled={qtdNum <= 0}
+          className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-white disabled:opacity-40"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          {confirmLabel}
+        </button>
+      </form>
     </div>
   );
 }
