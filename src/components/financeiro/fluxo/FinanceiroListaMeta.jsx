@@ -25,22 +25,22 @@ export default function FinanceiroListaMeta({
   extraActions,
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-      <p className="shrink-0 text-[11px] text-muted-foreground">
+    <div className="flex min-w-0 flex-col gap-0.5 py-0.5 sm:flex-row sm:items-center sm:justify-between">
+      <p className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-foreground/40 dark:text-foreground/45">
         {total} {totalLabel}
       </p>
 
       {(summaryChips || extraActions || (hasActiveFilters && onLimparFiltros)) && (
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:justify-end">
+        <div className="flex min-w-0 flex-wrap items-center gap-1 sm:justify-end">
           {summaryChips}
           {extraActions}
           {hasActiveFilters && onLimparFiltros && (
             <button
               type="button"
               onClick={onLimparFiltros}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground/90"
+              className="flex items-center gap-0.5 text-[10px] text-foreground/40 hover:text-foreground/65 dark:text-foreground/45"
             >
-              <X className="h-3 w-3" /> Limpar
+              <X className="h-2.5 w-2.5" /> Limpar
             </button>
           )}
         </div>
