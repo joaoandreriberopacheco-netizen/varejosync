@@ -13,7 +13,12 @@ import {
 import FiltrosContasAbertas, { PERIODOS_CONTAS } from './fluxo/FiltrosContasAbertas';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import ListaContasAbertas from './fluxo/ListaContasAbertas';
-import { P38_ACCENT, P38_KPI_SHELL } from './fluxo/financeiroP38';
+import { P38_ACCENT } from './fluxo/financeiroP38';
+import {
+  FinanceiroKpiItem,
+  FinanceiroKpiStrip,
+  formatKpiValor,
+} from './fluxo/FinanceiroKpiInline';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -56,64 +61,49 @@ function periodoRange(p, cs, ce) {
   return { s: null, e: null }; // todas
 }
 
-function KpiCell({ icon: Icon, iconClass, label, value, sub }) {
-  return (
-    <div className="min-w-0">
-      <p className="mb-0.5 flex min-w-0 items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
-        {Icon && <Icon className={`h-3 w-3 shrink-0 ${iconClass || ''}`} />}
-        <span className="truncate">{label}</span>
-      </p>
-      <p className="text-[13px] font-semibold leading-tight tabular-nums text-foreground sm:text-sm">{value}</p>
-      {sub && <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{sub}</p>}
-    </div>
-  );
-}
-
 function KpiAbertas({ kpis }) {
-  const gridClass = kpis.vencidas > 0 ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3';
-
   return (
-    <div className={P38_KPI_SHELL}>
-      <div className={`grid min-w-0 gap-x-3 gap-y-2 ${gridClass}`}>
-        <KpiCell
-          icon={ArrowDownLeft}
-          iconClass={P38_ACCENT}
-          label="A receber"
-          value={R(kpis.aReceber)}
-          sub={kpis.qtdReceber > 0 ? `${kpis.qtdReceber} lç.` : null}
-        />
-        <KpiCell
-          icon={ArrowUpRight}
-          iconClass="text-red-500 dark:text-red-400"
-          label="A pagar"
-          value={R(kpis.aPagar)}
-          sub={kpis.qtdPagar > 0 ? `${kpis.qtdPagar} lç.` : null}
-        />
-        <div className="min-w-0">
-          <p className="mb-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">Saldo projetado</p>
-          <p className="text-[13px] font-semibold leading-tight tabular-nums sm:text-sm">
+    <FinanceiroKpiStrip>
+      <FinanceiroKpiItem
+        icon={ArrowDownLeft}
+        iconClass={P38_ACCENT}
+        label="A receber"
+        value={formatKpiValor(kpis.aReceber)}
+        sub={kpis.qtdReceber > 0 ? `${kpis.qtdReceber} lç.` : null}
+      />
+      <FinanceiroKpiItem
+        icon={ArrowUpRight}
+        iconClass="text-red-500 dark:text-red-400"
+        label="A pagar"
+        value={formatKpiValor(kpis.aPagar)}
+        sub={kpis.qtdPagar > 0 ? `${kpis.qtdPagar} lç.` : null}
+      />
+      <FinanceiroKpiItem
+        label="Saldo proj."
+        value={
+          <>
             <span className={kpis.saldoProjetado >= 0 ? P38_ACCENT : 'text-red-600 dark:text-red-400'}>
               {kpis.saldoProjetado >= 0 ? '+' : '−'}
             </span>
-            {R(Math.abs(kpis.saldoProjetado))}
-          </p>
-        </div>
-        {kpis.vencidas > 0 && (
-          <KpiCell
-            icon={AlertTriangle}
-            iconClass="text-red-500 dark:text-red-400"
-            label="Vencidas"
-            value={
-              <>
-                <span className="text-red-600 dark:text-red-400">−</span>
-                {R(kpis.vencidas)}
-              </>
-            }
-            sub={kpis.qtdVencidas > 0 ? `${kpis.qtdVencidas} lç.` : null}
-          />
-        )}
-      </div>
-    </div>
+            {formatKpiValor(Math.abs(kpis.saldoProjetado))}
+          </>
+        }
+      />
+      {kpis.vencidas > 0 && (
+        <FinanceiroKpiItem
+          icon={AlertTriangle}
+          iconClass="text-red-500 dark:text-red-400"
+          label="Vencidas"
+          value={
+            <>
+              <span className="text-red-600 dark:text-red-400">−</span>
+              {formatKpiValor(kpis.vencidas)}
+            </>
+          }
+          sub={kpis.qtdVencidas > 0 ? `${kpis.qtdVencidas} lç.` : null}
+        />
+      )}
+    </FinanceiroKpiStrip>
   );
 }
 

@@ -1,9 +1,15 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
-/** Seletor compacto — mesmo padrão da aba Vendas do Caixa (Aguardando / Consulta). */
-export default function FinanceiroPillTabs({ items, value, onChange, className = '' }) {
+/** Seletor compacto — padrão Consulta do Turno / Caixa (Aguardando / Consulta). */
+export default function FinanceiroPillTabs({ items, value, onChange, className = '', compact = false }) {
   return (
-    <div className={`flex rounded-2xl bg-muted/50 dark:bg-[#26262e]/80 p-1 gap-1 ${className}`}>
+    <div
+      className={cn(
+        'flex shrink-0 rounded-2xl bg-muted/50 p-1 gap-1 dark:bg-[#26262e]/80',
+        className,
+      )}
+    >
       {items.map((item) => {
         const active = value === item.value;
         return (
@@ -11,15 +17,18 @@ export default function FinanceiroPillTabs({ items, value, onChange, className =
             key={item.value}
             type="button"
             onClick={() => onChange(item.value)}
-            className={`flex-1 min-w-0 px-3 py-2 rounded-xl text-xs sm:text-sm uppercase tracking-wide transition-colors
-              ${active
-                ? 'bg-card dark:bg-[#383e47] shadow-sm text-foreground font-medium'
-                : 'text-muted-foreground hover:text-foreground/80'}`}
-          >
-            <span className="truncate block">{item.label}</span>
-            {item.count != null && (
-              <span className="tabular-nums"> ({item.count})</span>
+            className={cn(
+              'rounded-xl uppercase tracking-wide transition-colors',
+              compact
+                ? 'flex-none px-3 py-1.5 text-[10px] sm:px-3.5 sm:py-2 sm:text-[11px]'
+                : 'min-w-0 flex-1 px-3 py-2 text-xs sm:text-sm',
+              active
+                ? 'bg-card font-medium text-foreground shadow-sm dark:bg-[#383e47]'
+                : 'text-muted-foreground hover:text-foreground/80',
             )}
+          >
+            <span className="block truncate">{item.label}</span>
+            {item.count != null && <span className="tabular-nums"> ({item.count})</span>}
           </button>
         );
       })}
