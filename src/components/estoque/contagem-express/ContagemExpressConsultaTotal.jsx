@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Loader2, Printer } from 'lucide-react';
+import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { formatCountQuantity } from '@/lib/inventoryCountUnits';
 import { agregarContagensPorProduto, resumoSessaoConcluida } from '@/lib/contagemExpressSessao';
+import { reimprimirRelatorioSessaoContagemExpress } from '@/lib/contagemExpressReport';
 
 function ProdutoRow({ nome, quantidade, unidade, meta, striped }) {
   return (
@@ -35,6 +38,19 @@ function ProdutoRow({ nome, quantidade, unidade, meta, striped }) {
 
 export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = [] }) {
   const [modo, setModo] = useState('produto');
+  const [imprimindoId, setImprimindoId] = useState(null);
+
+  const handleImprimirSessao = async (sessao) => {
+    if (imprimindoId) return;
+    setImprimindoId(sessao.id);
+    try {
+      await reimprimirRelatorioSessaoContagemExpress({ base44, sessao, produtos });
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível reimprimir o relatório.');
+    }
+    setImprimindoId(null);
+  };
 
   const produtosAgregados = useMemo(
     () => agregarContagensPorProduto(sessoes, produtos),
@@ -114,18 +130,32 @@ export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = 
               ? format(new Date(data), "dd/MM/yy HH:mm", { locale: ptBR })
               : '';
 
+            const imprimindo = imprimindoId === sessao.id;
+
             return (
               <div key={sessao.id} className="bg-card rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-border/40">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {sessao.nome_conferencia || 'Contagem Express'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {sessao.responsavel_nome || 'Operador'}
-                    {dataFmt ? ` · ${dataFmt}` : ''}
-                    {` · ${qtdProd} prod. · ${itens} ent.`}
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleImprimirSessao(sessao)}
+                  disabled={imprimindo}
+                  className="flex w-full items-start justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors disabled:opacity-60"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {sessao.nome_conferencia || 'Contagem Express'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {sessao.responsavel_nome || 'Operador'}
+                      {dataFmt ? ` · ${dataFmt}` : ''}
+                      {` · ${qtdProd} prod. · ${itens} ent.`}
+                    </p>
+                  </div>
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground">
+                    {imprimindo
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : <Printer className="h-4 w-4" />}
+                  </span>
+                </button>
                 <P38MobileLineList allViewports className="rounded-none border-0">
                   {linhas.map((linha, idx) => (
                     <ProdutoRow

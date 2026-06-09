@@ -9,6 +9,18 @@ import {
 } from '@/components/utils/dateUtils';
 
 export const TIPO_CONTAGEM_EXPRESS = 'Contagem Express';
+const PREFIXO_NOME_CONTAGEM_EXPRESS = 'Contagem Express ';
+
+export function extrairReferenciaSessao(sessao) {
+  const nome = String(sessao?.nome_conferencia || '').trim();
+  if (!nome) return sessao?.id || '';
+  if (nome.startsWith(PREFIXO_NOME_CONTAGEM_EXPRESS)) {
+    return nome.slice(PREFIXO_NOME_CONTAGEM_EXPRESS.length).trim();
+  }
+  const match = nome.match(/CE-[A-Z0-9-]+/i);
+  if (match) return match[0];
+  return nome;
+}
 
 export function getPeriodoMesAtual() {
   const hoje = dataHoje();

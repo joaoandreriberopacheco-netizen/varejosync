@@ -2,6 +2,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
+import { buildComparativoContagem } from '@/lib/contagemExpressApply';
+import { extrairReferenciaSessao } from '@/lib/contagemExpressSessao';
 
 const RELATORIOS_KEY = 'p38_contagem_express_relatorios_v1';
 const MAX_RELATORIOS = 50;
@@ -158,6 +160,65 @@ export function buildContagemExpressReportHtml({
       </body>
     </html>
   `;
+}
+
+export function buscarRelatorioContagemExpress(sessao) {
+  const ref = extrairReferenciaSessao(sessao);
+  const nome = String(sessao?.nome_conferencia || '').trim();
+  return loadContagemExpressRelatorios().find(
+    (relatorio) => relatorio.id === ref
+      || relatorio.referenciaNumero === ref
+      || relatorio.referenciaNumero === nome
+      || relatorio.id === sessao?.id,
+  ) || null;
+}
+
+export async function imprimirRelatorioArmazenado(relatorio) {
+  const html = buildContagemExpressReportHtml({
+    referenciaNumero: relatorio.referenciaNumero,
+    usuarioNome: relatorio.usuarioNome,
+    dataLancamento: relatorio.dataLancamento,
+    linhas: relatorio.linhas,
+    resumo: relatorio.resumo,
+  });
+
+  try {
+    await openPrintWindowOrShareHtml(
+      html,
+      `contagem-express-${String(relatorio.referenciaNumero).replace(/\s+/g, '-')}.html`,
+      `Contagem Express ${relatorio.referenciaNumero}`,
+    );
+  } catch {
+    /* popup bloqueado */
+  }
+}
+
+/**
+ * Reimprime relatório de sessão concluída: usa cache local se existir;
+ * senão reconstrói comparativo a partir dos itens gravados na conferência.
+ */
+export async function reimprimirRelatorioSessaoContagemExpress({ base44, sessao, produtos }) {
+  const armazenado = buscarRelatorioContagemExpress(sessao);
+  if (armazenado?.linhas?.length) {
+    await imprimirRelatorioArmazenado(armazenado);
+    return { origem: 'cache' };
+  }
+
+  const itens = sessao?.itens_conferidos || [];
+  if (!itens.length) {
+    throw new Error('Sessão sem itens para relatório');
+  }
+
+  const comparativo = await buildComparativoContagem(base44, itens, produtos);
+  await imprimirRelatorioContagemExpress({
+    referenciaNumero: extrairReferenciaSessao(sessao),
+    usuarioNome: sessao.responsavel_nome || 'Operador',
+    dataLancamento: sessao.data_fim || sessao.created_date,
+    comparativo,
+    produtos,
+  });
+
+  return { origem: 'reconstruido' };
 }
 
 export async function imprimirRelatorioContagemExpress(payload) {
