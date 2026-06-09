@@ -57,7 +57,7 @@ function LancRow({ l, onClick, striped }) {
       striped={striped}
       accent={p38AccentKeyFromTone(accent)}
       onClick={() => onClick(l)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} ${cancelado ? 'opacity-60' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${cancelado ? 'opacity-60' : ''}`}
       title={<span className={cancelado ? 'line-through' : undefined}>{l.descricao}</span>}
       subtitle={
         <>

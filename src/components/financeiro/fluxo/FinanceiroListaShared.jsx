@@ -32,26 +32,26 @@ export function FinanceiroGrupo({
       >
         <p
           className={cn(
-            'min-w-0 flex-1 truncate text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:tracking-widest',
+            'min-w-0 max-w-[42%] truncate text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:max-w-none sm:tracking-widest',
             labelClassName,
           )}
         >
           {label}
         </p>
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 shrink items-center gap-1 sm:gap-1.5">
           {showBreakdown && receitas > 0 && (
-            <span className="text-[11px] font-semibold tabular-nums text-[#4A5D23] dark:text-[#a4ce33]">
+            <span className="hidden text-[11px] font-semibold tabular-nums text-[#4A5D23] sm:inline dark:text-[#a4ce33]">
               +{formatFinanceiroValor(receitas)}
             </span>
           )}
           {showBreakdown && despesas > 0 && (
-            <span className={cn('text-[11px] font-semibold tabular-nums', negClass)}>
+            <span className={cn('hidden text-[11px] font-semibold tabular-nums sm:inline', negClass)}>
               −{formatFinanceiroValor(despesas)}
             </span>
           )}
           <span
             className={cn(
-              'text-[11px] font-bold tabular-nums',
+              'shrink-0 text-[11px] font-bold tabular-nums',
               liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
             )}
           >
@@ -59,7 +59,7 @@ export function FinanceiroGrupo({
             {formatFinanceiroValor(Math.abs(liquido))}
           </span>
           <ChevronRight
-            className={cn('h-3 w-3 text-foreground/50 transition-transform', open && 'rotate-90')}
+            className={cn('h-3 w-3 shrink-0 text-foreground/50 transition-transform', open && 'rotate-90')}
           />
         </div>
       </button>

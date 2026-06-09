@@ -78,7 +78,7 @@ function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, str
         striped={striped}
         accent={p38AccentKeyFromTone(tone)}
         onClick={() => onToggleSelecionado(l.id)}
-        className={`w-full cursor-pointer text-left ${LINE_TITLE_CLASS}`}
+        className={`w-full cursor-pointer text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0`}
         title={l.descricao}
         subtitle={
           <>
@@ -101,7 +101,7 @@ function ContaRow({ l, onClick, emSelecao, selecionado, onToggleSelecionado, str
       striped={striped}
       accent={p38AccentKeyFromTone(tone)}
       onClick={() => onClick(l)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} ${isPago ? 'opacity-60' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${isPago ? 'opacity-60' : ''}`}
       title={l.descricao}
       subtitle={
         <>

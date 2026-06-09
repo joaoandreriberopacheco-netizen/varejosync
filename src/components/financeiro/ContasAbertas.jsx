@@ -79,6 +79,7 @@ function KpiAbertas({ kpis, embedded = false }) {
         sub={kpis.qtdPagar > 0 ? `${kpis.qtdPagar} lç.` : null}
       />
       <FinanceiroKpiItem
+        className="col-span-2 md:col-span-auto"
         label="Saldo proj."
         value={
           <>
@@ -91,6 +92,7 @@ function KpiAbertas({ kpis, embedded = false }) {
       />
       {kpis.vencidas > 0 && (
         <FinanceiroKpiItem
+          className="col-span-2 md:col-span-auto"
           icon={AlertTriangle}
           iconClass="text-amber-600 dark:text-amber-400"
           label="Vencidas"

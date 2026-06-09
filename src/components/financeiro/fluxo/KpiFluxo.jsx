@@ -51,6 +51,7 @@ export default function KpiFluxo({ kpis, embedded = false }) {
       />
       {kpis.vencidos > 0 && (
         <FinanceiroKpiItem
+          className="col-span-2 md:col-span-auto"
           icon={AlertTriangle}
           iconClass="text-amber-600 dark:text-amber-400"
           label="Vencidos"

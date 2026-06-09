@@ -285,45 +285,45 @@ export default function ExecucaoOrcamentaria() {
   return (
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
-      {/* Header: mobile = título+abas na 1ª linha, KPIs em grelha; desktop = faixa única */}
+      {/* Header: mobile = título, abas largura total, KPIs em grelha; desktop = faixa única */}
       <div className="min-w-0 max-w-full space-y-1.5">
         <div className="flex min-w-0 flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
-          <div className="flex min-w-0 items-center justify-between gap-2 md:shrink-0 md:justify-start">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="text-lg leading-none font-semibold text-foreground sm:text-xl md:text-2xl font-glacial">Financeiro</p>
-              {aba === 'fluxo' && (
-                <button
-                  onClick={() => setShowPrintDialog(true)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-search-field border-0 hover:opacity-90 transition-opacity"
-                  aria-label="Imprimir extrato"
-                >
-                  <Printer className="w-4 h-4 text-foreground/90" />
-                </button>
-              )}
-            </div>
+          <div className="flex min-w-0 items-center gap-2 md:shrink-0">
+            <p className="text-lg leading-none font-semibold text-foreground sm:text-xl md:text-2xl font-glacial">Financeiro</p>
+            {aba === 'fluxo' && (
+              <button
+                onClick={() => setShowPrintDialog(true)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-search-field border-0 hover:opacity-90 transition-opacity"
+                aria-label="Imprimir extrato"
+              >
+                <Printer className="w-4 h-4 text-foreground/90" />
+              </button>
+            )}
+          </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-1 md:hidden">
+          <div className="flex w-full min-w-0 flex-col gap-1 md:hidden">
+            <FinanceiroPillTabs
+              stretch
+              compact
+              value={aba}
+              onChange={setAba}
+              items={[
+                { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
+                { value: 'contas', label: 'Contas Abertas', shortLabel: 'Contas' },
+              ]}
+            />
+            {aba === 'contas' && (
               <FinanceiroPillTabs
+                stretch
                 compact
-                value={aba}
-                onChange={setAba}
+                value={abaContas}
+                onChange={setAbaContas}
                 items={[
-                  { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
-                  { value: 'contas', label: 'Contas Abertas', shortLabel: 'Contas' },
+                  { value: 'contas', label: 'Contas a pagar', shortLabel: 'A pagar' },
+                  { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
                 ]}
               />
-              {aba === 'contas' && (
-                <FinanceiroPillTabs
-                  compact
-                  value={abaContas}
-                  onChange={setAbaContas}
-                  items={[
-                    { value: 'contas', label: 'Contas a pagar', shortLabel: 'A pagar' },
-                    { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
-                  ]}
-                />
-              )}
-            </div>
+            )}
           </div>
 
           {aba === 'fluxo' && (
