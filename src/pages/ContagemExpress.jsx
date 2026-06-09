@@ -349,6 +349,7 @@ export default function ContagemExpress() {
       <div className="flex h-dvh flex-col overflow-hidden bg-background font-din-1451">
         <ContagemExpressPainelSessoes
           usuario={usuario}
+          produtos={produtos}
           onContinuar={continuarSessao}
           onVoltar={() => navigate(createPageUrl('Dashboard'))}
         />
