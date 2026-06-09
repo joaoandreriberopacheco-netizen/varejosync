@@ -7,14 +7,7 @@ export default function ContagemExpressFaixaCarrinho({
   onSelecionar,
   onAbrirCarrinho,
 }) {
-  if (itensAgrupados.length === 0) {
-    return (
-      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/20 px-4 py-2.5">
-        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">Carrinho vazio — busque um produto abaixo</span>
-      </div>
-    );
-  }
+  if (itensAgrupados.length === 0) return null;
 
   return (
     <div className="border-b border-border/40 bg-muted/30">

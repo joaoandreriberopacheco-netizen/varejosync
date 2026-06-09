@@ -61,13 +61,7 @@ export default function ContagemExpressCarrinho({
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-semibold font-glacial text-foreground">Carrinho</h2>
-          <p className="text-xs text-muted-foreground">
-            {itensAgrupados.length} produto{itensAgrupados.length !== 1 ? 's' : ''}
-            {loadingComparativo ? ' · calculando diferenças…' : ` · ${comAjuste} com diferença`}
-          </p>
-        </div>
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold font-glacial text-foreground">Carrinho</h2>
       </div>
 
       {!loadingComparativo && comparativo?.length > 0 && (
@@ -89,11 +83,7 @@ export default function ContagemExpressCarrinho({
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-3 pb-28">
         {itensAgrupados.length === 0 && (
-          <div className="py-16 text-center">
-            <Package className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Carrinho vazio</p>
-            <p className="mt-1 text-xs text-muted-foreground">Volte e adicione produtos na contagem</p>
-          </div>
+          <div className="py-16 text-center text-sm text-muted-foreground">Carrinho vazio</div>
         )}
 
         {itensAgrupados.map((grupo) => {
@@ -165,9 +155,6 @@ export default function ContagemExpressCarrinho({
             </>
           )}
         </button>
-        <p className="mt-2 text-center text-[11px] text-muted-foreground">
-          Será pedido seu PIN para confirmar
-        </p>
       </div>
     </div>
   );

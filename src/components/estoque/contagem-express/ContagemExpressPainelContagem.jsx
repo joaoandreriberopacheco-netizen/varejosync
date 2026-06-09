@@ -29,16 +29,16 @@ export default function ContagemExpressPainelContagem({
   unidade,
   saldoInfo,
   totalNoCarrinhoBase,
+  pendenteBase = 0,
   onQuantidadeChange,
   onMenos,
   onMais,
   onTrocarUnidade,
   onConfirmar,
   onCancelar,
-  confirmLabel = 'Adicionar ao carrinho',
+  confirmLabel = 'Confirmar',
 }) {
   const qtdNum = parseFloat(quantidade) || 0;
-  const pendenteBase = qtdNum * (produto?._fatorPendente || 1);
   const contadoTotalBase = totalNoCarrinhoBase + pendenteBase;
   const saldo = saldoInfo?.saldoExtrato ?? null;
   const diferencaBase = saldo != null ? contadoTotalBase - saldo : null;
@@ -67,10 +67,7 @@ export default function ContagemExpressPainelContagem({
   return (
     <div className="mx-auto w-full max-w-lg rounded-3xl bg-muted/40 p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Produto selecionado</p>
-          <h2 className="mt-1 line-clamp-3 text-base font-semibold text-foreground">{produtoNome}</h2>
-        </div>
+        <h2 className="min-w-0 flex-1 line-clamp-3 text-base font-semibold text-foreground">{produtoNome}</h2>
         <button
           type="button"
           onClick={onCancelar}
@@ -136,12 +133,6 @@ export default function ContagemExpressPainelContagem({
           tone={diffTone}
         />
       </div>
-
-      {totalNoCarrinhoBase > 0 && qtdNum === 0 && (
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          Este produto já tem itens no carrinho. Informe a quantidade para atualizar.
-        </p>
-      )}
 
       <button
         type="button"

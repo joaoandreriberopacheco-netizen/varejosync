@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import {
-  ArrowLeft, Search, CheckCircle2, Loader2, Package, ShoppingCart, Send,
+  ArrowLeft, Search, Loader2, Package, ShoppingCart,
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
@@ -208,7 +208,6 @@ export default function ContagemExpress() {
 
     persistItens(novosItens);
     limparSelecao();
-    toast.success('Produto adicionado ao carrinho');
   };
 
   const abrirCarrinho = async () => {
@@ -306,7 +305,7 @@ export default function ContagemExpress() {
 
   return (
     <div className="flex h-dvh w-full max-w-full flex-col overflow-hidden bg-background font-din-1451">
-      <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/40 bg-background/95 px-4 py-3 backdrop-blur-sm">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border/40 px-3 py-2.5">
         <button
           type="button"
           onClick={() => navigate(createPageUrl('Dashboard'))}
@@ -314,19 +313,18 @@ export default function ContagemExpress() {
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold font-glacial text-foreground">Contagem Express</h1>
-          <p className="text-xs text-muted-foreground">Busque · conte · revise no carrinho</p>
-        </div>
+        <h1 className="min-w-0 flex-1 truncate text-base font-semibold font-glacial text-foreground">
+          Contagem Express
+        </h1>
         <button
           type="button"
           onClick={abrirCarrinho}
-          className="relative flex h-10 items-center gap-2 rounded-xl bg-muted/60 px-3 text-sm font-medium text-foreground"
+          aria-label="Carrinho"
+          className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground"
         >
           <ShoppingCart className="h-4 w-4" />
-          <span className="hidden sm:inline">Revisar</span>
           {itensAgrupados.length > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold text-white">
               {itensAgrupados.length}
             </span>
           )}
@@ -347,65 +345,23 @@ export default function ContagemExpress() {
         onAbrirCarrinho={abrirCarrinho}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-28">
-        {!produtoSelecionado ? (
-          <div className="mx-auto w-full max-w-lg space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={buscaRef}
-                placeholder="Buscar produto (use espaços: cimento 50kg)"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="h-12 rounded-2xl border-0 bg-muted/50 pl-9 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-border/40"
-              />
-            </div>
-
-            {busca.trim() && produtosFiltrados.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground">Nenhum produto encontrado</p>
-            )}
-
-            {produtosFiltrados.length > 0 && (
-              <div className="divide-y divide-border/30 overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
-                {produtosFiltrados.map((prod) => {
-                  const nome = resolveInventoryProductName(prod);
-                  const noCarrinho = itensAgrupados.find((g) => g.produto_id === prod.id);
-                  return (
-                    <button
-                      key={prod.id}
-                      type="button"
-                      onClick={() => iniciarSelecao(prod)}
-                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{nome}</p>
-                        <p className="text-xs text-muted-foreground">{prod.codigo_interno || prod.codigo_barras || ''}</p>
-                      </div>
-                      {noCarrinho && (
-                        <span className="shrink-0 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-semibold text-green-600 dark:text-green-400">
-                          {formatCountQuantity(noCarrinho.display?.quantidade)} {noCarrinho.display?.unidade}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {!busca.trim() && itensAgrupados.length === 0 && (
-              <div className="py-12 text-center">
-                <Package className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">Interface limpa para contar</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Digite o nome do produto — palavras separadas por espaço refinam a busca
-                </p>
-              </div>
-            )}
+      {!produtoSelecionado && (
+        <div className="shrink-0 px-3 pt-3">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              ref={buscaRef}
+              placeholder="Buscar produto..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="h-14 rounded-2xl border-0 bg-card pl-12 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-border/40 dark:bg-secondary"
+            />
           </div>
-        ) : (
+        </div>
+      )}
+
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(var(--p38-bottom-nav-total,0px)+0.5rem)]">
+        {produtoSelecionado ? (
           <ContagemExpressPainelContagem
             produto={produtoSelecionado}
             produtoNome={resolveInventoryProductName(produtoSelecionado)}
@@ -413,6 +369,7 @@ export default function ContagemExpress() {
             unidade={unidadePainel}
             saldoInfo={saldoInfo}
             totalNoCarrinhoBase={carrinhoBaseParaPainel}
+            pendenteBase={pendenteBase}
             onQuantidadeChange={setQuantidadePendente}
             onMenos={() => {
               const q = Math.max(0, (parseFloat(quantidadePendente) || 0) - 1);
@@ -425,21 +382,34 @@ export default function ContagemExpress() {
             onTrocarUnidade={() => setUnitSelector({ open: true, product: produtoSelecionado })}
             onConfirmar={confirmarProduto}
             onCancelar={limparSelecao}
-            confirmLabel={modoContagem === 'substituir' ? 'Atualizar no carrinho' : 'Adicionar ao carrinho'}
           />
-        )}
+        ) : produtosFiltrados.length > 0 ? (
+          <div className="divide-y divide-border/30 overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+            {produtosFiltrados.map((prod) => {
+              const nome = resolveInventoryProductName(prod);
+              const noCarrinho = itensAgrupados.find((g) => g.produto_id === prod.id);
+              return (
+                <button
+                  key={prod.id}
+                  type="button"
+                  onClick={() => iniciarSelecao(prod)}
+                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{nome}</p>
+                  {noCarrinho && (
+                    <span className="shrink-0 text-xs font-semibold text-green-600 dark:text-green-400">
+                      {formatCountQuantity(noCarrinho.display?.quantidade)} {noCarrinho.display?.unidade}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
-
-      {itensAgrupados.length > 0 && !produtoSelecionado && (
-        <button
-          type="button"
-          onClick={abrirCarrinho}
-          className="fixed bottom-[calc(var(--p38-bottom-nav-total,0px)+1rem+env(safe-area-inset-bottom,0px))] right-4 z-[56] flex h-14 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-white shadow-lg"
-        >
-          <Send className="h-5 w-5" />
-          Lançar ({itensAgrupados.length})
-        </button>
-      )}
 
       <ProductUnitSelectorDialog
         open={unitSelector.open}
