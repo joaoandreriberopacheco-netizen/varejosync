@@ -12,7 +12,7 @@ import {
   isSameDay, isBefore, eachDayOfInterval, getDay, addMonths
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import FinanceiroFiltrosShell, { FinanceiroSummaryChip } from './FinanceiroFiltrosShell';
+import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
 import {
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
@@ -24,7 +24,7 @@ const P38_CAL_SELECTED =
 const P38_CAL_IN_RANGE =
   'bg-[#4a5240]/15 text-foreground/90 dark:bg-[#a4ce33]/15 dark:text-foreground';
 
-const PERIODO_LABELS = {
+export const PERIODO_LABELS = {
   hoje: 'Hoje',
   ontem: 'Ontem',
   semana: 'Semana',
@@ -390,11 +390,9 @@ export default function FiltrosFluxoCaixa({
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
   onOpenConciliacao,
-  totalFiltrados, hasActiveFilters, onLimparFiltros,
+  hasActiveFilters,
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const todasContas = contas.length > 0 && contasSel.length === contas.length;
 
   return (
     <FinanceiroFiltrosShell
@@ -404,26 +402,6 @@ export default function FiltrosFluxoCaixa({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
       hasActiveFilters={hasActiveFilters}
-      onLimparFiltros={onLimparFiltros}
-      totalLabel={`${totalFiltrados} lançamento${totalFiltrados !== 1 ? 's' : ''}`}
-      summaryChips={
-        <>
-          {periodo !== 'mes' && (
-            <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
-          )}
-          {!todasContas && contasSel.length > 0 && (
-            <FinanceiroSummaryChip>{contasSel.length} conta{contasSel.length > 1 ? 's' : ''}</FinanceiroSummaryChip>
-          )}
-          {tiposSel.length > 0 && (
-            <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
-          )}
-          {statusSel.length > 0 && (
-            <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
-          )}
-          {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
-          {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
-        </>
-      }
     >
       <FiltrosFluxoPainel
         periodo={periodo}

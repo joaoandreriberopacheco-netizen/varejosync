@@ -10,7 +10,8 @@ import {
   ArrowDownLeft, ArrowUpRight, Plus,
   AlertTriangle, AlertCircle, FileText, Upload, ChevronRight, Scale, Clock
 } from 'lucide-react';
-import FiltrosContasAbertas from './fluxo/FiltrosContasAbertas';
+import FiltrosContasAbertas, { PERIODOS_CONTAS } from './fluxo/FiltrosContasAbertas';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import { P38_ACCENT, P38_KPI_SHELL } from './fluxo/financeiroP38';
 import { Checkbox } from '@/components/ui/checkbox';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
@@ -42,17 +43,6 @@ function getVencimento(l) {
 function isLancamentoPago(l) {
   return l?.status === 'Pago' || !!l?.data_pagamento;
 }
-
-// ─── Chips de período ─────────────────────────────────────────────────────────
-const PERIODOS = [
-  { v: 'vencidas',    l: 'Vencidas' },
-  { v: 'hoje',        l: 'Hoje' },
-  { v: 'semana',      l: '7 dias' },
-  { v: 'mes',         l: 'Mês' },
-  { v: 'futuras',     l: 'Futuras' },
-  { v: 'todas',       l: 'Todas' },
-  { v: 'personalizado', l: 'Personalizado' },
-];
 
 function periodoRange(p, cs, ce) {
   const h = new Date();
@@ -561,14 +551,19 @@ export function ContasAbertasProvider({ active, onOpenImportador, children }) {
   );
 }
 
-/** KPIs + busca + filtros + drawer + barra de lote — fica dentro do card Financeiro (como Fluxo). */
-export function ContasAbertasChrome() {
+/** KPIs — dentro do card cinza (box amarelo). */
+export function ContasAbertasKpis() {
+  const m = useContext(ContasAbertasCtx);
+  if (!m) return null;
+  return <KpiAbertas kpis={m.kpis} />;
+}
+
+/** Busca + filtros recolhíveis — fora do card, como Fluxo de Caixa. */
+export function ContasAbertasFiltros() {
   const m = useContext(ContasAbertasCtx);
   if (!m) return null;
 
   const {
-    kpis,
-    filtrados,
     search,
     setSearch,
     filtersOpen,
@@ -583,73 +578,25 @@ export function ContasAbertasChrome() {
     setTipoFiltro,
     mostrarPagas,
     setMostrarPagas,
-    modoSelecaoLote,
-    setModoSelecaoLote,
-    setSelectedIds,
-    lancamentosSelecionados,
-    setShowPagamentoLote,
   } = m;
 
   return (
-    <div className="min-w-0 w-full max-w-full space-y-3 overflow-x-hidden">
-      <KpiAbertas kpis={kpis} />
-
-      <FiltrosContasAbertas
-        search={search}
-        onSearch={setSearch}
-        filtersOpen={filtersOpen}
-        onFiltersOpenChange={setFiltersOpen}
-        periodo={periodo}
-        onPeriodo={setPeriodo}
-        cs={cs}
-        ce={ce}
-        onCs={setCs}
-        onCe={setCe}
-        tipoFiltro={tipoFiltro}
-        onTipoFiltro={setTipoFiltro}
-        mostrarPagas={mostrarPagas}
-        onMostrarPagas={setMostrarPagas}
-        totalFiltrados={filtrados.length}
-        onLimparFiltros={() => {
-          setPeriodo('mes');
-          setTipoFiltro('todos');
-          setMostrarPagas(false);
-          setCs('');
-          setCe('');
-        }}
-        footerActions={
-          <button
-            type="button"
-            onClick={() => {
-              setModoSelecaoLote((prev) => !prev);
-              setSelectedIds([]);
-            }}
-            className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
-          >
-            {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
-          </button>
-        }
-      />
-
-      {modoSelecaoLote && (
-        <div className="min-w-0 overflow-hidden rounded-2xl bg-card p-4 shadow-sm dark:bg-muted">
-          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
-              <p className="truncate text-xs text-muted-foreground">{lancamentosSelecionados.length} item(ns) selecionado(s)</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowPagamentoLote(true)}
-              disabled={lancamentosSelecionados.length === 0}
-              className="h-10 shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-medium text-white disabled:opacity-40"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <FiltrosContasAbertas
+      search={search}
+      onSearch={setSearch}
+      filtersOpen={filtersOpen}
+      onFiltersOpenChange={setFiltersOpen}
+      periodo={periodo}
+      onPeriodo={setPeriodo}
+      cs={cs}
+      ce={ce}
+      onCs={setCs}
+      onCe={setCe}
+      tipoFiltro={tipoFiltro}
+      onTipoFiltro={setTipoFiltro}
+      mostrarPagas={mostrarPagas}
+      onMostrarPagas={setMostrarPagas}
+    />
   );
 }
 
@@ -661,9 +608,12 @@ export function ContasAbertasListaPane() {
   const {
     loading,
     grupos,
+    filtrados,
     handlePagarRapido,
     setDetalhe,
     modoSelecaoLote,
+    setModoSelecaoLote,
+    setSelectedIds,
     selectedIds,
     handleToggleSelecionado,
     fabOpen,
@@ -684,10 +634,77 @@ export function ContasAbertasListaPane() {
     handleConfirmarPagamentoLote,
     processingLote,
     load,
+    periodo,
+    setPeriodo,
+    tipoFiltro,
+    setTipoFiltro,
+    mostrarPagas,
+    setMostrarPagas,
+    cs,
+    ce,
+    setCs,
+    setCe,
   } = m;
+
+  const hasActiveFilters = periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || !!cs || !!ce;
+  const periodoLabel = PERIODOS_CONTAS.find((p) => p.v === periodo)?.l || 'Período';
+  const tipoLabel = tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : tipoFiltro === 'compras' ? 'Compras' : null;
 
   return (
     <>
+      <FinanceiroListaMeta
+        total={filtrados.length}
+        totalLabel={filtrados.length === 1 ? 'lançamento' : 'lançamentos'}
+        hasActiveFilters={hasActiveFilters}
+        onLimparFiltros={() => {
+          setPeriodo('mes');
+          setTipoFiltro('todos');
+          setMostrarPagas(false);
+          setCs('');
+          setCe('');
+        }}
+        summaryChips={
+          <>
+            {periodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
+            {tipoFiltro !== 'todos' && tipoLabel && <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>}
+            {mostrarPagas && (
+              <FinanceiroSummaryChip className="text-green-700 dark:text-green-400">Pagas</FinanceiroSummaryChip>
+            )}
+          </>
+        }
+        extraActions={
+          <button
+            type="button"
+            onClick={() => {
+              setModoSelecaoLote((prev) => !prev);
+              setSelectedIds([]);
+            }}
+            className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+          >
+            {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
+          </button>
+        }
+      />
+
+      {modoSelecaoLote && (
+        <div className="min-w-0 overflow-hidden rounded-xl border border-border/40 bg-card/60 p-3 dark:border-white/10 dark:bg-[#26262e]/80">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
+              <p className="truncate text-xs text-muted-foreground">{lancamentosSelecionados.length} item(ns) selecionado(s)</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPagamentoLote(true)}
+              disabled={lancamentosSelecionados.length === 0}
+              className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="min-w-0 w-full max-w-full overflow-x-hidden">
         {loading ? (
           <div className="space-y-2">

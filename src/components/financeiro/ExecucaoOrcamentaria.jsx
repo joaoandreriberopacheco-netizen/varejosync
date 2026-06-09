@@ -4,16 +4,22 @@ import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } fro
 import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
-import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Printer } from 'lucide-react';
+import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
-import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
+import FiltrosFluxoCaixa, { PERIODO_LABELS } from './fluxo/FiltrosFluxoCaixa';
 import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
-import { ContasAbertasProvider, ContasAbertasChrome, ContasAbertasListaPane } from './ContasAbertas';
+import {
+  ContasAbertasProvider,
+  ContasAbertasKpis,
+  ContasAbertasFiltros,
+  ContasAbertasListaPane,
+} from './ContasAbertas';
 import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
@@ -284,7 +290,6 @@ export default function ExecucaoOrcamentaria() {
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             <p className="text-xl leading-none font-semibold text-foreground sm:text-2xl font-glacial">Financeiro</p>
-            <p className="mt-1 hidden text-xs text-muted-foreground sm:block">Fluxo e contas com visual mais leve, limpo e direto.</p>
           </div>
           {aba === 'fluxo' && (
             <button
@@ -306,42 +311,7 @@ export default function ExecucaoOrcamentaria() {
           ]}
         />
 
-        {aba === 'fluxo' && (
-          <div className="min-w-0 space-y-3">
-            {/* KPIs */}
-            <KpiFluxo kpis={kpis} />
-
-            {/* Alerta conciliação pendente */}
-            {totalPend > 0 && !pendentes && (
-              <button
-                type="button"
-                onClick={() => setPendentes(true)}
-                className="flex w-full items-center gap-2 rounded-xl bg-card px-3 py-2 text-left text-xs text-foreground/90 dark:bg-[#26262e] hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors"
-              >
-                <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{totalPend} aguardando conciliação</span>
-                <span className="shrink-0 font-semibold text-muted-foreground">Ver →</span>
-              </button>
-            )}
-
-            {/* Filtros */}
-            <FiltrosFluxoCaixa
-              search={search} onSearch={setSearch}
-              periodo={periodo} onPeriodo={setPeriodo}
-              customStart={cs} customEnd={ce}
-              onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
-              contas={contas} contasSel={contasSel} onContasSel={setContasSel}
-              tiposSel={tiposSel} onTiposSel={setTiposSel}
-              statusSel={statusSel} onStatusSel={setStatusSel}
-              pendentes={pendentes} onPendentes={setPendentes}
-              cmvOnly={cmvOnly} onCmvOnly={setCmvOnly}
-              onOpenConciliacao={setConciliacaoConta}
-              totalFiltrados={filtrados.length}
-              hasActiveFilters={hasActiveFilters}
-              onLimparFiltros={() => { setPeriodo('mes'); setCs(''); setCe(''); setTiposSel([]); setContasSel(contas.map(conta => conta.id)); setStatusSel([]); setPendentes(false); setCmvOnly(false); setSearch(''); }}
-            />
-          </div>
-        )}
+        {aba === 'fluxo' && <KpiFluxo kpis={kpis} />}
 
         {aba === 'contas' && (
           <div className="min-w-0 space-y-3">
@@ -353,9 +323,8 @@ export default function ExecucaoOrcamentaria() {
                 { value: 'agefin', label: 'Atualizar boletos' },
               ]}
             />
-
             {abaContas === 'contas' ? (
-              <ContasAbertasChrome />
+              <ContasAbertasKpis />
             ) : (
               <div className="min-w-0">
                 <AgefinRecorrentes />
@@ -365,36 +334,72 @@ export default function ExecucaoOrcamentaria() {
         )}
       </div>
 
-      {contasPagarAtiva && <ContasAbertasListaPane />}
-
-      {aba === 'contas' && (
-        <>
-        <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-          <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-card/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
-            <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-border/40">
-              <DialogTitle className="text-foreground">Importar conta</DialogTitle>
-            </DialogHeader>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
-              <AgefinImportador
-                onSuccess={(_, options) => {
-                  load();
-                  if (options?.close) {
-                    setShowImportadorAgefin(false);
-                  }
-                }}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-        </>
-      )}
-
       {aba === 'fluxo' && (
         <>
-          {/* Lista */}
+          <FiltrosFluxoCaixa
+            search={search}
+            onSearch={setSearch}
+            periodo={periodo}
+            onPeriodo={setPeriodo}
+            customStart={cs}
+            customEnd={ce}
+            onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
+            contas={contas}
+            contasSel={contasSel}
+            onContasSel={setContasSel}
+            tiposSel={tiposSel}
+            onTiposSel={setTiposSel}
+            statusSel={statusSel}
+            onStatusSel={setStatusSel}
+            pendentes={pendentes}
+            onPendentes={setPendentes}
+            cmvOnly={cmvOnly}
+            onCmvOnly={setCmvOnly}
+            onOpenConciliacao={setConciliacaoConta}
+            hasActiveFilters={hasActiveFilters}
+          />
+
+          <FinanceiroListaMeta
+            total={filtrados.length}
+            totalLabel={filtrados.length === 1 ? 'lançamento' : 'lançamentos'}
+            conciliacaoPendente={!pendentes ? totalPend : 0}
+            onConciliacaoClick={() => setPendentes(true)}
+            hasActiveFilters={hasActiveFilters}
+            onLimparFiltros={() => {
+              setPeriodo('mes');
+              setCs('');
+              setCe('');
+              setTiposSel([]);
+              setContasSel(contas.map((conta) => conta.id));
+              setStatusSel([]);
+              setPendentes(false);
+              setCmvOnly(false);
+              setSearch('');
+            }}
+            summaryChips={
+              <>
+                {periodo !== 'mes' && (
+                  <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
+                )}
+                {contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length && (
+                  <FinanceiroSummaryChip>
+                    {contasSel.length} conta{contasSel.length > 1 ? 's' : ''}
+                  </FinanceiroSummaryChip>
+                )}
+                {tiposSel.length > 0 && (
+                  <FinanceiroSummaryChip>{tiposSel.join(', ')}</FinanceiroSummaryChip>
+                )}
+                {statusSel.length > 0 && (
+                  <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
+                )}
+                {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+                {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+              </>
+            }
+          />
+
           <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
 
-          {/* FAB */}
           {fabOpen && !showNovoFluxo && <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
           <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
@@ -415,17 +420,16 @@ export default function ExecucaoOrcamentaria() {
             </button>
           </div>
 
-          {/* Dialogs */}
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
-          <NovoLancamentoDialog 
-            open={showNovoFluxo} 
-            tipoInicial={novoTipo} 
+          <NovoLancamentoDialog
+            open={showNovoFluxo}
+            tipoInicial={novoTipo}
             descricaoInicial={urlDescricao}
             valorInicial={urlValor}
             referenciaId={urlReferenciaId}
             referenciaTipo={urlReferenciaTipo}
-            onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }} 
-            onSaved={load} 
+            onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }}
+            onSaved={load}
           />
           <FluxoCaixaPrintDialog
             open={showPrintDialog}
@@ -454,7 +458,35 @@ export default function ExecucaoOrcamentaria() {
               </div>
             </DialogContent>
           </Dialog>
+        </>
+      )}
 
+      {contasPagarAtiva && (
+        <>
+          <ContasAbertasFiltros />
+          <ContasAbertasListaPane />
+        </>
+      )}
+
+      {aba === 'contas' && (
+        <>
+        <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
+          <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-card/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
+            <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-border/40">
+              <DialogTitle className="text-foreground">Importar conta</DialogTitle>
+            </DialogHeader>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
+              <AgefinImportador
+                onSuccess={(_, options) => {
+                  load();
+                  if (options?.close) {
+                    setShowImportadorAgefin(false);
+                  }
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
         </>
       )}
     </div>

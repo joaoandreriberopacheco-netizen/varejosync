@@ -1,9 +1,9 @@
 import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import FinanceiroFiltrosShell, { FinanceiroSummaryChip } from './FinanceiroFiltrosShell';
+import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE } from './financeiroP38';
 
-const PERIODOS = [
+export const PERIODOS_CONTAS = [
   { v: 'vencidas', l: 'Vencidas' },
   { v: 'hoje', l: 'Hoje' },
   { v: 'semana', l: '7 dias' },
@@ -35,9 +35,6 @@ export default function FiltrosContasAbertas({
   onTipoFiltro,
   mostrarPagas,
   onMostrarPagas,
-  totalFiltrados,
-  onLimparFiltros,
-  footerActions,
 }) {
   const hasActiveFilters =
     periodo !== 'mes' ||
@@ -45,9 +42,6 @@ export default function FiltrosContasAbertas({
     mostrarPagas ||
     !!cs ||
     !!ce;
-
-  const periodoLabel = PERIODOS.find((p) => p.v === periodo)?.l || 'Período';
-  const tipoLabel = TIPOS.find((t) => t.v === tipoFiltro)?.l;
 
   return (
     <FinanceiroFiltrosShell
@@ -57,24 +51,12 @@ export default function FiltrosContasAbertas({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}
-      onLimparFiltros={onLimparFiltros}
-      totalLabel={`${totalFiltrados} lançamento${totalFiltrados !== 1 ? 's' : ''}`}
-      footerActions={footerActions}
-      summaryChips={
-        <>
-          {periodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
-          {tipoFiltro !== 'todos' && <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>}
-          {mostrarPagas && (
-            <FinanceiroSummaryChip className="text-green-700 dark:text-green-400">Pagas</FinanceiroSummaryChip>
-          )}
-        </>
-      }
     >
       <div className="space-y-3">
         <div>
           <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Período</p>
           <div className="flex flex-wrap gap-1.5">
-            {PERIODOS.map((p) => (
+            {PERIODOS_CONTAS.map((p) => (
               <button
                 key={p.v}
                 type="button"
