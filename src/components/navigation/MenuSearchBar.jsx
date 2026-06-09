@@ -1,5 +1,6 @@
 import React from 'react';
 import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
+import { getGlobalSearchShortcutLabel } from '@/lib/globalSearchShortcut';
 
 export default function MenuSearchBar({
   isDark,
@@ -7,9 +8,12 @@ export default function MenuSearchBar({
   onOpen,
   onCollapsedActivate,
   className = '',
-  placeholder = 'Buscar…',
+  placeholder = 'Buscar funções…',
   searchableItems = [],
+  showShortcutHint = false,
 }) {
+  const shortcutLabel = getGlobalSearchShortcutLabel();
+
   return (
     <GlobalSearchBar
       isDark={isDark}
@@ -19,6 +23,9 @@ export default function MenuSearchBar({
       searchableItems={searchableItems}
       onNavigate={onOpen}
       onCollapsedActivate={onCollapsedActivate}
+      showShortcutHint={showShortcutHint}
+      shortcutLabel={shortcutLabel}
+      collapsedTitle={`${placeholder} (${shortcutLabel})`}
     />
   );
 }

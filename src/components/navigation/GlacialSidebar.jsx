@@ -160,6 +160,7 @@ export default function GlacialSidebar({
             onOpen={isMobile ? closeMobileMenu : undefined}
             onCollapsedActivate={onSearchCollapsedActivate}
             searchableItems={searchableItems}
+            showShortcutHint={!isMobile}
             className={isOpen ? "mb-2 mx-1" : "mb-1"}
           />
 
