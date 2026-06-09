@@ -34,16 +34,17 @@ function lancStatusTone(status) {
   return p38StatusTone(status);
 }
 
-function rowAccent(l) {
+/** Barra lateral — mesmo critério do Fluxo de Caixa: verde receita, vermelho despesa. */
+function rowAccent(l, { dimPago = false } = {}) {
   const isR = l.tipo === 'Receita';
   const isT = l.tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
 
-  if (cancelado || isPago) return 'muted';
+  if (dimPago && isPago) return 'muted';
+  if (cancelado) return 'muted';
   if (isT) return 'muted';
   if (isR) return 'success';
-  if (l.status === 'Vencido') return 'warning';
   return 'danger';
 }
 
@@ -140,7 +141,7 @@ export default function FinanceiroLancRow({
   const commonProps = {
     thinAccent: true,
     striped,
-    accent: p38AccentKeyFromTone(rowAccent(l)),
+    accent: p38AccentKeyFromTone(rowAccent(l, { dimPago: showPago })),
     className: `w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${cancelado || (showPago && isPago) ? 'opacity-60' : ''}`,
     title: <span className={cancelado ? 'line-through' : undefined}>{l.descricao}</span>,
     subtitle,
