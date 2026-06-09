@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import {
-  ArrowLeft, Search, Plus, Minus, Trash2, CheckCircle2, Loader2,
-  Package, Boxes, ShoppingCart,
+  ArrowLeft, Search, CheckCircle2, Loader2, Package, ShoppingCart, Send,
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import ContagemExpressCarrinho from '@/components/estoque/contagem-express/ContagemExpressCarrinho';
+import ContagemExpressFaixaCarrinho from '@/components/estoque/contagem-express/ContagemExpressFaixaCarrinho';
+import ContagemExpressPainelContagem from '@/components/estoque/contagem-express/ContagemExpressPainelContagem';
 import {
   buildCountEntry,
   changeCountEntryUnit,
@@ -22,6 +23,7 @@ import {
   updateCountEntryQuantity,
 } from '@/lib/inventoryCountUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { calcularSaldoMovimentacoes } from '@/lib/movimentacaoEstoqueSaldo';
 import {
   loadContagemExpressDraft,
   saveContagemExpressDraft,
@@ -29,7 +31,17 @@ import {
   createContagemExpressSessionId,
 } from '@/lib/contagemExpressStorage';
 import { aplicarContagemExpress, buildComparativoContagem } from '@/lib/contagemExpressApply';
+import { publicarRelatorioContagemExpress } from '@/lib/contagemExpressReport';
 import { toast } from 'sonner';
+
+async function carregarSaldoProduto(produtoId) {
+  const movs = await base44.entities.MovimentacaoEstoque.filter(
+    { produto_id: produtoId },
+    '-created_date',
+    1000
+  );
+  return calcularSaldoMovimentacoes(movs);
+}
 
 export default function ContagemExpress() {
   const navigate = useNavigate();
@@ -44,13 +56,23 @@ export default function ContagemExpress() {
   const [view, setView] = useState('contagem');
   const [busca, setBusca] = useState('');
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
-  const [produtoAtivoId, setProdutoAtivoId] = useState(null);
-  const [unitSelector, setUnitSelector] = useState({ open: false, itemIdx: null, product: null });
 
+  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [modoContagem, setModoContagem] = useState('adicionar');
+  const [quantidadePendente, setQuantidadePendente] = useState('');
+  const [entradaPendente, setEntradaPendente] = useState(null);
+  const [saldoInfo, setSaldoInfo] = useState({ loading: false, saldoExtrato: null });
+
+  const [unitSelector, setUnitSelector] = useState({ open: false, product: null });
   const [comparativo, setComparativo] = useState([]);
   const [loadingComparativo, setLoadingComparativo] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
   const [showPinDialog, setShowPinDialog] = useState(false);
+
+  const persistItens = useCallback((novosItens, sid = sessionId) => {
+    setItens(novosItens);
+    if (sid) saveContagemExpressDraft(sid, novosItens);
+  }, [sessionId]);
 
   useEffect(() => {
     const init = async () => {
@@ -67,19 +89,9 @@ export default function ContagemExpress() {
       setProdutos(prods);
       setUsuario(me);
       setLoading(false);
-
-      if ((draft.itens || []).length > 0) {
-        const last = draft.itens[draft.itens.length - 1];
-        if (last?.produto_id) setProdutoAtivoId(last.produto_id);
-      }
     };
     init();
   }, []);
-
-  const persistItens = useCallback((novosItens, sid = sessionId) => {
-    setItens(novosItens);
-    if (sid) saveContagemExpressDraft(sid, novosItens);
-  }, [sessionId]);
 
   useEffect(() => {
     if (!busca.trim()) {
@@ -123,47 +135,80 @@ export default function ContagemExpress() {
     }, []);
   }, [itens, produtos]);
 
-  const produtoAtivoGrupo = itensAgrupados.find((g) => g.produto_id === produtoAtivoId);
-  const ultimaEntradaIdx = produtoAtivoGrupo?.entradas?.[produtoAtivoGrupo.entradas.length - 1]?.idx;
+  const totalCarrinhoProduto = useCallback((produtoId) => {
+    return itens
+      .filter((i) => i.produto_id === produtoId)
+      .reduce((sum, item) => {
+        const produto = produtos.find((p) => p.id === item.produto_id);
+        return sum + getEntryBaseQuantity(item, produto);
+      }, 0);
+  }, [itens, produtos]);
 
-  const adicionarProduto = (produto) => {
-    const novosItens = [...itens, buildCountEntry(produto, 1)];
-    persistItens(novosItens);
-    setBusca('');
-    setProdutoAtivoId(produto.id);
-    setView('contagem');
-  };
-
-  const atualizarQtd = (idx, delta) => {
-    const novosItens = itens.map((item, i) => {
-      if (i !== idx) return item;
-      const produto = produtos.find((p) => p.id === item.produto_id);
-      const qtdAtual = getEntryDisplayQuantity(item, produto);
-      return updateCountEntryQuantity(item, produto, Math.max(0, qtdAtual + delta));
-    });
-    persistItens(novosItens);
-  };
-
-  const definirQtd = (idx, valor) => {
-    const qtd = parseFloat(valor) || 0;
-    const novosItens = itens.map((item, i) => {
-      if (i !== idx) return item;
-      const produto = produtos.find((p) => p.id === item.produto_id);
-      return updateCountEntryQuantity(item, produto, qtd);
-    });
-    persistItens(novosItens);
-  };
-
-  const removerEntradaAtiva = () => {
-    if (ultimaEntradaIdx == null) return;
-    const novosItens = itens.filter((_, i) => i !== ultimaEntradaIdx);
-    persistItens(novosItens);
-    if (novosItens.length === 0) {
-      setProdutoAtivoId(null);
-      return;
+  const carregarSaldoSelecionado = useCallback(async (produtoId) => {
+    if (!produtoId) return;
+    setSaldoInfo({ loading: true, saldoExtrato: null });
+    try {
+      const saldo = await carregarSaldoProduto(produtoId);
+      setSaldoInfo({ loading: false, saldoExtrato: saldo });
+    } catch {
+      setSaldoInfo({ loading: false, saldoExtrato: null });
     }
-    const restante = novosItens[novosItens.length - 1];
-    setProdutoAtivoId(restante.produto_id);
+  }, []);
+
+  const iniciarSelecao = async (produto, { modo = 'adicionar', quantidadeInicial = '' } = {}) => {
+    const entry = buildCountEntry(produto, 1);
+    setProdutoSelecionado(produto);
+    setModoContagem(modo);
+    setQuantidadePendente(quantidadeInicial === '' ? '' : String(quantidadeInicial));
+    setEntradaPendente(entry);
+    setBusca('');
+    setProdutosFiltrados([]);
+    await carregarSaldoSelecionado(produto.id);
+    setTimeout(() => buscaRef.current?.blur(), 50);
+  };
+
+  const limparSelecao = () => {
+    setProdutoSelecionado(null);
+    setQuantidadePendente('');
+    setEntradaPendente(null);
+    setSaldoInfo({ loading: false, saldoExtrato: null });
+    setTimeout(() => buscaRef.current?.focus(), 100);
+  };
+
+  const entradaPreview = useMemo(() => {
+    if (!produtoSelecionado || !entradaPendente) return null;
+    const qtd = parseFloat(quantidadePendente) || 0;
+    return updateCountEntryQuantity(entradaPendente, produtoSelecionado, qtd);
+  }, [produtoSelecionado, entradaPendente, quantidadePendente]);
+
+  const pendenteBase = entradaPreview
+    ? getEntryBaseQuantity(entradaPreview, produtoSelecionado)
+    : 0;
+
+  const carrinhoBaseParaPainel = produtoSelecionado && modoContagem === 'adicionar'
+    ? totalCarrinhoProduto(produtoSelecionado.id)
+    : 0;
+
+  const unidadePainel = entradaPreview
+    ? getCountUnitForEntry(produtoSelecionado, entradaPreview).unidade
+    : 'UN';
+
+  const confirmarProduto = () => {
+    if (!produtoSelecionado || !entradaPreview || pendenteBase <= 0) return;
+
+    let novosItens;
+    if (modoContagem === 'substituir') {
+      novosItens = [
+        ...itens.filter((i) => i.produto_id !== produtoSelecionado.id),
+        entradaPreview,
+      ];
+    } else {
+      novosItens = [...itens, entradaPreview];
+    }
+
+    persistItens(novosItens);
+    limparSelecao();
+    toast.success('Produto adicionado ao carrinho');
   };
 
   const abrirCarrinho = async () => {
@@ -192,23 +237,35 @@ export default function ContagemExpress() {
     setShowPinDialog(false);
     setFinalizando(true);
     try {
+      const comparativoPre = await buildComparativoContagem(base44, itens, produtos);
+      const usuarioNome = usuario?.nome || usuario?.full_name || usuario?.email || usuario?.id || 'Operador';
+
       const resultado = await aplicarContagemExpress(base44, {
         itens,
         produtos,
         sessionId,
-        usuarioNome: usuario?.nome || usuario?.email || usuario?.id || 'Operador',
+        usuarioNome,
+      });
+
+      await publicarRelatorioContagemExpress({
+        referenciaNumero: resultado.referenciaNumero,
+        usuarioNome,
+        dataLancamento: resultado.dataLancamento,
+        comparativo: comparativoPre,
+        produtos,
+        movimentacoes: resultado.movimentacoes,
       });
 
       clearContagemExpressDraft();
       const novoSid = createContagemExpressSessionId();
       setSessionId(novoSid);
       setItens([]);
-      setProdutoAtivoId(null);
       setComparativo([]);
       setView('contagem');
+      limparSelecao();
 
       toast.success(
-        `Contagem lançada: ${resultado.ajustesAplicados} ajuste(s) em ${resultado.produtosContados} produto(s).`
+        `Contagem lançada: ${resultado.ajustesAplicados} movimento(s) em ${resultado.produtosContados} produto(s). Relatório gerado.`
       );
     } catch (error) {
       console.error(error);
@@ -249,7 +306,6 @@ export default function ContagemExpress() {
 
   return (
     <div className="flex h-dvh w-full max-w-full flex-col overflow-hidden bg-background font-din-1451">
-      {/* Header */}
       <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/40 bg-background/95 px-4 py-3 backdrop-blur-sm">
         <button
           type="button"
@@ -260,7 +316,7 @@ export default function ContagemExpress() {
         </button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-semibold font-glacial text-foreground">Contagem Express</h1>
-          <p className="text-xs text-muted-foreground">Contagem rápida · solo</p>
+          <p className="text-xs text-muted-foreground">Busque · conte · revise no carrinho</p>
         </div>
         <button
           type="button"
@@ -268,7 +324,7 @@ export default function ContagemExpress() {
           className="relative flex h-10 items-center gap-2 rounded-xl bg-muted/60 px-3 text-sm font-medium text-foreground"
         >
           <ShoppingCart className="h-4 w-4" />
-          <span className="hidden sm:inline">Carrinho</span>
+          <span className="hidden sm:inline">Revisar</span>
           {itensAgrupados.length > 0 && (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
               {itensAgrupados.length}
@@ -277,173 +333,126 @@ export default function ContagemExpress() {
         </button>
       </div>
 
-      {/* Área limpa de contagem */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 pb-[calc(var(--p38-bottom-nav-total,0px)+7rem+env(safe-area-inset-bottom,0px))] pt-4">
-        {!produtoAtivoGrupo ? (
-          <div className="w-full max-w-md text-center">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
-              <Package className="h-8 w-8 text-muted-foreground" />
+      <ContagemExpressFaixaCarrinho
+        itensAgrupados={itensAgrupados}
+        produtoAtivoId={produtoSelecionado?.id}
+        onSelecionar={(grupo) => {
+          const produto = grupo._produto || produtos.find((p) => p.id === grupo.produto_id);
+          if (!produto) return;
+          iniciarSelecao(produto, {
+            modo: 'substituir',
+            quantidadeInicial: grupo.display?.quantidade ?? grupo.totalBase,
+          });
+        }}
+        onAbrirCarrinho={abrirCarrinho}
+      />
+
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-28">
+        {!produtoSelecionado ? (
+          <div className="mx-auto w-full max-w-lg space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                ref={buscaRef}
+                placeholder="Buscar produto (use espaços: cimento 50kg)"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="h-12 rounded-2xl border-0 bg-muted/50 pl-9 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-border/40"
+              />
             </div>
-            <h2 className="text-base font-semibold text-foreground">Tela limpa para contar</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Busque um produto abaixo. Os itens ficam no carrinho até você lançar com seu PIN.
-            </p>
-            {itensAgrupados.length > 0 && (
-              <button
-                type="button"
-                onClick={abrirCarrinho}
-                className="mt-6 text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Ver carrinho ({itensAgrupados.length} produto{itensAgrupados.length !== 1 ? 's' : ''})
-              </button>
+
+            {busca.trim() && produtosFiltrados.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground">Nenhum produto encontrado</p>
+            )}
+
+            {produtosFiltrados.length > 0 && (
+              <div className="divide-y divide-border/30 overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+                {produtosFiltrados.map((prod) => {
+                  const nome = resolveInventoryProductName(prod);
+                  const noCarrinho = itensAgrupados.find((g) => g.produto_id === prod.id);
+                  return (
+                    <button
+                      key={prod.id}
+                      type="button"
+                      onClick={() => iniciarSelecao(prod)}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{nome}</p>
+                        <p className="text-xs text-muted-foreground">{prod.codigo_interno || prod.codigo_barras || ''}</p>
+                      </div>
+                      {noCarrinho && (
+                        <span className="shrink-0 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-semibold text-green-600 dark:text-green-400">
+                          {formatCountQuantity(noCarrinho.display?.quantidade)} {noCarrinho.display?.unidade}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {!busca.trim() && itensAgrupados.length === 0 && (
+              <div className="py-12 text-center">
+                <Package className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Interface limpa para contar</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Digite o nome do produto — palavras separadas por espaço refinam a busca
+                </p>
+              </div>
             )}
           </div>
         ) : (
-          <div className="w-full max-w-md">
-            <div className="rounded-3xl bg-muted/40 p-6 text-center shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Contando agora</p>
-              <h2 className="mt-2 line-clamp-3 text-lg font-semibold text-foreground">
-                {produtoAtivoGrupo.produto_nome}
-              </h2>
-
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => ultimaEntradaIdx != null && atualizarQtd(ultimaEntradaIdx, -1)}
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl bg-card shadow-sm"
-                >
-                  <Minus className="h-6 w-6 text-muted-foreground" />
-                </button>
-
-                <div className="min-w-[8rem]">
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    value={produtoAtivoGrupo.entradas[produtoAtivoGrupo.entradas.length - 1]?.qtd ?? 0}
-                    onChange={(e) => ultimaEntradaIdx != null && definirQtd(ultimaEntradaIdx, e.target.value)}
-                    className="h-16 border-0 bg-transparent text-center text-4xl font-bold font-glacial shadow-none focus-visible:ring-0"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (ultimaEntradaIdx == null) return;
-                      const item = itens[ultimaEntradaIdx];
-                      const produto = produtos.find((p) => p.id === item?.produto_id);
-                      if (produto) setUnitSelector({ open: true, itemIdx: ultimaEntradaIdx, product: produto });
-                    }}
-                    className="mx-auto mt-1 flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-card"
-                  >
-                    <Boxes className="h-3 w-3" />
-                    {produtoAtivoGrupo.entradas[produtoAtivoGrupo.entradas.length - 1]?.unidade || 'UN'}
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => ultimaEntradaIdx != null && atualizarQtd(ultimaEntradaIdx, 1)}
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl bg-card shadow-sm"
-                >
-                  <Plus className="h-6 w-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="mt-6 flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={removerEntradaAtiva}
-                  className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-500/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Remover
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProdutoAtivoId(null);
-                    setBusca('');
-                    setTimeout(() => buscaRef.current?.focus(), 100);
-                  }}
-                  className="inline-flex items-center gap-1 rounded-xl bg-primary/10 px-4 py-2 text-xs font-semibold text-primary"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Próximo produto
-                </button>
-              </div>
-            </div>
-
-            {itensAgrupados.length > 1 && (
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                + {itensAgrupados.length - 1} outro{itensAgrupados.length - 1 !== 1 ? 's' : ''} no carrinho
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Busca fixa inferior — estilo PDV */}
-      <div className="fixed bottom-0 left-0 right-0 z-[55] max-w-full space-y-2 overflow-x-hidden border-t border-border/40 bg-card p-3 dark:border-border/40 dark:bg-background p38-bottom-dock">
-        {produtosFiltrados.length > 0 && (
-          <div className="max-h-72 divide-y divide-border/30 overflow-y-auto rounded-2xl border border-border/40 bg-card shadow-xl dark:divide-border/40">
-            {produtosFiltrados.map((prod) => {
-              const nome = resolveInventoryProductName(prod);
-              const contagens = itens.filter((i) => i.produto_id === prod.id);
-              const totalBase = contagens.reduce((s, i) => s + getEntryBaseQuantity(i, prod), 0);
-              const totalDisplay = getGroupDisplayFromBase(prod, totalBase);
-              return (
-                <button
-                  key={prod.id}
-                  type="button"
-                  onClick={() => adicionarProduto(prod)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{nome}</p>
-                    <p className="text-xs text-muted-foreground">{prod.codigo_interno || prod.codigo_barras || ''}</p>
-                  </div>
-                  {contagens.length > 0 && (
-                    <div className="flex shrink-0 items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-                      <span className="text-xs font-medium text-green-500">
-                        {formatCountQuantity(totalDisplay.quantidade)} {totalDisplay.unidade}
-                      </span>
-                    </div>
-                  )}
-                  <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="relative min-w-0">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            ref={buscaRef}
-            placeholder="Buscar produto para contar..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="h-11 w-full rounded-xl border-0 bg-muted/50 pl-9 focus-visible:ring-1 focus-visible:ring-border/40 dark:focus-visible:ring-ring"
+          <ContagemExpressPainelContagem
+            produto={produtoSelecionado}
+            produtoNome={resolveInventoryProductName(produtoSelecionado)}
+            quantidade={quantidadePendente}
+            unidade={unidadePainel}
+            saldoInfo={saldoInfo}
+            totalNoCarrinhoBase={carrinhoBaseParaPainel}
+            onQuantidadeChange={setQuantidadePendente}
+            onMenos={() => {
+              const q = Math.max(0, (parseFloat(quantidadePendente) || 0) - 1);
+              setQuantidadePendente(q > 0 ? String(q) : '');
+            }}
+            onMais={() => {
+              const q = (parseFloat(quantidadePendente) || 0) + 1;
+              setQuantidadePendente(String(q));
+            }}
+            onTrocarUnidade={() => setUnitSelector({ open: true, product: produtoSelecionado })}
+            onConfirmar={confirmarProduto}
+            onCancelar={limparSelecao}
+            confirmLabel={modoContagem === 'substituir' ? 'Atualizar no carrinho' : 'Adicionar ao carrinho'}
           />
-        </div>
+        )}
       </div>
+
+      {itensAgrupados.length > 0 && !produtoSelecionado && (
+        <button
+          type="button"
+          onClick={abrirCarrinho}
+          className="fixed bottom-[calc(var(--p38-bottom-nav-total,0px)+1rem+env(safe-area-inset-bottom,0px))] right-4 z-[56] flex h-14 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-white shadow-lg"
+        >
+          <Send className="h-5 w-5" />
+          Lançar ({itensAgrupados.length})
+        </button>
+      )}
 
       <ProductUnitSelectorDialog
         open={unitSelector.open}
         product={unitSelector.product}
         mode="sale"
-        onClose={() => setUnitSelector({ open: false, itemIdx: null, product: null })}
-        onConfirm={async (unitOption) => {
-          if (!unitOption || unitSelector.itemIdx === null) {
-            setUnitSelector({ open: false, itemIdx: null, product: null });
+        onClose={() => setUnitSelector({ open: false, product: null })}
+        onConfirm={(unitOption) => {
+          if (!unitOption || !entradaPendente || !produtoSelecionado) {
+            setUnitSelector({ open: false, product: null });
             return;
           }
-          const novosItens = itens.map((item, idx) => {
-            if (idx !== unitSelector.itemIdx) return item;
-            const produto = produtos.find((p) => p.id === item.produto_id);
-            return changeCountEntryUnit(item, produto, unitOption);
-          });
-          persistItens(novosItens);
-          setUnitSelector({ open: false, itemIdx: null, product: null });
+          setEntradaPendente(changeCountEntryUnit(entradaPendente, produtoSelecionado, unitOption));
+          setUnitSelector({ open: false, product: null });
         }}
       />
     </div>

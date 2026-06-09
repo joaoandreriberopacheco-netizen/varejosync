@@ -119,12 +119,34 @@ export async function aplicarContagemExpress(base44, {
   }
 
   const comparativo = await buildComparativoContagem(base44, itens, produtos);
+  const dataFim = new Date().toISOString();
+
+  let conferenciaId = null;
+  try {
+    const conferencia = await base44.entities.ConferenciaEstoque.create({
+      nome_conferencia: `Contagem Express ${referenciaNumero}`,
+      tipo_conferencia: 'Contagem Express',
+      responsavel_id: responsavel,
+      responsavel_nome: responsavel,
+      status: 'Concluída',
+      data_inicio: dataFim,
+      data_fim: dataFim,
+      itens_conferidos: itens,
+      ajuste_aplicado: true,
+    });
+    conferenciaId = conferencia?.id || null;
+  } catch (error) {
+    console.warn('[ContagemExpress] Não foi possível registrar ConferenciaEstoque:', error);
+  }
 
   return {
     referenciaNumero,
+    conferenciaId,
     produtosContados: grupos.length,
     ajustesAplicados: movimentacoes.length,
     semDiferenca: comparativo.filter((r) => !r.temDiferenca).length,
     movimentacoes,
+    comparativo,
+    dataLancamento: dataFim,
   };
 }
