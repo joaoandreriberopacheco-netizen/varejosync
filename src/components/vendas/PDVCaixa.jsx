@@ -32,7 +32,6 @@ import {
   CheckCircle2,
   Plus,
   Minus,
-  Lock,
   Printer,
   Edit,
   Eye,
@@ -1375,7 +1374,7 @@ export default function PDVCaixa({
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
               <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={caixaTabsRoot}>
                 {/* Abas mobile — abaixo do header; bottom nav fica no shell global */}
-                <TabsList className={`${caixaMobileTabBar} grid grid-cols-4 h-14 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 rounded-none p-0`}>
+                <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 rounded-none p-0`}>
                   <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
                     <PieChart className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Balanço</span>
@@ -1388,19 +1387,6 @@ export default function PDVCaixa({
                     <Wallet className="w-5 h-5" />
                     <span className={caixaTypo.labelSm}>Movimentos</span>
                   </TabsTrigger>
-                  <button
-                    type="button"
-                    disabled={modoVisualizacao}
-                    onClick={scrollToFechamento}
-                    className={`flex flex-col items-center justify-center gap-0.5 h-full rounded-none border-0 transition-colors touch-manipulation ${
-                      modoVisualizacao
-                        ? 'text-muted-foreground dark:text-muted-foreground cursor-not-allowed opacity-50'
-                        : 'text-muted-foreground hover:bg-muted/30 dark:hover:bg-muted/40 active:bg-muted/40'
-                    }`}
-                  >
-                    <Lock className="w-5 h-5" />
-                    <span className={caixaTypo.labelSm}>Fechar</span>
-                  </button>
                 </TabsList>
 
                 {/* KPIs Superiores - Apenas Desktop */}
