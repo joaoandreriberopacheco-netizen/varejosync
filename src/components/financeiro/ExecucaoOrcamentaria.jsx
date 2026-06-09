@@ -14,6 +14,7 @@ import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
+import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
   ContasAbertasProvider,
   ContasAbertasKpis,
@@ -213,12 +214,7 @@ export default function ExecucaoOrcamentaria() {
     });
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {
       const itemsOrdenados = sortLancamentosPorDescricao(items);
-      let label = 'Sem data';
-      if (k !== 'sem-data') {
-        const d = parseDateKey(k);
-        label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' : format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
-        if (k > hStr) label += ' (previsto)';
-      }
+      const label = k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(k, hStr, oStr);
       const totais = { r: 0, d: 0 };
       itemsOrdenados.forEach(l => {
         const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
@@ -281,9 +277,17 @@ export default function ExecucaoOrcamentaria() {
   };
 
   const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
+  const contasShared = useMemo(
+    () => ({ lancs, contas, loading, reload: load }),
+    [lancs, contas, loading],
+  );
 
   return (
-    <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
+    <ContasAbertasProvider
+      active={contasPagarAtiva}
+      shared={contasShared}
+      onOpenImportador={() => setShowImportadorAgefin(true)}
+    >
     <div className="w-full min-w-0 max-w-full space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header — mobile e desktop separados para evitar sobreposição */}
       <div className="min-w-0 max-w-full space-y-1.5">

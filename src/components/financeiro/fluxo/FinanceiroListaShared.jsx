@@ -1,8 +1,21 @@
 import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { P38_FIELD_SURFACE } from './financeiroP38';
+
+/** Rótulo de grupo — Hoje/Ontem ou data curta (mesmo padrão Fluxo e Contas). */
+export function formatFinanceiroGrupoLabel(k, hStr, oStr) {
+  if (k === 'sem-data' || k === 'sem-vencimento') return 'Sem data';
+  if (k === hStr) return 'Hoje';
+  if (k === oStr) return 'Ontem';
+  const d = new Date(`${k}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return k;
+  if (k > hStr) return `${format(d, "d 'de' MMMM", { locale: ptBR })} (previsto)`;
+  return format(d, "d 'de' MMMM", { locale: ptBR });
+}
 
 export const formatFinanceiroValor = (v) =>
   `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
