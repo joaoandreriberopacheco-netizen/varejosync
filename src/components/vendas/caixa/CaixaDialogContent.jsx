@@ -15,6 +15,7 @@ export function CaixaDialogContent({
   className,
   overlayClassName,
   nestedChild = false,
+  hideClose = false,
   ...props
 }) {
   const overlayStack = useCaixaOverlayStack();
@@ -24,6 +25,7 @@ export function CaixaDialogContent({
 
   return (
     <DialogContent
+      hideClose={hideClose}
       overlayClassName={cn(nestedZ, overlayClassName)}
       className={cn(nestedZ, className)}
       {...props}

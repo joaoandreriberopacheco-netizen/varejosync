@@ -14,3 +14,27 @@ export const QUICK_ACCESS_PANEL_CLASS = 'z-[1200]';
 export const QUICK_ACCESS_LAUNCHER_CLASS = 'z-[1210]';
 export const QUICK_ACCESS_NESTED_DIALOG_CLASS = 'z-[1220]';
 export const QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS = 'z-[1230]';
+
+/**
+ * Remove camadas Radix presas e travas de pointer-events/scroll no body
+ * após fechar o painel de atalho (caixa/orçamento/vendedor).
+ */
+export function cleanupQuickAccessPortalLayers() {
+  if (typeof document === 'undefined') return;
+
+  const resetBody = () => {
+    document.body.style.pointerEvents = '';
+    document.body.removeAttribute('data-scroll-locked');
+  };
+
+  resetBody();
+
+  requestAnimationFrame(() => {
+    resetBody();
+    document
+      .querySelectorAll(
+        '[data-radix-dialog-overlay][data-state="closed"], [data-radix-alert-dialog-overlay][data-state="closed"]'
+      )
+      .forEach((el) => el.remove());
+  });
+}

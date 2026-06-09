@@ -75,7 +75,7 @@ export default function ConfirmarPagamentoDialog({
     handleInputMascara(e, setInput, setValor);
   };
 
-  if (!pedidoSelecionado) return null;
+  const dialogOpen = open && !!pedidoSelecionado;
 
   const handleBuscarVale = async () => {
     if (!codigoVale.trim()) return;
@@ -107,9 +107,11 @@ export default function ConfirmarPagamentoDialog({
     }
   };
 
+  if (!open && !pedidoSelecionado) return null;
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
         <CaixaDialogContent className="flex max-h-[min(92dvh,52rem)] min-h-0 max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl dark:bg-background">
           {/* Header */}
           <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-4 pt-5 dark:border-border/40">

@@ -6,7 +6,7 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
   const [rascunhoDetalhes, setRascunhoDetalhes] = useState(null);
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-background">
+    <div className="relative flex-1 min-h-0 flex flex-col bg-background">
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center">
         <button onClick={onBack} className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors" style={{ minWidth: '44px', minHeight: '44px' }}>
           <ArrowLeft className="w-6 h-6 text-foreground/90" />
@@ -83,8 +83,15 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
 
       {/* Modal de Detalhes */}
       {rascunhoDetalhes && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
-          <div className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
+        <div
+          className="absolute inset-0 z-50 flex items-end justify-center bg-black/40 p-4 md:items-center"
+          onClick={() => setRascunhoDetalhes(null)}
+          role="presentation"
+        >
+          <div
+            className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
               <div>
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Senha</div>

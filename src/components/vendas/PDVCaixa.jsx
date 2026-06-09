@@ -75,6 +75,7 @@ import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
+import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 
 function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, formatarValorExibicao }) {
@@ -162,6 +163,8 @@ export default function PDVCaixa({
   const queryClient = useQueryClient();
   const handleClose = () => {
     if (overlayMode && onClose) {
+      setRascunhoDetalhesTab(null);
+      cleanupQuickAccessPortalLayers();
       onClose();
       return;
     }
@@ -1324,7 +1327,7 @@ export default function PDVCaixa({
       </div>
 
       {/* Conteúdo Principal */}
-      <div className={`${caixaMain} bg-muted/40 dark:bg-background`}>
+      <div className={`${caixaMain} relative bg-muted/40 dark:bg-background`}>
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground dark:text-muted-foreground">
@@ -1950,8 +1953,15 @@ export default function PDVCaixa({
 
         {/* Modal de Detalhes do Rascunho (Aba Vendas) */}
         {rascunhoDetalhesTab && (
-          <div className={`fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 ${overlayMode ? 'z-[1220]' : 'z-50'}`}>
-            <div className="bg-card dark:bg-background rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
+          <div
+            className="absolute inset-0 z-50 flex items-end bg-black/40 p-4 md:items-center"
+            onClick={() => setRascunhoDetalhesTab(null)}
+            role="presentation"
+          >
+            <div
+              className="bg-card dark:bg-background rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
               <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 dark:border-border/40">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Senha</div>
