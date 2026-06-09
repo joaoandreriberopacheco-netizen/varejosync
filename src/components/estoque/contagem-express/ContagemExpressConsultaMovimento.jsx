@@ -35,7 +35,7 @@ export default function ContagemExpressConsultaMovimento({ movimentos = [] }) {
         </p>
       </div>
 
-      <P38MobileLineList>
+      <P38MobileLineList allViewports className="rounded-lg">
         {movimentos.map((mov, index) => {
           const isEntrada = mov.tipo === 'Entrada';
           const tone = p38StatusTone(isEntrada ? 'success' : 'danger');

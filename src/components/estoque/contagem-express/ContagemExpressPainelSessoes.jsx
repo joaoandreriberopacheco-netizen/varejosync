@@ -190,7 +190,7 @@ export default function ContagemExpressPainelSessoes({
               <p className="text-sm text-muted-foreground">Nenhuma contagem em pausa</p>
             </div>
           ) : (
-            <P38MobileLineList>
+            <P38MobileLineList allViewports className="rounded-lg">
               {sessoesAguardando.map((sessao, index) => {
                 const { produtos: qtdProd, itens } = contarProdutosSessao(sessao);
                 const tone = p38StatusTone('info');
