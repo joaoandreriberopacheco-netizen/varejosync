@@ -1,36 +1,34 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
 import { ChevronUp, Search } from 'lucide-react';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
-import { shouldHideQuickAccessLaunchers } from '@/lib/caixaQuickAccessHide';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 import QuickBudgetPanel from './QuickBudgetPanel';
 
 export default function QuickBudgetLauncher() {
   const [open, setOpen] = useState(false);
+  const [sessionKey, setSessionKey] = useState(0);
   const isCompactViewport = !useIsDesktop();
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const startPointRef = useRef(null);
-  const location = useLocation();
-  const hideOnCaixaPage = useMemo(
-    () => shouldHideQuickAccessLaunchers(location.pathname, location.search),
-    [location.pathname, location.search]
-  );
+
+  const openOrRefresh = useCallback(() => {
+    setSessionKey((key) => key + 1);
+    setOpen(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (hideOnCaixaPage) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'q') {
         event.preventDefault();
-        setOpen((prev) => !prev);
+        openOrRefresh();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hideOnCaixaPage]);
+  }, [openOrRefresh]);
 
   const resetDrag = () => {
     setDragOffset({ x: 0, y: 0 });
@@ -52,15 +50,13 @@ export default function QuickBudgetLauncher() {
 
   const handlePointerUp = () => {
     if (dragOffset.x >= 20 && dragOffset.y <= -20) {
-      setOpen(true);
+      openOrRefresh();
     }
     resetDrag();
   };
 
   const launcher =
-    !hideOnCaixaPage &&
     isCompactViewport &&
-    !open &&
     typeof document !== 'undefined' &&
     createPortal(
       <div
@@ -87,12 +83,10 @@ export default function QuickBudgetLauncher() {
       document.body
     );
 
-  if (hideOnCaixaPage && !open) return null;
-
   return (
     <>
       {launcher}
-      <QuickBudgetPanel open={open} onOpenChange={setOpen} />
+      <QuickBudgetPanel open={open} onOpenChange={setOpen} sessionKey={sessionKey} />
     </>
   );
 }

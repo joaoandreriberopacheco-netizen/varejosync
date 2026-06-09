@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2 } from 'lucide-react';
 import { cleanupQuickAccessPortalLayers, QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
@@ -13,9 +13,7 @@ function VendedorLoading() {
   );
 }
 
-export default function VendedorRapidoPanel({ open, onOpenChange }) {
-  const [mountKey, setMountKey] = useState(0);
-
+export default function VendedorRapidoPanel({ open, onOpenChange, sessionKey = 0 }) {
   const handleClose = () => {
     cleanupQuickAccessPortalLayers();
     onOpenChange(false);
@@ -23,7 +21,6 @@ export default function VendedorRapidoPanel({ open, onOpenChange }) {
 
   useEffect(() => {
     if (!open) return undefined;
-    setMountKey((key) => key + 1);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -43,7 +40,7 @@ export default function VendedorRapidoPanel({ open, onOpenChange }) {
       aria-label="PDV vendedor"
     >
       <Suspense fallback={<VendedorLoading />}>
-        <PDVVendedor key={mountKey} overlayMode onClose={handleClose} />
+        <PDVVendedor key={sessionKey} overlayMode onClose={handleClose} />
       </Suspense>
     </div>
   );

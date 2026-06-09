@@ -17,7 +17,7 @@ import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/li
 import { toast } from 'sonner';
 import { QUICK_ACCESS_PANEL_CLASS } from '@/lib/quickAccessOverlay';
 
-export default function QuickBudgetPanel({ open, onOpenChange }) {
+export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 }) {
   const [produtos, setProdutos] = useState([]);
   const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
   const [query, setQuery] = useState('');
@@ -70,6 +70,12 @@ export default function QuickBudgetPanel({ open, onOpenChange }) {
     }
     setTimeout(() => searchInputRef.current?.focus(), 50);
   }, [open]);
+
+  useEffect(() => {
+    if (!open || sessionKey === 0) return;
+    resetPanel();
+    setProdutos([]);
+  }, [sessionKey, open]);
 
   const handleSelectProduct = (produto) => {
     const ctx = getQuickBudgetUnitContext(produto, tabelaSelecionada);

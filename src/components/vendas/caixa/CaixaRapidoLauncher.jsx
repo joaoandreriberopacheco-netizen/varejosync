@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
 import { ChevronUp, Wallet } from 'lucide-react';
 import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
-import { shouldHideQuickAccessLaunchers } from '@/lib/caixaQuickAccessHide';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 
@@ -19,22 +17,19 @@ function userCanAccessCaixa(user, perfilDeAcesso) {
   return !!(permissoes?.pdv?.acesso_caixa || permissoes?.financeiro?.acesso);
 }
 
-function useHideOnCaixaPage() {
-  const location = useLocation();
-  return useMemo(
-    () => shouldHideQuickAccessLaunchers(location.pathname, location.search),
-    [location.pathname, location.search]
-  );
-}
-
 export default function CaixaRapidoLauncher() {
   const [open, setOpen] = useState(false);
+  const [sessionKey, setSessionKey] = useState(0);
   const isCompactViewport = !useIsDesktop();
   const [canAccess, setCanAccess] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const startPointRef = useRef(null);
-  const hideOnCaixaPage = useHideOnCaixaPage();
+
+  const openOrRefresh = useCallback(() => {
+    setSessionKey((key) => key + 1);
+    setOpen(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,16 +50,16 @@ export default function CaixaRapidoLauncher() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (!canAccess || hideOnCaixaPage) return;
+      if (!canAccess) return;
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'c') {
         event.preventDefault();
-        setOpen((prev) => !prev);
+        openOrRefresh();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [canAccess, hideOnCaixaPage]);
+  }, [canAccess, openOrRefresh]);
 
   const resetDrag = () => {
     setDragOffset({ x: 0, y: 0 });
@@ -86,17 +81,16 @@ export default function CaixaRapidoLauncher() {
 
   const handlePointerUp = () => {
     if (dragOffset.x >= 20 && dragOffset.y <= -20) {
-      setOpen(true);
+      openOrRefresh();
     }
     resetDrag();
   };
 
-  const showLauncher = canAccess && !hideOnCaixaPage;
+  const showLauncher = canAccess;
 
   const launcher =
     showLauncher &&
     isCompactViewport &&
-    !open &&
     typeof document !== 'undefined' &&
     createPortal(
       <div
@@ -128,7 +122,7 @@ export default function CaixaRapidoLauncher() {
   return (
     <>
       {launcher}
-      <CaixaRapidoPanel open={open} onOpenChange={setOpen} />
+      <CaixaRapidoPanel open={open} onOpenChange={setOpen} sessionKey={sessionKey} />
     </>
   );
 }
