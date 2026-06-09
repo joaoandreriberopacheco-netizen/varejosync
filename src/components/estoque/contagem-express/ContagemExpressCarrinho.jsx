@@ -41,6 +41,7 @@ export default function ContagemExpressCarrinho({
   onVoltar,
   onSalvar,
   onImprimir,
+  onEditarItem,
 }) {
   const mapaComparativo = Object.fromEntries((comparativo || []).map((r) => [r.produto_id, r]));
 
@@ -101,8 +102,15 @@ export default function ContagemExpressCarrinho({
             ? (row.diferenca > 0 ? diffDisplay.quantidade : -diffDisplay.quantidade)
             : row?.diferenca ?? null;
 
+          const Wrapper = onEditarItem ? 'button' : 'div';
+
           return (
-            <div key={grupo.produto_id} className="rounded-2xl bg-muted/50 p-3.5">
+            <Wrapper
+              key={grupo.produto_id}
+              type={onEditarItem ? 'button' : undefined}
+              onClick={onEditarItem ? () => onEditarItem(grupo) : undefined}
+              className={`w-full rounded-2xl bg-muted/50 p-3.5 text-left ${onEditarItem ? 'transition-colors hover:bg-muted/70 active:bg-muted' : ''}`}
+            >
               <div className="flex items-start gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
                   <Package className="h-4 w-4 text-muted-foreground" />
@@ -138,7 +146,7 @@ export default function ContagemExpressCarrinho({
                   </div>
                 </div>
               </div>
-            </div>
+            </Wrapper>
           );
         })}
       </div>

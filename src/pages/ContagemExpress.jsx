@@ -9,7 +9,6 @@ import { createPageUrl } from '@/utils';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import ContagemExpressCarrinho from '@/components/estoque/contagem-express/ContagemExpressCarrinho';
-import ContagemExpressFaixaCarrinho from '@/components/estoque/contagem-express/ContagemExpressFaixaCarrinho';
 import ContagemExpressPainelContagem from '@/components/estoque/contagem-express/ContagemExpressPainelContagem';
 import ContagemExpressPainelSessoes from '@/components/estoque/contagem-express/ContagemExpressPainelSessoes';
 import {
@@ -369,6 +368,15 @@ export default function ContagemExpress() {
           onVoltar={() => setView('contagem')}
           onSalvar={handleSalvarClick}
           onImprimir={handleImprimir}
+          onEditarItem={(grupo) => {
+            const produto = grupo._produto || produtos.find((p) => p.id === grupo.produto_id);
+            if (!produto) return;
+            setView('contagem');
+            iniciarSelecao(produto, {
+              modo: 'substituir',
+              quantidadeInicial: grupo.display?.quantidade ?? grupo.totalBase,
+            });
+          }}
         />
         <PinValidationDialog
           forceEnabled
@@ -416,20 +424,6 @@ export default function ContagemExpress() {
           )}
         </button>
       </div>
-
-      <ContagemExpressFaixaCarrinho
-        itensAgrupados={itensAgrupados}
-        produtoAtivoId={produtoSelecionado?.id}
-        onSelecionar={(grupo) => {
-          const produto = grupo._produto || produtos.find((p) => p.id === grupo.produto_id);
-          if (!produto) return;
-          iniciarSelecao(produto, {
-            modo: 'substituir',
-            quantidadeInicial: grupo.display?.quantidade ?? grupo.totalBase,
-          });
-        }}
-        onAbrirCarrinho={abrirCarrinho}
-      />
 
       {!produtoSelecionado && (
         <div className="shrink-0 px-3 pt-3">
