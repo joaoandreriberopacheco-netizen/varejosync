@@ -473,22 +473,38 @@ export default function ContagemExpress() {
             {produtosFiltrados.map((prod) => {
               const nome = resolveInventoryProductName(prod);
               const noCarrinho = itensAgrupados.find((g) => g.produto_id === prod.id);
+              const estoqueDisplay = getGroupDisplayFromBase(prod, prod.estoque_atual || 0);
               return (
                 <button
                   key={prod.id}
                   type="button"
                   onClick={() => iniciarSelecao(prod)}
-                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
+                  className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{nome}</p>
-                  {noCarrinho && (
-                    <span className="shrink-0 text-xs font-semibold text-green-600 dark:text-green-400">
-                      {formatCountQuantity(noCarrinho.display?.quantidade)} {noCarrinho.display?.unidade}
-                    </span>
-                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
+                      {nome}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span>
+                        Estoque{' '}
+                        <span className="font-semibold text-foreground">
+                          {formatCountQuantity(estoqueDisplay.quantidade)} {estoqueDisplay.unidade}
+                        </span>
+                      </span>
+                      {noCarrinho ? (
+                        <span>
+                          Contada{' '}
+                          <span className="font-semibold text-[#4A5D23] dark:text-[#a4ce33]">
+                            {formatCountQuantity(noCarrinho.display?.quantidade)} {noCarrinho.display?.unidade}
+                          </span>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                 </button>
               );
             })}
