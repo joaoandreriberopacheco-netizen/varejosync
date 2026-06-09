@@ -11,7 +11,7 @@ import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { calcValorTotalPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
-import { aprovarPedidoCompraFinanceiro } from '@/lib/aprovarPedidoCompraFinanceiro';
+import { aprovarPedidoCompraFinanceiro, pedidoAguardandoAprovacaoFinanceira } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function AprovacoesFinanceirasPage() {
@@ -33,13 +33,20 @@ export default function AprovacoesFinanceirasPage() {
   }, []);
 
   const loadData = async () => {
-    const [pedidosLiberacao, pedidosAprovacaoFinanceira, contasData] = await Promise.all([
+    const [pedidosLiberacao, pedidosAprovacaoFinanceira, pedidosPorSaf, contasData] = await Promise.all([
       base44.entities.PedidoCompra.filter({ status: 'Aguardando Liberação' }),
       base44.entities.PedidoCompra.filter({ status: 'Aguardando Aprovação Financeira' }),
-      base44.entities.ContasFinanceiras.filter({ ativo: true })
+      base44.entities.PedidoCompra.filter({ status_aprovacao_financeira: 'Aguardando Aprovação Financeira' }),
+      base44.entities.ContasFinanceiras.filter({ ativo: true }),
     ]);
 
-    const pedidosPendentes = [...pedidosLiberacao, ...pedidosAprovacaoFinanceira];
+    const pedidosPorId = new Map();
+    [...pedidosLiberacao, ...pedidosAprovacaoFinanceira, ...pedidosPorSaf].forEach((p) => {
+      if (p?.id && pedidoAguardandoAprovacaoFinanceira(p)) {
+        pedidosPorId.set(p.id, p);
+      }
+    });
+    const pedidosPendentes = [...pedidosPorId.values()];
     const adaptados = pedidosPendentes.map(p => ({
       id: p.id,
       referencia_id: p.id,
@@ -248,7 +255,7 @@ export default function AprovacoesFinanceirasPage() {
             </p>
           </div>
         ) : (
-          <P38MobileLineList>
+          <P38MobileLineList allViewports>
             {Object.entries(groupedTransactions).map(([refNumero, transacoes], index) => {
               const primeira = transacoes[0];
               const total = primeira.valor || 0;
