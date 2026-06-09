@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
+import { createPageUrl } from '@/components/utils';
 import { format } from 'date-fns';
-import { TrendingUp, AlertTriangle } from 'lucide-react';
+import { TrendingUp, AlertTriangle, ClipboardList, ChevronRight } from 'lucide-react';
 
 export default function EstoqueTab() {
   const [data, setData] = useState({
@@ -75,6 +77,22 @@ export default function EstoqueTab() {
 
   return (
     <div className="space-y-6">
+      <Link
+        to={createPageUrl('ContagemExpress')}
+        className="flex items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:bg-primary/10 dark:border-primary/30"
+      >
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
+          <ClipboardList className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground">Contagem Express</h3>
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+            Contagem rápida no estilo PDV — carrinho, diferenças e lançamento com PIN.
+          </p>
+        </div>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </Link>
+
       {/* KPIs - SEM BORDAS */}
       <div>
         <h3 className="text-sm font-medium text-foreground mb-4">Visão Geral</h3>

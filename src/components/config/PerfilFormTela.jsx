@@ -75,6 +75,7 @@ export const MODULOS = [
       { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
       { key: 'conferencia_estoque', label: 'Conferência' },
       { key: 'auditoria_estoque', label: 'Auditoria' },
+      { key: 'contagem_express', label: 'Contagem Express' },
       {
         key: 'compras_ativo',
         label: 'Exibir grupo Compras',

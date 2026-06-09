@@ -226,8 +226,17 @@ export const ALL_MENU_ITEMS = [
       p?.estoque?.armazenagem ||
       p?.estoque?.separacao_pedidos ||
       p?.estoque?.tabela_precos ||
-      p?.estoque?.realizar_ajuste_estoque,
+      p?.estoque?.realizar_ajuste_estoque ||
+      p?.estoque?.contagem_express,
     submenu: [
+      {
+        name: 'Contagem Express',
+        page: 'ContagemExpress',
+        icon: ClipboardList,
+        permissaoCheck: (p) =>
+          p?.estoque?.contagem_express === true ||
+          p?.estoque?.auditoria_estoque === true
+      },
       {
         name: 'Movimentos de Inventário',
         page: 'MovimentosInventario',

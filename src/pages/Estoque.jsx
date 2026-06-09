@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeftRight, Package, Ship, CheckSquare, PackageSearch } from 'lucide-react';
+import { ArrowLeftRight, Package, Ship, CheckSquare, PackageSearch, ClipboardList } from 'lucide-react';
 import { createPageUrl } from '@/components/utils';
 
 /**
@@ -7,6 +7,12 @@ import { createPageUrl } from '@/components/utils';
  */
 export default function EstoquePage() {
   const links = [
+    {
+      to: createPageUrl('ContagemExpress'),
+      icon: ClipboardList,
+      title: 'Contagem Express',
+      desc: 'Contagem rápida com carrinho e confirmação por PIN',
+    },
     {
       to: createPageUrl('MovimentosInventario'),
       icon: ArrowLeftRight,
