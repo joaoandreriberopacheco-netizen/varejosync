@@ -66,6 +66,7 @@ import {
   caixaShell,
   caixaTabPanel,
   caixaTabPanelPad,
+  caixaTabPanelPadInLayout,
   caixaTabsRoot,
   caixaTypo,
   conferenciaTone,
@@ -77,6 +78,7 @@ import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 import { getCachedUserSession } from '@/lib/userSessionCache';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, formatarValorExibicao }) {
   return (
@@ -161,6 +163,10 @@ export default function PDVCaixa({
 } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isMobileShell = useCompactShell();
+  const inAppLayout = isMobileShell && !overlayMode;
+  const tabPanelPad = inAppLayout ? caixaTabPanelPadInLayout : caixaTabPanelPad;
+  const fechamentoSectionRef = useRef(null);
   const handleClose = () => {
     if (overlayMode && onClose) {
       setRascunhoDetalhesTab(null);
@@ -295,6 +301,35 @@ export default function PDVCaixa({
   const [modoVisualizacao, setModoVisualizacao] = useState(false);
   const [showSeletorCaixa, setShowSeletorCaixa] = useState(true);
   const [fechandoCaixa, setFechandoCaixa] = useState(false);
+
+  const scrollToFechamento = useCallback(() => {
+    if (modoVisualizacao) return;
+
+    const scrollElementIntoPanel = () => {
+      const target = fechamentoSectionRef.current;
+      if (!target) return;
+      const panel = target.closest('[data-caixa-tab-scroll]');
+      if (panel instanceof HTMLElement) {
+        const panelTop = panel.getBoundingClientRect().top;
+        const targetTop = target.getBoundingClientRect().top;
+        panel.scrollTo({
+          top: panel.scrollTop + (targetTop - panelTop) - 12,
+          behavior: 'smooth',
+        });
+        return;
+      }
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    if (activeTab !== 'balanco') {
+      setActiveTab('balanco');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollElementIntoPanel);
+      });
+      return;
+    }
+    scrollElementIntoPanel();
+  }, [activeTab, modoVisualizacao]);
 
   const lastUserActivityAtRef = useRef(Date.now());
   const loadDataRef = useRef(null);
@@ -502,7 +537,7 @@ export default function PDVCaixa({
 
       if (e.key === 'F6' && view === 'dashboard') {
         e.preventDefault();
-        document.getElementById('secao-fechamento-caixa')?.scrollIntoView({ behavior: 'smooth' });
+        scrollToFechamento();
         return;
       }
 
@@ -532,7 +567,7 @@ export default function PDVCaixa({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, showConfirmarImpressao, valorRestante, pedidosAguardando]); // Updated telaAtual to view
+  }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, showConfirmarImpressao, valorRestante, pedidosAguardando, scrollToFechamento]); // Updated telaAtual to view
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
   const loadData = useCallback(async (caixaParam, turnoParam, { force = false } = {}) => {
@@ -1267,7 +1302,7 @@ export default function PDVCaixa({
     // Não faz nada, pois o balanço está sempre visível
   };
 
-  const rootClassName = overlayMode
+  const rootClassName = overlayMode || inAppLayout
     ? `h-full min-h-0 flex flex-col bg-muted/40 dark:bg-background ${caixaTypo.screen}`
     : `${caixaShell} bg-muted/40 dark:bg-background ${caixaTypo.screen}`;
 
@@ -1339,6 +1374,35 @@ export default function PDVCaixa({
         <>
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
               <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className={caixaTabsRoot}>
+                {/* Abas mobile — abaixo do header; bottom nav fica no shell global */}
+                <TabsList className={`${caixaMobileTabBar} grid grid-cols-4 h-14 bg-card dark:bg-card border-b border-border/40 dark:border-border/40 rounded-none p-0`}>
+                  <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                    <PieChart className="w-5 h-5" />
+                    <span className={caixaTypo.labelSm}>Balanço</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                    <ShoppingCart className="w-5 h-5" />
+                    <span className={caixaTypo.labelSm}>Vendas</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
+                    <Wallet className="w-5 h-5" />
+                    <span className={caixaTypo.labelSm}>Movimentos</span>
+                  </TabsTrigger>
+                  <button
+                    type="button"
+                    disabled={modoVisualizacao}
+                    onClick={scrollToFechamento}
+                    className={`flex flex-col items-center justify-center gap-0.5 h-full rounded-none border-0 transition-colors touch-manipulation ${
+                      modoVisualizacao
+                        ? 'text-muted-foreground dark:text-muted-foreground cursor-not-allowed opacity-50'
+                        : 'text-muted-foreground hover:bg-muted/30 dark:hover:bg-muted/40 active:bg-muted/40'
+                    }`}
+                  >
+                    <Lock className="w-5 h-5" />
+                    <span className={caixaTypo.labelSm}>Fechar</span>
+                  </button>
+                </TabsList>
+
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
@@ -1377,7 +1441,7 @@ export default function PDVCaixa({
                   </TabsList>
                 </div>
 
-                <TabsContent value="balanco" className={`${caixaTabPanel} ${caixaTabPanelPad}`}>
+                <TabsContent value="balanco" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad}`}>
                   <div className="max-w-4xl mx-auto space-y-4 pb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <CaixaMovimentacoesTurno
@@ -1608,7 +1672,7 @@ export default function PDVCaixa({
                        }
                      };
                      return (
-                       <div id="secao-fechamento-caixa" className="bg-card dark:bg-card rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
+                       <div ref={fechamentoSectionRef} id="secao-fechamento-caixa" className="bg-card dark:bg-card rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
                          <div className="flex items-center justify-between mb-3">
                            <h3 className="text-sm font-semibold text-foreground/90 dark:text-muted-foreground">Fechamento de Caixa</h3>
                            {!temDiferenca ? (
@@ -1639,7 +1703,7 @@ export default function PDVCaixa({
                      })()}
                  </TabsContent>
 
-                 <TabsContent value="vendas" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
+                 <TabsContent value="vendas" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad} space-y-3`}>
                    <div className="max-w-4xl mx-auto space-y-4">
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                        <div className="flex rounded-2xl bg-muted/50 p-1 gap-1">
@@ -1700,7 +1764,7 @@ export default function PDVCaixa({
                             </div>
                             </TabsContent>
 
-                <TabsContent value="movimentos" className={`${caixaTabPanel} ${caixaTabPanelPad} space-y-3`}>
+                <TabsContent value="movimentos" data-caixa-tab-scroll className={`${caixaTabPanel} ${tabPanelPad} space-y-3`}>
                   <div className="max-w-4xl mx-auto space-y-3">
                     {/* Botões de ação */}
                     <div className="grid grid-cols-3 gap-2">
@@ -1751,35 +1815,6 @@ export default function PDVCaixa({
                   </div>
                 </TabsContent>
 
-                {/* Barra de Navegação - Mobile */}
-                <TabsList className={`${caixaMobileTabBar} grid grid-cols-4 h-16 bg-card dark:bg-card border-t border-border/40 dark:border-border/40 rounded-none p-0`}>
-                <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
-                <PieChart className="w-5 h-5" />
-                <span className={caixaTypo.labelSm}>Balanço</span>
-                </TabsTrigger>
-                <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
-                <ShoppingCart className="w-5 h-5" />
-                <span className={caixaTypo.labelSm}>Vendas</span>
-                </TabsTrigger>
-                <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted/40 dark:data-[state=active]:bg-muted h-full rounded-none border-0">
-                <Wallet className="w-5 h-5" />
-                <span className={caixaTypo.labelSm}>Movimentos</span>
-                </TabsTrigger>
-                {/* Botão Fechar Caixa - só ativo na aba balanço, vai para a seção de fechamento no balanço */}
-                 <button
-                   disabled={activeTab !== 'balanco' || modoVisualizacao}
-                   onClick={() => {
-                     if (activeTab !== 'balanco') setActiveTab('balanco');
-                     setTimeout(() => {
-                       document.getElementById('secao-fechamento-caixa')?.scrollIntoView({ behavior: 'smooth' });
-                     }, 100);
-                   }}
-                   className={`flex flex-col items-center justify-center gap-1 h-full rounded-none border-0 transition-colors ${activeTab === 'balanco' && !modoVisualizacao ? 'text-foreground dark:text-white' : 'text-muted-foreground dark:text-muted-foreground cursor-not-allowed'}`}
-                 >
-                   <Lock className="w-5 h-5" />
-                   <span className="text-xs">Fechar</span>
-                 </button>
-                </TabsList>
                 </Tabs>
                 </>
                 }

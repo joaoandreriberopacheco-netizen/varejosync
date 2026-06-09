@@ -387,6 +387,21 @@ export default function VisualizadorCaixa({
       {/* Conteúdo — caixaMain estabelece flex-col para TabsContent poder rolar no mobile */}
       <div className={`${caixaMain} bg-background`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className={caixaTabsRoot}>
+          <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-14 bg-card border-b border-border/40 rounded-none p-0`}>
+            <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+              <PieChart className="w-5 h-5" />
+              <span className="text-xs">Balanço</span>
+            </TabsTrigger>
+            <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+              <ShoppingCart className="w-5 h-5" />
+              <span className={caixaTypo.labelSm}>Vendas</span>
+            </TabsTrigger>
+            <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-0.5 data-[state=active]:bg-muted h-full rounded-none border-0">
+              <Wallet className="w-5 h-5" />
+              <span className="text-xs">Movimentos</span>
+            </TabsTrigger>
+          </TabsList>
+
           {/* KPIs - Desktop */}
           <div className="hidden md:block p-4 pb-0 bg-background">
             <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
@@ -656,21 +671,6 @@ export default function VisualizadorCaixa({
             </div>
           </TabsContent>
 
-          {/* Bottom Nav - Mobile */}
-          <TabsList className={`${caixaMobileTabBar} grid grid-cols-3 h-16 bg-card border-t border-border/40 rounded-none p-0`}>
-            <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
-              <PieChart className="w-5 h-5" />
-              <span className="text-xs">Balanço</span>
-            </TabsTrigger>
-            <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
-              <ShoppingCart className="w-5 h-5" />
-              <span className={caixaTypo.labelSm}>Vendas</span>
-            </TabsTrigger>
-            <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-muted h-full rounded-none border-0">
-              <Wallet className="w-5 h-5" />
-              <span className="text-xs">Movimentos</span>
-            </TabsTrigger>
-          </TabsList>
         </Tabs>
       </div>
 

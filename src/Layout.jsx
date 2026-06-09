@@ -24,6 +24,8 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'RelatorioCatalogoEstoque',
   'CaixasAtivos',
   'TurnosFechados',
+  'PDVCaixa',
+  'PDV',
 ]);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
 const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
@@ -51,7 +53,12 @@ export default function Layout({ children, currentPageName }) {
   const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
-  const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
+  const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
+  /** Mobile: caixa dentro do shell (bottom nav + scroll-hide); overlay rápido mantém fullscreen. */
+  const isMobileCaixaInShell = isMobile && (routePage === 'PDVCaixa' || routePage === 'PDV');
+  const isFullscreen =
+    !isMobileCaixaInShell &&
+    fullscreenPages.some((page) => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);
   const bottomNavScrollEnabled =
