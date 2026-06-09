@@ -91,10 +91,8 @@ export function FinanceiroGrupo({
 
   if (card) {
     return (
-      <div className={cn('w-full min-w-0 overflow-hidden rounded-xl border border-amber-500/25 dark:border-amber-400/20', P38_FIELD_SURFACE)}>
-        <div className="border-l-2 border-amber-500/70 dark:border-amber-400/60">
-          {content}
-        </div>
+      <div className={cn('w-full min-w-0 overflow-hidden rounded-xl border border-border/40 dark:border-white/10', P38_FIELD_SURFACE)}>
+        {content}
       </div>
     );
   }

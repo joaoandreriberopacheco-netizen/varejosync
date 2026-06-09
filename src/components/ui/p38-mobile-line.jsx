@@ -157,6 +157,29 @@ export function P38StatusLabel({ tone = 'success', children, className }) {
   );
 }
 
+const PILL_TONE_CLASS = {
+  success: 'bg-[#4a5240]/10 text-[#4a5240] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]',
+  warning: 'bg-amber-500/10 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
+  danger: 'bg-red-500/10 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+  info: 'bg-cyan-500/10 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300',
+  muted: 'bg-muted/80 text-muted-foreground',
+};
+
+/** Chip com fundo suave — mesmo padrão de “Despachado” em pedidos de compra. */
+export function P38StatusPill({ tone = 'success', children, className }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-normal whitespace-nowrap',
+        PILL_TONE_CLASS[tone] ?? PILL_TONE_CLASS.success,
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 /** Chip métrico horizontal (Receita, Lucro, etc.) — scroll horizontal opcional. */
 export function P38MobileMetric({ label, value, tone = 'default', className }) {
   const valueClass =

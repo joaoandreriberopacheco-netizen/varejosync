@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
   P38StatusLabel,
+  P38StatusPill,
   p38StatusTone,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
@@ -83,7 +84,11 @@ function rowMeta(l, { showPago = false } = {}) {
     <>
       {l.categoria && <span>{l.categoria}</span>}
       {l.status && l.status !== 'Pago' && (
-        <P38StatusLabel tone={lancStatusTone(l.status)}>{l.status}</P38StatusLabel>
+        showPago && l.status === 'Vencido' ? (
+          <P38StatusPill tone="danger">{l.status}</P38StatusPill>
+        ) : (
+          <P38StatusLabel tone={lancStatusTone(l.status)}>{l.status}</P38StatusLabel>
+        )
       )}
       {showPago && isPago && <P38StatusLabel tone="success">Pago</P38StatusLabel>}
       {cancelado && <P38StatusLabel tone="muted">Cancelado</P38StatusLabel>}
