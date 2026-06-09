@@ -4,12 +4,13 @@ import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } fro
 import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
-import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer, Upload } from 'lucide-react';
+import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Printer } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
+import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { ContasAbertasProvider, ContasAbertasChrome, ContasAbertasListaPane } from './ContasAbertas';
@@ -279,59 +280,47 @@ export default function ExecucaoOrcamentaria() {
     <ContasAbertasProvider active={contasPagarAtiva} onOpenImportador={() => setShowImportadorAgefin(true)}>
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header + tabs (painel mediterrâneo — até KPIs/controles) */}
-      <div className="min-w-0 max-w-full space-y-4 rounded-[24px] border border-border/40 bg-secondary/40 px-4 py-4 sm:space-y-6 sm:rounded-[32px] sm:px-5 sm:py-5 dark:border-white/10 dark:bg-[#2d333b]">
-        <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
-          <div className="min-w-0 flex-1 space-y-1 pr-0.5 sm:space-y-2 sm:pr-1">
-            <p className="text-[24px] leading-none font-semibold text-foreground sm:text-[32px] dark:text-foreground font-glacial">Financeiro</p>
-            <p className="text-xs text-muted-foreground sm:text-sm dark:text-muted-foreground">Fluxo e contas com visual mais leve, limpo e direto.</p>
+      <div className="min-w-0 max-w-full space-y-3 rounded-[20px] border border-border/40 bg-secondary/40 px-3 py-3 sm:rounded-[24px] sm:px-4 sm:py-4 dark:border-white/10 dark:bg-[#2d333b]">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-xl leading-none font-semibold text-foreground sm:text-2xl font-glacial">Financeiro</p>
+            <p className="mt-1 hidden text-xs text-muted-foreground sm:block">Fluxo e contas com visual mais leve, limpo e direto.</p>
           </div>
           {aba === 'fluxo' && (
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-card/90 dark:bg-[#26262e] hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card/90 dark:bg-[#26262e] hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors"
               aria-label="Imprimir extrato"
             >
               <Printer className="w-4 h-4 text-foreground/90" />
             </button>
           )}
         </div>
-        <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={() => setAba('fluxo')}
-            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'fluxo' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
-          >
-            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'fluxo' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
-              <Scale className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
-            </div>
-            <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Fluxo de Caixa</p>
-            <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">Movimento do período</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setAba('contas')}
-            className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${aba === 'contas' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
-          >
-            <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${aba === 'contas' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
-              <Clock className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
-            </div>
-            <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Contas Abertas</p>
-            <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">Pendências e cobranças</p>
-          </button>
-        </div>
+
+        <FinanceiroPillTabs
+          value={aba}
+          onChange={setAba}
+          items={[
+            { value: 'fluxo', label: 'Fluxo de Caixa' },
+            { value: 'contas', label: 'Contas Abertas' },
+          ]}
+        />
 
         {aba === 'fluxo' && (
-          <div className="min-w-0 space-y-4 sm:space-y-6">
+          <div className="min-w-0 space-y-3">
             {/* KPIs */}
             <KpiFluxo kpis={kpis} />
 
             {/* Alerta conciliação pendente */}
             {totalPend > 0 && !pendentes && (
-              <button onClick={() => setPendentes(true)}
-                className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-card dark:bg-[#26262e] text-foreground/90 text-xs text-left hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors">
-                <Clock className="w-3.5 h-3.5 flex-none text-muted-foreground" />
-                <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
-                <span className="font-semibold flex-none text-muted-foreground">Ver →</span>
+              <button
+                type="button"
+                onClick={() => setPendentes(true)}
+                className="flex w-full items-center gap-2 rounded-xl bg-card px-3 py-2 text-left text-xs text-foreground/90 dark:bg-[#26262e] hover:bg-secondary/80 dark:hover:bg-[#383e47] transition-colors"
+              >
+                <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate">{totalPend} aguardando conciliação</span>
+                <span className="shrink-0 font-semibold text-muted-foreground">Ver →</span>
               </button>
             )}
 
@@ -355,32 +344,15 @@ export default function ExecucaoOrcamentaria() {
         )}
 
         {aba === 'contas' && (
-          <div className="min-w-0 space-y-4 sm:space-y-6">
-            {/* Sub-abas no mesmo padrão visual de Fluxo / Contas Abertas */}
-            <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-2.5">
-              <button
-                type="button"
-                onClick={() => setAbaContas('contas')}
-                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'contas' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
-              >
-                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'contas' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
-                  <ArrowUpRight className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
-                </div>
-                <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Contas a pagar</p>
-                <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">Pendências e pagamentos</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAbaContas('agefin')}
-                className={`min-w-0 rounded-[18px] px-2 py-2.5 text-center transition-all sm:rounded-[22px] sm:px-3 sm:py-3 ${abaContas === 'agefin' ? 'bg-card dark:bg-[#26262e] opacity-100' : 'bg-card/80 dark:bg-[#26262e]/60 opacity-85'}`}
-              >
-                <div className={`mx-auto mb-1.5 flex h-9 w-9 items-center justify-center rounded-[13px] sm:mb-2 sm:h-10 sm:w-10 sm:rounded-[15px] ${abaContas === 'agefin' ? 'bg-secondary/80 dark:bg-[#383e47]' : 'bg-secondary/60 dark:bg-[#383e47]/60'}`}>
-                  <Upload className="h-3.5 w-3.5 text-foreground/90 sm:h-4 sm:w-4 dark:text-foreground" />
-                </div>
-                <p className="text-[12px] font-medium leading-tight text-foreground sm:text-[13px] dark:text-white">Atualizar boletos</p>
-                <p className="mt-0.5 hidden text-[10px] text-muted-foreground sm:mt-1 sm:block">PDF e recorrências</p>
-              </button>
-            </div>
+          <div className="min-w-0 space-y-3">
+            <FinanceiroPillTabs
+              value={abaContas}
+              onChange={setAbaContas}
+              items={[
+                { value: 'contas', label: 'Contas a pagar' },
+                { value: 'agefin', label: 'Atualizar boletos' },
+              ]}
+            />
 
             {abaContas === 'contas' ? (
               <ContasAbertasChrome />
