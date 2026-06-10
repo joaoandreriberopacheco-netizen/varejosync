@@ -69,7 +69,9 @@ export default function ContagemExpressPainelContagem({
 
   const handleConfirmarSubmit = (event) => {
     event?.preventDefault?.();
-    if (qtdNum > 0) onConfirmar?.();
+    if (qtdNum <= 0) return;
+    allowProgrammaticFocusBriefly();
+    onConfirmar?.();
   };
 
   let diffTone = 'default';

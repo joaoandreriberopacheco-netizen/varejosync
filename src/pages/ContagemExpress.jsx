@@ -37,7 +37,7 @@ import {
   extrairReferenciaSessao,
   sincronizarSessaoContagemExpress,
 } from '@/lib/contagemExpressSessao';
-import { allowProgrammaticFocusBriefly } from '@/lib/focusPolicy';
+import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
 import { toast } from 'sonner';
 
 async function carregarSaldoProduto(produtoId) {
@@ -77,6 +77,7 @@ export default function ContagemExpress() {
   const [imprimindo, setImprimindo] = useState(false);
   const [pinAutorizado, setPinAutorizado] = useState(false);
   const [showPinEntrada, setShowPinEntrada] = useState(false);
+  const [focarBuscaAposLimpar, setFocarBuscaAposLimpar] = useState(false);
 
   const persistItens = useCallback(async (novosItens, sid = sessionId, confId = conferenciaId) => {
     setItens(novosItens);
@@ -95,6 +96,19 @@ export default function ContagemExpress() {
       setShowPinEntrada(true);
     }
   }, [loading, pinAutorizado]);
+
+  useEffect(() => {
+    if (produtoSelecionado || !focarBuscaAposLimpar) return undefined;
+
+    allowProgrammaticFocusBriefly();
+    const timer = window.setTimeout(() => {
+      allowProgrammaticFocusBriefly();
+      focusField(buscaRef.current, { preventScroll: true });
+      setFocarBuscaAposLimpar(false);
+    }, 50);
+
+    return () => window.clearTimeout(timer);
+  }, [produtoSelecionado, focarBuscaAposLimpar]);
 
   useEffect(() => {
     const init = async () => {
@@ -195,12 +209,16 @@ export default function ContagemExpress() {
     setTimeout(() => buscaRef.current?.blur(), 50);
   };
 
-  const limparSelecao = () => {
+  const limparSelecao = ({ focarBusca = false } = {}) => {
     setProdutoSelecionado(null);
     setQuantidadePendente('');
     setEntradaPendente(null);
     setSaldoInfo({ loading: false, saldoExtrato: null });
-    setTimeout(() => buscaRef.current?.focus(), 100);
+    setBusca('');
+    setProdutosFiltrados([]);
+    if (focarBusca) {
+      setFocarBuscaAposLimpar(true);
+    }
   };
 
   const handleSessaoCancelada = (sessao) => {
@@ -268,8 +286,9 @@ export default function ContagemExpress() {
       novosItens = [...itens, entradaPreview];
     }
 
+    allowProgrammaticFocusBriefly();
     persistItens(novosItens);
-    limparSelecao();
+    limparSelecao({ focarBusca: true });
   };
 
   const abrirCarrinho = async () => {
@@ -467,6 +486,7 @@ export default function ContagemExpress() {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               ref={buscaRef}
+              variant="search"
               placeholder="Buscar produto..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
