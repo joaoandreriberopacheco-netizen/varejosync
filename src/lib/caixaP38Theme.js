@@ -118,9 +118,9 @@ export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))
 /** Painéis com GlacialBottomNav visível no shell mobile */
 export const caixaTabPanelPadInLayout = 'p-4 pb-[var(--p38-scroll-pad-below-nav)]';
 export const caixaMobileTabBar = 'md:hidden flex-shrink-0';
-/** Detalhe embutido (Caixas Ativos / Turnos Fechados) — portal no body, acima do layout mobile */
+/** Detalhe embutido (Caixas Ativos / Turnos Fechados) — portal no body, acima dos atalhos rápidos */
 export const caixaOverlayShell =
-  'fixed inset-0 z-[1180] h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background';
+  'fixed inset-0 z-[1250] h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background pointer-events-auto';
 
 /** Tipografia da tela de caixa — maiúsculas + corpo maior (alinhado ao fluxo P38) */
 export const caixaTypo = {

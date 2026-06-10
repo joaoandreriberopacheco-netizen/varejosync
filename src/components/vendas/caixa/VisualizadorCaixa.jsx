@@ -28,6 +28,8 @@ import {
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
+import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 
 function RascunhoAguardandoCardEspelho({ rascunho, onDetalhes, onEditar, formatarValorExibicao }) {
   return (
@@ -173,10 +175,12 @@ export default function VisualizadorCaixa({
 
   // Portal no body: evita contentor overflow-hidden do Layout bloquear toque/scroll no mobile.
   useEffect(() => {
+    cleanupQuickAccessPortalLayers();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prevOverflow;
+      cleanupQuickAccessPortalLayers();
     };
   }, []);
 
@@ -345,6 +349,7 @@ export default function VisualizadorCaixa({
   }
 
   return renderInPortal(
+    <CaixaOverlayStackProvider active stack="mirror">
     <div className={`${caixaOverlayShell} ${caixaTypo.screen}`}>
       {/* Header */}
       <div className="bg-card border-b border-border/40 px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -700,7 +705,7 @@ export default function VisualizadorCaixa({
       />
 
       {rascunhoDetalhesTab && (
-        <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 z-[1190]">
+        <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 z-[1270]">
           <div className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
               <div>
@@ -747,5 +752,6 @@ export default function VisualizadorCaixa({
         </div>
       )}
     </div>
+    </CaixaOverlayStackProvider>
   );
 }

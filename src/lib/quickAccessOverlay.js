@@ -15,6 +15,11 @@ export const QUICK_ACCESS_LAUNCHER_CLASS = 'z-[1210]';
 export const QUICK_ACCESS_NESTED_DIALOG_CLASS = 'z-[1220]';
 export const QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS = 'z-[1230]';
 
+/** Espelho Caixas Ativos / Turnos Fechados — acima dos atalhos rápidos (z-1200). */
+export const CAIXA_MIRROR_SHELL_Z = 1250;
+export const CAIXA_MIRROR_DIALOG_CLASS = 'z-[1260]';
+export const CAIXA_MIRROR_DIALOG_CHILD_CLASS = 'z-[1270]';
+
 /**
  * Remove camadas Radix presas e travas de pointer-events/scroll no body
  * após fechar o painel de atalho (caixa/orçamento/vendedor).

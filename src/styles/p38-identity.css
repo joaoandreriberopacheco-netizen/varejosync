@@ -226,11 +226,15 @@
   }
 
   .caixa-screen .p38-panel__accent-bar {
-    @apply w-px md:w-[3px];
+    @apply w-px rounded-sm;
   }
 
   .dark .p38-panel__accent-bar {
     background-color: hsl(var(--p38-accent-lime));
+  }
+
+  .dark .caixa-screen .p38-panel__accent-bar {
+    background-color: #a4ce33;
   }
 
   .p38-panel__body {
