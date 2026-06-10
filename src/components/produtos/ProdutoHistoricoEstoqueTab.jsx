@@ -11,6 +11,9 @@ import {
   RefreshCw,
   Wallet,
   X,
+  ListFilter,
+  ArrowDownAZ,
+  ArrowUpAZ,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +53,9 @@ import {
   P38_VIRTUAL_MIN_ROWS,
   P38_VIRTUAL_OVERSCAN,
 } from '@/lib/p38VirtualList';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { cn } from '@/components/utils';
 
 const P38_FIELD =
   'h-11 rounded-lg border-0 bg-secondary/80 shadow-none focus-visible:ring-1 focus-visible:ring-border/60 dark:bg-[#26262e]';
@@ -496,7 +502,10 @@ export default function ProdutoHistoricoEstoqueTab({
   const [dataIni, setDataIni] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [ordem, setOrdem] = useState('desc');
+  const [sortAlpha, setSortAlpha] = useState('az');
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const isMobile = useCompactShell();
+  const chromeExpanded = useBottomNavScrollVisibility(isMobile);
 
   const filtros = useMemo(
     () => ({ busca, tipoFiltro, refTipo, dataIni, dataFim }),
@@ -528,10 +537,19 @@ export default function ProdutoHistoricoEstoqueTab({
     return pass;
   }, [extrato.linhas, filtros, ordem]);
 
-  const diasExtratoMobile = useMemo(
-    () => agruparLinhasPorDia(linhasParaExibir, ordem),
-    [linhasParaExibir, ordem]
-  );
+  const diasExtratoMobile = useMemo(() => {
+    const dias = agruparLinhasPorDia(linhasParaExibir, ordem);
+    if (!isMobile) return dias;
+    return dias.map(({ dia, linhas: linhasDia }) => ({
+      dia,
+      linhas: [...linhasDia].sort((a, b) => {
+        const da = descricaoMovimento(a.mov).toLocaleLowerCase('pt-BR');
+        const db = descricaoMovimento(b.mov).toLocaleLowerCase('pt-BR');
+        const cmp = da.localeCompare(db, 'pt-BR');
+        return sortAlpha === 'az' ? cmp : -cmp;
+      }),
+    }));
+  }, [linhasParaExibir, ordem, isMobile, sortAlpha]);
 
   const itensVirtuaisMobile = useMemo(
     () => buildExtratoItensVirtuais(diasExtratoMobile),
@@ -559,51 +577,125 @@ export default function ProdutoHistoricoEstoqueTab({
     setDataFim('');
   }, []);
 
+  const searchRowMobile = (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="relative min-w-0 flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Documento, cliente, origem…"
+          className={`${P38_FIELD} h-11 rounded-2xl pl-9 pr-9`}
+        />
+        {busca ? (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:text-foreground"
+            onClick={() => setBusca('')}
+            aria-label="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        onClick={() => setFiltrosAbertos(true)}
+        className={cn(
+          'relative h-11 w-11 shrink-0 rounded-2xl flex items-center justify-center transition-colors',
+          temFiltrosExtras
+            ? 'bg-primary/15 text-primary dark:bg-muted dark:text-foreground'
+            : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+        )}
+        aria-label="Filtros do extrato"
+      >
+        <ListFilter className="h-4 w-4" />
+        {temFiltrosExtras ? (
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#4a5240] dark:bg-[#a4ce33]" />
+        ) : null}
+      </button>
+      <button
+        type="button"
+        onClick={() => setSortAlpha((o) => (o === 'az' ? 'za' : 'az'))}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-colors hover:bg-muted"
+        aria-label={sortAlpha === 'az' ? 'Ordenar Z–A' : 'Ordenar A–Z'}
+        title={sortAlpha === 'az' ? 'A–Z' : 'Z–A'}
+      >
+        {sortAlpha === 'az' ? <ArrowDownAZ className="h-4 w-4" /> : <ArrowUpAZ className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-      {/* Resumo P38 */}
-      <div className="p38-panel shrink-0">
-        <div className="p38-panel__accent-bar" aria-hidden />
-        <div className="p38-panel__body">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="min-w-0">
-              <p className={p38Table.mobileMicroLabel}>Estoque (sistema)</p>
-              <p className={`mt-1 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums ${p38Accent.success.text}`}>
-                <Wallet className="h-4 w-4 shrink-0" />
-                {formatQtd(estoqueAtual)}
-              </p>
-              {estoqueAuxiliar ? (
-                <p className="mt-1 text-[10px] text-muted-foreground">
-                  ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}
-                  {estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
+      {/* Resumo P38 — colapsa no mobile ao descer a lista */}
+      <div
+        className={cn(
+          'shrink-0 overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
+          'desktop-layout:max-h-none desktop-layout:opacity-100',
+          isMobile && (chromeExpanded ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0')
+        )}
+        aria-hidden={isMobile && !chromeExpanded}
+      >
+        <div className="p38-panel">
+          <div className="p38-panel__accent-bar" aria-hidden />
+          <div className="p38-panel__body">
+            <div className="mb-3 flex items-start justify-end desktop-layout:hidden">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0 rounded-xl"
+                onClick={() => onRefresh?.()}
+                disabled={loading}
+                aria-label="Atualizar extrato"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="min-w-0">
+                <p className={p38Table.mobileMicroLabel}>Estoque (sistema)</p>
+                <p className={`mt-1 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums ${p38Accent.success.text}`}>
+                  <Wallet className="h-4 w-4 shrink-0" />
+                  {formatQtd(estoqueAtual)}
                 </p>
-              ) : null}
+                {estoqueAuxiliar ? (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}
+                    {estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
+                  </p>
+                ) : null}
+              </div>
+              <div className="min-w-0">
+                <p className={p38Table.mobileMicroLabel}>Movimentos</p>
+                <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
+                  {linhasParaExibir.length}
+                  <span className="text-xs font-normal text-muted-foreground"> / {movimentacoes.length}</span>
+                </p>
+              </div>
+              <div className="col-span-2 min-w-0 sm:col-span-1">
+                <p className={p38Table.mobileMicroLabel}>Saldo antes (est.)</p>
+                <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
+                  {formatQtd(extrato.saldoInicial)}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className={p38Table.mobileMicroLabel}>Movimentos</p>
-              <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
-                {linhasParaExibir.length}
-                <span className="text-xs font-normal text-muted-foreground"> / {movimentacoes.length}</span>
+            {Math.abs(extrato.divergencia) > 0.0001 ? (
+              <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-800 dark:text-amber-200">
+                Atenção: a soma das movimentações não fecha exatamente com o estoque atual. Pode haver
+                ajustes manuais ou registros antigos fora do histórico.
               </p>
-            </div>
-            <div className="col-span-2 min-w-0 sm:col-span-1">
-              <p className={p38Table.mobileMicroLabel}>Saldo antes (est.)</p>
-              <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
-                {formatQtd(extrato.saldoInicial)}
-              </p>
-            </div>
+            ) : null}
           </div>
-          {Math.abs(extrato.divergencia) > 0.0001 ? (
-            <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-800 dark:text-amber-200">
-              Atenção: a soma das movimentações não fecha exatamente com o estoque atual. Pode haver
-              ajustes manuais ou registros antigos fora do histórico.
-            </p>
-          ) : null}
         </div>
       </div>
 
-      {/* Barra busca + ações */}
-      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+      {/* Mobile — busca + filtro + ordem sempre visíveis */}
+      <div className="desktop-layout:hidden shrink-0">{searchRowMobile}</div>
+
+      {/* Desktop — barra busca + ações */}
+      <div className="hidden shrink-0 flex-col gap-2 sm:flex-row sm:items-center desktop-layout:flex">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

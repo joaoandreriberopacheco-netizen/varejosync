@@ -27,7 +27,6 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'PDVCaixa',
   'PDV',
   'TabelaPrecosConsulta',
-  'ExtratoConta',
 ]);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
 const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
@@ -54,7 +53,7 @@ export default function Layout({ children, currentPageName }) {
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
   const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
 
-  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
+  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
   /** Mobile: caixa dentro do shell (bottom nav + scroll-hide); overlay rápido mantém fullscreen. */
   const isMobileCaixaInShell = isMobile && (routePage === 'PDVCaixa' || routePage === 'PDV');
