@@ -97,20 +97,58 @@ export function prepareWritePayload(payload, entityName, mapping) {
   return out;
 }
 
+function normalizeFilterColumn(field, mapping) {
+  if (field === 'created_date') return 'created_at';
+  if (field === 'updated_date') return 'updated_at';
+  const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
+  const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
+  if (hasOverflowJsonb && !cols.has(field)) {
+    return `dados->>${field}`;
+  }
+  return field;
+}
+
 function applyFilters(query, where, mapping) {
   if (!where || typeof where !== 'object') return query;
   let q = query;
-  const hasOverflowJsonb = mapping?.mode === 'jsonb' || Array.isArray(mapping?.columns);
-  const cols = new Set([...(mapping?.columns || []), ...META_COLUMNS]);
 
   for (const [key, val] of Object.entries(where)) {
     if (val === undefined) continue;
     // Operadores especiais do Base44 (ex: $or) não são suportados aqui — ignorar.
     if (key.startsWith('$')) continue;
-    let target = key;
-    if (hasOverflowJsonb && !cols.has(key)) {
-      target = `dados->>${key}`;
+    const target = normalizeFilterColumn(key, mapping);
+
+    if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
+      const ops = val;
+      let applied = false;
+      if ('$gte' in ops) {
+        q = q.gte(target, ops.$gte);
+        applied = true;
+      }
+      if ('$lte' in ops) {
+        q = q.lte(target, ops.$lte);
+        applied = true;
+      }
+      if ('$gt' in ops) {
+        q = q.gt(target, ops.$gt);
+        applied = true;
+      }
+      if ('$lt' in ops) {
+        q = q.lt(target, ops.$lt);
+        applied = true;
+      }
+      if ('$ne' in ops) {
+        q = q.neq(target, ops.$ne);
+        applied = true;
+      }
+      if ('$regex' in ops) {
+        const pattern = String(ops.$regex);
+        q = ops.$options === 'i' ? q.ilike(target, `%${pattern}%`) : q.like(target, `%${pattern}%`);
+        applied = true;
+      }
+      if (applied) continue;
     }
+
     if (Array.isArray(val)) {
       q = q.in(target, val);
     } else {

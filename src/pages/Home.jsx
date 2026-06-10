@@ -45,8 +45,6 @@ export default function HomePage() {
     return !!(perms?.dashboard?.acesso || perms?.dashboard?.resumo_vendas_home || perms?.vendas?.acesso);
   }, []);
 
-  const { kpis } = useKPIsCache({ enabled: podeVerResumoVendasEarly });
-
   // Mesma árvore que o menu lateral (inclui cache do perfil enquanto carrega)
   const permissoes = useMemo(() => {
     if (!currentUser || currentUser.role === 'admin') return null;
@@ -77,6 +75,8 @@ export default function HomePage() {
       permissoes?.vendas?.acesso
     );
   }, [currentUser, permissoes]);
+
+  const { kpis } = useKPIsCache({ enabled: podeVerResumoVendas || podeVerResumoVendasEarly });
 
   useEffect(() => {
     const loadUser = async () => {

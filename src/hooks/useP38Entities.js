@@ -2,7 +2,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { dataHoje } from '@/components/utils/dateUtils';
+import {
+  dataHoje,
+  fimDiaSistemaISO,
+  inicioDiaSistemaISO,
+  toLocalDateKey,
+} from '@/components/utils/dateUtils';
 
 const entityQueryDefaults = {
   staleTime: P38_STALE_TIME,
@@ -30,7 +35,8 @@ export function fetchRascunhosPedidoVendaList(sort = '-created_date') {
 }
 
 export async function fetchHomeKpis(dateKey, queryClient) {
-  const dayStart = new Date(`${dateKey}T00:00:00`);
+  const inicioDia = inicioDiaSistemaISO(dateKey);
+  const fimDia = fimDiaSistemaISO(dateKey);
 
   const produtosPromise = queryClient
     ? queryClient.fetchQuery({
@@ -41,13 +47,15 @@ export async function fetchHomeKpis(dateKey, queryClient) {
     : fetchProdutosList();
 
   const [vendasHojeRows, pedidosPendentes, produtos] = await Promise.all([
-    base44.entities.PedidoVenda.filter({ created_date: { $gte: dateKey } }),
+    base44.entities.PedidoVenda.filter({
+      created_date: { $gte: inicioDia, $lte: fimDia },
+    }),
     base44.entities.PedidoVenda.filter({ status: 'Aguardando Caixa' }),
     produtosPromise,
   ]);
 
   const vendasHoje = (vendasHojeRows || []).filter(
-    (v) => v?.created_date && new Date(v.created_date) >= dayStart
+    (v) => v?.created_date && toLocalDateKey(v.created_date) === dateKey
   );
   const produtosAlerta = (produtos || []).filter(
     (p) => (p.estoque_atual || 0) <= (p.estoque_minimo || 0)
