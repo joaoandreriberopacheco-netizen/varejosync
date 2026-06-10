@@ -25,6 +25,12 @@ import {
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  P38MobileLine,
+  P38MobileLineList,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
+import {
   calcularExtratoComSaldo,
   deltaQuantidadeMovimento,
   movimentacaoPassaFiltros,
@@ -44,6 +50,48 @@ const STICKY_COL = {
 function formatQtd(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '0';
   return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+}
+
+function movimentoAccent(tipo) {
+  return tipo === 'Entrada' ? 'success' : 'danger';
+}
+
+function formatDataHoraMov(mov) {
+  if (!mov?.created_date) return '—';
+  const d = new Date(mov.created_date);
+  return `${format(d, 'dd/MM/yy')} ${format(d, 'HH:mm')}`;
+}
+
+function descricaoMovimento(mov) {
+  return mov.referencia_numero || mov.documento_referencia || mov.referencia_id || textoReferenciaTipo(mov);
+}
+
+function agruparLinhasPorDia(linhas, ordemLista) {
+  const grupos = new Map();
+  for (const linha of linhas) {
+    const dia = linha.mov?.created_date
+      ? format(new Date(linha.mov.created_date), 'yyyy-MM-dd')
+      : 'sem-data';
+    if (!grupos.has(dia)) grupos.set(dia, []);
+    grupos.get(dia).push(linha);
+  }
+
+  const dias = [...grupos.keys()].sort((a, b) => {
+    if (a === 'sem-data') return 1;
+    if (b === 'sem-data') return -1;
+    return ordemLista === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
+  });
+
+  return dias.map((dia) => {
+    const linhasDia = [...grupos.get(dia)];
+    linhasDia.sort((a, b) => {
+      const ta = new Date(a.mov?.created_date || 0).getTime();
+      const tb = new Date(b.mov?.created_date || 0).getTime();
+      const cmp = ta - tb;
+      return ordemLista === 'asc' ? cmp : -cmp;
+    });
+    return { dia, linhas: linhasDia };
+  });
 }
 
 export default function ProdutoHistoricoEstoqueTab({
@@ -90,6 +138,11 @@ export default function ProdutoHistoricoEstoqueTab({
     });
     return pass;
   }, [extrato.linhas, filtros, ordem]);
+
+  const diasExtratoMobile = useMemo(
+    () => agruparLinhasPorDia(linhasParaExibir, ordem),
+    [linhasParaExibir, ordem]
+  );
 
   const temFiltrosExtras =
     tipoFiltro !== 'todos' || refTipo !== 'todos' || Boolean(dataIni) || Boolean(dataFim);
@@ -304,7 +357,134 @@ export default function ProdutoHistoricoEstoqueTab({
           ) : null}
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40/90 bg-card shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
+        <>
+        {/* Extrato mobile — movimento + saldo (estilo extrato bancário) */}
+        <div className="desktop-layout:hidden flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+            <div className="space-y-3 p-2">
+              {diasExtratoMobile.map(({ dia, linhas: linhasDia }) => {
+                const saldoFimDia = linhasDia.reduce((acc, l) => {
+                  const t = new Date(l.mov?.created_date || 0).getTime();
+                  const best = acc?.t ?? -Infinity;
+                  return t >= best ? { t, saldo: l.saldoApos } : acc;
+                }, null)?.saldo;
+
+                return (
+                  <div
+                    key={dia}
+                    className="overflow-hidden rounded-xl border border-border/40 bg-card dark:border-white/10 dark:bg-[#151a26]"
+                  >
+                    <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3 py-2.5 dark:border-white/5 dark:bg-[#1a1f2e]">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          {dia === 'sem-data'
+                            ? 'Sem data'
+                            : format(new Date(`${dia}T12:00:00`), "dd 'de' MMM yyyy")}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {linhasDia.length} movimento{linhasDia.length === 1 ? '' : 's'}
+                        </p>
+                      </div>
+                      {saldoFimDia != null ? (
+                        <div className="text-right">
+                          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Saldo no dia
+                          </p>
+                          <p className="font-glacial text-base font-bold tabular-nums text-foreground">
+                            {formatQtd(saldoFimDia)}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <P38MobileLineList>
+                      {linhasDia.map(({ mov, saldoApos }, idx) => {
+                        const isEntrada = mov.tipo === 'Entrada';
+                        const delta = deltaQuantidadeMovimento(mov);
+                        const origem = textoReferenciaTipo(mov);
+                        const clienteNome =
+                          mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '';
+                        const documento = descricaoMovimento(mov);
+                        const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
+                        const qtdShow =
+                          estoqueAuxiliar && fatorAuxiliar
+                            ? `${formatQtd((Number(mov.quantidade) || 0) / fatorAuxiliar)} ${estoqueAuxiliar.sigla}`
+                            : null;
+                        const rowKey = mov.id != null ? mov.id : `mov-m-${dia}-${idx}`;
+
+                        const metaParts = [
+                          <P38StatusLabel key="tipo" tone={movimentoAccent(mov.tipo)}>
+                            {mov.tipo}
+                          </P38StatusLabel>,
+                        ];
+                        if (origem && origem !== mov.tipo) {
+                          metaParts.push(
+                            <span key="origem" className="truncate text-[10px] text-muted-foreground">
+                              {origem}
+                            </span>
+                          );
+                        }
+                        if (clienteNome) {
+                          metaParts.push(
+                            <span key="cli" className="truncate text-[10px] text-muted-foreground">
+                              {clienteNome}
+                            </span>
+                          );
+                        }
+                        if (mov.usuario_responsavel) {
+                          metaParts.push(
+                            <span key="resp" className="truncate text-[10px] text-muted-foreground">
+                              {mov.usuario_responsavel}
+                            </span>
+                          );
+                        }
+
+                        const subtitleParts = [formatDataHoraMov(mov)];
+                        if (total > 0) {
+                          subtitleParts.push(
+                            `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                          );
+                        }
+                        if (qtdShow) subtitleParts.push(qtdShow);
+
+                        return (
+                          <P38MobileLine
+                            key={rowKey}
+                            striped={idx % 2 === 1}
+                            accent={p38AccentKeyFromTone(movimentoAccent(mov.tipo))}
+                            title={documento}
+                            subtitle={subtitleParts.join(' · ')}
+                            meta={metaParts}
+                            value={
+                              <span
+                                className={
+                                  isEntrada
+                                    ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+                                    : 'font-semibold text-red-600 dark:text-red-300'
+                                }
+                              >
+                                {delta >= 0 ? '+' : ''}
+                                {formatQtd(delta)}
+                              </span>
+                            }
+                            valueSub={
+                              <span className="text-[10px] font-medium tabular-nums text-muted-foreground">
+                                Saldo {saldoApos != null ? formatQtd(saldoApos) : '—'}
+                              </span>
+                            }
+                          />
+                        );
+                      })}
+                    </P38MobileLineList>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabela desktop — colunas fixas + scroll horizontal */}
+        <div className="hidden desktop-layout:flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40/90 bg-card shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
           <p className="shrink-0 border-b border-border/40 bg-muted/40 px-3 py-2 text-[10px] leading-snug text-muted-foreground dark:border-white/5 dark:bg-[#1a1f2e] dark:text-muted-foreground">
             Colunas fixas: data, documento e saldo. Deslize para a direita para ver origem, valores e responsável.
           </p>
@@ -453,6 +633,7 @@ export default function ProdutoHistoricoEstoqueTab({
             </table>
           </div>
         </div>
+        </>
       )}
     </div>
   );
