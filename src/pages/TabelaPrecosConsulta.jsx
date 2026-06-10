@@ -7,7 +7,7 @@ import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 import { calcularPrecoVendaTabela, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
 import { p38Mobile } from '@/lib/p38MobileSurfaces';
-import { P38StatusDot } from '@/components/ui/p38-mobile-line';
+import { P38MobileLineList, P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
 import { produtoMatchesSearchTerm } from '@/lib/filterProdutos';
@@ -234,7 +234,7 @@ export default function TabelaPrecosConsulta() {
             {searchTerm && <p className="text-xs text-muted-foreground mt-1">Tente outros termos de busca</p>}
           </div>
         ) : (
-          <P38MobileLineList>
+          <P38MobileLineList allViewports>
             {produtosFiltrados.map((produto, index) => (
               <SkuCard
                 key={produto.id}
