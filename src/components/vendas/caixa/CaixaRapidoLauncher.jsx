@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import { ChevronUp, Wallet } from 'lucide-react';
+import { shouldShowQuickAccessLaunchers } from '@/config/quickAccessLauncherPolicy';
 import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
@@ -18,6 +20,7 @@ function userCanAccessCaixa(user, perfilDeAcesso) {
 }
 
 export default function CaixaRapidoLauncher() {
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
   const isCompactViewport = !useIsDesktop();
@@ -86,7 +89,7 @@ export default function CaixaRapidoLauncher() {
     resetDrag();
   };
 
-  const showLauncher = canAccess;
+  const showLauncher = canAccess && shouldShowQuickAccessLaunchers(location.pathname);
 
   const launcher =
     showLauncher &&

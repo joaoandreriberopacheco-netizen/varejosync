@@ -85,7 +85,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
           </div>
         )}
         {e <= 0 && (
-          <div className="text-xs text-red-400 whitespace-nowrap mt-0.5">sem estoque</div>
+          <div className="text-[10px] text-red-400 whitespace-nowrap mt-0.5 shrink-0">s/ estoque</div>
         )}
       </div>
     </div>
@@ -149,7 +149,7 @@ export default function TabelaPrecosConsulta() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full bg-card relative">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden w-full bg-card relative">
 
       {/* Header fixo */}
       <div className="flex-none bg-card border-b border-border/40 px-4 py-3 space-y-3">
@@ -224,7 +224,7 @@ export default function TabelaPrecosConsulta() {
       />
 
       {/* Lista simples em ordem alfabética */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
         {produtosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mb-3">
@@ -234,7 +234,10 @@ export default function TabelaPrecosConsulta() {
             {searchTerm && <p className="text-xs text-muted-foreground mt-1">Tente outros termos de busca</p>}
           </div>
         ) : (
-          <P38MobileLineList allViewports>
+          <P38MobileLineList
+            allViewports
+            className="rounded-none border-0 bg-transparent desktop-layout:rounded-lg desktop-layout:border desktop-layout:border-border/40 desktop-layout:bg-background"
+          >
             {produtosFiltrados.map((produto, index) => (
               <SkuCard
                 key={produto.id}

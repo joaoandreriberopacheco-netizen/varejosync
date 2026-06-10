@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import { ChevronUp, Search } from 'lucide-react';
+import { shouldShowQuickAccessLaunchers } from '@/config/quickAccessLauncherPolicy';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 import QuickBudgetPanel from './QuickBudgetPanel';
 
 export default function QuickBudgetLauncher() {
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
   const isCompactViewport = !useIsDesktop();
+  const showOnRoute = shouldShowQuickAccessLaunchers(location.pathname);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const startPointRef = useRef(null);
@@ -56,6 +60,7 @@ export default function QuickBudgetLauncher() {
   };
 
   const launcher =
+    showOnRoute &&
     isCompactViewport &&
     typeof document !== 'undefined' &&
     createPortal(
