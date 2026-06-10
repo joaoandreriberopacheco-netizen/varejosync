@@ -4,6 +4,7 @@ import { ChevronRight, Search, X } from 'lucide-react';
 import { createPageUrl } from '@/components/utils';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
 import { cn } from '@/components/utils';
+import { SHELL_SEARCH_DROPDOWN_CLASS } from '@/lib/quickAccessOverlay';
 
 function filterSearchItems(items, query) {
   const trimmed = String(query || '').trim();
@@ -122,7 +123,10 @@ export default function GlobalSearchBar({
 
       {showDropdown ? (
         <div
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[80] overflow-hidden rounded-xl border border-border/40 dark:border-white/10 shadow-lg font-din-1451"
+          className={cn(
+            'absolute left-0 right-0 top-[calc(100%+6px)] overflow-hidden rounded-xl border border-border/40 dark:border-white/10 shadow-lg font-din-1451',
+            SHELL_SEARCH_DROPDOWN_CLASS
+          )}
           style={{ background: c.cardBg, maxHeight: resultsMaxHeight }}
         >
           <div className="overflow-y-auto overscroll-contain p-1" style={{ maxHeight: resultsMaxHeight }}>

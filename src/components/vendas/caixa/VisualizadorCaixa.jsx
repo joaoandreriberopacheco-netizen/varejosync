@@ -13,6 +13,7 @@ import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { CAIXA_POLL_MS } from '@/lib/caixaTurnoData';
+import { CAIXA_MIRROR_DIALOG_CHILD_CLASS } from '@/lib/quickAccessOverlay';
 import {
   CAIXA_PRINT,
   caixaClasses,
@@ -705,7 +706,7 @@ export default function VisualizadorCaixa({
       />
 
       {rascunhoDetalhesTab && (
-        <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 z-[1270]">
+        <div className={`fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-4 ${CAIXA_MIRROR_DIALOG_CHILD_CLASS}`}>
           <div className="bg-card rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
               <div>
