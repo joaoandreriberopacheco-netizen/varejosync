@@ -53,7 +53,7 @@ export default function Layout({ children, currentPageName }) {
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
   const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
 
-  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
+  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
   /** Mobile: caixa dentro do shell (bottom nav + scroll-hide); overlay rápido mantém fullscreen. */
   const isMobileCaixaInShell = isMobile && (routePage === 'PDVCaixa' || routePage === 'PDV');
