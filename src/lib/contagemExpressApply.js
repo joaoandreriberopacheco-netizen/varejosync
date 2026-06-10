@@ -67,11 +67,36 @@ export async function aplicarContagemExpress(base44, {
   sessionId,
   conferenciaId,
   usuarioNome,
+  usuarioEmail,
 }) {
   const grupos = agruparItensContagem(itens, produtos);
   const mapaProdutos = Object.fromEntries((produtos || []).map((p) => [p.id, p]));
   const referenciaNumero = sessionId || `CE-${Date.now()}`;
   const responsavel = usuarioNome || 'Sistema';
+  const responsavelId = usuarioEmail || usuarioNome || 'Sistema';
+  const dataFim = new Date().toISOString();
+
+  const conferenciaPayload = {
+    status: 'Concluída',
+    data_fim: dataFim,
+    itens_conferidos: itens,
+    ajuste_aplicado: true,
+  };
+
+  let conferenciaRegistroId = conferenciaId || null;
+  if (conferenciaId) {
+    await base44.entities.ConferenciaEstoque.update(conferenciaId, conferenciaPayload);
+  } else {
+    const conferencia = await base44.entities.ConferenciaEstoque.create({
+      nome_conferencia: `Contagem Express ${referenciaNumero}`,
+      tipo_conferencia: 'Contagem Express',
+      responsavel_id: responsavelId,
+      responsavel_nome: responsavel,
+      data_inicio: dataFim,
+      ...conferenciaPayload,
+    });
+    conferenciaRegistroId = conferencia?.id || null;
+  }
 
   const movimentacoesPayload = await Promise.all(
     grupos.map(async (grupo) => {
@@ -120,32 +145,6 @@ export async function aplicarContagemExpress(base44, {
   }
 
   const comparativo = await buildComparativoContagem(base44, itens, produtos);
-  const dataFim = new Date().toISOString();
-
-  let conferenciaRegistroId = conferenciaId || null;
-  try {
-    const payload = {
-      status: 'Concluída',
-      data_fim: dataFim,
-      itens_conferidos: itens,
-      ajuste_aplicado: true,
-    };
-    if (conferenciaId) {
-      await base44.entities.ConferenciaEstoque.update(conferenciaId, payload);
-    } else {
-      const conferencia = await base44.entities.ConferenciaEstoque.create({
-        nome_conferencia: `Contagem Express ${referenciaNumero}`,
-        tipo_conferencia: 'Contagem Express',
-        responsavel_id: responsavel,
-        responsavel_nome: responsavel,
-        data_inicio: dataFim,
-        ...payload,
-      });
-      conferenciaRegistroId = conferencia?.id || null;
-    }
-  } catch (error) {
-    console.warn('[ContagemExpress] Não foi possível registrar ConferenciaEstoque:', error);
-  }
 
   return {
     referenciaNumero,

@@ -33,7 +33,7 @@ import {
 } from '@/lib/contagemExpressStorage';
 import { aplicarContagemExpress, buildComparativoContagem } from '@/lib/contagemExpressApply';
 import { imprimirRelatorioContagemExpress, publicarRelatorioContagemExpress } from '@/lib/contagemExpressReport';
-import { sincronizarSessaoContagemExpress } from '@/lib/contagemExpressSessao';
+import { extrairReferenciaSessao, sincronizarSessaoContagemExpress } from '@/lib/contagemExpressSessao';
 import { allowProgrammaticFocusBriefly } from '@/lib/focusPolicy';
 import { toast } from 'sonner';
 
@@ -195,7 +195,7 @@ export default function ContagemExpress() {
   };
 
   const continuarSessao = (sessao) => {
-    const sid = sessao.nome_conferencia || createContagemExpressSessionId();
+    const sid = extrairReferenciaSessao(sessao) || createContagemExpressSessionId();
     const itensSessao = sessao.itens_conferidos || [];
     setConferenciaId(sessao.id);
     setSessionId(sid);
@@ -302,6 +302,7 @@ export default function ContagemExpress() {
     try {
       const comparativoPre = await buildComparativoContagem(base44, itens, produtos);
       const usuarioNome = usuario?.nome || usuario?.full_name || usuario?.email || usuario?.id || 'Operador';
+      const usuarioEmail = usuario?.email || usuario?.id || '';
 
       const resultado = await aplicarContagemExpress(base44, {
         itens,
@@ -309,6 +310,7 @@ export default function ContagemExpress() {
         sessionId,
         conferenciaId,
         usuarioNome,
+        usuarioEmail,
       });
 
       await publicarRelatorioContagemExpress({

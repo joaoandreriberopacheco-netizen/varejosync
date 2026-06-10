@@ -48,18 +48,24 @@ export function isSessaoContagemExpress(conferencia) {
   );
 }
 
+export function isSessaoConcluidaContagemExpress(conferencia) {
+  if (!isSessaoContagemExpress(conferencia)) return false;
+  return conferencia.status === 'Concluída' || conferencia.ajuste_aplicado === true;
+}
+
 export async function listarSessoesContagemExpress(base44, { incluirConcluidas = false } = {}) {
   const data = await base44.entities.ConferenciaEstoque.list('-created_date', 200);
   return data.filter((c) => {
     if (!isSessaoContagemExpress(c)) return false;
     if (incluirConcluidas) return true;
+    if (isSessaoConcluidaContagemExpress(c)) return false;
     return c.status === 'Em Andamento' || c.status === 'Rascunho';
   });
 }
 
 export async function listarSessoesConcluidasContagemExpress(base44) {
   const data = await base44.entities.ConferenciaEstoque.list('-created_date', 200);
-  return data.filter((c) => isSessaoContagemExpress(c) && c.status === 'Concluída');
+  return data.filter((c) => isSessaoConcluidaContagemExpress(c));
 }
 
 export async function listarMovimentosContagemExpress(base44) {

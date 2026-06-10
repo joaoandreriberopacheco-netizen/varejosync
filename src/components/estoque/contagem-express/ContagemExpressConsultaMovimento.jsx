@@ -56,7 +56,7 @@ export default function ContagemExpressConsultaMovimento({ movimentos = [] }) {
               }
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
+                <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
                   {mov.produto_nome || 'Produto'}
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">

@@ -6,11 +6,13 @@ export default function ContagemExpressFiltroPeriodo({
   onChange,
 }) {
   return (
-    <MobileDateRangePicker
-      startDate={dataInicio}
-      endDate={dataFim}
-      onApply={(inicio, fim) => onChange({ dataInicio: inicio, dataFim: fim })}
-      onClear={() => onChange({ dataInicio: '', dataFim: '' })}
-    />
+    <div className="[&_button]:h-10 [&_button]:text-sm">
+      <MobileDateRangePicker
+        startDate={dataInicio}
+        endDate={dataFim}
+        onApply={(inicio, fim) => onChange({ dataInicio: inicio, dataFim: fim })}
+        onClear={() => onChange({ dataInicio: '', dataFim: '' })}
+      />
+    </div>
   );
 }
