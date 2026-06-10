@@ -1,15 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, ArrowUpCircle, ArrowDownCircle, ArrowRightLeft, Calendar, Search, FileDown, Printer } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  ArrowLeft,
+  Plus,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  ArrowRightLeft,
+  Search,
+  FileDown,
+  Printer,
+  ListFilter,
+  ArrowDownAZ,
+  ArrowUpAZ,
+} from 'lucide-react';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { cn } from '@/components/utils';
+
+const PERIODOS_EXTRATO = [
+  { value: 'hoje', label: 'Hoje' },
+  { value: 'ontem', label: 'Ontem' },
+  { value: 'semana', label: 'Semana' },
+  { value: 'mes', label: 'Mês' },
+  { value: 'todos', label: 'Tudo' },
+  { value: 'personalizado', label: 'Período' },
+];
 
 function extratoMovAccent(tipo) {
   if (tipo === 'Receita' || tipo === 'Reforço') return 'success';
@@ -29,6 +54,10 @@ export default function ExtratoContaPage() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [sortOrdem, setSortOrdem] = useState('az');
+  const isMobile = useCompactShell();
+  const chromeExpanded = useBottomNavScrollVisibility(isMobile);
   const { toast } = useToast();
 
   const [formLancamento, setFormLancamento] = useState({
@@ -250,6 +279,8 @@ export default function ExtratoContaPage() {
         return { inicio: startOfWeek(hoje, { weekStartsOn: 0 }), fim: endOfWeek(hoje, { weekStartsOn: 0 }) };
       case 'mes':
         return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
+      case 'todos':
+        return { inicio: new Date(0), fim: endOfDay(hoje) };
       case 'personalizado':
         return dataInicio && dataFim ? 
           { inicio: startOfDay(parseISO(dataInicio)), fim: endOfDay(parseISO(dataFim)) } : 
@@ -345,7 +376,59 @@ export default function ExtratoContaPage() {
     };
   }).reverse();
 
+  const diasExibicao = useMemo(() => {
+    return diasComSaldo.map((diaData) => ({
+      ...diaData,
+      movimentacoes: [...diaData.movimentacoes].sort((a, b) => {
+        const da = (a.descricao || a.tipo || '').toLocaleLowerCase('pt-BR');
+        const db = (b.descricao || b.tipo || '').toLocaleLowerCase('pt-BR');
+        const cmp = da.localeCompare(db, 'pt-BR');
+        return sortOrdem === 'az' ? cmp : -cmp;
+      }),
+    }));
+  }, [diasComSaldo, sortOrdem]);
+
   const saldoCalculado = saldoReal;
+
+  const searchRow = (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="relative flex-1 min-w-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Input
+          placeholder="Buscar movimentações..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 h-11 bg-muted/40 dark:bg-muted border-0 rounded-2xl"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={() => setFilterSheetOpen(true)}
+        className={cn(
+          'h-11 w-11 shrink-0 rounded-2xl flex items-center justify-center transition-colors',
+          filtroPeriodo !== 'mes'
+            ? 'bg-primary/15 text-primary dark:bg-muted dark:text-foreground'
+            : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+        )}
+        aria-label="Filtrar período"
+      >
+        <ListFilter className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setSortOrdem((o) => (o === 'az' ? 'za' : 'az'))}
+        className="h-11 w-11 shrink-0 rounded-full bg-muted/60 text-muted-foreground hover:bg-muted flex items-center justify-center transition-colors"
+        aria-label={sortOrdem === 'az' ? 'Ordenar Z–A' : 'Ordenar A–Z'}
+        title={sortOrdem === 'az' ? 'A–Z' : 'Z–A'}
+      >
+        {sortOrdem === 'az' ? (
+          <ArrowDownAZ className="w-4 h-4" />
+        ) : (
+          <ArrowUpAZ className="w-4 h-4" />
+        )}
+      </button>
+    </div>
+  );
 
   // Funções de exportação
   const exportarCSV = () => {
@@ -401,26 +484,60 @@ export default function ExtratoContaPage() {
 
   return (
     <div id="extrato-print-root" className="min-h-screen bg-background font-glacial">
-      {/* Header fixo */}
-      <div className="bg-card shadow-sm sticky top-0 z-10">
+      {/* Mobile — chrome colapsável ao descer; busca + filtro + ordem sempre visíveis */}
+      <div className="desktop-layout:hidden sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border/40 shadow-sm shrink-0">
+        <div
+          className={cn(
+            'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
+            chromeExpanded ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0'
+          )}
+          aria-hidden={!chromeExpanded}
+        >
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.history.back()}
+                className="shrink-0 hover:bg-muted"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex-1 text-center min-w-0 px-1">
+                <h1 className="text-lg font-medium text-foreground truncate">{conta.nome}</h1>
+                <p className="text-xs text-muted-foreground">{conta.tipo}</p>
+              </div>
+              <div className="flex gap-1 shrink-0 no-pdf-capture">
+                <Button variant="ghost" size="icon" onClick={exportarCSV} title="Exportar CSV" className="h-10 w-10">
+                  <FileDown className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={imprimir} title="Imprimir" className="h-10 w-10">
+                  <Printer className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="bg-muted/40 dark:bg-muted px-4 py-2.5 rounded-xl mb-3">
+              <p className="text-[11px] text-muted-foreground mb-0.5">Saldo Atual</p>
+              <p className="text-xl font-semibold text-foreground tabular-nums">{formatCurrency(saldoCalculado)}</p>
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-2">{searchRow}</div>
+      </div>
+
+      {/* Desktop — header completo */}
+      <div className="hidden desktop-layout:block bg-card shadow-sm sticky top-0 z-10 shrink-0">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <Button
-              variant="ghost"
-              onClick={() => window.history.back()}
-              className="gap-2 hover:bg-muted"
-            >
+            <Button variant="ghost" onClick={() => window.history.back()} className="gap-2 hover:bg-muted">
               <ArrowLeft className="w-5 h-5" />
-              <span className="hidden md:inline">Voltar</span>
+              <span>Voltar</span>
             </Button>
-            
             <div className="text-center flex-1">
-              <h1 className="text-xl md:text-2xl font-medium text-foreground">
-                {conta.nome}
-              </h1>
+              <h1 className="text-2xl font-medium text-foreground">{conta.nome}</h1>
               <p className="text-sm text-muted-foreground">{conta.tipo}</p>
             </div>
-
             <div className="flex gap-2 no-pdf-capture">
               <Button variant="ghost" size="icon" onClick={exportarCSV} title="Exportar CSV">
                 <FileDown className="w-5 h-5" />
@@ -430,60 +547,35 @@ export default function ExtratoContaPage() {
               </Button>
             </div>
           </div>
-
-          {/* Saldo */}
           <div className="bg-muted/40 dark:bg-muted px-6 py-3 rounded-xl mb-4">
             <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
-            <p className="text-2xl font-semibold text-foreground">
-              {formatCurrency(saldoCalculado)}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{formatCurrency(saldoCalculado)}</p>
           </div>
-
-          {/* Filtros Timeline */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-4">
-            {[
-              { value: 'hoje', label: 'Hoje' },
-              { value: 'ontem', label: 'Ontem' },
-              { value: 'semana', label: 'Semana' },
-              { value: 'mes', label: 'Mês' },
-              { value: 'todos', label: 'Tudo' },
-              { value: 'personalizado', label: 'Período' }
-            ].map(filtro => (
+            {PERIODOS_EXTRATO.map((filtro) => (
               <button
                 key={filtro.value}
+                type="button"
                 onClick={() => setFiltroPeriodo(filtro.value)}
-                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors',
                   filtroPeriodo === filtro.value
                     ? 'bg-primary dark:bg-muted text-white'
                     : 'bg-card dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted'
-                }`}
+                )}
               >
                 {filtro.label}
               </button>
             ))}
           </div>
-
-          {/* Período personalizado */}
           {filtroPeriodo === 'personalizado' && (
             <div className="flex gap-2 mb-4">
-              <Input
-                type="date"
-                value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
-                className="dark:bg-muted dark:border-border/40"
-              />
-              <Input
-                type="date"
-                value={dataFim}
-                onChange={(e) => setDataFim(e.target.value)}
-                className="dark:bg-muted dark:border-border/40"
-              />
+              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="dark:bg-muted dark:border-border/40" />
+              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="dark:bg-muted dark:border-border/40" />
             </div>
           )}
-
-          {/* Busca */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Buscar movimentações..."
               value={searchTerm}
@@ -495,8 +587,8 @@ export default function ExtratoContaPage() {
       </div>
 
       {/* Lista de movimentações por dia */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {diasComSaldo.length === 0 ? (
+      <div className="max-w-7xl mx-auto w-full px-4 py-4 desktop-layout:py-6 pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-6">
+        {diasExibicao.length === 0 ? (
           <div className="bg-card rounded-xl shadow-sm text-center py-16">
             <p className="text-muted-foreground mb-2">Nenhuma movimentação encontrada</p>
             <p className="text-sm text-muted-foreground">
@@ -505,7 +597,7 @@ export default function ExtratoContaPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {diasComSaldo.map((diaData, diaIdx) => (
+            {diasExibicao.map((diaData, diaIdx) => (
               <div key={diaIdx} className="bg-card border border-border rounded-xl overflow-hidden">
                 {/* Header do dia */}
                 <div className="bg-card px-4 py-3 border-b border-border">
@@ -560,11 +652,52 @@ export default function ExtratoContaPage() {
         )}
       </div>
 
+      {/* Filtro de período — mobile (sheet) */}
+      <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-[28px] border-0 px-4 pb-8">
+          <SheetHeader className="text-left mb-4">
+            <SheetTitle className="font-glacial text-foreground">Período do extrato</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {PERIODOS_EXTRATO.map((filtro) => (
+              <button
+                key={filtro.value}
+                type="button"
+                onClick={() => {
+                  setFiltroPeriodo(filtro.value);
+                  if (filtro.value !== 'personalizado') setFilterSheetOpen(false);
+                }}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm transition-colors',
+                  filtroPeriodo === filtro.value
+                    ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
+                    : 'bg-muted text-foreground/90'
+                )}
+              >
+                {filtro.label}
+              </button>
+            ))}
+          </div>
+          {filtroPeriodo === 'personalizado' && (
+            <div className="flex flex-col gap-2 mb-4">
+              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="h-11 rounded-2xl border-0 bg-muted" />
+              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="h-11 rounded-2xl border-0 bg-muted" />
+              <Button type="button" className="h-11 rounded-2xl" onClick={() => setFilterSheetOpen(false)}>
+                Aplicar
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
       {/* FAB Principal */}
       <button
         type="button"
         onClick={() => setShowFAB(!showFAB)}
-        className="fixed right-6 p38-bottom-fab1 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-110 hover:bg-background dark:bg-muted dark:hover:bg-muted"
+        className={cn(
+          'fixed right-6 p38-bottom-fab1 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all duration-300 hover:scale-110 hover:bg-background dark:bg-muted dark:hover:bg-muted',
+          isMobile && !chromeExpanded && 'translate-y-8 opacity-0 pointer-events-none'
+        )}
       >
         <Plus className={`w-6 h-6 transition-transform ${showFAB ? 'rotate-45' : ''}`} />
       </button>
