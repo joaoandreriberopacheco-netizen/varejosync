@@ -33,7 +33,10 @@ import {
 } from '@/lib/contagemExpressStorage';
 import { aplicarContagemExpress, buildComparativoContagem } from '@/lib/contagemExpressApply';
 import { imprimirRelatorioContagemExpress, publicarRelatorioContagemExpress } from '@/lib/contagemExpressReport';
-import { extrairReferenciaSessao, sincronizarSessaoContagemExpress } from '@/lib/contagemExpressSessao';
+import {
+  extrairReferenciaSessao,
+  sincronizarSessaoContagemExpress,
+} from '@/lib/contagemExpressSessao';
 import { allowProgrammaticFocusBriefly } from '@/lib/focusPolicy';
 import { toast } from 'sonner';
 
@@ -191,6 +194,17 @@ export default function ContagemExpress() {
     setEntradaPendente(null);
     setSaldoInfo({ loading: false, saldoExtrato: null });
     setTimeout(() => buscaRef.current?.focus(), 100);
+  };
+
+  const handleSessaoCancelada = (sessao) => {
+    if (conferenciaId === sessao.id) {
+      clearContagemExpressDraft();
+      setConferenciaId(null);
+      setItens([]);
+      setComparativo([]);
+      setSessionId(createContagemExpressSessionId());
+      limparSelecao();
+    }
   };
 
   const continuarSessao = (sessao) => {
@@ -354,6 +368,7 @@ export default function ContagemExpress() {
           usuario={usuario}
           produtos={produtos}
           onContinuar={continuarSessao}
+          onSessaoCancelada={handleSessaoCancelada}
           onVoltar={() => navigate(createPageUrl('Dashboard'))}
         />
       </div>

@@ -22,6 +22,25 @@ export function extrairReferenciaSessao(sessao) {
   return nome;
 }
 
+/** Chaves que podem aparecer em referencia_numero / referencia_id de movimentos. */
+export function referenciasSessaoContagemExpress(sessao) {
+  const nome = String(sessao?.nome_conferencia || '').trim();
+  const ref = extrairReferenciaSessao(sessao);
+  const set = new Set([ref, nome, sessao?.id].filter(Boolean));
+  if (ref) set.add(`${PREFIXO_NOME_CONTAGEM_EXPRESS}${ref}`);
+  return set;
+}
+
+export function movimentoPertenceSessaoContagemExpress(mov, sessao) {
+  if (!mov || !sessao) return false;
+  const refs = referenciasSessaoContagemExpress(sessao);
+  return refs.has(mov.referencia_numero) || refs.has(mov.referencia_id);
+}
+
+export function sessaoTemMovimentoContagemExpress(sessao, movimentos) {
+  return (movimentos || []).some((mov) => movimentoPertenceSessaoContagemExpress(mov, sessao));
+}
+
 export function getPeriodoMesAtual() {
   const hoje = dataHoje();
   const year = parseInt(hoje.slice(0, 4), 10);
@@ -57,6 +76,7 @@ export async function listarSessoesContagemExpress(base44, { incluirConcluidas =
   const data = await base44.entities.ConferenciaEstoque.list('-created_date', 200);
   return data.filter((c) => {
     if (!isSessaoContagemExpress(c)) return false;
+    if (c.status === 'Cancelada') return false;
     if (incluirConcluidas) return true;
     if (isSessaoConcluidaContagemExpress(c)) return false;
     return c.status === 'Em Andamento' || c.status === 'Rascunho';
@@ -71,6 +91,47 @@ export async function listarSessoesConcluidasContagemExpress(base44) {
 export async function listarMovimentosContagemExpress(base44) {
   const movs = await base44.entities.MovimentacaoEstoque.list('-created_date', 3000);
   return movs.filter((m) => m.referencia_tipo === REFERENCIA_CONTAGEM_EXPRESS);
+}
+
+/**
+ * Sessões com movimento gravado mas conferência ainda em aberto (bug legado).
+ * Marca como Concluída para alinhar com o estoque.
+ */
+export async function repararSessoesOrfasContagemExpress(base44) {
+  const [conferencias, movimentos] = await Promise.all([
+    base44.entities.ConferenciaEstoque.list('-created_date', 200),
+    listarMovimentosContagemExpress(base44),
+  ]);
+
+  const orfas = conferencias.filter(
+    (c) => isSessaoContagemExpress(c)
+      && c.status !== 'Cancelada'
+      && !isSessaoConcluidaContagemExpress(c)
+      && sessaoTemMovimentoContagemExpress(c, movimentos),
+  );
+
+  await Promise.all(
+    orfas.map((sessao) => {
+      const movsSessao = movimentos.filter((m) => movimentoPertenceSessaoContagemExpress(m, sessao));
+      const dataFim = movsSessao[0]?.created_date || sessao.data_fim || new Date().toISOString();
+      return base44.entities.ConferenciaEstoque.update(sessao.id, {
+        status: 'Concluída',
+        data_fim: dataFim,
+        ajuste_aplicado: true,
+        itens_conferidos: sessao.itens_conferidos || [],
+      });
+    }),
+  );
+
+  return orfas.length;
+}
+
+export async function cancelarSessaoContagemExpress(base44, conferenciaId) {
+  if (!conferenciaId) return;
+  await base44.entities.ConferenciaEstoque.update(conferenciaId, {
+    status: 'Cancelada',
+    data_fim: new Date().toISOString(),
+  });
 }
 
 export async function criarSessaoContagemExpress(base44, usuario, nome) {

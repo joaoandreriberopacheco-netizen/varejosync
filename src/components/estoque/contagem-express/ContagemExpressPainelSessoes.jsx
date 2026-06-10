@@ -3,8 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ArrowLeft, ClipboardList, Loader2, Play, Plus, RefreshCw,
+  ArrowLeft, ClipboardList, Loader2, Play, Plus, RefreshCw, Trash2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -17,12 +18,14 @@ import {
 import ContagemExpressFiltroPeriodo from '@/components/estoque/contagem-express/ContagemExpressFiltroPeriodo';
 import ContagemExpressConsultaTotal from '@/components/estoque/contagem-express/ContagemExpressConsultaTotal';
 import {
+  cancelarSessaoContagemExpress,
   contarProdutosSessao,
   criarSessaoContagemExpress,
   filtrarPorPeriodo,
   getPeriodoMesAtual,
   listarSessoesConcluidasContagemExpress,
   listarSessoesContagemExpress,
+  repararSessoesOrfasContagemExpress,
 } from '@/lib/contagemExpressSessao';
 
 function HubTab({ active, onClick, children }) {
@@ -43,6 +46,7 @@ export default function ContagemExpressPainelSessoes({
   usuario,
   produtos = [],
   onContinuar,
+  onSessaoCancelada,
   onVoltar,
 }) {
   const periodoPadrao = useMemo(() => getPeriodoMesAtual(), []);
@@ -56,16 +60,25 @@ export default function ContagemExpressPainelSessoes({
   const [criando, setCriando] = useState(false);
   const [nomeNova, setNomeNova] = useState('');
   const [mostrarNome, setMostrarNome] = useState(false);
+  const [cancelandoId, setCancelandoId] = useState(null);
 
   const carregar = async () => {
     setLoading(true);
     try {
+      const reparadas = await repararSessoesOrfasContagemExpress(base44);
       const [aguardando, concluidas] = await Promise.all([
         listarSessoesContagemExpress(base44),
         listarSessoesConcluidasContagemExpress(base44),
       ]);
       setSessoesAguardando(aguardando);
       setSessoesConcluidas(concluidas);
+      if (reparadas > 0) {
+        toast.success(
+          reparadas === 1
+            ? '1 contagem com movimento foi marcada como concluída.'
+            : `${reparadas} contagens com movimento foram marcadas como concluídas.`,
+        );
+      }
     } catch (error) {
       console.error(error);
     }
@@ -84,6 +97,26 @@ export default function ContagemExpressPainelSessoes({
   const handlePeriodoChange = ({ dataInicio: inicio, dataFim: fim }) => {
     setDataInicio(inicio);
     setDataFim(fim);
+  };
+
+  const handleCancelar = async (sessao) => {
+    const nome = sessao.nome_conferencia || 'esta contagem';
+    const ok = window.confirm(
+      `Descartar "${nome}"?\n\nOs itens em pausa não serão lançados. Esta ação não desfaz movimentos de estoque já gravados.`,
+    );
+    if (!ok) return;
+
+    setCancelandoId(sessao.id);
+    try {
+      await cancelarSessaoContagemExpress(base44, sessao.id);
+      onSessaoCancelada?.(sessao);
+      await carregar();
+      toast.success('Contagem descartada.');
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível descartar a contagem.');
+    }
+    setCancelandoId(null);
   };
 
   const handleNova = async () => {
@@ -198,13 +231,33 @@ export default function ContagemExpressPainelSessoes({
                     ? format(new Date(data), "dd/MM/yy HH:mm", { locale: ptBR })
                     : '';
 
+                  const cancelando = cancelandoId === sessao.id;
+
                   return (
                     <P38MobileLine
                       key={sessao.id}
                       accent={p38AccentKeyFromTone(tone)}
                       striped={index % 2 === 1}
                       onClick={() => onContinuar(sessao)}
-                      trailing={<Play className="h-4 w-4 text-muted-foreground" />}
+                      trailing={(
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelar(sessao);
+                            }}
+                            disabled={cancelando}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+                            aria-label="Descartar contagem"
+                          >
+                            {cancelando
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <Trash2 className="h-4 w-4" />}
+                          </button>
+                          <Play className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
